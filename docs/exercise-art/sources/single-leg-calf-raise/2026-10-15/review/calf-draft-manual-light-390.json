@@ -1,0 +1,180 @@
+{
+  "artifactName": "calf-draft-manual-light-390.json",
+  "observations": [
+    {
+      "alt": "Single-Leg Calf Raise, Low",
+      "complete": true,
+      "cues": [
+        "Unregistered two-endpoint candidate",
+        "Low 1/6",
+        "Lower heel slightly below the step."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "natural": [
+        626,
+        1209
+      ],
+      "overflow": false,
+      "src": "/draft/frames/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Single-Leg Calf Raise, Brace",
+      "complete": true,
+      "cues": [
+        "Unregistered two-endpoint candidate",
+        "Brace 2/6",
+        "Keep your knee straight; balance lightly."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "natural": [
+        626,
+        1209
+      ],
+      "overflow": false,
+      "src": "/draft/frames/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Single-Leg Calf Raise, Top",
+      "complete": true,
+      "cues": [
+        "Unregistered two-endpoint candidate",
+        "Top 3/6",
+        "Rise onto your toes without pulling."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "natural": [
+        626,
+        1209
+      ],
+      "overflow": false,
+      "src": "/draft/frames/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Single-Leg Calf Raise, Hold",
+      "complete": true,
+      "cues": [
+        "Unregistered two-endpoint candidate",
+        "Hold 4/6",
+        "Pause tall; squeeze your working calf."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "natural": [
+        626,
+        1209
+      ],
+      "overflow": false,
+      "src": "/draft/frames/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Single-Leg Calf Raise, Lower",
+      "complete": true,
+      "cues": [
+        "Unregistered two-endpoint candidate",
+        "Lower 5/6",
+        "Lower slowly through the shown range."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "natural": [
+        626,
+        1209
+      ],
+      "overflow": false,
+      "src": "/draft/frames/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Single-Leg Calf Raise, Reset",
+      "complete": true,
+      "cues": [
+        "Unregistered two-endpoint candidate",
+        "Reset 6/6",
+        "Reset below step; keep forefoot planted."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "natural": [
+        626,
+        1209
+      ],
+      "overflow": false,
+      "src": "/draft/frames/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Single-Leg Calf Raise, Low",
+      "complete": true,
+      "cues": [
+        "Unregistered two-endpoint candidate",
+        "Low 1/6",
+        "Lower heel slightly below the step."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "natural": [
+        626,
+        1209
+      ],
+      "overflow": false,
+      "src": "/draft/frames/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    }
+  ]
+}

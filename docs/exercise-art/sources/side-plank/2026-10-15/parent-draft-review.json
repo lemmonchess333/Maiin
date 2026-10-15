@@ -1,0 +1,30 @@
+{
+  "reviewedAt": "2026-10-15T19:20:13.269163+00:00",
+  "exerciseId": "side-plank",
+  "version": "anatomy-v3-2026-10-15-retained-side-plank-timed-hold-v1",
+  "planSha256": "1b709e4216adc80a963417f65d16f29e0375de3c228ba3412757f51b0fe50bbd",
+  "cardSha256": "fafcaa0f236b7309ccd75c57370493e8192e2b786fa9821f37dfee847bcb3c1a",
+  "allowLocalIntegration": true,
+  "completionCredit": false,
+  "strictChecksRemainNull": true,
+  "findings": [
+    "One physical isometric hold. Setup and switching sides remain written instructions, with no fabricated transition imagery.",
+    "Recognizable canonical white-grey anatomy/no shorts/featureless pelvis. Trainer straps and shading differ in detail from the global canonical image; no strict identity equivalence claimed.",
+    "Raw lower/side obliques were primary; rectus and delts were pale. Source-derived role maps need actual native semantic palette review.",
+    "Old -4px forearm/-12px shoe mismatch against a separate low pose remains historical; no pair movement is used in this static guide."
+  ],
+  "observations": {
+    "identity": "Parent viewed canonical FA56 and the intact original/final native art. Bald faceless white-grey athlete without shorts, anatomical contours and full white trainers retained. Source trainer/shading detail differences remain disclosed; this is not pixel-identical canonical identity certification.",
+    "anatomy": "All original human geometry remains intact. Colour layers stay within the documented original muscle fields; no body warping, limb fitting, head/shoe grafting or hidden anatomy reconstruction. Parent native and mobile observation found no obvious material body distortion.",
+    "muscles": "Catalogue primary ['Obliques'], secondary ['Core', 'Shoulders']. Palette bases primary#7B72E9 and secondary#9590E0; inherited shading/fade and contours retained in documented independent layers. No unrelated new highlight field or spatial gradient is authored.",
+    "cueAgreement": "Parent manually selected all six draft paths plus wrap in both390x844 themes. Each decoded visible source matched its displayed label/cue, every cue is at most seven words. Written setup is based on the existing exact catalogue; final registered component review remains pending.",
+    "sequenceAndLoop": "Actual unchanged ExerciseFormFrames native and390x844 draft observations include all six paths and6-to-1 automatic wraps, pause/manual selection and slower playback. Normal intervals are approximately1.2s, slower2.4s. Source order[1, 1, 1, 1, 1, 1], physicalPoses1; no six-unique-state or continuous trajectory claim.",
+    "mobileLight": "Parent inspected actual390x844 light draft player and normal-generator transparent cards at480/160px. Full athlete/support visible, no horizontal overflow, cues legible and no observed material clipping or contact defect. Registered guide review remains pending.",
+    "mobileDark": "Parent inspected actual390x844 dark draft player and normal-generator transparent cards at480/160px. Full athlete/support visible, no horizontal overflow, cues legible and no observed material clipping or contact defect. Browser draft warning/error observations are empty; registered review remains pending.",
+    "camera": "One original native1536x1024 pose remains at unchanged coordinates. Common empty-margin crop[32,168,1512,864], final1480x696; actual native player1480x696. No scaling, pose/body-part alignment or mirrored anatomy.",
+    "equipment": "Bodyweight forearm hold on the original floor/shadow, without introduced equipment. Source floor/contact pixels remain unchanged.",
+    "contact": "Parent native and mobile views show a real planted horizontal forearm/elbow, supporting shoulder above it, raised hips and extended stacked trainers. No ambiguous vertical-fist substitute, contact drift or anatomical repair is used.",
+    "physics": "This is a single timed isometric hold. Six cues describe support, stacking, alignment, bracing, breathing and time; written setup covers raising hips and later switching sides. Entry/lowering/opposite-side drawings are not claimed. Earlier pairwise drift against a low pose does not invalidate this sole hold."
+  },
+  "draftActualUiOnly": "Final integrated component, normal project checks, CI, merge and preservation audit remain pending."
+}

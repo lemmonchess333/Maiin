@@ -1097,6 +1097,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "fd854e16d713eab7077649df497c95c28742bf6f254d2e26f43e649a0ca5666e",
     sha256: "a6b85844c73b245af6e180328435175bf352737713e26b0465a492b97931019f",
   },
+  "side-plank": {
+    src: "form-art/side-plank.webp",
+    width: 480,
+    height: 226,
+    keyed: true,
+    source: "form-frames/side-plank/3.webp",
+    sourceSha256:
+      "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    sha256: "fafcaa0f236b7309ccd75c57370493e8192e2b786fa9821f37dfee847bcb3c1a",
+  },
   "single-arm-cable-pushdown": {
     src: "form-art/single-arm-cable-pushdown.webp",
     width: 445,
@@ -1116,6 +1126,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "d4efe89d65991bc136941a9de73182f239c5590724df055b54987bef12905f56",
     sha256: "3534ebf9751a0052a608daec6d5344f9d13262ac66a12688f6fc0b4241613409",
+  },
+  "single-leg-calf-raise": {
+    src: "form-art/single-leg-calf-raise.webp",
+    width: 249,
+    height: 480,
+    keyed: true,
+    source: "form-frames/single-leg-calf-raise/3.webp",
+    sourceSha256:
+      "1d9a123655b12cd30e9dd25fc102acbe8c3a0b6519489da14339114d61b57fa3",
+    sha256: "bf19def08b9fcbcd4e97243c22fb8fbc2c7d4ac7b98d25c2fb86bd17dfab1298",
   },
   "sissy-squat": {
     src: "form-art/sissy-squat.webp",

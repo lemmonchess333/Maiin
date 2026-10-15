@@ -1,0 +1,186 @@
+{
+  "exerciseId": "side-plank",
+  "version": "anatomy-v3-2026-10-15-retained-side-plank-timed-hold-v1",
+  "width": 1480,
+  "height": 696,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Parent actual native, standard-card, registered390x844 light/dark and playback review under existing owner relaxation authorization",
+  "reviewedAt": "2026-10-15T19:32:26.554466+00:00",
+  "recordStage": "Actual integrated review complete; project verification, CI and publication separately gated",
+  "reference": {
+    "path": "form-frames/side-plank/3.webp",
+    "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032"
+  },
+  "cueSha256": "8798276e69dd97eb3b30b42cc6441e9c02e26a123dee04a0d02fe6d0a3b69e6d",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Parent viewed canonical FA56 and the intact original/final native art. Bald faceless white-grey athlete without shorts, anatomical contours and full white trainers retained. Source trainer/shading detail differences remain disclosed; this is not pixel-identical canonical identity certification."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: One original native1536x1024 pose remains at unchanged coordinates. Common empty-margin crop[32,168,1512,864], final1480x696; actual native player1480x696. No scaling, pose/body-part alignment or mirrored anatomy."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: All original human geometry remains intact. Colour layers stay within the documented original muscle fields; no body warping, limb fitting, head/shoe grafting or hidden anatomy reconstruction. Parent native and mobile observation found no obvious material body distortion."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Bodyweight forearm hold on the original floor/shadow, without introduced equipment. Source floor/contact pixels remain unchanged."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Parent native and mobile views show a real planted horizontal forearm/elbow, supporting shoulder above it, raised hips and extended stacked trainers. No ambiguous vertical-fist substitute, contact drift or anatomical repair is used."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: This is a single timed isometric hold. Six cues describe support, stacking, alignment, bracing, breathing and time; written setup covers raising hips and later switching sides. Entry/lowering/opposite-side drawings are not claimed. Earlier pairwise drift against a low pose does not invalidate this sole hold."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Catalogue primary ['Obliques'], secondary ['Core', 'Shoulders']. Palette bases primary#7B72E9 and secondary#9590E0; inherited shading/fade and contours retained in documented independent layers. No unrelated new highlight field or spatial gradient is authored."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Parent selected all six actual ExerciseFormContent instruction buttons plus wrap in390x844 light and dark; each decoded public path/label matches its cue. The prescribed muscle key and exact catalogue preparation are visibly present. Reference3 normal card is byte-identical to the reviewed draft preview."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual native and registered390x844 traces contain all six paths with automatic6-to-1 wraps. Parent exercised pause/manual selection, previous1-to-6 and next6-to-1. Registered slower intervals approximately2.4s versus normal1.2s. PhysicalPoses1, source order[1, 1, 1, 1, 1, 1]; no additional trajectory drawings are claimed."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Parent reviewed actual unchanged ExerciseFormContent at verified390x844 light, full athlete/supports and normal registered card, prescribed muscle legend, preparation, six instruction selections and playback. No horizontal overflow or material clipping/contact defect observed. Draft cards at480/160px reviewed in both themes; actual registered export is byte-identical. Registered browser warnings/errors empty."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Parent reviewed actual unchanged ExerciseFormContent at verified390x844 dark, full athlete/supports and normal registered card, prescribed muscle legend, preparation, six instruction selections and playback. No horizontal overflow or material clipping/contact defect observed. Draft cards at480/160px reviewed in both themes; actual registered export is byte-identical. Registered browser warnings/errors empty."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/side-plank/1.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/side-plank/2026-10-15/draft/1-framed.png",
+        "sha256": "6469a48d2725737ba7d6c71eaad8dea50682d459b3b85eb85cb9e5da176f5b98"
+      }
+    },
+    {
+      "path": "form-frames/side-plank/2.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/side-plank/2026-10-15/draft/1-framed.png",
+        "sha256": "6469a48d2725737ba7d6c71eaad8dea50682d459b3b85eb85cb9e5da176f5b98"
+      }
+    },
+    {
+      "path": "form-frames/side-plank/3.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/side-plank/2026-10-15/draft/1-framed.png",
+        "sha256": "6469a48d2725737ba7d6c71eaad8dea50682d459b3b85eb85cb9e5da176f5b98"
+      }
+    },
+    {
+      "path": "form-frames/side-plank/4.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/side-plank/2026-10-15/draft/1-framed.png",
+        "sha256": "6469a48d2725737ba7d6c71eaad8dea50682d459b3b85eb85cb9e5da176f5b98"
+      }
+    },
+    {
+      "path": "form-frames/side-plank/5.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/side-plank/2026-10-15/draft/1-framed.png",
+        "sha256": "6469a48d2725737ba7d6c71eaad8dea50682d459b3b85eb85cb9e5da176f5b98"
+      }
+    },
+    {
+      "path": "form-frames/side-plank/6.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/side-plank/2026-10-15/draft/1-framed.png",
+        "sha256": "6469a48d2725737ba7d6c71eaad8dea50682d459b3b85eb85cb9e5da176f5b98"
+      }
+    }
+  ],
+  "physicalPoses": 1,
+  "sourcePoseOrder": [1, 1, 1, 1, 1, 1],
+  "positionCoordinates": [1, 1, 1, 1, 1, 1],
+  "setup": [
+    "Lie on your side with your forearm on the floor, elbow under your shoulder.",
+    "Stack your feet (or stagger for easier) and brace your core.",
+    "Lift your hips off the floor into a straight line from head to feet."
+  ],
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "approval": {
+    "actor": "User through explicit continuing completion/merge request and prior slight-requirements relaxation.",
+    "instruction": "Continue and merge completed exercises, preserve the current model without shorts, avoid repeated failed requests, and stop asking routine approvals.",
+    "context": "Use the existing owner-with-findings route, keep strict checks null and disclose residual source differences. Acceptance does not excuse implausible anatomy, equipment, contact or mechanics. Final registered review, project checks, CI and actual merge remain required."
+  },
+  "findings": [
+    "One physical isometric hold. Setup and switching sides remain written instructions, with no fabricated transition imagery.",
+    "Recognizable canonical white-grey anatomy/no shorts/featureless pelvis. Trainer straps and shading differ in detail from the global canonical image; no strict identity equivalence claimed.",
+    "Old -4px forearm/-12px shoe mismatch against a separate low pose remains historical; no pair movement is used in this static guide.",
+    "Muscle role boundaries follow the original visible compartments and documented masks; subtle source tint/shading remains. No measured activation or hidden-side anatomy is claimed.",
+    "The normal transparent cutout retains small original floor-shadow islands, most visible on the light card; these were reviewed rather than edited in place."
+  ],
+  "observedQaChecks": {
+    "identity": {
+      "observed": true,
+      "evidence": "Parent viewed canonical FA56 and the intact original/final native art. Bald faceless white-grey athlete without shorts, anatomical contours and full white trainers retained. Source trainer/shading detail differences remain disclosed; this is not pixel-identical canonical identity certification."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "One original native1536x1024 pose remains at unchanged coordinates. Common empty-margin crop[32,168,1512,864], final1480x696; actual native player1480x696. No scaling, pose/body-part alignment or mirrored anatomy."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "All original human geometry remains intact. Colour layers stay within the documented original muscle fields; no body warping, limb fitting, head/shoe grafting or hidden anatomy reconstruction. Parent native and mobile observation found no obvious material body distortion."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "Bodyweight forearm hold on the original floor/shadow, without introduced equipment. Source floor/contact pixels remain unchanged."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Parent native and mobile views show a real planted horizontal forearm/elbow, supporting shoulder above it, raised hips and extended stacked trainers. No ambiguous vertical-fist substitute, contact drift or anatomical repair is used."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "This is a single timed isometric hold. Six cues describe support, stacking, alignment, bracing, breathing and time; written setup covers raising hips and later switching sides. Entry/lowering/opposite-side drawings are not claimed. Earlier pairwise drift against a low pose does not invalidate this sole hold."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Catalogue primary ['Obliques'], secondary ['Core', 'Shoulders']. Palette bases primary#7B72E9 and secondary#9590E0; inherited shading/fade and contours retained in documented independent layers. No unrelated new highlight field or spatial gradient is authored."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Parent selected all six actual ExerciseFormContent instruction buttons plus wrap in390x844 light and dark; each decoded public path/label matches its cue. The prescribed muscle key and exact catalogue preparation are visibly present. Reference3 normal card is byte-identical to the reviewed draft preview."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Actual native and registered390x844 traces contain all six paths with automatic6-to-1 wraps. Parent exercised pause/manual selection, previous1-to-6 and next6-to-1. Registered slower intervals approximately2.4s versus normal1.2s. PhysicalPoses1, source order[1, 1, 1, 1, 1, 1]; no additional trajectory drawings are claimed."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Parent reviewed actual unchanged ExerciseFormContent at verified390x844 light, full athlete/supports and normal registered card, prescribed muscle legend, preparation, six instruction selections and playback. No horizontal overflow or material clipping/contact defect observed. Draft cards at480/160px reviewed in both themes; actual registered export is byte-identical. Registered browser warnings/errors empty."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Parent reviewed actual unchanged ExerciseFormContent at verified390x844 dark, full athlete/supports and normal registered card, prescribed muscle legend, preparation, six instruction selections and playback. No horizontal overflow or material clipping/contact defect observed. Draft cards at480/160px reviewed in both themes; actual registered export is byte-identical. Registered browser warnings/errors empty."
+    }
+  },
+  "integrationValidation": "Actual native and registered390x844 light/dark guides, six selections, normal/slower loops, wrap controls and standard card reviewed. All strict checks remain null. Project verification, current-head CI, actual merge and preservation audit remain separate gates.",
+  "publicationGate": "No completion credit until final review, normal checks, actual current-head CI, merge and preservation audit."
+}
