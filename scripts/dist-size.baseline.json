@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 6253395,
+  "total": 6255626,
   "chunks": {
     "AccordionSection": 1612,
     "accountSecurity": 2561,
@@ -98,7 +98,7 @@
     "FoodAnalyzer": 39639,
     "foodPhotoStore": 3888,
     "footprints": 450,
-    "formArtCutouts": 37381,
+    "formArtCutouts": 39612,
     "formArtwork": 16469,
     "formatNutrition": 135,
     "formatters": 1514,
