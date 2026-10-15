@@ -1,10 +1,30 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import TreadmillMode from "../TreadmillMode";
+import { formatClock } from "@/utils/formatters";
 
 const h = vi.hoisted(() => ({ unit: "km" as "km" | "mi" }));
 vi.mock("@/hooks/useDistanceUnit", () => ({ useDistanceUnit: () => h.unit }));
 afterEach(cleanup);
+
+it("distinguishes elapsed time from a matching session countdown", () => {
+  const props = {
+    formatTime: formatClock,
+    onSave: vi.fn(),
+    onDiscard: vi.fn(),
+    sessionGuidance: <p>30:00</p>,
+  };
+  const view = render(<TreadmillMode {...props} elapsed={0} />);
+  expect(screen.getByText("30:00")).toBeVisible();
+  const elapsed = screen.getByRole("timer", { name: "Elapsed time" });
+  expect(elapsed).toHaveTextContent(/^0:00$/);
+  expect(elapsed).not.toHaveTextContent(/^30:\d\d$/);
+  view.rerender(<TreadmillMode {...props} elapsed={1800} />);
+  expect(screen.getAllByText("30:00")).toHaveLength(2);
+  expect(screen.getByRole("timer", { name: "Elapsed time" })).toHaveTextContent(
+    /^30:00$/
+  );
+});
 
 describe("typed run distance", () => {
   it.each([

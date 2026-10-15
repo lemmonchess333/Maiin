@@ -93,7 +93,11 @@ export default function TreadmillMode({
         <p className="text-xs text-white/50 uppercase tracking-widest">
           {title}
         </p>
-        <p className="text-6xl font-mono tabular-nums font-bold mt-2">
+        <p
+          role="timer"
+          aria-label="Elapsed time"
+          className="text-6xl font-mono tabular-nums font-bold mt-2"
+        >
           {formatTime(elapsed)}
         </p>
         {onPause && onResume && (

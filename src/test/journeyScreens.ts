@@ -103,6 +103,7 @@ export const RUN = {
   /** A switch. */
   treadmill: "On a treadmill",
   startTreadmill: "Start on the treadmill",
+  elapsedTime: "Elapsed time",
   distance: "Distance from treadmill",
   saveTreadmill: "Save Treadmill Run",
   /** The summary's heading, by the planned session's name ("Easy 30"). */
