@@ -60,6 +60,61 @@ afterEach(() => {
 });
 
 describe("writeStoredRun + readStoredRun — round-trip", () => {
+  it.each(["3.10", "3.", "-", "1e", "100001", ""])(
+    "round-trips optional editable distance text %j without changing v2",
+    (raw) => {
+      const snapshot = makeSnapshot({
+        manualDistanceDraft: { version: 1, raw, unit: "mi" },
+      });
+      expect(writeStoredRun(UID, snapshot)).toBe(true);
+      expect(readStoredRun(UID, snapshot.lastWriteAt)).toEqual(snapshot);
+      expect(snapshot.v).toBe(2);
+    }
+  );
+
+  it.each([
+    null,
+    { version: 2, raw: "3.1", unit: "mi" },
+    { version: 1, raw: 3.1, unit: "mi" },
+    { version: 1, raw: "3.1", unit: "miles" },
+  ])(
+    "ignores malformed optional distance data without dropping base or coaching: %j",
+    (manualDistanceDraft) => {
+      const snapshot = makeSnapshot({
+        playerCheckpoint: {
+          version: 1,
+          signature: "retained",
+          index: 0,
+          segmentStarts: [{ elapsed: 0, distance: 0 }],
+        },
+      });
+      expect(writeStoredRun(UID, snapshot)).toBe(true);
+      const meta = JSON.parse(localStorage.getItem(RUN_RESUME_KEY)!);
+      localStorage.setItem(
+        RUN_RESUME_KEY,
+        JSON.stringify({ ...meta, manualDistanceDraft })
+      );
+      expect(readStoredRun(UID, snapshot.lastWriteAt)).toEqual(snapshot);
+      expect(localStorage.getItem(RUN_RESUME_KEY)).not.toBeNull();
+    }
+  );
+
+  it("keeps drafts account/run scoped and clears them with the active snapshot", () => {
+    const first = makeSnapshot({
+      manualDistanceDraft: { version: 1, raw: "3.10", unit: "mi" },
+    });
+    expect(writeStoredRun(UID, first)).toBe(true);
+    expect(readStoredRun("user-B", first.lastWriteAt)).toBeNull();
+    const nextRun = makeSnapshot({ startedAt: first.startedAt + 1 });
+    expect(writeStoredRun(UID, nextRun)).toBe(true);
+    expect(
+      readStoredRun(UID, nextRun.lastWriteAt)?.manualDistanceDraft
+    ).toBeUndefined();
+    expect(writeStoredRun(UID, first)).toBe(true);
+    clearStoredRun(UID);
+    expect(readStoredRun(UID, first.lastWriteAt)).toBeNull();
+  });
+
   it("round-trips optional coaching anchors without changing the base schema", () => {
     const snapshot = makeSnapshot({
       playerCheckpoint: {

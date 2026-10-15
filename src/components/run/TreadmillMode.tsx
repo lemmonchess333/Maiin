@@ -4,11 +4,11 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Button } from "@/components/ui/Button";
 import { RunControlButton } from "@/components/ui/RunControlButton";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 import {
-  distanceIn,
-  distanceToMetres,
-  distanceUnitLabel,
-} from "@/lib/distanceUnits";
+  manualDistanceMetres,
+  type ManualDistanceDraft,
+} from "@/lib/manualDistanceDraft";
 import { THEME } from "@/lib/theme";
 
 interface TreadmillModeProps {
@@ -16,6 +16,8 @@ interface TreadmillModeProps {
   formatTime: (s: number) => string;
   onSave: (distance: number) => void;
   onDiscard: () => void;
+  distanceDraft: ManualDistanceDraft | null;
+  onDistanceDraftChange: (draft: ManualDistanceDraft) => void;
   sessionGuidance?: ReactNode;
   isPaused?: boolean;
   onPause?: () => void;
@@ -34,27 +36,26 @@ export default function TreadmillMode({
   formatTime,
   onSave,
   onDiscard,
+  distanceDraft,
+  onDistanceDraftChange,
   sessionGuidance,
   isPaused = false,
   onPause,
   onResume,
   mode = "treadmill",
 }: TreadmillModeProps) {
-  const [distance, setDistance] = useState("");
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
-  const unit = useDistanceUnit();
+  const preferredUnit = useDistanceUnit();
+  const distance = distanceDraft?.raw ?? "";
+  // Never reinterpret nonempty restored text under a changed preference.
+  const unit = distance ? distanceDraft!.unit : preferredUnit;
   const unitLabel = distanceUnitLabel(unit);
-  const distanceNum = Number(distance);
-  const distanceMetres = distanceToMetres(distanceNum, unit);
+  const distanceMetres = manualDistanceMetres(distance, unit);
   // Same physical bounds as the summary's EditDistance. Offer hundredths
   // inside those bounds, independent of the runner's display preference.
   const minimum = Math.ceil(distanceIn(50, unit) * 100) / 100;
   const maximum = Math.floor(distanceIn(100000, unit) * 100) / 100;
-  const distanceValid =
-    distance.trim() !== "" &&
-    Number.isFinite(distanceNum) &&
-    distanceMetres >= 50 &&
-    distanceMetres <= 100000;
+  const distanceValid = distanceMetres !== null;
 
   /* Mode-aware copy. Treadmill users read distance off the
      machine display; manual users (GPS-fallback "Track without
@@ -79,8 +80,7 @@ export default function TreadmillMode({
      work). A typed distance even with elapsed under 30s also counts.
      Below both thresholds — fresh entry, accidental tap — discard
      immediately so the user isn't gated by a redundant confirm. */
-  const hasDataAtStake =
-    elapsed >= 30 || (distance !== "" && Number(distance) > 0);
+  const hasDataAtStake = elapsed >= 30 || distance.trim() !== "";
   const saveDisabled = !distanceValid;
   const handleDiscardClick = () => {
     if (hasDataAtStake) setShowDiscardConfirm(true);
@@ -129,12 +129,12 @@ export default function TreadmillMode({
         <div className="flex items-center gap-2">
           <input
             id="treadmill-distance"
-            type="number"
-            step={0.01}
-            min={minimum}
-            max={maximum}
+            type="text"
+            inputMode="decimal"
             value={distance}
-            onChange={(e) => setDistance(e.target.value)}
+            onChange={(e) =>
+              onDistanceDraftChange({ version: 1, raw: e.target.value, unit })
+            }
             placeholder="0.00"
             aria-describedby="treadmill-distance-help treadmill-distance-unit"
             aria-invalid={distance !== "" && !distanceValid ? true : undefined}
@@ -174,7 +174,7 @@ export default function TreadmillMode({
           size="lg"
           fullWidth
           onClick={() => {
-            if (distanceValid) onSave(distanceMetres);
+            if (distanceMetres !== null) onSave(distanceMetres);
           }}
           disabled={saveDisabled}
           className="disabled:opacity-100 disabled:bg-white/15 disabled:text-white/50"

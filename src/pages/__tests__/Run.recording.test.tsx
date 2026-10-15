@@ -563,7 +563,7 @@ describe("recovering coaching and checkpoint durability", () => {
       );
       const manual = mode.activityType === "manual";
       expect(
-        screen.getByRole("spinbutton", {
+        screen.getByRole("textbox", {
           name: manual ? "Distance covered" : "Distance from treadmill",
         })
       ).toBeInTheDocument();
@@ -691,7 +691,7 @@ describe("GPS acquisition recovery", () => {
       fireEvent.click(manual);
       expect(h.timerStart).toHaveBeenCalledOnce();
       expect(
-        screen.getByRole("spinbutton", { name: "Distance covered" })
+        screen.getByRole("textbox", { name: "Distance covered" })
       ).toBeInTheDocument();
     }
   );
@@ -727,7 +727,7 @@ describe("GPS acquisition recovery", () => {
     expect(h.timerStart).toHaveBeenCalledOnce();
     expect(screen.getByRole("button", { name: "Finish" })).toBeInTheDocument();
     expect(
-      screen.queryByRole("spinbutton", { name: "Distance covered" })
+      screen.queryByRole("textbox", { name: "Distance covered" })
     ).toBeNull();
   });
 });
@@ -970,6 +970,223 @@ describe("the lock screen", () => {
   });
 });
 
+describe("interrupted manual distance entry", () => {
+  it.each([
+    { mode: "treadmill", phase: "active" },
+    { mode: "manual", phase: "paused" },
+  ] as const)(
+    "retains exact typed miles and their unit after a real remount: %j",
+    async ({ mode, phase }) => {
+      h.unit = "mi";
+      const config =
+        mode === "manual"
+          ? { activityType: "manual" as const }
+          : { activityType: "long" as const, place: "treadmill" as const };
+      const seed = saveInterruptedRun(phase, config);
+      expect(writeStoredRun("recording-test", { ...seed, points: [] })).toBe(
+        true
+      );
+      const view = render(tree());
+      await act(async () =>
+        fireEvent.click(screen.getByRole("button", { name: "Resume run" }))
+      );
+      const label =
+        mode === "manual" ? "Distance covered" : "Distance from treadmill";
+      const input = screen.getByLabelText(label) as HTMLInputElement;
+      act(() => {
+        fireEvent.change(input, { target: { value: "3.10" } });
+        // Before the outer act commits the render/effects, the keystroke is durable.
+        expect(readStoredRun("recording-test")?.manualDistanceDraft).toEqual({
+          version: 1,
+          raw: "3.10",
+          unit: "mi",
+        });
+      });
+      expect(input.value).toBe("3.10");
+      expect(readStoredRun("recording-test")?.manualDistanceDraft).toEqual({
+        version: 1,
+        raw: "3.10",
+        unit: "mi",
+      });
+      expect(
+        document.getElementById("treadmill-distance-unit")
+      ).toHaveTextContent("mi");
+      view.unmount();
+      h.unit = "km";
+      render(tree());
+      await act(async () =>
+        fireEvent.click(screen.getByRole("button", { name: "Resume run" }))
+      );
+      expect((screen.getByLabelText(label) as HTMLInputElement).value).toBe(
+        "3.10"
+      );
+      expect(
+        document.getElementById("treadmill-distance-unit")
+      ).toHaveTextContent("mi");
+      expect(h.timer.isRunning).toBe(phase === "active");
+      expect(h.gpsCalls).not.toContain("start");
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: mode === "manual" ? "Save Manual Run" : "Save Treadmill Run",
+        })
+      );
+      const payload = JSON.parse(
+        screen.getByTestId("finish-payload").textContent!
+      );
+      expect(payload.distance).toBeCloseTo(4988.9664, 6);
+      expect(payload.points).toEqual([]);
+      expect(payload.workPortion).toBeNull();
+      // The first Save only navigates; recovery survives until durable acceptance.
+      expect(readStoredRun("recording-test")?.manualDistanceDraft?.raw).toBe(
+        "3.10"
+      );
+    }
+  );
+
+  it.each(["3.", "-", "1e", "0.01", "100001", "0x10"])(
+    "retains editable unsavable text %j after a paused remount",
+    async (raw) => {
+      const seed = saveInterruptedRun("paused", { activityType: "manual" });
+      expect(writeStoredRun("recording-test", { ...seed, points: [] })).toBe(
+        true
+      );
+      const view = render(tree());
+      await act(async () =>
+        fireEvent.click(screen.getByRole("button", { name: "Resume run" }))
+      );
+      const input = screen.getByRole("textbox", { name: "Distance covered" });
+      fireEvent.change(input, { target: { value: raw } });
+      expect(readStoredRun("recording-test")?.manualDistanceDraft?.raw).toBe(
+        raw
+      );
+      view.unmount();
+      render(tree());
+      await act(async () =>
+        fireEvent.click(screen.getByRole("button", { name: "Resume run" }))
+      );
+      expect(
+        screen.getByRole("textbox", { name: "Distance covered" })
+      ).toHaveValue(raw);
+      expect(
+        screen.getByRole("button", { name: "Save Manual Run" })
+      ).toBeDisabled();
+      expect(h.timer.isRunning).toBe(false);
+      expect(h.gpsCalls).not.toContain("start");
+    }
+  );
+
+  it("keeps the previous committed draft on refusal and immediately persists correction and clear", async () => {
+    const seed = saveInterruptedRun("paused", { activityType: "manual" });
+    expect(writeStoredRun("recording-test", { ...seed, points: [] })).toBe(
+      true
+    );
+    const view = render(tree());
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "Resume run" }))
+    );
+    const input = screen.getByRole("textbox", { name: "Distance covered" });
+    fireEvent.change(input, { target: { value: "1.25" } });
+    const originalSet = Storage.prototype.setItem;
+    const refused = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(function (this: Storage, key, value) {
+        if (key.startsWith(runResumeKey("recording-test")))
+          throw new DOMException("quota", "QuotaExceededError");
+        return originalSet.call(this, key, value);
+      });
+    try {
+      fireEvent.change(input, { target: { value: "2.50" } });
+      expect(input).toHaveValue("2.50");
+      expect(readStoredRun("recording-test")?.manualDistanceDraft?.raw).toBe(
+        "1.25"
+      );
+      expect(
+        screen.getByText(/Latest progress couldn't be saved for recovery/)
+      ).toBeInTheDocument();
+      expect(refused.mock.calls.length).toBeLessThan(10);
+      refused.mockRestore();
+      fireEvent.change(input, { target: { value: "2.51" } });
+      expect(readStoredRun("recording-test")?.manualDistanceDraft?.raw).toBe(
+        "2.51"
+      );
+      expect(
+        screen.queryByText(/Latest progress couldn't be saved for recovery/)
+      ).toBeNull();
+      h.unit = "km";
+      view.rerender(tree());
+      fireEvent.change(input, { target: { value: "" } });
+      expect(
+        readStoredRun("recording-test")?.manualDistanceDraft
+      ).toBeUndefined();
+      expect(
+        document.getElementById("treadmill-distance-unit")
+      ).toHaveTextContent("km");
+      view.unmount();
+      render(tree());
+      await act(async () =>
+        fireEvent.click(screen.getByRole("button", { name: "Resume run" }))
+      );
+      expect(
+        screen.getByRole("textbox", { name: "Distance covered" })
+      ).toHaveValue("");
+    } finally {
+      refused.mockRestore();
+    }
+  });
+
+  it("clears the recovery draft on confirmed discard", async () => {
+    const seed = saveInterruptedRun("active", { activityType: "manual" });
+    expect(writeStoredRun("recording-test", { ...seed, points: [] })).toBe(
+      true
+    );
+    render(tree());
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "Resume run" }))
+    );
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Distance covered" }),
+      { target: { value: "3.10" } }
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Discard" }));
+    const confirmation = screen.getByRole("alertdialog", {
+      name: "Discard this run?",
+    });
+    fireEvent.click(
+      within(confirmation).getByRole("button", { name: "Discard" })
+    );
+    expect(readStoredRun("recording-test")).toBeNull();
+    act(() => vi.advanceTimersByTime(5000));
+    expect(readStoredRun("recording-test")).toBeNull();
+  });
+
+  it("starts a new manual run with an empty draft after replacing the previous run", async () => {
+    const seed = saveInterruptedRun("active", { activityType: "manual" });
+    expect(
+      writeStoredRun("recording-test", {
+        ...seed,
+        points: [],
+        manualDistanceDraft: { version: 1, raw: "3.10", unit: "mi" },
+      })
+    ).toBe(true);
+    const view = render(tree());
+    fireEvent.click(screen.getByRole("button", { name: "Start new run" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Discard and start new" })
+    );
+    expect(readStoredRun("recording-test")).toBeNull();
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "Easy run" }))
+    );
+    h.gps.error = "Permission denied";
+    view.rerender(tree());
+    // The page's GPS failure action starts a fresh manual entry.
+    fireEvent.click(screen.getByRole("button", { name: "Track without GPS" }));
+    expect(
+      screen.getByRole("textbox", { name: "Distance covered" })
+    ).toHaveValue("");
+  });
+});
+
 /* Pgm8: the treadmill is where a run is done, so a treadmill run keeps its
    session's type ("long") with `place: "treadmill"`. Everything that asks
    "is this run on the GPS" reads the place too: such a run never starts
@@ -1027,7 +1244,7 @@ describe("a run on the treadmill", () => {
       await act(async () => {
         fireEvent.click(screen.getByRole("button", { name: "Resume run" }));
       });
-      const distance = screen.getByRole("spinbutton", {
+      const distance = screen.getByRole("textbox", {
         name: "Distance from treadmill",
       });
       expect(h.gpsCalls).not.toContain("start");
@@ -1112,7 +1329,7 @@ describe("manual structured coaching through the real player", () => {
     );
     expect(screen.getByText("1:30")).toBeInTheDocument();
     fireEvent.change(
-      screen.getByRole("spinbutton", { name: "Distance from treadmill" }),
+      screen.getByRole("textbox", { name: "Distance from treadmill" }),
       {
         target: { value: "2.75" },
       }
@@ -1139,7 +1356,7 @@ describe("manual structured coaching through the real player", () => {
       screen.getByRole("button", { name: "Mark distance step complete" })
     );
     fireEvent.change(
-      screen.getByRole("spinbutton", { name: "Distance covered" }),
+      screen.getByRole("textbox", { name: "Distance covered" }),
       {
         target: { value: "3.1" },
       }

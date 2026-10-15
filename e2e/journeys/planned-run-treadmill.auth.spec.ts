@@ -122,7 +122,7 @@ test("a planned run, done on a treadmill, is the planned run", async ({
       .getByRole("button", { name: RUN.startTreadmill, exact: true })
       .click();
     // The run's clock starts with the treadmill screen; the run's time on.
-    const distance = page.getByRole("spinbutton", { name: RUN.distance });
+    const distance = page.getByRole("textbox", { name: RUN.distance });
     await expect(distance).toBeVisible();
     await passTime(page, minutes);
     // Wait for elapsed time's next tick. A session countdown can still
