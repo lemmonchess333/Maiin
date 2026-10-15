@@ -1,0 +1,91 @@
+{
+  "exerciseId": "leg-extension",
+  "name": "Leg Extension",
+  "version": "anatomy-v3-2026-10-15-material-endpoint-leg-extension-v1",
+  "physicalPoses": 2,
+  "sourcePoseOrder": [
+    1,
+    1,
+    4,
+    4,
+    1,
+    1
+  ],
+  "positions": [
+    0,
+    0,
+    1,
+    1,
+    0,
+    0
+  ],
+  "commonCrop": [
+    114,
+    14,
+    1433,
+    1070
+  ],
+  "dimensions": [
+    1319,
+    1056
+  ],
+  "primary": [
+    "Quads"
+  ],
+  "secondary": [
+    "Hip Flexors"
+  ],
+  "setup": [
+    "Sit in the machine, adjust the pad so it sits on your shins, just above the ankle."
+  ],
+  "beats": [
+    {
+      "t": 0,
+      "label": "Set",
+      "cue": "Keep your back supported and hips seated."
+    },
+    {
+      "t": 0,
+      "label": "Brace",
+      "cue": "Brace your torso and grip the handles."
+    },
+    {
+      "t": 1,
+      "label": "Squeeze",
+      "cue": "Straighten your legs and squeeze your quads."
+    },
+    {
+      "t": 1,
+      "label": "Hold",
+      "cue": "Keep your hips down and hands gripping."
+    },
+    {
+      "t": 0,
+      "label": "Return",
+      "cue": "Bend your knees slowly; control the resistance."
+    },
+    {
+      "t": 0,
+      "label": "Reset",
+      "cue": "Return to bent knees without losing control."
+    }
+  ],
+  "frameHashes": {
+    "draft/frames/1.webp": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826",
+    "draft/frames/2.webp": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826",
+    "draft/frames/3.webp": "67009ad87ae8a8d5d12215fda6cc375e94d5898db1ee2afef4f76dbf1fe30d59",
+    "draft/frames/4.webp": "67009ad87ae8a8d5d12215fda6cc375e94d5898db1ee2afef4f76dbf1fe30d59",
+    "draft/frames/5.webp": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826",
+    "draft/frames/6.webp": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826"
+  },
+  "scope": "Unregistered two-endpoint equipment-only candidate. Repeated beat paths hold actual bent/extended states; no intermediate image, smooth trajectory or six unique pose claim.",
+  "findings": [
+    "Independent generic covered selectorized apparatus, not an exact branded replica.",
+    "A constructed common apparatus camera is used, not an original human-camera/depth recovery.",
+    "Covered resistance routing and unseen cams/belts/weights are not verified.",
+    "Original source body/seat/head/hand variations remain; human pixels are not fitted.",
+    "The held middle source2 and earlier long-pad diagnostic are not delivered."
+  ],
+  "releaseApproved": false,
+  "completionCredit": false
+}

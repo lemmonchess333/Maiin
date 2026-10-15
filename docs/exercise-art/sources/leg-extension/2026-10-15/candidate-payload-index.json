@@ -1,0 +1,441 @@
+{
+  "sourcePackage": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\endpoint-material-finish-20261015",
+  "sourceReviewFileCount": 99,
+  "files": {
+    "bounded-revision.json": {
+      "readablePath": "bounded-revision.json.txt",
+      "sha256": "40a7a3bfbd1b1652499ef80d28606c89894c161fb6adcb78a558d60297874bde"
+    },
+    "card-preview-proof.json": {
+      "readablePath": "card-preview-proof.json.txt",
+      "sha256": "c5761ee64696fd84cfd55c1096c9d75e1ead7420db1d1a01b022da4894179c82"
+    },
+    "catalogue.json": {
+      "readablePath": "catalogue.json.txt",
+      "sha256": "e1654fd8e113c0fbe0e764beb0e1496ba3df0da37f5e397205d2653e900cf202"
+    },
+    "construct-working-unit.py": {
+      "readablePath": "construct-working-unit.py",
+      "sha256": "e0ecf4587ae3302f4ed80820b8e90a34238d3c140cfaca5d88c0051d30a34749"
+    },
+    "construction-and-preservation-proof.json": {
+      "readablePath": "construction-and-preservation-proof.json.txt",
+      "sha256": "59d3de47a3730d590186d7b608862df512b9f1d48b39e02dfc3a39626fb6b8f2"
+    },
+    "draft/1-fixed-covered-housings-depth.png": {
+      "readablePath": "draft/1-fixed-covered-housings-depth.png",
+      "sha256": "6857438f534eed7e2d0d720f2514330e926f1421aa7844a207b8dd6787483911"
+    },
+    "draft/1-framed.ora": {
+      "readablePath": "draft/1-framed.ora",
+      "sha256": "692fb033cd1cb0925eace993cbc48807d873b7ba7ad9aae23406316cd858d696"
+    },
+    "draft/1-framed.png": {
+      "readablePath": "draft/1-framed.png",
+      "sha256": "18f430df219ac55d5f9d57c002a3eac6fbbf9c301594814997a5d571bbfbaef6"
+    },
+    "draft/1-full.ora": {
+      "readablePath": "draft/1-full.ora",
+      "sha256": "52750682e36fcfb985dc905a9737fbb54856fad93bb3b95812b37db21dc7d324"
+    },
+    "draft/1-native.png": {
+      "readablePath": "draft/1-native.png",
+      "sha256": "e6a96352d108e0af272bbcccd8152a3e81445437df91f08e4ab46298296789e4"
+    },
+    "draft/1-source-tonal-colour-layer.png": {
+      "readablePath": "draft/1-source-tonal-colour-layer.png",
+      "sha256": "eb6a4faa8556eb792be06e2944c0be31b2bcfd5a0f088295e0cc7f20977197d8"
+    },
+    "draft/4-fixed-covered-housings-depth.png": {
+      "readablePath": "draft/4-fixed-covered-housings-depth.png",
+      "sha256": "1fafbb8c31b390ef8e92a19ca87f245f95da5fb1b1225f64b1c85313e4c6b47e"
+    },
+    "draft/4-framed.ora": {
+      "readablePath": "draft/4-framed.ora",
+      "sha256": "21c6f080d3847588643567570af431d7fbd6e089e917f8dae95d004929050661"
+    },
+    "draft/4-framed.png": {
+      "readablePath": "draft/4-framed.png",
+      "sha256": "6acccd299ad36e353d110f0e2c8fee19571857962ddfd7e6107c89c15c01adc8"
+    },
+    "draft/4-full.ora": {
+      "readablePath": "draft/4-full.ora",
+      "sha256": "70348dd592b7d165b6bc2da1c001b1ef6b6a22c369391346cf3da9a35b529646"
+    },
+    "draft/4-native.png": {
+      "readablePath": "draft/4-native.png",
+      "sha256": "bf7be9ae7baa5351d5b7e8003b8e32e7a421695d0e4e6f54e5094b6097d04c5d"
+    },
+    "draft/4-source-tonal-colour-layer.png": {
+      "readablePath": "draft/4-source-tonal-colour-layer.png",
+      "sha256": "319bfe9ee0c562971cdfb8e7b7503914801f4b2a79a1c8710aa13c4f77b23362"
+    },
+    "draft/card.webp": {
+      "readablePath": "draft/card.webp",
+      "sha256": "66473827c8e846bf9ee25fbca2f38b237212c3516e1bec10ed9d1f1a38f512d2"
+    },
+    "draft/fixed-covered-housings-and-chassis-unoccluded.png": {
+      "readablePath": "draft/fixed-covered-housings-and-chassis-unoccluded.png",
+      "sha256": "6ca59c579cdf3b9c2247ed8f3606ac38f346b6a92a39edf8c1e83dcddae29b72"
+    },
+    "draft/frames/1.webp": {
+      "readablePath": "draft/frames/1.webp",
+      "sha256": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826"
+    },
+    "draft/frames/2.webp": {
+      "readablePath": "draft/frames/2.webp",
+      "sha256": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826"
+    },
+    "draft/frames/3.webp": {
+      "readablePath": "draft/frames/3.webp",
+      "sha256": "67009ad87ae8a8d5d12215fda6cc375e94d5898db1ee2afef4f76dbf1fe30d59"
+    },
+    "draft/frames/4.webp": {
+      "readablePath": "draft/frames/4.webp",
+      "sha256": "67009ad87ae8a8d5d12215fda6cc375e94d5898db1ee2afef4f76dbf1fe30d59"
+    },
+    "draft/frames/5.webp": {
+      "readablePath": "draft/frames/5.webp",
+      "sha256": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826"
+    },
+    "draft/frames/6.webp": {
+      "readablePath": "draft/frames/6.webp",
+      "sha256": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826"
+    },
+    "freeze-review-inputs.py": {
+      "readablePath": "freeze-review-inputs.py",
+      "sha256": "cb506cc5f3e88753d22e82520394bffebde4fc2a3c7e7b24f572ce2a0177416b"
+    },
+    "input-provenance.json": {
+      "readablePath": "input-provenance.json.txt",
+      "sha256": "22f899aa329f4e50e47a674c5a106f3a602bd4d73f7cb50400fb3c2f3185e749"
+    },
+    "inputs/1-exact-palette-layer.png": {
+      "readablePath": "inputs/1-exact-palette-layer.png",
+      "sha256": "d56aee5620e74a04f51d17669031b7813aa9025cb52169d1f1ad89ff3a401482"
+    },
+    "inputs/1-old-equipment-ownership-mask.png": {
+      "readablePath": "inputs/1-old-equipment-ownership-mask.png",
+      "sha256": "2bb40fcdb30343969f63d45c4d0352e17dc7c09a6002a64324baf1e62765b32a"
+    },
+    "inputs/1-original.png": {
+      "readablePath": "inputs/1-original.png",
+      "sha256": "cf96479772e0af178578ef771a7930df0d535b1c778d1b30ac2f9245818b8c8e"
+    },
+    "inputs/1-retained-coloured-contour-layer.png": {
+      "readablePath": "inputs/1-retained-coloured-contour-layer.png",
+      "sha256": "3f709fe24e3d33af0f7379e629d14e6b9feaa4dce42099de11615242d6308060"
+    },
+    "inputs/1-source-kept-base.png": {
+      "readablePath": "inputs/1-source-kept-base.png",
+      "sha256": "2a9433f61b2a8ab4e272c5252d3d241e4162a38fccc843c51b64de0c753d2b2e"
+    },
+    "inputs/4-exact-palette-layer.png": {
+      "readablePath": "inputs/4-exact-palette-layer.png",
+      "sha256": "fc9486952e7a5ea5193d6a5657cebe68382b29eab1b64e554476b499b9ac7495"
+    },
+    "inputs/4-old-equipment-ownership-mask.png": {
+      "readablePath": "inputs/4-old-equipment-ownership-mask.png",
+      "sha256": "b7cf1e5850fc2696108c07228bc0e7995bbe7325822677ca335a814adbada532"
+    },
+    "inputs/4-original.png": {
+      "readablePath": "inputs/4-original.png",
+      "sha256": "0ffa89a3a5f235e7034fe5933259f749e567eb6fc49027b5a42328c5677d1ebe"
+    },
+    "inputs/4-retained-coloured-contour-layer.png": {
+      "readablePath": "inputs/4-retained-coloured-contour-layer.png",
+      "sha256": "8da6364d1e75ff892fd0c93bb4aba8c923e5674b1748811e6dc3c29c2ca3d032"
+    },
+    "inputs/4-source-kept-base.png": {
+      "readablePath": "inputs/4-source-kept-base.png",
+      "sha256": "c16dea5e03c08f94182801e3911f8f5da13d419e95f5fe03e4184b253679a513"
+    },
+    "inputs/palette-candidate-proof.json": {
+      "readablePath": "inputs/palette-candidate-proof.json.txt",
+      "sha256": "690321c7b98cc0c9438f524239c5a7c06371ab460e3255be27f1bddbdeb767ae"
+    },
+    "inputs/prior-1-equipment-back-alpha.png": {
+      "readablePath": "inputs/prior-1-equipment-back-alpha.png",
+      "sha256": "646ccf38c0c7bab67115bc6eec5f6c4cc8c3232d292233cc1702a9517367b6a8"
+    },
+    "inputs/prior-1-equipment-front-unoccluded-alpha.png": {
+      "readablePath": "inputs/prior-1-equipment-front-unoccluded-alpha.png",
+      "sha256": "64ad6263e7f63c3cda81bc816efab2a30262eb15787e31a3af785df66ae61499"
+    },
+    "inputs/prior-1-equipment-front-with-existing-depth-alpha.png": {
+      "readablePath": "inputs/prior-1-equipment-front-with-existing-depth-alpha.png",
+      "sha256": "64ad6263e7f63c3cda81bc816efab2a30262eb15787e31a3af785df66ae61499"
+    },
+    "inputs/prior-4-equipment-back-alpha.png": {
+      "readablePath": "inputs/prior-4-equipment-back-alpha.png",
+      "sha256": "9e59b0c8269671989a44abc3058c71eb754212562939a88e7b4dab82d9a8409b"
+    },
+    "inputs/prior-4-equipment-front-unoccluded-alpha.png": {
+      "readablePath": "inputs/prior-4-equipment-front-unoccluded-alpha.png",
+      "sha256": "1947d66192ef401790a623b51c48b0070d4c42103bc33a6e8a1e6a7eea7ff750"
+    },
+    "inputs/prior-4-equipment-front-with-existing-depth-alpha.png": {
+      "readablePath": "inputs/prior-4-equipment-front-with-existing-depth-alpha.png",
+      "sha256": "d1de92e14e352f8c5450f90fce13a10fed554fe339e98cd0a8a55f473ee60133"
+    },
+    "inputs/prior-complete-construction-proof.json": {
+      "readablePath": "inputs/prior-complete-construction-proof.json.txt",
+      "sha256": "1d3d788c8cc855de2b72cae303eb6471a57e1de83e902572810c7c224815d86b"
+    },
+    "inputs/prior-construction-proof.json": {
+      "readablePath": "inputs/prior-construction-proof.json.txt",
+      "sha256": "fc38eb2d33962a5a37724c9964738b3bdef73b9c5ee537287b8e6e03ea4e0b86"
+    },
+    "inputs/prior-native-mechanics-review.json": {
+      "readablePath": "inputs/prior-native-mechanics-review.json.txt",
+      "sha256": "a57ac6bfcb1a747e8de0a36dbaaf77c3de72cc602ae8e48060a5b28b2eae44c1"
+    },
+    "inputs/prior-sequence-plan.json": {
+      "readablePath": "inputs/prior-sequence-plan.json.txt",
+      "sha256": "cfab1fb89f6b9beb75c57824699e42a05f0237f129098fc9a94b12ae2e9a9d21"
+    },
+    "inputs/prior-static-alpha.png": {
+      "readablePath": "inputs/prior-static-alpha.png",
+      "sha256": "532915bda7fd9571c483ba5857920ea4474903bbfdd673134f5277351aeea6f9"
+    },
+    "inputs/prior-working-unit-proof.json": {
+      "readablePath": "inputs/prior-working-unit-proof.json.txt",
+      "sha256": "fc38eb2d33962a5a37724c9964738b3bdef73b9c5ee537287b8e6e03ea4e0b86"
+    },
+    "inputs/source-kept-pilot-provenance.json": {
+      "readablePath": "inputs/source-kept-pilot-provenance.json.txt",
+      "sha256": "0c07153716b78809159bd50eb93bdf83aa109e7568142e206af61486c63f1aca"
+    },
+    "inputs/source-metal-highpass.png": {
+      "readablePath": "inputs/source-metal-highpass.png",
+      "sha256": "9977a452b45a3d7b5b0dffd032803fcc1d162d07df5ff5d242ed553f4044ba29"
+    },
+    "integrated-review.html": {
+      "readablePath": "integrated-review.html.txt",
+      "sha256": "8e031a631254d0a455710f0f0929c4b4640524f47669b9b6793b8777122a444e"
+    },
+    "integrated-review.tsx": {
+      "readablePath": "integrated-review.tsx.txt",
+      "sha256": "30c05d13ea10e36749d78fd88e302459b49e70d14f993f1d5c4b94287d9f5a6b"
+    },
+    "material-attempt-review-inputs.json": {
+      "readablePath": "material-attempt-review-inputs.json.txt",
+      "sha256": "761ae2f6f4452ddd9e840afc0bbb2d9511918a41d7814a617f1e6f15814905f4"
+    },
+    "material_finish.py": {
+      "readablePath": "material_finish.py",
+      "sha256": "28d7515113546a7b89878a26327a111deed34753934a28fa8c0243917391df3e"
+    },
+    "mobile-review.html": {
+      "readablePath": "mobile-review.html.txt",
+      "sha256": "d834f3ca58cfa5f50a69c4170dd26e3ab011da28177a763bbf2b3a2c74c924a9"
+    },
+    "mobile-review.tsx": {
+      "readablePath": "mobile-review.tsx.txt",
+      "sha256": "652866322e218fd569cef531646760bd9c2ced7786c3b11ec29f456e8490601c"
+    },
+    "native-review.html": {
+      "readablePath": "native-review.html.txt",
+      "sha256": "8229b733c5d0f305aaf49371e16d6024d014c13ddd0c59a98b56139e0ae46255"
+    },
+    "native-review.tsx": {
+      "readablePath": "native-review.tsx.txt",
+      "sha256": "800f1eca7c09e29092644a0f126b7f9f9dc023663d05139e46a824af2d9e521a"
+    },
+    "package-material-only.patch": {
+      "readablePath": "package-material-only.patch",
+      "sha256": "7d569aa25edfcd784849da14114d6a93f812f036873dd9976bb51849039223a7"
+    },
+    "parent-draft-review.json": {
+      "readablePath": "parent-draft-review.json.txt",
+      "sha256": "32c47514ec09d9cdbcef4380176fbc1258a2d9a7266327382cecac433a954714"
+    },
+    "prepare-once.py": {
+      "readablePath": "prepare-once.py",
+      "sha256": "30392748cf1430785f6d34a8c64a5dbc7bd97cce98a50f18ffbd6e047b738934"
+    },
+    "preview-normal-cutout.mjs": {
+      "readablePath": "preview-normal-cutout.mjs.txt",
+      "sha256": "1a9d2aa29400329616d75cbc575da75aea00a4963c5e2121c6cd243f97629be7"
+    },
+    "record-parent-review.py": {
+      "readablePath": "record-parent-review.py",
+      "sha256": "230239fbbf6910b0a131773cf07ae86e72abe409a6679bae7034aa36a064be90"
+    },
+    "reproduce.py": {
+      "readablePath": "reproduce.py",
+      "sha256": "f1200c44255988b601d253446e9b693678bf18a0700e34706f19118576dbb1e5"
+    },
+    "review/cards-dark.jpg": {
+      "readablePath": "review/cards-dark.jpg",
+      "sha256": "231c3bfd31d9a74e9c042f7482e62143221616d15fab0fc250db4854c6ab852f"
+    },
+    "review/cards-light.jpg": {
+      "readablePath": "review/cards-light.jpg",
+      "sha256": "77fd7ef0415b6c9e1e71fa5edf26a191ab5cebd078ff18c900f2f5d358d322f4"
+    },
+    "review/extension-draft-cards-dark.json": {
+      "readablePath": "review/extension-draft-cards-dark.json.txt",
+      "sha256": "739ad89846027a3f4ba10906de168521cbee2b0f30d42fbef6cc642714df250e"
+    },
+    "review/extension-draft-cards-light.json": {
+      "readablePath": "review/extension-draft-cards-light.json.txt",
+      "sha256": "9dd16168ee744f3f9a2460c55b021b4a6237b6c653b7cec95b617c2c5675791c"
+    },
+    "review/extension-draft-console.json": {
+      "readablePath": "review/extension-draft-console.json.txt",
+      "sha256": "eedfa988939a9b2ecbdb81942377b61a24f2ef5820149cd835693c7c99d44600"
+    },
+    "review/extension-draft-manual-dark.json": {
+      "readablePath": "review/extension-draft-manual-dark.json.txt",
+      "sha256": "65c75e5c11fcb5acf0d66024e00198ae2f51f04eacd9f76bcc1d4cb98abcb410"
+    },
+    "review/extension-draft-manual-light.json": {
+      "readablePath": "review/extension-draft-manual-light.json.txt",
+      "sha256": "fb45a05eeb1f380061d6f12682f5ed4c2141449e15f7d974b4cb8008a4b6c2a7"
+    },
+    "review/extension-draft-manual-wrap.json": {
+      "readablePath": "review/extension-draft-manual-wrap.json.txt",
+      "sha256": "6677ce7e05b364b649b201f3c22dd8782e51a5ff357f173b2698deaf839fcbe3"
+    },
+    "review/extension-draft-mobile-dark-normal.json": {
+      "readablePath": "review/extension-draft-mobile-dark-normal.json.txt",
+      "sha256": "6ae9d3c33f97301e93e16d0a7208214c1a372af53c4c106638dbcae3d7245f99"
+    },
+    "review/extension-draft-mobile-light-normal.json": {
+      "readablePath": "review/extension-draft-mobile-light-normal.json.txt",
+      "sha256": "fe70f140cff10cd360f67f18b1ff6a2c6a44f67a46ee9f965615f9073b69caeb"
+    },
+    "review/extension-draft-mobile-light-slower.json": {
+      "readablePath": "review/extension-draft-mobile-light-slower.json.txt",
+      "sha256": "77d6360e796f608c13ba651710907d7113fa5d98362d2fe408ccafb35836f1c6"
+    },
+    "review/extension-draft-native-bent.json": {
+      "readablePath": "review/extension-draft-native-bent.json.txt",
+      "sha256": "a88ae1b224e666164c512e886835767bc14b188794b1c64fdda6984ff370c83f"
+    },
+    "review/extension-draft-native-extended.json": {
+      "readablePath": "review/extension-draft-native-extended.json.txt",
+      "sha256": "ab98d9af9532234ccf255ad8c2511e78f822b5e2bb790b3f51ea7da810db5836"
+    },
+    "review/extension-draft-native-playback.json": {
+      "readablePath": "review/extension-draft-native-playback.json.txt",
+      "sha256": "4d1827f8a3992dcb6783e5d57e63b3edfeddfac4954e17c3bc399ecbaaf89297"
+    },
+    "review/independent-source-review.json": {
+      "readablePath": "review/independent-source-review.json.txt",
+      "sha256": "a51be5d18d5ca90e44f64d9a62487d7af1e72d688079b2632efd4ad21d56b41f"
+    },
+    "review/mobile-dark.jpg": {
+      "readablePath": "review/mobile-dark.jpg",
+      "sha256": "3efa1659936430c5bbbe6087b7200fd78072592d6a1bf55d823f7fa6656626b5"
+    },
+    "review/mobile-light.jpg": {
+      "readablePath": "review/mobile-light.jpg",
+      "sha256": "b5447bcc9fa7b5274e79beb9c652d67398f94665d6fde036283812ff2846ca6e"
+    },
+    "review/native-bent.jpg": {
+      "readablePath": "review/native-bent.jpg",
+      "sha256": "78847c78aa4a424e18df8401b65ef8fbe974e5a547ffd66950da5123303e5145"
+    },
+    "review/native-extended.jpg": {
+      "readablePath": "review/native-extended.jpg",
+      "sha256": "d61a180b3e1140e8224a30f9f4ff652a468f194bc5638f64347d5b5581f1b219"
+    },
+    "review/tool-return-artifact-index.json": {
+      "readablePath": "review/tool-return-artifact-index.json.txt",
+      "sha256": "9519ee4a802b8efbb635d234bab10fa13653ca6208e48be69bca84e7a21a18e0"
+    },
+    "review-shared.tsx": {
+      "readablePath": "review-shared.tsx.txt",
+      "sha256": "4557ff27779407076a7234d4f3a4216747955e4a824a1d2b479932f418e9553b"
+    },
+    "review-vite.config.mjs": {
+      "readablePath": "review-vite.config.mjs.txt",
+      "sha256": "fd3d87d41c1be6d9be89e2b73e52fdf3d8ece1f3286cb1c2b30ea559c34bec70"
+    },
+    "sequence-plan.json": {
+      "readablePath": "sequence-plan.json.txt",
+      "sha256": "718a1752e1fe1b6bd47ac081aeb89f33eaba2a30253239833dcc7731cac30eed"
+    },
+    "working-unit/1-equipment-back.png": {
+      "readablePath": "working-unit/1-equipment-back.png",
+      "sha256": "7bc17bf8953387d4893e216dd08ae42b733f1cff3eaeac6ef9a52595d5f09c4f"
+    },
+    "working-unit/1-equipment-front-unoccluded.png": {
+      "readablePath": "working-unit/1-equipment-front-unoccluded.png",
+      "sha256": "e2f4b12841089ef803d72b63b239de93d6b7ae75a10d44ae203e7a59f69077cd"
+    },
+    "working-unit/1-equipment-front-with-existing-depth.png": {
+      "readablePath": "working-unit/1-equipment-front-with-existing-depth.png",
+      "sha256": "e2f4b12841089ef803d72b63b239de93d6b7ae75a10d44ae203e7a59f69077cd"
+    },
+    "working-unit/1-native-contact-draft.png": {
+      "readablePath": "working-unit/1-native-contact-draft.png",
+      "sha256": "0c3301576d37220df43acd75273e19a4b8ad45dc1c221c2adc471c514818a599"
+    },
+    "working-unit/4-equipment-back.png": {
+      "readablePath": "working-unit/4-equipment-back.png",
+      "sha256": "7d135996142859575f4a8072e83b93569f855bb52f654f6fa9cd3f0d45d573e2"
+    },
+    "working-unit/4-equipment-front-unoccluded.png": {
+      "readablePath": "working-unit/4-equipment-front-unoccluded.png",
+      "sha256": "3b2420d9af717486acbf29b1dffc0ff98aba1cee6d98375b6308f993827cdafb"
+    },
+    "working-unit/4-equipment-front-with-existing-depth.png": {
+      "readablePath": "working-unit/4-equipment-front-with-existing-depth.png",
+      "sha256": "8008fa7042c2cb9ad83b1ff699277366cad4f853d3a45eb49d30251b023c36ab"
+    },
+    "working-unit/4-native-contact-draft.png": {
+      "readablePath": "working-unit/4-native-contact-draft.png",
+      "sha256": "713475b2ad4451977900a99e6cfa038682cd3309e9219e27884bcfcd0abd5002"
+    },
+    "working-unit/construction-proof.json": {
+      "readablePath": "working-unit/construction-proof.json.txt",
+      "sha256": "9ef1605065421d76500b384b85cf905e136539d0153db5a26804150eb461cb0b"
+    },
+    "working-unit-material-only.patch": {
+      "readablePath": "working-unit-material-only.patch",
+      "sha256": "33060965ca6a4c79935721f8c434b7e953f3c506eb3e14576ed4bb7760720e8b"
+    }
+  },
+  "fullObservedCandidateFileCount": 130,
+  "excludedRuntimeCacheFiles": {
+    ".vite-review-cache/deps/_metadata.json": "23c65e0a59c7536407e03a539f10e99e023618a6f55b92a4582c37174e2181ed",
+    ".vite-review-cache/deps/chunk-24RTZYBL.js": "6c13350fd65be4ce755261b013213d429bbb440e676c35688ba238e5a046aa37",
+    ".vite-review-cache/deps/chunk-24RTZYBL.js.map": "43d420303fc3ec99e68f94d4d1c5e4d4315cecc80064a3a6f41cfd12053246d6",
+    ".vite-review-cache/deps/chunk-4RQ7ABSJ.js": "aee055a5fe6b41da428bf29c503985d3ba1cc1e5f13f8a3724a8f7e82b616ed9",
+    ".vite-review-cache/deps/chunk-4RQ7ABSJ.js.map": "3364fc1c990002984f9faad8991660379feee2a562ca1816d26495d89e60456c",
+    ".vite-review-cache/deps/chunk-5NRSLDL5.js": "46902e8fa2790e5960155bc7ec6a252edb28594cc7ab1c3d2a6ae25e8fd5644d",
+    ".vite-review-cache/deps/chunk-5NRSLDL5.js.map": "5e14dd8ff76b5a085e1732a3dc6cefd10ee1b229068c2577620f67e14588166e",
+    ".vite-review-cache/deps/chunk-ZPWHCABL.js": "485de0fbac117e89bfdc47fdaefb9005480342b5ec647823620dd6a42c0fe5b9",
+    ".vite-review-cache/deps/chunk-ZPWHCABL.js.map": "ed562b0bba7ee7214e56ac7f728054b3496bec4597c94a4eb7b4179e6f5cb1c9",
+    ".vite-review-cache/deps/clsx.js": "ed97cbd461d4150de9a651b3344e3da54c9ae04d3c81534da5bfedf90942fd55",
+    ".vite-review-cache/deps/clsx.js.map": "f30b94b37c03b9dc6e87cce8dca95a76802f1a46ff1859ce1aebc09883956cf4",
+    ".vite-review-cache/deps/framer-motion.js": "4697971f262e13289a31789ba9ddee0a4a09719a7c574b0c23eb35187ea1a48d",
+    ".vite-review-cache/deps/framer-motion.js.map": "1e4c4ed30733a6181dc1d850652ee4c4016af0164d6df59a272d9c946a2c0c9c",
+    ".vite-review-cache/deps/lucide-react.js": "7c261ec418e78a6e0de82aa87b20666dd8688a2c15d09a4093e1af4698d54f11",
+    ".vite-review-cache/deps/lucide-react.js.map": "9eed967ba514a81e7734dc6e9747811c33895c080c0767f34f43cfa67dfd9331",
+    ".vite-review-cache/deps/package.json": "3ca9d4afd21425087cf31893b8f9f63c81b0b8408db5e343ca76e5f8aa26ab9a",
+    ".vite-review-cache/deps/react-body-highlighter.js": "1b76c9b84d55239f79caf7de0263d429c5a928e0fae154c0bfded12446385d2e",
+    ".vite-review-cache/deps/react-body-highlighter.js.map": "6eeaf36507bd4ee0b7bf8e20f6408b201773781274b19ad0f83220ef7d1018c8",
+    ".vite-review-cache/deps/react-dom.js": "f3a382a8f5c6b906a58e66216b02019dba5bc1951ae92b3a5cbf92e3d371a43b",
+    ".vite-review-cache/deps/react-dom.js.map": "ed562b0bba7ee7214e56ac7f728054b3496bec4597c94a4eb7b4179e6f5cb1c9",
+    ".vite-review-cache/deps/react-dom_client.js": "a3ee0b89f6ee6ad31fad41a6de8b9a21a6eb181c0cc09d91b491c2221a853096",
+    ".vite-review-cache/deps/react-dom_client.js.map": "f910170703b28cb5c0298e76b99ec6bc557a33cb8872b2c4453d451c47933fab",
+    ".vite-review-cache/deps/react.js": "aa753be287a1dcfa9f99c70fda99f0fecdd850d74f4404a905c960e8e55d43a9",
+    ".vite-review-cache/deps/react.js.map": "ed562b0bba7ee7214e56ac7f728054b3496bec4597c94a4eb7b4179e6f5cb1c9",
+    ".vite-review-cache/deps/react_jsx-dev-runtime.js": "2d42a8fdc8b22ba502bacf9e629622c99bcfebc3313859b48edffb15eac4f935",
+    ".vite-review-cache/deps/react_jsx-dev-runtime.js.map": "debe91addadb2b0c397b23301fc8dca73ad3029345761efa669203ad9f52e4da",
+    ".vite-review-cache/deps/react_jsx-runtime.js": "3033514306d41d0f548201c18f85e78f8274ce065cc0d71610a24e55a57ff1d6",
+    ".vite-review-cache/deps/react_jsx-runtime.js.map": "ed562b0bba7ee7214e56ac7f728054b3496bec4597c94a4eb7b4179e6f5cb1c9",
+    ".vite-review-cache/deps/tailwind-merge.js": "1076590aff395c37df55e824dd920c3075038a43c7a83773692c936b5a692976",
+    ".vite-review-cache/deps/tailwind-merge.js.map": "62e3f1cba1048d02041f0093711a86ffe48ba1eebf0a0def5470c880dc9eb317",
+    "__pycache__/material_finish.cpython-312.pyc": "ee829c74f6bc91e8021fbe9a27d453516df6102157a72828fcf78b48111bd304"
+  },
+  "exactOriginalNamesZip": {
+    "path": "candidate-inputs-exact.zip",
+    "sha256": "6eabccecea3afd54f6196137f8b31b2ec6a548127e89f5c3710e542434d454f0"
+  },
+  "archiveState": "local-integration-payload-not-final-source-seal"
+}

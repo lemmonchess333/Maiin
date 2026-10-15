@@ -1,0 +1,5 @@
+{
+  "artifactName": "extension-integrated-wrap-controls.json",
+  "previousFromOne": "/form-frames/leg-extension/6.webp",
+  "nextFromSix": "/form-frames/leg-extension/1.webp"
+}

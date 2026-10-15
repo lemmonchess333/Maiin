@@ -1,0 +1,21 @@
+import { createRoot } from 'react-dom/client';
+import '../../Maiin-burpees/src/index.css';
+import ExerciseFormContent from '../../Maiin-burpees/src/components/ExerciseFormContent';
+import { CardViews, PlaybackEvidence, ThemeControl } from './review-shared';
+
+function Review() {
+  return <main className="min-h-screen bg-background text-foreground p-4">
+    <div style={{ maxWidth: 390, margin: '0 auto' }} className="space-y-3">
+      <h1 className="text-h2 font-bold">Leg Extension</h1>
+      <ThemeControl />
+      <img src="/form-art/leg-extension.webp" alt="Leg Extension registered card" className="h-40 w-full object-contain" />
+      <ExerciseFormContent exerciseName="Leg Extension" />
+      <CardViews src="/form-art/leg-extension.webp" />
+      <PlaybackEvidence />
+    </div>
+  </main>;
+}
+
+const root = createRoot(document.getElementById('root')!);
+root.render(<Review />);
+if (import.meta.hot) import.meta.hot.dispose(() => root.unmount());

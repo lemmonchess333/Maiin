@@ -1,0 +1,186 @@
+{
+  "exerciseId": "leg-extension",
+  "version": "anatomy-v3-2026-10-15-material-endpoint-leg-extension-v1",
+  "width": 1319,
+  "height": 1056,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root actual native draft plus actual registered guide/card review under existing user completion and merge authorization",
+  "reviewedAt": "2026-10-15T20:31:53.100990+00:00",
+  "recordStage": "Actual registered review complete; project checks, current-head CI and merge remain separately gated",
+  "reference": {
+    "path": "form-frames/leg-extension/3.webp",
+    "sha256": "67009ad87ae8a8d5d12215fda6cc375e94d5898db1ee2afef4f76dbf1fe30d59"
+  },
+  "cueSha256": "0b7340927b7411ffc0dc033a8d802b1b122fe8ff5b93aeac6b8c35cc01adf14a",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Parent viewed FA56 and original/final native endpoints. Original bald faceless grey-white athlete without shorts, full white trainers and anatomical contour detail remain. Small original head/seat/hand differences remain disclosed; no exact canonical pixel identity certification."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Original source1/4 intact scenes retain coordinates after the common whole-scene placement(0,+40) on1536x1104. Common crop[114,14,1433,1070] yields1319x1056. Replacement apparatus has one explicit orthographic3D camera; it does not establish the original human camera or unseen joint depth."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: All human shapes remain from intact successful originals. No anatomical warping, limb fitting, head/shoe graft or hidden reconstruction. Parent final native pair and mobile views show readable bent and extended legs without obvious material body distortion."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Both states use the same constructed fixed covered generic selectorized chassis and dual independent rotary working units. Actual world arm lengths, pad radii/lengths and axes remain constant. Short pads have documented positive axial clearance. Original foreground/occlusion masks and all unoccluded replacement gear layers are retained for inspection. Neutral material finish now follows original contour/shading detail; minor facet bands/simpler panels remain. Covered cams/belts/resistance and brand-specific routing are unverified."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Preserved hands grip original seat handles and hips/back remain supported. True rotary pad contact targets project onto the original shin positions at both endpoints; feet remain free. Source depth assumptions and joint-centre estimates remain disclosed, rather than a biomechanical calibration. No visible mobile collision or major contact gap observed."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual bent/extended states show knee extension while hips remain seated and hands retain support. A common rigid apparatus geometry explains both pad positions, without frame-specific shrinking arms or separate fitted SVG paths. Two endpoints are repeated; no drawn intermediate or continuous mechanics certification. Hidden resistance transmission remains unverified."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Existing Quads primary and Hip Flexors secondary colour fields remap to base#7B72E9/#9590E0 using source-local maximum-channel/chroma. Original fibre shading, neutral contours and support alpha are retained. No spatial body shading gradient is authored. Native and mobile final colours/shadows are coherent with retained approved source style."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Parent clicked every registered instruction1..6 then1 in both390x844 themes. Actual selectedInstruction, public source path and alt match each label; bent/extended art agrees with each cue. Exact catalogue setup, Quads primary/Hip Flexors secondary and all six seven-word cues appear. No horizontal overflow."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual registered ExerciseFormContent/ExerciseFormFrames observed all6public paths and automatic6-to-1 wraps in both390x844 themes. Normal intervals approximately1.2s and actual slower light intervals2.4s. Pause/play, all6instruction selections, previous1-to-6 and next6-to-1 controls verified. Source order[1,1,4,4,1,1] remains2physical endpoints; no intermediate/continuous movement claim."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Parent inspected the real registered390x844 light guide, full source art at324x360, exact setup/legend/all6instruction selections, normal/slower playback and the registered normal480/160px cards. Full athlete, equipment and supported contacts readable with no observed material clipping or horizontal overflow. Registered card matches the earlier reviewed preview exactly."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Parent inspected the real registered390x844 dark guide, full source art at324x360, all6instruction selections/normal playback, manual wrap controls and registered normal480/160px cards. No observed material clipping/contact gap; full body/equipment and cues readable. Captured warnings/errors empty. Registered card matches the reviewed preview exactly."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/leg-extension/1.webp",
+      "sha256": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/leg-extension/2026-10-15/draft/1-framed.png",
+        "sha256": "18f430df219ac55d5f9d57c002a3eac6fbbf9c301594814997a5d571bbfbaef6"
+      }
+    },
+    {
+      "path": "form-frames/leg-extension/2.webp",
+      "sha256": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/leg-extension/2026-10-15/draft/1-framed.png",
+        "sha256": "18f430df219ac55d5f9d57c002a3eac6fbbf9c301594814997a5d571bbfbaef6"
+      }
+    },
+    {
+      "path": "form-frames/leg-extension/3.webp",
+      "sha256": "67009ad87ae8a8d5d12215fda6cc375e94d5898db1ee2afef4f76dbf1fe30d59",
+      "sourcePose": 4,
+      "source": {
+        "path": "docs/exercise-art/sources/leg-extension/2026-10-15/draft/4-framed.png",
+        "sha256": "6acccd299ad36e353d110f0e2c8fee19571857962ddfd7e6107c89c15c01adc8"
+      }
+    },
+    {
+      "path": "form-frames/leg-extension/4.webp",
+      "sha256": "67009ad87ae8a8d5d12215fda6cc375e94d5898db1ee2afef4f76dbf1fe30d59",
+      "sourcePose": 4,
+      "source": {
+        "path": "docs/exercise-art/sources/leg-extension/2026-10-15/draft/4-framed.png",
+        "sha256": "6acccd299ad36e353d110f0e2c8fee19571857962ddfd7e6107c89c15c01adc8"
+      }
+    },
+    {
+      "path": "form-frames/leg-extension/5.webp",
+      "sha256": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/leg-extension/2026-10-15/draft/1-framed.png",
+        "sha256": "18f430df219ac55d5f9d57c002a3eac6fbbf9c301594814997a5d571bbfbaef6"
+      }
+    },
+    {
+      "path": "form-frames/leg-extension/6.webp",
+      "sha256": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/leg-extension/2026-10-15/draft/1-framed.png",
+        "sha256": "18f430df219ac55d5f9d57c002a3eac6fbbf9c301594814997a5d571bbfbaef6"
+      }
+    }
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": [1, 1, 4, 4, 1, 1],
+  "positionCoordinates": [0, 0, 1, 1, 0, 0],
+  "setup": [
+    "Sit in the machine, adjust the pad so it sits on your shins, just above the ankle."
+  ],
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "approval": {
+    "actor": "User continuing completion/merge instruction and prior slight-requirement relaxation",
+    "instruction": "Preserve the no-shorts canonical model and complete usable exercises with findings disclosed.",
+    "context": "Parent draft acceptance permits local integration only. No strict certification or publication acceptance is inferred."
+  },
+  "findings": [
+    "Independent generic covered selectorized apparatus, not an exact branded replica.",
+    "A constructed common apparatus camera is used, not an original human-camera/depth recovery.",
+    "Covered resistance routing and unseen cams/belts/weights are not verified.",
+    "Original source body/seat/head/hand variations remain; human pixels are not fitted.",
+    "The held middle source2 and earlier long-pad diagnostic are not delivered.",
+    "Minor neutral-metal facet bands and simplified covered panels remain.",
+    "Only a constructed apparatus camera is proven; original human depth and covered resistance routing remain uncertain."
+  ],
+  "observedQaChecks": {
+    "identity": {
+      "observed": true,
+      "evidence": "Parent viewed FA56 and original/final native endpoints. Original bald faceless grey-white athlete without shorts, full white trainers and anatomical contour detail remain. Small original head/seat/hand differences remain disclosed; no exact canonical pixel identity certification."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "Original source1/4 intact scenes retain coordinates after the common whole-scene placement(0,+40) on1536x1104. Common crop[114,14,1433,1070] yields1319x1056. Replacement apparatus has one explicit orthographic3D camera; it does not establish the original human camera or unseen joint depth."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "All human shapes remain from intact successful originals. No anatomical warping, limb fitting, head/shoe graft or hidden reconstruction. Parent final native pair and mobile views show readable bent and extended legs without obvious material body distortion."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "Both states use the same constructed fixed covered generic selectorized chassis and dual independent rotary working units. Actual world arm lengths, pad radii/lengths and axes remain constant. Short pads have documented positive axial clearance. Original foreground/occlusion masks and all unoccluded replacement gear layers are retained for inspection. Neutral material finish now follows original contour/shading detail; minor facet bands/simpler panels remain. Covered cams/belts/resistance and brand-specific routing are unverified."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Preserved hands grip original seat handles and hips/back remain supported. True rotary pad contact targets project onto the original shin positions at both endpoints; feet remain free. Source depth assumptions and joint-centre estimates remain disclosed, rather than a biomechanical calibration. No visible mobile collision or major contact gap observed."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "Actual bent/extended states show knee extension while hips remain seated and hands retain support. A common rigid apparatus geometry explains both pad positions, without frame-specific shrinking arms or separate fitted SVG paths. Two endpoints are repeated; no drawn intermediate or continuous mechanics certification. Hidden resistance transmission remains unverified."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Existing Quads primary and Hip Flexors secondary colour fields remap to base#7B72E9/#9590E0 using source-local maximum-channel/chroma. Original fibre shading, neutral contours and support alpha are retained. No spatial body shading gradient is authored. Native and mobile final colours/shadows are coherent with retained approved source style."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Parent clicked every registered instruction1..6 then1 in both390x844 themes. Actual selectedInstruction, public source path and alt match each label; bent/extended art agrees with each cue. Exact catalogue setup, Quads primary/Hip Flexors secondary and all six seven-word cues appear. No horizontal overflow."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Actual registered ExerciseFormContent/ExerciseFormFrames observed all6public paths and automatic6-to-1 wraps in both390x844 themes. Normal intervals approximately1.2s and actual slower light intervals2.4s. Pause/play, all6instruction selections, previous1-to-6 and next6-to-1 controls verified. Source order[1,1,4,4,1,1] remains2physical endpoints; no intermediate/continuous movement claim."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Parent inspected the real registered390x844 light guide, full source art at324x360, exact setup/legend/all6instruction selections, normal/slower playback and the registered normal480/160px cards. Full athlete, equipment and supported contacts readable with no observed material clipping or horizontal overflow. Registered card matches the earlier reviewed preview exactly."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Parent inspected the real registered390x844 dark guide, full source art at324x360, all6instruction selections/normal playback, manual wrap controls and registered normal480/160px cards. No observed material clipping/contact gap; full body/equipment and cues readable. Captured warnings/errors empty. Registered card matches the reviewed preview exactly."
+    }
+  },
+  "integrationValidation": "Actual registered390x844 light/dark, six cues/manual selection, normal/slower wraps, controls and normal card reviewed. Strict checks remain null. Normal project verification, current-head CI, actual merge and preservation audit remain pending.",
+  "publicationGate": "No completion credit until registered review, normal checks, current-head CI, merge and preservation audit."
+}

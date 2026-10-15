@@ -767,6 +767,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "2fc8466bb1c13bdeb4a8f1aa11fa4e62921e5fc9156bda5488c15d84416f4ea3",
     sha256: "594722a8afb61456e4b8ddcf7725e954cbde8a169049f28605fd520c5159e70c",
   },
+  "leg-extension": {
+    src: "form-art/leg-extension.webp",
+    width: 480,
+    height: 384,
+    keyed: true,
+    source: "form-frames/leg-extension/3.webp",
+    sourceSha256:
+      "67009ad87ae8a8d5d12215fda6cc375e94d5898db1ee2afef4f76dbf1fe30d59",
+    sha256: "66473827c8e846bf9ee25fbca2f38b237212c3516e1bec10ed9d1f1a38f512d2",
+  },
   "leg-raise": {
     src: "form-art/leg-raise.webp",
     width: 422,

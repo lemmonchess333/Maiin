@@ -17,6 +17,22 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "leg-extension": placard(
+    "leg-extension",
+    ["Quads"],
+    ["Hip Flexors"],
+    [
+      [0, "Set", "Keep your back supported and hips seated."],
+      [0, "Brace", "Brace your torso and grip the handles."],
+      [1, "Squeeze", "Straighten your legs and squeeze your quads."],
+      [1, "Hold", "Keep your hips down and hands gripping."],
+      [0, "Return", "Bend your knees slowly; control the resistance."],
+      [0, "Reset", "Return to bent knees without losing control."],
+    ],
+    [
+      "Sit in the machine, adjust the pad so it sits on your shins, just above the ankle.",
+    ]
+  ),
   "single-leg-calf-raise": placard(
     "single-leg-calf-raise",
     ["Calves"],

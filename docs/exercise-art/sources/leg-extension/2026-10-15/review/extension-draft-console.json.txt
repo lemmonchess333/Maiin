@@ -1,0 +1,4 @@
+{
+  "artifactName": "extension-draft-console.json",
+  "errors": []
+}

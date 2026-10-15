@@ -1,0 +1,152 @@
+{
+  "artifactName": "extension-draft-manual-dark.json",
+  "observations": [
+    {
+      "alt": "Leg Extension, Hold",
+      "complete": true,
+      "cues": [
+        "Unregistered two-endpoint common-camera equipment candidate",
+        "Hold 4/6",
+        "Keep your hips down and hands gripping."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "overflow": false,
+      "src": "/draft/frames/4.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Leg Extension, Return",
+      "complete": true,
+      "cues": [
+        "Unregistered two-endpoint common-camera equipment candidate",
+        "Return 5/6",
+        "Bend your knees slowly; control the resistance."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "overflow": false,
+      "src": "/draft/frames/5.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Leg Extension, Reset",
+      "complete": true,
+      "cues": [
+        "Unregistered two-endpoint common-camera equipment candidate",
+        "Reset 6/6",
+        "Return to bent knees without losing control."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "overflow": false,
+      "src": "/draft/frames/6.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Leg Extension, Set",
+      "complete": true,
+      "cues": [
+        "Unregistered two-endpoint common-camera equipment candidate",
+        "Set 1/6",
+        "Keep your back supported and hips seated."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "overflow": false,
+      "src": "/draft/frames/1.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Leg Extension, Brace",
+      "complete": true,
+      "cues": [
+        "Unregistered two-endpoint common-camera equipment candidate",
+        "Brace 2/6",
+        "Brace your torso and grip the handles."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "overflow": false,
+      "src": "/draft/frames/2.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Leg Extension, Squeeze",
+      "complete": true,
+      "cues": [
+        "Unregistered two-endpoint common-camera equipment candidate",
+        "Squeeze 3/6",
+        "Straighten your legs and squeeze your quads."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "overflow": false,
+      "src": "/draft/frames/3.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Leg Extension, Hold",
+      "complete": true,
+      "cues": [
+        "Unregistered two-endpoint common-camera equipment candidate",
+        "Hold 4/6",
+        "Keep your hips down and hands gripping."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "overflow": false,
+      "src": "/draft/frames/4.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    }
+  ]
+}
