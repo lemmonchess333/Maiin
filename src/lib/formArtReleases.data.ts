@@ -19,6 +19,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
   string,
   ApprovedFormArtRelease
 > = {
+  "ab-wheel": {
+    folder: "2026-10-14",
+    version: "anatomy-v3-2026-10-14-intact-ab-wheel-cycle-v1",
+    width: 1448,
+    height: 924,
+    reference: 1,
+  },
   "arnold-press": {
     folder: "2026-09-24",
     version: "anatomy-v3-2026-09-24",
@@ -445,6 +452,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     width: 1024,
     height: 1536,
     reference: 1,
+  },
+  "kettlebell-swing": {
+    folder: "2026-10-14",
+    version: "anatomy-v3-2026-10-14-retained-kettlebell-cycle-v1",
+    width: 690,
+    height: 1008,
+    reference: 3,
   },
   "l-sit": {
     folder: "2026-09-29",

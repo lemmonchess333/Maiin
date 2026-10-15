@@ -1,0 +1,19 @@
+--- reviewed/src/lib/releasedFormPlacards.ts
++++ corrected/src/lib/releasedFormPlacards.ts
+@@ -23,11 +23,11 @@
+     ["Lats", "Shoulders"],
+     [
+       [0, "Brace", "Brace core; tuck pelvis; keep back neutral."],
+-      [0.2, "Roll", "Roll forward with straight arms; knees planted."],
+-      [0.4, "Reach", "Reach only while your back stays neutral."],
+-      [0.6, "Hold", "Hold your brace without sagging."],
+-      [0.8, "Return", "Pull back with abs; keep elbows straight."],
+-      [1, "Reset", "Reset under shoulders without sitting on heels."],
++      [0.5, "Roll", "Roll forward with straight arms; knees planted."],
++      [1, "Reach", "Reach only while your back stays neutral."],
++      [1, "Hold", "Hold your brace without sagging."],
++      [0.5, "Return", "Pull back with abs; keep elbows straight."],
++      [0, "Reset", "Reset under shoulders without sitting on heels."],
+     ],
+     [
+       "Kneel on a pad holding the ab wheel with both hands under your shoulders.",

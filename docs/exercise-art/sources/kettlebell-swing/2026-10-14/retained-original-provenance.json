@@ -1,0 +1,180 @@
+[
+  {
+    "name": "1-master.png",
+    "originalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-09-29\\ok-continue-on-with-the-doing\\work\\kettlebell-swing-production-review\\1-master.png",
+    "sha256": "c48e17588b1c937dc54a49bb28713bfdeb3783cdf20713977a684c719b52c00e",
+    "dimensions": [1536, 1024],
+    "prompt": "master-prompt.txt",
+    "promptSha256": "c6b8d6d000e909697d0c70333bffbb8760b0eb0e6a3e9a450ac6910a8bde16ae",
+    "newGeneration": false,
+    "components": [
+      {
+        "label": 5,
+        "pixels": 179,
+        "bbox": [874, 278, 893, 293]
+      },
+      {
+        "label": 24,
+        "pixels": 9627,
+        "bbox": [438, 294, 560, 467]
+      },
+      {
+        "label": 33,
+        "pixels": 316,
+        "bbox": [430, 325, 450, 381]
+      },
+      {
+        "label": 39,
+        "pixels": 712,
+        "bbox": [436, 388, 471, 425]
+      },
+      {
+        "label": 49,
+        "pixels": 3122,
+        "bbox": [407, 396, 464, 479]
+      },
+      {
+        "label": 64,
+        "pixels": 5729,
+        "bbox": [432, 424, 497, 678]
+      },
+      {
+        "label": 77,
+        "pixels": 4316,
+        "bbox": [523, 466, 572, 690]
+      },
+      {
+        "label": 81,
+        "pixels": 4777,
+        "bbox": [460, 471, 512, 625]
+      },
+      {
+        "label": 99,
+        "pixels": 1577,
+        "bbox": [414, 507, 438, 627]
+      },
+      {
+        "label": 109,
+        "pixels": 453,
+        "bbox": [502, 574, 527, 628]
+      }
+    ]
+  },
+  {
+    "name": "2-hike-candidate.png",
+    "originalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-09-29\\ok-continue-on-with-the-doing\\work\\kettlebell-swing-production-review\\2-hike-candidate.png",
+    "sha256": "5552c7d32578de3a5417e1940ac679580654f78d38df0658ead7ecb04889d2c4",
+    "dimensions": [1536, 1024],
+    "prompt": "2-hike-prompt.txt",
+    "promptSha256": "c2ebc7ed616d3ae37804e6a883bac3cd7197beb6b68056d2a3ae58d27cdce8ef",
+    "newGeneration": false,
+    "components": [
+      {
+        "label": 1,
+        "pixels": 5830,
+        "bbox": [430, 297, 549, 408]
+      },
+      {
+        "label": 17,
+        "pixels": 4834,
+        "bbox": [343, 340, 429, 433]
+      },
+      {
+        "label": 20,
+        "pixels": 1622,
+        "bbox": [470, 379, 547, 439]
+      },
+      {
+        "label": 22,
+        "pixels": 7056,
+        "bbox": [374, 386, 473, 651]
+      },
+      {
+        "label": 35,
+        "pixels": 5573,
+        "bbox": [429, 427, 490, 594]
+      },
+      {
+        "label": 39,
+        "pixels": 209,
+        "bbox": [500, 429, 515, 455]
+      },
+      {
+        "label": 61,
+        "pixels": 1930,
+        "bbox": [374, 461, 441, 596]
+      },
+      {
+        "label": 67,
+        "pixels": 1256,
+        "bbox": [544, 518, 578, 596]
+      },
+      {
+        "label": 74,
+        "pixels": 1885,
+        "bbox": [528, 542, 582, 658]
+      },
+      {
+        "label": 91,
+        "pixels": 254,
+        "bbox": [306, 583, 335, 611]
+      },
+      {
+        "label": 144,
+        "pixels": 158,
+        "bbox": [345, 604, 362, 619]
+      }
+    ]
+  },
+  {
+    "name": "3-mid-candidate.png",
+    "originalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-09-29\\ok-continue-on-with-the-doing\\work\\kettlebell-swing-production-review\\3-mid-candidate.png",
+    "sha256": "6a0ff5550d20ff24088f1558b0acec3f07a27d6946eb20bf2cf052dda1c9d248",
+    "dimensions": [1536, 1024],
+    "prompt": "3-mid-prompt.txt",
+    "promptSha256": "11725f4245e64e6a671c7123d1705a4b02d43648daa8bcc80d9f5df87713b980",
+    "newGeneration": false,
+    "components": [
+      {
+        "label": 1,
+        "pixels": 8174,
+        "bbox": [425, 307, 579, 449]
+      },
+      {
+        "label": 14,
+        "pixels": 4255,
+        "bbox": [369, 364, 439, 457]
+      },
+      {
+        "label": 19,
+        "pixels": 6792,
+        "bbox": [403, 407, 473, 667]
+      },
+      {
+        "label": 23,
+        "pixels": 6234,
+        "bbox": [514, 434, 573, 678]
+      },
+      {
+        "label": 30,
+        "pixels": 5441,
+        "bbox": [455, 450, 504, 613]
+      },
+      {
+        "label": 64,
+        "pixels": 1780,
+        "bbox": [399, 486, 447, 619]
+      },
+      {
+        "label": 77,
+        "pixels": 161,
+        "bbox": [814, 543, 832, 559]
+      },
+      {
+        "label": 86,
+        "pixels": 467,
+        "bbox": [513, 559, 526, 620]
+      }
+    ]
+  }
+]

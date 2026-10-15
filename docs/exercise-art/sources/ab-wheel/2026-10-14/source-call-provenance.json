@@ -1,0 +1,55 @@
+{
+  "exerciseId": "ab-wheel",
+  "mode": "built-in imagegen",
+  "method": "New intact whole-athlete canonical master; no old clothing source used",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "calls": [
+    {
+      "pose": "Brace",
+      "prompt": "master-prompt.txt",
+      "referenceRoles": ["Canonical FA56 identity and rendering style"],
+      "savedToolOutputPath": "C:/Users/myles/.codex/generated_images/01a10711-412c-7ce2-8907-eb9f63d462da/exec-64f900e7-9316-4a80-89b4-736894baffd7.png",
+      "workspaceSource": "master-brace-original.png",
+      "sourceSha256": "92cbc7bf52bf72258c762e52ddffec70dbaed32406e8c32850da5888f6399c0f",
+      "size": [1536, 1024],
+      "result": "image produced; parent native master mechanics review passed provisionally; independent review pending",
+      "notClaimed": "No raw request ID exposed by built-in result; file output identifier is preserved instead",
+      "promptSha256": "e3e21c10b67d16d10183f1e2ef1844f018f9e0a7e9391c32bf4c91fb3d4e8d63"
+    },
+    {
+      "pose": "Roll",
+      "prompt": "roll-prompt.txt",
+      "referenceRoles": [
+        "Canonical FA56 identity",
+        "Intact no-shorts Brace master; exact scene authority"
+      ],
+      "savedToolOutputPath": "C:/Users/myles/.codex/generated_images/01a10711-412c-7ce2-8907-eb9f63d462da/exec-eac66659-d7e6-4b96-a82d-6e6c36111288.png",
+      "workspaceSource": "roll-original.png",
+      "sourceSha256": "959af45a9d7614cb06bae131d7feaad9e036f6106e2b6ab93b729c7086dfaaa6",
+      "size": [1536, 1024],
+      "result": "image produced; physical cycle measurements/review pending",
+      "notClaimed": "No raw request ID exposed by built-in result; file output identifier preserved instead",
+      "promptSha256": "ee2bfbaff8fabf6d54b9c7125a8abce279849b80ae4a97e9eaff667a88c90e17"
+    },
+    {
+      "pose": "Reach",
+      "prompt": "reach-prompt.txt",
+      "referenceRoles": [
+        "Canonical FA56 identity",
+        "Intact no-shorts Brace master; exact scene authority",
+        "Adjacent whole Roll pose; edit target"
+      ],
+      "savedToolOutputPath": "C:/Users/myles/.codex/generated_images/01a10711-412c-7ce2-8907-eb9f63d462da/exec-0dc22d2b-287d-4564-8bf2-18c7a44664e0.png",
+      "workspaceSource": "reach-original.png",
+      "sourceSha256": "3362d9e5842d07eaee62bf3f92c444908e3aa3778db59d3a30585969f626087b",
+      "size": [1536, 1024],
+      "result": "image produced; physical cycle measurements/review pending",
+      "notClaimed": "No raw request ID exposed by built-in result; file output identifier preserved instead",
+      "promptSha256": "1a7a3b86509e04de82cc297c8fbb7ead2bf47b685742d86555b62bbf54fb61df"
+    }
+  ],
+  "sourceAcceptedAsCompleteSet": false,
+  "productionRegistered": false,
+  "completionCredit": 0,
+  "newImageRequests": 3
+}

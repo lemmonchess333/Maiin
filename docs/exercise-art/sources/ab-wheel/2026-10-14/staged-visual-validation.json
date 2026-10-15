@@ -1,0 +1,242 @@
+{
+  "exerciseId": "ab-wheel",
+  "passed": true,
+  "reviewedAt": "2026-10-14T22:34:50.607709+00:00",
+  "status": "Actual staged native/mobile/static/card accepted; registration/integrated checks/current-head CI/merge pending",
+  "baselineHead": "82d6d829ad20ad3c8924933f736ad615b83054f6",
+  "baselineExitCode": 1,
+  "baselineFullWindowsNonGreen": true,
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "physicalPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "newImageRequests": 3,
+  "nativeDimensions": [1448, 924],
+  "commonCrop": [48, 8, 1496, 932],
+  "reference": 1,
+  "cueSha256": "8a20afdb5f64d37621738f6769da6b122784481666f8b8174e72365778c305db",
+  "authoredSetupInstructions": [
+    "Kneel on a pad holding the ab wheel with both hands under your shoulders."
+  ],
+  "mobile": {
+    "light": {
+      "viewport": [390, 844],
+      "decodedDimensions": [1448, 924],
+      "frames": [1, 2, 3, 4, 5, 6],
+      "sequential6to1": true,
+      "visiblePlayingObservations": 30
+    },
+    "dark": {
+      "viewport": [390, 844],
+      "decodedDimensions": [1448, 924],
+      "frames": [1, 2, 3, 4, 5, 6],
+      "sequential6to1": true,
+      "visiblePlayingObservations": 20
+    }
+  },
+  "controls": {
+    "selectSix": "/form-frames/ab-wheel/6.webp",
+    "nextWrap": "/form-frames/ab-wheel/1.webp",
+    "previousWrap": "/form-frames/ab-wheel/6.webp",
+    "slowerPressed": "true",
+    "consoleErrors": [],
+    "viewport": [390, 844],
+    "preparationText": "Preparation: Kneel on a pad holding the ab wheel with both hands under your shoulders.",
+    "measuredTiming": {
+      "normalMedianMs": 1206.0,
+      "slowerMedianMs": 2407.5,
+      "ratio": 1.9962686567164178
+    }
+  },
+  "cardDimensions": [480, 479],
+  "reviewedAssetHashes": {
+    "master-brace-original.png": "92cbc7bf52bf72258c762e52ddffec70dbaed32406e8c32850da5888f6399c0f",
+    "roll-original.png": "959af45a9d7614cb06bae131d7feaad9e036f6106e2b6ab93b729c7086dfaaa6",
+    "reach-original.png": "3362d9e5842d07eaee62bf3f92c444908e3aa3778db59d3a30585969f626087b",
+    "final-frames/1.webp": "1c6adbc52050d867b542229cdd46a2aeb2062197ca354cbf2555c38456a7b9be",
+    "final-frames/2.webp": "4f8d53ee4e94dea1eb6cb1c44c0f965357310c7af85c0379cfa16695dfe4459e",
+    "final-frames/3.webp": "e927bb1ee10e138e68568f95f477a7f2763790f47a25ef57df49618e154b657f",
+    "final-frames/4.webp": "e927bb1ee10e138e68568f95f477a7f2763790f47a25ef57df49618e154b657f",
+    "final-frames/5.webp": "4f8d53ee4e94dea1eb6cb1c44c0f965357310c7af85c0379cfa16695dfe4459e",
+    "final-frames/6.webp": "1c6adbc52050d867b542229cdd46a2aeb2062197ca354cbf2555c38456a7b9be",
+    "1-framed.png": "e844927f544c14339e475a91c07f2cb7e9eaf58f0d91a9272ad2a97a5dc653ed",
+    "1-framed.ora": "bff716760bd1f77abc88b247b69c407fe8412dc5ea89637f0b7e6b982e35a209",
+    "1-native-finished.png": "48ee1162be68dd7eb467fd019ee50b6e2e4434a9b294434f872c6bcb6759eb4d",
+    "1-primary-core.png": "ebcf4798b94aa6a57d447e5ab2e8585e5973010bf420d567af8a65836f3939e6",
+    "1-secondary-lats-deltoids.png": "bdf4f65c4ddb835e227d451c8d3d80260cd2e9ad5980729a0e7f2c4eedf72ad1",
+    "2-framed.png": "0e5410ad55c4fae5e0c9c889372c13fb93c7f693a7f8ad78662639f2f539c373",
+    "2-framed.ora": "57207dd1306fd1632920a74e46f9d401fb55b86c6ff480755c0e64ac835b6d90",
+    "2-native-finished.png": "5aa537605b36687bfe5f08d42570d5d88de716e81a0f5429774ac0e851704c93",
+    "2-primary-core.png": "08c44524402897512bc8414c07b40d5c2564644d15854d9c70e6b78f92c8ee17",
+    "2-secondary-lats-deltoids.png": "29864245aee4308e6acfdbedc5070c20c727cd716a02c5d8ba13f9296253d5b4",
+    "3-framed.png": "70e5b22d52013308b15438c3ef33775424bc297ba38e25dd756a42cedd89ead1",
+    "3-framed.ora": "b02b83d67bd467f87163509d328d3e4eaa648e67c6a922c7552ff30425b762c1",
+    "3-native-finished.png": "08fb3fcf7a2dcf04b7bf020ab12ab6487743b7c0d70fb2f2ad7476668ddce9ee",
+    "3-primary-core.png": "d7c7deba72505ecd29acd22713450805583f986fb3831f0ed4119350678b02d1",
+    "3-secondary-lats-deltoids.png": "839cc2ce7b91847f33783e6b90ee646a73afe63596d61e49ffa392866ed5b2d2",
+    "plan.json": "987e80a9e82ce0a9f6a9174b75bf2abb0eede7a21715e8870c16466cd7c3ded7",
+    "catalogue.json": "81211c6c7c7c6ffc1a39f500f235ae6d989fe85fe29117ff29695f07be9bde90",
+    "draft-beats.json": "ec1111329d7c32454f95c22c8bbaecc491dd733f92adccd0dcb8ea8ce75750b3",
+    "provenance.json": "b2f60d3d4d3c653a0127665ddff4c1c85e185a3cae78da7ea9b8ce95b7cc805c",
+    "framing.json": "758a44a99466b45528451a23c4028bbaa48039d5108749535e57acb2526cd364",
+    "finishing-audit.json": "2e7799a98456d9128cc9562b3f72872aee4ba14d5823b627d4d4518f61fd4fa2",
+    "finish-colour.py": "b596a55e677d809af68fd29ef12da0914c763bb7655b6e243ddb505aa6b63da5",
+    "prepared-card-source.png": "3c8abd9b518cd9ab7464080cf0d0f060d74b703a0535774e98e0aa1be7540ad5",
+    "card-cutout.webp": "f0b3ed7b9052c8f413dfecf6ee972b51ea66b86035038c61abadbb055ea5f0db",
+    "prepared-card-alpha-proof.json": "ed6c051c5d680f6187c2b13fcd7398e6be73c4fae614e7ffcbbd187f26e40ebe",
+    "staged-card-provenance.json": "c51e22f312c0a11cf7820ed6fa2706f541bf0b485739e4845b3ddd16861adbd3",
+    "prepare-card-floor-matte.py": "213e67718fba36454f9b7b29314feb02bafb29e55dbd6ce701d7892332c5729f",
+    "stage-prepared-card.mts": "d9943adf617bd7d730775b5d628863be1b1a0f127a95f14cff9b4e8d1687aa88",
+    "measurements-independent.json": "4d3801d9624079c5438d3f7d7f076cac333d5a401d5ccb8381ec31a0f7d7f26c",
+    "static-finishing-review-independent.json": "7a69ad808f3abf273273d0912bb737d37c451aa875005e9770b7e8a8e8c5f880",
+    "prepared-card-review-independent.json": "854b295c6af582cea02bc902d200e322c68944d3c5085207ab7be53f4c9aa019",
+    "mobile-review.tsx": "7caf83a4bfd9cd045e91a6f1602aeda749e0c9ae4b3b48362ad20a4e6619385d",
+    "mobile-review.html": "b855d58761b67b26b6f8726fb4ce8945dc4d0320369e561a82fef72e4ed930f6",
+    "native-review.html": "9807d2bad5632ec3d4c3123088ca256a3ece3ac91b95492548c5248cbccf8d6b",
+    "review-vite.config.mjs": "f354ea365702f38d6dce70b41f063c973926cd47cccb53d7531b2a180a229f33",
+    "native-manual-trace.json": "58efbc339cd928f15607f0542345f6608b18abd366890057c729ad905e58458e",
+    "native-timed-trace.json": "cdc1e7012c10139ff1dfe3826881e74528eddbd98e79ceb9f76d731f477499d0",
+    "staged-light-trace.json": "088b0af839111ba51090071976f280750d4de87b9b4180b8cbc97128c88386c3",
+    "staged-dark-trace.json": "437d9505d5c995823fca3af01b60777bf517f43cb10d36caae8d0b0a9e4f8a9f",
+    "staged-slower-trace.json": "58d9a981e6a7af7ad82da08b59d1d41f5c63c716959ff243310ad4cff5e8f50e",
+    "staged-controls.json": "309e4e09e5870918c735bbe3fce15e4fd609dedd557c61346491c8ec4a5cc7ee",
+    "previous-artwork-hashes.json": "cbf1bb885c3d95abbb338b04f2a001aaf50b23d9e00ed109c8b1b6820236351e",
+    "baseline/baseline-verify-result.json": "e2210363223a7ae38e585670c3a1d7fb93e9d59f46858d6171afeb6b6ea58bf0",
+    "baseline/baseline-failure-identities.json": "1d645e87095129e908e33067abfe3cc17ed8e548a630aa7569a0b9cc54fbb71a",
+    "master-prompt.txt": "e3e21c10b67d16d10183f1e2ef1844f018f9e0a7e9391c32bf4c91fb3d4e8d63",
+    "roll-prompt.txt": "ee2bfbaff8fabf6d54b9c7125a8abce279849b80ae4a97e9eaff667a88c90e17",
+    "reach-prompt.txt": "1a7a3b86509e04de82cc297c8fbb7ead2bf47b685742d86555b62bbf54fb61df",
+    "native-parent-signoff.json": "983cec7c1e2be778f0c3fc710bca5f0416ffb932ed6bdb918ecfa5067418d0c1",
+    "native-master-review-independent.json": "7a1c6f450e068ec4c7a39bac3805e5fae37fdf49a1db5405c1358867849d4e7d",
+    "native-roll-review-independent.json": "02145e0d34e8df1575ef9ba26104b3a3cdcc8e15ec544919d73798784bb53aee",
+    "native-source-cycle-review-independent.json": "78b103d80b50545e8f95f082b653039c0acc2bb6171879aeb20e466c1f469ac2",
+    "native-playback-proof.png": "30eb09fa5134fbe0f767ddb310c390758da36f327e62786165c21d2077719fe2",
+    "staged-light-full-page.png": "6ecb1552bdca25ca5c0cd6d243a060e4deeaf3f756446a4ebd34c909087131d8",
+    "staged-dark-full-page.png": "33018ca74cfbd8b0b633c2634f4b6d4905fd2cc270762c81288bb696c2c7b35a",
+    "staged-parent-visual-signoff.json": "02b4ba24475f4b19c3d6f06c07477a09a4e0d971a27d97bcf780f4b7bce83460"
+  },
+  "previousArtworkHashCount": 903,
+  "fixedAnchors": [
+    {
+      "name": "Exposed upper-right outer knee-pad edge",
+      "nativePoints": [
+        [588, 810],
+        [588, 810],
+        [588, 810]
+      ],
+      "expectedCropPoints": [
+        [540, 802],
+        [540, 802],
+        [540, 802]
+      ],
+      "maxPairwiseEuclideanDriftPx": 0.0,
+      "limitPx": 1,
+      "pass": true,
+      "method": "Rightmost qualifying pixel in the exposed right pad ROI, then first qualifying y at that x. Actual pad boundary, not a canvas coordinate.",
+      "roiXYXY": [575, 802, 600, 846],
+      "pixelRule": {
+        "minRGB": 40,
+        "maxRGB": 140,
+        "maxChannelSpread": 12
+      }
+    },
+    {
+      "name": "Midpoint of exposed frontmost lower rounded knee-pad edge plateau",
+      "nativePoints": [
+        [383.0, 863],
+        [383.5, 863],
+        [383.5, 863]
+      ],
+      "expectedCropPoints": [
+        [335.0, 855],
+        [335.5, 855],
+        [335.5, 855]
+      ],
+      "maxPairwiseEuclideanDriftPx": 0.5,
+      "limitPx": 1,
+      "pass": true,
+      "method": "Lowest qualifying pad row in exposed front pad ROI; midpoint of its qualifying x range. The rounded front corner has a real visible plateau, so a half-pixel midpoint is retained without rounding.",
+      "roiXYXY": [350, 845, 460, 880],
+      "pixelRule": {
+        "minRGB": 40,
+        "maxRGB": 140,
+        "maxChannelSpread": 12
+      },
+      "sensitivity": {
+        "threshold45Points": [
+          [383.0, 863],
+          [383.5, 863],
+          [383.0, 863]
+        ],
+        "threshold50Points": [
+          [382.5, 863],
+          [383.5, 863],
+          [383.0, 863]
+        ],
+        "interpretation": "Threshold40/45/50 gives the same y863 and front midpoint within1px across all sources and sampled thresholds. Thresholds20-35 can capture floor/shadow; those points are rejected as pad features."
+      }
+    }
+  ],
+  "invariantDimensions": [
+    {
+      "name": "Projected full visible pad horizontal extent",
+      "valuesPx": [352, 351, 352],
+      "maxDeviationFromBracePercent": 0.2840909090909091,
+      "limitPercent": 1,
+      "pass": true,
+      "method": "Rightmost exposed pad x minus leftmost exposed pad x, common neutral threshold40. Measures actual pad footprint extent.",
+      "roisXYXY": [
+        [230, 808, 258, 849],
+        [575, 802, 600, 846]
+      ],
+      "pixelRule": {
+        "minRGB": 40,
+        "maxRGB": 140,
+        "maxChannelSpread": 12
+      },
+      "caveat": "Leftmost y is unstable on a rounded antialiased edge and is not selected as a fixed anchor."
+    },
+    {
+      "name": "Projected exposed bright-neutral tyre vertical contour span",
+      "valuesPx": [193, 193, 193],
+      "topYs": [686, 700, 717],
+      "bottomYs": [879, 893, 910],
+      "maxDeviationFromBracePercent": 0.0,
+      "limitPercent": 1,
+      "pass": true,
+      "method": "At least10 consecutive neutral tyre pixels in each qualifying row, common brightness threshold30, outer top/bottom exposed tyre ROIs. Run filter excludes isolated human-outline anti-alias pixels.",
+      "roisBySource": [
+        [
+          [735, 675, 799, 712],
+          [730, 865, 826, 899]
+        ],
+        [
+          [1130, 689, 1197, 733],
+          [1130, 880, 1226, 915]
+        ],
+        [
+          [1330, 705, 1397, 754],
+          [1310, 900, 1411, 936]
+        ]
+      ],
+      "pixelRule": {
+        "minRGB": 30,
+        "maxRGB": 140,
+        "maxChannelSpread": 12,
+        "minimumContiguousHorizontalRun": 10
+      },
+      "sensitivity": {
+        "threshold35SpansPx": [192, 193, 193],
+        "maxDeviationFromBracePercent": 0.5208333333333333,
+        "interpretation": "193px at threshold30 across all3; threshold35 yields192/193/193px, within1%. Threshold40 erodes the dark lower tyre rim and is unsuitable for this contour."
+      },
+      "caveat": "This is a consistently defined visible raster tyre contour. It is not a true3D radius, unoccluded geometric diameter, axle length or calibrated grip-width claim."
+    }
+  ],
+  "minorFindings": [
+    "Controlled Reach retains residual hip flexion; no fully horizontal/perfectly straight claim.",
+    "Small knee/trainer contour redraws are disclosed; failed shoe brightness metrics are not represented as passing.",
+    "Projected exposed axle-tip span289/277/260px varies10.035%; no calibrated3D shaft, radius, grip-width or invented yaw claim.",
+    "Three real poses reused honestly across six separate paths."
+  ],
+  "completionCredit": false
+}

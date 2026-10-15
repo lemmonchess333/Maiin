@@ -3,8 +3,10 @@ const placard = (
   id: string,
   primary: string[],
   secondary: string[],
-  rows: [number, string, string][]
+  rows: [number, string, string][],
+  authoredSetupInstructions?: string[]
 ) => ({
+  authoredSetupInstructions,
   beats: rows.map(([t, label, cue], i) => ({
     t,
     label,
@@ -15,6 +17,39 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "ab-wheel": placard(
+    "ab-wheel",
+    ["Core"],
+    ["Lats", "Shoulders"],
+    [
+      [0, "Brace", "Brace core; tuck pelvis; keep back neutral."],
+      [0.5, "Roll", "Roll forward with straight arms; knees planted."],
+      [1, "Reach", "Reach only while your back stays neutral."],
+      [1, "Hold", "Hold your brace without sagging."],
+      [0.5, "Return", "Pull back with abs; keep elbows straight."],
+      [0, "Reset", "Reset under shoulders without sitting on heels."],
+    ],
+    [
+      "Kneel on a pad holding the ab wheel with both hands under your shoulders.",
+    ]
+  ),
+  "kettlebell-swing": placard(
+    "kettlebell-swing",
+    ["Glutes", "Hamstrings"],
+    ["Core", "Lower Back"],
+    [
+      [0, "Hike", "Hinge back; guide bell between your legs."],
+      [0.5, "Drive", "Drive through your feet and extend hips."],
+      [1, "Float", "Let the bell float to chest height."],
+      [1, "Brace", "Brace your abs without leaning back."],
+      [0.5, "Return", "Let the bell fall; keep arms relaxed."],
+      [0, "Reset", "Hinge back as bell passes your legs."],
+    ],
+    [
+      "Stand with feet shoulder-width, bell on the floor a foot in front of you.",
+      "Hinge at the hips and grip the handle with both hands, back flat.",
+    ]
+  ),
   "rear-delt-machine-fly": placard(
     "rear-delt-machine-fly",
     ["Rear Delts"],
