@@ -20,7 +20,6 @@ import {
   runTransaction,
   QueryDocumentSnapshot,
 } from "firebase/firestore";
-import { deleteDocGuarded } from "@/lib/firestoreWrite";
 import { deleteFoodPhoto } from "@/lib/foodPhotoStore";
 import { invalidateFoodPhotoCache } from "@/hooks/useFoodPhotoUrls";
 import { noteActivitySnapshot } from "@/lib/activationTracker";
@@ -38,6 +37,7 @@ import {
   clampFoodName,
   undoMealEntries,
   restoreMealEntries,
+  hardDeleteMealEntry,
 } from "@/lib/mealEntry";
 
 export interface MealItem {
@@ -474,8 +474,8 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
    *  by the retention sweep instead. */
   const hardDeleteMeal = useCallback(
     async (mealId: string) => {
-      if (!uid) return;
-      await deleteDocGuarded(doc(db, "users", uid, "meals", mealId));
+      if (!uid) throw new Error("Sign in again before deleting this meal.");
+      await hardDeleteMealEntry(uid, mealId);
       await deleteFoodPhoto(uid, mealId);
       invalidateFoodPhotoCache(uid, mealId);
     },

@@ -1007,6 +1007,31 @@ export default function Food() {
       return;
     }
     if (confidence === "nl-parse") {
+      const quantityIssues = items.filter((i) => i.quantityIssue);
+      if (quantityIssues.length > 0) {
+        const corrections = quantityIssues.map((item) => {
+          const issue = item.quantityIssue!;
+          return `${item.name} (${issue.expectedUnit ? `use ${issue.expectedUnit}` : `reference portion: ${issue.referencePortion}`})`;
+        });
+        toast.warning(
+          `Couldn't calculate these quantities: ${corrections.join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
+          {
+            id: "food-nl-warning",
+            duration: 10000,
+            action: {
+              label: "Edit description",
+              onClick: (event) => {
+                // Release the toast's focus restoration before handing
+                // focus to the editable draft.
+                event.currentTarget.blur();
+                inputRef.current?.focus();
+              },
+            },
+          }
+        );
+        setNlParsing(false);
+        return;
+      }
       const unresolved = items.filter((i) => i.unrecognized);
       if (unresolved.length > 0) {
         toast.warning(
@@ -1015,7 +1040,10 @@ export default function Food() {
             id: "food-nl-warning",
             action: {
               label: "Edit description",
-              onClick: () => inputRef.current?.focus(),
+              onClick: (event) => {
+                event.currentTarget.blur();
+                inputRef.current?.focus();
+              },
             },
           }
         );

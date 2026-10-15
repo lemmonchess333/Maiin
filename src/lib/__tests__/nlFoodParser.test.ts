@@ -939,3 +939,70 @@ describe("incomplete with phrases", () => {
     );
   });
 });
+
+describe("measured quantities require a compatible nutrition reference", () => {
+  it.each([
+    ["50g milk", "240ml", "ml"],
+    ["500g milk", "240ml", "ml"],
+    ["5ml olive oil", "1 tbsp (14g)", "g"],
+    ["50ml olive oil", "1 tbsp (14g)", "g"],
+    ["150ml chicken", "150g cooked", "g"],
+    ["200g pizza", "1 slice", null],
+    ["a pint of pizza", "1 slice", null],
+  ] as const)(
+    "requires correction for %s instead of substituting one serving",
+    (text, referencePortion, expectedUnit) => {
+      const rows = parseFoodText(text);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        quantityIssue: { referencePortion, expectedUnit },
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+      });
+      expect(rows[0].unrecognized).not.toBe(true);
+      expect(rows[0].portionLabel).toBeDefined();
+    }
+  );
+
+  it.each([
+    ["50g milk with 2 eggs", "50g milk"],
+    ["chicken with 5ml olive oil", "5ml olive oil"],
+    ["2 coffee with 50g milk", "50g milk"],
+    ["2 eggs and 50ml olive oil", "50ml olive oil"],
+  ])("keeps the incompatible part visible in %s", (text, unresolved) => {
+    const rows = parseFoodText(text);
+    const issue = rows.find((row) => row.quantityIssue);
+    expect(issue?.name.toLowerCase()).toBe(unresolved);
+    expect(issue?.calories).toBe(0);
+    expect(
+      rows
+        .filter((row) => !row.quantityIssue)
+        .every((row) => !row.name.toLowerCase().includes(unresolved))
+    ).toBe(true);
+    expect(rows.some((row) => !row.quantityIssue && row.calories > 0)).toBe(
+      true
+    );
+  });
+
+  it.each([
+    ["120ml milk", 75, 4, 6, 4],
+    ["240ml milk", 150, 8, 12, 8],
+    ["0.24l milk", 150, 8, 12, 8],
+    ["7g olive oil", 60, 0, 0, 7],
+    ["14g olive oil", 119, 0, 0, 14],
+    ["0.014kg olive oil", 119, 0, 0, 14],
+    ["2 eggs", 156, 12, 2, 10],
+  ] as const)(
+    "retains independently calculated macros for %s",
+    (text, calories, protein, carbs, fat) => {
+      // References: milk 150/8/12/8 per 240ml; oil 119/0/0/14 per 14g;
+      // one egg 78/6/1/5. Scaling happens before whole-gram rounding.
+      expect(parseFoodText(text)).toEqual([
+        expect.objectContaining({ calories, protein, carbs, fat }),
+      ]);
+      expect(parseFoodText(text)[0].quantityIssue).toBeUndefined();
+    }
+  );
+});

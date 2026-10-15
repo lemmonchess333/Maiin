@@ -49,6 +49,7 @@ import EditSetSheet from "@/components/workout/EditSetSheet";
 import SetTypeChip from "@/components/workout/SetTypeChip";
 import { sessionRecords } from "@/features/program/sessionRecords";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Dialog } from "@/components/ui/Dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
 import {
@@ -334,6 +335,7 @@ export default function WorkoutSession({
   } = useWorkoutDraft(user?.uid, dayIndex, draftIdentity);
   // Captured once on mount — stable across renders via the stable hook callbacks.
   const initialDraft = useMemo(() => loadDraft(), [loadDraft]);
+  const hasRecoveryDraft = useRef(initialDraft !== null);
   // One completion id per session (packet 15). Resumed from the draft when
   // present so a retry/resume targets the SAME workout doc; persisted into
   // every draft save below. Never regenerated per Finish click.
@@ -585,9 +587,11 @@ export default function WorkoutSession({
     const hasProgress = setLogs.some((exSets) =>
       exSets.some((s) => s.completed)
     );
-    if (!hasProgress) return;
+    // Once a draft exists, Undo must also persist zero completed sets.
+    // Keep the entered values, notes and session choices with that reversal.
+    if (!hasProgress && !hasRecoveryDraft.current) return;
     if (completionPendingRef.current) return;
-    saveDraft({
+    const stored = saveDraft({
       dayIndex,
       dayName: day.dayName,
       setLogs,
@@ -601,6 +605,7 @@ export default function WorkoutSession({
       skippedRows,
       programmeContext: sessionProgrammeContext,
     });
+    if (stored) hasRecoveryDraft.current = true;
   }, [
     setLogs,
     skippedRows,
@@ -1535,6 +1540,7 @@ export default function WorkoutSession({
   };
 
   const handleStartFresh = () => {
+    hasRecoveryDraft.current = false;
     // A fresh start drops the draft's swaps and skips with its sets.
     const planned = prescription.exercises.map((ex, i) =>
       swapAt(i) ? (plannedAt(i) ?? ex) : ex
@@ -1645,50 +1651,47 @@ export default function WorkoutSession({
         />
       )}
       {showResumePrompt && initialDraft && (
-        <div className="fixed inset-0 z-[60] bg-black/60 flex items-end sm:items-center justify-center sm:p-4">
-          <motion.div
-            initial={{ y: 40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="w-full max-w-md bg-card rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-5 shadow-xl"
-          >
-            <h3 className="text-lg font-bold text-foreground">
-              Resume workout?
-            </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              You left this workout in progress earlier.
-            </p>
-            <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-              <span>
-                <span className="font-mono tabular-nums">
-                  {draftCompletedSets}
-                </span>{" "}
-                sets logged
-              </span>
-              <span>·</span>
-              <span>
-                <span className="font-mono tabular-nums">
-                  {formatElapsed(initialDraft.elapsedSeconds)}
-                </span>{" "}
-                elapsed
-              </span>
-            </div>
-            <div className="mt-5 flex gap-2">
-              <Button
-                className="flex-1"
-                onClick={() => setShowResumePrompt(false)}
-              >
-                Resume
-              </Button>
-              <Button
-                variant="secondary"
-                className="flex-1"
-                onClick={handleStartFresh}
-              >
-                Start fresh
-              </Button>
-            </div>
-          </motion.div>
-        </div>
+        <Dialog
+          open
+          onClose={onClose}
+          title="Resume workout?"
+          description="You left this workout in progress earlier."
+          size="md"
+          position="bottom"
+          overlayClassName="z-[60]"
+          className="z-[60] max-h-[calc(100dvh-2rem)] overflow-y-auto"
+        >
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>
+              <span className="font-mono tabular-nums">
+                {draftCompletedSets}
+              </span>{" "}
+              sets logged
+            </span>
+            <span>·</span>
+            <span>
+              <span className="font-mono tabular-nums">
+                {formatElapsed(initialDraft.elapsedSeconds)}
+              </span>{" "}
+              elapsed
+            </span>
+          </div>
+          <div className="mt-5 flex gap-2">
+            <Button
+              className="flex-1"
+              onClick={() => setShowResumePrompt(false)}
+            >
+              Resume
+            </Button>
+            <Button
+              variant="secondary"
+              className="flex-1"
+              onClick={handleStartFresh}
+            >
+              Start fresh
+            </Button>
+          </div>
+        </Dialog>
       )}
 
       {/* Top Bar — the day named as Train and Home name it (DS3): "Pull ·

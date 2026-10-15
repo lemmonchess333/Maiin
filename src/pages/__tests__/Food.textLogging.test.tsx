@@ -154,7 +154,194 @@ function startAnalysis() {
   };
 }
 
+function submitLocalText(text: string) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ items: [], products: [] }),
+    }))
+  );
+  render(
+    <MemoryRouter>
+      <Food />
+    </MemoryRouter>
+  );
+  const input = screen.getByLabelText("What did you eat");
+  fireEvent.change(input, { target: { value: text } });
+  fireEvent.click(screen.getByLabelText("Log meal"));
+  return input;
+}
+
 describe("food text logging", () => {
+  describe("explicit quantities need a compatible serving reference", () => {
+    it.each([
+      ["50g milk", "50g", "150ml milk", "150ml", 94, 5, 8, 5],
+      ["500g milk", "500g", "150ml milk", "150ml", 94, 5, 8, 5],
+      ["5ml olive oil", "5ml", "14g olive oil", "14g", 119, 0, 0, 14],
+      ["50ml olive oil", "50ml", "14g olive oil", "14g", 119, 0, 0, 14],
+    ] as const)(
+      "keeps %s for correction instead of saving a differently measured serving",
+      async (
+        text,
+        amount,
+        corrected,
+        portion,
+        calories,
+        protein,
+        carbs,
+        fat
+      ) => {
+        const warning = vi.spyOn(toast, "warning");
+        try {
+          const input = submitLocalText(text);
+          // Wait for the real local parser's decision, including the wrong
+          // save on an unfixed implementation, rather than passing too early.
+          await waitFor(() =>
+            expect(
+              warning.mock.calls.length + api.createMealEntry.mock.calls.length
+            ).toBeGreaterThan(0)
+          );
+          expect(api.createMealEntry).not.toHaveBeenCalled();
+          expect(api.addFavourite).not.toHaveBeenCalled();
+          expect(api.notifyMealsLogged).not.toHaveBeenCalled();
+          expect(warning).toHaveBeenCalledWith(
+            expect.stringMatching(/nothing (was )?logged/i),
+            expect.objectContaining({
+              id: "food-nl-warning",
+              action: expect.objectContaining({ label: "Edit description" }),
+            })
+          );
+          expect(
+            String(warning.mock.calls.at(-1)?.[0]).toLowerCase()
+          ).toContain(amount);
+          expect(input).toHaveValue(text);
+          expect(screen.getByLabelText("Log meal")).toBeEnabled();
+
+          // A supported correction must still save the exact measured
+          // payload; rejecting every quantity would fail this control.
+          fireEvent.change(input, { target: { value: corrected } });
+          fireEvent.click(screen.getByLabelText("Log meal"));
+          await waitFor(() =>
+            expect(api.notifyMealsLogged).toHaveBeenCalledOnce()
+          );
+          expect(api.createMealEntry).toHaveBeenCalledOnce();
+          expect(api.createMealEntry).toHaveBeenCalledWith(
+            "u1",
+            expect.objectContaining({
+              confidence: "nl-parse",
+              foodName: corrected,
+              totalCalories: calories,
+              totalProtein: protein,
+              totalCarbs: carbs,
+              totalFat: fat,
+              items: [
+                {
+                  name: corrected,
+                  portionSize: portion,
+                  calories,
+                  protein,
+                  carbs,
+                  fat,
+                },
+              ],
+            })
+          );
+          expect(input).toHaveValue("");
+        } finally {
+          warning.mockRestore();
+        }
+      }
+    );
+
+    it.each([
+      ["150ml milk", "150ml", 94, 5, 8, 5],
+      ["14g olive oil", "14g", 119, 0, 0, 14],
+    ] as const)(
+      "saves supported %s with its matching portion and macros",
+      async (text, portion, calories, protein, carbs, fat) => {
+        const warning = vi.spyOn(toast, "warning");
+        try {
+          submitLocalText(text);
+          await waitFor(() =>
+            expect(api.notifyMealsLogged).toHaveBeenCalledOnce()
+          );
+          expect(api.createMealEntry).toHaveBeenCalledWith(
+            "u1",
+            expect.objectContaining({
+              confidence: "nl-parse",
+              foodName: text,
+              totalCalories: calories,
+              totalProtein: protein,
+              totalCarbs: carbs,
+              totalFat: fat,
+              items: [
+                {
+                  name: text,
+                  portionSize: portion,
+                  calories,
+                  protein,
+                  carbs,
+                  fat,
+                },
+              ],
+            })
+          );
+          expect(warning).not.toHaveBeenCalled();
+        } finally {
+          warning.mockRestore();
+        }
+      }
+    );
+
+    it("keeps the whole meal when only one measured food lacks a compatible reference", async () => {
+      const warning = vi.spyOn(toast, "warning");
+      try {
+        const text = "2 eggs, 50g milk";
+        const input = submitLocalText(text);
+        await waitFor(() =>
+          expect(
+            warning.mock.calls.length + api.createMealEntry.mock.calls.length
+          ).toBeGreaterThan(0)
+        );
+        expect(api.createMealEntry).not.toHaveBeenCalled();
+        expect(api.addFavourite).not.toHaveBeenCalled();
+        expect(api.notifyMealsLogged).not.toHaveBeenCalled();
+        expect(String(warning.mock.calls.at(-1)?.[0])).toMatch(
+          /nothing (was )?logged/i
+        );
+        expect(input).toHaveValue(text);
+
+        fireEvent.change(input, { target: { value: "2 eggs, 150ml milk" } });
+        fireEvent.click(screen.getByLabelText("Log meal"));
+        await waitFor(() =>
+          expect(api.notifyMealsLogged).toHaveBeenCalledOnce()
+        );
+        expect(api.createMealEntry).toHaveBeenCalledOnce();
+        expect(api.createMealEntry).toHaveBeenCalledWith(
+          "u1",
+          expect.objectContaining({
+            confidence: "nl-parse",
+            totalCalories: 250,
+            totalProtein: 17,
+            totalCarbs: 10,
+            totalFat: 15,
+            items: expect.arrayContaining([
+              expect.objectContaining({ name: "Eggs (x2)", calories: 156 }),
+              expect.objectContaining({
+                name: "150ml milk",
+                portionSize: "150ml",
+                calories: 94,
+              }),
+            ]),
+          })
+        );
+      } finally {
+        warning.mockRestore();
+      }
+    });
+  });
+
   it.each([
     "chicken with tahini",
     "chicken and tahini",
