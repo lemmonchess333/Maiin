@@ -19,7 +19,9 @@ import { FOOD_NAME_MAX } from "@/lib/mealEntry";
 interface ServingSource {
   /** Display name shown at the top of the sheet. */
   foodName: string;
-  /** Number of docs currently in this group (= current serving count). */
+  /** Number of equivalent portions in this group. FoodTimeline keeps
+   * differing nutrition/items separately editable, so the average below
+   * is the actual portion that adding/removing one serving will copy. */
   currentCount: number;
   /** Total calories across all current servings — used to derive a
    *  per-serving figure for the live preview AND seed the F5a macro

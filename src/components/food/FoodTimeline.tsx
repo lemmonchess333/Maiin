@@ -11,6 +11,11 @@ import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import type { Meal } from "@/hooks/useMeals";
 import { useFoodPhotoUrls } from "@/hooks/useFoodPhotoUrls";
 import { formatTimeOfDay } from "@/utils/formatters";
+import {
+  CALORIE_UNIT,
+  formatCalories,
+  formatMacro,
+} from "@/utils/formatNutrition";
 
 /**
  * The Food diary feed — a single chronological timeline (newest first),
@@ -21,10 +26,10 @@ import { formatTimeOfDay } from "@/utils/formatters";
  * "Moved X to Y" toast). Slot targeting for NEW logs lives on in the
  * composer pills; this surface is purely the record of the day.
  *
- * Grouping is unchanged from the sections era — same-name logs within
- * one slot collapse to a "×N" row with the same `${slot}-${name}` id, so
- * the lifted openRowId, group delete, and the edit sheet's count/slot/
- * macro semantics all carry over untouched.
+ * Identical portions within one slot collapse to a "×N" row. A shared
+ * name alone does not make two portions interchangeable: the edit sheet
+ * repeats or removes a whole recorded portion, so different nutrition or
+ * item quantities stay separately editable instead of becoming an average.
  *
  * Mixed feed (Food8): AI-scanned meals keep their capture and show it;
  * text, barcode and manual logs have none. Pol1 made the photo a 52 px
@@ -65,6 +70,28 @@ function safeNum(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+/** Only the serving's contents belong in this identity. Timestamps,
+ * revision counters and record ids describe its history, not its size. */
+function portionIdentity(meal: Meal): string {
+  return JSON.stringify([
+    safeNum(meal.totalCalories),
+    safeNum(meal.totalProtein),
+    safeNum(meal.totalCarbs),
+    safeNum(meal.totalFat),
+    (meal.items ?? []).map((item) => [
+      item.name,
+      item.portionSize,
+      safeNum(item.calories),
+      safeNum(item.protein),
+      safeNum(item.carbs),
+      safeNum(item.fat),
+      item.fiber ?? null,
+      item.sugar ?? null,
+      item.sodium ?? null,
+    ]),
+  ]);
+}
+
 interface FoodTimelineProps {
   /** All visible meal docs for the selected day (pending deletes
    *  already filtered by the parent). */
@@ -84,10 +111,10 @@ export default function FoodTimeline({
   onDelete,
   onEdit,
 }: FoodTimelineProps) {
-  // Group same-name logs within a slot (identical key shape to the
-  // sections era so row ids — and therefore openRowId — are stable
-  // across the migration). Each group tracks its LATEST log time,
-  // which drives both the timeline order and the row's time caption.
+  // A serving step must copy/remove an equivalent recorded portion.
+  // Include its contents in the stable key so adding/removing another
+  // portion cannot make an open row switch to a different portion size.
+  // Each group tracks its latest log time for the timeline and caption.
   const grouped = new Map<
     string,
     {
@@ -105,7 +132,7 @@ export default function FoodTimeline({
   for (const m of meals) {
     const slot = mealSlotFor(m);
     const nameKey = (m.foodName || "Meal").toLowerCase().trim();
-    const key = `${slot}-${nameKey}`;
+    const key = `${slot}-${nameKey}-${portionIdentity(m)}`;
     const loggedMs = mealLoggedAt(m.createdAt)?.getTime() ?? 0;
     const existing = grouped.get(key);
     if (existing) {
@@ -133,6 +160,11 @@ export default function FoodTimeline({
   const entries = Array.from(grouped.values()).sort(
     (a, b) => b.latestMs - a.latestMs
   );
+  const nameCounts = new Map<string, number>();
+  for (const group of entries) {
+    const name = group.foodName.toLowerCase().trim();
+    nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
+  }
 
   /* Device-local photo resolution (Food9). One id per group is enough:
      grouping collapses same-name logs in one slot, and the card shows a
@@ -204,6 +236,30 @@ export default function FoodTimeline({
             first paint: the day's rows are simply there. */}
         <AnimatePresence initial={false}>
           {entries.map((group) => {
+            // aria-label replaces the row's visible text. Name collisions
+            // therefore need the portion details in both action labels.
+            const accessibleFoodName =
+              (nameCounts.get(group.foodName.toLowerCase().trim()) ?? 0) > 1
+                ? [
+                    group.foodName,
+                    MEAL_LABELS[group.slot],
+                    `${formatCalories(group.totalCal)} ${CALORIE_UNIT}`,
+                    `${group.meals.length} ${group.meals.length === 1 ? "serving" : "servings"}`,
+                    `${formatMacro(group.totalPro)} g protein`,
+                    `${formatMacro(group.totalCarb)} g carbs`,
+                    `${formatMacro(group.totalFat)} g fat`,
+                    ...(group.meals[0].items ?? []).map((item) =>
+                      [
+                        item.name,
+                        item.portionSize ? `(${item.portionSize})` : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")
+                    ),
+                  ]
+                    .filter(Boolean)
+                    .join(", ")
+                : undefined;
             const rowGroup: FoodRowGroup = {
               id: group.id,
               foodName: group.foodName,
@@ -221,6 +277,7 @@ export default function FoodTimeline({
               <FoodRow
                 key={group.id}
                 group={rowGroup}
+                accessibleFoodName={accessibleFoodName}
                 photoUrl={photoUrlOf(group)}
                 slot={group.slot}
                 thumbnailColumn={dayHasPhotos}

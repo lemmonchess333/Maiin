@@ -23,9 +23,9 @@ import { db } from "@/lib/firebase";
 import { logger } from "@/lib/logger";
 import { parseMealDoc, type Meal } from "@/hooks/useMeals";
 
-/** The window the archive screen offers. A UI convention, not a retention
- *  guarantee — nothing purges soft-deleted docs (see `useMeals`). */
-export const DELETED_ARCHIVE_WINDOW_MS = 24 * 60 * 60 * 1000;
+/** Include every supported Firestore timestamp, excluding null/missing
+ *  deletion fields. Meals remain recoverable until an explicit hard delete. */
+const FIRST_TIMESTAMP = Timestamp.fromDate(new Date("0001-01-01T00:00:00Z"));
 
 /** Stable identity so a signed-out render does not churn consumers. */
 const EMPTY: Meal[] = [];
@@ -39,13 +39,9 @@ export function useDeletedMeals(uid: string | null | undefined): {
 
   useEffect(() => {
     if (!uid) return;
-    /* Captured once per mount rather than recomputed per render. A sliding
-       cutoff would drop a meal out of the list while the user was reaching
-       for it — the one moment this screen exists to serve. */
-    const cutoff = Timestamp.fromMillis(Date.now() - DELETED_ARCHIVE_WINDOW_MS);
     const q = query(
       collection(db, "users", uid, "meals"),
-      where("deletedAt", ">=", cutoff),
+      where("deletedAt", ">=", FIRST_TIMESTAMP),
       orderBy("deletedAt", "desc")
     );
     const unsubscribe = onSnapshot(

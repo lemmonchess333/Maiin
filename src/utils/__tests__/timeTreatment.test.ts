@@ -204,7 +204,7 @@ const dayPeriods = (code: string) => hitsIn(code, DAY_PERIOD);
 let sourcesCache: { rel: string; code: string }[] | undefined;
 function sources(): { rel: string; code: string }[] {
   sourcesCache ??= walk(SRC_ROOT).map((file) => ({
-    rel: file.slice(SRC_ROOT.length + 1),
+    rel: file.slice(SRC_ROOT.length + 1).replaceAll("\\", "/"),
     code: stripComments(readFileSync(file, "utf8")),
   }));
   return sourcesCache;

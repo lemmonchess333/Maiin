@@ -1853,6 +1853,28 @@ function parseServingMl(serving: string): number | null {
   return m ? parseFloat(m[1]) : null;
 }
 
+/** A quantity scales the matched food's own serving, in standalone and
+ *  compound inputs alike. Mismatched units retain the one-serving fallback. */
+function foodMultiplier(
+  key: string,
+  amount: ReturnType<typeof extractQty>
+): number {
+  const item = FOOD_DB[key];
+  let multiplier = amount.qty;
+  const piece = amount.counted ? pieceGrams(key, amount.rest) : null;
+  if (piece) {
+    const servingGrams = parseServingGrams(item.serving);
+    if (servingGrams) multiplier = (amount.qty * piece) / servingGrams;
+  } else if (amount.grams !== undefined) {
+    const servingGrams = parseServingGrams(item.serving);
+    if (servingGrams) multiplier = amount.grams / servingGrams;
+  } else if (amount.ml !== undefined) {
+    const servingMl = parseServingMl(item.serving);
+    if (servingMl) multiplier = amount.ml / servingMl;
+  }
+  return multiplier;
+}
+
 /**
  * Edit distance for typos. Swapping two neighbouring letters ("chciken")
  * is one slip, as it is on a keyboard, not two (optimal string alignment).
@@ -2176,6 +2198,26 @@ function addedShare(baseKey: string | null, key: string): number {
   return ml ? SPLASH_ML / ml : 1;
 }
 
+function unrecognizedFood(text: string): ParsedFood {
+  const { qty, grams, ml, portionLabel, namePrefix, rest } = extractQty(text);
+  const displayName =
+    grams !== undefined || ml !== undefined
+      ? `${namePrefix ?? portionLabel} ${rest}`
+      : qty > 1
+        ? `${rest} (x${qty})`
+        : rest;
+  logger.warn("[nlFoodParser] Unrecognized food:", rest);
+  return {
+    name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    unrecognized: true,
+    ...(portionLabel ? { portionLabel } : {}),
+  };
+}
+
 export function parseFoodText(input: string): ParsedFood[] {
   if (!input.trim()) return [];
 
@@ -2192,14 +2234,11 @@ export function parseFoodText(input: string): ParsedFood[] {
     const { qty, grams, ml, portionLabel, namePrefix, counted, rest } =
       extractQty(segment);
 
-    // Mass/volume-prefixed inputs skip the compound `with` path —
-    // the user's portion applies to one food, not a sum. "100g
-    // chicken with rice" is ambiguous (rice portion is unclear);
-    // we treat the whole rest as a single food and match best-effort.
     const hasUnitPrefix = grams !== undefined || ml !== undefined;
 
-    // Handle "X with Y" pattern (e.g. "toast with butter")
-    const withParts = hasUnitPrefix ? [rest] : rest.split(/\s+with\s+/i);
+    // A leading measure belongs to the base; the addition keeps its own
+    // portion (or normal serving), just as in "200g chicken, rice".
+    const withParts = rest.split(/\s+with\s+/i);
 
     if (withParts.length > 1) {
       let totalCal = 0,
@@ -2207,33 +2246,94 @@ export function parseFoodText(input: string): ParsedFood[] {
         totalC = 0,
         totalF = 0;
       let anyMatch = false;
+      let hasExplicitSide = false;
       const baseKey = findBestMatch(withParts[0]);
+      const typedParts = segment.split(/\s+with\s+/i);
+      const matchedParts: { index: number; text: string }[] = [];
+      const unresolved: ParsedFood[] = [];
 
       for (const [i, part] of withParts.entries()) {
-        const key = findBestMatch(part);
+        const extracted = extractQty(part);
+        // The leading count was removed before splitting "with". Keep
+        // that context so a counted base uses its piece weight; the count
+        // itself still applies once through `qty` below. Bare foods and
+        // containers keep their normal serving because pieceGrams checks
+        // that the remaining wording names only the food itself.
+        const amount =
+          i === 0 ? { ...extracted, counted, grams, ml } : extracted;
+        const key = findBestMatch(amount.rest);
         if (key) {
+          matchedParts.push({ index: i, text: part });
           const item = FOOD_DB[key];
-          const share = i === 0 ? 1 : addedShare(baseKey, key);
+          const assumedShare = i === 0 ? 1 : addedShare(baseKey, key);
+          const articlePortion = /^an?\s+/i.test(part);
+          const impliedSplash =
+            assumedShare !== 1 &&
+            amount.grams === undefined &&
+            amount.ml === undefined &&
+            (!amount.counted ||
+              articlePortion ||
+              /\bsplash(?:es)?\b/i.test(amount.rest));
+          const explicitPortion =
+            amount.grams !== undefined ||
+            amount.ml !== undefined ||
+            (amount.counted && !(impliedSplash && articlePortion));
+          if (i > 0 && explicitPortion) hasExplicitSide = true;
+          // An explicit measure wins over an implied splash. An article
+          // ("a splash of milk") retains the existing cup-sized assumption.
+          const portionShare = impliedSplash
+            ? assumedShare * amount.qty
+            : foodMultiplier(key, amount);
+          // The leading quantity repeats the base and implicit additions.
+          // A side's own count, grams or ml is an absolute amount, applied
+          // once even when the leading quantity is zero.
+          const share = portionShare * (i === 0 || !explicitPortion ? qty : 1);
           totalCal += item.calories * share;
           totalP += item.protein * share;
           totalC += item.carbs * share;
           totalF += item.fat * share;
           anyMatch = true;
+        } else {
+          // Keep the missing ingredient (including its typed portion).
+          // A caller must not mistake a known subtotal for the whole meal.
+          unresolved.push(unrecognizedFood(i === 0 ? typedParts[0] : part));
         }
       }
 
       if (anyMatch) {
-        const displayName = qty > 1 ? `${rest} (x${qty})` : rest;
+        const knownRest =
+          unresolved.length > 0
+            ? matchedParts.map((part) => part.text).join(" with ")
+            : rest;
+        const hasKnownBase = matchedParts[0].index === 0;
+        // A whole-meal xN suffix would imply that explicit sides repeat too.
+        let displayName = qty > 1 ? `${knownRest} (x${qty})` : knownRest;
+        if (hasExplicitSide) {
+          displayName =
+            unresolved.length > 0
+              ? matchedParts
+                  .map((part) => (part.index === 0 ? typedParts[0] : part.text))
+                  .join(" with ")
+              : segment;
+        }
+        if (hasUnitPrefix && hasKnownBase) {
+          displayName = `${namePrefix ?? portionLabel} ${knownRest}`;
+        }
         // Compound `with` rows are a separate semantic from single-food rows;
         // intentionally NOT setting _canonicalKey so they never merge with
         // simple foods (the macros are sums, not 1:1 to a single FOOD_DB entry).
         results.push({
           name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
-          calories: Math.round(totalCal * qty),
-          protein: Math.round(totalP * qty),
-          carbs: Math.round(totalC * qty),
-          fat: Math.round(totalF * qty),
+          calories: Math.round(totalCal),
+          protein: Math.round(totalP),
+          carbs: Math.round(totalC),
+          fat: Math.round(totalF),
         });
+        results.push(...unresolved);
+        continue;
+      }
+      if (unresolved.length > 0) {
+        results.push(...unresolved);
         continue;
       }
     }
@@ -2250,18 +2350,7 @@ export function parseFoodText(input: string): ParsedFood[] {
       // `portionLabel` still carries the user's wording so the saved
       // entry stays honest. Better than silently producing the
       // count-prefix bug (200x macros).
-      let multiplier = qty;
-      const piece = counted ? pieceGrams(key, rest) : null;
-      if (piece) {
-        const servingGrams = parseServingGrams(item.serving);
-        if (servingGrams) multiplier = (qty * piece) / servingGrams;
-      } else if (grams !== undefined) {
-        const servingGrams = parseServingGrams(item.serving);
-        if (servingGrams) multiplier = grams / servingGrams;
-      } else if (ml !== undefined) {
-        const servingMl = parseServingMl(item.serving);
-        if (servingMl) multiplier = ml / servingMl;
-      }
+      const multiplier = foodMultiplier(key, { qty, grams, ml, counted, rest });
       // Name preserves the user's wording: typed portion ("200g chicken")
       // rounds out the prefix already, so we just title-case the rest
       // and the portionLabel carries the unit.
@@ -2290,8 +2379,8 @@ export function parseFoodText(input: string): ParsedFood[] {
       continue;
     }
 
-    // Fallback: compound word matching ("ham sandwich" → ham + sandwich)
-    // Skipped for unit-prefixed inputs — see hasUnitPrefix note above.
+    // Fallback: compound word matching ("ham sandwich" → ham + sandwich).
+    // A measured single-food portion cannot safely scale a sum of foods.
     const compound = hasUnitPrefix ? null : findCompoundMatch(rest);
     if (compound && compound.macros.calories > 0) {
       const displayName = qty > 1 ? `${rest} (x${qty})` : rest;
@@ -2306,24 +2395,7 @@ export function parseFoodText(input: string): ParsedFood[] {
       continue;
     }
 
-    // Unrecognized — return with zero macros and flag. Unit-prefixed
-    // inputs still carry their portionLabel so the user sees "200g
-    // <unknown food>" instead of losing the wording entirely.
-    logger.warn("[nlFoodParser] Unrecognized food:", rest);
-    const displayName = hasUnitPrefix
-      ? `${namePrefix ?? portionLabel} ${rest}`
-      : qty > 1
-        ? `${rest} (x${qty})`
-        : rest;
-    results.push({
-      name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      unrecognized: true,
-      ...(portionLabel ? { portionLabel } : {}),
-    });
+    results.push(unrecognizedFood(segment));
   }
 
   return mergeByCanonicalKey(results);

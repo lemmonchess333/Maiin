@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import {
   weekKeyMinusN,
   computeBaseline,
@@ -77,8 +78,12 @@ describe("weekKeyMinusN", () => {
 // local week, not to the week the UTC-rolled Monday opens.
 describe("localWeekKey / weekKeyMinusN — UTC/local drift", () => {
   it("localWeekKey keys a late-Sunday-night local time to its local week under a negative-offset TZ", () => {
-    const enginePath = path.resolve(__dirname, "../performanceEngine.ts");
-    const dateHelpersPath = path.resolve(__dirname, "../dateHelpers.ts");
+    const engineUrl = pathToFileURL(
+      path.resolve(__dirname, "../performanceEngine.ts")
+    ).href;
+    const dateHelpersUrl = pathToFileURL(
+      path.resolve(__dirname, "../dateHelpers.ts")
+    ).href;
     // Actually import + call the REAL exported functions under TZ=America/
     // New_York (UTC-5). Sun 2025-01-05 23:30 local NY = 2025-01-06 04:30Z.
     // Under the Monday anchor that Sunday CLOSES the week that opened on
@@ -86,8 +91,8 @@ describe("localWeekKey / weekKeyMinusN — UTC/local drift", () => {
     // and keys the NEXT week — a whole week of drift, in the direction the
     // pre-fix bug (previous-day drift) always ran.
     const script = `
-      import { weekKeyMinusN } from ${JSON.stringify(enginePath)};
-      import { localWeekKey } from ${JSON.stringify(dateHelpersPath)};
+      import { weekKeyMinusN } from ${JSON.stringify(engineUrl)};
+      import { localWeekKey } from ${JSON.stringify(dateHelpersUrl)};
       const d = new Date(2025, 0, 5, 23, 30, 0); // local Sun 23:30
       process.stdout.write(JSON.stringify({
         weekKey: localWeekKey(d),

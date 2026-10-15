@@ -67,7 +67,9 @@ interface Hit {
 
 function scan(): Hit[] {
   const out: Hit[] = [];
-  for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot })) {
+  for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot }).map(
+    (file) => file.replaceAll("\\", "/")
+  )) {
     if (rel.includes("__tests__") || rel.includes(".test.")) continue;
     if (NOT_PRODUCT.some((p) => rel.startsWith(p))) continue;
     // The constant's own home.
@@ -123,7 +125,9 @@ describe("the calorie unit comes from CALORIE_UNIT", () => {
     /* Otherwise an entry outlives what justified it and silently exempts
        whatever gets written there next. */
     for (const prefix of NOT_PRODUCT) {
-      const files = globSync(`${prefix}**/*.{ts,tsx}`, { cwd: repoRoot });
+      const files = globSync(`${prefix}**/*.{ts,tsx}`, { cwd: repoRoot }).map(
+        (file) => file.replaceAll("\\", "/")
+      );
       expect(files.length, `${prefix} matches no files`).toBeGreaterThan(0);
     }
   });

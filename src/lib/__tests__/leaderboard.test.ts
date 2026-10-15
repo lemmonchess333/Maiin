@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { localDateString } from "../dateHelpers";
 
 /**
@@ -28,13 +29,15 @@ describe("leaderboard weekly cutoff — local vs UTC date string", () => {
   });
 
   it("uses the LOCAL date of `since` under a positive-offset TZ (regression)", () => {
-    const helpersPath = path.resolve(__dirname, "../dateHelpers.ts");
+    const helpersUrl = pathToFileURL(
+      path.resolve(__dirname, "../dateHelpers.ts")
+    ).href;
     // Reproduce leaderboard's `since` derivation under TZ=Asia/Tokyo (UTC+9):
     // Date() at a Sunday instant → rewind to local Sunday midnight. The local
     // cutoff must be 2025-01-05; the old toISOString() cutoff drifts back to
     // the previous Saturday because local midnight = 15:00 the prior day UTC.
     const script = `
-      import { localDateString } from ${JSON.stringify(helpersPath)};
+      import { localDateString } from ${JSON.stringify(helpersUrl)};
       // pretend "now" is Sun 2025-01-05 09:00 local Tokyo
       const now = new Date(2025, 0, 5, 9, 0, 0);
       const since = new Date(now);

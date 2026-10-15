@@ -107,7 +107,7 @@ function walk(dir: string, keep: (p: string) => boolean): string[] {
     return out;
   }
   for (const name of entries) {
-    const full = resolve(dir, name);
+    const full = resolve(dir, name).replaceAll("\\", "/");
     if (statSync(full).isDirectory()) {
       if (name === "node_modules") continue;
       out.push(...walk(full, keep));
@@ -141,7 +141,7 @@ const consumers = CONSUMER_ROOTS.flatMap((root) =>
 function unrendered(): string[] {
   const out: string[] = [];
   for (const file of componentFiles) {
-    const rel = relative(repoRoot, file);
+    const rel = relative(repoRoot, file).replaceAll("\\", "/");
     const name = rel
       .split("/")
       .pop()!
@@ -193,7 +193,9 @@ describe("component reachability (src/components + src/features)", () => {
   it("every pinned entry names a real file and gives a reason", () => {
     for (const { path, why } of KNOWN_ORPHAN_COMPONENTS) {
       expect(
-        componentFiles.some((f) => relative(repoRoot, f) === path),
+        componentFiles.some(
+          (f) => relative(repoRoot, f).replaceAll("\\", "/") === path
+        ),
         `${path} is pinned but does not exist — remove the entry`
       ).toBe(true);
       // "No reason given" is the one state the symbolReachability doctrine

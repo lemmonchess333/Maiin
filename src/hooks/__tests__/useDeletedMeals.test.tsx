@@ -17,7 +17,7 @@ vi.mock("@/lib/firebase", () => ({ db: {}, auth: { currentUser: null } }));
 vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }));
-import { useDeletedMeals, DELETED_ARCHIVE_WINDOW_MS } from "../useDeletedMeals";
+import { useDeletedMeals } from "../useDeletedMeals";
 import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
 import { Timestamp } from "firebase/firestore";
 
@@ -91,11 +91,11 @@ describe("useDeletedMeals", () => {
     expect(result.current.deletedMeals).toEqual([]);
   });
 
-  it("excludes a deletion older than the archive window", async () => {
+  it("keeps older deletions recoverable until explicitly restored or removed", async () => {
     seedFirestore({
       "users/u1/meals/expired": meal({
         foodName: "Long gone",
-        deletedAt: ago(DELETED_ARCHIVE_WINDOW_MS + 60 * MINUTE),
+        deletedAt: ago(30 * DAY),
       }),
       "users/u1/meals/fresh": meal({
         foodName: "Still here",
@@ -106,6 +106,21 @@ describe("useDeletedMeals", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.deletedMeals.map((m) => m.foodName)).toEqual([
       "Still here",
+      "Long gone",
+    ]);
+  });
+
+  it("does not introduce a lower retention cutoff for stored timestamps", async () => {
+    seedFirestore({
+      "users/u1/meals/legacy": meal({
+        foodName: "Legacy deletion",
+        deletedAt: Timestamp.fromMillis(-1),
+      }),
+    });
+    const { result } = renderHook(() => useDeletedMeals("u1"));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.deletedMeals.map((m) => m.foodName)).toEqual([
+      "Legacy deletion",
     ]);
   });
 

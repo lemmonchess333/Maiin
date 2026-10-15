@@ -1254,7 +1254,12 @@ export default function RunSetupModal({
             <button
               type="button"
               onClick={() => {
-                if (!targetError) onStart(config);
+                if (!targetError)
+                  onStart(
+                    config.activityType === "intervals"
+                      ? { ...config, intervals: intervalConfig }
+                      : config
+                  );
               }}
               disabled={!!targetError}
               // Run7 Q4 — Sport-primary CTA. Was an orange→pink gradient

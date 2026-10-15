@@ -96,20 +96,21 @@ describe("every map carries the credit", () => {
   );
 
   it("finds the maps (the scan reaches them)", () => {
-    expect(builders.map((f) => relative(repoRoot, f)).sort()).toEqual([
+    expect(
+      builders.map((f) => relative(repoRoot, f).replaceAll("\\", "/")).sort()
+    ).toEqual([
       "src/components/run/RoutePlannerSheet.tsx",
       "src/components/run/RunMap.tsx",
     ]);
   });
 
-  it.each(builders.map((f) => [relative(repoRoot, f), f]))(
-    "%s draws the basemap and adds its credit",
-    (_name, file) => {
-      const src = readFileSync(file, "utf8");
-      expect(src).toMatch(/style:\s*basemapStyle\(/);
-      expect(src).toMatch(/addBasemapCredit\(/);
-    }
-  );
+  it.each(
+    builders.map((f) => [relative(repoRoot, f).replaceAll("\\", "/"), f])
+  )("%s draws the basemap and adds its credit", (_name, file) => {
+    const src = readFileSync(file, "utf8");
+    expect(src).toMatch(/style:\s*basemapStyle\(/);
+    expect(src).toMatch(/addBasemapCredit\(/);
+  });
 
   it("no source file still names CARTO's hosts", () => {
     const named = files.filter((f) =>

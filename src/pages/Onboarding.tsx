@@ -59,7 +59,12 @@ import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
 import { describeRejection } from "@/lib/callableErrors";
-import { formatWeightInUnit, formatStonePounds } from "@/lib/weightUnits";
+import {
+  formatWeightInUnit,
+  formatStonePounds,
+  kgToLb,
+  lbToKg,
+} from "@/lib/weightUnits";
 import { newRunnerUntil } from "@/features/program/newRunner";
 import { runDoseLine } from "@/lib/runDose";
 import { smallPlatesHint } from "@/lib/liftRules";
@@ -278,6 +283,12 @@ export default function Onboarding() {
     "kg" | "lbs" | "st"
   >(draft?.weightDisplayUnit ?? draft?.weightUnit ?? "kg");
   const weightUnit = weightDisplayUnit === "st" ? "lbs" : weightDisplayUnit;
+  const [goalWeightText, setGoalWeightText] = useState(
+    draft?.goalWeightText ?? ""
+  );
+  const [paceKgPerWeek, setPaceKgPerWeek] = useState<0.25 | 0.5 | 0.75>(
+    draft?.paceKgPerWeek ?? 0.5
+  );
   const liftUnit = liftUnitForBodyWeight(weightDisplayUnit);
   const [metricsValid, setMetricsValid] = useState(true);
   // Existing optional motivation is retained in resumed drafts; no extra setup prompt.
@@ -321,6 +332,8 @@ export default function Onboarding() {
       recentRaceDistance,
       recentRaceMinutes,
       recentRaceSeconds,
+      goalWeightText,
+      paceKgPerWeek,
     }),
     [
       step,
@@ -359,6 +372,8 @@ export default function Onboarding() {
       recentRaceDistance,
       recentRaceMinutes,
       recentRaceSeconds,
+      goalWeightText,
+      paceKgPerWeek,
     ]
   );
   useEffect(() => {
@@ -380,14 +395,33 @@ export default function Onboarding() {
   /* Goal weight (optional): the target weight owns the nutrition direction
      (goalWeightPlan's locked MacroFactor model), so an empty box holds the
      current weight, as before. Typed in the person's weight unit. */
-  const [goalWeightText, setGoalWeightText] = useState("");
-  const [paceKgPerWeek, setPaceKgPerWeek] = useState<0.25 | 0.5 | 0.75>(0.5);
+  const goalWeightNumber = /^(?:\d+(?:[.,]\d*)?|[.,]\d+)$/.test(
+    goalWeightText.trim()
+  )
+    ? Number(goalWeightText.trim().replace(",", "."))
+    : NaN;
   const goalWeightKgInput = useMemo(() => {
-    const n = Number.parseFloat(goalWeightText.replace(",", "."));
-    if (!Number.isFinite(n)) return null;
-    const kg = weightUnit === "lbs" ? n / 2.20462 : n;
-    return kg >= 30 && kg <= 300 ? kg : null;
-  }, [goalWeightText, weightUnit]);
+    if (!Number.isFinite(goalWeightNumber)) return null;
+    const kg =
+      weightUnit === "lbs" ? lbToKg(goalWeightNumber) : goalWeightNumber;
+    return kg >= WEIGHT_KG.min && kg <= WEIGHT_KG.max ? kg : null;
+  }, [goalWeightNumber, weightUnit]);
+  const goalWeightInvalid =
+    goalWeightText.trim() !== "" && goalWeightKgInput === null;
+  const changeWeightDisplayUnit = (next: "kg" | "lbs" | "st") => {
+    const nextGoalUnit = next === "st" ? "lbs" : next;
+    if (nextGoalUnit !== weightUnit && Number.isFinite(goalWeightNumber)) {
+      // Convert even an out-of-range number: changing units cannot turn an
+      // invalid 500 kg target into a valid 500 lb target.
+      const kg =
+        weightUnit === "lbs" ? lbToKg(goalWeightNumber) : goalWeightNumber;
+      // Keep conversion precision: a one-decimal display would move 30 kg
+      // below the accepted minimum (66.1 lb) and 300 kg above its maximum.
+      const displayed = nextGoalUnit === "lbs" ? kgToLb(kg) : kg;
+      setGoalWeightText(String(Number(displayed.toFixed(6))));
+    }
+    setWeightDisplayUnit(next);
+  };
   const goalPlan = useMemo(
     () =>
       resolveGoalWeightPlan({
@@ -536,6 +570,7 @@ export default function Onboarding() {
     bodyAnswered &&
     ageRange !== "under-16" &&
     metricsValid &&
+    !goalWeightInvalid &&
     weightKg >= WEIGHT_KG.min &&
     weightKg <= WEIGHT_KG.max &&
     heightCm >= HEIGHT_CM.min &&
@@ -1534,7 +1569,7 @@ export default function Onboarding() {
                 heightUnit={heightUnit}
                 onWeight={setWeightKg}
                 onHeight={setHeightCm}
-                onWeightUnit={setWeightDisplayUnit}
+                onWeightUnit={changeWeightDisplayUnit}
                 onHeightUnit={setHeightUnit}
                 onValidityChange={setMetricsValid}
               />
@@ -1606,6 +1641,12 @@ export default function Onboarding() {
                     inputMode="decimal"
                     className="ds-input w-32 min-h-11 font-mono tabular-nums"
                     value={goalWeightText}
+                    aria-invalid={goalWeightInvalid}
+                    aria-describedby={
+                      goalWeightInvalid
+                        ? "onboarding-goal-weight-error"
+                        : undefined
+                    }
                     placeholder={formatWeightInUnit(weightKg, weightUnit)}
                     onChange={(event) => setGoalWeightText(event.target.value)}
                   />
@@ -1613,6 +1654,17 @@ export default function Onboarding() {
                     {weightUnit === "lbs" ? "lb" : "kg"}
                   </span>
                 </div>
+                {goalWeightInvalid && (
+                  <p
+                    id="onboarding-goal-weight-error"
+                    role="alert"
+                    className="text-sm text-destructive-strong"
+                  >
+                    <InlineNumerals>
+                      {`Enter a goal weight between ${weightUnit === "lbs" ? kgToLb(WEIGHT_KG.min) : WEIGHT_KG.min} and ${weightUnit === "lbs" ? kgToLb(WEIGHT_KG.max) : WEIGHT_KG.max} ${weightUnit === "lbs" ? "lb" : "kg"}.`}
+                    </InlineNumerals>
+                  </p>
+                )}
                 {goalPlan.direction === "maintain" ? (
                   <p className="text-sm text-muted-foreground">
                     {primaryGoal === "fat_loss"

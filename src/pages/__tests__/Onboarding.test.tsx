@@ -1133,3 +1133,139 @@ describe("setup, by the names the journeys use", () => {
     expect(screen.getByRole("button", { name: SETUP.start })).toBeEnabled();
   });
 });
+
+describe("goal weight and weekly pace", () => {
+  const editGoal = () => {
+    saveOnboardingDraft("setup-test", { ...draft, bodyAnswered: true });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Edit about you" }));
+    fireEvent.change(screen.getByLabelText(/Goal weight/), {
+      target: { value: "70" },
+    });
+  };
+  it("commits goal weight and pace correctly before any reload or unit change", async () => {
+    editGoal();
+    fireEvent.click(screen.getByRole("radio", { name: "0.25 kg" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back to review" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const payload = complete.mock.calls[0][0].profileData;
+    expect(payload.goalWeightKg).toBe(70);
+    expect(payload.weeklyRateKg).toBe(-0.25);
+  });
+  it("keeps goal weight and weekly pace through reload and commits the intended deficit", async () => {
+    editGoal();
+    fireEvent.click(screen.getByRole("radio", { name: "0.25 kg" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back to review" }));
+    expect(
+      screen.getByText("To lose about 0.25 kg a week.")
+    ).toBeInTheDocument();
+    cleanup();
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const payload = complete.mock.calls[0][0].profileData;
+    expect(payload.goalWeightKg).toBe(70);
+    expect(payload.weeklyRateKg).toBe(-0.25);
+  });
+  it("converts the goal when body-weight presentation changes from kg to lb", async () => {
+    editGoal();
+    const units = screen.getByRole("radiogroup", { name: "Weight unit" });
+    fireEvent.click(within(units).getByRole("radio", { name: "lb" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back to review" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    const payload = complete.mock.calls[0][0].profileData;
+    expect(payload.goalWeightKg).toBeCloseTo(70, 1);
+  });
+  it("preserves the goal through kg, lb, stone, and kg display changes", async () => {
+    editGoal();
+    const units = screen.getByRole("radiogroup", { name: "Weight unit" });
+    fireEvent.click(within(units).getByRole("radio", { name: "lb" }));
+    expect(
+      Number((screen.getByLabelText(/Goal weight/) as HTMLInputElement).value)
+    ).toBeCloseTo(154.3, 1);
+    fireEvent.click(within(units).getByRole("radio", { name: "st" }));
+    expect(
+      Number((screen.getByLabelText(/Goal weight/) as HTMLInputElement).value)
+    ).toBeCloseTo(154.3, 1);
+    fireEvent.click(within(units).getByRole("radio", { name: "kg" }));
+    expect(
+      Number((screen.getByLabelText(/Goal weight/) as HTMLInputElement).value)
+    ).toBeCloseTo(70, 1);
+    fireEvent.click(screen.getByRole("button", { name: "Back to review" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    await waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    expect(complete.mock.calls[0][0].profileData.goalWeightKg).toBeCloseTo(
+      70,
+      1
+    );
+  });
+  it.each(["500", "29", "70abc", "-70"])(
+    "refuses invalid goal %s and allows recovery by clearing it",
+    (value) => {
+      editGoal();
+      fireEvent.change(screen.getByLabelText(/Goal weight/), {
+        target: { value },
+      });
+      expect(
+        screen.getByRole("button", { name: "Back to review" })
+      ).toBeDisabled();
+      expect(screen.getByLabelText(/Goal weight/)).toHaveAttribute(
+        "aria-invalid",
+        "true"
+      );
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Enter a goal weight between"
+      );
+      fireEvent.change(screen.getByLabelText(/Goal weight/), {
+        target: { value: "" },
+      });
+      expect(
+        screen.getByRole("button", { name: "Back to review" })
+      ).toBeEnabled();
+      expect(screen.queryByRole("alert")).toBeNull();
+    }
+  );
+  it.each(["30", "300"])(
+    "keeps the valid %s kg boundary valid after changing to lb",
+    (value) => {
+      editGoal();
+      fireEvent.change(screen.getByLabelText(/Goal weight/), {
+        target: { value },
+      });
+      const units = screen.getByRole("radiogroup", { name: "Weight unit" });
+      fireEvent.click(within(units).getByRole("radio", { name: "lb" }));
+      expect(
+        screen.getByRole("button", { name: "Back to review" })
+      ).toBeEnabled();
+      expect(screen.getByLabelText(/Goal weight/)).toHaveAttribute(
+        "aria-invalid",
+        "false"
+      );
+    }
+  );
+  it("keeps an out-of-range goal invalid when changing units and after reload", () => {
+    editGoal();
+    fireEvent.change(screen.getByLabelText(/Goal weight/), {
+      target: { value: "500" },
+    });
+    const units = screen.getByRole("radiogroup", { name: "Weight unit" });
+    fireEvent.click(within(units).getByRole("radio", { name: "lb" }));
+    expect(
+      screen.getByRole("button", { name: "Back to review" })
+    ).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "66.1386 and 661.386 lb"
+    );
+    cleanup();
+    open();
+    expect(
+      screen.getByRole("button", { name: "Back to review" })
+    ).toBeDisabled();
+    expect(screen.getByLabelText(/Goal weight/)).toHaveAttribute(
+      "aria-invalid",
+      "true"
+    );
+  });
+});

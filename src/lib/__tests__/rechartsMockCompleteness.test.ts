@@ -145,7 +145,9 @@ interface Case {
 
 function cases(): Case[] {
   const out: Case[] = [];
-  for (const rel of globSync("src/**/__tests__/*.{ts,tsx}", { cwd: ROOT })) {
+  for (const rel of globSync("src/**/__tests__/*.{ts,tsx}", { cwd: ROOT }).map(
+    (file) => file.replaceAll("\\", "/")
+  )) {
     const file = join(ROOT, rel);
     const src = readFileSync(file, "utf8");
     if (!FACTORY.test(src)) continue;
@@ -164,7 +166,7 @@ function cases(): Case[] {
       if (needed.length === 0) continue;
       out.push({
         test: rel,
-        component: path.slice(ROOT.length + 1),
+        component: path.slice(ROOT.length + 1).replaceAll("\\", "/"),
         mocked,
         needed,
       });

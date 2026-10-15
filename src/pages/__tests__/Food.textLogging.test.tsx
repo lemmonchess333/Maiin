@@ -7,6 +7,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const api = vi.hoisted(() => ({
@@ -154,6 +155,119 @@ function startAnalysis() {
 }
 
 describe("food text logging", () => {
+  it.each([
+    "chicken with tahini",
+    "chicken and tahini",
+    "creatine with tahini",
+    "xylophone",
+  ])(
+    "keeps %s for correction without saving an incomplete meal",
+    async (text) => {
+      const warning = vi.spyOn(toast, "warning");
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => ({
+          ok: true,
+          json: async () => ({ items: [], products: [] }),
+        }))
+      );
+      render(
+        <MemoryRouter>
+          <Food />
+        </MemoryRouter>
+      );
+      const input = screen.getByLabelText("What did you eat");
+      fireEvent.change(input, { target: { value: text } });
+      fireEvent.click(screen.getByLabelText("Log meal"));
+      await waitFor(() =>
+        expect(warning).toHaveBeenCalledWith(
+          expect.stringMatching(/couldn't find macros for/i),
+          expect.objectContaining({
+            id: "food-nl-warning",
+            action: expect.objectContaining({ label: "Edit description" }),
+          })
+        )
+      );
+      expect(warning.mock.calls.at(-1)?.[0]).toMatch(/nothing (was )?logged/i);
+      expect(api.createMealEntry).not.toHaveBeenCalled();
+      expect(api.addFavourite).not.toHaveBeenCalled();
+      expect(api.notifyMealsLogged).not.toHaveBeenCalled();
+      expect(input).toHaveValue(text);
+      expect(screen.getByLabelText("Log meal")).toBeEnabled();
+
+      fireEvent.change(input, { target: { value: "chicken with rice" } });
+      fireEvent.click(screen.getByLabelText("Log meal"));
+      await waitFor(() => expect(api.createMealEntry).toHaveBeenCalledOnce());
+      expect(api.createMealEntry).toHaveBeenCalledWith(
+        "u1",
+        expect.objectContaining({
+          foodName: "Chicken with rice",
+          totalCalories: 448,
+          totalCarbs: 45,
+        })
+      );
+      warning.mockRestore();
+    }
+  );
+
+  it("saves a measured base and its side together, including the typed portion in the name", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ items: [], products: [] }),
+      }))
+    );
+    render(
+      <MemoryRouter>
+        <Food />
+      </MemoryRouter>
+    );
+    fireEvent.change(screen.getByLabelText("What did you eat"), {
+      target: { value: "200g chicken with rice" },
+    });
+    fireEvent.click(screen.getByLabelText("Log meal"));
+    await waitFor(() => expect(api.createMealEntry).toHaveBeenCalledOnce());
+    expect(api.createMealEntry).toHaveBeenCalledWith(
+      "u1",
+      expect.objectContaining({
+        foodName: "200g chicken with rice",
+        totalCalories: 531,
+        totalProtein: 67,
+        totalCarbs: 45,
+      })
+    );
+  });
+
+  it("logs a recognized zero-calorie food without warning that it is unknown", async () => {
+    const warning = vi.spyOn(toast, "warning");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ items: [], products: [] }),
+      }))
+    );
+    render(
+      <MemoryRouter>
+        <Food />
+      </MemoryRouter>
+    );
+    fireEvent.change(screen.getByLabelText("What did you eat"), {
+      target: { value: "creatine" },
+    });
+    fireEvent.click(screen.getByLabelText("Log meal"));
+    await waitFor(() => expect(api.createMealEntry).toHaveBeenCalledOnce());
+    expect(api.createMealEntry).toHaveBeenCalledWith(
+      "u1",
+      expect.objectContaining({
+        totalCalories: 0,
+      })
+    );
+    expect(warning).not.toHaveBeenCalled();
+    warning.mockRestore();
+  });
+
   it.each(["a new meal", "the same meal retyped", "another diary day"])(
     "preserves the newer draft for %s when an earlier analysis finishes",
     async (scenario) => {

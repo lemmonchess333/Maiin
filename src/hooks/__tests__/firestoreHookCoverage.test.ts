@@ -237,7 +237,7 @@ describe("Firestore hook coverage", () => {
         } else if (/\.test\.tsx?$/.test(entry.name)) {
           const src = readFileSync(p, "utf8");
           if (/vi\.mock\(\s*["']firebase\/firestore["']\s*,/.test(src)) {
-            offenders.push(p.slice(ROOT.length + 1));
+            offenders.push(p.slice(ROOT.length + 1).replaceAll("\\", "/"));
           }
         }
       }

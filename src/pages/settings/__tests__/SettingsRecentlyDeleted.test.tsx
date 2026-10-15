@@ -82,6 +82,11 @@ describe("SettingsRecentlyDeleted — empty state", () => {
   it("renders the empty-state copy when no meals are soft-deleted", () => {
     renderWith(<SettingsRecentlyDeleted />);
     expect(screen.getByText(/No recently deleted meals/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /stay here until you restore or permanently delete them/i
+      )
+    ).toBeInTheDocument();
   });
 });
 
@@ -122,8 +127,15 @@ describe("SettingsRecentlyDeleted — listing", () => {
 
 describe("SettingsRecentlyDeleted — actions", () => {
   it("Restore button calls restoreMeal with the meal id", async () => {
-    deletedMealsMock = [makeMeal({ id: "m-1", foodName: "Oats" })];
+    deletedMealsMock = [
+      makeMeal({
+        id: "m-1",
+        foodName: "Oats",
+        deletedAtMs: Date.now() - 30 * 86_400_000,
+      }),
+    ];
     renderWith(<SettingsRecentlyDeleted />);
+    expect(screen.getByText(/deleted 30 days ago/i)).toBeInTheDocument();
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: /Restore Oats/i }));
     });

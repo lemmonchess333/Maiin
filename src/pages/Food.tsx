@@ -1007,12 +1007,22 @@ export default function Food() {
       return;
     }
     if (confidence === "nl-parse") {
-      const zeroItems = items.filter((i) => i.calories === 0);
-      if (zeroItems.length > 0) {
+      const unresolved = items.filter((i) => i.unrecognized);
+      if (unresolved.length > 0) {
         toast.warning(
-          `Couldn't find macros for: ${zeroItems.map((i) => i.name).join(", ")}. Search the foods to fill them in.`,
-          { id: "food-nl-warning" }
+          `Couldn't find macros for: ${unresolved.map((i) => i.name).join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
+          {
+            id: "food-nl-warning",
+            action: {
+              label: "Edit description",
+              onClick: () => inputRef.current?.focus(),
+            },
+          }
         );
+        // Keep the whole draft: saving a known subtotal would lose the
+        // unresolved foods from the diary and from later corrections.
+        setNlParsing(false);
+        return;
       }
     }
     /* Per-item suspicious-value validation. Runs only on freshly

@@ -22,8 +22,9 @@
  *
  * Meta is written LAST on every save, so a chunk-write failure (quota)
  * leaves meta pointing at the previous consistent state — the read
- * path only ever reconstructs `chunkCount` chunks, so a half-written
- * new chunk is simply ignored until the next successful write.
+ * path reconstructs only the committed `pointCount` prefix. A partial
+ * chunk extended before a later refusal can therefore retain its old
+ * committed points; any new chunk beyond `chunkCount` is ignored.
  *
  * Schema is versioned (`v: 2`); a bump invalidates every existing
  * entry on the next read (v1 was the single-blob layout), so a format
@@ -273,11 +274,25 @@ export function readStoredRun(
     }
     try {
       const chunk = JSON.parse(chunkRaw) as unknown;
-      if (!Array.isArray(chunk)) {
+      // An append can extend the previous partial chunk before a later
+      // chunk or META write is refused. META still commits the old prefix,
+      // which remains complete: ignore only its uncommitted tail. Every
+      // sealed chunk must still contain all 250 points, and a short or
+      // oversized chunk is corruption rather than an interrupted append.
+      const expectedCount = Math.min(
+        RUN_RESUME_CHUNK_SIZE,
+        parsed.pointCount - points.length
+      );
+      if (
+        !Array.isArray(chunk) ||
+        expectedCount <= 0 ||
+        chunk.length < expectedCount ||
+        chunk.length > RUN_RESUME_CHUNK_SIZE
+      ) {
         clearStoredRun(uid);
         return null;
       }
-      points.push(...(chunk as GPSPoint[]));
+      points.push(...(chunk.slice(0, expectedCount) as GPSPoint[]));
     } catch {
       clearStoredRun(uid);
       return null;

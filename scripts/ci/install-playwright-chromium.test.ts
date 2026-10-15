@@ -29,6 +29,47 @@ const here = dirname(fileURLToPath(import.meta.url));
 const script = resolve(here, "install-playwright-chromium.sh");
 const repoRoot = resolve(here, "../..");
 
+// Git for Windows can be on PATH without its Bash being on PATH. These
+// portable argument/browser cases still run there; only the Linux dpkg
+// process-lock integration below needs Linux itself.
+const gitExecPath =
+  process.platform === "win32"
+    ? spawnSync("git", ["--exec-path"], { encoding: "utf8" }).stdout?.trim()
+    : undefined;
+const gitBash = gitExecPath
+  ? resolve(gitExecPath, "../../../bin/bash.exe")
+  : undefined;
+const bash = gitBash && existsSync(gitBash) ? gitBash : "bash";
+const scriptPath = script.replace(/\\/g, "/");
+
+function runScript(args: string[], fixtureDir?: string) {
+  // Let Bash extend its own PATH, after MSYS converts the Windows PATH.
+  // A Windows temp path prepended with ':' in Node splits its drive letter
+  // and mixes POSIX/Windows separators, so the fake npx is never selected.
+  const command = fixtureDir
+    ? [
+        "-c",
+        [
+          "fixture_dir=$1; shift",
+          'if command -v cygpath >/dev/null 2>&1; then fixture_dir=$(cygpath -u "$fixture_dir"); fi',
+          'PATH="$fixture_dir:$PATH" exec bash "$@"',
+        ].join("\n"),
+        "playwright-install-test",
+        fixtureDir,
+        scriptPath,
+        ...args,
+      ]
+    : [scriptPath, ...args];
+  const result = spawnSync(bash, command, { encoding: "utf8" });
+  if (result.error) {
+    throw new Error(
+      "Playwright install script tests require Bash (Git Bash on Windows).",
+      { cause: result.error }
+    );
+  }
+  return result;
+}
+
 /** A stand-in holds the lock with fcntl, as apt-get and dpkg do. */
 const PYTHON = "/usr/bin/python3";
 const canStage =
@@ -137,7 +178,7 @@ function stage(attempts: Attempt[], options: { oldRetryStep?: boolean } = {}) {
       : "",
     "main install-deps 1",
   ].join("\n");
-  const result = spawnSync("bash", ["-c", harness], {
+  const result = spawnSync(bash, ["-c", harness], {
     encoding: "utf8",
     env: { ...process.env, PATH: `${dir}:${process.env.PATH}` },
     timeout: 60_000,
@@ -199,7 +240,7 @@ describe("usage", () => {
     [["install", "0"]],
     [["install", "60", "safari"]],
   ])("refuses %j", (args) => {
-    const result = spawnSync("bash", [script, ...args], { encoding: "utf8" });
+    const result = runScript(args);
     expect(result.status).toBe(2);
     expect(result.stderr).toContain("usage:");
   });
@@ -212,12 +253,11 @@ describe("browsers", () => {
     const dir = mkdtempSync(join(tmpdir(), "pw-browsers-"));
     writeFileSync(join(dir, "npx"), '#!/usr/bin/env bash\necho "npx $*"\n');
     chmodSync(join(dir, "npx"), 0o755);
-    const result = spawnSync("bash", [script, ...args], {
-      encoding: "utf8",
-      env: { ...process.env, PATH: `${dir}:${process.env.PATH}` },
-    });
-    rmSync(dir, { recursive: true, force: true });
-    return result;
+    try {
+      return runScript(args, dir);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   };
 
   it("are Chromium when a job names none", () => {

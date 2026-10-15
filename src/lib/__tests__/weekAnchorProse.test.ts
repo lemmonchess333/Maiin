@@ -52,7 +52,7 @@ const ALLOWED: Readonly<Record<string, string>> = {};
 
 function sourceFiles(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
-    const full = resolve(dir, name);
+    const full = resolve(dir, name).replaceAll("\\", "/");
     if (statSync(full).isDirectory()) {
       if (["node_modules", "__tests__", "dist", "coverage"].includes(name))
         continue;
@@ -81,7 +81,7 @@ describe("week-anchor prose", () => {
   it("never tells a reader the week starts on Sunday", () => {
     const offenders: string[] = [];
     for (const file of files) {
-      const rel = relative(repoRoot, file);
+      const rel = relative(repoRoot, file).replaceAll("\\", "/");
       if (rel in ALLOWED) continue;
       const lines = readFileSync(file, "utf8").split("\n");
       lines.forEach((line, i) => {

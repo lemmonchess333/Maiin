@@ -38,7 +38,7 @@ function tsxFiles(dir: string, out: string[] = []): string[] {
 function rechartsFiles(): string[] {
   return tsxFiles(srcRoot)
     .filter((f) => /from\s+"recharts"/.test(readFileSync(f, "utf8")))
-    .map((f) => f.slice(srcRoot.length + 1));
+    .map((f) => f.slice(srcRoot.length + 1).replaceAll("\\", "/"));
 }
 
 /** The expression inside each `tick={…}` prop, brace-matched. */

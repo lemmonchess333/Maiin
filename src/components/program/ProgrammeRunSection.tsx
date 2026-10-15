@@ -90,7 +90,11 @@ import {
   Trophy,
   X,
 } from "lucide-react";
-import { formatDistanceToNowStrict, format } from "date-fns";
+import {
+  differenceInCalendarDays,
+  formatDistanceToNowStrict,
+  format,
+} from "date-fns";
 import { toast } from "sonner";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
@@ -491,10 +495,16 @@ export default function ProgrammeRunSection({
       : null;
   const recoveryDaysLeft = useMemo(() => {
     if (!inRecovery || !recoveryEndDate) return 0;
-    const end = parseLocalDate(recoveryEndDate);
-    const ms = end.getTime() - new Date().getTime();
-    return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
-  }, [inRecovery, recoveryEndDate]);
+    // Recovery ends on a local date; DST days need not last 24 hours.
+    // The date key also refreshes this count when the app crosses midnight.
+    return Math.max(
+      0,
+      differenceInCalendarDays(
+        parseLocalDate(recoveryEndDate),
+        parseLocalDate(todayKeyDerivation)
+      )
+    );
+  }, [inRecovery, recoveryEndDate, todayKeyDerivation]);
 
   // PR-4: surface the first non-terminal runDay as a promoted
   // "Next planned run" Start card on non-freeform modes. The

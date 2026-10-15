@@ -12,6 +12,7 @@
  *  - completion is terminal.
  */
 import { describe, it, expect } from "vitest";
+import { createElement, StrictMode, type PropsWithChildren } from "react";
 import { renderHook, act } from "@testing-library/react";
 import { useSessionPlayer } from "../useSessionPlayer";
 import { computePlanMetadata } from "@/lib/runPlanMetadata";
@@ -74,6 +75,15 @@ describe("useSessionPlayer", () => {
     expect(result.current.state.index).toBe(1);
     act(() => result.current.start());
     expect(result.current.state.index).toBe(1); // NOT reset
+  });
+
+  it("leaves state unchanged when a tick repeats the same totals", () => {
+    const { result } = renderHook(() => useSessionPlayer(intervalSegs));
+    act(() => result.current.start());
+    act(() => result.current.tick(100, 250));
+    const before = result.current.state;
+    act(() => result.current.tick(100, 250));
+    expect(result.current.state).toBe(before);
   });
 
   it("duration segments advance on elapsed; distance segments on metres", () => {
@@ -211,6 +221,105 @@ describe("useSessionPlayer", () => {
     act(() => result.current.start());
     expect(result.current.state.index).toBe(-1);
     expect(result.current.isComplete).toBe(false);
+  });
+});
+
+function StrictPlayer({ children }: PropsWithChildren) {
+  return createElement(StrictMode, null, children);
+}
+
+describe("useSessionPlayer under StrictMode", () => {
+  const intervals = segmentsFromIntervals(
+    {
+      reps: 2,
+      workDistance: 400,
+      restDuration: 60,
+      warmupDuration: 300,
+      cooldownDuration: 120,
+    },
+    "km"
+  );
+
+  it("advances each duration and distance transition once", () => {
+    const { result } = renderHook(() => useSessionPlayer(intervals), {
+      wrapper: StrictPlayer,
+    });
+    act(() => result.current.start());
+    act(() => result.current.tick(301, 500));
+    expect(result.current.state.index).toBe(1);
+    expect(result.current.current?.type).toBe("hard");
+    act(() => result.current.tick(400, 950));
+    expect(result.current.state.index).toBe(2);
+    expect(result.current.current?.type).toBe("recovery");
+    act(() => result.current.tick(461, 1100));
+    expect(result.current.state.index).toBe(3);
+    act(() => result.current.tick(500, 1550));
+    expect(result.current.state.index).toBe(4);
+    expect(result.current.current?.type).toBe("cooldown");
+    act(() => result.current.tick(561, 1700));
+    expect(result.current.state.index).toBe(4);
+    expect(result.current.state.phaseElapsed).toBe(61);
+    act(() => result.current.tick(620, 2000));
+    expect(result.current.isComplete).toBe(true);
+    expect(result.current.workPortion(620, 2000)).toEqual({
+      seconds: 138,
+      meters: 900,
+    });
+    const complete = result.current.state;
+    act(() => {
+      result.current.start();
+      result.current.skip(700, 2200);
+      result.current.tick(700, 2200);
+    });
+    expect(result.current.state).toBe(complete);
+  });
+
+  it("keeps skip anchors and the work portion correct across replay", () => {
+    const { result } = renderHook(() => useSessionPlayer(intervals), {
+      wrapper: StrictPlayer,
+    });
+    act(() => result.current.start());
+    act(() => result.current.skip(50, 100));
+    act(() => result.current.tick(60, 350));
+    expect(result.current.state).toEqual({
+      index: 1,
+      phaseElapsed: 10,
+      phaseDistanceCovered: 250,
+    });
+    act(() => result.current.skip(200, 500));
+    expect(result.current.state.index).toBe(2);
+    expect(result.current.workPortion(200, 500)).toEqual({
+      seconds: 150,
+      meters: 400,
+    });
+    act(() => result.current.skip(230, 550));
+    act(() => result.current.tick(250, 700));
+    expect(result.current.workPortion(250, 700)).toEqual({
+      seconds: 170,
+      meters: 550,
+    });
+    act(() => result.current.skip(300, 1000));
+    expect(result.current.workPortion(400, 1300)).toEqual({
+      seconds: 220,
+      meters: 850,
+    });
+  });
+
+  it("keeps start idempotent even before a batched tick commits", () => {
+    const { result } = renderHook(() => useSessionPlayer(intervals), {
+      wrapper: StrictPlayer,
+    });
+    act(() => {
+      result.current.start();
+      result.current.tick(100, 250);
+      result.current.start();
+    });
+    expect(result.current.state).toEqual({
+      index: 0,
+      phaseElapsed: 100,
+      phaseDistanceCovered: 250,
+    });
+    expect(result.current.workPortion(100, 250)).toBeNull();
   });
 });
 

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { dirname, resolve, relative } from "node:path";
 
 /**
  * The app's only drag control, and it had two defects at once.
@@ -156,7 +156,7 @@ describe("range input — the app's only drag control", () => {
     };
     const offenders = walk(resolve(repoRoot, "src"))
       .filter((f) => /type="range"/.test(readFileSync(f, "utf8")))
-      .map((f) => f.replace(repoRoot + "/", ""))
+      .map((f) => relative(repoRoot, f).replaceAll("\\", "/"))
       // The primitive itself is where the raw input legitimately lives.
       .filter((f) => f !== "src/components/ui/RangeInput.tsx");
     expect(
@@ -213,7 +213,7 @@ describe("range input — the app's only drag control", () => {
       )
     );
     expect(
-      offenders.map((f) => f.replace(repoRoot + "/", "")),
+      offenders.map((f) => relative(repoRoot, f).replaceAll("\\", "/")),
       "These override the per-theme scheme with the DEVICE preference."
     ).toEqual([]);
   });

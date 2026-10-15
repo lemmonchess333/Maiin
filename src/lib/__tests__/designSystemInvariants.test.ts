@@ -97,7 +97,7 @@ function scan(predicate: (src: string, rel: string) => number): {
   const byFile = new Map<string, number>();
   let total = 0;
   for (const file of FILES) {
-    const rel = relative(repoRoot, file);
+    const rel = relative(repoRoot, file).replaceAll("\\", "/");
     const n = predicate(readFileSync(file, "utf8"), rel);
     if (n > 0) {
       byFile.set(rel, n);

@@ -170,6 +170,10 @@ export interface OnboardingDraft {
   recentRaceDistance?: (typeof DRAFT_RECENT_RACE_DISTANCES)[number];
   recentRaceMinutes?: string;
   recentRaceSeconds?: string;
+  /** Raw optional goal input, including a partial answer that needs correction. */
+  goalWeightText?: string;
+  /** Unsigned weekly pace; the target weight supplies its direction. */
+  paceKgPerWeek?: 0.25 | 0.5 | 0.75;
 }
 
 interface DraftEnvelope {
@@ -249,7 +253,9 @@ export function isValidDraft(
     (d.recentRaceMinutes === undefined ||
       typeof d.recentRaceMinutes === "string") &&
     (d.recentRaceSeconds === undefined ||
-      typeof d.recentRaceSeconds === "string")
+      typeof d.recentRaceSeconds === "string") &&
+    (d.goalWeightText === undefined || typeof d.goalWeightText === "string") &&
+    (d.paceKgPerWeek === undefined || oneOf([0.25, 0.5, 0.75], d.paceKgPerWeek))
   );
 }
 

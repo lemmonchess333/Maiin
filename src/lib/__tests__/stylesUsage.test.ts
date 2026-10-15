@@ -121,7 +121,9 @@ describe("src/styles class usage", () => {
     // ~30 declarations after the 2026-09 dead-rule sweep; the floor only has
     // to catch a collapsed scan (a bad root or extension reads as zero).
     expect(declared?.length ?? 0).toBeGreaterThan(20);
-    expect(relative(repoRoot, styleFiles[0])).toMatch(/^src\/styles\//);
+    expect(relative(repoRoot, styleFiles[0]).replaceAll("\\", "/")).toMatch(
+      /^src\/styles\//
+    );
   });
 
   it("no NEW dead class or keyframe", () => {
