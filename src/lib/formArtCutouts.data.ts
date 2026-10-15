@@ -917,6 +917,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "d831f34f8cb92b1d1a6de8b08ea2d8d3aa5273476eafeecbecc7e8fb0afb7b59",
     sha256: "dbbec23e6cc9e8a10b3e730e41c704a221af15eb3511c814c5b28defd827bc76",
   },
+  "pendlay-row": {
+    src: "form-art/pendlay-row.webp",
+    width: 480,
+    height: 352,
+    keyed: true,
+    source: "form-frames/pendlay-row/3.webp",
+    sourceSha256:
+      "562e35b61473e979dfb727ea3bcf24187dc6009feb704a5e91ba174eb0208850",
+    sha256: "05636de34da823f2d03ec2ab83ca5506ee1042e304f99ef25f955b3cc6bc5498",
+  },
   "pike-push-up": {
     src: "form-art/pike-push-up.webp",
     width: 480,
