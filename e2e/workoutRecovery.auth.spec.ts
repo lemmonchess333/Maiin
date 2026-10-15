@@ -4,6 +4,8 @@ import { writeFile } from "node:fs/promises";
 import { openSignInForm, TEST_USER } from "./helpers/auth";
 import { emulatorActive } from "./helpers/emulator";
 import { emulatorAdmin } from "./helpers/realCallables";
+import { settleFullPageHeight } from "./helpers/settleHeight";
+import { settleImages } from "./helpers/settleImages";
 import { WORKOUT } from "../src/test/journeyScreens";
 import type { WorkoutExercise } from "../src/lib/savedWorkouts";
 
@@ -224,8 +226,11 @@ test("an undone set stays unperformed after leaving and resuming, and only the o
       restoredDraft,
       saved,
     });
+    await settleImages(page);
+    await settleFullPageHeight(page);
     await page.screenshot({
       path: info.outputPath("saved-strength-summary.png"),
+      animations: "disabled",
       fullPage: true,
     });
     expect(saved.exercises).toHaveLength(1);
@@ -349,6 +354,8 @@ test("the Resume prompt contains keyboard navigation and prevents background set
           document.documentElement.classList.toggle("dark", isDark);
           document.documentElement.style.fontSize = "200%";
         }, dark);
+        await settleImages(page);
+        await settleFullPageHeight(page);
         const positions: unknown[] = [];
         for (const name of ["Resume", "Start fresh"]) {
           const button = prompt.getByRole("button", { name, exact: true });
@@ -419,6 +426,7 @@ test("the Resume prompt contains keyboard navigation and prevents background set
           path: info.outputPath(
             `resume-${width}-${dark ? "dark" : "light"}-200.png`
           ),
+          animations: "disabled",
           fullPage: true,
         });
       }
