@@ -48,6 +48,8 @@ const h = vi.hoisted(() => ({
   track: vi.fn(),
   mapProps: [] as Record<string, unknown>[],
   runPlan: undefined as { currentWeek: number; totalWeeks: number } | undefined,
+  failedOptional: null as "kudos" | "week" | null,
+  optionalAttempts: [] as string[],
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => h.auth,
@@ -119,13 +121,27 @@ vi.mock("@/components/workout/CompletionExtras", () => ({
   default: () => null,
 }));
 vi.mock("@/components/run/PaceInsightCard", () => ({ default: () => null }));
-vi.mock("@/components/WeekPulseView", () => ({ default: () => null }));
-vi.mock("@/components/social/SavedRunKudos", () => ({ default: () => null }));
+vi.mock("@/components/WeekPulseView", () => ({
+  default: () => {
+    h.optionalAttempts.push("week");
+    if (h.failedOptional === "week")
+      throw new TypeError("Importing a module script failed.");
+    return null;
+  },
+}));
+vi.mock("@/components/social/SavedRunKudos", () => ({
+  default: () => {
+    h.optionalAttempts.push("kudos");
+    if (h.failedOptional === "kudos")
+      throw new TypeError("Importing a module script failed.");
+    return null;
+  },
+}));
 
 import RunSummary from "../RunSummary";
 import { benchmarkEffortOf, type EffortRun } from "@/lib/benchmarkEfforts";
 import { writeString } from "@/lib/localStore";
-import { pendingDocumentWrites } from "@/lib/offlineQueue";
+import { pendingDocumentWrites, queueDurableWrite } from "@/lib/offlineQueue";
 import {
   readStoredRun,
   writeStoredRun,
@@ -203,6 +219,8 @@ beforeEach(() => {
   h.markManualComplete.mockResolvedValue({ status: "applied" });
   h.skipRunDay.mockReset();
   h.skipRunDay.mockResolvedValue({ status: "applied" });
+  h.failedOptional = null;
+  h.optionalAttempts.length = 0;
 });
 afterEach(() => {
   resumeReads();
@@ -227,6 +245,48 @@ describe("RunSummary — the off-plan prompt's stored dismissal", () => {
       h.domAtRender.filter((dom) => dom.includes("Off-plan save"))
     ).toEqual([]);
   });
+});
+
+describe("RunSummary — optional panels cannot lose a saved receipt", () => {
+  it.each(["kudos", "week"] as const)(
+    "keeps Done and the durable same-ID run when %s fails",
+    async (panel) => {
+      const online = vi
+        .spyOn(navigator, "onLine", "get")
+        .mockReturnValue(false);
+      const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+      try {
+        queueDurableWrite("runner", "users/runner/runs", "run-1", {
+          distance: 4988.9664,
+          duration: 1500,
+        });
+        const before = pendingDocumentWrites("runner", "users/runner/runs");
+        const completedBefore = h.track.mock.calls.length;
+        h.failedOptional = panel;
+        renderSummary();
+        await waitFor(() => expect(h.optionalAttempts).toContain(panel));
+        expect(
+          await screen.findByRole("button", { name: RUN.done })
+        ).toBeInTheDocument();
+        expect(
+          screen.getByText("Saved on this phone · waiting to sync")
+        ).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: RUN.save })).toBeNull();
+        expect(pendingDocumentWrites("runner", "users/runner/runs")).toEqual(
+          before
+        );
+        expect(before).toHaveLength(1);
+        expect(before[0]).toMatchObject({
+          id: "run-1",
+          data: { distance: 4988.9664 },
+        });
+        expect(h.track).toHaveBeenCalledTimes(completedBefore);
+      } finally {
+        errors.mockRestore();
+        online.mockRestore();
+      }
+    }
+  );
 });
 
 describe("RunSummary — the off-plan prompt says only what happened", () => {
