@@ -1,0 +1,1200 @@
+{
+  "archivedAtUtc": "2026-10-15T21:51:42.228910+00:00",
+  "sinceUtc": "2026-10-15T21:35:00Z",
+  "scopeFilter": "both",
+  "officialLog": "C:\\Users\\myles\\.codex\\sessions\\2026\\10\\04\\rollout-2026-10-04T14-18-53-01a10711-412c-7ce2-8907-eb9f63d462da.jsonl",
+  "logSnapshotBytes": 5415752537,
+  "boundedTailBytes": 120000000,
+  "source": "Only current-turn explicit pendlay-draft-* / pendlay-integrated-* official mcp__cua_repl.js returns",
+  "scope": "Exact screenshot bytes and original tool text are copied. JSON/JSON5 parses contain data only, never code execution. No capture, render, image edit, new image request, app mutation or QA acceptance.",
+  "mobileLimitation": "Earlier1280px traces remain real observations but are not390x844 mobile proof. Viewport values are retained/tagged per object; screenshot pixel dimensions do not independently establish CSS viewport. Only root can accept actual matching review observations.",
+  "helperSha256": "9cb2648827bc3008923cdce143ab7973cad00d29c7b6b991dc8302c46960c1fa",
+  "artifacts": [
+    {
+      "title": "Check the light-mode six-frame loop and enable slower playback",
+      "callTimestamp": "2026-10-15T21:38:29.153Z",
+      "declaredKinds": [
+        "pendlay-draft-light-normal"
+      ],
+      "callRecordSha256": "a558bfcd6d90c919dfbd7a30ab5179f38dfb26c4de5978d542d73b3f0f4077e0",
+      "callByteStart": 5414109388,
+      "callByteEndExclusive": 5414110551,
+      "callId": "call_4e2c625152634be29195c466c5332b23",
+      "outputTimestamp": "2026-10-15T21:38:34.480Z",
+      "outputRecordSha256": "04a2c82bb15330e935bcf55d3a502fd41a5c509c074f465b4d7cb8dbb7d26fcf",
+      "outputByteStart": 5414116873,
+      "outputByteEndExclusive": 5414121339,
+      "file": "review/pendlay-draft-light-normal-4e2c62515263-b1-tool-text.txt",
+      "sha256": "4d7c32b1a3e36ff34bfd5074ac86a07dbd5da367c63718d687b0d94d8e371b06",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-draft-light-normal"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check the light-mode six-frame loop and enable slower playback",
+      "callTimestamp": "2026-10-15T21:38:29.153Z",
+      "declaredKinds": [
+        "pendlay-draft-light-normal"
+      ],
+      "callRecordSha256": "a558bfcd6d90c919dfbd7a30ab5179f38dfb26c4de5978d542d73b3f0f4077e0",
+      "callByteStart": 5414109388,
+      "callByteEndExclusive": 5414110551,
+      "callId": "call_4e2c625152634be29195c466c5332b23",
+      "outputTimestamp": "2026-10-15T21:38:34.480Z",
+      "outputRecordSha256": "04a2c82bb15330e935bcf55d3a502fd41a5c509c074f465b4d7cb8dbb7d26fcf",
+      "outputByteStart": 5414116873,
+      "outputByteEndExclusive": 5414121339,
+      "file": "review/pendlay-draft-light-normal-4e2c62515263-b2-tool-text.txt",
+      "sha256": "9ade60bea8d8afa57ccec572f80a36838c7073b7a3ee160946c59e3f44a031f9",
+      "bytes": 275,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-draft-light-normal"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": true
+    },
+    {
+      "title": "Check the light-mode six-frame loop and enable slower playback",
+      "callTimestamp": "2026-10-15T21:38:29.153Z",
+      "declaredKinds": [
+        "pendlay-draft-light-normal"
+      ],
+      "callRecordSha256": "a558bfcd6d90c919dfbd7a30ab5179f38dfb26c4de5978d542d73b3f0f4077e0",
+      "callByteStart": 5414109388,
+      "callByteEndExclusive": 5414110551,
+      "callId": "call_4e2c625152634be29195c466c5332b23",
+      "outputTimestamp": "2026-10-15T21:38:34.480Z",
+      "outputRecordSha256": "04a2c82bb15330e935bcf55d3a502fd41a5c509c074f465b4d7cb8dbb7d26fcf",
+      "outputByteStart": 5414116873,
+      "outputByteEndExclusive": 5414121339,
+      "file": "review/pendlay-draft-light-normal-4e2c62515263-b3-tool-text.txt",
+      "sha256": "b12d37646d7637eade25cb191714d99d40da452dc02d2cc96ec4e1d9b7b97ad7",
+      "bytes": 3458,
+      "kind": "pendlay-draft-light-normal",
+      "sameCallKinds": [
+        "pendlay-draft-light-normal"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check the light-mode six-frame loop and enable slower playback",
+      "callTimestamp": "2026-10-15T21:38:29.153Z",
+      "declaredKinds": [
+        "pendlay-draft-light-normal"
+      ],
+      "callRecordSha256": "a558bfcd6d90c919dfbd7a30ab5179f38dfb26c4de5978d542d73b3f0f4077e0",
+      "callByteStart": 5414109388,
+      "callByteEndExclusive": 5414110551,
+      "callId": "call_4e2c625152634be29195c466c5332b23",
+      "outputTimestamp": "2026-10-15T21:38:34.480Z",
+      "outputRecordSha256": "04a2c82bb15330e935bcf55d3a502fd41a5c509c074f465b4d7cb8dbb7d26fcf",
+      "outputByteStart": 5414116873,
+      "outputByteEndExclusive": 5414121339,
+      "file": "review/pendlay-draft-light-normal-4e2c62515263-b3-dom.json",
+      "sha256": "02bc9be23c97c315086f7e3bcf9d9a37217ebf2002c20cd8da3370e7ad2f30d0",
+      "bytes": 4625,
+      "kind": "pendlay-draft-light-normal",
+      "block": 3,
+      "actualDomObservation": true,
+      "parseMethod": "JSON5 data-literal parse; no evaluation",
+      "originalTextFile": "review/pendlay-draft-light-normal-4e2c62515263-b3-tool-text.txt",
+      "originalTextSha256": "b12d37646d7637eade25cb191714d99d40da452dc02d2cc96ec4e1d9b7b97ad7",
+      "viewportScope": {
+        "topLevelViewport": [
+          390,
+          844
+        ],
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Inspect the normal transparent Pendlay card and light-mode guide",
+      "callTimestamp": "2026-10-15T21:40:08.559Z",
+      "declaredKinds": [
+        "pendlay-draft-light-card"
+      ],
+      "callRecordSha256": "574e40acb0fce4bd1ad6f8d7d538f460b2709047560b4c0e8187266f823b5dbc",
+      "callByteStart": 5414180931,
+      "callByteEndExclusive": 5414182192,
+      "callId": "call_d3c9bd8318fb4fef84e4b2d60e09488c",
+      "outputTimestamp": "2026-10-15T21:40:13.197Z",
+      "outputRecordSha256": "d31dca9cbe156383e8170cba5a6641b693ef39d12c85843da67884ee1f1b6d46",
+      "outputByteStart": 5414249958,
+      "outputByteEndExclusive": 5414366505,
+      "file": "review/pendlay-draft-light-card-d3c9bd8318fb-b1-tool-text.txt",
+      "sha256": "b70a9eec0fcc57c2d84a21e052a97e163dfa8281ce24f4f0405de7b759208dc6",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-draft-light-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Inspect the normal transparent Pendlay card and light-mode guide",
+      "callTimestamp": "2026-10-15T21:40:08.559Z",
+      "declaredKinds": [
+        "pendlay-draft-light-card"
+      ],
+      "callRecordSha256": "574e40acb0fce4bd1ad6f8d7d538f460b2709047560b4c0e8187266f823b5dbc",
+      "callByteStart": 5414180931,
+      "callByteEndExclusive": 5414182192,
+      "callId": "call_d3c9bd8318fb4fef84e4b2d60e09488c",
+      "outputTimestamp": "2026-10-15T21:40:13.197Z",
+      "outputRecordSha256": "d31dca9cbe156383e8170cba5a6641b693ef39d12c85843da67884ee1f1b6d46",
+      "outputByteStart": 5414249958,
+      "outputByteEndExclusive": 5414366505,
+      "file": "review/pendlay-draft-light-card-d3c9bd8318fb-b2-tool-text.txt",
+      "sha256": "b8738b0181191870ab6e93b8f8742cd6f07202c470be7a301bbaf758d36b39f3",
+      "bytes": 2005,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-draft-light-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Inspect the normal transparent Pendlay card and light-mode guide",
+      "callTimestamp": "2026-10-15T21:40:08.559Z",
+      "declaredKinds": [
+        "pendlay-draft-light-card"
+      ],
+      "callRecordSha256": "574e40acb0fce4bd1ad6f8d7d538f460b2709047560b4c0e8187266f823b5dbc",
+      "callByteStart": 5414180931,
+      "callByteEndExclusive": 5414182192,
+      "callId": "call_d3c9bd8318fb4fef84e4b2d60e09488c",
+      "outputTimestamp": "2026-10-15T21:40:13.197Z",
+      "outputRecordSha256": "d31dca9cbe156383e8170cba5a6641b693ef39d12c85843da67884ee1f1b6d46",
+      "outputByteStart": 5414249958,
+      "outputByteEndExclusive": 5414366505,
+      "file": "review/pendlay-draft-light-card-d3c9bd8318fb-b3-tool-text.txt",
+      "sha256": "5f00893885b776a2081229fedf57e803627a5d686d9268f8b85bc01164f8ea1c",
+      "bytes": 486,
+      "kind": "pendlay-draft-light-card",
+      "sameCallKinds": [
+        "pendlay-draft-light-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Inspect the normal transparent Pendlay card and light-mode guide",
+      "callTimestamp": "2026-10-15T21:40:08.559Z",
+      "declaredKinds": [
+        "pendlay-draft-light-card"
+      ],
+      "callRecordSha256": "574e40acb0fce4bd1ad6f8d7d538f460b2709047560b4c0e8187266f823b5dbc",
+      "callByteStart": 5414180931,
+      "callByteEndExclusive": 5414182192,
+      "callId": "call_d3c9bd8318fb4fef84e4b2d60e09488c",
+      "outputTimestamp": "2026-10-15T21:40:13.197Z",
+      "outputRecordSha256": "d31dca9cbe156383e8170cba5a6641b693ef39d12c85843da67884ee1f1b6d46",
+      "outputByteStart": 5414249958,
+      "outputByteEndExclusive": 5414366505,
+      "file": "review/pendlay-draft-light-card-d3c9bd8318fb-b3-dom.json",
+      "sha256": "b2d0bb7fc46a40f629c22393a17f1719fd95e7de15af95d6899adccf90423171",
+      "bytes": 613,
+      "kind": "pendlay-draft-light-card",
+      "block": 3,
+      "actualDomObservation": true,
+      "parseMethod": "JSON5 data-literal parse; no evaluation",
+      "originalTextFile": "review/pendlay-draft-light-card-d3c9bd8318fb-b3-tool-text.txt",
+      "originalTextSha256": "5f00893885b776a2081229fedf57e803627a5d686d9268f8b85bc01164f8ea1c",
+      "viewportScope": {
+        "topLevelViewport": [
+          390,
+          844
+        ],
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Inspect the normal transparent Pendlay card and light-mode guide",
+      "callTimestamp": "2026-10-15T21:40:08.559Z",
+      "declaredKinds": [
+        "pendlay-draft-light-card"
+      ],
+      "callRecordSha256": "574e40acb0fce4bd1ad6f8d7d538f460b2709047560b4c0e8187266f823b5dbc",
+      "callByteStart": 5414180931,
+      "callByteEndExclusive": 5414182192,
+      "callId": "call_d3c9bd8318fb4fef84e4b2d60e09488c",
+      "outputTimestamp": "2026-10-15T21:40:13.197Z",
+      "outputRecordSha256": "d31dca9cbe156383e8170cba5a6641b693ef39d12c85843da67884ee1f1b6d46",
+      "outputByteStart": 5414249958,
+      "outputByteEndExclusive": 5414366505,
+      "file": "review/pendlay-draft-light-card-d3c9bd8318fb-b4.jpg",
+      "sha256": "17cd6396d6869070841c9354333465f7fe448983bf26f9b09b907330d1e2744b",
+      "bytes": 84928,
+      "kind": "pendlay-draft-light-card",
+      "sameCallKinds": [
+        "pendlay-draft-light-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 4,
+      "dimensions": [
+        380,
+        1696
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [
+          {
+            "kind": "pendlay-draft-light-card",
+            "viewportScope": {
+              "topLevelViewport": [
+                390,
+                844
+              ],
+              "explicitViewportPairs": [
+                [
+                  390,
+                  844
+                ]
+              ],
+              "containsNon390x844Viewport": false,
+              "classification": "all explicit viewports are390x844; observations still require root review",
+              "qaAcceptance": false
+            }
+          }
+        ],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Check Pendlay colours, contacts and transparent cards in dark mode",
+      "callTimestamp": "2026-10-15T21:40:27.385Z",
+      "declaredKinds": [
+        "pendlay-draft-dark-card"
+      ],
+      "callRecordSha256": "2cea645d3a91f53f114bebb6e8557f0e30a1816f53d90264bdd3e60e681445bb",
+      "callByteStart": 5414371206,
+      "callByteEndExclusive": 5414372492,
+      "callId": "call_3552bd8e7ce24c8d94ab837ed549d7f2",
+      "outputTimestamp": "2026-10-15T21:40:31.229Z",
+      "outputRecordSha256": "dc1dbfe09ce7521d71bcc677f73cccf944bf16fe74c5750e40aa4f4a40f2b2c1",
+      "outputByteStart": 5414440284,
+      "outputByteEndExclusive": 5414555514,
+      "file": "review/pendlay-draft-dark-card-3552bd8e7ce2-b1-tool-text.txt",
+      "sha256": "22de7a0af4e1ec33f1ce4a7921feb8186ba4d6d43502cb144f111448315ed8d2",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-draft-dark-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check Pendlay colours, contacts and transparent cards in dark mode",
+      "callTimestamp": "2026-10-15T21:40:27.385Z",
+      "declaredKinds": [
+        "pendlay-draft-dark-card"
+      ],
+      "callRecordSha256": "2cea645d3a91f53f114bebb6e8557f0e30a1816f53d90264bdd3e60e681445bb",
+      "callByteStart": 5414371206,
+      "callByteEndExclusive": 5414372492,
+      "callId": "call_3552bd8e7ce24c8d94ab837ed549d7f2",
+      "outputTimestamp": "2026-10-15T21:40:31.229Z",
+      "outputRecordSha256": "dc1dbfe09ce7521d71bcc677f73cccf944bf16fe74c5750e40aa4f4a40f2b2c1",
+      "outputByteStart": 5414440284,
+      "outputByteEndExclusive": 5414555514,
+      "file": "review/pendlay-draft-dark-card-3552bd8e7ce2-b2-tool-text.txt",
+      "sha256": "856df3254e7f1189e21222a09c3abcd46622b31d366b68e0326f495fdbd380bd",
+      "bytes": 368,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-draft-dark-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check Pendlay colours, contacts and transparent cards in dark mode",
+      "callTimestamp": "2026-10-15T21:40:27.385Z",
+      "declaredKinds": [
+        "pendlay-draft-dark-card"
+      ],
+      "callRecordSha256": "2cea645d3a91f53f114bebb6e8557f0e30a1816f53d90264bdd3e60e681445bb",
+      "callByteStart": 5414371206,
+      "callByteEndExclusive": 5414372492,
+      "callId": "call_3552bd8e7ce24c8d94ab837ed549d7f2",
+      "outputTimestamp": "2026-10-15T21:40:31.229Z",
+      "outputRecordSha256": "dc1dbfe09ce7521d71bcc677f73cccf944bf16fe74c5750e40aa4f4a40f2b2c1",
+      "outputByteStart": 5414440284,
+      "outputByteEndExclusive": 5414555514,
+      "file": "review/pendlay-draft-dark-card-3552bd8e7ce2-b3-tool-text.txt",
+      "sha256": "1107586c88ad0ccf1ca6bd2aa3a2574d1aab44b53a4b3c18c33a5ce8f9766293",
+      "bytes": 380,
+      "kind": "pendlay-draft-dark-card",
+      "sameCallKinds": [
+        "pendlay-draft-dark-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check Pendlay colours, contacts and transparent cards in dark mode",
+      "callTimestamp": "2026-10-15T21:40:27.385Z",
+      "declaredKinds": [
+        "pendlay-draft-dark-card"
+      ],
+      "callRecordSha256": "2cea645d3a91f53f114bebb6e8557f0e30a1816f53d90264bdd3e60e681445bb",
+      "callByteStart": 5414371206,
+      "callByteEndExclusive": 5414372492,
+      "callId": "call_3552bd8e7ce24c8d94ab837ed549d7f2",
+      "outputTimestamp": "2026-10-15T21:40:31.229Z",
+      "outputRecordSha256": "dc1dbfe09ce7521d71bcc677f73cccf944bf16fe74c5750e40aa4f4a40f2b2c1",
+      "outputByteStart": 5414440284,
+      "outputByteEndExclusive": 5414555514,
+      "file": "review/pendlay-draft-dark-card-3552bd8e7ce2-b3-dom.json",
+      "sha256": "700be7469e0a11c1de24fba03d0a5d2c006bb08128664df3dacabe4e3efca854",
+      "bytes": 505,
+      "kind": "pendlay-draft-dark-card",
+      "block": 3,
+      "actualDomObservation": true,
+      "parseMethod": "JSON5 data-literal parse; no evaluation",
+      "originalTextFile": "review/pendlay-draft-dark-card-3552bd8e7ce2-b3-tool-text.txt",
+      "originalTextSha256": "1107586c88ad0ccf1ca6bd2aa3a2574d1aab44b53a4b3c18c33a5ce8f9766293",
+      "viewportScope": {
+        "topLevelViewport": [
+          390,
+          844
+        ],
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Check Pendlay colours, contacts and transparent cards in dark mode",
+      "callTimestamp": "2026-10-15T21:40:27.385Z",
+      "declaredKinds": [
+        "pendlay-draft-dark-card"
+      ],
+      "callRecordSha256": "2cea645d3a91f53f114bebb6e8557f0e30a1816f53d90264bdd3e60e681445bb",
+      "callByteStart": 5414371206,
+      "callByteEndExclusive": 5414372492,
+      "callId": "call_3552bd8e7ce24c8d94ab837ed549d7f2",
+      "outputTimestamp": "2026-10-15T21:40:31.229Z",
+      "outputRecordSha256": "dc1dbfe09ce7521d71bcc677f73cccf944bf16fe74c5750e40aa4f4a40f2b2c1",
+      "outputByteStart": 5414440284,
+      "outputByteEndExclusive": 5414555514,
+      "file": "review/pendlay-draft-dark-card-3552bd8e7ce2-b4.jpg",
+      "sha256": "ae761a047f4cc21b34c23d5fb24df9becadcccb3d559b4e995c2410c21aff8c6",
+      "bytes": 85352,
+      "kind": "pendlay-draft-dark-card",
+      "sameCallKinds": [
+        "pendlay-draft-dark-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 4,
+      "dimensions": [
+        380,
+        1696
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [
+          {
+            "kind": "pendlay-draft-dark-card",
+            "viewportScope": {
+              "topLevelViewport": [
+                390,
+                844
+              ],
+              "explicitViewportPairs": [
+                [
+                  390,
+                  844
+                ]
+              ],
+              "containsNon390x844Viewport": false,
+              "classification": "all explicit viewports are390x844; observations still require root review",
+              "qaAcceptance": false
+            }
+          }
+        ],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Confirm dark-mode playback and check actual warnings and errors",
+      "callTimestamp": "2026-10-15T21:40:56.037Z",
+      "declaredKinds": [
+        "pendlay-draft-console",
+        "pendlay-draft-dark-normal"
+      ],
+      "callRecordSha256": "ce869ae9d9f26463f8b039d22ed73e600d65a6915b8037570eb8503fe6511ec8",
+      "callByteStart": 5414584725,
+      "callByteEndExclusive": 5414585940,
+      "callId": "call_b3c692263ba9484f921e7a0df4c18b15",
+      "outputTimestamp": "2026-10-15T21:40:59.113Z",
+      "outputRecordSha256": "ede795912a8b001e86a08b104394950fa4dc0def6cc1db124745048b0032e32e",
+      "outputByteStart": 5414590588,
+      "outputByteEndExclusive": 5414593321,
+      "file": "review/pendlay-same-call-multiple-b3c692263ba9-b1-tool-text.txt",
+      "sha256": "151e027f3016063e1ef063a76ee42fb3dabcd7d96b2cf462e1af82e66e62f9d9",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-draft-console",
+        "pendlay-draft-dark-normal"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Confirm dark-mode playback and check actual warnings and errors",
+      "callTimestamp": "2026-10-15T21:40:56.037Z",
+      "declaredKinds": [
+        "pendlay-draft-console",
+        "pendlay-draft-dark-normal"
+      ],
+      "callRecordSha256": "ce869ae9d9f26463f8b039d22ed73e600d65a6915b8037570eb8503fe6511ec8",
+      "callByteStart": 5414584725,
+      "callByteEndExclusive": 5414585940,
+      "callId": "call_b3c692263ba9484f921e7a0df4c18b15",
+      "outputTimestamp": "2026-10-15T21:40:59.113Z",
+      "outputRecordSha256": "ede795912a8b001e86a08b104394950fa4dc0def6cc1db124745048b0032e32e",
+      "outputByteStart": 5414590588,
+      "outputByteEndExclusive": 5414593321,
+      "file": "review/pendlay-draft-dark-normal-b3c692263ba9-b2-tool-text.txt",
+      "sha256": "ecb3cfbb67044550a4adce2497f6adde276cacdeba4ba3f1f26ee197e0dd55a9",
+      "bytes": 2110,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-draft-console",
+        "pendlay-draft-dark-normal"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify real registration and set the actual phone viewport",
+      "callTimestamp": "2026-10-15T21:45:07.167Z",
+      "declaredKinds": [
+        "pendlay-integrated-initial"
+      ],
+      "callRecordSha256": "1b705ce83aedfc08263aedee66cc59445a9d74d4b1c1b9a6911f1328564bdd3e",
+      "callByteStart": 5414826486,
+      "callByteEndExclusive": 5414828010,
+      "callId": "call_b678f5fa1c1b4789877ee9339384b0b5",
+      "outputTimestamp": "2026-10-15T21:45:11.374Z",
+      "outputRecordSha256": "c318fe0a069c37475d250cbc7d499403809e2e547e9bc8e331f3e8036adb4538",
+      "outputByteStart": 5414896038,
+      "outputByteEndExclusive": 5414897894,
+      "file": "review/pendlay-integrated-initial-b678f5fa1c1b-b1-tool-text.txt",
+      "sha256": "a930094f655f12615b081fc9480e788185a6b1f18dcde3679fca1b9130d89ac1",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-integrated-initial"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify real registration and set the actual phone viewport",
+      "callTimestamp": "2026-10-15T21:45:07.167Z",
+      "declaredKinds": [
+        "pendlay-integrated-initial"
+      ],
+      "callRecordSha256": "1b705ce83aedfc08263aedee66cc59445a9d74d4b1c1b9a6911f1328564bdd3e",
+      "callByteStart": 5414826486,
+      "callByteEndExclusive": 5414828010,
+      "callId": "call_b678f5fa1c1b4789877ee9339384b0b5",
+      "outputTimestamp": "2026-10-15T21:45:11.374Z",
+      "outputRecordSha256": "c318fe0a069c37475d250cbc7d499403809e2e547e9bc8e331f3e8036adb4538",
+      "outputByteStart": 5414896038,
+      "outputByteEndExclusive": 5414897894,
+      "file": "review/pendlay-integrated-initial-b678f5fa1c1b-b2-tool-text.txt",
+      "sha256": "ba2e16381cff8707619993a2be9a0d9c2f47a66df824dee00a71e149fb2838d9",
+      "bytes": 475,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-integrated-initial"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify real registration and set the actual phone viewport",
+      "callTimestamp": "2026-10-15T21:45:07.167Z",
+      "declaredKinds": [
+        "pendlay-integrated-initial"
+      ],
+      "callRecordSha256": "1b705ce83aedfc08263aedee66cc59445a9d74d4b1c1b9a6911f1328564bdd3e",
+      "callByteStart": 5414826486,
+      "callByteEndExclusive": 5414828010,
+      "callId": "call_b678f5fa1c1b4789877ee9339384b0b5",
+      "outputTimestamp": "2026-10-15T21:45:11.374Z",
+      "outputRecordSha256": "c318fe0a069c37475d250cbc7d499403809e2e547e9bc8e331f3e8036adb4538",
+      "outputByteStart": 5414896038,
+      "outputByteEndExclusive": 5414897894,
+      "file": "review/pendlay-integrated-initial-b678f5fa1c1b-b3-tool-text.txt",
+      "sha256": "bd03ffb0d4086578e8c135b1a1c14efc3ab70c6af8425b1e4cb53a22e1305401",
+      "bytes": 770,
+      "kind": "pendlay-integrated-initial",
+      "sameCallKinds": [
+        "pendlay-integrated-initial"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify real registration and set the actual phone viewport",
+      "callTimestamp": "2026-10-15T21:45:07.167Z",
+      "declaredKinds": [
+        "pendlay-integrated-initial"
+      ],
+      "callRecordSha256": "1b705ce83aedfc08263aedee66cc59445a9d74d4b1c1b9a6911f1328564bdd3e",
+      "callByteStart": 5414826486,
+      "callByteEndExclusive": 5414828010,
+      "callId": "call_b678f5fa1c1b4789877ee9339384b0b5",
+      "outputTimestamp": "2026-10-15T21:45:11.374Z",
+      "outputRecordSha256": "c318fe0a069c37475d250cbc7d499403809e2e547e9bc8e331f3e8036adb4538",
+      "outputByteStart": 5414896038,
+      "outputByteEndExclusive": 5414897894,
+      "file": "review/pendlay-integrated-initial-b678f5fa1c1b-b3-dom.json",
+      "sha256": "ae9ec3ae45631b6b19c94a67b64847e5782cfd38cd233bd72926ad73349193d5",
+      "bytes": 999,
+      "kind": "pendlay-integrated-initial",
+      "block": 3,
+      "actualDomObservation": true,
+      "parseMethod": "JSON5 data-literal parse; no evaluation",
+      "originalTextFile": "review/pendlay-integrated-initial-b678f5fa1c1b-b3-tool-text.txt",
+      "originalTextSha256": "bd03ffb0d4086578e8c135b1a1c14efc3ab70c6af8425b1e4cb53a22e1305401",
+      "viewportScope": {
+        "topLevelViewport": [
+          390,
+          844
+        ],
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Check every registered instruction selects its exact dark-mode frame",
+      "callTimestamp": "2026-10-15T21:45:34.193Z",
+      "declaredKinds": [
+        "pendlay-integrated-dark-manual"
+      ],
+      "callRecordSha256": "67ad89d8870a9c0445b5c04232fd0d2b046f7fd0cf6b66297297bf7190685013",
+      "callByteStart": 5414908537,
+      "callByteEndExclusive": 5414910030,
+      "callId": "call_4edd9313894841c3bb1faffd04f5d0c6",
+      "outputTimestamp": "2026-10-15T21:45:39.064Z",
+      "outputRecordSha256": "fea487580908039ec3a11229a8c1ced32e66a13b409482f2de5000851b5804ce",
+      "outputByteStart": 5414978008,
+      "outputByteEndExclusive": 5414980685,
+      "file": "review/pendlay-integrated-dark-manual-4edd93138948-b1-tool-text.txt",
+      "sha256": "34d49e4d054c8c463626f1acb8a6d4108c227d639b8c6e05de0ca8dbf5c76009",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-integrated-dark-manual"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check every registered instruction selects its exact dark-mode frame",
+      "callTimestamp": "2026-10-15T21:45:34.193Z",
+      "declaredKinds": [
+        "pendlay-integrated-dark-manual"
+      ],
+      "callRecordSha256": "67ad89d8870a9c0445b5c04232fd0d2b046f7fd0cf6b66297297bf7190685013",
+      "callByteStart": 5414908537,
+      "callByteEndExclusive": 5414910030,
+      "callId": "call_4edd9313894841c3bb1faffd04f5d0c6",
+      "outputTimestamp": "2026-10-15T21:45:39.064Z",
+      "outputRecordSha256": "fea487580908039ec3a11229a8c1ced32e66a13b409482f2de5000851b5804ce",
+      "outputByteStart": 5414978008,
+      "outputByteEndExclusive": 5414980685,
+      "file": "review/pendlay-integrated-dark-manual-4edd93138948-b2-tool-text.txt",
+      "sha256": "160809d765b345981d3d32face7fcdad45e7c6052a945416279b1b56a86690b1",
+      "bytes": 625,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-integrated-dark-manual"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check every registered instruction selects its exact dark-mode frame",
+      "callTimestamp": "2026-10-15T21:45:34.193Z",
+      "declaredKinds": [
+        "pendlay-integrated-dark-manual"
+      ],
+      "callRecordSha256": "67ad89d8870a9c0445b5c04232fd0d2b046f7fd0cf6b66297297bf7190685013",
+      "callByteStart": 5414908537,
+      "callByteEndExclusive": 5414910030,
+      "callId": "call_4edd9313894841c3bb1faffd04f5d0c6",
+      "outputTimestamp": "2026-10-15T21:45:39.064Z",
+      "outputRecordSha256": "fea487580908039ec3a11229a8c1ced32e66a13b409482f2de5000851b5804ce",
+      "outputByteStart": 5414978008,
+      "outputByteEndExclusive": 5414980685,
+      "file": "review/pendlay-integrated-dark-manual-4edd93138948-b3-tool-text.txt",
+      "sha256": "4561d6fec34c1955b1c1e52098ffdcd77f37774ce97317633d935ef6d9e4e56c",
+      "bytes": 1402,
+      "kind": "pendlay-integrated-dark-manual",
+      "sameCallKinds": [
+        "pendlay-integrated-dark-manual"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check every registered instruction selects its exact dark-mode frame",
+      "callTimestamp": "2026-10-15T21:45:34.193Z",
+      "declaredKinds": [
+        "pendlay-integrated-dark-manual"
+      ],
+      "callRecordSha256": "67ad89d8870a9c0445b5c04232fd0d2b046f7fd0cf6b66297297bf7190685013",
+      "callByteStart": 5414908537,
+      "callByteEndExclusive": 5414910030,
+      "callId": "call_4edd9313894841c3bb1faffd04f5d0c6",
+      "outputTimestamp": "2026-10-15T21:45:39.064Z",
+      "outputRecordSha256": "fea487580908039ec3a11229a8c1ced32e66a13b409482f2de5000851b5804ce",
+      "outputByteStart": 5414978008,
+      "outputByteEndExclusive": 5414980685,
+      "file": "review/pendlay-integrated-dark-manual-4edd93138948-b3-dom.json",
+      "sha256": "e863c08ddb33b23049f8f32b70727c99d7eecba74f4dc7abd4bba953149190f8",
+      "bytes": 1939,
+      "kind": "pendlay-integrated-dark-manual",
+      "block": 3,
+      "actualDomObservation": true,
+      "parseMethod": "JSON5 data-literal parse; no evaluation",
+      "originalTextFile": "review/pendlay-integrated-dark-manual-4edd93138948-b3-tool-text.txt",
+      "originalTextSha256": "4561d6fec34c1955b1c1e52098ffdcd77f37774ce97317633d935ef6d9e4e56c",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Verify registered wrap controls, playback and dark-mode cards",
+      "callTimestamp": "2026-10-15T21:45:55.745Z",
+      "declaredKinds": [
+        "pendlay-integrated-dark-wrap"
+      ],
+      "callRecordSha256": "f106ecc2f169ce503c4c59beb6548b3b4abc232a2d86d246b72643d1a324fcec",
+      "callByteStart": 5414986473,
+      "callByteEndExclusive": 5414988275,
+      "callId": "call_ff73566bf1ac4361a79720c67589955e",
+      "outputTimestamp": "2026-10-15T21:46:00.752Z",
+      "outputRecordSha256": "2f104177ed541d8445d9dbeaf7a265a995e4302927d649711bb19f594cff9523",
+      "outputByteStart": 5415056552,
+      "outputByteEndExclusive": 5415187289,
+      "file": "review/pendlay-integrated-dark-wrap-ff73566bf1ac-b1-tool-text.txt",
+      "sha256": "70ad7fb0102970c0240e3b1004de4d2e97b51ae000230f1d54e51dd28e9852f7",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-integrated-dark-wrap"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify registered wrap controls, playback and dark-mode cards",
+      "callTimestamp": "2026-10-15T21:45:55.745Z",
+      "declaredKinds": [
+        "pendlay-integrated-dark-wrap"
+      ],
+      "callRecordSha256": "f106ecc2f169ce503c4c59beb6548b3b4abc232a2d86d246b72643d1a324fcec",
+      "callByteStart": 5414986473,
+      "callByteEndExclusive": 5414988275,
+      "callId": "call_ff73566bf1ac4361a79720c67589955e",
+      "outputTimestamp": "2026-10-15T21:46:00.752Z",
+      "outputRecordSha256": "2f104177ed541d8445d9dbeaf7a265a995e4302927d649711bb19f594cff9523",
+      "outputByteStart": 5415056552,
+      "outputByteEndExclusive": 5415187289,
+      "file": "review/pendlay-integrated-dark-wrap-ff73566bf1ac-b2-tool-text.txt",
+      "sha256": "7c12befbe88b511cee74e787af31c7f74193ff372bbf05e57d27ffe051671b92",
+      "bytes": 854,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-integrated-dark-wrap"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify registered wrap controls, playback and dark-mode cards",
+      "callTimestamp": "2026-10-15T21:45:55.745Z",
+      "declaredKinds": [
+        "pendlay-integrated-dark-wrap"
+      ],
+      "callRecordSha256": "f106ecc2f169ce503c4c59beb6548b3b4abc232a2d86d246b72643d1a324fcec",
+      "callByteStart": 5414986473,
+      "callByteEndExclusive": 5414988275,
+      "callId": "call_ff73566bf1ac4361a79720c67589955e",
+      "outputTimestamp": "2026-10-15T21:46:00.752Z",
+      "outputRecordSha256": "2f104177ed541d8445d9dbeaf7a265a995e4302927d649711bb19f594cff9523",
+      "outputByteStart": 5415056552,
+      "outputByteEndExclusive": 5415187289,
+      "file": "review/pendlay-integrated-dark-wrap-ff73566bf1ac-b3-tool-text.txt",
+      "sha256": "8e057a102694e27f685bbdea175842da05439d033ee518572691533037f96d22",
+      "bytes": 202,
+      "kind": "pendlay-integrated-dark-wrap",
+      "sameCallKinds": [
+        "pendlay-integrated-dark-wrap"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify registered wrap controls, playback and dark-mode cards",
+      "callTimestamp": "2026-10-15T21:45:55.745Z",
+      "declaredKinds": [
+        "pendlay-integrated-dark-wrap"
+      ],
+      "callRecordSha256": "f106ecc2f169ce503c4c59beb6548b3b4abc232a2d86d246b72643d1a324fcec",
+      "callByteStart": 5414986473,
+      "callByteEndExclusive": 5414988275,
+      "callId": "call_ff73566bf1ac4361a79720c67589955e",
+      "outputTimestamp": "2026-10-15T21:46:00.752Z",
+      "outputRecordSha256": "2f104177ed541d8445d9dbeaf7a265a995e4302927d649711bb19f594cff9523",
+      "outputByteStart": 5415056552,
+      "outputByteEndExclusive": 5415187289,
+      "file": "review/pendlay-integrated-dark-wrap-ff73566bf1ac-b3-dom.json",
+      "sha256": "c208995e1645e0e188c226e4598c6b87616b08b3fd0e2ac3c2760a7742f1c14e",
+      "bytes": 237,
+      "kind": "pendlay-integrated-dark-wrap",
+      "block": 3,
+      "actualDomObservation": true,
+      "parseMethod": "JSON5 data-literal parse; no evaluation",
+      "originalTextFile": "review/pendlay-integrated-dark-wrap-ff73566bf1ac-b3-tool-text.txt",
+      "originalTextSha256": "8e057a102694e27f685bbdea175842da05439d033ee518572691533037f96d22",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [],
+        "containsNon390x844Viewport": false,
+        "classification": "viewport not established",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Verify registered wrap controls, playback and dark-mode cards",
+      "callTimestamp": "2026-10-15T21:45:55.745Z",
+      "declaredKinds": [
+        "pendlay-integrated-dark-wrap"
+      ],
+      "callRecordSha256": "f106ecc2f169ce503c4c59beb6548b3b4abc232a2d86d246b72643d1a324fcec",
+      "callByteStart": 5414986473,
+      "callByteEndExclusive": 5414988275,
+      "callId": "call_ff73566bf1ac4361a79720c67589955e",
+      "outputTimestamp": "2026-10-15T21:46:00.752Z",
+      "outputRecordSha256": "2f104177ed541d8445d9dbeaf7a265a995e4302927d649711bb19f594cff9523",
+      "outputByteStart": 5415056552,
+      "outputByteEndExclusive": 5415187289,
+      "file": "review/pendlay-integrated-dark-wrap-ff73566bf1ac-b4.jpg",
+      "sha256": "cddf62ed8ddc0a976aab82e5031cab6ba7c651a184cb8fe55188b8d8657b2dab",
+      "bytes": 96744,
+      "kind": "pendlay-integrated-dark-wrap",
+      "sameCallKinds": [
+        "pendlay-integrated-dark-wrap"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 4,
+      "dimensions": [
+        380,
+        2224
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [
+          {
+            "kind": "pendlay-integrated-dark-wrap",
+            "viewportScope": {
+              "topLevelViewport": null,
+              "explicitViewportPairs": [],
+              "containsNon390x844Viewport": false,
+              "classification": "viewport not established",
+              "qaAcceptance": false
+            }
+          }
+        ],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Verify dark playback and every registered light-mode instruction",
+      "callTimestamp": "2026-10-15T21:47:20.703Z",
+      "declaredKinds": [
+        "pendlay-integrated-dark-normal",
+        "pendlay-integrated-light-manual"
+      ],
+      "callRecordSha256": "a23fe72b4e72f2e7dc753b46a2d1310cba69c1560a53a1cf788ea3eeb8a882d3",
+      "callByteStart": 5415230832,
+      "callByteEndExclusive": 5415233026,
+      "callId": "call_8447219f8edd4808abb7ea6d49de639f",
+      "outputTimestamp": "2026-10-15T21:47:27.635Z",
+      "outputRecordSha256": "6c4e7b70c12e246162884bf27b0fd55e6a393a64316314bf82649bf475a01119",
+      "outputByteStart": 5415301700,
+      "outputByteEndExclusive": 5415306072,
+      "file": "review/pendlay-same-call-multiple-8447219f8edd-b1-tool-text.txt",
+      "sha256": "6f0b679fa07609d1835886773003ab6c9f0d2a42d8eadc2a929e86e33a013cc1",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-integrated-dark-normal",
+        "pendlay-integrated-light-manual"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify dark playback and every registered light-mode instruction",
+      "callTimestamp": "2026-10-15T21:47:20.703Z",
+      "declaredKinds": [
+        "pendlay-integrated-dark-normal",
+        "pendlay-integrated-light-manual"
+      ],
+      "callRecordSha256": "a23fe72b4e72f2e7dc753b46a2d1310cba69c1560a53a1cf788ea3eeb8a882d3",
+      "callByteStart": 5415230832,
+      "callByteEndExclusive": 5415233026,
+      "callId": "call_8447219f8edd4808abb7ea6d49de639f",
+      "outputTimestamp": "2026-10-15T21:47:27.635Z",
+      "outputRecordSha256": "6c4e7b70c12e246162884bf27b0fd55e6a393a64316314bf82649bf475a01119",
+      "outputByteStart": 5415301700,
+      "outputByteEndExclusive": 5415306072,
+      "file": "review/pendlay-same-call-multiple-8447219f8edd-b2-tool-text.txt",
+      "sha256": "0619492b98ecac77d97f7240f6a43f6551faf55020ecabe5c7d11a2caf32f9b5",
+      "bytes": 634,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-integrated-dark-normal",
+        "pendlay-integrated-light-manual"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify dark playback and every registered light-mode instruction",
+      "callTimestamp": "2026-10-15T21:47:20.703Z",
+      "declaredKinds": [
+        "pendlay-integrated-dark-normal",
+        "pendlay-integrated-light-manual"
+      ],
+      "callRecordSha256": "a23fe72b4e72f2e7dc753b46a2d1310cba69c1560a53a1cf788ea3eeb8a882d3",
+      "callByteStart": 5415230832,
+      "callByteEndExclusive": 5415233026,
+      "callId": "call_8447219f8edd4808abb7ea6d49de639f",
+      "outputTimestamp": "2026-10-15T21:47:27.635Z",
+      "outputRecordSha256": "6c4e7b70c12e246162884bf27b0fd55e6a393a64316314bf82649bf475a01119",
+      "outputByteStart": 5415301700,
+      "outputByteEndExclusive": 5415306072,
+      "file": "review/pendlay-integrated-dark-normal-8447219f8edd-b3-tool-text.txt",
+      "sha256": "5ad7a3f83face2db722ff348e0fedcf2699b4b7acc78abd9c15e7da373cec500",
+      "bytes": 3007,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-integrated-dark-normal",
+        "pendlay-integrated-light-manual"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify both registered normal loops and inspect light-mode slower playback",
+      "callTimestamp": "2026-10-15T21:48:07.606Z",
+      "declaredKinds": [
+        "pendlay-integrated-console",
+        "pendlay-integrated-normal-loops"
+      ],
+      "callRecordSha256": "c77897537427e2fe5794373a95e19d2814ec42985a0b87b4d95726e6d893a46b",
+      "callByteStart": 5415324950,
+      "callByteEndExclusive": 5415326481,
+      "callId": "call_8c9e662394c940f5933f287896a3eec0",
+      "outputTimestamp": "2026-10-15T21:48:11.939Z",
+      "outputRecordSha256": "b291336b5dc51e2a6dddce0f1c19c13a6a31aedb62188431759a269b1b96f931",
+      "outputByteStart": 5415394516,
+      "outputByteEndExclusive": 5415526650,
+      "file": "review/pendlay-same-call-multiple-8c9e662394c9-b1-tool-text.txt",
+      "sha256": "1216868e1ba8e7c346f6b0941a916380eae26a1dddee04e07df7515bf961a035",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-integrated-console",
+        "pendlay-integrated-normal-loops"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify both registered normal loops and inspect light-mode slower playback",
+      "callTimestamp": "2026-10-15T21:48:07.606Z",
+      "declaredKinds": [
+        "pendlay-integrated-console",
+        "pendlay-integrated-normal-loops"
+      ],
+      "callRecordSha256": "c77897537427e2fe5794373a95e19d2814ec42985a0b87b4d95726e6d893a46b",
+      "callByteStart": 5415324950,
+      "callByteEndExclusive": 5415326481,
+      "callId": "call_8c9e662394c940f5933f287896a3eec0",
+      "outputTimestamp": "2026-10-15T21:48:11.939Z",
+      "outputRecordSha256": "b291336b5dc51e2a6dddce0f1c19c13a6a31aedb62188431759a269b1b96f931",
+      "outputByteStart": 5415394516,
+      "outputByteEndExclusive": 5415526650,
+      "file": "review/pendlay-same-call-multiple-8c9e662394c9-b2-tool-text.txt",
+      "sha256": "2af612fe41d93773d63d2e297cdacbec88ada6d93b76e514c3704e436e49174b",
+      "bytes": 513,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-integrated-console",
+        "pendlay-integrated-normal-loops"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify both registered normal loops and inspect light-mode slower playback",
+      "callTimestamp": "2026-10-15T21:48:07.606Z",
+      "declaredKinds": [
+        "pendlay-integrated-console",
+        "pendlay-integrated-normal-loops"
+      ],
+      "callRecordSha256": "c77897537427e2fe5794373a95e19d2814ec42985a0b87b4d95726e6d893a46b",
+      "callByteStart": 5415324950,
+      "callByteEndExclusive": 5415326481,
+      "callId": "call_8c9e662394c940f5933f287896a3eec0",
+      "outputTimestamp": "2026-10-15T21:48:11.939Z",
+      "outputRecordSha256": "b291336b5dc51e2a6dddce0f1c19c13a6a31aedb62188431759a269b1b96f931",
+      "outputByteStart": 5415394516,
+      "outputByteEndExclusive": 5415526650,
+      "file": "review/pendlay-integrated-normal-loops-8c9e662394c9-b3-tool-text.txt",
+      "sha256": "ce34f5006cabe738325e52cc17a3294a0c14e88835788fa7daf5ecc440483900",
+      "bytes": 2895,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-integrated-console",
+        "pendlay-integrated-normal-loops"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify both registered normal loops and inspect light-mode slower playback",
+      "callTimestamp": "2026-10-15T21:48:07.606Z",
+      "declaredKinds": [
+        "pendlay-integrated-console",
+        "pendlay-integrated-normal-loops"
+      ],
+      "callRecordSha256": "c77897537427e2fe5794373a95e19d2814ec42985a0b87b4d95726e6d893a46b",
+      "callByteStart": 5415324950,
+      "callByteEndExclusive": 5415326481,
+      "callId": "call_8c9e662394c940f5933f287896a3eec0",
+      "outputTimestamp": "2026-10-15T21:48:11.939Z",
+      "outputRecordSha256": "b291336b5dc51e2a6dddce0f1c19c13a6a31aedb62188431759a269b1b96f931",
+      "outputByteStart": 5415394516,
+      "outputByteEndExclusive": 5415526650,
+      "file": "review/pendlay-same-call-multiple-8c9e662394c9-b4.jpg",
+      "sha256": "21936ae73d5985ff67938a1397f7cbf539c3aa83fb6d866c843b7b46d576f67b",
+      "bytes": 95950,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-integrated-console",
+        "pendlay-integrated-normal-loops"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 4,
+      "dimensions": [
+        380,
+        2224
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Verify the registered slower loop completes all six frames and wraps",
+      "callTimestamp": "2026-10-15T21:49:48.319Z",
+      "declaredKinds": [
+        "pendlay-integrated-final-console",
+        "pendlay-integrated-light-slower"
+      ],
+      "callRecordSha256": "2aff503f4fdb7e5eae3884f1d0ac7112bf2cbfd1b858527ac13fed5c571a0618",
+      "callByteStart": 5415581847,
+      "callByteEndExclusive": 5415583179,
+      "callId": "call_ad91f1c00e6b4e4ea7345920cea93942",
+      "outputTimestamp": "2026-10-15T21:49:50.846Z",
+      "outputRecordSha256": "11aed84fd6bd4c8519b5ffe62223e5dc49c58543e30fd468f869ce7bc480f1c6",
+      "outputByteStart": 5415587629,
+      "outputByteEndExclusive": 5415590039,
+      "file": "review/pendlay-same-call-multiple-ad91f1c00e6b-b1-tool-text.txt",
+      "sha256": "b19283da16d76a3920a440d4b7609fe2b5d90994dca506a92671871b77fd68d1",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-integrated-final-console",
+        "pendlay-integrated-light-slower"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify the registered slower loop completes all six frames and wraps",
+      "callTimestamp": "2026-10-15T21:49:48.319Z",
+      "declaredKinds": [
+        "pendlay-integrated-final-console",
+        "pendlay-integrated-light-slower"
+      ],
+      "callRecordSha256": "2aff503f4fdb7e5eae3884f1d0ac7112bf2cbfd1b858527ac13fed5c571a0618",
+      "callByteStart": 5415581847,
+      "callByteEndExclusive": 5415583179,
+      "callId": "call_ad91f1c00e6b4e4ea7345920cea93942",
+      "outputTimestamp": "2026-10-15T21:49:50.846Z",
+      "outputRecordSha256": "11aed84fd6bd4c8519b5ffe62223e5dc49c58543e30fd468f869ce7bc480f1c6",
+      "outputByteStart": 5415587629,
+      "outputByteEndExclusive": 5415590039,
+      "file": "review/pendlay-integrated-light-slower-ad91f1c00e6b-b2-tool-text.txt",
+      "sha256": "1bda53260b9e99a0b5ed3954e27a8a56c079ca17ba505f96b2c590d1c6dc98dd",
+      "bytes": 1798,
+      "kind": null,
+      "sameCallKinds": [
+        "pendlay-integrated-final-console",
+        "pendlay-integrated-light-slower"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    }
+  ],
+  "unparsedObservations": [
+    {
+      "callId": "call_b3c692263ba9484f921e7a0df4c18b15",
+      "file": "review/pendlay-draft-dark-normal-b3c692263ba9-b2-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    },
+    {
+      "callId": "call_8447219f8edd4808abb7ea6d49de639f",
+      "file": "review/pendlay-integrated-dark-normal-8447219f8edd-b3-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    },
+    {
+      "callId": "call_8c9e662394c940f5933f287896a3eec0",
+      "file": "review/pendlay-integrated-normal-loops-8c9e662394c9-b3-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    },
+    {
+      "callId": "call_ad91f1c00e6b4e4ea7345920cea93942",
+      "file": "review/pendlay-integrated-light-slower-ad91f1c00e6b-b2-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    }
+  ],
+  "callsAwaitingOutputWithinSnapshot": [],
+  "qaAcceptance": false
+}

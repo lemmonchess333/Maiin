@@ -1,0 +1,114 @@
+{
+  "exerciseId": "pendlay-row",
+  "version": "anatomy-v3-2026-10-15-retained-whole-pair-pendlay-v1",
+  "reviewer": "root actual native, palette and registered390x844 guide/card review under existing user completion/merge authorization",
+  "reviewedAt": "2026-10-15T21:53:43.572Z",
+  "allowLocalIntegration": true,
+  "completionCredit": false,
+  "strictChecksRemainNull": true,
+  "planSha256": "e7e4998f98a9242e935a3d90cc4128afea6c448ba271be0ee38f05895e61f34c",
+  "payloadManifestSha256": "e8b3e3a58ee721bba6b2f01a4f72b2ecb65a6bef19c499241f1208ec2183b185",
+  "cardSha256": "05636de34da823f2d03ec2ab83ca5506ee1042e304f99ef25f955b3cc6bc5498",
+  "approval": {
+    "actor": "User explicit continuation and merge instructions plus prior minor-requirement relaxation",
+    "instruction": "Preserve the approved no-shorts FA56 model, colours, neutral shading and equipment; complete and merge usable conversions without routine approval questions.",
+    "context": "Draft acceptance allows local registration only. Actual registered review, normal checks, exact-head CI and merge remain required."
+  },
+  "findings": [
+    "Minor original head/neck/upperbody lift and knee/hip variation after ground registration; no strict fixed-torso certification.",
+    "Modest original far-hand/bar grip spacing variation remains; no exact rigid hand placement certification.",
+    "Two physical endpoints repeated across6separatepaths; no authored intermediate or continuous trajectory claim.",
+    "Biceps/Core remain neutral original source anatomy; legend includes their secondary functional role. No new highlight boundary is invented."
+  ],
+  "observations": {
+    "identity": {
+      "observed": true,
+      "evidence": "Root viewed FA56 and both intact source/final native endpoints. Bald faceless lean white-grey anatomical athlete without shorts, featureless pelvis and complete white trainers remain; fine detail varies in original source, no exact canonical pixel identity certification."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "Only full-scene integer placement floor(0,+32)/top(0,0) on1536x1056 and commoncrop[200,90,1380,982] were used. No scaling, rotation or per-part fit. This does not recover original3D camera/depth."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "Fresh knee/ankle/sole review corrected old32px shin inference. Approximate knee-to-ankle span differs~7px, not32; registerednearsole aligns andfarwithin1px. Root native and324px playback show no material disproportion or foot sliding. Small original hip/knee/head changes remain."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "Original whole barbell and both plate assemblies remain pixel-exact outside existing muscle colour support. Stable plate count/radii and complete sleeves retained. No repaired or invented equipment geometry."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Original closed overhand grips stay on actual source shaft and both shoes stay on their original support plane after whole-scene ground registration. Modest far-hand grip-spacing variation remains disclosed; no exact rigid-grip calibration."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "Actual floor/straight-arm and lower-chest/elbows-back endpoints depict the catalogue row. Torso stays low with minor original head/neck/hip movement; no strict fixed-torso or continuous trajectory claim. Two states honestly reused over6paths."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Root inspected both final native1180x892 images and actual mobilelight/dark. Existing Lats fields use primary#7B72E9 and upperback/reardelt fields secondary#9590E0 with original local brightness/fibre contours. No new spatial body gradient, shape change, neutralBiceps/Core paint or equipment recolour."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Root clicked actual registered Showframe1..6then1 in both390x844themes. aria-current=step, actual public frame path and image alt agree for all6distinct cues. Exact catalogue setupfirst2, Lats/RhomboidsRearDeltsBicepsCore, cue text and unchanged catalogue tip appear."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Actual registered player showed all6public paths and6-to-1automaticwraps in both390x844themes, normal~1206ms. LightSlower trace completed all6+wrap with2405–2412ms intervals. Pause/play, previous1-to-6 andnext6-to-1 verified. Two original physical endpoints repeated[1,1,4,4,1,1]; no authored in-between or continuous mechanism certification."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Root actual390x844 light registered ExerciseFormContent: fullsourceart324x360, all6instructionbuttons+1 selected correctly, normal/slower loops, exactsetup/legend/cues, completeathlete/bar/plates/trainers. Normalcardactual480x352 displays348x255 and160x117 withoutoverflow; original480px card also viewed locally. Registerednormalcard SHA05636de34da823f2d03ec2ab83ca5506ee1042e304f99ef25f955b3cc6bc5498 exactlymatchespreview. No materialclip/contactgap orhorizontaloverflow observed."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Root actual390x844 dark registered guide: all6instructionbuttons+1, normalall6/wrap, manualprevious/nextwrap, completebody/gear readable on darkart surface. Bothnormalcard sizes reviewed inactualfullpage. No materialclipping/overflow/contactgap. Actualdevlogs queriederror+warn returnedempty; rawquerylevels andoutputs preserved."
+    }
+  },
+  "evidence": {
+    "sourceEligibility": {
+      "path": "parent-source-eligibility.json",
+      "sha256": "606cad1560942a9769ef7e5c6c9a2248d66d3ec9e1fb372a8444207a4c3caa41"
+    },
+    "portableReproduction": {
+      "path": "portable-reproduction-verification-20261015/portable-reproduction-proof.json",
+      "sha256": "cc9d0ebf1e1fb8718753f9c190950e6ca25cb58507a7fe81d49b9b5f7b04f022"
+    },
+    "actualDraftBrowser": {
+      "tab": "50",
+      "origin": "http://127.0.0.1:62324",
+      "correctViewport": [
+        390,
+        844
+      ],
+      "earlier1280TraceExcludedFromMobileClaim": true,
+      "consoleQueriedLevels": [
+        "error",
+        "warn"
+      ],
+      "consoleLogs": []
+    }
+  },
+  "registeredReviewComplete": true,
+  "publicationApproved": false,
+  "actualRegisteredReviewComplete": true,
+  "evidenceHashes": {
+    "review/pendlay-tool-return-artifact-index-final.json": "aaebea5f5b1b99cf43e8398e676d8231febc8aa6bdc22f8ad8fd1990f111e573",
+    "review/pendlay-integrated-dark-manual-4edd93138948-b3-dom.json": "e863c08ddb33b23049f8f32b70727c99d7eecba74f4dc7abd4bba953149190f8",
+    "review/pendlay-integrated-dark-normal-8447219f8edd-b3-tool-text.txt": "5ad7a3f83face2db722ff348e0fedcf2699b4b7acc78abd9c15e7da373cec500",
+    "review/pendlay-integrated-dark-wrap-ff73566bf1ac-b3-dom.json": "c208995e1645e0e188c226e4598c6b87616b08b3fd0e2ac3c2760a7742f1c14e",
+    "review/pendlay-integrated-dark-wrap-ff73566bf1ac-b4.jpg": "cddf62ed8ddc0a976aab82e5031cab6ba7c651a184cb8fe55188b8d8657b2dab",
+    "review/pendlay-integrated-initial-b678f5fa1c1b-b3-dom.json": "ae9ec3ae45631b6b19c94a67b64847e5782cfd38cd233bd72926ad73349193d5",
+    "review/pendlay-integrated-light-slower-ad91f1c00e6b-b2-tool-text.txt": "1bda53260b9e99a0b5ed3954e27a8a56c079ca17ba505f96b2c590d1c6dc98dd",
+    "review/pendlay-integrated-normal-loops-8c9e662394c9-b3-tool-text.txt": "ce34f5006cabe738325e52cc17a3294a0c14e88835788fa7daf5ecc440483900",
+    "review/pendlay-same-call-multiple-8c9e662394c9-b4.jpg": "21936ae73d5985ff67938a1397f7cbf539c3aa83fb6d866c843b7b46d576f67b"
+  },
+  "normalProjectVerificationComplete": false,
+  "currentHeadCiComplete": false,
+  "evidenceLimitations": [
+    "Earlier1280px draft observations are excluded from mobile390x844 claims.",
+    "Original official raw tool blocks containing adjacent objects are preserved as text; parsed JSON is not invented.",
+    "Actual strict11 fields remain unverified/null; observedQA is scoped parent inspection."
+  ]
+}

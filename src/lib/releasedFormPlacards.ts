@@ -17,6 +17,23 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "pendlay-row": placard(
+    "pendlay-row",
+    ["Lats"],
+    ["Rhomboids", "Rear Delts", "Biceps", "Core"],
+    [
+      [0, "Set", "Brace flat-backed with the bar over midfoot."],
+      [0, "Brace", "Keep your torso low and feet planted."],
+      [1, "Row", "Row the bar toward your lower chest."],
+      [1, "Squeeze", "Draw elbows back; squeeze your shoulder blades."],
+      [0, "Lower", "Lower under control to a dead stop."],
+      [0, "Reset", "Keep feet planted; brace before each row."],
+    ],
+    [
+      "Set up with torso parallel to the floor, bar on the ground over midfoot.",
+      "Grip just outside your knees, back flat, core braced hard.",
+    ]
+  ),
   "leg-extension": placard(
     "leg-extension",
     ["Quads"],
