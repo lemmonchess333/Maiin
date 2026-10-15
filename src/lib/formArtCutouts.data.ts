@@ -1067,6 +1067,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "a177e100adc921d2741d6e7fcb68ffd67c8f0604105ee78d6c20f6b05f2f4cba",
     sha256: "5b4d852abbd3033f9d785107093ff6d8f9765b00fd2e179844de358f681f809e",
   },
+  "rowing-machine": {
+    src: "form-art/rowing-machine.webp",
+    width: 480,
+    height: 281,
+    keyed: true,
+    source: "form-frames/rowing-machine/3.webp",
+    sourceSha256:
+      "8c7385705a8396f4068e2ffbf6571509e6764a61efa91a30373d64578cce2aae",
+    sha256: "06c0b4a713879eff74fcc5b6f5a9ee8fbfd0047c3a3782dbe4c6fd9ba7019fe5",
+  },
   "russian-twist": {
     src: "form-art/russian-twist.webp",
     width: 480,

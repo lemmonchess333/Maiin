@@ -1,0 +1,26 @@
+{
+  "primary": [123,114,233],
+  "secondary": [149,144,224],
+  "sourceColourRoi": [220,235,1030,610],
+  "supportRules": {"bMinusRMin":3,"bMinusGMin":6,"rMinusGMin":1},
+  "sourceTintStrengthDenominators": {"primary":0.64,"secondary":0.42},
+  "primaryRoleTraces": {
+    "1": [
+      [[574,242],[690,242],[690,334],[655,334],[648,371],[633,393],[579,426]],
+      [[605,446],[692,399],[763,400],[770,442],[720,493],[651,544],[609,540]],
+      [[773,415],[820,420],[823,548],[772,534]]
+    ],
+    "2": [
+      [[365,232],[506,232],[506,316],[462,318],[465,352],[421,389],[366,407]],
+      [[392,442],[506,442],[593,483],[608,515],[542,516],[469,507],[396,504]]
+    ],
+    "3": [
+      [[274,270],[303,245],[324,270],[323,290],[294,304],[262,320],[252,302]],
+      [[305,323],[339,326],[340,405],[308,406]],
+      [[403,449],[531,449],[618,490],[626,529],[570,530],[507,519],[417,514]]
+    ]
+  },
+  "semanticTraceMeaning":"Primary quads/upper-back traces follow the actual retained strong source fields. Hamstrings/biceps stay secondary. Role traces are clipped to original source chroma; neutral core and other muscles are not painted. Native visual review remains required.",
+  "method":"Original per-pixel maximum-channel and source-chroma mapping to canonical bases. Preserve original fine tonal contours; no new spatial shading, body gradient or anatomical field. Six delivery paths reuse three intact whole sources.",
+  "currentGeometryChanges":"None. Integer identity placement at(0,0), common crop only. Historical selected catch-master framing is separately disclosed."
+}

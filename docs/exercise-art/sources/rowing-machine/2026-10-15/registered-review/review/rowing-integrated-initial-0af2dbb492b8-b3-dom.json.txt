@@ -1,0 +1,65 @@
+{
+  "reviewLabel": "rowing-integrated-initial",
+  "dom": {
+    "h": 844,
+    "images": [
+      {
+        "alt": "Rowing Machine registered normal card",
+        "complete": true,
+        "natural": [
+          480,
+          281
+        ],
+        "src": "/form-art/rowing-machine.webp"
+      },
+      {
+        "alt": "Rowing Machine, Catch",
+        "complete": true,
+        "natural": [
+          1416,
+          830
+        ],
+        "src": "/form-frames/rowing-machine/1.webp"
+      },
+      {
+        "alt": "",
+        "complete": true,
+        "natural": [
+          1416,
+          830
+        ],
+        "src": "/form-frames/rowing-machine/2.webp"
+      },
+      {
+        "alt": "Rowing Machine normal card, 480px long-side limit",
+        "complete": true,
+        "natural": [
+          480,
+          281
+        ],
+        "src": "/form-art/rowing-machine.webp"
+      },
+      {
+        "alt": "Rowing Machine normal card, 348px long-side limit",
+        "complete": true,
+        "natural": [
+          480,
+          281
+        ],
+        "src": "/form-art/rowing-machine.webp"
+      },
+      {
+        "alt": "Rowing Machine normal card, 160px long-side limit",
+        "complete": true,
+        "natural": [
+          480,
+          281
+        ],
+        "src": "/form-art/rowing-machine.webp"
+      }
+    ],
+    "scrollWidth": 380,
+    "text": "Rowing Machine\nLight theme\n\nRegistered owner-released-with-findings: anatomy-v3-2026-10-15-retained-whole-trio-rowing-v1, 1416×830.\n\nCardio\nMachine\n\nCATCH 1/6\n\nPause\nNormal\nPRIMARY\nQuads, Upper Back\nSECONDARY\nHamstrings, Biceps\n\nInstructions\n\nPreparation: Strap in, grip the handle, start compressed with shins vertical.\n\n1\n\nCompress with straight arms and vertical shins.\n\n2\n\nPush with your legs; keep arms straight.\n\n3\n\nLean back slightly; draw handle below ribs.\n\n4\n\nStay supported; keep wrists and shoulders relaxed.\n\n5\n\nArms away, then hinge forward before sliding.\n\n6\n\nRecover twice as slowly as you drive.\n\nWatch out\n\nIf you're yanking the handle with your arms first, you're wasting the big engine. Legs, back, arms — in that order.\n\nNormal card: native 480px and catalogue 348px / 160px\nActual registered asset paths\nObserved playback evidence",
+    "w": 390
+  }
+}

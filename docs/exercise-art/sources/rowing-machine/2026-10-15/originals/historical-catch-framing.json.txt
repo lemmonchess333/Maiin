@@ -1,0 +1,17 @@
+{
+  "source": "1-catch-corrected.png",
+  "sourceGeneration": "43a066aa-4773-4e87-b88c-ed2dce9f2976",
+  "resize": [
+    1382,
+    922
+  ],
+  "offset": [
+    77,
+    51
+  ],
+  "canvas": [
+    1536,
+    1024
+  ],
+  "method": "Authorized whole-scene uniform90% scale, rounded to integer pixels; no anatomy/pose change"
+}
