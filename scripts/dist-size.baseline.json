@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 6246966,
+  "total": 6251155,
   "chunks": {
     "AccordionSection": 1612,
     "accountSecurity": 2561,
@@ -76,7 +76,7 @@
     "download": 233,
     "dumbbell": 561,
     "EmptyState": 1704,
-    "ExerciseFormContent": 74740,
+    "ExerciseFormContent": 78929,
     "ExerciseHistory": 11655,
     "exerciseMovementCategory": 6150,
     "ExercisePicker": 10225,

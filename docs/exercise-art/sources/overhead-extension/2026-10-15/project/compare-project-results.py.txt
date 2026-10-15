@@ -1,0 +1,79 @@
+"""Compare actual completed normal runs, retaining exact raw diagnostic bytes."""
+from pathlib import Path
+import hashlib
+import json
+import re
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[1] / 'remaining19-execution-20261015/checks'
+STAGES = ['lint', 'check:form-art', 'check:form-drafts', 'check:cycles', 'build', 'check:dist-size', 'test']
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def index(label):
+    directory = ROOT / label
+    result = json.loads((directory / 'result.json').read_bytes())
+    raw = (directory / 'verify.log').read_bytes()
+    assert sha(raw) == result['logSha256']
+    assert result['allInputsUnchanged'] and result['headUnchanged'] and result['statusRestored']
+    before = json.loads((directory / 'inputs-before.json').read_bytes())
+    assert before == json.loads((directory / 'inputs-after.json').read_bytes())
+    raw_lines = raw.splitlines(keepends=True)
+    lines = [line.decode('utf8').rstrip('\r\n') for line in raw_lines]
+    offsets = [0]
+    for line in raw_lines:
+        offsets.append(offsets[-1] + len(line))
+    headers = [i for i, line in enumerate(lines) if re.match(r'^\s*FAIL\s+', line)]
+    failures = {}
+    for ordinal, start in enumerate(headers):
+        match = re.fullmatch(r'\s*FAIL\s+\|([^|]+)\|\s+(\S+?\.test\.[cm]?[jt]sx?)(.*)', lines[start])
+        assert match, lines[start]
+        project, file, tail = match.groups()
+        file = file.replace('\\', '/')
+        tail = tail.strip()
+        if tail.startswith('> '):
+            case = tail[2:]
+        else:
+            suite = re.fullmatch(r'\[\s*(.*?)\s*\]', tail)
+            assert suite and suite[1].replace('\\', '/') == file
+            case = '[suite]'
+        limit = headers[ordinal + 1] if ordinal + 1 < len(headers) else len(lines)
+        stop = next(i for i in range(start + 1, limit) if re.fullmatch(r'\s*⎯+\[\d+/\d+\]⎯*\s*', lines[i]))
+        begin = start + 1
+        while not lines[begin].strip():
+            begin += 1
+        while not lines[stop - 1].strip():
+            stop -= 1
+        key = f'{project}|{file}|{case}'
+        assert key not in failures
+        failures[key] = {'diagnosticSha256': sha(raw[offsets[begin]:offsets[stop]]), 'byteStart': offsets[begin], 'byteEndExclusive': offsets[stop], 'headerLine': start + 1}
+    counts = {}
+    for label in ['Test Files', 'Tests']:
+        rows = [line.strip() for line in lines if re.match(r'^\s*' + re.escape(label) + r'\s+\d', line)]
+        assert len(rows) == 1
+        values = {status: int(value) for value, status in re.findall(r'(\d+)\s+(failed|passed|skipped)', rows[0])}
+        total = int(re.search(r'\((\d+)\)\s*$', rows[0])[1])
+        assert sum(values.values()) == total
+        counts[label] = {**values, 'total': total, 'verbatim': rows[0]}
+    stages = [m[1] for line in lines if (m := re.fullmatch(r'>\s+\S+@\S+\s+(\S+)', line)) and m[1] in STAGES]
+    assert stages == STAGES
+    data = {'label': directory.name, 'exitCode': result['exitCode'], 'normalCommand': result['normalCommand'], 'head': result['headBefore'], 'logSha256': sha(raw), 'inputCount': len(before), 'inputsUnchanged': True, 'counts': counts, 'stages': stages, 'failures': failures, 'snapshotRestores': result['snapshotRestores']}
+    (HERE / (directory.name + '-index.json')).write_text(json.dumps(data, indent=2) + '\n')
+    return data, before
+
+
+baseline, base_inputs = index('remaining18-baseline-96fea6f1')
+candidate, candidate_inputs = index('overhead-extension-final-96fea6f1')
+old, new = baseline['failures'], candidate['failures']
+same = sorted(key for key in old.keys() & new.keys() if old[key]['diagnosticSha256'] == new[key]['diagnosticSha256'])
+changed = sorted(key for key in old.keys() & new.keys() if key not in same)
+report = {'baseline': baseline['label'], 'candidate': candidate['label'], 'baselineCounts': baseline['counts'], 'candidateCounts': candidate['counts'], 'baselineExitCode': baseline['exitCode'], 'candidateExitCode': candidate['exitCode'], 'addedFailures': sorted(new.keys() - old.keys()), 'resolvedFailures': sorted(old.keys() - new.keys()), 'sameRawDiagnosticFailures': same, 'changedRawDiagnosticFailures': changed, 'runtimeInputDifferences': sorted(key for key in base_inputs.keys() | candidate_inputs.keys() if base_inputs.get(key) != candidate_inputs.get(key)), 'bothNormalFullRunsCompleted': True, 'fullCandidateGreen': candidate['exitCode'] == 0}
+repo = HERE.parents[1] / 'Maiin-burpees'
+pinned = json.loads((HERE / 'assets-before-full-verify.json').read_bytes())
+assert all(sha((repo / path).read_bytes()) == digest for path, digest in pinned.items())
+report['allNineNewAssetsAndReleaseUnchangedAcrossVerification'] = True
+(HERE / 'project-comparison.json').write_text(json.dumps(report, indent=2) + '\n')
+print(json.dumps(report))

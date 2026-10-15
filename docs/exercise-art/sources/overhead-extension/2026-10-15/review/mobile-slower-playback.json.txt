@@ -1,0 +1,3764 @@
+[
+  {
+    "ms": 164,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "Loading frame…\n\nTOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 1383,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 2610,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 3834,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 5050,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 6261,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 7477,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 8685,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 9891,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 11107,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 12316,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 13523,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 14727,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 15943,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 17148,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 18358,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 19573,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 20782,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 21988,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 23194,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 24409,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 25615,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 26824,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 28040,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 29249,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 30455,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 31661,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 32876,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 34085,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 35291,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 36506,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 37710,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 38915,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 40121,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 41327,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 42542,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 43749,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 44957,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 46172,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 47379,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 48588,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 49793,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 51009,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 52218,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 53424,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 54639,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 55857,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 57075,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 58278,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 59484,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 60690,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 61905,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 63115,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 64320,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 65527,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 66742,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 67951,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 69157,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 70372,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 71581,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 72787,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 73994,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 75209,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 76424,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 77639,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 78848,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 80054,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 81260,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 82476,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 83684,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 84890,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 86105,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 87313,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 88520,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 89726,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 90942,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 92149,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 93357,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 94572,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 95781,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 96987,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 98194,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 99408,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 100617,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 101824,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 103029,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 104244,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 105454,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 106659,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 107875,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 109083,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 110290,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 111496,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 112711,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 113914,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 115119,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 116326,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 117541,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 118744,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 119950,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 121156,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 122363,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 123577,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 124786,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 125992,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 127207,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 128417,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 129624,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 130833,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 132048,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 133254,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 134460,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 135676,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 136885,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 138090,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 139296,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 140513,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 141721,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 142927,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 143482,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": false,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPlay\nNormal"
+  },
+  {
+    "ms": 144305,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 146712,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 149119,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 151527,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 153942,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 156351,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 158757,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 161167,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 163578,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 165987,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 168405,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 170818,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 173229,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 175636,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 178045,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 180454,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 182863,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 185274,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 187687,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 190097,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 192512,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 194920,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 197337,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 199747,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 202156,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 204562,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 206979,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 209388,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 211802,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 214219,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 216641,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 219047,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 221453,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 223859,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 226277,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 228684,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 231106,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 233515,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 235926,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 238342,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 240750,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 243156,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 245561,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 247977,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 250387,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 252807,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 255219,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 257628,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 260043,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 262452,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 264867,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 267274,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 269684,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 272094,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 274509,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 276919,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 279325,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 281735,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 284150,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 286562,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 288977,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 291389,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 293798,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 296210,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 298622,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 301028,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 303446,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 305857,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 308264,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 310682,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 313088,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 315494,
+    "src": "/draft/frames/4.webp",
+    "alt": "Overhead Tricep Extension, Bottom",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BOTTOM 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 317912,
+    "src": "/draft/frames/5.webp",
+    "alt": "Overhead Tricep Extension, Extend",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "EXTEND 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 320324,
+    "src": "/draft/frames/6.webp",
+    "alt": "Overhead Tricep Extension, Reset",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 322731,
+    "src": "/draft/frames/1.webp",
+    "alt": "Overhead Tricep Extension, Top",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "TOP 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 325146,
+    "src": "/draft/frames/2.webp",
+    "alt": "Overhead Tricep Extension, Brace",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 327555,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": true,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 329419,
+    "src": "/draft/frames/3.webp",
+    "alt": "Overhead Tricep Extension, Lower",
+    "playing": false,
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 461,
+    "naturalHeight": 1547,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "sectionText": "LOWER 3/6\n\nPlay\nSlower"
+  }
+]

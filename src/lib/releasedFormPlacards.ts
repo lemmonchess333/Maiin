@@ -17,6 +17,23 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "overhead-extension": placard(
+    "overhead-extension",
+    ["Triceps"],
+    ["Front Delts"],
+    [
+      [0, "Top", "Hold the dumbbell overhead with both hands."],
+      [0, "Brace", "Keep your core braced and elbows up."],
+      [1, "Lower", "Bend elbows; lower the dumbbell behind head."],
+      [1, "Bottom", "Keep your upper arms beside your head."],
+      [0, "Extend", "Straighten your elbows and squeeze your triceps."],
+      [0, "Reset", "Keep the dumbbell steady at full extension."],
+    ],
+    [
+      "Stand or sit, hold one dumbbell with both hands straight overhead.",
+      "Keep elbows close to your ears and pointed at the ceiling.",
+    ]
+  ),
   "face-pulls": placard(
     "face-pulls",
     ["Rear Delts"],

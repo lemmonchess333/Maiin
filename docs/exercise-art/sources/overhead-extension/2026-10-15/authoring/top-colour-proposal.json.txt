@@ -1,0 +1,80 @@
+{
+  "scope": "Colour candidate, native/playback review still required",
+  "source": "top-whole-frame-placement.png",
+  "sourceSha256": "a16851d35b8d8ccbf349b7fffd5e4cea1c27e5bdd8a124d88a20c50d152a3a3a",
+  "palette": {
+    "primary": "#7B72E9",
+    "secondary": "#9590E0"
+  },
+  "fields": [
+    {
+      "name": "far-triceps",
+      "box": [
+        385,
+        520,
+        455,
+        701
+      ],
+      "role": "primary",
+      "selectedExistingTintPixels": 2954,
+      "opaqueCorePixels": 2213
+    },
+    {
+      "name": "near-triceps",
+      "box": [
+        573,
+        520,
+        675,
+        820
+      ],
+      "role": "primary",
+      "selectedExistingTintPixels": 6122,
+      "opaqueCorePixels": 5073
+    },
+    {
+      "name": "far-front-deltoid",
+      "box": [
+        410,
+        701,
+        475,
+        790
+      ],
+      "role": "secondary",
+      "selectedExistingTintPixels": 2184,
+      "opaqueCorePixels": 1623
+    },
+    {
+      "name": "far-front-deltoid-upper-edge",
+      "box": [
+        455,
+        698,
+        475,
+        701
+      ],
+      "role": "secondary",
+      "selectedExistingTintPixels": 26,
+      "opaqueCorePixels": 0
+    },
+    {
+      "name": "near-front-deltoid",
+      "box": [
+        500,
+        670,
+        573,
+        860
+      ],
+      "role": "secondary",
+      "selectedExistingTintPixels": 4237,
+      "opaqueCorePixels": 3443
+    }
+  ],
+  "allExistingTintAccountedFor": {
+    "pixels": 0,
+    "bounds": null
+  },
+  "allOutsidePixelsUnchanged": true,
+  "anatomicalWarpOrGraft": false,
+  "sourceContoursAndNeutralShadingUnchanged": true,
+  "layerSha256": "9cbc457e2ca5ccac7ac001e45b2afac18ba6b6c8b23052c8cabb5469c759555a",
+  "outputSha256": "23a09c4abebe3740e7fd5b9a0ff590757f9bf277b149842dbed109659b1abd37"
+}

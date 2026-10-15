@@ -867,6 +867,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "2923ff62ea4a576013067b7a5c41aad39a7fbf7f75f272302c97445f6799f3e4",
     sha256: "822e472add01297cfcf64e9cca96049b98c360b97ba1e2a353147667b8e251f8",
   },
+  "overhead-extension": {
+    src: "form-art/overhead-extension.webp",
+    width: 163,
+    height: 480,
+    keyed: true,
+    source: "form-frames/overhead-extension/3.webp",
+    sourceSha256:
+      "a116abf8ca0115651e2f3e4a3cfb1ac600e0848ef5b7e1f39201f8ca2c3a1ce7",
+    sha256: "c3453eee07f245f0f4aa117e69364f570b91cb67ff375a6aa13c9b61ccd76e7d",
+  },
   "overhead-press": {
     src: "form-art/overhead-press.webp",
     width: 480,
