@@ -1,0 +1,63 @@
+{
+  "nativeRgbaExactToReviewedConstruction": true,
+  "changesConfinedToSourceChroma": true,
+  "bodyScale": 1,
+  "bodyTranslation": [0, 48],
+  "bodyWarpsOrGrafts": false,
+  "oraReadbacks": [
+    {
+      "path": "A-native.ora",
+      "sha256": "795829146ea4c34f71839dab594fca0201be8cbd6739f4f65a3b9f18c4abaf8f",
+      "layers": 5,
+      "mergedAndStackRgbaExact": true
+    },
+    {
+      "path": "B-native.ora",
+      "sha256": "d818040d9f13d37baff68836402b4210623803127c1f26820483b4bd3f18fccb",
+      "layers": 5,
+      "mergedAndStackRgbaExact": true
+    },
+    {
+      "path": "1.ora",
+      "sha256": "0ec4d281c079605c80443977e97312f3617b4f506c4227dbf4176ba28473304a",
+      "layers": 5,
+      "mergedAndStackRgbaExact": true
+    },
+    {
+      "path": "2.ora",
+      "sha256": "0ec4d281c079605c80443977e97312f3617b4f506c4227dbf4176ba28473304a",
+      "layers": 5,
+      "mergedAndStackRgbaExact": true
+    },
+    {
+      "path": "3.ora",
+      "sha256": "0bc9ed976ad02b85aed979ac4f1fd84c5ca3cddd654a68ee3f2b21ec2a69f34a",
+      "layers": 5,
+      "mergedAndStackRgbaExact": true
+    },
+    {
+      "path": "4.ora",
+      "sha256": "0bc9ed976ad02b85aed979ac4f1fd84c5ca3cddd654a68ee3f2b21ec2a69f34a",
+      "layers": 5,
+      "mergedAndStackRgbaExact": true
+    },
+    {
+      "path": "5.ora",
+      "sha256": "0ec4d281c079605c80443977e97312f3617b4f506c4227dbf4176ba28473304a",
+      "layers": 5,
+      "mergedAndStackRgbaExact": true
+    },
+    {
+      "path": "6.ora",
+      "sha256": "0ec4d281c079605c80443977e97312f3617b4f506c4227dbf4176ba28473304a",
+      "layers": 5,
+      "mergedAndStackRgbaExact": true
+    }
+  ],
+  "sourcePoseOrder": ["A", "A", "B", "B", "A", "A"],
+  "sixLosslessFramesExact": true,
+  "crop": [193, 15, 1528, 957],
+  "newImageRequests": 0,
+  "strictCertification": false,
+  "completionCredit": false
+}

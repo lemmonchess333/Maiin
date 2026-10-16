@@ -31,6 +31,9 @@ const beatsRef = {
   current: null as { t: number; label: string; cue: string }[] | null,
 };
 const setupRef = { current: null as string[] | null };
+const adviceRef = {
+  current: null as { tip: string; commonMistakes: string[] } | null,
+};
 const keyRef = {
   current: null as {
     primary: string[];
@@ -44,6 +47,7 @@ vi.mock("@/lib/bodyRig", () => ({
 vi.mock("@/lib/formGuides", () => ({
   getFormBeats: () => beatsRef.current,
   getFormSetup: () => setupRef.current,
+  getFormAdvice: () => adviceRef.current,
   getDemoMuscleKey: () => keyRef.current,
 }));
 
@@ -95,12 +99,41 @@ const BEATS = [
 beforeEach(() => {
   beatsRef.current = null;
   setupRef.current = null;
+  adviceRef.current = null;
   keyRef.current = null;
   reportStep = undefined;
   requestedStep = undefined;
 });
 
 describe("ExerciseFormContent — the instruction list", () => {
+  it("shows the released variation's advice alongside its movement cues", async () => {
+    beatsRef.current = BEATS;
+    adviceRef.current = {
+      tip: "Use a comfortable controlled hinge.",
+      commonMistakes: ["Bouncing through the return."],
+    };
+    render(<ExerciseFormContent exerciseName="Dips" />);
+    expect(
+      await screen.findByText("Use a comfortable controlled hinge.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Bouncing through the return.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Watch the shoulders.")).toBeNull();
+  });
+
+  it("keeps catalogue advice when a variation has no released beats", async () => {
+    adviceRef.current = {
+      tip: "Advice belonging to an unreleased variation.",
+      commonMistakes: ["Unreleased variation mistake."],
+    };
+    render(<ExerciseFormContent exerciseName="Dips" />);
+    expect(await screen.findByText("Watch the shoulders.")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Advice belonging to an unreleased variation.")
+    ).toBeNull();
+  });
+
   it("requests local instructions when the form surface owns a rig/placard", async () => {
     const lookup = vi.spyOn(exerciseDemoModule, "getExerciseDemo");
     try {

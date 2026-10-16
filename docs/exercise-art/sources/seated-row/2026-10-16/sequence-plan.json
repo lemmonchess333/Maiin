@@ -1,0 +1,80 @@
+{
+  "exerciseId": "seated-row",
+  "name": "Seated Cable Row",
+  "version": "anatomy-v3-2026-10-16-controlled-hinge-cable-v1",
+  "variation": "Controlled torso-hinge variation",
+  "physicalPoses": 2,
+  "sourcePoseOrder": ["A", "A", "B", "B", "A", "A"],
+  "positions": [0, 0, 1, 1, 0, 0],
+  "primary": ["Upper back"],
+  "secondary": ["Biceps"],
+  "setup": [
+    "Controlled torso-hinge variation: start light and move smoothly.",
+    "Sit on the fixed bench; brace both feet with knees slightly bent."
+  ],
+  "advice": {
+    "tip": "Use a small, comfortable torso hinge. Avoid bouncing or leaning far back to move the load.",
+    "commonMistakes": [
+      "Jerking the handle or using excessive momentum.",
+      "Straightening the knees to drive the movement.",
+      "Pulling high toward the shoulders instead of the lower ribs."
+    ]
+  },
+  "beats": [
+    {
+      "t": 0,
+      "label": "Reach",
+      "cue": "Reach forward; keep both feet braced."
+    },
+    {
+      "t": 0,
+      "label": "Set",
+      "cue": "Keep knees soft and wrists straight."
+    },
+    {
+      "t": 1,
+      "label": "Row",
+      "cue": "Draw elbows back; bring chest upright."
+    },
+    {
+      "t": 1,
+      "label": "Squeeze",
+      "cue": "Bring the handle toward your lower ribs."
+    },
+    {
+      "t": 0,
+      "label": "Return",
+      "cue": "Extend arms; hinge forward under control."
+    },
+    {
+      "t": 0,
+      "label": "Reset",
+      "cue": "Keep feet braced; avoid bouncing."
+    }
+  ],
+  "referenceFrame": 3,
+  "newImageRequests": 0,
+  "strictCertified": false,
+  "completionCredit": false,
+  "findings": [
+    "Two genuine source poses repeat across six delivery slots; no six-unique-pose or calibrated continuous human movement claim.",
+    "A labelled flex-and-extend cable-row variation, with matching advice; the default still-torso catalogue remains unchanged.",
+    "The source body and native flexible straps retain minor illustrative pose variations; held bar projections differ between source poses.",
+    "New fixed geometric charcoal equipment is an illustrative custom station, not a manufacturer replica or recovered source-body calibration.",
+    "Existing lower-body colour fields are neutralised per source-pixel luminance; this is not a recovered original untinted body.",
+    "Strict review remains unverified."
+  ],
+  "nativeCanvas": [1536, 1088],
+  "wholeSourceTranslation": [0, 48],
+  "wholeSourceScale": 1,
+  "commonCrop": [193, 15, 1528, 957],
+  "dimensions": [1335, 942],
+  "frameHashes": {
+    "draft/frames/1.webp": "a4ad168f8a595b039e710d9e42cbbee1cd88701cc12871235e9b5328451c9974",
+    "draft/frames/2.webp": "a4ad168f8a595b039e710d9e42cbbee1cd88701cc12871235e9b5328451c9974",
+    "draft/frames/3.webp": "ab9d79e0c4b36ffcd5cd082cb41c332069d73c8cbae00db47c7538e813598b07",
+    "draft/frames/4.webp": "ab9d79e0c4b36ffcd5cd082cb41c332069d73c8cbae00db47c7538e813598b07",
+    "draft/frames/5.webp": "a4ad168f8a595b039e710d9e42cbbee1cd88701cc12871235e9b5328451c9974",
+    "draft/frames/6.webp": "a4ad168f8a595b039e710d9e42cbbee1cd88701cc12871235e9b5328451c9974"
+  }
+}

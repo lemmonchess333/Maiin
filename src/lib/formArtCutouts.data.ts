@@ -1117,6 +1117,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "e2808ed49b6f64ebcedb29a3454746aa2bdc9e00490c9646bf5f6a101bef5e9b",
     sha256: "e59a050cef379f7353133cb80020a4ae8062edaa79e5a9252f4e373fd3d6e04d",
   },
+  "seated-row": {
+    src: "form-art/seated-row.webp",
+    width: 480,
+    height: 339,
+    keyed: true,
+    source: "form-frames/seated-row/3.webp",
+    sourceSha256:
+      "ab9d79e0c4b36ffcd5cd082cb41c332069d73c8cbae00db47c7538e813598b07",
+    sha256: "25c5c815d9aa5c74d1a63eca0e1615056308891a607606e9cc741ce7d6195b1f",
+  },
   "shoulder-press-machine": {
     src: "form-art/shoulder-press-machine.webp",
     width: 288,

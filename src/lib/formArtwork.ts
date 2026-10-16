@@ -75,12 +75,19 @@ const approved = (
 /**
  * The sets listed by hand: those released without a strict review. Six
  * shipped before the review existed and are kept while replacements are
- * reviewed; they do not claim to pass the new consistency standard. Fourteen
+ * reviewed; they do not claim to pass the new consistency standard. Fifteen
  * the owner released with their findings. An approved set never belongs
  * here: it comes from its record, and formArtwork.test.ts fails if an ID
  * is listed in both places.
  */
 export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
+  "seated-row": {
+    ...existing("seated-row", 1335, 942),
+    reference: "form-frames/seated-row/3.webp",
+    version: "anatomy-v3-2026-10-16-controlled-hinge-cable-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-16/seated-row.json",
+  },
   "spin-bike": {
     ...existing("spin-bike", 432, 707),
     reference: "form-frames/spin-bike/1.webp",

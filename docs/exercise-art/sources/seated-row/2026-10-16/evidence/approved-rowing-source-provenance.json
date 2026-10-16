@@ -1,0 +1,52 @@
+{
+  "exerciseId": "rowing-machine",
+  "sources": {
+    "1": {
+      "path": "originals/1-original.png",
+      "sha256": "54976c3327f10fcd229c6fbe20225d7c31af877896d1d0a77fc5424fb912466e",
+      "actualRetainedSourcePath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\rowing-machine\\1-master.png",
+      "promptMetadata": {
+        "path": "originals/1-prompt.txt",
+        "sha256": "788267a7b3344b5c1ff6b35b5de2d7749aa28e3037c2b090ef69f4b43ebe6701"
+      },
+      "nativeSize": [1536, 1024]
+    },
+    "2": {
+      "path": "originals/2-original.png",
+      "sha256": "c9e9d5359938dfab494dd01d9bbfe6a09d64bd21df669c376fa8bee307579609",
+      "actualRetainedSourcePath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\rowing-machine\\2-leg-drive-candidate.png",
+      "promptMetadata": {
+        "path": "originals/2-prompt.txt",
+        "sha256": "df195d2272224972ce24093d844844955a6a448c3ae4816c7cc33de485d500a6"
+      },
+      "nativeSize": [1536, 1024]
+    },
+    "3": {
+      "path": "originals/3-original.png",
+      "sha256": "b325b7dec503c4c1b2541a636ebc3434791214ac4d6c6e6eb2e6f8ea0db0a046",
+      "actualRetainedSourcePath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\rowing-machine\\3-finish-bent-knees.png",
+      "promptMetadata": {
+        "path": "originals/3-prompt.txt",
+        "sha256": "9c63c9168d685ba46385054b44de0f972c2de098fa28d4f6a31b5d4477422baf"
+      },
+      "nativeSize": [1536, 1024]
+    }
+  },
+  "canonicalReviewReference": {
+    "path": "originals/canonical-review-reference.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "parentSourceEligibility": {
+    "path": "parent-source-eligibility.json",
+    "sha256": "535bf7afa540b4d1c0266a699d68b76f6469f164bdaba5c8b44b5e8c33c23351"
+  },
+  "sourceNativeReview": {
+    "path": "source-native-review.json",
+    "sha256": "98ca090e4484753dd67e8765d639fb63219b26fd4f137a4c115114689b63b056"
+  },
+  "historicalCatchFraming": "Source1 is the exact retained authoring master after its historically authorized whole-scene90percent framing. Current authoring applies no resizing or translation to any human/equipment source.",
+  "newImageRequests": 0,
+  "bodyLocalTransforms": 0,
+  "equipmentEdits": 0,
+  "completionCredit": false
+}

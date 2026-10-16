@@ -1,0 +1,3818 @@
+[
+  {
+    "ms": 140208,
+    "observedAt": "2026-10-16T11:33:00.755Z",
+    "src": "/form-frames/seated-row/6.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/6.webp",
+    "alt": "Seated Cable Row, Reset",
+    "playing": false,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep feet braced; avoid bouncing.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPlay\nNormal"
+  },
+  {
+    "ms": 140460,
+    "observedAt": "2026-10-16T11:33:01.006Z",
+    "src": "/form-frames/seated-row/6.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/6.webp",
+    "alt": "Seated Cable Row, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep feet braced; avoid bouncing.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 141673,
+    "observedAt": "2026-10-16T11:33:02.220Z",
+    "src": "/form-frames/seated-row/1.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/1.webp",
+    "alt": "Seated Cable Row, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep feet braced; avoid bouncing.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 141682,
+    "observedAt": "2026-10-16T11:33:02.228Z",
+    "src": "/form-frames/seated-row/1.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/1.webp",
+    "alt": "Seated Cable Row, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reach forward; keep both feet braced.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 142892,
+    "observedAt": "2026-10-16T11:33:03.438Z",
+    "src": "/form-frames/seated-row/2.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/2.webp",
+    "alt": "Seated Cable Row, Set",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reach forward; keep both feet braced.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 142902,
+    "observedAt": "2026-10-16T11:33:03.448Z",
+    "src": "/form-frames/seated-row/2.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/2.webp",
+    "alt": "Seated Cable Row, Set",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft and wrists straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 144116,
+    "observedAt": "2026-10-16T11:33:04.662Z",
+    "src": "/form-frames/seated-row/3.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/3.webp",
+    "alt": "Seated Cable Row, Row",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft and wrists straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ROW 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 144127,
+    "observedAt": "2026-10-16T11:33:04.674Z",
+    "src": "/form-frames/seated-row/3.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/3.webp",
+    "alt": "Seated Cable Row, Row",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Row",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Draw elbows back; bring chest upright.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ROW 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 145340,
+    "observedAt": "2026-10-16T11:33:05.887Z",
+    "src": "/form-frames/seated-row/4.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/4.webp",
+    "alt": "Seated Cable Row, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Row",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Draw elbows back; bring chest upright.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 145351,
+    "observedAt": "2026-10-16T11:33:05.897Z",
+    "src": "/form-frames/seated-row/4.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/4.webp",
+    "alt": "Seated Cable Row, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bring the handle toward your lower ribs.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 146565,
+    "observedAt": "2026-10-16T11:33:07.112Z",
+    "src": "/form-frames/seated-row/5.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/5.webp",
+    "alt": "Seated Cable Row, Return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bring the handle toward your lower ribs.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 146579,
+    "observedAt": "2026-10-16T11:33:07.125Z",
+    "src": "/form-frames/seated-row/5.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/5.webp",
+    "alt": "Seated Cable Row, Return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Extend arms; hinge forward under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 147771,
+    "observedAt": "2026-10-16T11:33:08.317Z",
+    "src": "/form-frames/seated-row/6.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/6.webp",
+    "alt": "Seated Cable Row, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Extend arms; hinge forward under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 147783,
+    "observedAt": "2026-10-16T11:33:08.329Z",
+    "src": "/form-frames/seated-row/6.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/6.webp",
+    "alt": "Seated Cable Row, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep feet braced; avoid bouncing.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 148976,
+    "observedAt": "2026-10-16T11:33:09.523Z",
+    "src": "/form-frames/seated-row/1.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/1.webp",
+    "alt": "Seated Cable Row, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep feet braced; avoid bouncing.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 148989,
+    "observedAt": "2026-10-16T11:33:09.535Z",
+    "src": "/form-frames/seated-row/1.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/1.webp",
+    "alt": "Seated Cable Row, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reach forward; keep both feet braced.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 150183,
+    "observedAt": "2026-10-16T11:33:10.730Z",
+    "src": "/form-frames/seated-row/2.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/2.webp",
+    "alt": "Seated Cable Row, Set",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reach forward; keep both feet braced.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 150198,
+    "observedAt": "2026-10-16T11:33:10.745Z",
+    "src": "/form-frames/seated-row/2.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/2.webp",
+    "alt": "Seated Cable Row, Set",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft and wrists straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 151389,
+    "observedAt": "2026-10-16T11:33:11.935Z",
+    "src": "/form-frames/seated-row/3.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/3.webp",
+    "alt": "Seated Cable Row, Row",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft and wrists straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ROW 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 151403,
+    "observedAt": "2026-10-16T11:33:11.949Z",
+    "src": "/form-frames/seated-row/3.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/3.webp",
+    "alt": "Seated Cable Row, Row",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Row",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Draw elbows back; bring chest upright.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ROW 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 152595,
+    "observedAt": "2026-10-16T11:33:13.141Z",
+    "src": "/form-frames/seated-row/4.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/4.webp",
+    "alt": "Seated Cable Row, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Row",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Draw elbows back; bring chest upright.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 152610,
+    "observedAt": "2026-10-16T11:33:13.157Z",
+    "src": "/form-frames/seated-row/4.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/4.webp",
+    "alt": "Seated Cable Row, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bring the handle toward your lower ribs.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 153801,
+    "observedAt": "2026-10-16T11:33:14.347Z",
+    "src": "/form-frames/seated-row/5.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/5.webp",
+    "alt": "Seated Cable Row, Return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bring the handle toward your lower ribs.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 153816,
+    "observedAt": "2026-10-16T11:33:14.363Z",
+    "src": "/form-frames/seated-row/5.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/5.webp",
+    "alt": "Seated Cable Row, Return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Extend arms; hinge forward under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 155007,
+    "observedAt": "2026-10-16T11:33:15.553Z",
+    "src": "/form-frames/seated-row/6.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/6.webp",
+    "alt": "Seated Cable Row, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Extend arms; hinge forward under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 155024,
+    "observedAt": "2026-10-16T11:33:15.571Z",
+    "src": "/form-frames/seated-row/6.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/6.webp",
+    "alt": "Seated Cable Row, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep feet braced; avoid bouncing.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 156224,
+    "observedAt": "2026-10-16T11:33:16.770Z",
+    "src": "/form-frames/seated-row/1.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/1.webp",
+    "alt": "Seated Cable Row, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep feet braced; avoid bouncing.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 156246,
+    "observedAt": "2026-10-16T11:33:16.793Z",
+    "src": "/form-frames/seated-row/1.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/1.webp",
+    "alt": "Seated Cable Row, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reach forward; keep both feet braced.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 157431,
+    "observedAt": "2026-10-16T11:33:17.977Z",
+    "src": "/form-frames/seated-row/2.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/2.webp",
+    "alt": "Seated Cable Row, Set",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reach forward; keep both feet braced.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 157451,
+    "observedAt": "2026-10-16T11:33:17.997Z",
+    "src": "/form-frames/seated-row/2.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/2.webp",
+    "alt": "Seated Cable Row, Set",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft and wrists straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 158364,
+    "observedAt": "2026-10-16T11:33:18.910Z",
+    "src": "/form-frames/seated-row/2.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/2.webp",
+    "alt": "Seated Cable Row, Set",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft and wrists straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 158678,
+    "observedAt": "2026-10-16T11:33:19.225Z",
+    "src": "/form-frames/seated-row/2.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/2.webp",
+    "alt": "Seated Cable Row, Set",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft and wrists straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 159974,
+    "observedAt": "2026-10-16T11:33:20.520Z",
+    "src": "/form-frames/seated-row/2.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/2.webp",
+    "alt": "Seated Cable Row, Set",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft and wrists straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      0,
+      360
+    ],
+    "viewport": [
+      1,
+      1
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 159981,
+    "observedAt": "2026-10-16T11:33:20.527Z",
+    "src": "/form-frames/seated-row/2.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/2.webp",
+    "alt": "Seated Cable Row, Set",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft and wrists straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      334,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 160771,
+    "observedAt": "2026-10-16T11:33:21.317Z",
+    "src": "/form-frames/seated-row/3.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/3.webp",
+    "alt": "Seated Cable Row, Row",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft and wrists straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ROW 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 160780,
+    "observedAt": "2026-10-16T11:33:21.326Z",
+    "src": "/form-frames/seated-row/3.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/3.webp",
+    "alt": "Seated Cable Row, Row",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 3: Row",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Draw elbows back; bring chest upright.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ROW 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 163177,
+    "observedAt": "2026-10-16T11:33:23.723Z",
+    "src": "/form-frames/seated-row/4.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/4.webp",
+    "alt": "Seated Cable Row, Squeeze",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 3: Row",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Draw elbows back; bring chest upright.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 163186,
+    "observedAt": "2026-10-16T11:33:23.733Z",
+    "src": "/form-frames/seated-row/4.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/4.webp",
+    "alt": "Seated Cable Row, Squeeze",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bring the handle toward your lower ribs.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 165584,
+    "observedAt": "2026-10-16T11:33:26.130Z",
+    "src": "/form-frames/seated-row/5.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/5.webp",
+    "alt": "Seated Cable Row, Return",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bring the handle toward your lower ribs.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RETURN 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 165589,
+    "observedAt": "2026-10-16T11:33:26.136Z",
+    "src": "/form-frames/seated-row/5.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/5.webp",
+    "alt": "Seated Cable Row, Return",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 5: Return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Extend arms; hinge forward under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RETURN 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 167989,
+    "observedAt": "2026-10-16T11:33:28.535Z",
+    "src": "/form-frames/seated-row/6.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/6.webp",
+    "alt": "Seated Cable Row, Reset",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 5: Return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Extend arms; hinge forward under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 167995,
+    "observedAt": "2026-10-16T11:33:28.542Z",
+    "src": "/form-frames/seated-row/6.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/6.webp",
+    "alt": "Seated Cable Row, Reset",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep feet braced; avoid bouncing.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 170394,
+    "observedAt": "2026-10-16T11:33:30.941Z",
+    "src": "/form-frames/seated-row/1.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/1.webp",
+    "alt": "Seated Cable Row, Reach",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep feet braced; avoid bouncing.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 170399,
+    "observedAt": "2026-10-16T11:33:30.945Z",
+    "src": "/form-frames/seated-row/1.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/1.webp",
+    "alt": "Seated Cable Row, Reach",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reach forward; keep both feet braced.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 172801,
+    "observedAt": "2026-10-16T11:33:33.347Z",
+    "src": "/form-frames/seated-row/2.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/2.webp",
+    "alt": "Seated Cable Row, Set",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reach forward; keep both feet braced.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 172806,
+    "observedAt": "2026-10-16T11:33:33.352Z",
+    "src": "/form-frames/seated-row/2.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/2.webp",
+    "alt": "Seated Cable Row, Set",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft and wrists straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 175207,
+    "observedAt": "2026-10-16T11:33:35.753Z",
+    "src": "/form-frames/seated-row/3.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/3.webp",
+    "alt": "Seated Cable Row, Row",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft and wrists straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ROW 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 175211,
+    "observedAt": "2026-10-16T11:33:35.757Z",
+    "src": "/form-frames/seated-row/3.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/3.webp",
+    "alt": "Seated Cable Row, Row",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 3: Row",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Draw elbows back; bring chest upright.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ROW 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 177613,
+    "observedAt": "2026-10-16T11:33:38.159Z",
+    "src": "/form-frames/seated-row/4.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/4.webp",
+    "alt": "Seated Cable Row, Squeeze",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 3: Row",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Draw elbows back; bring chest upright.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 177617,
+    "observedAt": "2026-10-16T11:33:38.163Z",
+    "src": "/form-frames/seated-row/4.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/4.webp",
+    "alt": "Seated Cable Row, Squeeze",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bring the handle toward your lower ribs.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 180019,
+    "observedAt": "2026-10-16T11:33:40.566Z",
+    "src": "/form-frames/seated-row/5.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/5.webp",
+    "alt": "Seated Cable Row, Return",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bring the handle toward your lower ribs.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RETURN 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 180024,
+    "observedAt": "2026-10-16T11:33:40.570Z",
+    "src": "/form-frames/seated-row/5.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/5.webp",
+    "alt": "Seated Cable Row, Return",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 5: Return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Extend arms; hinge forward under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RETURN 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 182424,
+    "observedAt": "2026-10-16T11:33:42.971Z",
+    "src": "/form-frames/seated-row/6.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/6.webp",
+    "alt": "Seated Cable Row, Reset",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 5: Return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Extend arms; hinge forward under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 182431,
+    "observedAt": "2026-10-16T11:33:42.977Z",
+    "src": "/form-frames/seated-row/6.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/6.webp",
+    "alt": "Seated Cable Row, Reset",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep feet braced; avoid bouncing.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 184837,
+    "observedAt": "2026-10-16T11:33:45.383Z",
+    "src": "/form-frames/seated-row/1.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/1.webp",
+    "alt": "Seated Cable Row, Reach",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep feet braced; avoid bouncing.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 184841,
+    "observedAt": "2026-10-16T11:33:45.387Z",
+    "src": "/form-frames/seated-row/1.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/1.webp",
+    "alt": "Seated Cable Row, Reach",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reach forward; keep both feet braced.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 187243,
+    "observedAt": "2026-10-16T11:33:47.789Z",
+    "src": "/form-frames/seated-row/2.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/2.webp",
+    "alt": "Seated Cable Row, Set",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reach forward; keep both feet braced.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 187248,
+    "observedAt": "2026-10-16T11:33:47.795Z",
+    "src": "/form-frames/seated-row/2.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/2.webp",
+    "alt": "Seated Cable Row, Set",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft and wrists straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 189649,
+    "observedAt": "2026-10-16T11:33:50.195Z",
+    "src": "/form-frames/seated-row/3.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/3.webp",
+    "alt": "Seated Cable Row, Row",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft and wrists straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ROW 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 189653,
+    "observedAt": "2026-10-16T11:33:50.199Z",
+    "src": "/form-frames/seated-row/3.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/3.webp",
+    "alt": "Seated Cable Row, Row",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 3: Row",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Draw elbows back; bring chest upright.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ROW 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 192055,
+    "observedAt": "2026-10-16T11:33:52.601Z",
+    "src": "/form-frames/seated-row/4.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/4.webp",
+    "alt": "Seated Cable Row, Squeeze",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 3: Row",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Draw elbows back; bring chest upright.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 192060,
+    "observedAt": "2026-10-16T11:33:52.607Z",
+    "src": "/form-frames/seated-row/4.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/4.webp",
+    "alt": "Seated Cable Row, Squeeze",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bring the handle toward your lower ribs.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 194461,
+    "observedAt": "2026-10-16T11:33:55.007Z",
+    "src": "/form-frames/seated-row/5.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/5.webp",
+    "alt": "Seated Cable Row, Return",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bring the handle toward your lower ribs.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RETURN 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 194465,
+    "observedAt": "2026-10-16T11:33:55.011Z",
+    "src": "/form-frames/seated-row/5.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/5.webp",
+    "alt": "Seated Cable Row, Return",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 5: Return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Extend arms; hinge forward under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RETURN 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 196867,
+    "observedAt": "2026-10-16T11:33:57.413Z",
+    "src": "/form-frames/seated-row/6.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/6.webp",
+    "alt": "Seated Cable Row, Reset",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 5: Return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Extend arms; hinge forward under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 196874,
+    "observedAt": "2026-10-16T11:33:57.420Z",
+    "src": "/form-frames/seated-row/6.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/6.webp",
+    "alt": "Seated Cable Row, Reset",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep feet braced; avoid bouncing.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 199273,
+    "observedAt": "2026-10-16T11:33:59.819Z",
+    "src": "/form-frames/seated-row/1.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/1.webp",
+    "alt": "Seated Cable Row, Reach",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep feet braced; avoid bouncing.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 199282,
+    "observedAt": "2026-10-16T11:33:59.828Z",
+    "src": "/form-frames/seated-row/1.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/1.webp",
+    "alt": "Seated Cable Row, Reach",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reach forward; keep both feet braced.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 201679,
+    "observedAt": "2026-10-16T11:34:02.225Z",
+    "src": "/form-frames/seated-row/2.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/2.webp",
+    "alt": "Seated Cable Row, Set",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reach forward; keep both feet braced.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 201687,
+    "observedAt": "2026-10-16T11:34:02.234Z",
+    "src": "/form-frames/seated-row/2.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/2.webp",
+    "alt": "Seated Cable Row, Set",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft and wrists straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 204089,
+    "observedAt": "2026-10-16T11:34:04.636Z",
+    "src": "/form-frames/seated-row/3.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/3.webp",
+    "alt": "Seated Cable Row, Row",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft and wrists straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ROW 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 204101,
+    "observedAt": "2026-10-16T11:34:04.647Z",
+    "src": "/form-frames/seated-row/3.webp",
+    "currentSrc": "http://127.0.0.1:62328/form-frames/seated-row/3.webp",
+    "alt": "Seated Cable Row, Row",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 3: Row",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Draw elbows back; bring chest upright.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Row",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1335,
+    "naturalHeight": 942,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ROW 3/6\n\nPause\nSlower"
+  }
+]

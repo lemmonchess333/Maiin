@@ -1,0 +1,195 @@
+{
+  "exerciseId": "seated-row",
+  "version": "anatomy-v3-2026-10-16-controlled-hinge-cable-v1",
+  "width": 1335,
+  "height": 942,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex /root",
+  "reviewedAt": "2026-10-16T11:35:20.931829+00:00",
+  "recordStage": "Actual registered native/mobile/card review complete; project verification, required CI and merge remain separate gates.",
+  "reference": {
+    "path": "form-frames/seated-row/3.webp",
+    "sha256": "ab9d79e0c4b36ffcd5cd082cb41c332069d73c8cbae00db47c7538e813598b07"
+  },
+  "cueSha256": "6f87638404233d04126decce52212251355366804beed780d699e00fbd1575da",
+  "frames": [
+    {
+      "path": "form-frames/seated-row/1.webp",
+      "sha256": "a4ad168f8a595b039e710d9e42cbbee1cd88701cc12871235e9b5328451c9974",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/seated-row/2026-10-16/draft/A-framed.png",
+        "sha256": "25493360b21d7f548db1ad13c107c10d12338e9926b9aae84d5c50d761364093"
+      }
+    },
+    {
+      "path": "form-frames/seated-row/2.webp",
+      "sha256": "a4ad168f8a595b039e710d9e42cbbee1cd88701cc12871235e9b5328451c9974",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/seated-row/2026-10-16/draft/A-framed.png",
+        "sha256": "25493360b21d7f548db1ad13c107c10d12338e9926b9aae84d5c50d761364093"
+      }
+    },
+    {
+      "path": "form-frames/seated-row/3.webp",
+      "sha256": "ab9d79e0c4b36ffcd5cd082cb41c332069d73c8cbae00db47c7538e813598b07",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/seated-row/2026-10-16/draft/B-framed.png",
+        "sha256": "6047275b83eec5fba3e0d07f8eef2c8e07ad2d85f06982b8f0a395f74a47a4b7"
+      }
+    },
+    {
+      "path": "form-frames/seated-row/4.webp",
+      "sha256": "ab9d79e0c4b36ffcd5cd082cb41c332069d73c8cbae00db47c7538e813598b07",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/seated-row/2026-10-16/draft/B-framed.png",
+        "sha256": "6047275b83eec5fba3e0d07f8eef2c8e07ad2d85f06982b8f0a395f74a47a4b7"
+      }
+    },
+    {
+      "path": "form-frames/seated-row/5.webp",
+      "sha256": "a4ad168f8a595b039e710d9e42cbbee1cd88701cc12871235e9b5328451c9974",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/seated-row/2026-10-16/draft/A-framed.png",
+        "sha256": "25493360b21d7f548db1ad13c107c10d12338e9926b9aae84d5c50d761364093"
+      }
+    },
+    {
+      "path": "form-frames/seated-row/6.webp",
+      "sha256": "a4ad168f8a595b039e710d9e42cbbee1cd88701cc12871235e9b5328451c9974",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/seated-row/2026-10-16/draft/A-framed.png",
+        "sha256": "25493360b21d7f548db1ad13c107c10d12338e9926b9aae84d5c50d761364093"
+      }
+    }
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": ["A", "A", "B", "B", "A", "A"],
+  "positionCoordinates": [0, 0, 1, 1, 0, 0],
+  "variation": "Controlled torso-hinge variation",
+  "setup": [
+    "Controlled torso-hinge variation: start light and move smoothly.",
+    "Sit on the fixed bench; brace both feet with knees slightly bent."
+  ],
+  "advice": {
+    "tip": "Use a small, comfortable torso hinge. Avoid bouncing or leaning far back to move the load.",
+    "commonMistakes": [
+      "Jerking the handle or using excessive momentum.",
+      "Straightening the knees to drive the movement.",
+      "Pulling high toward the shoulders instead of the lower ribs."
+    ]
+  },
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "approval": {
+    "actor": "Human owner",
+    "instruction": "get spin bike merged then carry on with the other 10, same model and colours, no shorts. stop repeating failed attempts and asking for approval, just get them finished",
+    "context": "Existing session authorization covers native source extraction, existing-colour edits, new equipment, local registration, checks and merge. This owner release retains unverified strict review."
+  },
+  "findings": [
+    "Two genuine source poses repeat across six delivery slots; no six-unique-pose or calibrated continuous human movement claim.",
+    "A labelled flex-and-extend cable-row variation, with matching advice; the default still-torso catalogue remains unchanged.",
+    "The source body and native flexible straps retain minor illustrative pose variations; held bar projections differ between source poses.",
+    "New fixed geometric charcoal equipment is an illustrative custom station, not a manufacturer replica or recovered source-body calibration.",
+    "Existing lower-body colour fields are neutralised per source-pixel luminance; this is not a recovered original untinted body.",
+    "Strict review remains unverified.",
+    "Raw playback observation includes brief image/cue transition entries; all six settled selections agree in both themes. This is a discrete illustrated guide, not continuous animation."
+  ],
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Native FA56 athlete, no shorts, white trainers and fine source contours retained in two actual reviewed source poses."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Intact original native bodies, common integer translation (0,48), common crop. No human rescaling, warping or grafting. Equipment camera is illustrative, not recovered body calibration."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual native A/B review shows intact heads, torso, limbs, held bar and trainers. Native source differences remain findings."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. One fixed custom charcoal cable station, bench and angled footplate. Ten plates, three selected moving and seven resting."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual native review shows seated pelvis on the fixed bench, both feet on the shared plate with original flexible straps, and both source hands holding the retained bar."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Exact new gear construction uses fixed tangent pulley routing and 1:1 cable payout/selected-stack lift, including wrap arcs. Two discrete human states, no calibrated continuous human motion claim."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Approved source upper-back primary #7B72E9 and biceps secondary #9590E0 retain tone. Existing leg tint neutralised per original luminance; retained neutral source RGB stays exact."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual registered ExerciseFormContent at 390x844 in light and dark: six selected public frames, labels and exact cues agree; explicitly named variation preparation and advice are visible."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual decoded public images show all six paths and 6-to-1 wrap at normal and slower playback. Two actual physical states repeat A,A,B,B,A,A. Brief image/cue observer transitions remain disclosed; settled cue agreement is verified."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Root actual 390x844 light screenshots: whole athlete/equipment visible, six manual cues, legible advice and normal transparent 480x339 card at 480/348/160 long-side limits. Native480 card has an intentional horizontal preview scroller; page has no horizontal overflow."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Root actual 390x844 dark screenshots: whole athlete/equipment visible, all six selected cues and normal card previews. No captured browser warnings or errors."
+    }
+  },
+  "observedQaChecks": {
+    "identity": {
+      "observed": true,
+      "evidence": "Native FA56 athlete, no shorts, white trainers and fine source contours retained in two actual reviewed source poses."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "Intact original native bodies, common integer translation (0,48), common crop. No human rescaling, warping or grafting. Equipment camera is illustrative, not recovered body calibration."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "Actual native A/B review shows intact heads, torso, limbs, held bar and trainers. Native source differences remain findings."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "One fixed custom charcoal cable station, bench and angled footplate. Ten plates, three selected moving and seven resting."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Actual native review shows seated pelvis on the fixed bench, both feet on the shared plate with original flexible straps, and both source hands holding the retained bar."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "Exact new gear construction uses fixed tangent pulley routing and 1:1 cable payout/selected-stack lift, including wrap arcs. Two discrete human states, no calibrated continuous human motion claim."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Approved source upper-back primary #7B72E9 and biceps secondary #9590E0 retain tone. Existing leg tint neutralised per original luminance; retained neutral source RGB stays exact."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Actual registered ExerciseFormContent at 390x844 in light and dark: six selected public frames, labels and exact cues agree; explicitly named variation preparation and advice are visible."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Actual decoded public images show all six paths and 6-to-1 wrap at normal and slower playback. Two actual physical states repeat A,A,B,B,A,A. Brief image/cue observer transitions remain disclosed; settled cue agreement is verified."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Root actual 390x844 light screenshots: whole athlete/equipment visible, six manual cues, legible advice and normal transparent 480x339 card at 480/348/160 long-side limits. Native480 card has an intentional horizontal preview scroller; page has no horizontal overflow."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Root actual 390x844 dark screenshots: whole athlete/equipment visible, all six selected cues and normal card previews. No captured browser warnings or errors."
+    }
+  },
+  "publicationGate": "No credit before final registered review, normal verification disposition, required CI, merge and preservation audit."
+}
