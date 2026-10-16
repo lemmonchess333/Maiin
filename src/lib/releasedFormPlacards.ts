@@ -19,6 +19,32 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "straight-arm-pulldown": placard(
+    "straight-arm-pulldown",
+    ["Lats"],
+    ["Triceps", "Core"],
+    [
+      [0.0, "Reach", "Start with handles around shoulder height."],
+      [0.2, "Brace", "Brace your torso; keep elbows softly fixed."],
+      [0.4, "Pull to thighs", "Sweep your upper arms toward your sides."],
+      [0.6, "Squeeze", "Finish near thighs without leaning back."],
+      [0.8, "Control return", "Let the handles rise under control."],
+      [1.0, "Reset", "Keep your stance steady before repeating."],
+    ],
+    [
+      "Use two high cable handles; start with a light load.",
+      "Stand tall with feet planted and handles around shoulder height.",
+      "Keep a small, steady bend in both elbows.",
+    ],
+    {
+      tip: "Pull through your upper arms while keeping your torso steady.",
+      commonMistakes: [
+        "Turning the movement into an elbow-bending pulldown.",
+        "Leaning back or swinging to move the load.",
+        "Letting the weight stacks drop on the return.",
+      ],
+    }
+  ),
   "front-squat": placard(
     "front-squat",
     ["Quads"],

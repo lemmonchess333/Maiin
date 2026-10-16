@@ -1,0 +1,70 @@
+{
+  "exerciseId": "straight-arm-pulldown",
+  "name": "Straight-arm Cable Pulldown",
+  "version": "anatomy-v3-2026-10-16-native-local-repair-v1",
+  "variation": "Standing upright with two independent high-cable handles",
+  "physicalPoses": 2,
+  "sourcePoseOrder": ["B", "B", "A", "A", "B", "B"],
+  "positions": [0, 0, 1, 1, 0, 0],
+  "primary": ["Lats"],
+  "secondary": ["Triceps", "Core"],
+  "dimensions": [1152, 1728],
+  "setup": [
+    "Use two high cable handles; start with a light load.",
+    "Stand tall with feet planted and handles around shoulder height.",
+    "Keep a small, steady bend in both elbows."
+  ],
+  "advice": {
+    "tip": "Pull through your upper arms while keeping your torso steady.",
+    "commonMistakes": [
+      "Turning the movement into an elbow-bending pulldown.",
+      "Leaning back or swinging to move the load.",
+      "Letting the weight stacks drop on the return."
+    ]
+  },
+  "beats": [
+    {
+      "pose": "B",
+      "label": "Reach",
+      "cue": "Start with handles around shoulder height.",
+      "t": 0.0
+    },
+    {
+      "pose": "B",
+      "label": "Brace",
+      "cue": "Brace your torso; keep elbows softly fixed.",
+      "t": 0.2
+    },
+    {
+      "pose": "A",
+      "label": "Pull to thighs",
+      "cue": "Sweep your upper arms toward your sides.",
+      "t": 0.4
+    },
+    {
+      "pose": "A",
+      "label": "Squeeze",
+      "cue": "Finish near thighs without leaning back.",
+      "t": 0.6
+    },
+    {
+      "pose": "B",
+      "label": "Control return",
+      "cue": "Let the handles rise under control.",
+      "t": 0.8
+    },
+    {
+      "pose": "B",
+      "label": "Reset",
+      "cue": "Keep your stance steady before repeating.",
+      "t": 1.0
+    }
+  ],
+  "findings": [
+    "Two genuine source shoulder positions occupy six cue slots; no continuous or six-unique-pose motion claim.",
+    "The approved Front Raise source pair supplies the intact athlete. Newly image-authored local pixels restore the far forearm, near hand/thumb and occluded thigh surfaces at documented native coordinates; minor local shade joins remain illustrative.",
+    "Custom twin1:1 cable towers use finite sheave tangency, fixed hardware and conserved screen-space cable paths. This is a qualitative instructional drawing, not a factory replica or recovered3D human-camera calibration.",
+    "Visible latissimus is primary#7B72E9; the lowered near arm occludes it at the finish. Triceps/core secondary#9590E0 is restrained by uniform source-tone tint; highlight boundaries are manually traced qualitative regions, not measured activation.",
+    "Strict visual certification remains unverified under the owner-authorized release-with-findings workflow."
+  ]
+}

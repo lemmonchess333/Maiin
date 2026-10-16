@@ -1,0 +1,107 @@
+{
+  "reviewer": "Codex /root",
+  "reviewedAt": "2026-10-16T16:42:26.553434+00:00",
+  "actualRegisteredReviewComplete": true,
+  "strictCertified": false,
+  "manual": {
+    "dark": {
+      "sixSettledFramesAndCuesExact": true,
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    "light": {
+      "sixSettledFramesAndCuesExact": true,
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  },
+  "playback": {
+    "dark/normal": {
+      "allSixDecoded": true,
+      "wrapSixToOne": true,
+      "allSixSettledCuesAgree": true,
+      "transientObserverEntries": 18,
+      "observedRows": 37,
+      "source": "dark-normal-trace.json"
+    },
+    "dark/slower": {
+      "allSixDecoded": true,
+      "wrapSixToOne": true,
+      "allSixSettledCuesAgree": true,
+      "transientObserverEntries": 15,
+      "observedRows": 31,
+      "source": "dark-slower-trace.json"
+    },
+    "light/normal": {
+      "allSixDecoded": true,
+      "wrapSixToOne": true,
+      "allSixSettledCuesAgree": true,
+      "transientObserverEntries": 39,
+      "observedRows": 79,
+      "source": "light-normal-trace.json"
+    },
+    "light/slower": {
+      "allSixDecoded": true,
+      "wrapSixToOne": true,
+      "allSixSettledCuesAgree": true,
+      "transientObserverEntries": 17,
+      "observedRows": 37,
+      "source": "light-slower-trace.json"
+    }
+  },
+  "normalCardDimensions": [
+    283,
+    480
+  ],
+  "cardThemes": [
+    "dark",
+    "light"
+  ],
+  "normalCardLongSideLimits": [
+    480,
+    348,
+    160
+  ],
+  "preservedPriorPublicArtFiles": 1008,
+  "preservedHistoricalStrictRecords": 124,
+  "browserWarningsOrErrors": 0,
+  "nativeReview": "Final whole A/B native images, hand/handle contacts and flanks reviewed, then actual registered mobile reach/finish and both-theme cards. Original head/trainers remain byte-exact. New generated forearm and near hand/thigh pixels use fixed native crop coordinates only.",
+  "limitations": [
+    "Two real states repeated across six paths, no calibrated continuous movement claim.",
+    "Generated local restoration is illustrative, with minor thigh shade/contour joins; strict certification remains unverified.",
+    "White anatomical athlete has reduced contrast on a light normal card, especially at160px long-side limit; the form guide retains its standard dark stage."
+  ],
+  "previewResetDisposition": "Formatting the new registry/placard triggered Vite hot reload and reset theme during the first light normal playback attempt. Its raw not-light trace is retained; actual light normal playback was captured afresh after checking theme.",
+  "evidenceHashes": {
+    "review/browser-warnings-errors.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "review/dark-card-metrics.json": "1182c814c21b6cfd5df2c92e5eaacccec87a2160f176035f6549c7c92765de08",
+    "review/dark-cards.png": "af5eac720696c59679ffe26a4daa65739995a2b16adcbc26d8aabe63b9818171",
+    "review/dark-manual-1.png": "f382a8a0c70c44f75e116046e600c46b6ac0cbc9a69ae5258ba8e80e0f62bb06",
+    "review/dark-manual-2.png": "61a80f3b98e836e9cdf27a120dfd60bf365cadfc28774993caac9fc66f149685",
+    "review/dark-manual-3.png": "cbf6369178a5a2ba4beee34614459a3c6eeb0cca9b1ca1ed234cd4730c9fc565",
+    "review/dark-manual-4.png": "d155b19a7d33e5f4d3f5242b669fd23c57ed946d3459d8108fa0feaaa54fa33a",
+    "review/dark-manual-5.png": "375c0dcc71ce8ef7025c79e162efe10a22421e74f54bc174a2e8517e3647a57f",
+    "review/dark-manual-6.png": "bfd49f16c1100c3891b0d31b64a08360cc02664bc7831917a8d3523efd495d5b",
+    "review/dark-manual-six.json": "53fc5444a4b13bd3918c052c048f27b5c7d1616fb8cf560cd290df1dd59fdfea",
+    "review/dark-mobile.png": "234885ad0919e65c4bb721fc550f9138e1626593381efe986c05917db4aee504",
+    "review/dark-normal-trace.json": "c81cc92dedd7a5f2f223843b66cefe578c456cb133d01383947526a3b8a3549f",
+    "review/dark-slower-trace.json": "581be035b95e9fc31efa341bb90f01e5b024ee7dda763664afb03b3ed6131066",
+    "review/light-card-metrics.json": "0aba3ceb44b1d414e33742551855f65ae4b93b55018bdf658784f67497016aff",
+    "review/light-cards.png": "5281f23eb7ab8aef376c6a441b42b866b9da430ba87fdf0c8549515987930c29",
+    "review/light-manual-1.png": "f8083ff5b7d25152810779e2c3213f5367b02da973d23e8c679cd4c7cb85c0bb",
+    "review/light-manual-2.png": "2b303f2b10a2390ef1bdbc578b0b6a08642e8714f5e7a83c6a22a6f494a1a778",
+    "review/light-manual-3.png": "66ad535344bbe432cd076207ab8ad549e4aee951f2f3b7959b45c8fbf3e8c64e",
+    "review/light-manual-4.png": "fe94951b772dd81cd8a7f2822a48d1ca4f949557c43906d133902d959ed0c8cc",
+    "review/light-manual-5.png": "20523ca4c24c821a01b7dd56aca5437c46ae99f6e5423bfb6ea86fec2be1bbd3",
+    "review/light-manual-6.png": "9033eb6a49046ae24e792a584fac22240ed9feb8932f3c950da7c870511dd533",
+    "review/light-manual-six.json": "69c73f231cb8535124cf9a019577a99f7525824fd202d7c3f55435f131e8b436",
+    "review/light-normal-after-hot-reload-not-light.json": "3d3f09893b1aa6d252611e100d3dbe6f0a23e74d2506206be52a260e105d338a",
+    "review/light-normal-trace.json": "c6ae4297f36a00c8bd0e592b8c4c2e6ee310933edf41d7ea137baad6322520a4",
+    "review/light-slower-trace.json": "fa6fb7efcfcb14d22a07929c1198243a4ad356f6d433ee5dbb0970d180d18206"
+  },
+  "completionCredit": false
+}

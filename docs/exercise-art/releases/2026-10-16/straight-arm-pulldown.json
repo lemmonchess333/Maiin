@@ -1,0 +1,196 @@
+{
+  "exerciseId": "straight-arm-pulldown",
+  "version": "anatomy-v3-2026-10-16-native-local-repair-v1",
+  "width": 1152,
+  "height": 1728,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex /root",
+  "reviewedAt": "2026-10-16T16:42:26.553434+00:00",
+  "recordStage": "Actual native/mobile/card review complete; normal verification, required CI and actual merge remain separate gates.",
+  "reference": {
+    "path": "form-frames/straight-arm-pulldown/1.webp",
+    "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f"
+  },
+  "cueSha256": "e665f569e7f76c1807763a0cfd34c53f0aebb2f0c067d39563046e10ed5c8c0c",
+  "frames": [
+    {
+      "path": "form-frames/straight-arm-pulldown/1.webp",
+      "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/straight-arm-pulldown/2026-10-16/draft/B-native.png",
+        "sha256": "b4169392b167edbcacc1c1600ee790042ea409a445397044a6a5c2c759d761ce"
+      }
+    },
+    {
+      "path": "form-frames/straight-arm-pulldown/2.webp",
+      "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/straight-arm-pulldown/2026-10-16/draft/B-native.png",
+        "sha256": "b4169392b167edbcacc1c1600ee790042ea409a445397044a6a5c2c759d761ce"
+      }
+    },
+    {
+      "path": "form-frames/straight-arm-pulldown/3.webp",
+      "sha256": "a03e3b285e22bcc2a66712af85276d964302076ced16a81185360a3f6dbd92dd",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/straight-arm-pulldown/2026-10-16/draft/A-native.png",
+        "sha256": "f86498ac25725aac5562c8e6839ce05830217a030240093f350b1e5d64e55f76"
+      }
+    },
+    {
+      "path": "form-frames/straight-arm-pulldown/4.webp",
+      "sha256": "a03e3b285e22bcc2a66712af85276d964302076ced16a81185360a3f6dbd92dd",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/straight-arm-pulldown/2026-10-16/draft/A-native.png",
+        "sha256": "f86498ac25725aac5562c8e6839ce05830217a030240093f350b1e5d64e55f76"
+      }
+    },
+    {
+      "path": "form-frames/straight-arm-pulldown/5.webp",
+      "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/straight-arm-pulldown/2026-10-16/draft/B-native.png",
+        "sha256": "b4169392b167edbcacc1c1600ee790042ea409a445397044a6a5c2c759d761ce"
+      }
+    },
+    {
+      "path": "form-frames/straight-arm-pulldown/6.webp",
+      "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/straight-arm-pulldown/2026-10-16/draft/B-native.png",
+        "sha256": "b4169392b167edbcacc1c1600ee790042ea409a445397044a6a5c2c759d761ce"
+      }
+    }
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": ["B", "B", "A", "A", "B", "B"],
+  "positionCoordinates": [0, 0, 1, 1, 0, 0],
+  "variation": "Standing upright with two independent high-cable handles",
+  "setup": [
+    "Use two high cable handles; start with a light load.",
+    "Stand tall with feet planted and handles around shoulder height.",
+    "Keep a small, steady bend in both elbows."
+  ],
+  "advice": {
+    "tip": "Pull through your upper arms while keeping your torso steady.",
+    "commonMistakes": [
+      "Turning the movement into an elbow-bending pulldown.",
+      "Leaning back or swinging to move the load.",
+      "Letting the weight stacks drop on the return."
+    ]
+  },
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "approval": {
+    "actor": "Human owner",
+    "instruction": "ok carry on with the remaining8, same model and colours, no shorts. figure out another way to finish them and get them merged, stop repeating failed attempts and asking for approval",
+    "context": "Existing human authorization covers native-coordinate generated moving-part composites, palette/equipment edits, local registration, final checks, owner release with honest findings, PR and merge; strict certification is not implied."
+  },
+  "findings": [
+    "Two genuine source shoulder positions occupy six cue slots; no continuous or six-unique-pose motion claim.",
+    "The approved Front Raise source pair supplies the intact athlete. Newly image-authored local pixels restore the far forearm, near hand/thumb and occluded thigh surfaces at documented native coordinates; minor local shade joins remain illustrative.",
+    "Custom twin1:1 cable towers use finite sheave tangency, fixed hardware and conserved screen-space cable paths. This is a qualitative instructional drawing, not a factory replica or recovered3D human-camera calibration.",
+    "Visible latissimus is primary#7B72E9; the lowered near arm occludes it at the finish. Triceps/core secondary#9590E0 is restrained by uniform source-tone tint; highlight boundaries are manually traced qualitative regions, not measured activation.",
+    "Strict visual certification remains unverified under the owner-authorized release-with-findings workflow.",
+    "White anatomical athlete has reduced contrast on a light normal card, especially at160px long-side limit; the form guide retains its standard dark stage.",
+    "Raw playback includes brief observer image/cue transitions; all settled selections agree. A hot-reload theme reset and the fresh corrected light playback capture are retained in evidence."
+  ],
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Approved FA56-based Front Raise athlete, original head/trainers untouched, original surrounding body retained. Native local forearm/near-hand/thigh repairs match the existing smooth anatomical style. No shorts."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Original1024x1536 sources at scale1 with common integer padding[128,160], final1152x1728; exact documented whole-window2x undo for local sources. No anatomy fitting."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Actual full native and arm/hand/thigh contact crops reviewed. Two genuine fixed-stance shoulder states, source proportions and closed grips retained; local reconstructed surfaces are illustrative."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Custom restrained-grey twin1:1 high-cable towers, fixed20px-radius sheaves, same rails/ten plates/three selected plates/handles at both endpoints. Finite tangent and wrap paths preserved."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Actual native reviewed hand/handle overlaps, cable eyelets, selected-plate cable attachments and fixed planted trainers. Cable front/back depth is illustrative, not recovered3D clearance."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Each complete finite-sheave screen-space circuit has zero calculated length residual; selected plates rise as the handles descend. This does not certify a calibrated human camera or continuous motion."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Primary visible lat#7B72E9; secondary triceps/core#9590E0 blended uniformly with source grey shading. Native colour masks reviewed; lat is occluded by near arm in finish state. No measured activation claim."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual registered ExerciseFormContent at390x844 in both themes: all six decoded public paths, labels, cues, upright dual-handle setup and advice agree."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual public normal/slower playback in both themes includes all six paths and6-to1 wrap; all settled selected cues agree. Observer transitions retained. Two genuine states B,B,A,A,B,B."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual390x844 light manual six and normal/slower playback reviewed; complete athlete/apparatus visible on standard dark form stage, no page overflow. Normal283x480 card at480/348/160 long-side limits reviewed with reduced light-card contrast retained as a finding."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual390x844 dark manual six, normal/slower playback and three normal-card sizes reviewed; complete athlete/apparatus, no page overflow, no captured browser warnings or errors."
+    }
+  },
+  "observedQaChecks": {
+    "identity": {
+      "observed": true,
+      "evidence": "Approved FA56-based Front Raise athlete, original head/trainers untouched, original surrounding body retained. Native local forearm/near-hand/thigh repairs match the existing smooth anatomical style. No shorts."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "Original1024x1536 sources at scale1 with common integer padding[128,160], final1152x1728; exact documented whole-window2x undo for local sources. No anatomy fitting."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "Actual full native and arm/hand/thigh contact crops reviewed. Two genuine fixed-stance shoulder states, source proportions and closed grips retained; local reconstructed surfaces are illustrative."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "Custom restrained-grey twin1:1 high-cable towers, fixed20px-radius sheaves, same rails/ten plates/three selected plates/handles at both endpoints. Finite tangent and wrap paths preserved."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Actual native reviewed hand/handle overlaps, cable eyelets, selected-plate cable attachments and fixed planted trainers. Cable front/back depth is illustrative, not recovered3D clearance."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "Each complete finite-sheave screen-space circuit has zero calculated length residual; selected plates rise as the handles descend. This does not certify a calibrated human camera or continuous motion."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Primary visible lat#7B72E9; secondary triceps/core#9590E0 blended uniformly with source grey shading. Native colour masks reviewed; lat is occluded by near arm in finish state. No measured activation claim."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Actual registered ExerciseFormContent at390x844 in both themes: all six decoded public paths, labels, cues, upright dual-handle setup and advice agree."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Actual public normal/slower playback in both themes includes all six paths and6-to1 wrap; all settled selected cues agree. Observer transitions retained. Two genuine states B,B,A,A,B,B."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Actual390x844 light manual six and normal/slower playback reviewed; complete athlete/apparatus visible on standard dark form stage, no page overflow. Normal283x480 card at480/348/160 long-side limits reviewed with reduced light-card contrast retained as a finding."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Actual390x844 dark manual six, normal/slower playback and three normal-card sizes reviewed; complete athlete/apparatus, no page overflow, no captured browser warnings or errors."
+    }
+  },
+  "publicationGate": "No credit before real integrated review, normal verification disposition, required CI, actual merge and preservation audit."
+}

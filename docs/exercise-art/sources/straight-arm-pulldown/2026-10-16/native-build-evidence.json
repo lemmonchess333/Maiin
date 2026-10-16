@@ -1,0 +1,102 @@
+{
+  "status": "native-review-pending",
+  "sourceSize": [1024, 1536],
+  "canvas": [1152, 1728],
+  "integerPadding": [128, 160],
+  "sourceScale": 1,
+  "states": {
+    "A": {
+      "sourceSha256": "813df8deed18516707dc7925eda17b69cc96a5ac060e42188a758fd600b94c07",
+      "equipmentRemovalOrRestorationChangedPixels": 48766,
+      "primaryPixels": 0,
+      "secondaryPixels": 13971,
+      "headExact": true,
+      "trainersExact": true,
+      "mechanics": [
+        {
+          "circuit": 0,
+          "ratio": "1:1",
+          "radiusPx": 20,
+          "output": [-35, -100],
+          "handleCableAnchor": [427, 681],
+          "tangentPoint": [-17.566045730889396, -109.80087947801421],
+          "wrapRadians": 2.6294524550980514,
+          "freeLengthPx": 907.1962301508973,
+          "topSelectedPlateY": 600.9659963534135,
+          "loadRisePx": 509.0340036465865,
+          "constantCableLengthPx": 1660.751275606272,
+          "constantPathResidualPx": 0.0
+        },
+        {
+          "circuit": 1,
+          "ratio": "1:1",
+          "radiusPx": 20,
+          "output": [71, -60],
+          "handleCableAnchor": [614, 705],
+          "tangentPoint": [87.55225977868628, -71.22598308474072],
+          "wrapRadians": 2.5456379270979763,
+          "freeLengthPx": 937.9093772854603,
+          "topSelectedPlateY": 621.5437497542973,
+          "loadRisePx": 502.4562502457027,
+          "constantCableLengthPx": 1670.365885581717,
+          "constantPathResidualPx": 0.0
+        }
+      ]
+    },
+    "B": {
+      "sourceSha256": "1771951b91a37bbc369f96decc0ad447d0a933646cf032318341c5fef6d1f8be",
+      "equipmentRemovalOrRestorationChangedPixels": 41939,
+      "primaryPixels": 3626,
+      "secondaryPixels": 13129,
+      "headExact": true,
+      "trainersExact": true,
+      "mechanics": [
+        {
+          "circuit": 0,
+          "ratio": "1:1",
+          "radiusPx": 20,
+          "output": [-35, -100],
+          "handleCableAnchor": [167, 243],
+          "tangentPoint": [-17.27831992653329, -109.27049380419905],
+          "wrapRadians": 2.6596237461953844,
+          "freeLengthPx": 397.55880068236445,
+          "topSelectedPlateY": 1110.0,
+          "loadRisePx": 0.0,
+          "constantCableLengthPx": 1660.751275606272,
+          "constantPathResidualPx": 0.0
+        },
+        {
+          "circuit": 1,
+          "ratio": "1:1",
+          "radiusPx": 20,
+          "output": [71, -60],
+          "handleCableAnchor": [376, 255],
+          "tangentPoint": [85.98800078204187, -73.24234996356434],
+          "wrapRadians": 2.417951816010081,
+          "freeLengthPx": 438.0068492615155,
+          "topSelectedPlateY": 1124.0,
+          "loadRisePx": 0.0,
+          "constantCableLengthPx": 1670.365885581717,
+          "constantPathResidualPx": 0.0
+        }
+      ]
+    }
+  },
+  "anatomicalTransforms": 0,
+  "newImageRequests": 3,
+  "selectedNewSourceImages": 2,
+  "rejectedSquareOutput": {
+    "size": [1254, 1254],
+    "reason": "Service changed the requested1024 square canvas; not fitted or inserted."
+  },
+  "calibratedHumanCamera": false,
+  "equipment": "Custom illustrative twin high pulley towers, two independent 1:1 circuits with finite sheave tangencies and constant full cable paths. Pixel dimensions are not recovered human measurements or a stock-machine replica.",
+  "restoration": "New locally authored missing forearm/thigh pixels at documented native crop coordinates after exact whole-window2x undo. Local A near hand restored together with the occluded thigh at unchanged crop coordinates; original A far hand and B hands retained. Exposed heads/trainers byte exact. No fitted or warped limbs.",
+  "palette": {
+    "primary": "#7B72E9",
+    "secondary": "#9590E0"
+  },
+  "primaryOcclusion": "Source A lowered near arm occludes the latissimus surface; no false lat highlight painted onto that arm.",
+  "strictCertified": false,
+  "completionCredit": false
+}
