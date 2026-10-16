@@ -577,6 +577,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "c724267a05a39a4fd0b936de380bdd3dbc73accda8525d30607646a71a16bc79",
     sha256: "0c715bc608d077b8e093920e03091858565cbc7d59d62cde8b2be0cc7eedc1fc",
   },
+  "front-squat": {
+    src: "form-art/front-squat.webp",
+    width: 480,
+    height: 421,
+    keyed: true,
+    source: "form-frames/front-squat/3.webp",
+    sourceSha256:
+      "2a2bb9acc5d0aa8237885c8e8020f66a38af4927c47e745bd0d3dac115f58380",
+    sha256: "5e29be2a03c8373f59d8db97bcaa4c666d83303850b0b80cc2c85412a5fbb0c9",
+  },
   "glute-bridge": {
     src: "form-art/glute-bridge.webp",
     width: 480,

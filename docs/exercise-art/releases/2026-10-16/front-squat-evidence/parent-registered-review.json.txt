@@ -1,0 +1,133 @@
+{
+  "reviewer": "Codex /root",
+  "reviewedAt": "2026-10-16T12:52:39.175316+00:00",
+  "actualRegisteredReviewComplete": true,
+  "strictCertified": false,
+  "manual": {
+    "dark": {
+      "sixSettledFramesAndCuesExact": true,
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    "light": {
+      "sixSettledFramesAndCuesExact": true,
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  },
+  "playback": {
+    "dark/normal": {
+      "allSixVisibleDecodedFrames": true,
+      "wrapSixToOneObserved": true,
+      "allSixSettledCuesAgree": true,
+      "transientObserverEntries": 50,
+      "observedRows": 101,
+      "source": "dark-normal-trace.json"
+    },
+    "dark/slower": {
+      "allSixVisibleDecodedFrames": true,
+      "wrapSixToOneObserved": true,
+      "allSixSettledCuesAgree": true,
+      "transientObserverEntries": 14,
+      "observedRows": 29,
+      "source": "dark-slower-trace.json"
+    },
+    "light/normal": {
+      "allSixVisibleDecodedFrames": true,
+      "wrapSixToOneObserved": true,
+      "allSixSettledCuesAgree": true,
+      "transientObserverEntries": 30,
+      "observedRows": 61,
+      "source": "light-normal-stable-observations.json"
+    },
+    "light/slower": {
+      "allSixVisibleDecodedFrames": true,
+      "wrapSixToOneObserved": true,
+      "allSixSettledCuesAgree": true,
+      "transientObserverEntries": 19,
+      "observedRows": 39,
+      "source": "light-slower-stable-observations.json"
+    }
+  },
+  "normalCard": {
+    "advice": true,
+    "cards": [
+      {
+        "decoded": true,
+        "display": [
+          480,
+          421
+        ],
+        "limit": "480",
+        "natural": [
+          480,
+          421
+        ]
+      },
+      {
+        "decoded": true,
+        "display": [
+          347.9895935058594,
+          305.21875
+        ],
+        "limit": "348",
+        "natural": [
+          480,
+          421
+        ]
+      },
+      {
+        "decoded": true,
+        "display": [
+          160,
+          140.33334350585938
+        ],
+        "limit": "160",
+        "natural": [
+          480,
+          421
+        ]
+      }
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "preparation": true,
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  "preservedPriorPublicArtFiles": 1001,
+  "preservedHistoricalStrictRecords": 124,
+  "browserWarningsOrErrors": 0,
+  "portableImageAndOraProofSha256": "7c29123998fddb127de797c5985ae1039ffe85d83aeaad1c24e911ea783d8ee1",
+  "previewFailureDisposition": "Original truncated DOM read and empty capture after preview reset are preserved. Review evidence paths were excluded from Vite watching, then light normal and slower cycles were captured afresh. They are not replaced with synthetic observations.",
+  "nativeFindingDisposition": "New actual worn regular-harness evidence supports medial upper-shoulder arches, with original source anatomy and existing rigid apparatus retained. Scoped qualitative visual review only; prior strict/depth findings and old reviews retained.",
+  "evidenceHashes": {
+    "review/browser-warnings-errors.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "review/card-metrics-after-preview-reset.json": "3609ce96430b10d69d56153cd6df5e0b2b0bbacb6ac6d6662518bd8681bb43ee",
+    "review/dark-full-page.png": "764dab298fbd29eae7a5b9093825d781d4e097e3d770cbf70395c25daf46559d",
+    "review/dark-manual-six.json": "6d28ab1099a6fa67b8d3b3c7c78157a20716208675b9f6328ceb28103c65b5c3",
+    "review/dark-normal-trace.json": "3aa1f1b983ef925f6562e58aebe1262a5e1c360d623617eb1dbbdc6ddfd7de35",
+    "review/dark-slower-trace.json": "ba5001ba5666ee36b3c82f85f88e264f61c165002267e98b470e7744f2c6f59c",
+    "review/dark-stable-with-cards.png": "06b01f22fc745d05e87319cd4e775f2f7d6bbfb9b23d934ba541cbc35c421b24",
+    "review/handoff-guide-viewport.png": "6f1ecaa555dc501add788a609754b2cade19c111f275a18dcb7d62e12314fbfe",
+    "review/light-full-page.png": "63afb7423ac064d7eaabcf0855b5b5bfa077a8772f2cb55f0102f7000ffb9531",
+    "review/light-manual-six.json": "a4cd3c76a48ffbc2a90291f443d11c5de9d6fdf933f03fa00093ebc9a1488d52",
+    "review/light-normal-observations.json": "47efa1480dc4a80ebc1030fd796deaa8a3fdaee907adcf873bbfa048a9f52738",
+    "review/light-normal-stable-observations.json": "3d52041cdda47687bd7db747e7e3e0481625a84dd7491fb135e17a41f5ebe01b",
+    "review/light-normal-truncated-dom-read.txt": "d24e4a131312f95f6286e6a86ace8b30f85c16f6517a435695385acec8fb6bad",
+    "review/light-slower-empty-after-preview-reset.json": "60ce7fdd57b073017cc1aed749bd87269ccfe07f42e380ec1f1fe8e1d9922682",
+    "review/light-slower-stable-observations.json": "f20912b9d7e5a1861f8931131f776953f6659c5975eeb84bb30abac48665b4e9",
+    "review/light-stable-with-cards.png": "68b21956668f7420d2c3754bf1b6ca62297eb6024e20e3dda958d980ecbef2ba",
+    "review/light-with-card-previews.png": "de0d6ec7cad6696f6f3718d5de86f7a09593870cf7241d435395e92c9d0e016f",
+    "review/stable-card-metrics.json": "06330a3abb507adadc2abff977bd1809abf9697466e8cbff5083a0b3d0ac3417"
+  },
+  "completionCredit": false
+}

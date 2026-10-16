@@ -1,0 +1,196 @@
+{
+  "exerciseId": "front-squat",
+  "version": "anatomy-v3-2026-10-16-worn-reference-harness-source-tone-v1",
+  "width": 736,
+  "height": 800,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex /root",
+  "reviewedAt": "2026-10-16T12:52:39.175316+00:00",
+  "recordStage": "Actual native/mobile/card review complete; normal project verification, required CI and actual merge remain separate gates.",
+  "reference": {
+    "path": "form-frames/front-squat/3.webp",
+    "sha256": "2a2bb9acc5d0aa8237885c8e8020f66a38af4927c47e745bd0d3dac115f58380"
+  },
+  "cueSha256": "0cdf28cfd02dd15d5674b9d8434d6f6f965546db74da01f84e37771f1c363167",
+  "frames": [
+    {
+      "path": "form-frames/front-squat/1.webp",
+      "sha256": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/front-squat/2026-10-16/draft/A-framed.png",
+        "sha256": "972ec00beef87f2188a97062eec3212919c1d533d1f9e512613706d10afade8d"
+      }
+    },
+    {
+      "path": "form-frames/front-squat/2.webp",
+      "sha256": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/front-squat/2026-10-16/draft/A-framed.png",
+        "sha256": "972ec00beef87f2188a97062eec3212919c1d533d1f9e512613706d10afade8d"
+      }
+    },
+    {
+      "path": "form-frames/front-squat/3.webp",
+      "sha256": "2a2bb9acc5d0aa8237885c8e8020f66a38af4927c47e745bd0d3dac115f58380",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/front-squat/2026-10-16/draft/B-framed.png",
+        "sha256": "1d2afc51dc8047ea69888899cf40dd599b5c77346d3b17b9cd9348c0e91af0e4"
+      }
+    },
+    {
+      "path": "form-frames/front-squat/4.webp",
+      "sha256": "2a2bb9acc5d0aa8237885c8e8020f66a38af4927c47e745bd0d3dac115f58380",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/front-squat/2026-10-16/draft/B-framed.png",
+        "sha256": "1d2afc51dc8047ea69888899cf40dd599b5c77346d3b17b9cd9348c0e91af0e4"
+      }
+    },
+    {
+      "path": "form-frames/front-squat/5.webp",
+      "sha256": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/front-squat/2026-10-16/draft/A-framed.png",
+        "sha256": "972ec00beef87f2188a97062eec3212919c1d533d1f9e512613706d10afade8d"
+      }
+    },
+    {
+      "path": "form-frames/front-squat/6.webp",
+      "sha256": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/front-squat/2026-10-16/draft/A-framed.png",
+        "sha256": "972ec00beef87f2188a97062eec3212919c1d533d1f9e512613706d10afade8d"
+      }
+    }
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": ["A", "A", "B", "B", "A", "A"],
+  "positionCoordinates": [0, 0, 1, 1, 0, 0],
+  "variation": "Shoulder-harness variation",
+  "setup": [
+    "Shoulder-harness variation: use a fitted harness and start light.",
+    "Set both shoulder pads and bar catches before lifting from a rack.",
+    "Keep feet planted; brace before each squat."
+  ],
+  "advice": {
+    "tip": "Keep the harness supported on both shoulders and the bar secure in its catches.",
+    "commonMistakes": [
+      "Letting the harness tip or lose shoulder contact.",
+      "Lifting your heels or letting knees collapse inward.",
+      "Losing your brace or leaning far forward."
+    ]
+  },
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "approval": {
+    "actor": "Human owner",
+    "instruction": "keep going",
+    "context": "Existing session authorization: finish remaining exercises using the same model/colours, no shorts, native composites and equipment edits, local registration, checks and merge without routine reapproval. Earlier owner-authorised trial permits honest findings; no strict certification is implied."
+  },
+  "findings": [
+    "Two genuine intact squat states repeat across six delivery slots; this is a discrete illustrated guide.",
+    "Custom shoulder harness based on a real apparatus principle; not a stock manufacturer replica or ordinary direct-shoulder front rack.",
+    "Equipment projection is illustrative; the source body is not calibrated in3D. The old nominal51mm neck-envelope clearance is not adopted.",
+    "Original neutral source pixels remain exact; original violet fields use the exact target bases and per-pixel source tone. Neutralised source tint is not recovered pre-tint anatomy.",
+    "Retained source plate projections and hand contours have minor illustrative pose differences; a calibrated continuous human movement is not claimed.",
+    "Native scoped review uses the actual worn regular-harness reference for medial upper-shoulder support; strict review and exact anatomical depth remain unverified.",
+    "Raw playback contains brief image/cue observer transitions; settled selections agree. Preview-reset and truncated-read evidence are preserved beside the successful repeated light playback capture."
+  ],
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Native FA56-derived intact source athlete, no shorts, white trainers and fine contours retained; no body fitting or substituted head/hands/shoes."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Two intact original1536x1024 sources, one crop[432,208,1104,944] and integer padding[32,32]; source scale1. Equipment projection is illustrative, not body calibration."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Actual native top/bottom and contact crops inspected. Genuine planted-foot standing and deep-squat endpoints; inherited source pose variations are retained as findings."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Same custom connected shoulder harness in both states: padded arches, continuous risers, bar cradles and shorter front frame. Existing source bar/plates retained. No stock-replica claim."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Actual native scoped observation against the newly viewed worn regular-harness reference: medial upper-shoulder arches, both unchanged grips and planted trainers; shaft in front of neck. No exact anatomical-depth certificate."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Strict certification unverified. One rigid harness geometry and common projection, with the source shaft descent and small apparatus rotation; bottom frame clears thighs. Two discrete human states, not continuous calibrated motion."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Original neutral RGB remains exact outside source violet; quadriceps#7B72E9 and glutes/core#9590E0 use per-pixel source maximum/saturation. No new spatial shade gradient or anatomy detail."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual registered ExerciseFormContent at390x844 in both themes: all six selected public frames, labels and cues agree, with the explicitly labelled harness setup/advice."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual decoded public frames show all six paths and6-to1 wrap at normal and slower playback in both themes. Two genuine states A,A,B,B,A,A; brief observer image/cue transitions are retained and all settled cues agree."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Root actual390x844 light screenshots: whole athlete and apparatus, all six manual selections, legible harness-specific advice and transparent normal480x421 card at480/348/160 long-side limits. Native480 preview scrolls within its review container; no page overflow."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Root actual390x844 dark screenshots: whole athlete and apparatus, all six manual selections and normal card previews; no captured browser warnings or errors."
+    }
+  },
+  "observedQaChecks": {
+    "identity": {
+      "observed": true,
+      "evidence": "Native FA56-derived intact source athlete, no shorts, white trainers and fine contours retained; no body fitting or substituted head/hands/shoes."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "Two intact original1536x1024 sources, one crop[432,208,1104,944] and integer padding[32,32]; source scale1. Equipment projection is illustrative, not body calibration."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "Actual native top/bottom and contact crops inspected. Genuine planted-foot standing and deep-squat endpoints; inherited source pose variations are retained as findings."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "Same custom connected shoulder harness in both states: padded arches, continuous risers, bar cradles and shorter front frame. Existing source bar/plates retained. No stock-replica claim."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Actual native scoped observation against the newly viewed worn regular-harness reference: medial upper-shoulder arches, both unchanged grips and planted trainers; shaft in front of neck. No exact anatomical-depth certificate."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "One rigid harness geometry and common projection, with the source shaft descent and small apparatus rotation; bottom frame clears thighs. Two discrete human states, not continuous calibrated motion."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Original neutral RGB remains exact outside source violet; quadriceps#7B72E9 and glutes/core#9590E0 use per-pixel source maximum/saturation. No new spatial shade gradient or anatomy detail."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Actual registered ExerciseFormContent at390x844 in both themes: all six selected public frames, labels and cues agree, with the explicitly labelled harness setup/advice."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Actual decoded public frames show all six paths and6-to1 wrap at normal and slower playback in both themes. Two genuine states A,A,B,B,A,A; brief observer image/cue transitions are retained and all settled cues agree."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Root actual390x844 light screenshots: whole athlete and apparatus, all six manual selections, legible harness-specific advice and transparent normal480x421 card at480/348/160 long-side limits. Native480 preview scrolls within its review container; no page overflow."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Root actual390x844 dark screenshots: whole athlete and apparatus, all six manual selections and normal card previews; no captured browser warnings or errors."
+    }
+  },
+  "publicationGate": "No credit before actual integrated review, normal verify disposition, required CI, actual merge and preservation audit."
+}

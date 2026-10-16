@@ -1,0 +1,2507 @@
+{
+  "scope": "Projection of actual DOM-observer rows; repeated section text omitted",
+  "rows": [
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 189312,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:15.826Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 190523,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:17.037Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 190530,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:17.044Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 191737,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:18.251Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 191745,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:18.259Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 192955,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:19.469Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 192963,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:19.477Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 194174,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:20.688Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 194181,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:20.695Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 195389,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:21.903Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 195397,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:21.911Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 196597,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:23.111Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 196603,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:23.117Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 197804,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:24.318Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 197811,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:24.325Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 199019,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:25.533Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 199025,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:25.539Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 200228,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:26.742Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 200235,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:26.749Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 201434,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:27.948Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 201441,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:27.955Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 202640,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:29.154Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 202646,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:29.160Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 203855,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:30.369Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 203862,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:30.376Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 205064,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:31.578Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 205071,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:31.585Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 206270,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:32.784Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 206279,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:32.793Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 207495,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:34.009Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 207503,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:34.017Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 208700,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:35.214Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 208707,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:35.221Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 209907,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:36.421Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 209913,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:36.427Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 211116,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:37.630Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 211122,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:37.636Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 212325,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:38.839Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 212333,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:38.847Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 213531,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:40.045Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 213540,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:40.054Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 214737,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:41.251Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 214745,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:41.259Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 215952,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:42.466Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 215960,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:42.474Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 217162,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:43.676Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 217170,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:43.684Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 218373,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:44.888Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 218380,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:44.894Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 219589,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:46.103Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 219594,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:46.108Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 220792,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:47.306Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 220799,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:47.313Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 221997,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:48.511Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 222006,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:48.520Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 223203,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:49.717Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 223212,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:49.726Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 224409,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:50.923Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 224420,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:50.934Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 225618,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:52.132Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 225626,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:52.140Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 226827,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:53.341Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 226836,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:53.350Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 228034,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:54.548Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 228043,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:54.557Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 229240,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:55.754Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 229247,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:55.761Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 230456,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:56.970Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 230464,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:56.978Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 231660,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:58.174Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 231667,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:58.181Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 232870,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:59.384Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 232878,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:46:59.392Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 234086,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:00.600Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 234094,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:00.608Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 235294,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:01.808Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 235302,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:01.816Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 236500,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:03.014Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 236509,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:03.023Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 237706,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:04.220Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 237714,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:04.228Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 238922,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:05.436Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 238930,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:05.444Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 240130,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:06.644Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 240138,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:06.652Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 241337,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:07.851Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 241344,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:07.858Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 242542,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:09.056Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 242551,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:09.065Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 243748,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:10.262Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 243757,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:10.271Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 244953,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:11.467Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 244961,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:11.475Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 246161,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:12.675Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 246171,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:12.686Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 247368,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:13.882Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 247375,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:13.889Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 248573,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:15.087Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 248579,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:15.093Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 249788,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:16.302Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 249794,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:16.308Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 250993,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:17.507Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 251001,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:17.515Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 252197,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:18.711Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 252206,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:18.720Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 253403,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:19.917Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 253411,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:19.925Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 254618,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:21.132Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 254628,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:21.142Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 255828,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:22.342Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 255835,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:22.349Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 257033,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:23.547Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 257041,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:23.555Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 258240,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:24.754Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 258246,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:24.760Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 259455,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:25.969Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 259462,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:25.976Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 260663,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:27.177Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 260673,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:27.187Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 261869,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:28.383Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 261878,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:28.392Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 263085,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:29.599Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 263092,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:29.606Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 264294,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:30.809Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 264301,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:30.815Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 265502,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:32.016Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 265514,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:32.028Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 266713,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:33.227Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Control",
+      "documentHidden": false,
+      "ms": 266720,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:33.234Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 267923,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:34.437Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 4: Control",
+      "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Rise",
+      "documentHidden": false,
+      "ms": 267932,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:34.446Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 269130,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:35.644Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 5: Rise",
+      "selectedInstructionText": "Push through your whole feet to stand.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Reset",
+      "documentHidden": false,
+      "ms": 269138,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:35.652Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 270336,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:36.850Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Stay braced with both hands stabilising.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Stand",
+      "documentHidden": false,
+      "ms": 270344,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:36.858Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 271542,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:38.056Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 1: Stand",
+      "selectedInstructionText": "Stand tall; keep the harness supported.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Brace",
+      "documentHidden": false,
+      "ms": 271553,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:38.067Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 272748,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:39.262Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 2: Brace",
+      "selectedInstructionText": "Brace; keep both feet firmly planted.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Front Squat, Squat",
+      "documentHidden": false,
+      "ms": 272755,
+      "naturalHeight": 800,
+      "naturalWidth": 736,
+      "observedAt": "2026-10-16T12:47:39.269Z",
+      "playing": true,
+      "selectedInstruction": "Show frame 3: Squat",
+      "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+      "slower": "false",
+      "src": "/form-frames/front-squat/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  ]
+}

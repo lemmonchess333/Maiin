@@ -85,7 +85,7 @@ describe("form art cut-outs", () => {
     expect(getFormArtCutout(id)?.src).toBe(FORM_ART_CUTOUTS[id].src);
     expect(getFormArtCutout("not-an-exercise")).toBeNull();
     // A pilot that is not released has no cut-out even if one existed.
-    expect(getReleasedFormArtwork("front-squat")).toBeNull();
-    expect(getFormArtCutout("front-squat")).toBeNull();
+    expect(getReleasedFormArtwork("turkish-get-up")).toBeNull();
+    expect(getFormArtCutout("turkish-get-up")).toBeNull();
   });
 });
