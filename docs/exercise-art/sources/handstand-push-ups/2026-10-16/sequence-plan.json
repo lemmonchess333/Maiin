@@ -1,0 +1,73 @@
+{
+  "exerciseId": "handstand-push-ups",
+  "name": "Handstand Push-Up",
+  "version": "anatomy-v3-2026-10-16-native-head-profile-v1",
+  "variation": "Wall-supported strict press",
+  "physicalPoses": 2,
+  "sourcePoseOrder": ["A", "A", "B", "B", "A", "A"],
+  "positions": [0, 0, 1, 1, 0, 0],
+  "dimensions": [688, 1504],
+  "commonCrop": [240, 0, 864, 1440],
+  "padding": [32, 32],
+  "primary": ["Shoulders"],
+  "secondary": ["Triceps", "Core"],
+  "beats": [
+    {
+      "pose": "A",
+      "label": "Stack",
+      "cue": "Straight arms; keep heels against the wall.",
+      "t": 0
+    },
+    {
+      "pose": "A",
+      "label": "Brace",
+      "cue": "Brace your torso; keep legs together.",
+      "t": 0
+    },
+    {
+      "pose": "B",
+      "label": "Lower",
+      "cue": "Bend elbows; lower under control.",
+      "t": 1
+    },
+    {
+      "pose": "B",
+      "label": "Touch lightly",
+      "cue": "Touch lightly; keep support through your palms.",
+      "t": 1
+    },
+    {
+      "pose": "A",
+      "label": "Press",
+      "cue": "Press through both palms to straight arms.",
+      "t": 0
+    },
+    {
+      "pose": "A",
+      "label": "Reset",
+      "cue": "Reset with head neutral and heels supported.",
+      "t": 0
+    }
+  ],
+  "setup": [
+    "Establish a stable wall-supported handstand before starting.",
+    "Place both palms firmly on the floor and keep heels supported.",
+    "Keep your neck neutral and control the descent."
+  ],
+  "advice": {
+    "tip": "Press through both palms; keep control as your crown approaches the floor.",
+    "commonMistakes": [
+      "Dropping onto your head.",
+      "Losing torso control or kicking to press.",
+      "Letting the hands slide."
+    ]
+  },
+  "findings": [
+    "Two genuine strict-press endpoints occupy six cue slots; kick-up is written setup, and no six-unique-pose or continuous-motion claim is made.",
+    "New native full-frame connected head/neck authoring corrects the old broad bottom profile without a pasted head, anatomy warp or code head resize. Whole generated bottom is retained; no outside-pixel invariance to the older bottom is claimed.",
+    "The same read-only profile diagnostic now measures0.47percent breadth and0.96percent length differences at threshold200, with corresponding threshold210/220 checks retained. These are projected contour diagnostics, not calibrated3D skull measurements.",
+    "The source endpoints retain minor palm/finger silhouette variation, wide bent-elbow projections and illustrative wall/floor depth. Exact fixed-joint coordinates and calibrated vertical forearm loading remain unverified.",
+    "Only original source-violet pixels are recoloured using the exact approved targets and per-pixel source tone. All neutral pixels, including the actual chosen heads and trainers, stay byte-exact during palette finishing.",
+    "Strict visual certification remains unverified under the owner-authorized release-with-findings workflow."
+  ]
+}

@@ -1,0 +1,116 @@
+[
+  {
+    "cue": "Start with handles around shoulder height.",
+    "decoded": true,
+    "natural": [
+      1152,
+      1728
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 1: Reach",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Brace your torso; keep elbows softly fixed.",
+    "decoded": true,
+    "natural": [
+      1152,
+      1728
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 2: Brace",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Sweep your upper arms toward your sides.",
+    "decoded": true,
+    "natural": [
+      1152,
+      1728
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 3: Pull to thighs",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Finish near thighs without leaning back.",
+    "decoded": true,
+    "natural": [
+      1152,
+      1728
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 4: Squeeze",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Let the handles rise under control.",
+    "decoded": true,
+    "natural": [
+      1152,
+      1728
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 5: Control return",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Keep your stance steady before repeating.",
+    "decoded": true,
+    "natural": [
+      1152,
+      1728
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 6: Reset",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  }
+]

@@ -1,0 +1,305 @@
+{
+  "scope": "Manually inspected corresponding exposed native cranial profile ROIs; neutral bright mask. PCA removes in-plane orientation from projected profile diagnostics only. No3D skull calibration/yaw inference and no anatomical pixel transform. Torso colour-boundary span is a local projected anatomical field comparison, not full-body bbox height or bone length.",
+  "rows": [
+    {
+      "pose": "top",
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\handstand-push-ups\\native-head-profile-authoring-20261016\\..\\1-master.png",
+      "sha256": "643f0b7c42ee48259caa42aa86124d2c2789cf6f401a3fc98508003b34eb5562",
+      "nativeSize": [1024, 1536],
+      "headROI": [455, 1023, 565, 1149],
+      "headROIScope": "Corresponding head/profile patches below the manually observed upper chin/neck junction. Brightness200-220 excludes darker adjacent neutral body/background pixels which contaminate lower thresholds. Lateral/bottom profile bounds do not touch ROI boundary. Upper neck junction/ear remain within this diagnostic; not a calibrated isolated skull.",
+      "samples": [
+        {
+          "threshold": 200,
+          "pixelCount": 8693,
+          "boundsInclusive": [468, 1023, 560, 1142],
+          "centroid": [510.9218911768089, 1078.7150580927182],
+          "principal99PercentSpansMinorMajorPx": [
+            87.00857123774477, 117.00037725033764
+          ],
+          "principalCovarianceEllipseMinorMajorPx": [
+            90.53013766587473, 126.76089635009909
+          ],
+          "majorAxisVector": [-0.0003561775856519443, 0.9999999365687617]
+        },
+        {
+          "threshold": 210,
+          "pixelCount": 8437,
+          "boundsInclusive": [468, 1023, 560, 1142],
+          "centroid": [510.11402157164866, 1078.2854095057485],
+          "principal99PercentSpansMinorMajorPx": [
+            87.09624717542707, 116.90280890822925
+          ],
+          "principalCovarianceEllipseMinorMajorPx": [
+            89.12091397583028, 125.4240461564662
+          ],
+          "majorAxisVector": [-0.0047098907144958865, 0.999988908403217]
+        },
+        {
+          "threshold": 220,
+          "pixelCount": 8193,
+          "boundsInclusive": [468, 1023, 560, 1142],
+          "centroid": [509.4718662272672, 1078.1446356645918],
+          "principal99PercentSpansMinorMajorPx": [
+            86.9994813158574, 115.9911541539536
+          ],
+          "principalCovarianceEllipseMinorMajorPx": [
+            87.99580166825424, 123.92903580495489
+          ],
+          "majorAxisVector": [0.00017716397428112115, 0.9999999843064631]
+        }
+      ],
+      "torsoROI": [500, 670, 535, 925],
+      "torsoColourBoundaryDiagnostics": [
+        {
+          "minBlueMinusRed": 10,
+          "firstY": 693,
+          "lastY": 890,
+          "centralAbdominalFieldProjectedSpanPx": 197
+        },
+        {
+          "minBlueMinusRed": 20,
+          "firstY": 693,
+          "lastY": 890,
+          "centralAbdominalFieldProjectedSpanPx": 197
+        },
+        {
+          "minBlueMinusRed": 30,
+          "firstY": 693,
+          "lastY": 889,
+          "centralAbdominalFieldProjectedSpanPx": 196
+        }
+      ],
+      "rejectedIndividualTrainerROIAttempts": [
+        {
+          "name": "near",
+          "toeSearchROI": [590, 0, 678, 50],
+          "firstBrightToeY": 8,
+          "minRGB": 200,
+          "crossSections": [
+            {
+              "offsetBelowFirstBrightToeRow": 20,
+              "nativeY": 28,
+              "xRange": [590, 654],
+              "brightToeCapSpanPx": 64,
+              "lateralROIClipped": true
+            },
+            {
+              "offsetBelowFirstBrightToeRow": 30,
+              "nativeY": 38,
+              "xRange": [590, 659],
+              "brightToeCapSpanPx": 69,
+              "lateralROIClipped": true
+            },
+            {
+              "offsetBelowFirstBrightToeRow": 40,
+              "nativeY": 48,
+              "xRange": [590, 664],
+              "brightToeCapSpanPx": 74,
+              "lateralROIClipped": true
+            }
+          ]
+        },
+        {
+          "name": "far",
+          "toeSearchROI": [540, 15, 610, 65],
+          "firstBrightToeY": 15,
+          "minRGB": 200,
+          "crossSections": [
+            {
+              "offsetBelowFirstBrightToeRow": 20,
+              "nativeY": 35,
+              "xRange": [557, 609],
+              "brightToeCapSpanPx": 52,
+              "lateralROIClipped": true
+            },
+            {
+              "offsetBelowFirstBrightToeRow": 30,
+              "nativeY": 45,
+              "xRange": [554, 609],
+              "brightToeCapSpanPx": 55,
+              "lateralROIClipped": true
+            },
+            {
+              "offsetBelowFirstBrightToeRow": 40,
+              "nativeY": 55,
+              "xRange": [554, 609],
+              "brightToeCapSpanPx": 55,
+              "lateralROIClipped": true
+            }
+          ]
+        }
+      ],
+      "pairedTrainerForefootDiagnostic": {
+        "searchROI": [530, 0, 685, 75],
+        "firstBrightToeY": 8,
+        "forefootBandHeight": 60,
+        "nativeBand": [530, 8, 685, 68],
+        "projectedForefootPairBrightXSpanPx": 113,
+        "xRange": [554, 667],
+        "threshold": 200,
+        "interpretation": "Observed paired trainer forefoot silhouette width, not an individual shoe length/3D scale. Shoe outlines overlap in view; individual narrow-ROI attempts above are rejected when clipped/contaminated."
+      }
+    },
+    {
+      "pose": "bottom",
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\handstand-push-ups\\native-head-profile-authoring-20261016\\B-profile-corrected-native.png",
+      "sha256": "2e3921b4752b6430511b3c6f8e8c50b9d307872f52337c9a5b036bb24bc6268e",
+      "nativeSize": [1024, 1536],
+      "headROI": [435, 1212, 565, 1338],
+      "headROIScope": "Corresponding head/profile patches below the manually observed upper chin/neck junction. Brightness200-220 excludes darker adjacent neutral body/background pixels which contaminate lower thresholds. Lateral/bottom profile bounds do not touch ROI boundary. Upper neck junction/ear remain within this diagnostic; not a calibrated isolated skull.",
+      "samples": [
+        {
+          "threshold": 200,
+          "pixelCount": 9110,
+          "boundsInclusive": [460, 1212, 554, 1330],
+          "centroid": [505.95993413830956, 1268.0614709110866],
+          "principal99PercentSpansMinorMajorPx": [
+            87.41923504468983, 118.12275248705652
+          ],
+          "principalCovarianceEllipseMinorMajorPx": [
+            93.79437332364208, 127.8676674012423
+          ],
+          "majorAxisVector": [0.14809009723608924, 0.9889738738210457]
+        },
+        {
+          "threshold": 210,
+          "pixelCount": 8739,
+          "boundsInclusive": [460, 1212, 554, 1330],
+          "centroid": [504.44833504977686, 1267.4638974711065],
+          "principal99PercentSpansMinorMajorPx": [
+            87.14029662020553, 117.00320417002655
+          ],
+          "principalCovarianceEllipseMinorMajorPx": [
+            90.94199060392533, 127.12117308946902
+          ],
+          "majorAxisVector": [0.107018355854865, 0.9942570449889312]
+        },
+        {
+          "threshold": 220,
+          "pixelCount": 8516,
+          "boundsInclusive": [460, 1212, 554, 1330],
+          "centroid": [503.64020666979803, 1267.2848755284172],
+          "principal99PercentSpansMinorMajorPx": [
+            86.5091609693853, 116.08576574940676
+          ],
+          "principalCovarianceEllipseMinorMajorPx": [
+            89.2778097346205, 126.63334618581463
+          ],
+          "majorAxisVector": [0.09746836815153063, 0.9952386232506644]
+        }
+      ],
+      "torsoROI": [500, 845, 535, 1100],
+      "torsoColourBoundaryDiagnostics": [
+        {
+          "minBlueMinusRed": 10,
+          "firstY": 869,
+          "lastY": 1068,
+          "centralAbdominalFieldProjectedSpanPx": 199
+        },
+        {
+          "minBlueMinusRed": 20,
+          "firstY": 869,
+          "lastY": 1068,
+          "centralAbdominalFieldProjectedSpanPx": 199
+        },
+        {
+          "minBlueMinusRed": 30,
+          "firstY": 869,
+          "lastY": 1068,
+          "centralAbdominalFieldProjectedSpanPx": 199
+        }
+      ],
+      "rejectedIndividualTrainerROIAttempts": [
+        {
+          "name": "near",
+          "toeSearchROI": [590, 150, 678, 200],
+          "firstBrightToeY": 158,
+          "minRGB": 200,
+          "crossSections": [
+            {
+              "offsetBelowFirstBrightToeRow": 20,
+              "nativeY": 178,
+              "xRange": [604, 654],
+              "brightToeCapSpanPx": 50,
+              "lateralROIClipped": false
+            },
+            {
+              "offsetBelowFirstBrightToeRow": 30,
+              "nativeY": 188,
+              "xRange": [590, 659],
+              "brightToeCapSpanPx": 69,
+              "lateralROIClipped": true
+            },
+            {
+              "offsetBelowFirstBrightToeRow": 40,
+              "nativeY": 198,
+              "xRange": [590, 663],
+              "brightToeCapSpanPx": 73,
+              "lateralROIClipped": true
+            }
+          ]
+        },
+        {
+          "name": "far",
+          "toeSearchROI": [540, 165, 610, 215],
+          "firstBrightToeY": 165,
+          "minRGB": 200,
+          "crossSections": [
+            {
+              "offsetBelowFirstBrightToeRow": 20,
+              "nativeY": 185,
+              "xRange": [557, 609],
+              "brightToeCapSpanPx": 52,
+              "lateralROIClipped": true
+            },
+            {
+              "offsetBelowFirstBrightToeRow": 30,
+              "nativeY": 195,
+              "xRange": [554, 609],
+              "brightToeCapSpanPx": 55,
+              "lateralROIClipped": true
+            },
+            {
+              "offsetBelowFirstBrightToeRow": 40,
+              "nativeY": 205,
+              "xRange": [554, 609],
+              "brightToeCapSpanPx": 55,
+              "lateralROIClipped": true
+            }
+          ]
+        }
+      ],
+      "pairedTrainerForefootDiagnostic": {
+        "searchROI": [530, 150, 685, 225],
+        "firstBrightToeY": 158,
+        "forefootBandHeight": 60,
+        "nativeBand": [530, 158, 685, 218],
+        "projectedForefootPairBrightXSpanPx": 113,
+        "xRange": [554, 667],
+        "threshold": 200,
+        "interpretation": "Observed paired trainer forefoot silhouette width, not an individual shoe length/3D scale. Shoe outlines overlap in view; individual narrow-ROI attempts above are rejected when clipped/contaminated."
+      }
+    }
+  ],
+  "thresholdComparisons": [
+    {
+      "threshold": 200,
+      "bottomOverTopPixelAreaPercent": 4.796963073737492,
+      "bottomOverTopMinorSpanPercent": 0.47198086476210044,
+      "bottomOverTopMajorSpanPercent": 0.959291981014232
+    },
+    {
+      "threshold": 210,
+      "bottomOverTopPixelAreaPercent": 3.5794713760815444,
+      "bottomOverTopMinorSpanPercent": 0.05057559447967375,
+      "bottomOverTopMajorSpanPercent": 0.08587925537024699
+    },
+    {
+      "threshold": 220,
+      "bottomOverTopPixelAreaPercent": 3.9423898449896244,
+      "bottomOverTopMinorSpanPercent": -0.563589965199851,
+      "bottomOverTopMajorSpanPercent": 0.08156794036862092
+    }
+  ]
+}

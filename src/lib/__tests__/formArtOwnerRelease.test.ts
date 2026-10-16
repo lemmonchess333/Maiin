@@ -26,6 +26,8 @@ const ids = [
   "spin-bike",
   "seated-row",
   "front-squat",
+  "straight-arm-pulldown",
+  "handstand-push-ups",
 ];
 const sha = (bytes: string | Buffer) =>
   createHash("sha256").update(bytes).digest("hex");
@@ -56,7 +58,7 @@ describe("owner-authorized artwork activation", () => {
      I/O, and raising it further would be treating the symptom. If this
      starts failing regularly rather than occasionally, the thing to
      look at is suite concurrency, not this number. */
-  it("ships exactly sixteen owner-authorized guides bound to source, delivered assets and cues", () => {
+  it("ships exactly eighteen owner-authorized guides bound to source, delivered assets and cues", () => {
     expect(
       Object.keys(FORM_ARTWORK)
         .filter(

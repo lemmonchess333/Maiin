@@ -1,0 +1,3182 @@
+[
+  {
+    "ms": 639,
+    "observedAt": "2026-10-16T17:20:59.340Z",
+    "src": "/form-frames/handstand-push-ups/1.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/1.webp",
+    "alt": "Handstand Push-Ups, Stack",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stack",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Straight arms; keep heels against the wall.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "Loading frame…\n\nSTACK 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 1858,
+    "observedAt": "2026-10-16T17:21:00.560Z",
+    "src": "/form-frames/handstand-push-ups/2.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/2.webp",
+    "alt": "Handstand Push-Ups, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stack",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Straight arms; keep heels against the wall.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 1870,
+    "observedAt": "2026-10-16T17:21:00.571Z",
+    "src": "/form-frames/handstand-push-ups/2.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/2.webp",
+    "alt": "Handstand Push-Ups, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep legs together.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 3082,
+    "observedAt": "2026-10-16T17:21:01.784Z",
+    "src": "/form-frames/handstand-push-ups/3.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/3.webp",
+    "alt": "Handstand Push-Ups, Lower",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep legs together.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 3093,
+    "observedAt": "2026-10-16T17:21:01.795Z",
+    "src": "/form-frames/handstand-push-ups/3.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/3.webp",
+    "alt": "Handstand Push-Ups, Lower",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Lower",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend elbows; lower under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 4301,
+    "observedAt": "2026-10-16T17:21:03.002Z",
+    "src": "/form-frames/handstand-push-ups/4.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/4.webp",
+    "alt": "Handstand Push-Ups, Touch lightly",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Lower",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend elbows; lower under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "TOUCH LIGHTLY 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 4311,
+    "observedAt": "2026-10-16T17:21:03.012Z",
+    "src": "/form-frames/handstand-push-ups/4.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/4.webp",
+    "alt": "Handstand Push-Ups, Touch lightly",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Touch lightly",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Touch lightly; keep support through your palms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "TOUCH LIGHTLY 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 5518,
+    "observedAt": "2026-10-16T17:21:04.219Z",
+    "src": "/form-frames/handstand-push-ups/5.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/5.webp",
+    "alt": "Handstand Push-Ups, Press",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Touch lightly",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Touch lightly; keep support through your palms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PRESS 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 5528,
+    "observedAt": "2026-10-16T17:21:04.229Z",
+    "src": "/form-frames/handstand-push-ups/5.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/5.webp",
+    "alt": "Handstand Push-Ups, Press",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Press",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Press through both palms to straight arms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PRESS 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 6736,
+    "observedAt": "2026-10-16T17:21:05.437Z",
+    "src": "/form-frames/handstand-push-ups/6.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/6.webp",
+    "alt": "Handstand Push-Ups, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Press",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Press through both palms to straight arms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 6743,
+    "observedAt": "2026-10-16T17:21:05.444Z",
+    "src": "/form-frames/handstand-push-ups/6.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/6.webp",
+    "alt": "Handstand Push-Ups, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reset with head neutral and heels supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 7944,
+    "observedAt": "2026-10-16T17:21:06.645Z",
+    "src": "/form-frames/handstand-push-ups/1.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/1.webp",
+    "alt": "Handstand Push-Ups, Stack",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reset with head neutral and heels supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STACK 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 7952,
+    "observedAt": "2026-10-16T17:21:06.653Z",
+    "src": "/form-frames/handstand-push-ups/1.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/1.webp",
+    "alt": "Handstand Push-Ups, Stack",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stack",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Straight arms; keep heels against the wall.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STACK 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 9149,
+    "observedAt": "2026-10-16T17:21:07.850Z",
+    "src": "/form-frames/handstand-push-ups/2.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/2.webp",
+    "alt": "Handstand Push-Ups, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stack",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Straight arms; keep heels against the wall.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 9152,
+    "observedAt": "2026-10-16T17:21:07.854Z",
+    "src": "/form-frames/handstand-push-ups/2.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/2.webp",
+    "alt": "Handstand Push-Ups, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep legs together.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 10354,
+    "observedAt": "2026-10-16T17:21:09.056Z",
+    "src": "/form-frames/handstand-push-ups/3.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/3.webp",
+    "alt": "Handstand Push-Ups, Lower",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep legs together.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 10358,
+    "observedAt": "2026-10-16T17:21:09.059Z",
+    "src": "/form-frames/handstand-push-ups/3.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/3.webp",
+    "alt": "Handstand Push-Ups, Lower",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Lower",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend elbows; lower under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 11560,
+    "observedAt": "2026-10-16T17:21:10.261Z",
+    "src": "/form-frames/handstand-push-ups/4.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/4.webp",
+    "alt": "Handstand Push-Ups, Touch lightly",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Lower",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend elbows; lower under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "TOUCH LIGHTLY 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 11566,
+    "observedAt": "2026-10-16T17:21:10.267Z",
+    "src": "/form-frames/handstand-push-ups/4.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/4.webp",
+    "alt": "Handstand Push-Ups, Touch lightly",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Touch lightly",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Touch lightly; keep support through your palms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "TOUCH LIGHTLY 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 12773,
+    "observedAt": "2026-10-16T17:21:11.475Z",
+    "src": "/form-frames/handstand-push-ups/5.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/5.webp",
+    "alt": "Handstand Push-Ups, Press",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Touch lightly",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Touch lightly; keep support through your palms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PRESS 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 12778,
+    "observedAt": "2026-10-16T17:21:11.479Z",
+    "src": "/form-frames/handstand-push-ups/5.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/5.webp",
+    "alt": "Handstand Push-Ups, Press",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Press",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Press through both palms to straight arms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PRESS 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 13980,
+    "observedAt": "2026-10-16T17:21:12.682Z",
+    "src": "/form-frames/handstand-push-ups/6.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/6.webp",
+    "alt": "Handstand Push-Ups, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Press",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Press through both palms to straight arms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 13985,
+    "observedAt": "2026-10-16T17:21:12.687Z",
+    "src": "/form-frames/handstand-push-ups/6.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/6.webp",
+    "alt": "Handstand Push-Ups, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reset with head neutral and heels supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 15184,
+    "observedAt": "2026-10-16T17:21:13.885Z",
+    "src": "/form-frames/handstand-push-ups/1.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/1.webp",
+    "alt": "Handstand Push-Ups, Stack",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reset with head neutral and heels supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STACK 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 15188,
+    "observedAt": "2026-10-16T17:21:13.889Z",
+    "src": "/form-frames/handstand-push-ups/1.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/1.webp",
+    "alt": "Handstand Push-Ups, Stack",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stack",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Straight arms; keep heels against the wall.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STACK 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 16390,
+    "observedAt": "2026-10-16T17:21:15.092Z",
+    "src": "/form-frames/handstand-push-ups/2.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/2.webp",
+    "alt": "Handstand Push-Ups, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stack",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Straight arms; keep heels against the wall.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 16394,
+    "observedAt": "2026-10-16T17:21:15.096Z",
+    "src": "/form-frames/handstand-push-ups/2.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/2.webp",
+    "alt": "Handstand Push-Ups, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep legs together.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 17603,
+    "observedAt": "2026-10-16T17:21:16.304Z",
+    "src": "/form-frames/handstand-push-ups/3.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/3.webp",
+    "alt": "Handstand Push-Ups, Lower",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep legs together.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 17606,
+    "observedAt": "2026-10-16T17:21:16.308Z",
+    "src": "/form-frames/handstand-push-ups/3.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/3.webp",
+    "alt": "Handstand Push-Ups, Lower",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Lower",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend elbows; lower under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 18807,
+    "observedAt": "2026-10-16T17:21:17.508Z",
+    "src": "/form-frames/handstand-push-ups/4.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/4.webp",
+    "alt": "Handstand Push-Ups, Touch lightly",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Lower",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend elbows; lower under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "TOUCH LIGHTLY 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 18811,
+    "observedAt": "2026-10-16T17:21:17.513Z",
+    "src": "/form-frames/handstand-push-ups/4.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/4.webp",
+    "alt": "Handstand Push-Ups, Touch lightly",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Touch lightly",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Touch lightly; keep support through your palms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "TOUCH LIGHTLY 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 20016,
+    "observedAt": "2026-10-16T17:21:18.717Z",
+    "src": "/form-frames/handstand-push-ups/5.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/5.webp",
+    "alt": "Handstand Push-Ups, Press",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Touch lightly",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Touch lightly; keep support through your palms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PRESS 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 20020,
+    "observedAt": "2026-10-16T17:21:18.722Z",
+    "src": "/form-frames/handstand-push-ups/5.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/5.webp",
+    "alt": "Handstand Push-Ups, Press",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Press",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Press through both palms to straight arms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PRESS 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 21221,
+    "observedAt": "2026-10-16T17:21:19.930Z",
+    "src": "/form-frames/handstand-push-ups/6.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/6.webp",
+    "alt": "Handstand Push-Ups, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Press",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Press through both palms to straight arms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 21226,
+    "observedAt": "2026-10-16T17:21:19.934Z",
+    "src": "/form-frames/handstand-push-ups/6.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/6.webp",
+    "alt": "Handstand Push-Ups, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reset with head neutral and heels supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 22427,
+    "observedAt": "2026-10-16T17:21:21.135Z",
+    "src": "/form-frames/handstand-push-ups/1.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/1.webp",
+    "alt": "Handstand Push-Ups, Stack",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reset with head neutral and heels supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STACK 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 22431,
+    "observedAt": "2026-10-16T17:21:21.139Z",
+    "src": "/form-frames/handstand-push-ups/1.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/1.webp",
+    "alt": "Handstand Push-Ups, Stack",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stack",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Straight arms; keep heels against the wall.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STACK 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 23633,
+    "observedAt": "2026-10-16T17:21:22.341Z",
+    "src": "/form-frames/handstand-push-ups/2.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/2.webp",
+    "alt": "Handstand Push-Ups, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stack",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Straight arms; keep heels against the wall.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 23636,
+    "observedAt": "2026-10-16T17:21:22.344Z",
+    "src": "/form-frames/handstand-push-ups/2.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/2.webp",
+    "alt": "Handstand Push-Ups, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep legs together.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 24845,
+    "observedAt": "2026-10-16T17:21:23.553Z",
+    "src": "/form-frames/handstand-push-ups/3.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/3.webp",
+    "alt": "Handstand Push-Ups, Lower",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep legs together.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 24849,
+    "observedAt": "2026-10-16T17:21:23.557Z",
+    "src": "/form-frames/handstand-push-ups/3.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/3.webp",
+    "alt": "Handstand Push-Ups, Lower",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Lower",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend elbows; lower under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 26051,
+    "observedAt": "2026-10-16T17:21:24.759Z",
+    "src": "/form-frames/handstand-push-ups/4.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/4.webp",
+    "alt": "Handstand Push-Ups, Touch lightly",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Lower",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend elbows; lower under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "TOUCH LIGHTLY 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 26055,
+    "observedAt": "2026-10-16T17:21:24.763Z",
+    "src": "/form-frames/handstand-push-ups/4.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/4.webp",
+    "alt": "Handstand Push-Ups, Touch lightly",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Touch lightly",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Touch lightly; keep support through your palms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "TOUCH LIGHTLY 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 27257,
+    "observedAt": "2026-10-16T17:21:25.965Z",
+    "src": "/form-frames/handstand-push-ups/5.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/5.webp",
+    "alt": "Handstand Push-Ups, Press",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Touch lightly",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Touch lightly; keep support through your palms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PRESS 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 27262,
+    "observedAt": "2026-10-16T17:21:25.970Z",
+    "src": "/form-frames/handstand-push-ups/5.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/5.webp",
+    "alt": "Handstand Push-Ups, Press",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Press",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Press through both palms to straight arms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PRESS 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 28469,
+    "observedAt": "2026-10-16T17:21:27.178Z",
+    "src": "/form-frames/handstand-push-ups/6.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/6.webp",
+    "alt": "Handstand Push-Ups, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Press",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Press through both palms to straight arms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 28474,
+    "observedAt": "2026-10-16T17:21:27.182Z",
+    "src": "/form-frames/handstand-push-ups/6.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/6.webp",
+    "alt": "Handstand Push-Ups, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reset with head neutral and heels supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 29675,
+    "observedAt": "2026-10-16T17:21:28.383Z",
+    "src": "/form-frames/handstand-push-ups/1.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/1.webp",
+    "alt": "Handstand Push-Ups, Stack",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reset with head neutral and heels supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STACK 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 29679,
+    "observedAt": "2026-10-16T17:21:28.387Z",
+    "src": "/form-frames/handstand-push-ups/1.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/1.webp",
+    "alt": "Handstand Push-Ups, Stack",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stack",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Straight arms; keep heels against the wall.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STACK 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 30881,
+    "observedAt": "2026-10-16T17:21:29.589Z",
+    "src": "/form-frames/handstand-push-ups/2.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/2.webp",
+    "alt": "Handstand Push-Ups, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stack",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Straight arms; keep heels against the wall.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 30888,
+    "observedAt": "2026-10-16T17:21:29.596Z",
+    "src": "/form-frames/handstand-push-ups/2.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/2.webp",
+    "alt": "Handstand Push-Ups, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep legs together.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 32087,
+    "observedAt": "2026-10-16T17:21:30.795Z",
+    "src": "/form-frames/handstand-push-ups/3.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/3.webp",
+    "alt": "Handstand Push-Ups, Lower",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep legs together.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 32094,
+    "observedAt": "2026-10-16T17:21:30.803Z",
+    "src": "/form-frames/handstand-push-ups/3.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/3.webp",
+    "alt": "Handstand Push-Ups, Lower",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Lower",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend elbows; lower under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "LOWER 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 33293,
+    "observedAt": "2026-10-16T17:21:32.001Z",
+    "src": "/form-frames/handstand-push-ups/4.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/4.webp",
+    "alt": "Handstand Push-Ups, Touch lightly",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Lower",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend elbows; lower under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "TOUCH LIGHTLY 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 33301,
+    "observedAt": "2026-10-16T17:21:32.009Z",
+    "src": "/form-frames/handstand-push-ups/4.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/4.webp",
+    "alt": "Handstand Push-Ups, Touch lightly",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Touch lightly",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Touch lightly; keep support through your palms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "TOUCH LIGHTLY 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 34508,
+    "observedAt": "2026-10-16T17:21:33.216Z",
+    "src": "/form-frames/handstand-push-ups/5.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/5.webp",
+    "alt": "Handstand Push-Ups, Press",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Touch lightly",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Touch lightly; keep support through your palms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PRESS 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 34513,
+    "observedAt": "2026-10-16T17:21:33.221Z",
+    "src": "/form-frames/handstand-push-ups/5.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/5.webp",
+    "alt": "Handstand Push-Ups, Press",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Press",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Press through both palms to straight arms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PRESS 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 35712,
+    "observedAt": "2026-10-16T17:21:34.420Z",
+    "src": "/form-frames/handstand-push-ups/6.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/6.webp",
+    "alt": "Handstand Push-Ups, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Press",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Press through both palms to straight arms.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 35717,
+    "observedAt": "2026-10-16T17:21:34.425Z",
+    "src": "/form-frames/handstand-push-ups/6.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/6.webp",
+    "alt": "Handstand Push-Ups, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reset with head neutral and heels supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 36426,
+    "observedAt": "2026-10-16T17:21:35.134Z",
+    "src": "/form-frames/handstand-push-ups/6.webp",
+    "currentSrc": "http://127.0.0.1:62331/form-frames/handstand-push-ups/6.webp",
+    "alt": "Handstand Push-Ups, Reset",
+    "playing": false,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Reset with head neutral and heels supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stack",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Touch lightly",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 1504,
+    "display": [
+      360,
+      360
+    ],
+    "viewport": [
+      1280,
+      720
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPlay\nNormal"
+  }
+]
