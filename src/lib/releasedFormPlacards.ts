@@ -23,10 +23,10 @@ export const RELEASED_FORM_PLACARDS = {
     ["Core", "Calves", "Hamstrings"],
     [
       [0, "Seated drive", "Stay seated; pedal with controlled resistance."],
-      [1, "Seated recovery", "Keep your knees tracking over your feet."],
-      [1, "Hold seated", "Keep a relaxed hold on the bars."],
-      [2, "Standing drive", "Rise from the saddle; keep pedalling controlled."],
-      [2, "Hold standing", "Support yourself through the pedals and bars."],
+      [0.5, "Seated recovery", "Keep your knees tracking over your feet."],
+      [0.5, "Hold seated", "Keep a relaxed hold on the bars."],
+      [1, "Standing drive", "Rise from the saddle; keep pedalling controlled."],
+      [1, "Hold standing", "Support yourself through the pedals and bars."],
       [0, "Return seated", "Sit back onto the saddle smoothly."],
     ],
     [
