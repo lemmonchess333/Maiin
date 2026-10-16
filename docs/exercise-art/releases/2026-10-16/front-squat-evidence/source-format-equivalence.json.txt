@@ -1,0 +1,6 @@
+{
+  "sourceArchive": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\sources\\front-squat\\2026-10-16",
+  "formattedJsonFiles": 9,
+  "originalJsonValuesPreserved": true,
+  "inputAndPayloadHashesResealed": true
+}

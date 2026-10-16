@@ -1,0 +1,5355 @@
+[
+  {
+    "ms": 4842,
+    "observedAt": "2026-10-16T12:43:11.356Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "Loading frame…\n\nSTAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 6056,
+    "observedAt": "2026-10-16T12:43:12.570Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 6066,
+    "observedAt": "2026-10-16T12:43:12.580Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 7274,
+    "observedAt": "2026-10-16T12:43:13.788Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 7282,
+    "observedAt": "2026-10-16T12:43:13.796Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 8489,
+    "observedAt": "2026-10-16T12:43:15.003Z",
+    "src": "/form-frames/front-squat/4.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/4.webp",
+    "alt": "Front Squat, Control",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 8496,
+    "observedAt": "2026-10-16T12:43:15.010Z",
+    "src": "/form-frames/front-squat/4.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/4.webp",
+    "alt": "Front Squat, Control",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Control",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 9704,
+    "observedAt": "2026-10-16T12:43:16.218Z",
+    "src": "/form-frames/front-squat/5.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/5.webp",
+    "alt": "Front Squat, Rise",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Control",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RISE 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 9710,
+    "observedAt": "2026-10-16T12:43:16.224Z",
+    "src": "/form-frames/front-squat/5.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/5.webp",
+    "alt": "Front Squat, Rise",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Rise",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push through your whole feet to stand.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RISE 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 10916,
+    "observedAt": "2026-10-16T12:43:17.430Z",
+    "src": "/form-frames/front-squat/6.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/6.webp",
+    "alt": "Front Squat, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Rise",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push through your whole feet to stand.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 10920,
+    "observedAt": "2026-10-16T12:43:17.434Z",
+    "src": "/form-frames/front-squat/6.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/6.webp",
+    "alt": "Front Squat, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stay braced with both hands stabilising.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 12122,
+    "observedAt": "2026-10-16T12:43:18.636Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stay braced with both hands stabilising.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 12126,
+    "observedAt": "2026-10-16T12:43:18.640Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 13328,
+    "observedAt": "2026-10-16T12:43:19.842Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 13333,
+    "observedAt": "2026-10-16T12:43:19.847Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 14534,
+    "observedAt": "2026-10-16T12:43:21.048Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 14538,
+    "observedAt": "2026-10-16T12:43:21.052Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 15740,
+    "observedAt": "2026-10-16T12:43:22.254Z",
+    "src": "/form-frames/front-squat/4.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/4.webp",
+    "alt": "Front Squat, Control",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 15745,
+    "observedAt": "2026-10-16T12:43:22.259Z",
+    "src": "/form-frames/front-squat/4.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/4.webp",
+    "alt": "Front Squat, Control",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Control",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 16956,
+    "observedAt": "2026-10-16T12:43:23.470Z",
+    "src": "/form-frames/front-squat/5.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/5.webp",
+    "alt": "Front Squat, Rise",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Control",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RISE 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 16960,
+    "observedAt": "2026-10-16T12:43:23.474Z",
+    "src": "/form-frames/front-squat/5.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/5.webp",
+    "alt": "Front Squat, Rise",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Rise",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push through your whole feet to stand.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RISE 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 18164,
+    "observedAt": "2026-10-16T12:43:24.678Z",
+    "src": "/form-frames/front-squat/6.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/6.webp",
+    "alt": "Front Squat, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Rise",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push through your whole feet to stand.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 18168,
+    "observedAt": "2026-10-16T12:43:24.682Z",
+    "src": "/form-frames/front-squat/6.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/6.webp",
+    "alt": "Front Squat, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stay braced with both hands stabilising.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 19370,
+    "observedAt": "2026-10-16T12:43:25.884Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stay braced with both hands stabilising.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 19374,
+    "observedAt": "2026-10-16T12:43:25.888Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 20585,
+    "observedAt": "2026-10-16T12:43:27.099Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 20589,
+    "observedAt": "2026-10-16T12:43:27.103Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 21794,
+    "observedAt": "2026-10-16T12:43:28.308Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 21798,
+    "observedAt": "2026-10-16T12:43:28.312Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 23000,
+    "observedAt": "2026-10-16T12:43:29.514Z",
+    "src": "/form-frames/front-squat/4.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/4.webp",
+    "alt": "Front Squat, Control",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 23005,
+    "observedAt": "2026-10-16T12:43:29.519Z",
+    "src": "/form-frames/front-squat/4.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/4.webp",
+    "alt": "Front Squat, Control",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Control",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 24207,
+    "observedAt": "2026-10-16T12:43:30.721Z",
+    "src": "/form-frames/front-squat/5.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/5.webp",
+    "alt": "Front Squat, Rise",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Control",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RISE 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 24210,
+    "observedAt": "2026-10-16T12:43:30.724Z",
+    "src": "/form-frames/front-squat/5.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/5.webp",
+    "alt": "Front Squat, Rise",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Rise",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push through your whole feet to stand.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RISE 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 25422,
+    "observedAt": "2026-10-16T12:43:31.936Z",
+    "src": "/form-frames/front-squat/6.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/6.webp",
+    "alt": "Front Squat, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Rise",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push through your whole feet to stand.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 25426,
+    "observedAt": "2026-10-16T12:43:31.940Z",
+    "src": "/form-frames/front-squat/6.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/6.webp",
+    "alt": "Front Squat, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stay braced with both hands stabilising.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 26631,
+    "observedAt": "2026-10-16T12:43:33.145Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stay braced with both hands stabilising.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 26635,
+    "observedAt": "2026-10-16T12:43:33.149Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 27837,
+    "observedAt": "2026-10-16T12:43:34.351Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 27844,
+    "observedAt": "2026-10-16T12:43:34.358Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 29052,
+    "observedAt": "2026-10-16T12:43:35.566Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 29059,
+    "observedAt": "2026-10-16T12:43:35.573Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 30262,
+    "observedAt": "2026-10-16T12:43:36.776Z",
+    "src": "/form-frames/front-squat/4.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/4.webp",
+    "alt": "Front Squat, Control",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 30270,
+    "observedAt": "2026-10-16T12:43:36.784Z",
+    "src": "/form-frames/front-squat/4.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/4.webp",
+    "alt": "Front Squat, Control",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Control",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 31467,
+    "observedAt": "2026-10-16T12:43:37.981Z",
+    "src": "/form-frames/front-squat/5.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/5.webp",
+    "alt": "Front Squat, Rise",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Control",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RISE 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 31473,
+    "observedAt": "2026-10-16T12:43:37.987Z",
+    "src": "/form-frames/front-squat/5.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/5.webp",
+    "alt": "Front Squat, Rise",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Rise",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push through your whole feet to stand.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RISE 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 32673,
+    "observedAt": "2026-10-16T12:43:39.187Z",
+    "src": "/form-frames/front-squat/6.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/6.webp",
+    "alt": "Front Squat, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Rise",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push through your whole feet to stand.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 32679,
+    "observedAt": "2026-10-16T12:43:39.193Z",
+    "src": "/form-frames/front-squat/6.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/6.webp",
+    "alt": "Front Squat, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stay braced with both hands stabilising.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 33888,
+    "observedAt": "2026-10-16T12:43:40.402Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stay braced with both hands stabilising.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 33893,
+    "observedAt": "2026-10-16T12:43:40.407Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 35091,
+    "observedAt": "2026-10-16T12:43:41.605Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 35097,
+    "observedAt": "2026-10-16T12:43:41.611Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 36298,
+    "observedAt": "2026-10-16T12:43:42.812Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 36304,
+    "observedAt": "2026-10-16T12:43:42.818Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 37503,
+    "observedAt": "2026-10-16T12:43:44.017Z",
+    "src": "/form-frames/front-squat/4.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/4.webp",
+    "alt": "Front Squat, Control",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 37508,
+    "observedAt": "2026-10-16T12:43:44.022Z",
+    "src": "/form-frames/front-squat/4.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/4.webp",
+    "alt": "Front Squat, Control",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Control",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 38718,
+    "observedAt": "2026-10-16T12:43:45.232Z",
+    "src": "/form-frames/front-squat/5.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/5.webp",
+    "alt": "Front Squat, Rise",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Control",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RISE 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 38723,
+    "observedAt": "2026-10-16T12:43:45.237Z",
+    "src": "/form-frames/front-squat/5.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/5.webp",
+    "alt": "Front Squat, Rise",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Rise",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push through your whole feet to stand.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RISE 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 39933,
+    "observedAt": "2026-10-16T12:43:46.447Z",
+    "src": "/form-frames/front-squat/6.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/6.webp",
+    "alt": "Front Squat, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Rise",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push through your whole feet to stand.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 39940,
+    "observedAt": "2026-10-16T12:43:46.454Z",
+    "src": "/form-frames/front-squat/6.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/6.webp",
+    "alt": "Front Squat, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stay braced with both hands stabilising.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 41140,
+    "observedAt": "2026-10-16T12:43:47.654Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stay braced with both hands stabilising.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 41145,
+    "observedAt": "2026-10-16T12:43:47.659Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 42355,
+    "observedAt": "2026-10-16T12:43:48.869Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 42360,
+    "observedAt": "2026-10-16T12:43:48.874Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 43564,
+    "observedAt": "2026-10-16T12:43:50.078Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 43567,
+    "observedAt": "2026-10-16T12:43:50.081Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 44770,
+    "observedAt": "2026-10-16T12:43:51.284Z",
+    "src": "/form-frames/front-squat/4.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/4.webp",
+    "alt": "Front Squat, Control",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 44775,
+    "observedAt": "2026-10-16T12:43:51.289Z",
+    "src": "/form-frames/front-squat/4.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/4.webp",
+    "alt": "Front Squat, Control",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Control",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 45985,
+    "observedAt": "2026-10-16T12:43:52.499Z",
+    "src": "/form-frames/front-squat/5.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/5.webp",
+    "alt": "Front Squat, Rise",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Control",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RISE 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 45991,
+    "observedAt": "2026-10-16T12:43:52.505Z",
+    "src": "/form-frames/front-squat/5.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/5.webp",
+    "alt": "Front Squat, Rise",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Rise",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push through your whole feet to stand.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RISE 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 47188,
+    "observedAt": "2026-10-16T12:43:53.702Z",
+    "src": "/form-frames/front-squat/6.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/6.webp",
+    "alt": "Front Squat, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Rise",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push through your whole feet to stand.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 47194,
+    "observedAt": "2026-10-16T12:43:53.708Z",
+    "src": "/form-frames/front-squat/6.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/6.webp",
+    "alt": "Front Squat, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stay braced with both hands stabilising.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 48394,
+    "observedAt": "2026-10-16T12:43:54.908Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stay braced with both hands stabilising.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 48400,
+    "observedAt": "2026-10-16T12:43:54.914Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 49600,
+    "observedAt": "2026-10-16T12:43:56.114Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 49606,
+    "observedAt": "2026-10-16T12:43:56.120Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 50806,
+    "observedAt": "2026-10-16T12:43:57.320Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 50810,
+    "observedAt": "2026-10-16T12:43:57.324Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 52012,
+    "observedAt": "2026-10-16T12:43:58.526Z",
+    "src": "/form-frames/front-squat/4.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/4.webp",
+    "alt": "Front Squat, Control",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 52020,
+    "observedAt": "2026-10-16T12:43:58.534Z",
+    "src": "/form-frames/front-squat/4.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/4.webp",
+    "alt": "Front Squat, Control",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Control",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 53222,
+    "observedAt": "2026-10-16T12:43:59.736Z",
+    "src": "/form-frames/front-squat/5.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/5.webp",
+    "alt": "Front Squat, Rise",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Control",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RISE 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 53226,
+    "observedAt": "2026-10-16T12:43:59.740Z",
+    "src": "/form-frames/front-squat/5.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/5.webp",
+    "alt": "Front Squat, Rise",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Rise",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push through your whole feet to stand.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RISE 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 54430,
+    "observedAt": "2026-10-16T12:44:00.944Z",
+    "src": "/form-frames/front-squat/6.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/6.webp",
+    "alt": "Front Squat, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Rise",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push through your whole feet to stand.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 54435,
+    "observedAt": "2026-10-16T12:44:00.949Z",
+    "src": "/form-frames/front-squat/6.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/6.webp",
+    "alt": "Front Squat, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stay braced with both hands stabilising.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 55636,
+    "observedAt": "2026-10-16T12:44:02.150Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stay braced with both hands stabilising.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 55643,
+    "observedAt": "2026-10-16T12:44:02.157Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 56851,
+    "observedAt": "2026-10-16T12:44:03.365Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 56857,
+    "observedAt": "2026-10-16T12:44:03.371Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 58060,
+    "observedAt": "2026-10-16T12:44:04.574Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 58069,
+    "observedAt": "2026-10-16T12:44:04.583Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 59266,
+    "observedAt": "2026-10-16T12:44:05.780Z",
+    "src": "/form-frames/front-squat/4.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/4.webp",
+    "alt": "Front Squat, Control",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 59273,
+    "observedAt": "2026-10-16T12:44:05.787Z",
+    "src": "/form-frames/front-squat/4.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/4.webp",
+    "alt": "Front Squat, Control",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Control",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 60472,
+    "observedAt": "2026-10-16T12:44:06.986Z",
+    "src": "/form-frames/front-squat/5.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/5.webp",
+    "alt": "Front Squat, Rise",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Control",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep chest lifted and knees tracking outward.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RISE 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 60479,
+    "observedAt": "2026-10-16T12:44:06.993Z",
+    "src": "/form-frames/front-squat/5.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/5.webp",
+    "alt": "Front Squat, Rise",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Rise",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push through your whole feet to stand.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RISE 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 61677,
+    "observedAt": "2026-10-16T12:44:08.191Z",
+    "src": "/form-frames/front-squat/6.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/6.webp",
+    "alt": "Front Squat, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Rise",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push through your whole feet to stand.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 61684,
+    "observedAt": "2026-10-16T12:44:08.198Z",
+    "src": "/form-frames/front-squat/6.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/6.webp",
+    "alt": "Front Squat, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stay braced with both hands stabilising.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 62887,
+    "observedAt": "2026-10-16T12:44:09.401Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stay braced with both hands stabilising.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 62893,
+    "observedAt": "2026-10-16T12:44:09.407Z",
+    "src": "/form-frames/front-squat/1.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/1.webp",
+    "alt": "Front Squat, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 64091,
+    "observedAt": "2026-10-16T12:44:10.605Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; keep the harness supported.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 64096,
+    "observedAt": "2026-10-16T12:44:10.610Z",
+    "src": "/form-frames/front-squat/2.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/2.webp",
+    "alt": "Front Squat, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 65297,
+    "observedAt": "2026-10-16T12:44:11.811Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep both feet firmly planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 65302,
+    "observedAt": "2026-10-16T12:44:11.816Z",
+    "src": "/form-frames/front-squat/3.webp",
+    "currentSrc": "http://127.0.0.1:62329/form-frames/front-squat/3.webp",
+    "alt": "Front Squat, Squat",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Squat",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees; keep heels grounded.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Stand",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Squat",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Control",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Rise",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 736,
+    "naturalHeight": 800,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUAT 3/6\n\nPause\nNormal"
+  }
+]

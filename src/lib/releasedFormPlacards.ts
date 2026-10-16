@@ -19,6 +19,32 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "front-squat": placard(
+    "front-squat",
+    ["Quads"],
+    ["Glutes", "Core"],
+    [
+      [0, "Stand", "Stand tall; keep the harness supported."],
+      [0, "Brace", "Brace; keep both feet firmly planted."],
+      [1, "Squat", "Bend hips and knees; keep heels grounded."],
+      [1, "Control", "Keep chest lifted and knees tracking outward."],
+      [0, "Rise", "Push through your whole feet to stand."],
+      [0, "Reset", "Stay braced with both hands stabilising."],
+    ],
+    [
+      "Shoulder-harness variation: use a fitted harness and start light.",
+      "Set both shoulder pads and bar catches before lifting from a rack.",
+      "Keep feet planted; brace before each squat.",
+    ],
+    {
+      tip: "Keep the harness supported on both shoulders and the bar secure in its catches.",
+      commonMistakes: [
+        "Letting the harness tip or lose shoulder contact.",
+        "Lifting your heels or letting knees collapse inward.",
+        "Losing your brace or leaning far forward.",
+      ],
+    }
+  ),
   "seated-row": placard(
     "seated-row",
     ["Upper back"],

@@ -1,0 +1,122 @@
+[
+  {
+    "alt": "Front Squat, Stand",
+    "cue": "Stand tall; keep the harness supported.",
+    "decoded": true,
+    "natural": [
+      736,
+      800
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 1: Stand",
+    "src": "/form-frames/front-squat/1.webp",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "alt": "Front Squat, Brace",
+    "cue": "Brace; keep both feet firmly planted.",
+    "decoded": true,
+    "natural": [
+      736,
+      800
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 2: Brace",
+    "src": "/form-frames/front-squat/2.webp",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "alt": "Front Squat, Squat",
+    "cue": "Bend hips and knees; keep heels grounded.",
+    "decoded": true,
+    "natural": [
+      736,
+      800
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 3: Squat",
+    "src": "/form-frames/front-squat/3.webp",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "alt": "Front Squat, Control",
+    "cue": "Keep chest lifted and knees tracking outward.",
+    "decoded": true,
+    "natural": [
+      736,
+      800
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 4: Control",
+    "src": "/form-frames/front-squat/4.webp",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "alt": "Front Squat, Rise",
+    "cue": "Push through your whole feet to stand.",
+    "decoded": true,
+    "natural": [
+      736,
+      800
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 5: Rise",
+    "src": "/form-frames/front-squat/5.webp",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "alt": "Front Squat, Reset",
+    "cue": "Stay braced with both hands stabilising.",
+    "decoded": true,
+    "natural": [
+      736,
+      800
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 6: Reset",
+    "src": "/form-frames/front-squat/6.webp",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ]
+  }
+]

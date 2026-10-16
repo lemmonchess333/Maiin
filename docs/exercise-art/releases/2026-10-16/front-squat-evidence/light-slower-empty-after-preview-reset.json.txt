@@ -1,0 +1,4 @@
+{
+  "scope": "Projection of actual DOM-observer rows; repeated section text omitted",
+  "rows": []
+}

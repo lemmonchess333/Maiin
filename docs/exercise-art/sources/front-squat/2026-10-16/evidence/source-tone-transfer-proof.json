@@ -1,0 +1,33 @@
+{
+  "status": "native-review-pending",
+  "rows": [
+    {
+      "label": "A",
+      "changedPixels": 24845,
+      "sourceVioletPixels": 24845,
+      "changedOutsideSourceViolet": 0,
+      "sourceNeutralRgbaExact": true,
+      "sourceTrainersRgbaExact": true,
+      "ownershipPixelCounts": { "Primary": 12596, "Secondary": 7531 },
+      "spatialShadingAdded": false,
+      "anatomicalTransforms": 0
+    },
+    {
+      "label": "B",
+      "changedPixels": 19087,
+      "sourceVioletPixels": 19087,
+      "changedOutsideSourceViolet": 0,
+      "sourceNeutralRgbaExact": true,
+      "sourceTrainersRgbaExact": true,
+      "ownershipPixelCounts": { "Primary": 6906, "Secondary": 7163 },
+      "spatialShadingAdded": false,
+      "anatomicalTransforms": 0
+    }
+  ],
+  "formula": "sourceMaximum * (1 - saturationAmount * (1 - exactTargetRGB/255))",
+  "targets": { "primary": "#7B72E9", "secondary": "#9590E0" },
+  "shadeSupport": "Per-pixel source maximum and saturation only; no spatial gradient, invented detail layer or body coordinate change.",
+  "previousRecipePreserved": true,
+  "newImageRequests": 0,
+  "completionCredit": false
+}
