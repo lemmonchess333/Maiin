@@ -75,12 +75,26 @@ const approved = (
 /**
  * The sets listed by hand: those released without a strict review. Six
  * shipped before the review existed and are kept while replacements are
- * reviewed; they do not claim to pass the new consistency standard. Eighteen
+ * reviewed; they do not claim to pass the new consistency standard. Twenty
  * the owner released with their findings. An approved set never belongs
  * here: it comes from its record, and formArtwork.test.ts fails if an ID
  * is listed in both places.
  */
 export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
+  "incline-db-curl": {
+    ...existing("incline-db-curl", 992, 784),
+    reference: "form-frames/incline-db-curl/1.webp",
+    version: "anatomy-v3-2026-10-16-native-moving-source-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-16/incline-db-curl.json",
+  },
+  "leg-press": {
+    ...existing("leg-press", 1264, 1056),
+    reference: "form-frames/leg-press/1.webp",
+    version: "anatomy-v3-2026-10-16-native-moving-source-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-16/leg-press.json",
+  },
   "handstand-push-ups": {
     ...existing("handstand-push-ups", 688, 1504),
     reference: "form-frames/handstand-push-ups/1.webp",

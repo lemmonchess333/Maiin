@@ -19,6 +19,58 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "incline-db-curl": placard(
+    "incline-db-curl",
+    ["Biceps"],
+    ["Forearms"],
+    [
+      [0, "Set", "Let the near arm hang beside you."],
+      [0, "Brace", "Keep your upper arm beside the bench."],
+      [1, "Curl", "Curl toward your shoulder; keep wrist straight."],
+      [1, "Squeeze", "Pause without swinging your upper arm."],
+      [0, "Lower", "Lower the weight under control."],
+      [0, "Alternate", "Repeat with the opposite arm."],
+    ],
+    [
+      "Lie back on a low incline bench with both feet planted.",
+      "Hold one dumbbell in each hand and curl one arm at a time.",
+      "The near arm is demonstrated; repeat the same controlled curl on the other side.",
+    ],
+    {
+      tip: "Keep the working upper arm beside the bench and lower the dumbbell slowly before changing sides.",
+      commonMistakes: [
+        "Swinging the upper arm to lift the weight.",
+        "Bending the wrist back.",
+        "Lifting the shoulder away from the bench.",
+      ],
+    }
+  ),
+  "leg-press": placard(
+    "leg-press",
+    ["Quads"],
+    ["Glutes", "Hamstrings"],
+    [
+      [0, "Bend", "Set both feet flat on the plate."],
+      [0, "Brace", "Brace; keep your back against the pad."],
+      [1, "Press", "Push the plate away through both feet."],
+      [1, "Finish", "Keep knees soft at the finish."],
+      [0, "Return", "Bend hips and knees under control."],
+      [0, "Reset", "Keep your heels down before pressing again."],
+    ],
+    [
+      "Sit against the back pad and hold the side handles.",
+      "Place both feet on the plate; keep heels supported.",
+      "Control the return and stop before your back rounds.",
+    ],
+    {
+      tip: "Keep your back supported and press through both feet without snapping your knees straight.",
+      commonMistakes: [
+        "Rounding the lower back off the pad.",
+        "Lifting the heels off the plate.",
+        "Snapping the knees straight.",
+      ],
+    }
+  ),
   "handstand-push-ups": placard(
     "handstand-push-ups",
     ["Shoulders"],

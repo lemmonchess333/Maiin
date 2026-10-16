@@ -1,0 +1,199 @@
+{
+  "exerciseId": "leg-press",
+  "version": "anatomy-v3-2026-10-16-native-moving-source-v1",
+  "width": 1264,
+  "height": 1056,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex /root",
+  "reviewedAt": "2026-10-16T18:28:29.415553+00:00",
+  "recordStage": "Actual native/mobile/card review complete; normal verification, required CI and actual merge remain separate gates.",
+  "reference": {
+    "path": "form-frames/leg-press/1.webp",
+    "sha256": "6b62168b71386ac22edf1e64c9871b2cd45b5047379ed1cf1d6c58ecef931d77"
+  },
+  "cueSha256": "cb5053df3c1c89d0fc0a607be8f3195f61eafacbc3a6f236319bb176574e5128",
+  "frames": [
+    {
+      "path": "form-frames/leg-press/1.webp",
+      "sha256": "6b62168b71386ac22edf1e64c9871b2cd45b5047379ed1cf1d6c58ecef931d77",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/leg-press/2026-10-16/draft/B-native.png",
+        "sha256": "9cc787a778e273c527bab9a8f5921c7d6571572c5daa13788b6b168fea7efe5c"
+      }
+    },
+    {
+      "path": "form-frames/leg-press/2.webp",
+      "sha256": "6b62168b71386ac22edf1e64c9871b2cd45b5047379ed1cf1d6c58ecef931d77",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/leg-press/2026-10-16/draft/B-native.png",
+        "sha256": "9cc787a778e273c527bab9a8f5921c7d6571572c5daa13788b6b168fea7efe5c"
+      }
+    },
+    {
+      "path": "form-frames/leg-press/3.webp",
+      "sha256": "e83919b57dc2c56e21f25bb287f5e00f3686df83c47df5659df4e2b500ea77b0",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/leg-press/2026-10-16/draft/A-native.png",
+        "sha256": "d1a2547fe6c91fc1b062a0f1646e80ddcc5a10a67a03b34dfd15fdba315b0592"
+      }
+    },
+    {
+      "path": "form-frames/leg-press/4.webp",
+      "sha256": "e83919b57dc2c56e21f25bb287f5e00f3686df83c47df5659df4e2b500ea77b0",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/leg-press/2026-10-16/draft/A-native.png",
+        "sha256": "d1a2547fe6c91fc1b062a0f1646e80ddcc5a10a67a03b34dfd15fdba315b0592"
+      }
+    },
+    {
+      "path": "form-frames/leg-press/5.webp",
+      "sha256": "6b62168b71386ac22edf1e64c9871b2cd45b5047379ed1cf1d6c58ecef931d77",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/leg-press/2026-10-16/draft/B-native.png",
+        "sha256": "9cc787a778e273c527bab9a8f5921c7d6571572c5daa13788b6b168fea7efe5c"
+      }
+    },
+    {
+      "path": "form-frames/leg-press/6.webp",
+      "sha256": "6b62168b71386ac22edf1e64c9871b2cd45b5047379ed1cf1d6c58ecef931d77",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/leg-press/2026-10-16/draft/B-native.png",
+        "sha256": "9cc787a778e273c527bab9a8f5921c7d6571572c5daa13788b6b168fea7efe5c"
+      }
+    }
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": ["B", "B", "A", "A", "B", "B"],
+  "positionCoordinates": [0, 0, 1, 1, 0, 0],
+  "variation": "Seated plate-loaded double-beam lever press",
+  "setup": [
+    "Sit against the back pad and hold the side handles.",
+    "Place both feet on the plate; keep heels supported.",
+    "Control the return and stop before your back rounds."
+  ],
+  "advice": {
+    "tip": "Keep your back supported and press through both feet without snapping your knees straight.",
+    "commonMistakes": [
+      "Rounding the lower back off the pad.",
+      "Lifting the heels off the plate.",
+      "Snapping the knees straight."
+    ]
+  },
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "approval": {
+    "actor": "Human owner",
+    "instruction": "ok carry on with the remaining8, same model and colours, no shorts. figure out another way to finish them and get them merged, stop repeating failed attempts and asking for approval",
+    "context": "Standing authorization covers native-coordinate generated moving-part composites, palette/equipment edits, local registration, checks, owner release with findings, PR and merge. Strict certification is not implied."
+  },
+  "findings": [
+    "Two genuine hip-and-knee press endpoints occupy six cue slots; no six-unique-pose or continuous-animation claim.",
+    "New native shin repair and hip-and-knee-flexion authoring preserve the approved athlete. The B moving region is inserted at unchanged native coordinates onto A; the rest of that fixed source scene is byte-identical. A itself is an image-authored shin repair, so no byte-invariance to the older original is claimed.",
+    "A custom double-beam plate-loaded lever is drawn around the intact poses. Both beams retain identical endpoint lengths and fixed pivots; the same three load plates rise85.75px during extension and stay above the illustrated floor. This is screen-space mechanics, not calibrated anatomical3D or a factory replica.",
+    "Large rubber footplate supports both complete trainers in the two positions. Small projected toe/heel pitch differences and layered sole occlusion remain illustrative; no recovered3D contact certificate.",
+    "Source violet quads are finished in#7B72E9; visible source-tone posterior thigh fields use#9590E0. Manual anatomical boundaries are qualitative. No added body shading gradient.",
+    "Strict visual certification remains unverified under the owner-authorized release-with-findings workflow.",
+    "The gluteal surface is largely occluded by the supported pelvis/seat in this camera. It remains in the secondary-muscle legend without painting a false glute highlight onto the abdominal wall.",
+    "Two genuine physical endpoints occupy six cue slots; no continuous-motion or six-unique-pose certificate.",
+    "Normal cards use the established lossy export and transparent-background treatment. The white athlete has reduced contrast against the light card; at160px the complete apparatus/athlete is small. No strict readability certificate.",
+    "Actual native-coordinate source joins, anatomical colour boundaries and projected contact depth are qualitative findings. Strict visual checks remain null."
+  ],
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Same FA56-based approved athlete, no shorts, smooth grey anatomy, fine contours, white trainers. Actual final native whole endpoints and local contacts reviewed."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Native1536x1024 source at scale1; common crop[144, 0, 1344, 1024] and integer padding[32, 16], output[1264, 1056]. No anatomical transforms or individually fitted limbs."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Two genuine connected movement endpoints. New B moving region inserted at unchanged source coordinates; fixed source pixels outside it remain RGB exact. Source proportions and local contour continuity reviewed qualitatively."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Custom grey double-beam plate-loaded lever, rubber footplate, same three plates and fixed bearings across states."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Both complete trainers against moving plate, back on pad and hands on fixed handles; sole depth is illustrative."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Congruent344.009px beams retain fixed pivots; same load plates rise85.75px during extension and stay above the illustrated floor. Screen-space mechanics only."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Primary quads#7B72E9; visible posterior thigh#9590E0 from original grey tone. Glutes largely occluded; no false abdominal highlight. Qualitative source-based boundaries."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual registered ExerciseFormContent at390x844: all six decoded public paths, labels, short cues, preparation and advice agree in both themes."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual normal/slower playback in both themes includes all six paths,6-to1 wrap and matching settled cues. Two real states and recorded scalar phases; observer transitions retained."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual390x844 light six-frame, normal/slower loop and normal-card review at480/348/160px limits complete; full athlete/apparatus retained, no page overflow."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual390x844 dark six-frame, normal/slower loop and normal-card review complete; full athlete/apparatus retained, controls/cues readable and no captured browser warnings/errors."
+    }
+  },
+  "observedQaChecks": {
+    "identity": {
+      "observed": true,
+      "evidence": "Same FA56-based approved athlete, no shorts, smooth grey anatomy, fine contours, white trainers. Actual final native whole endpoints and local contacts reviewed."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "Native1536x1024 source at scale1; common crop[144, 0, 1344, 1024] and integer padding[32, 16], output[1264, 1056]. No anatomical transforms or individually fitted limbs."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "Two genuine connected movement endpoints. New B moving region inserted at unchanged source coordinates; fixed source pixels outside it remain RGB exact. Source proportions and local contour continuity reviewed qualitatively."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "Custom grey double-beam plate-loaded lever, rubber footplate, same three plates and fixed bearings across states."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Both complete trainers against moving plate, back on pad and hands on fixed handles; sole depth is illustrative."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "Congruent344.009px beams retain fixed pivots; same load plates rise85.75px during extension and stay above the illustrated floor. Screen-space mechanics only."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Primary quads#7B72E9; visible posterior thigh#9590E0 from original grey tone. Glutes largely occluded; no false abdominal highlight. Qualitative source-based boundaries."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Actual registered ExerciseFormContent at390x844: all six decoded public paths, labels, short cues, preparation and advice agree in both themes."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Actual normal/slower playback in both themes includes all six paths,6-to1 wrap and matching settled cues. Two real states and recorded scalar phases; observer transitions retained."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Actual390x844 light six-frame, normal/slower loop and normal-card review at480/348/160px limits complete; full athlete/apparatus retained, no page overflow."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Actual390x844 dark six-frame, normal/slower loop and normal-card review complete; full athlete/apparatus retained, controls/cues readable and no captured browser warnings/errors."
+    }
+  },
+  "publicationGate": "No completion credit before integrated review, verification disposition, CI, actual merge and preservation audit."
+}

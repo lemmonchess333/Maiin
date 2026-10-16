@@ -687,6 +687,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "bba515ce1ec06953de041e2d2ee71f41c1dbabe8321c4140c37b4e89556d9cb3",
     sha256: "dfbee104ef125836012cf0e3d4aa0fb078d30c875d914f940e69a6433f19f1ee",
   },
+  "incline-db-curl": {
+    src: "form-art/incline-db-curl.webp",
+    width: 480,
+    height: 377,
+    keyed: true,
+    source: "form-frames/incline-db-curl/1.webp",
+    sourceSha256:
+      "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+    sha256: "b4dfe4dd6d360d702a14f83df7853094effb19c7023a5631d3277ace64a86322",
+  },
   "incline-db-press": {
     src: "form-art/incline-db-press.webp",
     width: 480,
@@ -806,6 +816,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "67009ad87ae8a8d5d12215fda6cc375e94d5898db1ee2afef4f76dbf1fe30d59",
     sha256: "66473827c8e846bf9ee25fbca2f38b237212c3516e1bec10ed9d1f1a38f512d2",
+  },
+  "leg-press": {
+    src: "form-art/leg-press.webp",
+    width: 445,
+    height: 480,
+    keyed: true,
+    source: "form-frames/leg-press/1.webp",
+    sourceSha256:
+      "6b62168b71386ac22edf1e64c9871b2cd45b5047379ed1cf1d6c58ecef931d77",
+    sha256: "5b022378837920ecbbfecffc3c2eac7366a59db9e11275e134dfe7e1117b4272",
   },
   "leg-raise": {
     src: "form-art/leg-raise.webp",
