@@ -1,0 +1,119 @@
+{
+  "kind": "spin-integrated-dark-manual-six",
+  "observations": [
+    {
+      "cue": "Stay seated; pedal with controlled resistance.",
+      "image": {
+        "alt": "Spin Bike, Seated drive",
+        "decoded": true,
+        "natural": [
+          432,
+          707
+        ],
+        "objectFit": "contain",
+        "src": "/form-frames/spin-bike/1.webp"
+      },
+      "selected": "Show frame 1: Seated drive",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "cue": "Keep your knees tracking over your feet.",
+      "image": {
+        "alt": "Spin Bike, Seated recovery",
+        "decoded": true,
+        "natural": [
+          432,
+          707
+        ],
+        "objectFit": "contain",
+        "src": "/form-frames/spin-bike/2.webp"
+      },
+      "selected": "Show frame 2: Seated recovery",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "cue": "Keep a relaxed hold on the bars.",
+      "image": {
+        "alt": "Spin Bike, Hold seated",
+        "decoded": true,
+        "natural": [
+          432,
+          707
+        ],
+        "objectFit": "contain",
+        "src": "/form-frames/spin-bike/3.webp"
+      },
+      "selected": "Show frame 3: Hold seated",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "cue": "Rise from the saddle; keep pedalling controlled.",
+      "image": {
+        "alt": "Spin Bike, Standing drive",
+        "decoded": true,
+        "natural": [
+          432,
+          707
+        ],
+        "objectFit": "contain",
+        "src": "/form-frames/spin-bike/4.webp"
+      },
+      "selected": "Show frame 4: Standing drive",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "cue": "Support yourself through the pedals and bars.",
+      "image": {
+        "alt": "Spin Bike, Hold standing",
+        "decoded": true,
+        "natural": [
+          432,
+          707
+        ],
+        "objectFit": "contain",
+        "src": "/form-frames/spin-bike/5.webp"
+      },
+      "selected": "Show frame 5: Hold standing",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "cue": "Sit back onto the saddle smoothly.",
+      "image": {
+        "alt": "Spin Bike, Return seated",
+        "decoded": true,
+        "natural": [
+          432,
+          707
+        ],
+        "objectFit": "contain",
+        "src": "/form-frames/spin-bike/6.webp"
+      },
+      "selected": "Show frame 6: Return seated",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  ]
+}

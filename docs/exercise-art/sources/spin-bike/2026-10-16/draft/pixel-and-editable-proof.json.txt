@@ -1,0 +1,211 @@
+{
+  "scope": "One final colour pass on root-eligible three-state construction, pending actual root native/mobile/card review.",
+  "palettePasses": 1,
+  "dependencies": {
+    "pillow": "12.3.0",
+    "numpy": "2.3.5"
+  },
+  "recipeSha256": "d5acd13aba90db33e69029212c3ddcf044910b56d1ea3b5bc23b2d4fdd94aa00",
+  "sourceSheetSha256": "83ad4e7d901d2f73832b7c5ef51766ccd3105bdbcb73138df9ea98fef6462c3b",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "poses": {
+    "A": {
+      "existingSourceChromaPixels": 9727,
+      "rolePixelsAboveHalf": {
+        "core": 2264,
+        "calves": 1328,
+        "hamstrings": 1087,
+        "primary": 5048
+      },
+      "roleWeightSumEqualsSourceSupport": true,
+      "neutralPixelsNotSelected": true,
+      "noNewBodyOrSpatialGradient": true,
+      "sourceTonalCalibration": {
+        "primary": 0.61,
+        "core": 0.41,
+        "calves": 0.53,
+        "hamstrings": 0.47
+      },
+      "selection": "Existing source chroma only; semantic masks select roles, never new anatomical fields.",
+      "exactUncolouredSourceRecovered": false,
+      "allNeutralGuardedBodyRgbaExact": true,
+      "allOutsideColourSupportRgbaExactToAcceptedConstruction": true,
+      "equipmentPortableRgbaAndPngExact": true,
+      "equipmentRenderSha256": "8f6d7b0a8df05c3c0f2f295b374655979c069b0d7b93dc91ca0a8f9d709d4c49",
+      "meshFaces": 2618,
+      "nativePixelSha256": "654bf1e81505311b7100b699ab9b3a56bebf4c1a95b1aa8581bfe66c09271771",
+      "framedPixelSha256": "554401a5f2180b56687ee690366507950b2d2957db865a57b65186c2a6cdeec6",
+      "foregroundBoundsAllNonBlack": [
+        141,
+        53,
+        525,
+        687
+      ],
+      "cropMarginsAllNonBlack": [
+        24,
+        49,
+        24,
+        24
+      ],
+      "bodyWarpsResizesOrGrafts": 0,
+      "documentedWholeSourceIntegerTranslation": [
+        0,
+        0
+      ]
+    },
+    "B": {
+      "existingSourceChromaPixels": 7387,
+      "rolePixelsAboveHalf": {
+        "core": 1939,
+        "calves": 0,
+        "hamstrings": 2615,
+        "primary": 2833
+      },
+      "roleWeightSumEqualsSourceSupport": true,
+      "neutralPixelsNotSelected": true,
+      "noNewBodyOrSpatialGradient": true,
+      "sourceTonalCalibration": {
+        "primary": 0.61,
+        "core": 0.41,
+        "calves": 0.53,
+        "hamstrings": 0.47
+      },
+      "selection": "Existing source chroma only; semantic masks select roles, never new anatomical fields.",
+      "exactUncolouredSourceRecovered": false,
+      "allNeutralGuardedBodyRgbaExact": true,
+      "allOutsideColourSupportRgbaExactToAcceptedConstruction": true,
+      "equipmentPortableRgbaAndPngExact": true,
+      "equipmentRenderSha256": "26d9d975c37d3e81569b5be6087f6f3940adcf02af53aea340af150e321d7180",
+      "meshFaces": 2618,
+      "nativePixelSha256": "55b45207e9d6bc162c0d5206eabb2deae84a35064f2a82094accd7d0536706ba",
+      "framedPixelSha256": "72bb6e99cd05a10ec93fd26c66c234986349d2c52f7310aae22f4176bb4af8d9",
+      "foregroundBoundsAllNonBlack": [
+        141,
+        53,
+        525,
+        687
+      ],
+      "cropMarginsAllNonBlack": [
+        24,
+        49,
+        24,
+        24
+      ],
+      "bodyWarpsResizesOrGrafts": 0,
+      "documentedWholeSourceIntegerTranslation": [
+        0,
+        0
+      ]
+    },
+    "C": {
+      "existingSourceChromaPixels": 10089,
+      "rolePixelsAboveHalf": {
+        "core": 2262,
+        "calves": 1439,
+        "hamstrings": 1055,
+        "primary": 5333
+      },
+      "roleWeightSumEqualsSourceSupport": true,
+      "neutralPixelsNotSelected": true,
+      "noNewBodyOrSpatialGradient": true,
+      "sourceTonalCalibration": {
+        "primary": 0.61,
+        "core": 0.41,
+        "calves": 0.53,
+        "hamstrings": 0.47
+      },
+      "selection": "Existing source chroma only; semantic masks select roles, never new anatomical fields.",
+      "exactUncolouredSourceRecovered": false,
+      "allNeutralGuardedBodyRgbaExact": true,
+      "allOutsideColourSupportRgbaExactToAcceptedConstruction": true,
+      "equipmentPortableRgbaAndPngExact": true,
+      "equipmentRenderSha256": "805b1dbbb56240e3737cf6598240e3a28107f67abfc77070175f050d6cdb76cf",
+      "meshFaces": 2618,
+      "nativePixelSha256": "d531a5ee33acc78c12f3b71942f5f308cf0faef23dd9e3c70c353b46e444d7ae",
+      "framedPixelSha256": "89bf0dad8068def058d1468f66acc104d7fe95f20a53c5600db92ad32bec9f5c",
+      "foregroundBoundsAllNonBlack": [
+        141,
+        28,
+        525,
+        687
+      ],
+      "cropMarginsAllNonBlack": [
+        24,
+        24,
+        24,
+        24
+      ],
+      "bodyWarpsResizesOrGrafts": 0,
+      "documentedWholeSourceIntegerTranslation": [
+        6,
+        7
+      ]
+    }
+  },
+  "oraReadbacks": [
+    {
+      "path": "A-native.ora",
+      "sha256": "fdcf99cc817b3a95195a49b03732f00be921ac2047dfaba1c78a15fc40d55417",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "654bf1e81505311b7100b699ab9b3a56bebf4c1a95b1aa8581bfe66c09271771"
+    },
+    {
+      "path": "A-framed.ora",
+      "sha256": "1222bae413504c58797d51b4c8bfccacdb9bca37ee6868459969590462e0e9ab",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "554401a5f2180b56687ee690366507950b2d2957db865a57b65186c2a6cdeec6"
+    },
+    {
+      "path": "B-native.ora",
+      "sha256": "ec16dcdea36e5a45652c3398cf892ff469188b51de44bd323158b2a358eed9ce",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "55b45207e9d6bc162c0d5206eabb2deae84a35064f2a82094accd7d0536706ba"
+    },
+    {
+      "path": "B-framed.ora",
+      "sha256": "f0d6c8819721b20f8cd55d92c328b61f7b3739f351998796a47f582a2bd790ba",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "72bb6e99cd05a10ec93fd26c66c234986349d2c52f7310aae22f4176bb4af8d9"
+    },
+    {
+      "path": "C-native.ora",
+      "sha256": "dcf4f2705f29b6b5629b9562fc0f016817724d2ae81742b36d84b962efb7c1e2",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "d531a5ee33acc78c12f3b71942f5f308cf0faef23dd9e3c70c353b46e444d7ae"
+    },
+    {
+      "path": "C-framed.ora",
+      "sha256": "75971cd3dccc25aa34f24a7656f7cc2ff2e2f6ecf23dcbb9c7f1755a1589c6b5",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "89bf0dad8068def058d1468f66acc104d7fe95f20a53c5600db92ad32bec9f5c"
+    }
+  ],
+  "frameOrder": [
+    "A",
+    "B",
+    "B",
+    "C",
+    "C",
+    "A"
+  ],
+  "allSixFramesLosslessRgbaExact": true,
+  "sixOraStacksAndMergedImagesRgbaExact": true,
+  "commonCropAllNonBlackMarginsAtLeast24": true,
+  "newSpatialBodyGradients": false,
+  "anatomicalWarpsOrGrafts": false,
+  "newImageRequests": 0,
+  "projectTestsBuildsGitOrRepositoryWrites": 0,
+  "acceptance": false
+}

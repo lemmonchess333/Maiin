@@ -1,0 +1,13 @@
+Browser tab: 57, Title: "Spin Bike actual registered component review", URL: "http://127.0.0.1:62327/integrated-review.html".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 9-16
+~		5 button Dark theme
++		36 container Spin Bike form guide
++			37 image Spin Bike, Hold standing
++			38 container
++				39 text HOLD STANDING 5 /6
++			40 button Previous frame
++			41 button Pause
++			42 button Next frame
++			43 checkbox Description: Slower playback, Value: 1
+The focused UI element is 43 checkbox Description: Slower playback, Value: 1

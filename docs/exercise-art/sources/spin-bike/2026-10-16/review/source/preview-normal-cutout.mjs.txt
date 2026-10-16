@@ -1,0 +1,64 @@
+// Prepared outside-repository preview. Root runs only after candidate stability.
+// Exact current normal generator functions and encode block; no production main.
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
+
+const root = path.dirname(fileURLToPath(import.meta.url));
+const repo = path.resolve(root, '../../Maiin-burpees');
+const require = createRequire(path.join(repo, 'package.json'));
+const args = process.argv.slice(2);
+if (args.length !== 2 || args[0] !== '--expected-input-sha' || !/^[a-f0-9]{64}$/.test(args[1]))
+  throw Error('Required: node preview-normal-cutout.mjs --expected-input-sha <actual stable plan reference SHA256>');
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const generatorPath = path.join(repo, 'scripts/art/cut-out-form-art.ts');
+const sourceBytes = fs.readFileSync(generatorPath);
+const source = sourceBytes.toString('utf8').replace(/\r\n/g, '\n');
+const pin = JSON.parse(fs.readFileSync(path.join(root, 'card-preview-generator-pin.json'), 'utf8'));
+if (sha(sourceBytes) !== pin.generatorSha256) throw Error('Frozen normal generator changed');
+const definitions = source.slice(source.indexOf('const DARK_MAX = 14;'), source.indexOf('async function main()'));
+const encodeStart = source.indexOf('    const scale = Math.min(1, LONG_SIDE / Math.max(box.width, box.height));');
+const encode = source.slice(encodeStart, source.indexOf('    const rel = ', encodeStart));
+if (!definitions.includes('async function cutOut(') || !definitions.includes('function contentBox(') ||
+    sha(Buffer.from(definitions)) !== pin.definitionSha256 || sha(Buffer.from(encode)) !== pin.encodeBlockSha256)
+  throw Error('Exact normal extraction boundaries or blocks changed');
+const ts = require('typescript');
+const sharpUrl = pathToFileURL(require.resolve('sharp')).href;
+const recipe = `import sharp from ${JSON.stringify(sharpUrl)};\nimport {createHash} from 'node:crypto';\n` + definitions +
+  '\nexport async function preview(input: string) {\nconst {rgba,width,height,keyed}=await cutOut(input);\nconst box=contentBox(rgba,width,height);\n' + encode +
+  '\nreturn {webp,width:outW,height:outH,keyed,box};\n}';
+const compiled = ts.transpileModule(recipe, { reportDiagnostics: true,
+  compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } });
+if (compiled.diagnostics?.some(item => item.category === ts.DiagnosticCategory.Error)) throw Error('Normal recipe syntax error');
+const { preview } = await import('data:text/javascript;base64,' + Buffer.from(compiled.outputText).toString('base64'));
+const candidate = path.join(root, 'candidate');
+const plan = JSON.parse(fs.readFileSync(path.join(candidate, 'sequence-plan.json'), 'utf8'));
+if (plan.exerciseId !== 'spin-bike' || plan.physicalPoses !== 3 || ![1,2,3,4,5,6].includes(plan.referenceFrame)) throw Error('Actual Spin Bike plan binding failed');
+const reference = `draft/frames/${plan.referenceFrame}.webp`;
+const input = path.join(candidate, reference);
+if (plan.frameHashes[reference] !== args[1]) throw Error('Plan reference SHA differs');
+const output = path.join(candidate, 'draft/card.webp');
+const proofPath = path.join(candidate, 'card-preview-proof.json');
+const inputSha = sha(fs.readFileSync(input));
+if (inputSha !== args[1]) throw Error('Actual stable reference SHA mismatch');
+if (fs.existsSync(output) || fs.existsSync(proofPath)) throw Error('Preserve existing card/proof; do not overwrite');
+const result = await preview(input);
+if (sha(fs.readFileSync(input)) !== inputSha) throw Error('Reference changed during preview');
+fs.writeFileSync(output, result.webp, { flag: 'wx' });
+const report = {
+  scope: 'Preview only, exact current normal pure functions and encoding; final registered normal generator must match',
+  generator: 'scripts/art/cut-out-form-art.ts', generatorSha256: pin.generatorSha256,
+  verbatimDefinitionSha256: pin.definitionSha256, encodeBlockSha256: pin.encodeBlockSha256,
+  extractionEolRepresentation: 'LF for exact block comparison; complete generator raw bytes separately pinned',
+  helperSha256: sha(fs.readFileSync(fileURLToPath(import.meta.url))),
+  exerciseId: 'spin-bike', planSha256: sha(fs.readFileSync(path.join(candidate, 'sequence-plan.json'))),
+  reference, referenceSha256: inputSha,
+  output: 'draft/card.webp', width: result.width, height: result.height, keyed: result.keyed,
+  contentBox: result.box, sha256: sha(result.webp), bytes: result.webp.length,
+  noThresholdOrAlphaOverride: true, productionMainInvoked: false,
+  noRegistryOrPublicMutation: true, qaAcceptance: false,
+};
+fs.writeFileSync(proofPath, JSON.stringify(report, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify(report, null, 2));

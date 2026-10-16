@@ -1,0 +1,15 @@
+{
+  "startedAtUtc": "2026-10-16T08:58:49.447508+00:00",
+  "command": [
+    "C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\spin-bike\\perspective-source-production-20261016\\candidate\\reproduce.py",
+    "--build",
+    "--out",
+    "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\spin-bike\\perspective-source-production-20261016\\independent-portable-reproduction-20261016\\reproduced"
+  ],
+  "candidateManifestSha256": "b56bc499850ea893d4313d28c7de575761a007a69943b9b6b7ace7d31486cbdb",
+  "payloadFileCount": 68,
+  "sourceOrRepositoryWrites": 0,
+  "recipeSha256": "d5acd13aba90db33e69029212c3ddcf044910b56d1ea3b5bc23b2d4fdd94aa00"
+}

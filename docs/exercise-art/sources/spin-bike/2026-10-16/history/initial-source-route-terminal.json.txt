@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "status": "held-terminal-correction-service-refusal-original-far-mechanics-unresolved",
+  "recordedAtUtc": "2026-10-15T11:50:39.776787+00:00",
+  "exerciseId": "spin-bike",
+  "route": {
+    "ordinalWithinDocumentedSpinRoutes": 7,
+    "method": "One newly authored intact four-scene source sheet, jointly containing two seated and two genuine standing cycling states with a common camera and apparatus; no body compositing.",
+    "historyScope": "The six earlier stopped Spin routes had no evidenced image-service rejection. The present correction is the first evidenced service hold in this seventh route; earlier source/geometry failures are not reclassified as refusals.",
+    "historyAudit": {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\spin-bike\\joint-two-panel-history-audit-20261015\\REVIEW.json",
+      "sha256": "d0336142fdcb8fbb3add5dcf35ff06610b66e3d9c97b66daf562cf5d757d11e9",
+      "bytes": 14207
+    }
+  },
+  "originalGeneration": {
+    "outcome": "image-returned-native-review-held",
+    "toolExecutionId": "exec744124d3-6471-4519-9b08-4f88e998206b",
+    "prompt": {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\spin-bike\\whole-sequence-sheet-20261015\\source-prompt.txt",
+      "sha256": "03c41f869f8ac8029d654507d69f9814cc426780a99ee18735952fc103308860",
+      "bytes": 4003
+    },
+    "referencedInputsInOrder": [
+      {
+        "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\identity\\athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+        "bytes": 798559,
+        "role": "Strict approved athlete identity and rendering style",
+        "decodedSize": [
+          1024,
+          1536
+        ],
+        "mode": "RGB"
+      },
+      {
+        "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\spin-bike\\rider-cycle-production\\valid-seated-phase-3-reference.png",
+        "sha256": "206fe617ba964c5e068d57ffad9416b4957ebd16a4edd08ec53344dc3922fadb",
+        "bytes": 146802,
+        "role": "Photographic seated posture and contact guidance only",
+        "decodedSize": [
+          1707,
+          960
+        ],
+        "mode": "RGB"
+      },
+      {
+        "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\spin-bike\\rider-cycle-production\\valid-standing-phase-3-reference.png",
+        "sha256": "19797bc9197e2f6d51a25ff1f7749faf25894d96bcc4a436616d906cf0540f11",
+        "bytes": 138172,
+        "role": "Photographic standing-climb posture and contact guidance only",
+        "decodedSize": [
+          1707,
+          960
+        ],
+        "mode": "RGB"
+      }
+    ],
+    "inputOrderObservation": "Exact call order supplied by the parent agent from its actual tool call; parent reports all three inputs were visually inspected before submission.",
+    "transparentBackground": false,
+    "output": {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\spin-bike\\whole-sequence-sheet-20261015\\1-whole-sequence-original.png",
+      "sha256": "83ad4e7d901d2f73832b7c5ef51766ccd3105bdbcb73138df9ea98fef6462c3b",
+      "bytes": 1193872,
+      "decodedSize": [
+        1254,
+        1254
+      ],
+      "mode": "RGB"
+    },
+    "actualEqualCellSize": [
+      627,
+      627
+    ],
+    "dimensionDisclosure": "Requested high-resolution sheet was not delivered at 2048 or 1280 pixels. Literal output is 1254 by 1254; native measurements use those actual pixels."
+  },
+  "nativeSourceConclusion": {
+    "review": {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\spin-bike\\whole-sequence-sheet-20261015\\independent-native-inspection\\source-review.json",
+      "sha256": "38a37b12fb856f86fd96563dda683394d1118fa3944aaa975cee5497dc0c1576",
+      "bytes": 8858
+    },
+    "reviewMethod": "Original native source and four literal no-resampling diagnostic crank crops were actually inspected. No release-source pixels were changed.",
+    "demonstrated": [
+      "Two visibly seated poses with saddle support",
+      "Two genuine standing poses with pelvis clear of the saddle",
+      "Distinct near-leg low/high states",
+      "Broadly coherent canonical no-shorts mannequin, featureless neutral pelvis and white trainers"
+    ],
+    "unresolvedMaterialFinding": "Actual far sole-to-pedal support and a connected, opposed far crank are not established across all four scenes. Raised far shoes in A/C appear forward/right, while B/D hide or leave their support/crank relationship unclear.",
+    "limits": "No hidden far axle was calibrated from the front belt pulley. No exact 3D radius, crank length, projection, limb length or head invariant is certified. Conservative native enclosures in the original review are observations, not release contact measurements.",
+    "layoutFinding": "Standing crowns begin about y610, above the nominal y627 lower-row boundary. Literal equal-cell slicing would clip them. No scene extraction, padding, registration or finishing was performed.",
+    "otherUnfinishedFinishing": "Visible calf tint and red resistance knobs would require ordinary colour finishing, but cannot resolve or conceal the mechanical finding.",
+    "acceptedForRelease": false
+  },
+  "singleMechanicsCorrection": {
+    "outcome": "no-image-returned-service-refusal",
+    "prompt": {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\spin-bike\\whole-sequence-sheet-20261015\\mechanics-correction-prompt.txt",
+      "sha256": "00cc023f6f9e9e53b3b09a3cf6156aad81b494efc5bed35ced2d46df1f23a3a3",
+      "bytes": 2804
+    },
+    "referencedInputsInOrder": [
+      {
+        "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\spin-bike\\whole-sequence-sheet-20261015\\1-whole-sequence-original.png",
+        "sha256": "83ad4e7d901d2f73832b7c5ef51766ccd3105bdbcb73138df9ea98fef6462c3b",
+        "bytes": 1193872,
+        "role": "Original four-scene sheet to correct as intact scenes",
+        "decodedSize": [
+          1254,
+          1254
+        ],
+        "mode": "RGB"
+      },
+      {
+        "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\identity\\athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+        "bytes": 798559,
+        "role": "Exact approved athlete identity and style",
+        "decodedSize": [
+          1024,
+          1536
+        ],
+        "mode": "RGB"
+      }
+    ],
+    "reportedError": {
+      "httpStatus": 400,
+      "code": "moderation_blocked",
+      "reportedStage": "output",
+      "reportedCategory": "sexual",
+      "requestId": "0aa741e6-ec88-466b-9d9d-ec1cc4afabbe",
+      "imageReturned": false,
+      "evidenceAttribution": "Parent agent supplied these fields from the actual tool error visible in its conversation. This sidecar is a structured observation record, not a fabricated copy of an unavailable raw service response. Exact failure time and correction execution ID were not supplied."
+    },
+    "noOutputFileClaim": "The correction returned no image; no corrected source, accepted mechanics or changed human pixels exist from that request.",
+    "terminalAction": "Stop this route. No retry, prompt rephrasing, fallback service, alternate endpoint, garment change, code pose, limb fitting or equipment/contact repair is authorised as a response to this refusal."
+  },
+  "preservation": {
+    "originalSourceBytesUnchanged": true,
+    "allPreexistingCandidateFilesUnchanged": true,
+    "preexistingCandidateHashes": {
+      "1-whole-sequence-original.png": "83ad4e7d901d2f73832b7c5ef51766ccd3105bdbcb73138df9ea98fef6462c3b",
+      "mechanics-correction-prompt.txt": "00cc023f6f9e9e53b3b09a3cf6156aad81b494efc5bed35ced2d46df1f23a3a3",
+      "source-prompt.txt": "03c41f869f8ac8029d654507d69f9814cc426780a99ee18735952fc103308860",
+      "independent-native-inspection\\A-crank.png": "959a69244dbe5496f28a1c2d4abb02914ed6f227f543b49ab5ac924ed90f0d4c",
+      "independent-native-inspection\\B-crank.png": "e9dd7a60d43f98842bb42c19811be83f3c112b0cfaa2e68562b65b1af82b36d4",
+      "independent-native-inspection\\C-crank.png": "1fdd33fb5774fc1d60aab1466830d4a9c601c1004baed35bebeb089fc688204a",
+      "independent-native-inspection\\crop-coordinates.json": "e7ab4ee08fed6ffdf621e5fa5ff8d896efa42e3a1f9f8e9cf028d42f6a64f8c6",
+      "independent-native-inspection\\D-crank.png": "83d86288a40b723473d97890086fbd47a073ee8ee41d0e3a0dec37fdb8f1ada5",
+      "independent-native-inspection\\source-review.json": "38a37b12fb856f86fd96563dda683394d1118fa3944aaa975cee5497dc0c1576"
+    },
+    "reviewerNewImageRequests": 0,
+    "repoOrPublicEdits": false,
+    "registrationPerformed": false,
+    "completionCredit": false,
+    "progressCountersChanged": false,
+    "goalStatusChanged": false
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "scope": "Actual targeted normal card generator ran; registered bytes equal reviewed preview",
+  "sha256": "273c462c1dec1af3711b9788a2c62d442e6f820b1d06f49e4681345414f5c1e0",
+  "bytes": 21140,
+  "previewAndRegisteredByteExact": true,
+  "productionMainInvoked": true,
+  "noThresholdOrAlphaOverride": true,
+  "completionCredit": false
+}

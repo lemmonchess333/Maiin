@@ -1,0 +1,422 @@
+{
+  "status": "common-seated-standing-perspective-study-not-native-approval",
+  "sourcePath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\spin-bike\\whole-sequence-sheet-20261015\\1-whole-sequence-original.png",
+  "sourceSha256": "83ad4e7d901d2f73832b7c5ef51766ccd3105bdbcb73138df9ea98fef6462c3b",
+  "observations": {
+    "A": {
+      "near": [
+        325.0,
+        491.0
+      ],
+      "far": [
+        327.0,
+        374.0
+      ]
+    },
+    "B": {
+      "near": [
+        300.0,
+        395.0
+      ]
+    },
+    "C": {
+      "near": [
+        310.0,
+        483.0
+      ],
+      "far": [
+        330.0,
+        368.0
+      ]
+    }
+  },
+  "observationLimits": "Manually estimated native sole/plate points, A/B from prior inspection plus actual C crank crop. They are not surveyed joint centres; final sole polygons and occlusion must be inspected.",
+  "crankRadiusMetres": 0.17,
+  "bounds": {
+    "yawDegrees": [
+      15.0,
+      65.0
+    ],
+    "pitchDegrees": [
+      3.0,
+      25.0
+    ],
+    "focalPixels": [
+      500.0,
+      2200.0
+    ],
+    "scalePixelsPerMetre": [
+      250.0,
+      600.0
+    ],
+    "contactPlaneWidthMetres": [
+      0.22,
+      0.32
+    ],
+    "phaseADegrees": [
+      -110.0,
+      -5.0
+    ],
+    "phaseBDegrees": [
+      10.0,
+      150.0
+    ],
+    "phaseCDegrees": [
+      -110.0,
+      -5.0
+    ],
+    "nearAxleX": [
+      270.0,
+      320.0
+    ],
+    "nearAxleY": [
+      415.0,
+      465.0
+    ]
+  },
+  "best": {
+    "parameters": {
+      "yawDegrees": 31.113956222374647,
+      "pitchDegrees": 14.661753439590328,
+      "focalPixels": 516.902431734465,
+      "scalePixelsPerMetre": 284.53422544695906,
+      "contactPlaneWidthMetres": 0.22,
+      "phaseADegrees": -69.45297273462,
+      "phaseBDegrees": 102.79754339073419,
+      "phaseCDegrees": -82.05383134415726,
+      "nearAxleX": 309.84236840942367,
+      "nearAxleY": 443.51857131612303
+    },
+    "standingCWholeSceneIntegerTranslation": [
+      6,
+      7
+    ],
+    "residualSquared": 1.2193502921487103,
+    "iterations": 180,
+    "contactPredictions": {
+      "A": {
+        "near": {
+          "world": [
+            0.05966593115005009,
+            -0.15918535315787533,
+            -0.11
+          ],
+          "projection": [
+            325.07432064333716,
+            490.912858742283
+          ],
+          "cameraDepth": 1.736016667036723
+        },
+        "far": {
+          "world": [
+            -0.05966593115005007,
+            0.15918535315787533,
+            0.11
+          ],
+          "projection": [
+            327.22843037602365,
+            374.67796192885066
+          ],
+          "cameraDepth": 1.897306747202753
+        }
+      },
+      "B": {
+        "near": {
+          "world": [
+            -0.037656136788302604,
+            0.165777004925836,
+            -0.11
+          ],
+          "projection": [
+            300.00399254741757,
+            395.09448638060576
+          ],
+          "cameraDepth": 1.702417505875573
+        },
+        "far": {
+          "world": [
+            0.03765613678830258,
+            -0.165777004925836,
+            0.11
+          ],
+          "projection": [
+            349.29464756657165,
+            461.1805039740683
+          ],
+          "cameraDepth": 1.9309059083639029
+        }
+      },
+      "C": {
+        "near": {
+          "world": [
+            0.02350125032270557,
+            -0.16836772622230645,
+            -0.11
+          ],
+          "projection": [
+            315.8279406821972,
+            490.0742179111495
+          ],
+          "cameraDepth": 1.756420110752488
+        },
+        "far": {
+          "world": [
+            -0.02350125032270555,
+            0.16836772622230645,
+            0.11
+          ],
+          "projection": [
+            335.9046786099308,
+            374.19920175416826
+          ],
+          "cameraDepth": 1.876903303486988
+        }
+      }
+    },
+    "farAxle": [
+      340.99371106154234,
+      418.1829886169911
+    ],
+    "nearAxle": [
+      309.84236840942367,
+      443.51857131612303
+    ],
+    "rotation": [
+      [
+        0.8561412409618417,
+        0.0,
+        0.5167418848170889
+      ],
+      [
+        -0.1307936801526565,
+        0.9674369278953064,
+        0.2166998010534763
+      ],
+      [
+        -0.4999151815622748,
+        -0.25311220939435464,
+        0.8282626520005995
+      ]
+    ],
+    "translation": [
+      0.04463149551509154,
+      0.41019834076617445,
+      1.816661707119738
+    ],
+    "observedErrors": {
+      "A": {
+        "near": 0.11453015682583888,
+        "far": 0.7154109404120262
+      },
+      "B": {
+        "near": 0.09457069606837916
+      },
+      "C": {
+        "near": 0.18738384983278966,
+        "far": 0.8064514851693957
+      }
+    }
+  },
+  "attempts": [
+    {
+      "standingCWholeSceneIntegerTranslation": [
+        0,
+        0
+      ],
+      "residualSquared": 71.04802612900617,
+      "parameters": {
+        "yawDegrees": 40.34541892356577,
+        "pitchDegrees": 18.51535038072973,
+        "focalPixels": 500.0,
+        "scalePixelsPerMetre": 280.83833330812604,
+        "contactPlaneWidthMetres": 0.23562559385426854,
+        "phaseADegrees": -56.41723033509643,
+        "phaseBDegrees": 91.2081134271473,
+        "phaseCDegrees": -73.00276966179209,
+        "nearAxleX": 301.1745040989538,
+        "nearAxleY": 440.4785482290517
+      }
+    },
+    {
+      "standingCWholeSceneIntegerTranslation": [
+        0,
+        0
+      ],
+      "residualSquared": 68.92009021228576,
+      "parameters": {
+        "yawDegrees": 45.29863302739775,
+        "pitchDegrees": 21.092341342789073,
+        "focalPixels": 500.0,
+        "scalePixelsPerMetre": 286.4833679760551,
+        "contactPlaneWidthMetres": 0.22,
+        "phaseADegrees": -51.915571378237246,
+        "phaseBDegrees": 89.89898169925671,
+        "phaseCDegrees": -70.22500247671178,
+        "nearAxleX": 300.2777647417543,
+        "nearAxleY": 439.69722416881643
+      }
+    },
+    {
+      "standingCWholeSceneIntegerTranslation": [
+        6,
+        7
+      ],
+      "residualSquared": 1.2193502921487103,
+      "parameters": {
+        "yawDegrees": 31.113956222374647,
+        "pitchDegrees": 14.661753439590328,
+        "focalPixels": 516.902431734465,
+        "scalePixelsPerMetre": 284.53422544695906,
+        "contactPlaneWidthMetres": 0.22,
+        "phaseADegrees": -69.45297273462,
+        "phaseBDegrees": 102.79754339073419,
+        "phaseCDegrees": -82.05383134415726,
+        "nearAxleX": 309.84236840942367,
+        "nearAxleY": 443.51857131612303
+      }
+    },
+    {
+      "standingCWholeSceneIntegerTranslation": [
+        6,
+        7
+      ],
+      "residualSquared": 2.111933471373386,
+      "parameters": {
+        "yawDegrees": 37.32216526861109,
+        "pitchDegrees": 16.22058823974826,
+        "focalPixels": 500.0,
+        "scalePixelsPerMetre": 284.5563480530542,
+        "contactPlaneWidthMetres": 0.22,
+        "phaseADegrees": -63.43017315711498,
+        "phaseBDegrees": 99.55931430306624,
+        "phaseCDegrees": -77.22449246404483,
+        "nearAxleX": 306.9395993980803,
+        "nearAxleY": 443.200353815562
+      }
+    },
+    {
+      "standingCWholeSceneIntegerTranslation": [
+        6,
+        10
+      ],
+      "residualSquared": 12.440535463025562,
+      "parameters": {
+        "yawDegrees": 30.303510302808363,
+        "pitchDegrees": 18.39685852484083,
+        "focalPixels": 2200.0,
+        "scalePixelsPerMetre": 297.339965066717,
+        "contactPlaneWidthMetres": 0.22,
+        "phaseADegrees": -69.59498067764972,
+        "phaseBDegrees": 102.30703683735436,
+        "phaseCDegrees": -81.57616145361631,
+        "nearAxleX": 309.49384813930004,
+        "nearAxleY": 443.96307488398537
+      }
+    },
+    {
+      "standingCWholeSceneIntegerTranslation": [
+        6,
+        10
+      ],
+      "residualSquared": 13.617050194519143,
+      "parameters": {
+        "yawDegrees": 34.12012889827956,
+        "pitchDegrees": 19.51207149418532,
+        "focalPixels": 2200.0,
+        "scalePixelsPerMetre": 297.7765471033295,
+        "contactPlaneWidthMetres": 0.22,
+        "phaseADegrees": -66.05047660486746,
+        "phaseBDegrees": 100.24006974548978,
+        "phaseCDegrees": -78.60793703662469,
+        "nearAxleX": 307.61062405676216,
+        "nearAxleY": 444.01097448723067
+      }
+    },
+    {
+      "standingCWholeSceneIntegerTranslation": [
+        10,
+        7
+      ],
+      "residualSquared": 18.89195370781146,
+      "parameters": {
+        "yawDegrees": 33.03040887931929,
+        "pitchDegrees": 19.78487759857416,
+        "focalPixels": 1343.3322790190075,
+        "scalePixelsPerMetre": 293.8360320469757,
+        "contactPlaneWidthMetres": 0.22,
+        "phaseADegrees": -67.17631594513375,
+        "phaseBDegrees": 103.92256753961212,
+        "phaseCDegrees": -79.78652844025473,
+        "nearAxleX": 310.38584981165815,
+        "nearAxleY": 443.3541135321478
+      }
+    },
+    {
+      "standingCWholeSceneIntegerTranslation": [
+        10,
+        7
+      ],
+      "residualSquared": 20.04364355294402,
+      "parameters": {
+        "yawDegrees": 38.097924781622964,
+        "pitchDegrees": 19.64479959496995,
+        "focalPixels": 810.0823925464999,
+        "scalePixelsPerMetre": 291.14210229285266,
+        "contactPlaneWidthMetres": 0.22,
+        "phaseADegrees": -62.29020178738634,
+        "phaseBDegrees": 101.59867881138963,
+        "phaseCDegrees": -75.97044466054686,
+        "nearAxleX": 308.2276978921425,
+        "nearAxleY": 443.35838429831347
+      }
+    },
+    {
+      "standingCWholeSceneIntegerTranslation": [
+        4,
+        7
+      ],
+      "residualSquared": 4.005633431284325,
+      "parameters": {
+        "yawDegrees": 30.944741305897825,
+        "pitchDegrees": 14.273612235175415,
+        "focalPixels": 500.0,
+        "scalePixelsPerMetre": 283.82334613310604,
+        "contactPlaneWidthMetres": 0.22,
+        "phaseADegrees": -69.51925235192452,
+        "phaseBDegrees": 101.51259876308661,
+        "phaseCDegrees": -82.2199630374592,
+        "nearAxleX": 308.91240791115064,
+        "nearAxleY": 443.49461559686205
+      }
+    },
+    {
+      "standingCWholeSceneIntegerTranslation": [
+        4,
+        7
+      ],
+      "residualSquared": 4.936606774228473,
+      "parameters": {
+        "yawDegrees": 36.91744408084273,
+        "pitchDegrees": 15.849374713310533,
+        "focalPixels": 500.0,
+        "scalePixelsPerMetre": 284.51534205916096,
+        "contactPlaneWidthMetres": 0.22,
+        "phaseADegrees": -63.715979947712896,
+        "phaseBDegrees": 98.22579814996627,
+        "phaseCDegrees": -77.53624531611773,
+        "nearAxleX": 306.0626109088507,
+        "nearAxleY": 443.1320272690076
+      }
+    }
+  ],
+  "mechanism": "One replacement common rigid opposed crank under one common camera. Near axle is a common new apparatus parameter, not the original generated decorative spindle. Source C may receive ONLY the documented integer whole-scene registration. Fixed handlebars must expose actual usable sleeves at A/B and C hand locations; no hand point is moved separately.",
+  "limits": [
+    "Far B is a common-mechanism projection only, not recovered hidden anatomy; common fixed apparatus must physically occlude the projected support without masking known human pixels.",
+    "Standing D is not declared eligible; its visibly close near/far support must be tested separately if used.",
+    "No claim of recovered actual camera, calibrated body lengths, complete continuous human cycle, native contact approval or release approval.",
+    "No images, source body pixels, public files, repository files or completion counts were mutated."
+  ],
+  "imageRequests": 0,
+  "artworkWrites": 0,
+  "completionCredit": false
+}

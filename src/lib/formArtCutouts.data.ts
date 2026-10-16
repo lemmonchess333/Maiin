@@ -1257,6 +1257,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "3c174a2b0e9c5605f8af0f28427bbca75891e3b41f1afac085e172f704ef9bf2",
     sha256: "68cd8e60ef3a708c7b444ed97fa7eacb0b46e4c3c7519a3d03db82807b30656d",
   },
+  "spin-bike": {
+    src: "form-art/spin-bike.webp",
+    width: 304,
+    height: 480,
+    keyed: true,
+    source: "form-frames/spin-bike/1.webp",
+    sourceSha256:
+      "4778b11213b83f0a6574bf61a5084764c406fdbd0e4949edc0c9ee42f81d3bab",
+    sha256: "273c462c1dec1af3711b9788a2c62d442e6f820b1d06f49e4681345414f5c1e0",
+  },
   squat: {
     src: "form-art/squat.webp",
     width: 315,

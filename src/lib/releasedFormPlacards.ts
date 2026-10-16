@@ -17,6 +17,23 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "spin-bike": placard(
+    "spin-bike",
+    ["Quads"],
+    ["Core", "Calves", "Hamstrings"],
+    [
+      [0, "Seated drive", "Stay seated; pedal with controlled resistance."],
+      [0.5, "Seated recovery", "Keep your knees tracking over your feet."],
+      [0.5, "Hold seated", "Keep a relaxed hold on the bars."],
+      [1, "Standing drive", "Rise from the saddle; keep pedalling controlled."],
+      [1, "Hold standing", "Support yourself through the pedals and bars."],
+      [0, "Return seated", "Sit back onto the saddle smoothly."],
+    ],
+    [
+      "Dial in seat and bar height — seat level with the bars for most.",
+      "Clip or strap in, grip the bars with a firm but relaxed hold.",
+    ]
+  ),
   elliptical: placard(
     "elliptical",
     ["Quads", "Glutes"],
