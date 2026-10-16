@@ -12,7 +12,12 @@ import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
 import ExerciseDemoPlayer from "@/components/ExerciseDemoPlayer";
 import ExerciseRigDemo from "@/components/ExerciseRigDemo";
-import { getDemoMuscleKey, getFormBeats, getFormSetup } from "@/lib/formGuides";
+import {
+  getDemoMuscleKey,
+  getFormAdvice,
+  getFormBeats,
+  getFormSetup,
+} from "@/lib/formGuides";
 import MuscleKey from "@/components/MuscleKey";
 import { EXERCISES } from "@/lib/exercises";
 import { Button } from "@/components/ui/Button";
@@ -44,6 +49,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
   const beats = exerciseId ? getFormBeats(exerciseId) : null;
   const setupInstructions =
     beats && exerciseId ? getFormSetup(exerciseId) : null;
+  const guideAdvice = beats && exerciseId ? getFormAdvice(exerciseId) : null;
   const [legacyGuide, setLegacyGuide] = useState<string | null>(null);
   const hasLocalGuide =
     beats !== null || (exerciseId !== undefined && legacyGuide === exerciseId);
@@ -151,6 +157,9 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
       </div>
     );
   }
+
+  const tip = guideAdvice?.tip ?? demo.tip;
+  const commonMistakes = guideAdvice?.commonMistakes ?? demo.commonMistakes;
 
   // One body, not two: when the exercise has a usable demo it IS the hero
   // visual and the muscle worked drops to the Primary/Secondary pills below;
@@ -457,7 +466,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
               )}
             </button>
           )}
-          {demo.tip && (
+          {tip && (
             <div
               className="mt-4 flex gap-3 rounded-xl p-3"
               style={{ backgroundColor: `${THEME.warning}14` }}
@@ -477,20 +486,20 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                   Watch out
                 </p>
                 <p className="mt-0.5 text-small leading-relaxed text-foreground/80">
-                  {demo.tip}
+                  {tip}
                 </p>
               </div>
             </div>
           )}
           {(beats !== null || showInstructions) &&
-            demo.commonMistakes &&
-            demo.commonMistakes.length > 0 && (
+            commonMistakes &&
+            commonMistakes.length > 0 && (
               <div className="mt-4">
                 <p className="text-caption uppercase tracking-wide text-muted-foreground">
                   Common mistakes
                 </p>
                 <ul className="mt-1.5 space-y-1">
-                  {demo.commonMistakes.map((m) => (
+                  {commonMistakes.map((m) => (
                     <li
                       key={m}
                       className="flex gap-2 text-small leading-relaxed text-foreground/80"

@@ -4,9 +4,11 @@ const placard = (
   primary: string[],
   secondary: string[],
   rows: [number, string, string][],
-  authoredSetupInstructions?: string[]
+  authoredSetupInstructions?: string[],
+  advice?: { tip: string; commonMistakes: string[] }
 ) => ({
   authoredSetupInstructions,
+  advice,
   beats: rows.map(([t, label, cue], i) => ({
     t,
     label,
@@ -17,6 +19,31 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "seated-row": placard(
+    "seated-row",
+    ["Upper back"],
+    ["Biceps"],
+    [
+      [0, "Reach", "Reach forward; keep both feet braced."],
+      [0, "Set", "Keep knees soft and wrists straight."],
+      [1, "Row", "Draw elbows back; bring chest upright."],
+      [1, "Squeeze", "Bring the handle toward your lower ribs."],
+      [0, "Return", "Extend arms; hinge forward under control."],
+      [0, "Reset", "Keep feet braced; avoid bouncing."],
+    ],
+    [
+      "Controlled torso-hinge variation: start light and move smoothly.",
+      "Sit on the fixed bench; brace both feet with knees slightly bent.",
+    ],
+    {
+      tip: "Use a small, comfortable torso hinge. Avoid bouncing or leaning far back to move the load.",
+      commonMistakes: [
+        "Jerking the handle or using excessive momentum.",
+        "Straightening the knees to drive the movement.",
+        "Pulling high toward the shoulders instead of the lower ribs.",
+      ],
+    }
+  ),
   "spin-bike": placard(
     "spin-bike",
     ["Quads"],

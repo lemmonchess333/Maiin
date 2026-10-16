@@ -41,6 +41,8 @@ export interface FormPlacard {
   beats: readonly FormBeat[];
   /** Preparation before the depicted movement cycle, kept separate from cues. */
   authoredSetupInstructions?: readonly string[];
+  /** Advice specific to the explicitly named variation in this artwork. */
+  advice?: FormGuideAdvice;
   /** The muscle key for SUPPLIED art. The catalogue names the muscle
    *  groups an exercise trains, which is a true statement about the
    *  exercise and not necessarily about the picture: the dips card
@@ -48,6 +50,11 @@ export interface FormPlacard {
    *  catalogue's "chest / triceps / shoulders" describes. A key is a
    *  key to what is ON SCREEN, so supplied art brings its own. */
   key?: DemoMuscleKey;
+}
+
+export interface FormGuideAdvice {
+  tip: string;
+  commonMistakes: readonly string[];
 }
 
 export interface DemoMuscleKey {
@@ -452,6 +459,13 @@ export function getFormBeats(exerciseId: string): readonly FormBeat[] | null {
 export function getFormSetup(exerciseId: string): readonly string[] | null {
   return getFormBeats(exerciseId)
     ? (FORM_BEATS[exerciseId]?.authoredSetupInstructions ?? null)
+    : null;
+}
+
+/** Variation advice is active only with its exact released six-frame guide. */
+export function getFormAdvice(exerciseId: string): FormGuideAdvice | null {
+  return getFormBeats(exerciseId)
+    ? (FORM_BEATS[exerciseId]?.advice ?? null)
     : null;
 }
 
