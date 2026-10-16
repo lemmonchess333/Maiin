@@ -28,6 +28,8 @@ const ids = [
   "front-squat",
   "straight-arm-pulldown",
   "handstand-push-ups",
+  "leg-press",
+  "incline-db-curl",
 ];
 const sha = (bytes: string | Buffer) =>
   createHash("sha256").update(bytes).digest("hex");
@@ -58,7 +60,7 @@ describe("owner-authorized artwork activation", () => {
      I/O, and raising it further would be treating the symptom. If this
      starts failing regularly rather than occasionally, the thing to
      look at is suite concurrency, not this number. */
-  it("ships exactly eighteen owner-authorized guides bound to source, delivered assets and cues", () => {
+  it("ships exactly twenty owner-authorized guides bound to source, delivered assets and cues", () => {
     expect(
       Object.keys(FORM_ARTWORK)
         .filter(
@@ -82,7 +84,7 @@ describe("owner-authorized artwork activation", () => {
     }
   }, 30_000);
   it("keeps incomplete pilots inactive", () => {
-    for (const id of ["incline-db-curl", "turkish-get-up"])
+    for (const id of ["turkish-get-up"])
       expect(getReleasedFormArtwork(id), id).toBeNull();
   });
   /* Every approved set, not a hand-kept list of them: a list that each
