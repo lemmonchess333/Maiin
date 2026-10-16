@@ -1,0 +1,78 @@
+{
+  "status": "native-review-ready-not-accepted",
+  "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\spin-bike\\whole-sequence-sheet-20261015\\1-whole-sequence-original.png",
+  "sourceSha256": "83ad4e7d901d2f73832b7c5ef51766ccd3105bdbcb73138df9ea98fef6462c3b",
+  "draftProofSha256": "a7ca7b78ece6b39894ffba431a8a5ead7a1aa5aaddb429507319f8f674b1d5f5",
+  "rendererSha256": "c564fe3f6fed4dafb57d5bfb3db47d1cb09e2cbb75ad2460334b1852007c5e48",
+  "registration": {
+    "A": "output=(sheetX+20,sheetY+40)",
+    "B": "output=(sheetX-627+20,sheetY+40)",
+    "C": "Actual upward-extended extract [0,600,627,1254] pasted at(26,20), so output=(sheetX+26,sheetY-580). The reported whole-scene integer(+6,+7) is relative to nominal lower-panel coordinate origin y627 and common PAD(20,40). This actual extraction intentionally retains27rows above that origin, including real standing-crown pixels around rawrows610\u2013626; it is NOT pixel-equivalent to discarding those rows via crop[0,627,627,1254]. No human pixel resampling or source transform beyond integer translation."
+  },
+  "humanSelection": "Full connected original pale/purple athlete plus disconnected black-strap-separated white trainer toes and actual far shoe fragments. Original neutral contour/antialias pixels preserved with2nativepixel mask dilation. Mask operations never alter selected source RGBA. Earlier coarse clipped candidates remain separate and are not proposed.",
+  "actualGuardChecks": {
+    "A": {
+      "guardPixels": 45434,
+      "changedGuardPixels": 0,
+      "allSeedPixelsExact": true,
+      "oraIndependentRecompositionExact": true
+    },
+    "B": {
+      "guardPixels": 39772,
+      "changedGuardPixels": 0,
+      "allSeedPixelsExact": true,
+      "oraIndependentRecompositionExact": true
+    },
+    "C": {
+      "guardPixels": 46511,
+      "changedGuardPixels": 0,
+      "allSeedPixelsExact": true,
+      "oraIndependentRecompositionExact": true
+    }
+  },
+  "mechanism": {
+    "oneCameraAndRigForAllStates": true,
+    "crankRadiusMetres": 0.17,
+    "crankQMetres": 0.16,
+    "forefootPlaneSpacingMetres": 0.22,
+    "outboardDistanceFromCrankToForefootPlaneEachMetres": 0.03,
+    "samePlatformMetres": [
+      0.14,
+      0.1,
+      0.022
+    ],
+    "bearingTopHeightMetres": 0.025,
+    "floorWorldYMetres": -0.3,
+    "crankWorldYMetres": 0,
+    "standingSourceUsed": "C true saddle-cleared pose",
+    "standingD": "Not used or declared compatible. Three actual states cover seated A/B and genuine standing C; no six-distinct-human claim.",
+    "grips": "One fixed multi-position loop per side. A/B and C use different existing parallel sleeve segments in the same fixed 3D bars; individual hand pixels/coordinates are never adjusted.",
+    "pedalPassivePitch": "One freely rotating pedal bearing each side, common hardware size, source-visible sole pitch chosen per actual pose; no human foot operation.",
+    "unoccludedProof": "Same exact moving geometry with fixed chassis/covers/bars hidden; no different camera/rig or invented hidden human."
+  },
+  "dimensionPrecedentFromRootVerifiedOfficialSources": [
+    {
+      "url": "https://us.wattbike.com/products/wattbike-atom",
+      "rootObservedFacts": "170mm cranks and160mmQ factor"
+    },
+    {
+      "url": "https://manuals.stagescycling.com/en/stages-bike/user-guide/about/specifications/",
+      "rootObservedFacts": "165\u2013175mm crank options including170mm;157mmQ"
+    }
+  ],
+  "equipmentIdentity": "Custom replacement indoor-cycle apparatus with physically plausible chosen dimensions; not a claimed Wattbike/Stages manufacturer replica. Source2D data does not recover true anthropometric calibration or actual camera.",
+  "qualityLimits": [
+    "Actual native sole/hand support, model coverage and gear proportions require root/peer visual review.",
+    "Approximate targets within0.81px indicate mathematical construction eligibility only, not subpixel source measurement or strict certification.",
+    "Source colours deliberately not finalized at this review stage.",
+    "No source-image service requests, anatomical transformations or repository/public writes."
+  ],
+  "strictCertification": false,
+  "releaseApproved": false,
+  "completionCredit": false,
+  "documentaryPredecessor": {
+    "path": "work\\remaining11-new-authoring-20261016\\equipment-route\\native-draft-construction-notes.json",
+    "sha256": "b0524ca57da32272f2dc53d3256d31cd49c084488b31acad7c62ab964cda7ff4",
+    "clarification": "Prior coordinate formula was correct, but its lower-panel crop shorthand could incorrectly imply equality after discarding actual overflow head pixels. This version explicitly distinguishes coordinate-origin equivalence from full image pixel equality. Actual draft source bases and all images unchanged."
+  }
+}

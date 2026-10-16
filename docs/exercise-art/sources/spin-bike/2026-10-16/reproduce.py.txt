@@ -1,0 +1,133 @@
+"""Portable Spin Bike source-preserving finish. Pillow+NumPy, relative paths.
+
+--build creates the one prescribed colour pass; --out NEW_DIR reproduces there.
+--verify reads saved hashes/layers/frames without rerendering. No optimizers,
+anatomical fitting/generation, network, repository access or release acceptance.
+"""
+from pathlib import Path
+from io import BytesIO
+from collections import deque
+import argparse,hashlib,importlib.util,json,shutil,sys,zipfile
+import xml.etree.ElementTree as ET
+import numpy as np
+from PIL import Image,ImageDraw,__version__ as pillow_version
+sys.dont_write_bytecode=True
+HERE=Path(__file__).resolve().parent;SIZE=(700,730);ACCEPTED_SIZE=(700,700);CROP=(117,4,549,711);ORDER=['A','B','B','C','C','A'];POSITIONS=[0,1,1,2,2,0]
+CANONICAL='fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b'
+SOURCE='83ad4e7d901d2f73832b7c5ef51766ccd3105bdbcb73138df9ea98fef6462c3b'
+VERSION='anatomy-v3-2026-10-16-custom-perspective-spin-v1'
+BEATS=[(0,'Seated drive','Stay seated; pedal with controlled resistance.'),(1,'Seated recovery','Keep your knees tracking over your feet.'),(1,'Hold seated','Keep a relaxed hold on the bars.'),(2,'Standing drive','Rise from the saddle; keep pedalling controlled.'),(2,'Hold standing','Support yourself through the pedals and bars.'),(0,'Return seated','Sit back onto the saddle smoothly.')]
+FINDINGS=['Three actual retained source bodies: seatedA/B and genuine standingC, repeated across six paths. No six-distinct-human or complete continuous calibrated human cycle claim.','Original sheet is1254x1254 with nominal627cells. C crown extends above nominal lower-panel y627origin; upwardextended y600extract preserves those actual head pixels. WholeC(+6,+7) is relative to nominal origin; all source pixels remain native/unscaled.','One fixed custom perspective indoor-cycle, ordinary equal170mmopposedcranks,160mmcrankQ,220mmforefootplanes and passive rocking140x100mmpedals; fixed multi-position loopbars support different actual seated/standing grips. No manufacturer replica or recovered source3D/body calibration claim.','B far pedal support is hidden by the common actual drive cover; no new far shoe or hidden anatomy has been constructed.','Native source contours/shading and minor pose differences remain. Tiny inherited C silver old-hardware edge at the left calf is retained as a minor contour finding, not repainted.','Custom shaded apparatus has a more geometric frame than the originally generated equipment. Source627cell quality is preserved; the production crop is not upscaled.','Existing source anterior-thigh tint is Quads primary. Existing Core, Calves and identifiable posterior-thighHamstrings tint is secondary; neutral source anatomy/trainers are unchanged.']
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+load=lambda p:json.loads(p.read_bytes())
+def save(p,v):p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dumps(v,indent=2,ensure_ascii=False)+'\n',encoding='utf8')
+def opened(p):return Image.open(p).convert('RGBA')
+def pixel(im):return hashlib.sha256(im.convert('RGBA').tobytes()).hexdigest()
+def png(im):b=BytesIO();im.save(b,format='PNG');return b.getvalue()
+def allfiles(root):return {p.relative_to(root).as_posix():sha(p) for p in sorted(root.rglob('*')) if p.is_file() and '__pycache__' not in p.parts and p.name!='candidate-payload-manifest.json'}
+def pad(im,mode='RGBA',fill=(0,0,0,0)):
+    out=Image.new(mode,SIZE,fill);out.paste(im,(0,0));return out
+def sourcebase(raw,label):
+    out=Image.new('RGBA',SIZE,(0,0,0,255))
+    if label=='A':out.paste(raw.crop((0,0,627,600)),(20,40))
+    elif label=='B':out.paste(raw.crop((627,0,1254,600)),(20,40))
+    else:out.paste(raw.crop((0,600,627,1254)),(26,20))
+    return out
+def rolemask(polygons):
+    im=Image.new('L',(SIZE[0]*4,SIZE[1]*4));d=ImageDraw.Draw(im)
+    for poly in polygons:d.polygon([(x*4,y*4) for x,y in poly],fill=255)
+    return np.asarray(im.resize(SIZE,Image.Resampling.LANCZOS),dtype=float)/255
+def palette(source,guard,label,recipe):
+    a=np.asarray(source);rgb=a[:,:,:3].astype(float);r,g,b=rgb[:,:,0],rgb[:,:,1],rgb[:,:,2];rules=recipe['sourceSupportRules']
+    support=(b-r>=rules['bMinusRMin'])&(b-g>=rules['bMinusGMin'])&(r-g>=rules['rMinusGMin'])&(np.asarray(guard)>0)
+    weights={};remaining=support.astype(float)
+    for role in ['core','calves','hamstrings']:
+        weight=rolemask(recipe['semanticRolePolygons'][label][role])
+        # Existing disconnected chroma fields can be assigned in full by a
+        # reviewed interior seed, avoiding a rectangle cutting neighbouring
+        # quadriceps. A/C far underside strips use explicit semantic traces.
+        selected=np.zeros_like(support)
+        for sx,sy in recipe['existingFieldSeeds'][label][role]:
+            assert support[sy,sx],'Reviewed role seed is outside original tint'
+            todo=deque([(sy,sx)]);selected[sy,sx]=True
+            while todo:
+                yy,xx=todo.popleft()
+                for ny,nx in [(yy-1,xx),(yy+1,xx),(yy,xx-1),(yy,xx+1)]:
+                    if 0<=ny<SIZE[1] and 0<=nx<SIZE[0] and support[ny,nx] and not selected[ny,nx]:selected[ny,nx]=True;todo.append((ny,nx))
+        weight=np.maximum(weight,selected.astype(float));weight[~support]=0;weight=np.minimum(weight,remaining);weights[role]=weight;remaining-=weight
+    weights['primary']=remaining
+    maximum=np.max(rgb,axis=2);chroma=(maximum-g)/np.maximum(maximum,1);neutral=maximum[:,:,None];out=np.zeros_like(rgb)
+    for role,weight in weights.items():
+        target=recipe['primary'] if role=='primary' else recipe['secondary'];strength=np.minimum(chroma/recipe['sourceTintStrengthDenominators'][role],1)
+        mapped=neutral+(np.asarray(target)*maximum[:,:,None]/255-neutral)*strength[:,:,None];out+=mapped*weight[:,:,None]
+    colour=np.zeros_like(a);colour[support,:3]=np.rint(np.clip(out[support],0,255)).astype(np.uint8);colour[support,3]=255
+    masks={'source-colour-support':Image.fromarray((support*255).astype(np.uint8))}
+    masks.update({role+'-role':Image.fromarray(np.rint(weight*255).astype(np.uint8)) for role,weight in weights.items()})
+    details={'existingSourceChromaPixels':int(support.sum()),'rolePixelsAboveHalf':{role:int((w>.5).sum()) for role,w in weights.items()},'roleWeightSumEqualsSourceSupport':bool(np.max(np.abs(sum(weights.values())-support.astype(float)))<1e-9),'neutralPixelsNotSelected':True,'noNewBodyOrSpatialGradient':True,'sourceTonalCalibration':recipe['sourceTintStrengthDenominators'],'selection':'Existing source chroma only; semantic masks select roles, never new anatomical fields.','exactUncolouredSourceRecovered':False}
+    return Image.fromarray(colour),support,masks,details
+def ora(path,layers,expected):
+    doc=ET.Element('image',w=str(expected.width),h=str(expected.height),name='Spin Bike retained native source + fixed equipment + colour roles REVIEW');stack=ET.SubElement(doc,'stack');members={'mimetype':b'image/openraster','mergedimage.png':png(expected)}
+    for i,(name,im) in reversed(list(enumerate(layers))):
+        key=f'data/layer{i}.png';members[key]=png(im);ET.SubElement(stack,'layer',name=name,src=key,x='0',y='0',opacity='1.0',visibility='visible',**{'composite-op':'svg:src-over'})
+    members['stack.xml']=ET.tostring(doc,encoding='utf8')
+    with zipfile.ZipFile(path,'x') as z:
+        for name,data in members.items():
+            entry=zipfile.ZipInfo(name,(2026,10,16,0,0,0));entry.compress_type=zipfile.ZIP_STORED if name=='mimetype' else zipfile.ZIP_DEFLATED;z.writestr(entry,data)
+    return verify_ora(path,expected)
+def verify_ora(path,expected):
+    with zipfile.ZipFile(path) as z:
+        assert z.testzip() is None and len(z.namelist())==len(set(z.namelist()))==8
+        doc=ET.fromstring(z.read('stack.xml'));out=Image.new('RGBA',(int(doc.attrib['w']),int(doc.attrib['h'])))
+        for el in reversed(doc.find('stack').findall('layer')):out=Image.alpha_composite(out,Image.open(BytesIO(z.read(el.attrib['src']))).convert('RGBA'))
+        merged=Image.open(BytesIO(z.read('mergedimage.png'))).convert('RGBA');assert pixel(out)==pixel(merged)==pixel(expected)
+    return {'path':path.name,'sha256':sha(path),'layers':5,'members':8,'stackAndMergedRgbaExact':True,'pixelSha256':pixel(expected)}
+def verify(root):
+    manifest=load(root/'candidate-payload-manifest.json');assert allfiles(root)==manifest['files'];plan=load(root/'sequence-plan.json');assert plan['physicalPoses']==3 and plan['sourcePoseOrder']==ORDER and plan['positions']==POSITIONS
+    assert sha(root/'originals/canonical-review-reference.png')==CANONICAL and sha(root/'originals/source-sheet.png')==SOURCE;oras=[]
+    for label in ['A','B','C']:
+        native=opened(root/f'draft/{label}-native.png');framed=opened(root/f'draft/{label}-framed.png');assert native.size==SIZE and pixel(native.crop(CROP))==pixel(framed)
+        for suffix,im in [('native',native),('framed',framed)]:oras.append(verify_ora(root/f'draft/{label}-{suffix}.ora',im))
+    for n,label in enumerate(ORDER,1):
+        f=root/f'draft/frames/{n}.webp';assert sha(f)==plan['frameHashes'][f'draft/frames/{n}.webp'];assert pixel(opened(f))==pixel(opened(root/f'draft/{label}-framed.png'))
+    return {'payloadFiles':len(manifest['files']),'sixOraReadbacks':oras,'allSixLosslessFrameSlotsExact':True,'repositoryAccess':False,'approval':False}
+def build(root):
+    draft=root/'draft';assert not draft.exists(),'Use a new folder; do not overwrite an existing palette pass'
+    for sub in ['frames','layers','masks']:(draft/sub).mkdir(parents=True,exist_ok=True)
+    recipe=load(root/'authoring/palette-recipe.json');catalogue=load(root/'authoring/catalogue-snapshot.json');eligible=load(root/'evidence/root-source-construction-eligibility.json');assert eligible['sourceConstructionEligible'] is True and eligible['paletteReviewed'] is False
+    assert sha(root/'originals/canonical-review-reference.png')==CANONICAL and sha(root/'originals/source-sheet.png')==SOURCE
+    raw=opened(root/'originals/source-sheet.png');spec=importlib.util.spec_from_file_location('spin_fixed_equipment',root/'authoring/render-fixed-equipment.py');renderer=importlib.util.module_from_spec(spec);spec.loader.exec_module(renderer)
+    details={};oras=[];frame_hashes={}
+    for label in ['A','B','C']:
+        base=sourcebase(raw,label);guard=pad(Image.open(root/f'authoring/{label}-human-guard.png').convert('L'),'L',0);ga=np.asarray(guard)>0
+        removal=pad(opened(root/f'authoring/{label}-equipment-removal.png'),fill=(0,0,0,255));originalGear=opened(root/f'authoring/{label}-fixed-equipment.png');rendered,geometry=renderer.apparatus(label)
+        assert pixel(rendered)==pixel(originalGear) and hashlib.sha256(png(rendered)).hexdigest()==sha(root/f'authoring/{label}-fixed-equipment.png'),'Portable fixed equipment changed accepted mesh/material pixels'
+        gear=pad(originalGear);body=np.array(base);body[:,:,3]=np.where(ga,255,0);body=Image.fromarray(body);clean=Image.alpha_composite(Image.alpha_composite(Image.alpha_composite(base,removal),gear),body)
+        assert hashlib.sha256(png(clean.crop((0,0,700,700)))).hexdigest()==eligible['reviewedNativeFiles'][label]['sha256'],'Original accepted native source construction changed'
+        colour,support,masks,roleProof=palette(base,guard,label,recipe);native=Image.alpha_composite(clean,colour);framed=native.crop(CROP);before=np.asarray(clean);after=np.asarray(native);source=np.asarray(base)
+        assert np.array_equal(after[~support],before[~support]) and np.array_equal(after[:,:,3],before[:,:,3]);assert np.array_equal(after[ga&~support],source[ga&~support]),'Neutral source anatomy changed'
+        colour.save(draft/f'layers/{label}-colour.png')
+        for name,im in masks.items():im.save(draft/f'masks/{label}-{name}.png')
+        native.save(draft/f'{label}-native.png');framed.save(draft/f'{label}-framed.png')
+        layers=[('Original intact source with documented whole-scene registration and black padding',base),('Old equipment removal outside exact native source human guard',removal),('Exact common fixed-perspective custom3Dequipment',gear),('Exact original native human contours and retained source contact pixels',body),('Existing source muscle chroma with source-tonal semantic role mapping',colour)]
+        oras.append(ora(draft/f'{label}-native.ora',layers,native));oras.append(ora(draft/f'{label}-framed.ora',[(name,im.crop(CROP)) for name,im in layers],framed))
+        yy,xx=np.where(np.max(after[:,:,:3],axis=2)>0);bb=[int(xx.min()),int(yy.min()),int(xx.max()+1),int(yy.max()+1)];margins=[bb[0]-CROP[0],bb[1]-CROP[1],CROP[2]-bb[2],CROP[3]-bb[3]];assert min(margins)>=24
+        details[label]={**roleProof,'allNeutralGuardedBodyRgbaExact':True,'allOutsideColourSupportRgbaExactToAcceptedConstruction':True,'equipmentPortableRgbaAndPngExact':True,'equipmentRenderSha256':sha(root/f'authoring/{label}-fixed-equipment.png'),'meshFaces':geometry['meshFaces'],'nativePixelSha256':pixel(native),'framedPixelSha256':pixel(framed),'foregroundBoundsAllNonBlack':bb,'cropMarginsAllNonBlack':margins,'bodyWarpsResizesOrGrafts':0,'documentedWholeSourceIntegerTranslation':[6,7] if label=='C' else [0,0]}
+    for n,label in enumerate(ORDER,1):
+        frame=draft/f'frames/{n}.webp';opened(draft/f'{label}-framed.png').save(frame,format='WEBP',lossless=True,quality=100,method=6,exact=True);assert pixel(opened(frame))==pixel(opened(draft/f'{label}-framed.png'));frame_hashes[f'draft/frames/{n}.webp']=sha(frame)
+    for t,label,cue in BEATS:assert len(cue.split())<=7
+    plan={'exerciseId':'spin-bike','name':'Spin Bike','version':VERSION,'physicalPoses':3,'sourcePoseOrder':ORDER,'positions':POSITIONS,'registeredCanvas':list(SIZE),'sourceEquipmentCanvas':[700,700],'originalSourceCanvas':[1254,1254],'nativeSourceNominalCell':[627,627],'commonPadding':[20,40,0,30],'commonCrop':list(CROP),'dimensions':[CROP[2]-CROP[0],CROP[3]-CROP[1]],'primary':['Quads'],'secondary':['Core','Calves','Hamstrings'],'catalogueMuscleGroup':catalogue['muscleGroup'],'catalogueSecondaryMuscles':catalogue['secondaryMuscles'],'equipment':catalogue['equipment'],'setup':catalogue['instructions'][:2],'beats':[{'t':t,'label':label,'cue':cue} for t,label,cue in BEATS],'frameHashes':frame_hashes,'referenceFrame':1,'scope':'Three retained actual human states including seatedA/B and true saddle-cleared standingC. Repeated hold slots and return instruction do not assert six different poses, human interpolation or a calibrated continuous revolution.','equipmentScope':'One fixed custom indoor-cycle with ordinary opposed cranks and a physical perspective camera; native source feet/hands unchanged.','findings':FINDINGS,'finalPaletteReviewed':False,'registeredReviewComplete':False,'strictCertified':False,'completionCredit':False};save(root/'sequence-plan.json',plan)
+    provenance={'exerciseId':'spin-bike','version':VERSION,'canonicalSha256':CANONICAL,'sourceSheet':{'path':'originals/source-sheet.png','sha256':SOURCE,'sourceGenerationId':'exec744124d3-6471-4519-9b08-4f88e998206b','actualDimensions':[1254,1254]},'sourcePrompt':'originals/source-prompt.txt','sourceMetadata':'originals/source-metadata.json','priorHolds':'history/initial-source-route-terminal.json','sourceConstructionReview':'evidence/root-source-construction-eligibility.json','independentNativeReview':'evidence/native-independent-review.json','prepaletteRoleReview':'evidence/prepalette-muscle-role-review.json','registrationNotes':'evidence/native-construction-notes.json','paletteRecipe':'authoring/palette-recipe.json','fixedGeometry':'authoring/fixed-geometry.json','fixedRenderer':'authoring/render-fixed-equipment.py','recipeSha256':sha(root/'reproduce.py'),'physicalPoses':3,'sourcePoseOrder':ORDER,'commonCrop':list(CROP),'framedDimensions':plan['dimensions'],'sourceCRegistration':'Nominal lower-panel y627origin+integer(+6,+7); actualy600upwardextendedextract preservesoverflowcrown.','newImageRequests':0,'anatomicalWarpsResizesOrGrafts':0,'sourceNeutralPixelsExact':True,'portableDependencies':['Pillow','NumPy'],'recipeScope':'Fixed accepted equipment rendering and exact source layer composition/colour-role remap only. No solver or anatomical synthesis.','findings':FINDINGS,'finalPaletteReviewed':False,'registeredReviewComplete':False,'completionCredit':False};save(root/'source-provenance.json',provenance)
+    save(draft/'pixel-and-editable-proof.json',{'scope':'One final colour pass on root-eligible three-state construction, pending actual root native/mobile/card review.','palettePasses':1,'dependencies':{'pillow':pillow_version,'numpy':np.__version__},'recipeSha256':sha(root/'reproduce.py'),'sourceSheetSha256':SOURCE,'canonicalSha256':CANONICAL,'poses':details,'oraReadbacks':oras,'frameOrder':ORDER,'allSixFramesLosslessRgbaExact':True,'sixOraStacksAndMergedImagesRgbaExact':True,'commonCropAllNonBlackMarginsAtLeast24':True,'newSpatialBodyGradients':False,'anatomicalWarpsOrGrafts':False,'newImageRequests':0,'projectTestsBuildsGitOrRepositoryWrites':0,'acceptance':False})
+    inputs={p.relative_to(root).as_posix():sha(p) for folder in ['originals','authoring','evidence','history'] for p in sorted((root/folder).rglob('*')) if p.is_file()};inputs['reproduce.py']=sha(root/'reproduce.py');save(root/'input-file-hashes.json',inputs)
+    save(root/'candidate-payload-manifest.json',{'scope':'Curated three-state retained-source Spin candidate. No caches, source bank or unrelated historical attempts. Final palette/native/mobile/card review pending.','files':allfiles(root),'approval':False});return verify(root)
+def main():
+    parser=argparse.ArgumentParser(description=__doc__);mode=parser.add_mutually_exclusive_group(required=True);mode.add_argument('--build',action='store_true');mode.add_argument('--verify',action='store_true');parser.add_argument('--out',type=Path,default=HERE);args=parser.parse_args();root=args.out.resolve()
+    if args.build:
+        if root!=HERE:
+            assert not root.exists(),'Use a new reproduction folder';root.mkdir(parents=True)
+            for folder in ['originals','authoring','evidence','history']:shutil.copytree(HERE/folder,root/folder)
+            shutil.copyfile(HERE/'reproduce.py',root/'reproduce.py')
+        result=build(root)
+    else:result=verify(root)
+    print(json.dumps({'candidate':str(root),'manifestSha256':sha(root/'candidate-payload-manifest.json'),**result},indent=2))
+if __name__=='__main__':main()

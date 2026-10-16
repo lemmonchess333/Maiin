@@ -1,0 +1,65 @@
+{
+  "exerciseId": "spin-bike",
+  "version": "anatomy-v3-2026-10-16-custom-perspective-spin-v1",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "sourceSheet": {
+    "path": "originals/source-sheet.png",
+    "sha256": "83ad4e7d901d2f73832b7c5ef51766ccd3105bdbcb73138df9ea98fef6462c3b",
+    "sourceGenerationId": "exec744124d3-6471-4519-9b08-4f88e998206b",
+    "actualDimensions": [
+      1254,
+      1254
+    ]
+  },
+  "sourcePrompt": "originals/source-prompt.txt",
+  "sourceMetadata": "originals/source-metadata.json",
+  "priorHolds": "history/initial-source-route-terminal.json",
+  "sourceConstructionReview": "evidence/root-source-construction-eligibility.json",
+  "independentNativeReview": "evidence/native-independent-review.json",
+  "prepaletteRoleReview": "evidence/prepalette-muscle-role-review.json",
+  "registrationNotes": "evidence/native-construction-notes.json",
+  "paletteRecipe": "authoring/palette-recipe.json",
+  "fixedGeometry": "authoring/fixed-geometry.json",
+  "fixedRenderer": "authoring/render-fixed-equipment.py",
+  "recipeSha256": "d5acd13aba90db33e69029212c3ddcf044910b56d1ea3b5bc23b2d4fdd94aa00",
+  "physicalPoses": 3,
+  "sourcePoseOrder": [
+    "A",
+    "B",
+    "B",
+    "C",
+    "C",
+    "A"
+  ],
+  "commonCrop": [
+    117,
+    4,
+    549,
+    711
+  ],
+  "framedDimensions": [
+    432,
+    707
+  ],
+  "sourceCRegistration": "Nominal lower-panel y627origin+integer(+6,+7); actualy600upwardextendedextract preservesoverflowcrown.",
+  "newImageRequests": 0,
+  "anatomicalWarpsResizesOrGrafts": 0,
+  "sourceNeutralPixelsExact": true,
+  "portableDependencies": [
+    "Pillow",
+    "NumPy"
+  ],
+  "recipeScope": "Fixed accepted equipment rendering and exact source layer composition/colour-role remap only. No solver or anatomical synthesis.",
+  "findings": [
+    "Three actual retained source bodies: seatedA/B and genuine standingC, repeated across six paths. No six-distinct-human or complete continuous calibrated human cycle claim.",
+    "Original sheet is1254x1254 with nominal627cells. C crown extends above nominal lower-panel y627origin; upwardextended y600extract preserves those actual head pixels. WholeC(+6,+7) is relative to nominal origin; all source pixels remain native/unscaled.",
+    "One fixed custom perspective indoor-cycle, ordinary equal170mmopposedcranks,160mmcrankQ,220mmforefootplanes and passive rocking140x100mmpedals; fixed multi-position loopbars support different actual seated/standing grips. No manufacturer replica or recovered source3D/body calibration claim.",
+    "B far pedal support is hidden by the common actual drive cover; no new far shoe or hidden anatomy has been constructed.",
+    "Native source contours/shading and minor pose differences remain. Tiny inherited C silver old-hardware edge at the left calf is retained as a minor contour finding, not repainted.",
+    "Custom shaded apparatus has a more geometric frame than the originally generated equipment. Source627cell quality is preserved; the production crop is not upscaled.",
+    "Existing source anterior-thigh tint is Quads primary. Existing Core, Calves and identifiable posterior-thighHamstrings tint is secondary; neutral source anatomy/trainers are unchanged."
+  ],
+  "finalPaletteReviewed": false,
+  "registeredReviewComplete": false,
+  "completionCredit": false
+}

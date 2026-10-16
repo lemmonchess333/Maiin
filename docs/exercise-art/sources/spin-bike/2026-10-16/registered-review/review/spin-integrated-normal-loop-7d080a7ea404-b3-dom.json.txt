@@ -1,0 +1,347 @@
+{
+  "kind": "spin-integrated-normal-loop",
+  "trace": [
+    {
+      "alt": "Spin Bike, Hold seated",
+      "cue": "Keep your knees tracking over your feet.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 65556,
+      "playing": true,
+      "selected": "Show frame 2: Seated recovery",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Hold seated",
+      "cue": "Keep a relaxed hold on the bars.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 65559,
+      "playing": true,
+      "selected": "Show frame 3: Hold seated",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Standing drive",
+      "cue": "Keep a relaxed hold on the bars.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 66762,
+      "playing": true,
+      "selected": "Show frame 3: Hold seated",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Standing drive",
+      "cue": "Rise from the saddle; keep pedalling controlled.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 66765,
+      "playing": true,
+      "selected": "Show frame 4: Standing drive",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Hold standing",
+      "cue": "Rise from the saddle; keep pedalling controlled.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 67968,
+      "playing": true,
+      "selected": "Show frame 4: Standing drive",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Hold standing",
+      "cue": "Support yourself through the pedals and bars.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 67971,
+      "playing": true,
+      "selected": "Show frame 5: Hold standing",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Return seated",
+      "cue": "Support yourself through the pedals and bars.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 69174,
+      "playing": true,
+      "selected": "Show frame 5: Hold standing",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Return seated",
+      "cue": "Sit back onto the saddle smoothly.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 69180,
+      "playing": true,
+      "selected": "Show frame 6: Return seated",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Seated drive",
+      "cue": "Sit back onto the saddle smoothly.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 70380,
+      "playing": true,
+      "selected": "Show frame 6: Return seated",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Seated drive",
+      "cue": "Stay seated; pedal with controlled resistance.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 70384,
+      "playing": true,
+      "selected": "Show frame 1: Seated drive",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Seated recovery",
+      "cue": "Stay seated; pedal with controlled resistance.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 71586,
+      "playing": true,
+      "selected": "Show frame 1: Seated drive",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Seated recovery",
+      "cue": "Keep your knees tracking over your feet.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 71589,
+      "playing": true,
+      "selected": "Show frame 2: Seated recovery",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Hold seated",
+      "cue": "Keep your knees tracking over your feet.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 72792,
+      "playing": true,
+      "selected": "Show frame 2: Seated recovery",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Hold seated",
+      "cue": "Keep a relaxed hold on the bars.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 72796,
+      "playing": true,
+      "selected": "Show frame 3: Hold seated",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Standing drive",
+      "cue": "Keep a relaxed hold on the bars.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 73996,
+      "playing": true,
+      "selected": "Show frame 3: Hold seated",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Standing drive",
+      "cue": "Rise from the saddle; keep pedalling controlled.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 74005,
+      "playing": true,
+      "selected": "Show frame 4: Standing drive",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Hold standing",
+      "cue": "Rise from the saddle; keep pedalling controlled.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 75201,
+      "playing": true,
+      "selected": "Show frame 4: Standing drive",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Hold standing",
+      "cue": "Support yourself through the pedals and bars.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 75205,
+      "playing": true,
+      "selected": "Show frame 5: Hold standing",
+      "slower": "false",
+      "src": "/form-frames/spin-bike/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  ]
+}

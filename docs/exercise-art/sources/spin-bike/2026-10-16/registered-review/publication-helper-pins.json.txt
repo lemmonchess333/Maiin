@@ -1,0 +1,8 @@
+{
+  "stage-reviewed-candidate.py": "6edc9c713150329822cdd4f02874686eb17025a895eae7e4bc7e95408bbf647b",
+  "stage-input-pins.json": "c7fe2db0bbda457d6102ee12a5092257a35b6d8eb537c42591b1c44bf76592b7",
+  "staged-registration.json": "e2309d4f0223bc63e1361455f160c21afb53c89a9fe31c033d638df3d6e0a022",
+  "helper-preparation-proof.json": "7658b943bf02dbaa2367f9f536051e42320ef634490b79802b2c03cae1df0b0b",
+  "seal-reviewed-candidate.py": "8f71ac09923459a7f547aa70ee189fbec9ba097b955b85c14d48bc441e204d3b",
+  "verify-frozen-candidate.py": "e3626d94dc0cc8daf12248c526374708a41820d8e6688543415cb1cbc6e48ec7"
+}
