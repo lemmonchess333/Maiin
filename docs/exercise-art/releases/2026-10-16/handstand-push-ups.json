@@ -1,0 +1,197 @@
+{
+  "exerciseId": "handstand-push-ups",
+  "version": "anatomy-v3-2026-10-16-native-head-profile-v1",
+  "width": 688,
+  "height": 1504,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex /root",
+  "reviewedAt": "2026-10-16T17:27:14.165267+00:00",
+  "recordStage": "Actual native/mobile/card review complete; normal verification, required CI and actual merge remain separate gates.",
+  "reference": {
+    "path": "form-frames/handstand-push-ups/1.webp",
+    "sha256": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905"
+  },
+  "cueSha256": "39c0006a2a422ab2cab810409e4e4e5bd73c5d7c3b2914caf6605f1902d5de99",
+  "frames": [
+    {
+      "path": "form-frames/handstand-push-ups/1.webp",
+      "sha256": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/handstand-push-ups/2026-10-16/draft/A-native.png",
+        "sha256": "739e3688daaa064f9f37c957bb8721344bde52b746179604898f41bcc5025616"
+      }
+    },
+    {
+      "path": "form-frames/handstand-push-ups/2.webp",
+      "sha256": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/handstand-push-ups/2026-10-16/draft/A-native.png",
+        "sha256": "739e3688daaa064f9f37c957bb8721344bde52b746179604898f41bcc5025616"
+      }
+    },
+    {
+      "path": "form-frames/handstand-push-ups/3.webp",
+      "sha256": "f042c84b2a1d70f7fc287a39515a22b2148c36a9830c8d8ea7e2f002afcd4b59",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/handstand-push-ups/2026-10-16/draft/B-native.png",
+        "sha256": "59d762b0fbc66e6c4d406fbbe796f9b48e2096c10b59f388bfa13f019098c795"
+      }
+    },
+    {
+      "path": "form-frames/handstand-push-ups/4.webp",
+      "sha256": "f042c84b2a1d70f7fc287a39515a22b2148c36a9830c8d8ea7e2f002afcd4b59",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/handstand-push-ups/2026-10-16/draft/B-native.png",
+        "sha256": "59d762b0fbc66e6c4d406fbbe796f9b48e2096c10b59f388bfa13f019098c795"
+      }
+    },
+    {
+      "path": "form-frames/handstand-push-ups/5.webp",
+      "sha256": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/handstand-push-ups/2026-10-16/draft/A-native.png",
+        "sha256": "739e3688daaa064f9f37c957bb8721344bde52b746179604898f41bcc5025616"
+      }
+    },
+    {
+      "path": "form-frames/handstand-push-ups/6.webp",
+      "sha256": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/handstand-push-ups/2026-10-16/draft/A-native.png",
+        "sha256": "739e3688daaa064f9f37c957bb8721344bde52b746179604898f41bcc5025616"
+      }
+    }
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": ["A", "A", "B", "B", "A", "A"],
+  "positionCoordinates": [0, 0, 1, 1, 0, 0],
+  "variation": "Wall-supported strict press",
+  "setup": [
+    "Establish a stable wall-supported handstand before starting.",
+    "Place both palms firmly on the floor and keep heels supported.",
+    "Keep your neck neutral and control the descent."
+  ],
+  "advice": {
+    "tip": "Press through both palms; keep control as your crown approaches the floor.",
+    "commonMistakes": [
+      "Dropping onto your head.",
+      "Losing torso control or kicking to press.",
+      "Letting the hands slide."
+    ]
+  },
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "approval": {
+    "actor": "Human owner",
+    "instruction": "ok carry on with the remaining8, same model and colours, no shorts. figure out another way to finish them and get them merged, stop repeating failed attempts and asking for approval",
+    "context": "Existing human authorization covers native-coordinate generated moving-part composites, palette/equipment edits, local registration, final checks, owner release with honest findings, PR and merge; strict certification is not implied."
+  },
+  "findings": [
+    "Two genuine strict-press endpoints occupy six cue slots; kick-up is written setup, and no six-unique-pose or continuous-motion claim is made.",
+    "New native full-frame connected head/neck authoring corrects the old broad bottom profile without a pasted head, anatomy warp or code head resize. Whole generated bottom is retained; no outside-pixel invariance to the older bottom is claimed.",
+    "The same read-only profile diagnostic now measures0.47percent breadth and0.96percent length differences at threshold200, with corresponding threshold210/220 checks retained. These are projected contour diagnostics, not calibrated3D skull measurements.",
+    "The source endpoints retain minor palm/finger silhouette variation, wide bent-elbow projections and illustrative wall/floor depth. Exact fixed-joint coordinates and calibrated vertical forearm loading remain unverified.",
+    "Only original source-violet pixels are recoloured using the exact approved targets and per-pixel source tone. All neutral pixels, including the actual chosen heads and trainers, stay byte-exact during palette finishing.",
+    "Strict visual certification remains unverified under the owner-authorized release-with-findings workflow.",
+    "The normal220x480 cutout retains the grey wall/floor as apparatus context. At160px long-side limit the complete figure is small; no body-only transparent cutout or strict readability certificate is claimed.",
+    "Raw playback includes brief observer image/cue transitions; all settled selections agree. Initial desktop evidence and separately verified mobile evidence are retained with their actual viewport sizes."
+  ],
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Canonical FA56 athlete, same neutral featureless pelvis/no shorts, white trainers and thin anatomical contours. New whole native bottom head/neck authoring matches the accepted top profile; no pasted head or anatomy fitting."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Both sources native1024x1536. Common crop[240,0,864,1440] and integer pad[32,32] only; no body resizing, mirroring or anatomical transform. New generated whole bottom used as a complete source."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Actual full native top/bottom and head/palm crops reviewed. Correctly inverted head in both. Measured bright-profile breadth87.01/87.42px and length117.00/118.12px at threshold200; thresholds210/220 retained. Projected diagnostics, not calibrated3D skull proof."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Same restrained-grey wall and floor support across two genuine straight-arm/bent-arm handstand endpoints. Both complete trainers and both palms retained. No apparatus substitution."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Actual native full hands on the common floor, supported heels on the same wall, neutral neck and light crown-floor bottom. Minor inherited palm/finger silhouette differences retained, not certified fixed-joint coordinates."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Genuine elbow-flexed descent and locked-arm press endpoints, straight legs and wall support. Wide-elbow projection and forearm stacking remain qualitative; no recovered3D load-path or continuous-motion certificate."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Shoulders primary#7B72E9, triceps/core secondary#9590E0, per-pixel original source tone only. All selected neutral source pixels, heads and trainers stay exact during palette finishing."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual registered ExerciseFormContent at390x844 in both themes: all six decoded public paths, labels, seven-word-or-shorter cues and wall-supported press setup/advice agree."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual public normal/slower playback in both themes includes all six paths and6-to1 wrap; settled cues agree. Two genuine states A,A,B,B,A,A and scalar0,0,1,1,0,0. Observer transitions retained."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual390x844 light mobile six, normal/slower playback and220x480 normal card at480/348/160 long-side limits reviewed. Complete wall-supported athlete, correct inverted head and visible floor/palms; no page overflow."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual390x844 dark mobile six, normal/slower playback and three normal-card sizes reviewed. Complete athlete, neutral head at both endpoints, wall/floor context and controls legible; no captured browser warnings/errors."
+    }
+  },
+  "observedQaChecks": {
+    "identity": {
+      "observed": true,
+      "evidence": "Canonical FA56 athlete, same neutral featureless pelvis/no shorts, white trainers and thin anatomical contours. New whole native bottom head/neck authoring matches the accepted top profile; no pasted head or anatomy fitting."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "Both sources native1024x1536. Common crop[240,0,864,1440] and integer pad[32,32] only; no body resizing, mirroring or anatomical transform. New generated whole bottom used as a complete source."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "Actual full native top/bottom and head/palm crops reviewed. Correctly inverted head in both. Measured bright-profile breadth87.01/87.42px and length117.00/118.12px at threshold200; thresholds210/220 retained. Projected diagnostics, not calibrated3D skull proof."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "Same restrained-grey wall and floor support across two genuine straight-arm/bent-arm handstand endpoints. Both complete trainers and both palms retained. No apparatus substitution."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Actual native full hands on the common floor, supported heels on the same wall, neutral neck and light crown-floor bottom. Minor inherited palm/finger silhouette differences retained, not certified fixed-joint coordinates."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "Genuine elbow-flexed descent and locked-arm press endpoints, straight legs and wall support. Wide-elbow projection and forearm stacking remain qualitative; no recovered3D load-path or continuous-motion certificate."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Shoulders primary#7B72E9, triceps/core secondary#9590E0, per-pixel original source tone only. All selected neutral source pixels, heads and trainers stay exact during palette finishing."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Actual registered ExerciseFormContent at390x844 in both themes: all six decoded public paths, labels, seven-word-or-shorter cues and wall-supported press setup/advice agree."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Actual public normal/slower playback in both themes includes all six paths and6-to1 wrap; settled cues agree. Two genuine states A,A,B,B,A,A and scalar0,0,1,1,0,0. Observer transitions retained."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Actual390x844 light mobile six, normal/slower playback and220x480 normal card at480/348/160 long-side limits reviewed. Complete wall-supported athlete, correct inverted head and visible floor/palms; no page overflow."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Actual390x844 dark mobile six, normal/slower playback and three normal-card sizes reviewed. Complete athlete, neutral head at both endpoints, wall/floor context and controls legible; no captured browser warnings/errors."
+    }
+  },
+  "publicationGate": "No credit before real integrated review, normal verification disposition, required CI, actual merge and preservation audit."
+}

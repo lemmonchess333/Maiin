@@ -27,37 +27,37 @@
       "pose": "B",
       "label": "Reach",
       "cue": "Start with handles around shoulder height.",
-      "t": 0.0
+      "t": 0
     },
     {
       "pose": "B",
       "label": "Brace",
       "cue": "Brace your torso; keep elbows softly fixed.",
-      "t": 0.2
+      "t": 0
     },
     {
       "pose": "A",
       "label": "Pull to thighs",
       "cue": "Sweep your upper arms toward your sides.",
-      "t": 0.4
+      "t": 1
     },
     {
       "pose": "A",
       "label": "Squeeze",
       "cue": "Finish near thighs without leaning back.",
-      "t": 0.6
+      "t": 1
     },
     {
       "pose": "B",
       "label": "Control return",
       "cue": "Let the handles rise under control.",
-      "t": 0.8
+      "t": 0
     },
     {
       "pose": "B",
       "label": "Reset",
       "cue": "Keep your stance steady before repeating.",
-      "t": 1.0
+      "t": 0
     }
   ],
   "findings": [

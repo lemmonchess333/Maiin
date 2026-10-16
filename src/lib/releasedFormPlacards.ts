@@ -19,17 +19,43 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "handstand-push-ups": placard(
+    "handstand-push-ups",
+    ["Shoulders"],
+    ["Triceps", "Core"],
+    [
+      [0, "Stack", "Straight arms; keep heels against the wall."],
+      [0, "Brace", "Brace your torso; keep legs together."],
+      [1, "Lower", "Bend elbows; lower under control."],
+      [1, "Touch lightly", "Touch lightly; keep support through your palms."],
+      [0, "Press", "Press through both palms to straight arms."],
+      [0, "Reset", "Reset with head neutral and heels supported."],
+    ],
+    [
+      "Establish a stable wall-supported handstand before starting.",
+      "Place both palms firmly on the floor and keep heels supported.",
+      "Keep your neck neutral and control the descent.",
+    ],
+    {
+      tip: "Press through both palms; keep control as your crown approaches the floor.",
+      commonMistakes: [
+        "Dropping onto your head.",
+        "Losing torso control or kicking to press.",
+        "Letting the hands slide.",
+      ],
+    }
+  ),
   "straight-arm-pulldown": placard(
     "straight-arm-pulldown",
     ["Lats"],
     ["Triceps", "Core"],
     [
-      [0.0, "Reach", "Start with handles around shoulder height."],
-      [0.2, "Brace", "Brace your torso; keep elbows softly fixed."],
-      [0.4, "Pull to thighs", "Sweep your upper arms toward your sides."],
-      [0.6, "Squeeze", "Finish near thighs without leaning back."],
-      [0.8, "Control return", "Let the handles rise under control."],
-      [1.0, "Reset", "Keep your stance steady before repeating."],
+      [0, "Reach", "Start with handles around shoulder height."],
+      [0, "Brace", "Brace your torso; keep elbows softly fixed."],
+      [1, "Pull to thighs", "Sweep your upper arms toward your sides."],
+      [1, "Squeeze", "Finish near thighs without leaning back."],
+      [0, "Control return", "Let the handles rise under control."],
+      [0, "Reset", "Keep your stance steady before repeating."],
     ],
     [
       "Use two high cable handles; start with a light load.",

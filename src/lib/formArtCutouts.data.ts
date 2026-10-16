@@ -637,6 +637,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "b4040f54ee8a8e4bfd02dd2867e085274386f6691084723d6cfd7aa62b701ebe",
     sha256: "17e58c8d8529b533bdd5b520c649e5baf621119465676b5bcb4a4add233b3ea8",
   },
+  "handstand-push-ups": {
+    src: "form-art/handstand-push-ups.webp",
+    width: 220,
+    height: 480,
+    keyed: true,
+    source: "form-frames/handstand-push-ups/1.webp",
+    sourceSha256:
+      "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905",
+    sha256: "4f1736fe494c78aaf78465b1a7b3244d57bdcfe426d4b79232ae3faab2d555df",
+  },
   "hip-abduction-machine": {
     src: "form-art/hip-abduction-machine.webp",
     width: 480,
