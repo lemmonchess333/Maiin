@@ -1,0 +1,13 @@
+{
+  "scope": "Outside-only observer completeness correction; no product/candidate/artwork modification",
+  "recordedAt": "2026-10-15T23:09:01.190248+00:00",
+  "beforeSha256": "fca699f8d68404d8abb912a92feaf74b627a814f6431b5d05f8b7487f1af0d77",
+  "afterSha256": "7b6843e52b1000b4270d42ae5f46331b0016e7ddcb4ec73d956894b46b2aa9e2",
+  "exactReplacement": {
+    "before": "subtree: true, childList: true, attributes: true,",
+    "after": "subtree: true, childList: true, attributes: true, characterData: true,"
+  },
+  "replacementCount": 1,
+  "rawEarlierTracesPreserved": true,
+  "qaAcceptance": false
+}

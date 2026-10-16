@@ -17,6 +17,23 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  elliptical: placard(
+    "elliptical",
+    ["Quads", "Glutes"],
+    ["Front Delts", "Upper Back", "Hamstrings"],
+    [
+      [0, "Stride A", "Stand tall; keep both feet on pedals."],
+      [0, "Hold A", "Keep both feet planted in the pedals."],
+      [1, "Stride B", "Coordinate your push and pull with legs."],
+      [1, "Hold B", "Hold both grips; keep your chest tall."],
+      [0, "Return A", "Return smoothly to the first shown stride."],
+      [0, "Reset", "Keep your torso tall without leaning forward."],
+    ],
+    [
+      "Step on the pedals with feet evenly placed, grip the moving handles.",
+      "Start with a smooth easy pace to find the stride rhythm.",
+    ]
+  ),
   "rowing-machine": placard(
     "rowing-machine",
     ["Quads", "Upper back"],

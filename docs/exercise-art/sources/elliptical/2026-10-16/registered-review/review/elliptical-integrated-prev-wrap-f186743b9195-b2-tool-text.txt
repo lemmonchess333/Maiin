@@ -1,0 +1,12 @@
+Browser tab: 55, Title: "Elliptical actual registered component review", URL: "http://127.0.0.1:62326/integrated-review.html".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 8-15
++		35 container Elliptical form guide
++			36 image Elliptical, Stride A
++			37 container
++				38 text STRIDE A 1 /6
++			39 button Previous frame
++			40 button Pause
++			41 button Next frame
++			42 checkbox Description: Slower playback, Value: 0
+The focused UI element is 40 button Pause

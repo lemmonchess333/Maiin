@@ -1,0 +1,18 @@
+Browser tab: 55, Title: "Elliptical actual registered component review", URL: "http://127.0.0.1:62326/integrated-review.html".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~		4 button Dark theme
+~			36 image Elliptical, Reset
+~				38 text RESET 6 /6
+~			42 checkbox Description: Slower playback, Value: 1
+~		29 button (expanded) Normal card preview: native 480px / 348px / 160px long-side limits, Secondary Actions: Collapse
++		43 text Generate the normal preview before opening this review.
++		44 container
++			45 image Elliptical normal card, 480px long-side limit
++			46 text 480 px long-side limit; actual asset  469×480 .  Horizontal review scroll preserves native size on narrow viewports.
++		47 container
++			48 image Elliptical normal card, 348px long-side limit
++			49 text 348 px long-side limit; actual asset  469×480 .
++		50 container
++			51 image Elliptical normal card, 160px long-side limit
++			52 text 160 px long-side limit; actual asset  469×480 .
+The focused UI element is 40 button Pause

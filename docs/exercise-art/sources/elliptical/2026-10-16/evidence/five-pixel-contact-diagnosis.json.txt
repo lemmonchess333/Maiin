@@ -1,0 +1,98 @@
+{
+  "scope": "Exact five uncovered dark-envelope pixels; no body or grip correction applied. Convex white-hand envelope is conservative and can include background; native classification required.",
+  "pixels": [
+    {
+      "x": 771,
+      "y": 293,
+      "sourceRGBA": [
+        40,
+        39,
+        39,
+        255
+      ],
+      "newEquipmentRGBA": [
+        16,
+        18,
+        20,
+        239
+      ],
+      "sourcePixelStillPreserved": false
+    },
+    {
+      "x": 771,
+      "y": 294,
+      "sourceRGBA": [
+        37,
+        36,
+        35,
+        255
+      ],
+      "newEquipmentRGBA": [
+        16,
+        18,
+        20,
+        239
+      ],
+      "sourcePixelStillPreserved": false
+    },
+    {
+      "x": 772,
+      "y": 294,
+      "sourceRGBA": [
+        37,
+        35,
+        35,
+        255
+      ],
+      "newEquipmentRGBA": [
+        15,
+        15,
+        15,
+        16
+      ],
+      "sourcePixelStillPreserved": false
+    },
+    {
+      "x": 771,
+      "y": 295,
+      "sourceRGBA": [
+        34,
+        33,
+        32,
+        255
+      ],
+      "newEquipmentRGBA": [
+        16,
+        18,
+        20,
+        238
+      ],
+      "sourcePixelStillPreserved": false
+    },
+    {
+      "x": 772,
+      "y": 295,
+      "sourceRGBA": [
+        37,
+        36,
+        35,
+        255
+      ],
+      "newEquipmentRGBA": [
+        15,
+        15,
+        15,
+        16
+      ],
+      "sourcePixelStillPreserved": false
+    }
+  ],
+  "crop": [
+    738,
+    282,
+    791,
+    339
+  ],
+  "comparison": "4-far-hand-native8x-comparison.png",
+  "comparisonSha256": "3aa97b1d514851582260179209d1e58c84360b8b485acc941935c18a11aff7d9"
+}

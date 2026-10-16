@@ -1,0 +1,29 @@
+{
+  "scope": "Preview only, exact current normal pure functions and encoding; final registered normal generator must match",
+  "generator": "scripts/art/cut-out-form-art.ts",
+  "generatorSha256": "a465f712bcb21078a171e6ddfd24f74112a5d379192c7159f133a0fb869f0f2f",
+  "verbatimDefinitionSha256": "f95042479cc61ffb5b292b7da463d4479963f1f76d7b3b98e3175f4d2b12487c",
+  "encodeBlockSha256": "55c1d7a913962aabaff1eb2c506ab5ec7fe308803c13ab07b0ea3dacf69130f7",
+  "extractionEolRepresentation": "LF for exact block comparison; complete generator raw bytes separately pinned",
+  "helperSha256": "b223289461e5df424d2f0c8aac8ad715604a626da689e747392aeaf90a2ef56b",
+  "exerciseId": "elliptical",
+  "planSha256": "7dbf525a4f8929f252842d6f860ff4da178de7e0ce83b646a874dbf4b9a591f6",
+  "reference": "draft/frames/1.webp",
+  "referenceSha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+  "output": "draft/card.webp",
+  "width": 469,
+  "height": 480,
+  "keyed": true,
+  "contentBox": {
+    "left": 0,
+    "top": 0,
+    "width": 1047,
+    "height": 1072
+  },
+  "sha256": "43021735200a89e72a718b3d5351790528109796abc709fe46175f892e081e5c",
+  "bytes": 36146,
+  "noThresholdOrAlphaOverride": true,
+  "productionMainInvoked": false,
+  "noRegistryOrPublicMutation": true,
+  "qaAcceptance": false
+}

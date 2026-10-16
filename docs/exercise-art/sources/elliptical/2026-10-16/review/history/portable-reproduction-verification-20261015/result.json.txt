@@ -1,0 +1,10 @@
+{
+  "startedAtUtc": "2026-10-15T23:00:47.132155+00:00",
+  "finishedAtUtc": "2026-10-15T23:01:23.568608+00:00",
+  "elapsedSeconds": 36.437000000005355,
+  "exitCode": 0,
+  "stdoutSha256": "a54baa958127eeee6457920269fa1d95c083112f3c96cacd9bf67af58956a31f",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "candidateManifestUnchanged": true,
+  "allOriginal58CandidatePayloadsUnchanged": true
+}

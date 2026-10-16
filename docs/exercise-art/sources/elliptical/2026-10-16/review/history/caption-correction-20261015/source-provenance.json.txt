@@ -1,0 +1,73 @@
+{
+  "exerciseId": "elliptical",
+  "version": "anatomy-v3-2026-10-15-custom-rear-drive-elliptical-v1",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "sources": {
+    "1": {
+      "path": "originals/1-original.png",
+      "sha256": "e40913b14089d9ac1f9032e3d1afb636ee0b6dd3c1777bf9462b5315ca5c6433",
+      "promptMetadata": {
+        "path": "originals/1-prompt.json",
+        "sha256": "f1e2eb23ed740d8007f7cde927c0f5b5d9b9158bdaa8f62d593d7ca2c49c65b9",
+        "generationId": "8d75a89c-b003-4c20-97b6-1ba29af61fd9"
+      }
+    },
+    "4": {
+      "path": "originals/4-original.png",
+      "sha256": "649036cf174307e0d7b091774880d5210196a5707368fde858e6df31aa01e3be",
+      "promptMetadata": {
+        "path": "originals/4-prompt.json",
+        "sha256": "8d4a42a9a466c15c824213132e34f687500f58d03855c75d509f71a4ce3d7b37",
+        "generationId": "ac9f0fc8-2918-4371-bc68-2664d10591af"
+      }
+    }
+  },
+  "sourceHistory": "originals/sequence-candidates.json",
+  "source1HistoricalFraming": "originals/framing.json",
+  "paletteRecipe": "authoring/palette-recipe.json",
+  "fixedGeometry": "authoring/fixed-geometry.json",
+  "fixedRenderer": "authoring/render-fixed-equipment.py",
+  "sourceConstructionReview": "evidence/root-source-construction-eligibility.json",
+  "reviewedCleanProofSha256": "75b98a96092c33506b0f1ef23cc4b16358a3e4ab04ec5bf5583386057afb0900",
+  "fivePixelSourceEdgeFinding": "evidence/five-pixel-contact-diagnosis.json",
+  "physicalPoses": 2,
+  "sourcePoseOrder": [
+    1,
+    1,
+    4,
+    4,
+    1,
+    1
+  ],
+  "commonCrop": [
+    242,
+    37,
+    1289,
+    1109
+  ],
+  "framedDimensions": [
+    1047,
+    1072
+  ],
+  "newImageRequests": 0,
+  "bodyTransforms": 0,
+  "roleLegendIsSourceSpecific": true,
+  "catalogueSnapshot": "authoring/catalogue-snapshot.json",
+  "findings": [
+    "Custom rear-drive four-bar, passive pitching trays and mirrored offset-bearing D grips; no exact manufacturer-model or recovered source3D claim.",
+    "Near/far locked stem and pedal-bearing settings differ but stay fixed across both poses; dimensions/camera/phase closure are exposed in authoring/fixed-geometry.json.",
+    "Two genuine intact source body states repeated across six distinct paths. No generated human intermediates or continuous human trajectory claim.",
+    "Original source shading/contours and minor source pose/activation differences retained. Pose4posterior-thigh field is secondaryHamstrings, not silently relabelled as primaryQuads.",
+    "Five original dark upper-cylinder antialias pixels near pose4far index edge differ from new hardware. Parent reviewed this as a minor equipment edge finding, not missing white finger anatomy.",
+    "Shaded charcoal custom apparatus differs from original generated machine style and equipment geometry; parent source-construction eligibility is not final palette/mobile or strict acceptance."
+  ],
+  "portableDependencies": [
+    "Pillow",
+    "NumPy"
+  ],
+  "recipeScope": "Fixed equipment rendering and source-preserving layer composition only. No solver/newfit/service request.",
+  "recipeSha256": "d672a76e01fd659b9c52e1ca5164d9c4ad629762220f2a6c49824dc427661235",
+  "finalPaletteReviewed": false,
+  "registeredReviewComplete": false,
+  "completionCredit": false
+}
