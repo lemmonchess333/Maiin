@@ -1,0 +1,7 @@
+{
+  "independentOutputDirectory": "independent-reproduction",
+  "nonArchiveFilesByteExact": 40,
+  "oraArchivesWithEveryMemberByteExact": 3,
+  "allGeneratedOutputsMatched": true,
+  "zipContainerTimestampMetadataNotCompared": true
+}

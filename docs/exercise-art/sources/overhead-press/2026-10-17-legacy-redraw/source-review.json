@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-17",
+  "exercise": "overhead-press",
+  "status": "ready for independent root source/integrated review",
+  "nativeFilesViewed": [
+    "candidate/A-finished.png",
+    "candidate/B-finished.png",
+    "candidate/C-finished.png",
+    "candidate/review/A-upper-native.png",
+    "candidate/review/B-upper-native.png",
+    "candidate/review/C-upper-native.png",
+    "candidate/review/three-pose-contact-sheet.png"
+  ],
+  "observed": {
+    "canonicalReferenceDirectlyViewed": true,
+    "frontViewStandingBarbellVariationPreserved": true,
+    "whiteTrainersNoShortsNeutralPelvis": true,
+    "twoArmsTwoLegsCoherentClosedGrips": true,
+    "genuineLowIntermediateOverheadPositions": true,
+    "overheadArmsVisuallyExtendedAfterOneBoundedCorrection": true,
+    "rigidEquipmentSeparateLayer": true,
+    "nativeSourceNotRescaled": true,
+    "allSixLosslessFramesVerified": true,
+    "fiveLayerOraRecompositesExact": true
+  },
+  "findings": [
+    "Three source poses are honestly reused as A,A,B,C,C,B. Frame6 is the intermediate on descent; loop to frame1 completes the return. Propose t0,0,0.55,1,1,0.55 so scalar metadata matches actual geometry.",
+    "Whole repaired generated sources retain small contour and shading differences. Core and lower-body bytes are NOT identical to the low master; earlier fixed-scene selection caused hard armpit seams and was rejected.",
+    "At thresholds100 and180, lower-body bounding extents across the three final poses differ by at most1px; all three sole baselines are1388 at threshold100. This is projected image evidence, not camera calibration.",
+    "Muscle tint is qualitative: primary anterior deltoids, secondary upper chest, triceps and core. Curved upper-pec tint edge has1.3px antialias. Forward biceps remain neutral; a slightly straight secondary boundary at the intermediate triceps may remain as a minor cosmetic finding.",
+    "Frontal illustrations cannot certify sagittal bar path over mid-foot. No such claim has been added.",
+    "Native six-frame animation file has been created but no browser playback has been observed by this source-only agent; root must observe native and actual mobile light/dark loops, all frames, pause and cards before registration."
+  ],
+  "strictChecks": {
+    "identity": null,
+    "anatomy": null,
+    "hands": null,
+    "equipment": null,
+    "contacts": null,
+    "palette": null,
+    "poseCoverage": null,
+    "loop": null,
+    "nativePlayback": null,
+    "mobileLightDark": null,
+    "projectChecks": null
+  },
+  "notPerformed": [
+    "repository modifications",
+    "app registration",
+    "card generation",
+    "browser/mobile review",
+    "npm verify",
+    "PR",
+    "merge"
+  ]
+}

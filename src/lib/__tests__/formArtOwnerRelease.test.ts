@@ -10,6 +10,12 @@ import {
 } from "../formArtReview";
 
 const ids = [
+  "skull-crushers",
+  "dips",
+  "barbell-row",
+  "bench-press",
+  "overhead-press",
+  "rope-tricep-pushdown",
   "goblet-squat",
   "squat",
   "barbell-curl",
@@ -64,7 +70,7 @@ describe("owner-authorized artwork activation", () => {
      I/O, and raising it further would be treating the symptom. If this
      starts failing regularly rather than occasionally, the thing to
      look at is suite concurrency, not this number. */
-  it("ships exactly twenty-four owner-authorized guides bound to source, delivered assets and cues", () => {
+  it("ships exactly thirty owner-authorized guides bound to source, delivered assets and cues", () => {
     expect(
       Object.keys(FORM_ARTWORK)
         .filter(

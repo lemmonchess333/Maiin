@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-17",
+  "exercise": "dips",
+  "status": "ready for independent root review; not registered or certified",
+  "actuallyViewed": [
+    "canonical FA56 identity",
+    "approved weighted-chest-dip source1/2/3 at native size",
+    "generated unweighted1/2/3",
+    "candidate/A-framed.png",
+    "candidate/B-framed.png",
+    "candidate/C-framed.png",
+    "candidate/review/A-occlusion-window-native.png",
+    "candidate/review/B-occlusion-window-native.png",
+    "candidate/review/C-occlusion-window-native.png"
+  ],
+  "observed": {
+    "sameApprovedAthleteHeadAndOriginalUpperLimbChainsRetained": true,
+    "chestLeanVariationPreserved": true,
+    "beltChainAndWeightPlateAbsent": true,
+    "previouslyOccludedHipThighSurfaceGeneratedInCurrentPose": true,
+    "neutralFeaturelessPelvisNoShorts": true,
+    "whiteTrainersRetained": true,
+    "sourceOnlyNativeRegistrationNoAnatomicalTransforms": true,
+    "headAndBothGripsRgbExactBeforePalette": true,
+    "outsideAuthoringMaskRgbExact": true,
+    "sameStationAndBaseRgbExact": true,
+    "threeGenuineTopMidBottomPoses": true,
+    "nativeAndFramedOraRecompositesExact": true,
+    "sixLosslessFrameRgbComparisonsExact": true
+  },
+  "findings": [
+    "This is a new bodyweight chest-dip source derived from the approved weighted chest-dip motion, not a newly generated entire athlete or an upright triceps dip. Missing anatomy behind belt/chain/plate was newly authored in each actual pose.",
+    "Three genuine poses are reused asA,B,B,C,B,A. Beat2 and3 show the same intermediate at physical progress.5; use t0,.5,.5,1,.5,0 rather than claiming an unshown early.22 pose. Existing initiation/mid-descent/press-up cues remain qualitatively checkable.",
+    "The source chest has inherited fine striation/contour lines and mild specular tone variation; those have not been erased. Primary and secondary are remapped to the exact established hues with inherited light/shade.",
+    "A few seam-adjacent lower torso/thigh contour differences from native occlusion reconstruction may remain, but native review shows coherent pelvis-to-knee/shin chains, no detached surfaces, no shorts and no visible residual accessories.",
+    "The bottom whole-image32px framing registration is measured from three equipment ROIs and applied uniformly before selecting source pixels; no limb/body alignment or source resampling occurs.",
+    "Full880x1088 framing preserves the entire station and all three athletes without per-pose scaling.",
+    "A1200ms/frame native playback file is created for root observation. This source-only agent has not observed browser/mobile playback or card rendering."
+  ],
+  "strictChecks": {
+    "identity": null,
+    "anatomy": null,
+    "hands": null,
+    "equipment": null,
+    "contacts": null,
+    "palette": null,
+    "poseCoverage": null,
+    "loop": null,
+    "nativePlayback": null,
+    "mobileLightDark": null,
+    "projectChecks": null
+  },
+  "notPerformed": [
+    "repository or git edits",
+    "browser state changes",
+    "app registration",
+    "card export",
+    "mobile light/dark review",
+    "npm verify",
+    "PR",
+    "merge"
+  ]
+}

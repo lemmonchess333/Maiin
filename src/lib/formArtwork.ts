@@ -73,10 +73,9 @@ const approved = (
 });
 
 /**
- * The sets listed by hand: those released without a strict review. Six
- * shipped before the review existed and are kept while replacements are
- * reviewed; they do not claim to pass the new consistency standard. Twenty
- * the owner released with their findings. An approved set never belongs
+ * The sets listed by hand: thirty owner-authorized guides with findings
+ * retained, including the six legacy sets redrawn in the current style.
+ * They do not claim strict visual certification. An approved set never belongs
  * here: it comes from its record, and formArtwork.test.ts fails if an ID
  * is listed in both places.
  */
@@ -230,12 +229,49 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
   "goblet-squat": ownerReleased("goblet-squat", 1024, 1536),
   squat: ownerReleased("squat", 1024, 1536),
   "barbell-curl": ownerReleased("barbell-curl", 1024, 1536),
-  "barbell-row": existing("barbell-row", 1000, 1701),
-  "bench-press": existing("bench-press", 1000, 823),
-  dips: existing("dips", 1000, 1413),
-  "overhead-press": existing("overhead-press", 1000, 966),
-  "rope-tricep-pushdown": existing("rope-tricep-pushdown", 1000, 1767),
-  "skull-crushers": existing("skull-crushers", 1000, 858),
+  "barbell-row": {
+    ...existing("barbell-row", 1140, 1024),
+    reference: "form-frames/barbell-row/4.webp",
+    version: "anatomy-v3-2026-10-17-legacy-redraw-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-17/barbell-row.json",
+  },
+  "bench-press": {
+    ...existing("bench-press", 888, 1024),
+    reference: "form-frames/bench-press/4.webp",
+    version: "anatomy-v3-2026-10-17-legacy-redraw-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-17/bench-press.json",
+  },
+  dips: {
+    ...existing("dips", 880, 1088),
+    reference: "form-frames/dips/4.webp",
+    version: "anatomy-v3-2026-10-17-legacy-redraw-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-17/dips.json",
+  },
+  "overhead-press": {
+    ...existing("overhead-press", 1024, 1536),
+    reference: "form-frames/overhead-press/4.webp",
+    version: "anatomy-v3-2026-10-17-legacy-redraw-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-17/overhead-press.json",
+  },
+  "rope-tricep-pushdown": {
+    ...existing("rope-tricep-pushdown", 1024, 1600),
+    reference: "form-frames/rope-tricep-pushdown/1.webp",
+    version: "anatomy-v3-2026-10-17-legacy-redraw-v1",
+    status: "owner-released-with-findings",
+    reviewFile:
+      "docs/exercise-art/releases/2026-10-17/rope-tricep-pushdown.json",
+  },
+  "skull-crushers": {
+    ...existing("skull-crushers", 870, 1072),
+    reference: "form-frames/skull-crushers/3.webp",
+    version: "anatomy-v3-2026-10-17-legacy-redraw-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-17/skull-crushers.json",
+  },
 };
 
 export const FORM_ARTWORK: Record<string, FormArtwork> = {

@@ -1,0 +1,155 @@
+{
+  "exerciseId": "overhead-press",
+  "version": "anatomy-v3-2026-10-17-legacy-redraw-v1",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex native and actual-player review under the user-authorized revised standard",
+  "reviewedAt": "2026-10-17T22:04:51.181521+00:00",
+  "reference": {
+    "path": "form-frames/overhead-press/4.webp",
+    "sha256": "b37c0fca9825a423d9539adb63394174b86bc749e9b45656639f02361238bc45"
+  },
+  "cueSha256": "71159924512ffce704dbea114fdc96b785ef5bc496dff0549629253c15f4cbbd",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Native complete A/B/C states actually compared with FA56. Same lean faceless bald athlete, neutral pelvis and white trainers; no shorts."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Whole repaired native1024x1536 sources. No anatomy selection, resampling or grafts. Sole baselines equal1388 at threshold100; small other contour/shading differences retained."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Both arms genuinely flex/extend through low/intermediate/overhead, closed grips coherent and final arms extended. No calibrated3D limb-length claim."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "One rigid native source barbell template translated as whole equipment only, no anatomical transform. Same modest plate each side, straight shaft, grips overlay at native coordinates."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Both closed grips meet the same shaft. Planted trainers remain visually steady and source sole baseline is identical across three states."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Standing free bar reaches overhead, then intermediate descent returns to low across6to1. Frontal view does not certify sagittal path over mid-foot."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Anterior deltoids primary7B72E9; visible triceps/upper chest/core secondary9590E0, biceps neutral. Original neutral contours retained; intermediate triceps boundary has disclosed minor straightness."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "A,A,B,C,C,B; physical t0,0,.55,1,1,.55. No false intermediate on a lockout image, no claim of six distinct source drawings."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Actual registered six-frame normal light/dark loops and slower dark loop observed, including 6-to-1. Manual frame 6 selection and paused 6-to-1 wraps agree with instruction highlights for all six guides. Native ORA, fresh rebuild and lossless source proofs retained. No anatomical interpolation."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Actual registered ExerciseFormContent at 390x844 in light: all six frames decoded and 6-to-1 observed in normal playback. A separately scrolled viewport screenshot shows the painted player; full-page screenshots are layout context only. Normal 480/348/160/48px cards reviewed. Raw evidence is in the shared archive. This is scoped observation, not strict certification."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Actual registered ExerciseFormContent at 390x844 in dark: all six frames decoded and 6-to-1 observed in normal playback. A separately scrolled viewport screenshot shows the painted player; full-page screenshots are layout context only. Normal 480/348/160/48px cards reviewed. Raw evidence is in the shared archive. This is scoped observation, not strict certification."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/overhead-press/1.webp",
+      "sha256": "2e6f286cf0c46ec3f0943b77fc50c1b76d5b2307a85bce6ce00ac9749e48ddcc",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-press/2026-10-17-legacy-redraw/1.png",
+        "sha256": "f97dd12665c705e590785ceb8101a00ed4479989685fbe2f1252144e23238fc5"
+      }
+    },
+    {
+      "path": "form-frames/overhead-press/2.webp",
+      "sha256": "2e6f286cf0c46ec3f0943b77fc50c1b76d5b2307a85bce6ce00ac9749e48ddcc",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-press/2026-10-17-legacy-redraw/2.png",
+        "sha256": "f97dd12665c705e590785ceb8101a00ed4479989685fbe2f1252144e23238fc5"
+      }
+    },
+    {
+      "path": "form-frames/overhead-press/3.webp",
+      "sha256": "0a76ff542e0e677f352ef9ba985c4c30d87ae121d282fbd1ef2136797f5528a5",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-press/2026-10-17-legacy-redraw/3.png",
+        "sha256": "4a926e497714184d16b819208e60ef019799b1b1fad259b00d535c441c6855ef"
+      }
+    },
+    {
+      "path": "form-frames/overhead-press/4.webp",
+      "sha256": "b37c0fca9825a423d9539adb63394174b86bc749e9b45656639f02361238bc45",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-press/2026-10-17-legacy-redraw/4.png",
+        "sha256": "d5109ba8d3c0bda0fc6d945415ff76bdecfb9ee6b50fbb4e3eef2013698d44c3"
+      }
+    },
+    {
+      "path": "form-frames/overhead-press/5.webp",
+      "sha256": "b37c0fca9825a423d9539adb63394174b86bc749e9b45656639f02361238bc45",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-press/2026-10-17-legacy-redraw/5.png",
+        "sha256": "d5109ba8d3c0bda0fc6d945415ff76bdecfb9ee6b50fbb4e3eef2013698d44c3"
+      }
+    },
+    {
+      "path": "form-frames/overhead-press/6.webp",
+      "sha256": "0a76ff542e0e677f352ef9ba985c4c30d87ae121d282fbd1ef2136797f5528a5",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/overhead-press/2026-10-17-legacy-redraw/6.png",
+        "sha256": "4a926e497714184d16b819208e60ef019799b1b1fad259b00d535c441c6855ef"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "The human owner in this chat",
+    "instruction": "Redraw the six oldest exercise sets in today's style: bench press, overhead press, barbell row, dips, rope tricep pushdown and skull crushers.",
+    "context": "Standing user instructions authorize local registration, project checks and merging, preserve FA56/no shorts/palette, and allow 3-4 genuine poses reused for returns plus minor nondistracting contour differences under work/REVISED-CONVERSION-STANDARDS-20261009.md. This is authorizing work, not a claim that the human personally certified these candidate pixels."
+  },
+  "findings": [
+    "Three source poses are honestly reused as A,A,B,C,C,B. Frame6 is the intermediate on descent; loop to frame1 completes the return. Propose t0,0,0.55,1,1,0.55 so scalar metadata matches actual geometry.",
+    "Whole repaired generated sources retain small contour and shading differences. Core and lower-body bytes are NOT identical to the low master; earlier fixed-scene selection caused hard armpit seams and was rejected.",
+    "At thresholds100 and180, lower-body bounding extents across the three final poses differ by at most1px; all three sole baselines are1388 at threshold100. This is projected image evidence, not camera calibration.",
+    "Muscle tint is qualitative: primary anterior deltoids, secondary upper chest, triceps and core. Curved upper-pec tint edge has1.3px antialias. Forward biceps remain neutral; a slightly straight secondary boundary at the intermediate triceps may remain as a minor cosmetic finding.",
+    "Frontal illustrations cannot certify sagittal bar path over mid-foot. No such claim has been added.",
+    "Actual integrated player/mobile/cards and project checks are publication gates; strict certification is not asserted."
+  ],
+  "sourcePoseOrder": ["A", "A", "B", "C", "C", "B"],
+  "distinctPhysicalPoses": 3,
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/overhead-press/2026-10-17-legacy-redraw",
+    "method": "Built-in image_gen with canonical and accepted local sources; native source/layer reuse and exact palette/contour work. No CLI model switch, anatomical fitting, warping or head/shoe grafts.",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/overhead-press/2026-10-17-legacy-redraw/portable-native-source.zip",
+      "sha256": "37956b7060269094df92830429fc9ebecb5fd442be951896f5a3b02477cc053f",
+      "bytes": 19532398
+    }
+  },
+  "recordStage": "Native/source, registered mobile/card/manual/normal/slower reviews complete under revised standard with findings retained. Normal project verification and exact-head CI/merge remain separate publication gates.",
+  "replacementScope": "Six guides and one normal card replace an existing guide; no conversion-count increment.",
+  "integrationEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-17-legacy-six/native-and-mobile-review.zip",
+    "sha256": "0c5a1a92d212aeb9bad9c584132aeb0e3bfb10da812ab4f64c7a31e6bdec69ce",
+    "review": "docs/exercise-art/reviews/2026-10-17-legacy-six/integrated-review-results.json"
+  }
+}
