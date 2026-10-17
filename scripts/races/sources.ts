@@ -24,7 +24,7 @@ const selectors: Record<string, Partial<DateSource>> = {
   "prague-marathon": {
     selector: ".c-races__item-title",
     pattern:
-      "^Vodafone Prague Marathon Distance: 42\\.195km Date: [A-Za-z]+ \\d{1,2}\\.\\s*\\d{1,2}\\.\\s*20\\d{2}",
+      "^Vodafone Prague Marathon Distance: 42\\.195km Date: [A-Za-z]+ \\d{1,2}\\.\\s*\\d{1,2}\\.\\s*20\\d{2}(?: From \\d{1,2}:\\d{2})?$",
     dateFormat: "dmy",
   },
   "vienna-marathon": {

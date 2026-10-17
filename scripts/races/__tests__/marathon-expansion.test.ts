@@ -73,10 +73,7 @@ describe("new destination marathon date sources", () => {
       `<title>Vodafone Prague Marathon</title><div class="c-races__item-title">Vodafone Prague Marathon Distance: 42.195km Date: Sunday ${date}</div>`;
     expect(() => parseOfficialDate(page("31. 2. 2027"), source)).toThrow();
     expect(() =>
-      parseOfficialDate(page("2. 5. 2027 / 9. 5. 2027"), {
-        ...source,
-        pattern: undefined,
-      })
+      parseOfficialDate(page("2. 5. 2027 / 9. 5. 2027"), source)
     ).toThrow();
     expect(() =>
       parseOfficialDate(

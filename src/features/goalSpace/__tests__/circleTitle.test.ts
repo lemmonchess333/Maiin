@@ -54,7 +54,9 @@ describe("every Circle name drawn in the app goes through circleTitle", () => {
 
   it("finds no space.title read outside circleTitle.ts", () => {
     const offenders = files
-      .filter((f) => !f.endsWith("goalSpace/circleTitle.ts"))
+      .filter(
+        (f) => !f.replaceAll("\\", "/").endsWith("goalSpace/circleTitle.ts")
+      )
       .filter((f) => /\bspace\??\.title\b/.test(readFileSync(f, "utf8")))
       .map((f) => relative(root, f));
     expect(offenders).toEqual([]);
