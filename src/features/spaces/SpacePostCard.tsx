@@ -2,7 +2,8 @@
  * Space post card (Spc1 PR3). Author row (Tropos Team badge is
  * rules-backed), title/body, optional attached-session art — the SAME
  * hero grammar as the feed's ActivityCard (RouteScene glow for runs,
- * MiniMuscleFigure for lifts) — read-only engagement counts, and the
+ * the lead lift's drawing for lifts, or the muscle figure on a post that
+ * names no lead lift) — read-only engagement counts, and the
  * moderation kit: author delete, or report/block for everyone else.
  * photoUrl renders when present (written by the PR4 photo slice).
  */
@@ -29,6 +30,7 @@ import RouteScene from "@/components/social/RouteScene";
 import MiniMuscleFigure, {
   hasMuscleFigure,
 } from "@/components/social/MiniMuscleFigure";
+import { formArtCutoutUrl, getFormArtCutout } from "@/lib/formArtCutouts";
 import ReportModal from "@/components/social/ReportModal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { IconButton } from "@/components/ui/IconButton";
@@ -86,9 +88,13 @@ export default function SpacePostCard({
     activity?.type === "run" &&
     !!activity.routePreview &&
     activity.routePreview.length > 1;
+  const leadArt =
+    activity?.type === "workout" && activity.leadExerciseId
+      ? getFormArtCutout(activity.leadExerciseId)
+      : null;
   const isLiftAttach =
     activity?.type === "workout" &&
-    hasMuscleFigure(activity.muscleGroups ?? []);
+    (!!leadArt || hasMuscleFigure(activity.muscleGroups ?? []));
 
   const removePost = async () => {
     try {
@@ -141,12 +147,25 @@ export default function SpacePostCard({
             background: `linear-gradient(150deg, ${THEME.lifting}22 0%, ${THEME.lifting}08 55%, ${THEME.lifting}10 100%)`,
           }}
         >
-          <div className="absolute inset-0 flex items-center justify-center py-1.5">
-            <MiniMuscleFigure
-              categories={activity.muscleGroups ?? []}
-              className="h-full w-auto"
+          {leadArt ? (
+            <img
+              src={formArtCutoutUrl(leadArt)}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              decoding="async"
+              loading="lazy"
+              data-lead-drawing=""
+              className="pointer-events-none absolute inset-y-1.5 right-3 h-[calc(100%-0.75rem)] w-[58%] object-contain object-right-bottom"
             />
-          </div>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center py-1.5">
+              <MiniMuscleFigure
+                categories={activity.muscleGroups ?? []}
+                className="h-full w-auto"
+              />
+            </div>
+          )}
           {(activity.totalVolume ?? 0) > 0 && (
             <div className="absolute bottom-2.5 left-3.5">
               <p className="text-xl font-bold font-mono tabular-nums leading-none text-lifting">

@@ -59,6 +59,10 @@ export interface SpacePostActivitySnapshot {
   totalVolume?: number;
   exerciseCount?: number;
   muscleGroups?: string[];
+  /** The lift the post's picture draws (`liftPostLeadExerciseId`): the
+   *  session's first exercise with a drawing. Absent on older posts, which
+   *  keep the muscle figure. */
+  leadExerciseId?: string;
 }
 
 export interface SpacePostDoc {

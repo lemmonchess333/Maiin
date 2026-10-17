@@ -25,6 +25,7 @@ import { containsProfanity } from "@/lib/profanityFilter";
 import { uploadSpacePostPhoto } from "@/lib/spacePhotoUpload";
 import { PhotoRefusedError } from "@/lib/photoScreen";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
+import { liftPostLeadExerciseId } from "@/lib/liftPost";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import SustainedOfflineBanner from "@/components/ui/SustainedOfflineBanner";
 import { Button } from "@/components/ui/Button";
@@ -86,12 +87,19 @@ function toSnapshot(
       )
     )
   );
+  const leadExerciseId = liftPostLeadExerciseId(
+    w.exercises.map((ex) => ({
+      exerciseId: ex.exerciseId,
+      name: ex.exerciseName,
+    }))
+  );
   return {
     type: "workout",
     totalVolume: Math.round(workoutTonnageKg(w)),
     exerciseCount: w.exercises.length,
     muscleGroups: categories,
     duration: w.durationMinutes * 60,
+    ...(leadExerciseId ? { leadExerciseId } : {}),
   };
 }
 
