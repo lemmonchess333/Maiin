@@ -28,7 +28,7 @@ export interface FormArtCutout {
   /** True when the black backdrop was keyed out; false when the reviewed
    *  input already carried its own alpha. */
   keyed: boolean;
-  /** The released reference frame it was cut from. */
+  /** The released frame it was cut from: the set's card frame. */
   source: string;
   sourceSha256: string;
   sha256: string;

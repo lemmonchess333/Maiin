@@ -10,9 +10,10 @@
  * release records pin every delivered frame's sha256
  * (docs/exercise-art/releases, formArtOwnerRelease.test.ts), so a cut-out
  * written over them would quietly un-approve the art. Each cut-out is
- * derived from its set's reference frame and records that frame's hash;
- * formArtCutouts.test.ts fails when a reference frame changes and its
- * cut-out was not regenerated.
+ * derived from its set's card frame (its reference, unless
+ * src/lib/formArtCardFrames.ts lists a frame that shows the exercise
+ * better) and records that frame's hash; formArtCutouts.test.ts fails
+ * when that frame changes and its cut-out was not regenerated.
  *
  * Black-background sets are keyed out in five steps:
  *   1. background candidates: max(r, g, b) <= 14
@@ -52,6 +53,7 @@ import {
   FORM_ARTWORK,
   getReleasedFormArtwork,
 } from "../../src/lib/formArtwork";
+import { cardFrameOf } from "../../src/lib/formArtCardFrames";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
 const OUT_DIR = resolve(ROOT, "public", "form-art");
@@ -235,13 +237,14 @@ async function main() {
     throw new Error(`Unknown released exercise: ${only}`);
   for (const id of ids) {
     const art = getReleasedFormArtwork(id)!;
-    const sourcePath = resolve(ROOT, "public", art.reference);
+    const source = cardFrameOf(id, art);
+    const sourcePath = resolve(ROOT, "public", source);
     const sourceBytes = readFileSync(sourcePath);
     if (only && id !== only) {
       const previous = FORM_ART_CUTOUTS[id];
       if (
         !previous ||
-        previous.source !== art.reference ||
+        previous.source !== source ||
         previous.sourceSha256 !== sha256(sourceBytes) ||
         previous.sha256 !==
           sha256(readFileSync(resolve(ROOT, "public", previous.src)))
@@ -256,12 +259,7 @@ async function main() {
     // Preserve reviewed artist/imagegen cutouts across future regenerations.
     // Their transparent source stays bound to the exact released reference.
     const preparedDir = resolve(ROOT, "docs/exercise-art/cutout-sources");
-    const prepared = preparedCutoutPath(
-      preparedDir,
-      id,
-      art.reference,
-      sourceBytes
-    );
+    const prepared = preparedCutoutPath(preparedDir, id, source, sourceBytes);
     const inputPath = prepared ?? sourcePath;
     if (prepared) {
       const alpha = await sharp(prepared).stats();
@@ -289,7 +287,7 @@ async function main() {
         width: outW,
         height: outH,
         keyed,
-        source: art.reference,
+        source,
         sourceSha256: sha256(sourceBytes),
         sha256: sha256(webp),
       },

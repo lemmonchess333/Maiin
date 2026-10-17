@@ -5,11 +5,14 @@
  *
  * They are DERIVED, never edited in place: the reviewed six-frame sets in
  * `public/form-frames` stay byte-for-byte what their release records
- * approved, and each cut-out records the reference frame it came from.
+ * approved, and each cut-out records the frame it came from: the set's
+ * card frame (`formArtCardFrames`), which is its reference unless a
+ * frame that shows the exercise better is listed.
  * `npm run art:cutouts` regenerates them; `formArtCutouts.test.ts` fails
  * when a reference frame changes without a regenerate.
  */
 import { getReleasedFormArtwork } from "./formArtwork";
+import { cardFrameOf } from "./formArtCardFrames";
 import { FORM_ART_CUTOUTS, type FormArtCutout } from "./formArtCutouts.data";
 
 export type { FormArtCutout };
@@ -18,14 +21,15 @@ export type { FormArtCutout };
  * The cut-out for an exercise's released drawing, or null.
  *
  * Null when the exercise has no released art, and also when the cut-out
- * was made from a different frame than the set's current reference: a
+ * was made from a different frame than the set's current card frame: a
  * drawing that is no longer the released one must not keep showing on a
  * card.
  */
 export function getFormArtCutout(exerciseId: string): FormArtCutout | null {
   const art = getReleasedFormArtwork(exerciseId);
   const cutout = FORM_ART_CUTOUTS[exerciseId];
-  if (!art || !cutout || cutout.source !== art.reference) return null;
+  if (!art || !cutout || cutout.source !== cardFrameOf(exerciseId, art))
+    return null;
   return cutout;
 }
 
