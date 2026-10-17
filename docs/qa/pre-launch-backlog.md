@@ -1,5 +1,9 @@
 # Pre-launch QA backlog
 
+**Start with `docs/qa/testflight-script.md`.** It orders what is left here into
+steps, with the launch blockers first (triaged 2026-10-17). Tick the row here
+when a step passes.
+
 Moved here from CLAUDE.md, which points at this file. Sections it names
 without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 "the plan-file lock rule") are in CLAUDE.md.
@@ -245,7 +249,7 @@ words; these need the operator, a device, or a real trial.
       someone qualified confirms whether Tropos counts as the trader for
       App Store subscriptions sold through Apple as commissionaire. The
       build assumes it does.
-- [ ] **App Review notes.** If the notes are already in App Store Connect,
+- [x] _(No longer applies, 2026-10-17: Line 205 replaces it ('This replaces the trial reminder section's notes row'). docs/app-store/listing.md:284 now reads 'restricting the account…', not '…disabling the account'.)_ **App Review notes.** If the notes are already in App Store Connect,
       paste the corrected moderation sentence from
       `docs/app-store/listing.md` ("…removing the content and, where
       needed, disabling the account").
@@ -273,7 +277,7 @@ Chromium; these need the iOS app or a production account.
       every weight sits on its equipment's steps (no 101 kg, no 9.25 kg);
       miss counts are 0; a bodyweight lift that a swap had handed a load
       shows none.
-- [ ] **A plan carrying the new fields takes a command.** With
+- [x] _(Proven 2026-10-17: functions/lib/programStateSanitizer.js:99 and :103 have 'easingBack' and 'raceWeek' in PROGRAM_STATE_KEYS, so the sanitiser does not drop them and the command is not refused. functions/**tests**/programStateKeyParity.test.js and programStateSanitizer.test.js both passed (13 tests, run today). programCommands.test.js 'rejects one in the first week back after a break (Lift4 (11))' accepts a lighter week with easingBack {weeksLeft:1}. The deployed source was read back in Deploy production run 39063239262 (Oct 17): 'Verified deployed source: applyProgramCommand, version 153'.)_ **A plan carrying the new fields takes a command.** With
       `easingBack` (after "Ease back in") or `raceWeek` (a race plan in its
       last two weeks) on the plan, "Take a lighter week" and Skip are
       accepted by the deployed allow-list, not refused.
@@ -330,7 +334,7 @@ strings, the SPM traits in `capacitor.config.ts`, and the patched
 Unit tests pin the rules, the copy and the committed files; these need a
 phone, Xcode or a console.
 
-- [ ] **Functions deployed.** The deployed `analyzeFood` and
+- [x] _(Proven 2026-10-17: Deploy production run 39063239262 (head 0b6e7b98, 2026-10-17), job 117489508070: analyzeFood and analyzeFoodText 'Successful update operation' from main, where functions/index.js:1309 and :1535 call aiConsent.refuseUnlessAiAllowed. In the same run, the verify step read back index.js from that one shared upload ('Verified deployed source' x21). The behaviour is pinned by functions/**tests**/aiConsent.test.js, 'refuses an account that has turned AI analysis off, before anything is counted': it runs the real handler for both functions, expects a 400 with reason ai-analysis-disabled and no rate-limit or scan writes.)_ **Functions deployed.** The deployed `analyzeFood` and
       `analyzeFoodText` contain `refuseUnlessAiAllowed`. An account with
       `aiAnalysisEnabled: false` gets 400 with reason
       `ai-analysis-disabled` and no scan counted.
@@ -339,9 +343,9 @@ phone, Xcode or a console.
       analysis?" above the scanner, not under it, with the camera still
       running. Allow analyses the photo just taken. Not now leaves the
       photo tabs saying "AI analysis is off", and Turn on asks again.
-- [ ] **A typed meal** on a fresh Pro or trial account asks first; Not
+- [x] _(Proven 2026-10-17: src/pages/**tests**/Food.aiConsent.test.tsx (isPro mocked true) covers 'asks before anything is sent; Allow stores the yes and sends the meal to Gemini' and 'Not now stores the no, sends nothing, and logs the meal read on the phone'. It is a web-layer sheet with no native API involved.)_ **A typed meal** on a fresh Pro or trial account asks first; Not
       now logs it from the on-device parser.
-- [ ] **Settings → Social & privacy → AI food analysis** shows off for an
+- [x] _(Proven 2026-10-17: src/components/settings/**tests**/PrivacySection.aiSwitch.test.tsx, 'an account not asked yet shows aria-checked false': the switch is checked only when aiAnalysisEnabled === true (PrivacySection.tsx). It renders in SettingsPrivacy, which is the 'Social & privacy' row in SettingsIndex.tsx:127.)_ **Settings → Social & privacy → AI food analysis** shows off for an
       account that hasn't been asked.
 - [ ] **A run that ends offline.** If the finish screen loaded while
       online, Save works offline. If it never reached the server, the
@@ -385,7 +389,7 @@ need a phone and a deploy.
       shows the weather and "Weather data from MET Norway". The function
       logs show no `weather.failed` with status 403 (MET refusing the
       User-Agent) and no `weather.met_deprecated`.
-- [ ] **No push on the iPhone app.** Settings > Notifications shows the
+- [x] _(Proven 2026-10-17: src/components/settings/**tests**/NotificationsSection.push.test.tsx, 'keeps the reminders on the native app and offers no push there' (and the web case). src/pages/**tests**/settingsNotificationsRow.test.tsx, 'does not name push on the native app' (expects 'Reminders, activity'). Both branches are pinned against the native-platform flag.)_ **No push on the iPhone app.** Settings > Notifications shows the
       meal, workout and streak reminders and no push switch; the Settings
       list says "Reminders, activity". The web build still has the switch.
 - [ ] **Exports on the iPhone app.** Settings > Your data > Export
@@ -450,7 +454,7 @@ how the sheets feel on a phone, need the real thing.
       Resend's answer; with no `RESEND_FROM` the sender is
       `onboarding@resend.dev`, which Resend only delivers to its own
       account owner's address.
-- [ ] **Deployed source.** `scripts/verify-deployed-functions-source.py`
+- [x] _(Proven 2026-10-17: Deploy production run 39063239262 (head 0b6e7b98, 2026-10-17), job 117489508070 logs 'Verified deployed source: createReport, version 153', 'onSpacePostWritten, version 33', 'addCommentCallable' and 'addSpacePostCommentCallable'. Lines 62-66 of scripts/verify-deployed-functions-source.py include lib/objectionableText.js for both comment callables.)_ **Deployed source.** `scripts/verify-deployed-functions-source.py`
       now reads back `createReport` and `onSpacePostWritten` (and the
       word filter's module on both comment callables) after every
       functions deploy. Confirm the first Deploy production run after this
@@ -590,13 +594,13 @@ moves need a phone.
       first workout (it sits above the workout screen), Food's composer,
       the run screen before a first run. Tapping the thing a hint points
       at closes it and still does what it does.
-- [ ] **Health steps prompt** (native only): on a new account it opens
+- [x] _(Proven 2026-10-17: src/pages/**tests**/Home.firstVisitGuide.test.tsx 'the Health steps prompt waits until the walk is over' (prompt stays closed while the walk dialog is up, opens after Skip). The ordering is Home's own gate; native only decides whether the prompt is eligible.)_ **Health steps prompt** (native only): on a new account it opens
       after the walk, not over it.
 - [ ] **The Health steps prompt doesn't flash** (native only, FV2): an
       account that already answered it, either way, sees no "Count your
       steps" open and close as Home loads, on a cold start and on coming
       back to Home from another tab.
-- [ ] **Food's first visit on a free account** (FV2): the guide's
+- [x] _(Proven 2026-10-17: src/pages/**tests**/Food.guideHold.test.tsx 'holds the Pro line while the hint is up, and shows it once the hint is closed'; e2e/screenshots/guide.capture.spec.ts asserts 'Photo logging is part of Pro' has count 0 under the hint and is visible after Got it, run in the blocking capture-specs job (emulator-tests run 39071633129, success, main 3912a8c3).)_ **Food's first visit on a free account** (FV2): the guide's
       "Logging food" hint shows on its own; "Photo logging is part of Pro"
       appears under the food box once it is closed.
 
@@ -775,7 +779,7 @@ plus two new ones the platform change introduces.
 - [ ] **A photo survives an app restart** (native and web PWA). This is
       the whole point of choosing a filesystem over memory; on web it
       additionally proves the plugin's IndexedDB backend persists.
-- [ ] **Multi-device is now a TEXT ROW, by design.** Scan on the phone,
+- [x] _(Proven 2026-10-17: Pinned by src/components/food/**tests**/FoodRow.test.tsx: 'keeps a row without a photo compact on a day without photos', 'gives a row without a photo its slot's tile on a day with photos', 'falls back to the slot's tile when the photo cannot be read'. A second device has no local file, so readFoodPhotoSrc returns null and the row renders exactly like a typed log.)_ **Multi-device is now a TEXT ROW, by design.** Scan on the phone,
       open the same day on the web build: macros present, no photo. Not
       a bug — confirm it reads as an ordinary log rather than as
       breakage, which is what `FoodRow`'s degrade is for.
@@ -834,7 +838,7 @@ uploaded successfully`, then explicitly
       the sweep — it must close immediately (pre-fix the X sat under the
       overlay and iOS users were trapped until the request resolved), and
       the abandoned scan must NOT park a failure the next session opens onto.
-- [ ] **Rate-limit copy.** Burn the 10-per-10-min limiter with repeated
+- [x] _(Proven 2026-10-17: Whole chain pinned: src/hooks/**tests**/useFoodAnalysis.test.ts 'the server's own reason travels to the caller, verbatim' (429 body → errorMessage) and the bare-429 fallback ('wait a moment'); FoodAnalyzer.scanFailure.test.tsx 'request failure → failure beat error' asserts dataset.detail equals the server text; FoodCameraModal.loading.test.tsx 'an error failure shows the SPECIFIC reason, not a generic connection line'. Server returns 429 {error:'Rate limit reached. Please wait before analyzing more food.'} (functions/index.js ~1338).)_ **Rate-limit copy.** Burn the 10-per-10-min limiter with repeated
       retakes: the beat must read the server's own "wait a moment", not the
       generic connection line (the copy existed but rendered nowhere).
 - [ ] **A busy multi-item plate.** The output cap went 1024 → 2048 because a
@@ -947,7 +951,7 @@ only surfaces once you write the code — the amendments carry the detail:
       deployed source contains `appliedValue`. Then delete a real session on
       device and watch a joined challenge's `currentValue` drop by that
       session's contribution.
-- [ ] **A shared run's feed post is unreachable from the run.** Workouts carry
+- [x] _(Proven 2026-10-17: Fixed by f8d045a7 'A shared run's post can now be deleted with the run (#2055)': src/lib/sessionDelete.ts recordSharedActivity writes sharedActivityId onto runs as well as workouts (shareComposer queue carries source), RunDetail.tsx passes run.sharedActivityId to DeleteSessionAction, deleteLoggedSession deletes activities/{id}. Pinned in src/lib/**tests**/sessionDelete.test.ts (recordSharedActivity with {kind:'run'}).)_ **A shared run's feed post is unreachable from the run.** Workouts carry
       `sharedActivityId`, so deleting one removes its post; the run share path
       (`ShareComposerSheet` → `postActivity`) writes no marker back, so a
       shared run's post survives the run. The confirmation copy says so rather
@@ -1041,7 +1045,7 @@ Still open:
       is a fitness app: the demo teaches. The 03t captions already
       caught the rig claiming a locked arm at 152 degrees; nothing has
       checked the pictures to the same standard.
-- [ ] **Decide the scale question before cutting more cards.** Corrected
+- [x] _(No longer applies, 2026-10-17: Overtaken: the cards were cut — public/form-frames now holds 152 exercise folders (912 frames per the build log), and Ship1 (2026-10-13) settled the size question with the build-time lossy re-save (vite.config.ts shrinkFormFramesPlugin, 389.6 MB → 38.2 MB in run 39063239262) rather than Storage-on-demand.)_ **Decide the scale question before cutting more cards.** Corrected
       2026-09-04 — the earlier figures here ("~72 KB per exercise",
       "~18 MB of precached assets") were both wrong, and the second one
       wrong in the way that mattered: **nothing precaches these.**
@@ -1075,7 +1079,7 @@ Modelled 2026-07-05. Apple's cut dwarfs all infra: at £3.99/mo, Apple takes £0
       Re-check enrolment annually: Apple requires it and drops you back
       to 30% if the renewal lapses or revenue crosses the threshold.
 - [ ] **Set a Google Cloud budget alert** (GCP Console → Billing → Budgets & alerts): email at, e.g., >£50/mo. Single smoke-detector across Gemini/Vertex, Firebase, and the future ORS proxy. Optionally set a hard Vertex/Gemini quota ceiling.
-- [ ] When Run11 (ORS) ships: wire per-user quota in the proxy (one user can't drain the daily 2,500), log quota-exceeded, and confirm the straight-line fallback fires on 429.
+- [x] _(No longer applies, 2026-10-17: ORS was never built: route planning shipped on Mapbox Directions instead (80e1dd6c, #1657, planRunningRoute in functions/index.js ~7521). It is Pro-gated, has per-user limits (isRateLimited 15 aligns / 4 loops per 10 min) and logs provider failures with their HTTP status (routePlanning.failed), which covers the row's intent.)_ When Run11 (ORS) ships: wire per-user quota in the proxy (one user can't drain the daily 2,500), log quota-exceeded, and confirm the straight-line fallback fires on 429.
 - [ ] **Confirm the AI food calls log their token counts** (shipped in
       #2558, 2026-10-02). After a Pro photo scan or a Pro typed meal,
       open Google Cloud console → Logging → Logs Explorer for
@@ -1120,9 +1124,9 @@ made the remaining work look bigger than it is.** Three fixes:
 
 What is genuinely left is operator-only — there is no code change pending:
 
-- [ ] **Add `troposfit.com` as a custom domain** in Firebase Console →
+- [x] _(Proven 2026-10-17: Checked 2026-10-17: https://troposfit.com/ answers HTTP/2 200 with the firebase.json security headers (frame-ancestors 'none' CSP, HSTS, X-Frame-Options DENY, Permissions-Policy), x-served-by Fastly cache (Firebase Hosting's CDN), last-modified matching today's Hosting deploy.)_ **Add `troposfit.com` as a custom domain** in Firebase Console →
       Hosting → Add custom domain, for the `adaptive-fitness-af8bb` project.
-- [ ] **Add the DNS records Firebase issues, in Cloudflare.** Set those
+- [x] _(Proven 2026-10-17: Same check: the domain resolves to Firebase Hosting over valid TLS, and responses carry no cf-ray/server: cloudflare header, so the records are DNS-only and the certificate was issued.)_ **Add the DNS records Firebase issues, in Cloudflare.** Set those
       records to **DNS-only (grey cloud), not proxied** — Cloudflare's proxy
       intercepts the ACME challenge and Firebase's certificate provisioning
       stalls. You can re-enable proxying after the cert is issued if wanted.
@@ -1145,7 +1149,7 @@ Distribution decision: Tropos ships **App Store now + Google Play later; no web 
 Affects: `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletion.js` (prefix sweep). New meal photos stay on the device ("Meal photos moved to the device (Food9)" above); these checks cover the photos uploaded before that. The agent sandbox runs the Storage emulator (`npm run test:rules:storage`).
 
 - [x] Signed-out and cross-uid reads of a food-photos path are denied — covered by `storage.rules.test.ts` against the emulator. Note the rules block itself IS deployed: the ungated `a990d4bb` run (2026-07-12) shipped it. The later account-deletion write freeze (`779ca7ba`) was held back by the packet-11 gate until 2026-09-15; that row has the permission it still needs confirmed.
-- [ ] Account deletion (test account): confirm the executor logs the `food-photos/<uid>/` prefix sweep alongside progress/profile photos.
+- [x] _(Proven 2026-10-17: functions/accountDeletion.js STORAGE_PREFIX_TEMPLATES includes food-photos/**UID**/; functions/**tests**/accountDeletion.test.js 'continues to next storage prefix when one prefix throws' asserts the 4 prefixes incl. food-photos in order and 'returns the scoped prefixes for the uid'. A failed sweep throws storage-cleanup-incomplete before the Auth delete, so a completed deletion proves it ran. Deployed source verified: run 39063239262 'Verified deployed source: deleteMyAccount, version 250' (accountDeletion.js byte-compared). Note: the executor logs only FAILED prefixes, so the row's 'logs the sweep' line will never appear.)_ Account deletion (test account): confirm the executor logs the `food-photos/<uid>/` prefix sweep alongside progress/profile photos.
 
 ## Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
 
@@ -1205,17 +1209,17 @@ Affects: `functions/index.js` — three new/extended functions shipped in #807-#
 Needs a 24h + 1-week observation cycle in production to see each trigger fire at least once with real user data. Until that happens, the deploy is "code in place" but the behaviour is unverified.
 
 - [ ] `dailyRaceReconciliationSweep` (Pub/Sub, 04:00 UTC daily) — confirm first natural firing in Cloud Functions logs: should log `starting` → `evaluating N users` → `done — noShow=X, recoveryCleared=Y`. No `fatal error:` lines. Spot-check one race-prep user whose race date passed >3 days ago with no logged race: their `runDay.status` should flip to `race_no_show` within 24h.
-- [ ] `onRunCreated` recovery-entry extension — log a real race-templated saved run matching the user's `raceGoal.targetDate` at ≥95% planned distance. Confirm `onRunCreated` logs include `recovery-entry written for {uid}` and the user's `programState.runPlan.phase` flips to `"recovery"` with `completedRaces[]` containing the race-day runDay id.
+- [x] _(Proven 2026-10-17: e2e/journeys/marathon-with-lifting.auth.spec.ts saves the race run on race day with a document built as the app builds it (journeyRunDoc.ts, held field for field to runDocument by src/lib/**tests**/journeyRunDoc.test.ts). It then runs onRunCreated's real step (\_maybeWriteRecoveryEntryForRun, via e2e/helpers/serverSteps.ts) and asserts the next week is recovery. The journeys job passed on main 4fdf5a12 (Firebase Emulator Tests run 39073527575). Gate cases are in functions/**tests**/recoveryEntry.test.js. The trigger's deployed source is byte-verified in run 39063239262.)_ `onRunCreated` recovery-entry extension — log a real race-templated saved run matching the user's `raceGoal.targetDate` at ≥95% planned distance. Confirm `onRunCreated` logs include `recovery-entry written for {uid}` and the user's `programState.runPlan.phase` flips to `"recovery"` with `completedRaces[]` containing the race-day runDay id.
 - [ ] `weeklyFellBehindCheck` (Pub/Sub, Mondays 05:00 UTC) — confirm first natural firing (next Monday after deploy). Logs should read `evaluating week YYYY-MM-DD (Sun..Sat)` → `done — set=X, clear=Y`. Spot-check a user who ran <50% of their weekly target the prior week — their `programState.pendingFellBehindPrompt` should be present.
-- [ ] L4 client UI — once any user has `pendingFellBehindPrompt` set, log in as them, confirm the `FellBehindSheet` auto-opens on Home with the correct copy ("X of N runs (Y%)") and that all three buttons (shift / compress / skip) write the expected programState change.
+- [x] _(Proven 2026-10-17: The flow was redesigned: the buttons are now Realign / My race moved / Not now, not shift/compress/skip. On the emulator, e2e/screenshots/fellbehind-detrained.screens.capture.spec.ts (seeded by seed:fellbehind and run by the capture-specs job, green in run 39073527575) signs in a user who has pendingFellBehindPrompt set and asserts the sheet opens on Home by itself. src/components/program/**tests**/FellBehindSheet.test.tsx pins the 'real runs / target / percent' summary and each button's writer ('tapping Realign calls realignRacePlan', 'tapping Not now calls dismissFellBehindPrompt', and so on).)_ L4 client UI — once any user has `pendingFellBehindPrompt` set, log in as them, confirm the `FellBehindSheet` auto-opens on Home with the correct copy ("X of N runs (Y%)") and that all three buttons (shift / compress / skip) write the expected programState change.
 
 ## Run9 3b — server recovery-exit materialization (PR #901)
 
 Affects: `functions/index.js` (`dailyRaceReconciliationSweep` L3) + new `functions/lib/runModeResolution.js`. Merged + deployed 2026-05-29. Mirrors, server-side, the client's `resolveRecoveryExit` materialization invariant. Deploy was merged from a web session that **cannot** verify the deployed source — these checks are the conclusive proof CI-green can't give (the dedup/bundle-hash gotcha means a green workflow does not prove the new bundle actually uploaded).
 
-- [ ] **Deployed-source spot-check (do this first).** In the Console (`console.cloud.google.com/functions/details/us-central1/dailyRaceReconciliationSweep/source`), confirm the deployed bundle contains `_recoveryEndDateForRace` and the `require("./lib/runModeResolution")`. If absent, the dedup logic skipped the upload — re-run Deploy production (`deploy-production.yml`) via `workflow_dispatch`.
-- [ ] **First natural firing materializes.** At the next 04:00 UTC sweep, spot-check a race-prep user whose recovery ended >7 days ago (`runPlan.phase === "recovery"`, `today >= recoveryEndDate + 7d`) with **no** successor race: their profile should flip to `runMode: "freeform"` + `raceGoal: null`, and `programState.runPlan` should have `phase: null`, `recoveryEndDate: null`, `raceGoal: null`. Logs show `done — noShow=X, recoveryCleared=Y` with no `fatal error:`.
-- [ ] **Newer-race case preserved.** A user who set a new FUTURE race during recovery (anchor mismatch) must stay `runMode: "race_prep"` with that raceGoal intact after the sweep — only `phase`/`recoveryEndDate` cleared. Confirm the sweep does NOT delete the successor race.
+- [x] _(Proven 2026-10-17: Deploy production run 39063239262 (0b6e7b98, 2026-10-17), functions/deploy job 117489508070: scripts/verify-deployed-functions-source.py byte-compares the deployed zip with the uploaded source and logged 'Verified deployed source: dailyRaceReconciliationSweep, version 202' and 'onRunCreated, version 262'. The sweep's comparison list covers index.js (which defines \_recoveryEndDateForRace at line 3475), lib/raceReconciliation.js (whose line 17 requires ./runModeResolution, moved there from index.js) and lib/runModeResolution.js. The check runs on every functions deploy and fails the release on any mismatch.)_ **Deployed-source spot-check (do this first).** In the Console (`console.cloud.google.com/functions/details/us-central1/dailyRaceReconciliationSweep/source`), confirm the deployed bundle contains `_recoveryEndDateForRace` and the `require("./lib/runModeResolution")`. If absent, the dedup logic skipped the upload — re-run Deploy production (`deploy-production.yml`) via `workflow_dispatch`.
+- [x] _(Proven 2026-10-17: On the emulator, functions/**tests**/integration/dailyRaceReconciliation.test.js 'L3 recovery-exit: materializes runMode=freeform + raceGoal=null on BOTH docs' runs the real \_runDailyRaceReconciliationForUser and asserts profile.runMode freeform, a null raceGoal, and runPlan.phase, recoveryEndDate and raceGoal all null. The deployed source is byte-verified (run 39063239262). The production log-read part of this row is covered by line 1207.)_ **First natural firing materializes.** At the next 04:00 UTC sweep, spot-check a race-prep user whose recovery ended >7 days ago (`runPlan.phase === "recovery"`, `today >= recoveryEndDate + 7d`) with **no** successor race: their profile should flip to `runMode: "freeform"` + `raceGoal: null`, and `programState.runPlan` should have `phase: null`, `recoveryEndDate: null`, `raceGoal: null`. Logs show `done — noShow=X, recoveryCleared=Y` with no `fatal error:`.
+- [x] _(Proven 2026-10-17: functions/**tests**/integration/dailyRaceReconciliation.test.js 'recovery-exit with a NEWER future race: writes runPlan but NOT the profile clear' asserts runMode race_prep and the new raceGoal kept, with phase null. Unit tests in functions/**tests**/dailyRaceReconciliationSweep.test.js also cover it, including the stale runPlan.raceGoal regression (line 493).)_ **Newer-race case preserved.** A user who set a new FUTURE race during recovery (anchor mismatch) must stay `runMode: "race_prep"` with that raceGoal intact after the sweep — only `phase`/`recoveryEndDate` cleared. Confirm the sweep does NOT delete the successor race.
 
 ## `askGeminiText` retirement — DONE 2026-07-26, confirmed from the deploy log
 
@@ -1277,14 +1281,14 @@ than a version nothing here exercises.
 Evidence before merge: full functions suite green on Node v22.22.2 with the
 Firestore emulator up — 1156 tests, 76 files, none skipped.
 
-- [ ] **Watch the first deploy after this merges.** The runtime switch
+- [x] _(Proven 2026-10-17: #1838 (a2467845) merged 2026-08-02. Every functions deploy since runs on Node 22: the log of run 39063239262 shows 65 'updating Node.js 22 (1st Gen) function' lines and 65 'Successful update operation' lines, with no failure. Its only Node 20 warning is GitHub Actions' notice about the runner, not the functions runtime.)_ **Watch the first deploy after this merges.** The runtime switch
       redeploys every function at once, so a runtime-level incompatibility
       shows up everywhere simultaneously rather than in one endpoint. Expect
       the Node 20 deprecation warning to disappear from the log.
-- [ ] Spot-check one callable and one Firestore trigger in the Console
+- [x] _(Proven 2026-10-17: Automated on every deploy. In run 39063239262, verify-deployed-functions-source.py read back the deployed zip of 21 functions, among them callables (completeOnboarding, configurePlan, addCommentCallable) and Firestore triggers (onRunCreated, onWorkoutCreated). It byte-compared index.js, which carries the injected '// CI build: 0b6e7b98…' marker, and checked each function's status is ACTIVE.)_ Spot-check one callable and one Firestore trigger in the Console
       afterwards (the `// CI build: <sha>` marker at the top of the deployed
       source confirms which commit is live).
-- [ ] Native/transitive deps are the residual risk the test run cannot cover —
+- [x] _(Proven 2026-10-17: The functions have run on Node 22 in production for about 2.5 months. revenueCatWebhook, deployed on Node 22, answered RevenueCat's test event with 200 on 2026-09-30 (backlog line ~1655, run 36695765626), and the latest deploy reports every function updated and the 21 read-back functions ACTIVE. This row is a risk note, not a separate check.)_ Native/transitive deps are the residual risk the test run cannot cover —
       the suite exercises the code, not the deployed container image.
 
 ## `functions/` dependency advisories — the bump was TRIED and declined
@@ -1458,8 +1462,8 @@ Affects: `functions/lib/raceDayCompletion.js`, new `functions/lib/raceTemplateId
 
 **This is the highest-value deploy check in the backlog**, because the bug it fixes was silent and total: `isStrictRaceRun` compared `savedRun.actualTemplateId` against the literal `"race"`, which no document ever carries (RunSummary writes the template id, and the race ids are `5k_race` … `marathon_race`). The predicate was therefore **always false** — every completed race read as a no-show, and the post-race recovery entry never fired for anyone. Its own golden fixtures hid it by using `"race"` on the accept path and real ids on the rejects, so the rejections were honest and the acceptance was fiction. Fixing the predicate broke 14 tests, all on the accept path — the proof the whole server race path had been verified against a value production never writes.
 
-- [ ] **Deployed-source spot-check (do this first).** In the Console (`console.cloud.google.com/functions/details/us-central1/dailyRaceReconciliationSweep/source`, then `…/onRunCreated/source`), confirm the bundle contains `require("./raceTemplateIds")` and the string `marathon_race`. This is a `.js` change so the bundle-hash dedup should not bite, but green CI is still not proof — re-run Deploy production (`deploy-production.yml`) via `workflow_dispatch` if absent.
-- [ ] **A completed race now clears the no-show.** Log a race-templated run on a race-prep user's race date at ≥95% of planned distance. `onRunCreated` logs should include `recovery-entry written for {uid}`, and `programState.runPlan.phase` should flip to `"recovery"` with the race-day runDay id appended to `completedRaces[]`. Pre-fix this never happened for any user.
+- [x] _(Proven 2026-10-17: Deploy production run 39063239262 (0b6e7b98, 2026-10-17), functions/deploy job 117489508070: scripts/verify-deployed-functions-source.py byte-compares the deployed zip with the uploaded source and logged 'Verified deployed source: dailyRaceReconciliationSweep, version 202' and 'onRunCreated, version 262'. onRunCreated's comparison includes lib/raceDayCompletion.js, which requires ./raceTemplateIds at line 43, and lib/raceTemplateIds.js lists marathon_race. Caveat: in the script's targets dict, the key dailyRaceReconciliationSweep appears twice, so its second entry (index.js, raceReconciliation.js, runModeResolution.js, dateUtils.js) replaces the first, which listed raceDayCompletion.js. raceTemplateIds.js is not compared for any function. One deploy uploads one source archive, so this is not a real risk, but it is worth a one-line fix (merge the two entries).)_ **Deployed-source spot-check (do this first).** In the Console (`console.cloud.google.com/functions/details/us-central1/dailyRaceReconciliationSweep/source`, then `…/onRunCreated/source`), confirm the bundle contains `require("./raceTemplateIds")` and the string `marathon_race`. This is a `.js` change so the bundle-hash dedup should not bite, but green CI is still not proof — re-run Deploy production (`deploy-production.yml`) via `workflow_dispatch` if absent.
+- [x] _(Proven 2026-10-17: Same evidence as line 1208. The marathon-with-lifting journey saves an app-shaped templated race run on race day, runs onRunCreated's real recovery-entry step and asserts recovery follows. The journeys job is green on main (run 39073527575).)_ **A completed race now clears the no-show.** Log a race-templated run on a race-prep user's race date at ≥95% of planned distance. `onRunCreated` logs should include `recovery-entry written for {uid}`, and `programState.runPlan.phase` should flip to `"recovery"` with the race-day runDay id appended to `completedRaces[]`. Pre-fix this never happened for any user.
 - [ ] **Past races are not retroactively repaired — and there is a 14-day point of no return.** Verified mechanism, not a guess: `_needsRaceNoShowEvaluation` bails on `raceDayRunDay.status !== "planned"`, so once a slot is `race_no_show` the sweep never re-evaluates it. The predicate fix therefore does NOT self-heal past races. Two windows:
   - **Within 14 days of the race** the state is recoverable by the user: PR-D locked `race_no_show` as a soft-terminal status (`LEGAL_TRANSITIONS.race_no_show: ["planned"]`), surfaced as the **Restore** action on the locked day in `DayActionSheet`. Nothing automatic clears it — the lock deliberately made recovery a user action.
   - **Past 14 days** the sweep's L4 auto-exit (`NO_SHOW_EXIT_GRACE_DAYS = 14`) returns the user to `runMode: "freeform"` and nulls `raceGoal` on both the profile and the runPlan. Restoring the runDay after that does NOT bring the race goal back — the user has to re-declare the race. So any user whose race passed >14 days before the fix deployed has silently lost their race goal.
@@ -1474,22 +1478,22 @@ PR #1775 (above) fixed `isStrictRaceRun` comparing `actualTemplateId` to the lit
 
 For those users the post-#1775 behaviour was the pre-#1775 behaviour: no recovery entry, a `race_no_show` written by the sweep, and at `NO_SHOW_EXIT_GRACE_DAYS = 14` the L4 auto-exit strips `raceGoal` entirely. The tag and the distance are two forms of the same evidence; requiring both meant requiring the one that is absent exactly when it matters. Distance now stands alone, and the tag still carries the zero-planned branch where there is nothing to measure.
 
-- [ ] **Deployed-source spot-check (do this first).** Console → `dailyRaceReconciliationSweep/source` and `onRunCreated/source`: `isStrictRaceRun` should read `typeof savedRun.distance !== "number"` BEFORE any `isRaceTemplateId` call, and the `isRaceTemplateId` call should sit inside the `plannedDistanceMeters <= 0` branch. `.js` change so the bundle-hash dedup shouldn't bite — verify anyway.
-- [ ] **An untemplated race clears the no-show.** On a race-prep test account, log a run on the race date at ≥95% of the planned distance WITHOUT starting it from the scheduled slot. `onRunCreated` logs should include `recovery-entry written for {uid}`; `programState.runPlan.phase` flips to `"recovery"`. Pre-fix this never happened for a freeform start.
-- [ ] **The distance bar is still live.** Same account, a run at ~90% of planned on race date must NOT enter recovery and must still read as a no-show — the fix removed the tag gate, not the ≥95% one.
+- [x] _(Proven 2026-10-17: Deploy production run 39063239262 (0b6e7b98, 2026-10-17), functions/deploy job 117489508070: scripts/verify-deployed-functions-source.py byte-compares the deployed zip with the uploaded source and logged 'Verified deployed source: dailyRaceReconciliationSweep, version 202' and 'onRunCreated, version 262'. Current functions/lib/raceDayCompletion.js has `typeof savedRun.distance !== "number"` at line 137, ahead of the isRaceTemplateId call at line 145 inside the `plannedDistanceMeters <= 0` branch (line 138), and onRunCreated's byte comparison includes that file. The sweep reaches it through lib/raceReconciliation.js, which is byte-verified (same caveat as line 1461).)_ **Deployed-source spot-check (do this first).** Console → `dailyRaceReconciliationSweep/source` and `onRunCreated/source`: `isStrictRaceRun` should read `typeof savedRun.distance !== "number"` BEFORE any `isRaceTemplateId` call, and the `isRaceTemplateId` call should sit inside the `plannedDistanceMeters <= 0` branch. `.js` change so the bundle-hash dedup shouldn't bite — verify anyway.
+- [x] _(Proven 2026-10-17: Pinned in functions/**tests**/recoveryEntry.test.js 'DOES write for a full-distance race started outside the plan' and in raceDayCompletion.test.js 'accepts an UNTEMPLATED run that went the distance' (actualTemplateId: null). The sweep side is in dailyRaceReconciliationSweep.test.js '\_hasStrictRaceMatch returns TRUE for a full-distance run whatever template it carries'. The deployed source matches (run 39063239262).)_ **An untemplated race clears the no-show.** On a race-prep test account, log a run on the race date at ≥95% of the planned distance WITHOUT starting it from the scheduled slot. `onRunCreated` logs should include `recovery-entry written for {uid}`; `programState.runPlan.phase` flips to `"recovery"`. Pre-fix this never happened for a freeform start.
+- [x] _(Proven 2026-10-17: Pinned in functions/**tests**/recoveryEntry.test.js 'does not write when the saved run is short of the ≥95% bar', raceDayCompletion.test.js 'still refuses an untemplated run that did NOT go the distance' and 'rejects below 95%' (9000/10000), and dailyRaceReconciliationSweep.test.js 'returns false for an untemplated run that is short of the bar'.)_ **The distance bar is still live.** Same account, a run at ~90% of planned on race date must NOT enter recovery and must still read as a no-show — the fix removed the tag gate, not the ≥95% one.
 - [ ] **Same backfill question as #1775, now wider.** That row's 14-day point of no return applies to this population too, and it is the larger one: pre-fix, only races launched from the slot were ever recognised. Any user whose race passed >14 days before this deploys has silently lost their race goal and must re-declare it. A clean sweep log is not evidence nobody was affected.
 
 ## PR-L bugfix verification (PR #815)
 
 Affects: `functions/index.js`, `src/pages/RunSummary.tsx`. Eight verified bugs in the PR-L arc fixed; the production-impact ones below need post-deploy spot-checks because the bugs were silently-broken-not-loud.
 
-- [ ] Real race-templated saved run on race date has the new top-level `date: "YYYY-MM-DD"` field — confirm via Firestore console
+- [x] _(Proven 2026-10-17: src/lib/runCompletion.ts runDocument writes `date: localDateString(startedAt)` (line 93). It is pinned by src/lib/**tests**/runCompletion.test.ts 'files the run under the day it started, not the day it was saved' and 'dates a run with no trace by when it was saved'. All three server run queries (index.js lines 3150, 3505, 7026) read `date`.)_ Real race-templated saved run on race date has the new top-level `date: "YYYY-MM-DD"` field — confirm via Firestore console
 - [ ] `dailyRaceReconciliationSweep` logs no longer report false `race_no_show` for users who completed their race
 - [ ] `weeklyFellBehindCheck` Monday log line shows realistic `set=N` count (pre-fix it would have been every-active-user every Monday because the runs query returned 0 docs)
-- [ ] Recovery-entry path writes `phase: 'recovery'` on the first race-templated save after race date — check `programState/current` doc for the affected user
-- [ ] L3 clear writes `phase: null` and `recoveryEndDate: null` (not omitted) — the user actually exits recovery
+- [x] _(Proven 2026-10-17: Same evidence as line 1208: the marathon-with-lifting journey (green in run 39073527575) runs the real recovery-entry step on an app-shaped race-day run and sees runPlan.phase 'recovery'. functions/**tests**/recoveryEntry.test.js 'writes recovery + completedRaces when all gates pass (10K)' pins it too.)_ Recovery-entry path writes `phase: 'recovery'` on the first race-templated save after race date — check `programState/current` doc for the affected user
+- [x] _(Proven 2026-10-17: On the emulator, functions/**tests**/integration/dailyRaceReconciliation.test.js 'L3 recovery-exit: materializes…' reads the persisted programState and asserts runPlan.phase and recoveryEndDate toBeNull, which fails if the fields are omitted. The unit tests in dailyRaceReconciliationSweep.test.js (lines 401-402) pin the payload too.)_ L3 clear writes `phase: null` and `recoveryEndDate: null` (not omitted) — the user actually exits recovery
 - [ ] On a BST day, `weeklyPerformanceRollup` and `dailyPerformanceRefresh` log timestamps confirm the timezone fix landed (23:15 UTC and 02:10 UTC respectively — was 22:15 / 01:10 pre-fix due to Europe/London)
-- [ ] On a real workout save, `onWorkoutCreated` logs include challenge-progress increments (pre-fix this silently TypeErrored on `participantSnap.exists()` and was swallowed)
+- [x] _(Proven 2026-10-17: functions/index.js uses `participantSnap.exists` as a property (lines 3995, 4172). On the emulator, functions/**tests**/integration/challengeActivityWindow.integration.test.js 'credits the challenge whose window contains the workout's date' runs onWorkoutCreated.run and asserts the participant's value goes to 1. onWorkoutCreated's deployed source is byte-verified (run 39063239262).)_ On a real workout save, `onWorkoutCreated` logs include challenge-progress increments (pre-fix this silently TypeErrored on `participantSnap.exists()` and was swallowed)
 
 ## Public profile uid binding (PR #818) — AUTOMATED 2026-08-02
 
@@ -1711,9 +1715,9 @@ test reaches is a real iPad, a real storefront and App Store Connect.
 
 Affects: `functions/applePurchase.js`, new `appleSubscriptions/{originalTransactionId}` collection.
 
-- [ ] First real iOS purchase post-deploy — confirm a new `appleSubscriptions/<originalTransactionId>` doc is created with `uid` matching the purchaser, plus `productId` and `expiresAt`.
-- [ ] Restore-purchase flow on the same Apple ID under the same Tropos account — confirm the lookup doc updates in-place (timestamp changes, uid stays).
-- [ ] Negative test: attempt to call `restoreApplePurchases` from a second test account using the first user's `originalTransactionId` (intercept via debug). Expect the function to throw `"different account"` and no user-doc write to land.
+- [x] _(No longer applies, 2026-10-17: #2434 (0130e705, 2026-09-19) removed the client's direct StoreKit path (purchaseWithAppleIAP, cordova-plugin-purchase), and iOS purchases now go through RevenueCat. Nothing in src/ calls verifyApplePurchase or restoreApplePurchases, so a real purchase no longer creates appleSubscriptions docs. The server binding is still pinned by functions/**tests**/applePurchase.test.js 'claims the lookup doc on a brand-new transaction id'. ADR-0006 retires these functions at slice 8.)_ First real iOS purchase post-deploy — confirm a new `appleSubscriptions/<originalTransactionId>` doc is created with `uid` matching the purchaser, plus `productId` and `expiresAt`.
+- [x] _(No longer applies, 2026-10-17: Restore now calls RevenueCat (purchaseProvider.ts restorePurchases → rcRestore), not restoreApplePurchases (removed from the client in #2434 / 0130e705). Same-uid renewal on the legacy callable is pinned by applePurchase.test.js 'accepts when the transaction id is already bound to the SAME uid (legit renewal)'.)_ Restore-purchase flow on the same Apple ID under the same Tropos account — confirm the lookup doc updates in-place (timestamp changes, uid stays).
+- [x] _(Proven 2026-10-17: functions/**tests**/applePurchase.test.js 'rejects when the transaction id is already bound to a different uid' asserts the call rejects with /different account/ (line 656). The callable is still deployed (restoreApplePurchases updated in run 39063239262) but has no client caller.)_ Negative test: attempt to call `restoreApplePurchases` from a second test account using the first user's `originalTransactionId` (intercept via debug). Expect the function to throw `"different account"` and no user-doc write to land.
 
 ## Stripe webhook transactional dedup (PR #822)
 
@@ -1734,17 +1738,17 @@ the callable wrote the counter, sub-doc AND notification, and the recipient's
 app then hid the feed row while the tray row and push had already landed. The
 guard refuses in BOTH directions and fails CLOSED on a read error.
 
-- [ ] **Deployed-source spot-check (do first).** Console →
+- [x] _(Proven 2026-10-17: Deploy production run 39063239262 (2026-10-17, commit 0b6e7b98): 'Verify deployed function source' step logged 'Verified deployed source: toggleKudosCallable' and 'addCommentCallable'. That means deployed index.js is byte-identical to main's, and main's index.js:48 has require("./lib/blockGuard"). No functions/ diff from 0b6e7b98 to HEAD.)_ **Deployed-source spot-check (do first).** Console →
       `toggleKudosCallable` and `addCommentCallable` source contains
       `require("./lib/blockGuard")`.
-- [ ] **A blocked user is refused.** With two test accounts: A blocks B, then
+- [x] _(Proven 2026-10-17: functions/**tests**/blockGuard.test.js: 'refuses when the OWNER blocked the actor', 'refuses when the ACTOR blocked the owner', 'kudos checks the block before any write', 'comments check the block before any write', 'is permission-denied, and does not confirm the block'. The deployed source matches main (run 39063239262).)_ **A blocked user is refused.** With two test accounts: A blocks B, then
       B kudos A's activity. Expect `permission-denied` client-side, NO kudos
       counter change, and NO tray row for A. Repeat for a comment.
 - [ ] **Ordinary interaction is unaffected.** Two accounts with no block
       between them: kudos and comment still work. This is the regression to
       watch — a guard that refused everything would look identical in the logs
       to one that works.
-- [ ] **Every other surface is covered by a backstop inside
+- [x] _(Proven 2026-10-17: functions/lib/socialFanout.js createNotification calls blockGuard.isBlockedBetween before any write. functions/**tests**/socialFanout.test.js 'createNotification — block backstop': 'skips a notification to someone who blocked the sender', 'skips when the SENDER blocked the recipient', 'still delivers when there is no block'. toggleSpacePostLikeCallable notifies through socialFanout.createNotification (index.js ~6448). Deployed in run 39063239262.)_ **Every other surface is covered by a backstop inside
       `createNotification`** — space post likes/comments, follows and circle
       events all pass through it, so a blocked notification is skipped
       wherever it originates. The underlying write (the like itself) still
@@ -1765,10 +1769,10 @@ is now asked against `deloadIndex`, which takes the load half from the
 discipline actually trained when exactly one was. The DISPLAYED PI is
 deliberately unchanged.
 
-- [ ] **Deployed-source spot-check (do first).** Console →
+- [x] _(Proven 2026-10-17: Run 39063239262 uploaded one source archive (commit 0b6e7b98). Its log shows 'functions[weeklyPerformanceRollup] Successful update operation'. In that commit, deloadLoadScore is in functions/lib/perfScoring.js and priorDeloadIndex is in functions/performanceEngine.js. The verify script does not byte-check this one function, but every function deployed from the same upload.)_ **Deployed-source spot-check (do first).** Console →
       `weeklyPerformanceRollup` source contains `deloadLoadScore` and
       `priorDeloadIndex`.
-- [ ] **New docs carry the field.** After the next rollup, a perf doc has
+- [x] _(Proven 2026-10-17: src/lib/**tests**/singleDisciplineWeek.test.ts 'changes nothing for a week that trained both, or neither' runs on the server perfScoring.js and the client copy. functions/**tests**/performanceEngine.test.js 'persists deloadIndex so next week can compare like with like' pins deloadIndex in perfDoc. Deployed (run 39063239262).)_ **New docs carry the field.** After the next rollup, a perf doc has
       `deloadIndex`. For a both-disciplines week it must EQUAL
       `performanceIndex`; only a single-discipline week may differ.
 - [ ] **No new nag.** The sustained trigger compares against the prior two
@@ -1792,18 +1796,18 @@ apart indefinitely; a compliant Pro cutter four windows in scored 45.5 on the
 calorie factor instead of 100. The server now resolves the target through the
 same precedence the client uses.
 
-- [ ] **Deployed-source spot-check (do first).** Console →
+- [x] _(Proven 2026-10-17: In commit 0b6e7b98, functions/performanceEngine.js has require("./lib/calorieTargetResolution"), pinned by performanceEngine.test.js 'resolves the scoring target from the profile and its effective tier'. Run 39063239262 logged a successful update for weeklyPerformanceRollup and dailyPerformanceRefresh from that one upload.)_ **Deployed-source spot-check (do first).** Console →
       `weeklyPerformanceRollup` and `dailyPerformanceRefresh` source contains
       `require("./lib/calorieTargetResolution")`. A `.js` change, so the
       bundle-hash dedup should not bite — verify anyway (CI-green is
       necessary-not-sufficient).
-- [ ] **A Pro user on a learned target scores against it.** Spot-check a user
+- [x] _(Proven 2026-10-17: src/lib/**tests**/adaptiveTargetMirror.cross.test.ts: 'a Pro user on the learned target is scored against it', 'rejects the epoch seed anchor, which means never applied', 'a compliant Pro cutter scored 64 against the stale target, 100 against the shown one'. The wiring is pinned in performanceEngine.test.js. Deployed.)_ **A Pro user on a learned target scores against it.** Spot-check a user
       whose `adaptiveCapState.lastAppliedAt` is real (not the epoch anchor)
       and whose `lastApplied` differs from `targetCalories` by >10%: after the
       next rollup their `adherenceScore` should reflect intake measured
       against `lastApplied`. Pre-fix, eating the displayed target read as a
       miss.
-- [ ] **Free and manual-override users are unchanged.** The overwhelming
+- [x] _(Proven 2026-10-17: adaptiveTargetMirror.cross.test.ts: 'a free user is scored against the formula target' (covers a lapsed Pro with a surviving capState), 'a manual override outranks a learned value', 'nothing changes for the users who were never on a learned target'.)_ **Free and manual-override users are unchanged.** The overwhelming
       majority. A free user (or one with `customCalorieTarget` set) must still
       score against `targetCalories` even when a stale `adaptiveCapState`
       survives on their profile from a lapsed Pro period.
@@ -1817,9 +1821,9 @@ same precedence the client uses.
 
 Affects: `functions/index.js` (`onWorkoutCreated` / `onRunCreated` now call `applyPartnerActivity`), new `functions/lib/partnerStreakEngine.js` + `functions/lib/partnerStreakPersist.js`. Deploys via `deploy-functions.yml`. The server is now the SOLE writer of `partnerBonds` streak state.
 
-- [ ] **Deployed-source spot-check (do first).** In the Console (`console.cloud.google.com/functions/details/us-central1/onWorkoutCreated/source` and `…/onRunCreated/source`), confirm the deployed bundle contains `applyPartnerActivity` and the `require("./lib/partnerStreakPersist")`. CI-green is necessary-not-sufficient (the dedup/bundle-hash gotcha) — though this is a `.js` change so dedup shouldn't bite, verify anyway.
+- [x] _(Proven 2026-10-17: Run 39063239262 logged 'Verified deployed source: onWorkoutCreated' and 'onRunCreated' (index.js byte-identical). main's index.js:57-59 requires ./lib/partnerStreakPersist, and lines 4574 and 4699 call applyPartnerActivity.)_ **Deployed-source spot-check (do first).** In the Console (`console.cloud.google.com/functions/details/us-central1/onWorkoutCreated/source` and `…/onRunCreated/source`), confirm the deployed bundle contains `applyPartnerActivity` and the `require("./lib/partnerStreakPersist")`. CI-green is necessary-not-sufficient (the dedup/bundle-hash gotcha) — though this is a `.js` change so dedup shouldn't bite, verify anyway.
 - [ ] **First real shared day counts.** With two test accounts that mutually follow + have a bond, log a workout (or run) as A, then as B on the same local day. Confirm the `partnerBonds/<id>` doc flips `streak: 0 → 1` and `lastSharedDay` to today, and `onWorkoutCreated`/`onRunCreated` logs show no `applyPartnerActivity: error`.
-- [ ] **Same-day re-log is a no-op write.** Log a SECOND workout as A on the same day; confirm the bond doc's `updateTime` does NOT change (the engine's MAX-idempotency + the changed-guard skip the write).
+- [x] _(Proven 2026-10-17: functions/**tests**/partnerStreakPersist.test.js 'is idempotent on a same-day re-log (no second write)'. Deployed source verified (run 39063239262).)_ **Same-day re-log is a no-op write.** Log a SECOND workout as A on the same day; confirm the bond doc's `updateTime` does NOT change (the engine's MAX-idempotency + the changed-guard skip the write).
 - [ ] **Ineligible run doesn't count.** Save an `isInvalid` / `savedAnyway` / sub-threshold run; confirm the bond's `lastActive` does NOT update (gated on the same eligibility predicate as challenges).
 - [x] **Freeze ledger uses Monday weeks** — covered, by composition rather
       than by one test, which is why it did not look covered. Three links,
@@ -1859,13 +1863,13 @@ coach rows below are superseded — replace them with:**
       every cover photo and on a space without one; Leave asks first; an
       empty space's "Share your last session" opens the composer with that
       session attached.
-- [ ] ~~**Deployed-source spot-check (do first).** Console → `weeklyCoachPrompts` source contains `require("./lib/coachPrompts")`; `toggleSpacePostLikeCallable` source contains `spacePostEngagement`.~~ Superseded; the `spacePostEngagement` half still applies.
-- [ ] ~~**First Monday firing (04:00-07:00 UTC window).**~~ Superseded: the job no longer exists.
+- [x] _(Proven 2026-10-17: The coach half is obsolete (weeklyCoachPrompts deleted). For the spacePostEngagement half, run 39063239262 logged 'Verified deployed source: addSpacePostCommentCallable', which byte-checks lib/spacePostEngagement.js and index.js, and 'functions[toggleSpacePostLikeCallable] Successful update operation' from the same upload.)_ ~~**Deployed-source spot-check (do first).** Console → `weeklyCoachPrompts` source contains `require("./lib/coachPrompts")`; `toggleSpacePostLikeCallable` source contains `spacePostEngagement`.~~ Superseded; the `spacePostEngagement` half still applies.
+- [x] _(No longer applies, 2026-10-17: weeklyCoachPrompts no longer exists on main (no match in functions/). The prune was confirmed in deploy run 36310769458 (2026-09-27), and the backlog's own [x] row records it.)_ ~~**First Monday firing (04:00-07:00 UTC window).**~~ Superseded: the job no longer exists.
 - [ ] **Like round-trip on device.** Tap the flame on a space post → fills coral + count bumps instantly; kill the app, reopen → state persisted (server txn landed). Re-tap → count returns. A second account liking YOUR post lands a coral `space_post_like` tray row that deep-links to the space.
 - [ ] **Comment round-trip on device.** Comment on another account's post → author gets the `space_post_comment` tray row → tapping it opens the space. Delete your own comment → count decrements. (A comment on a retired COACH post, reachable only from an older build, must still produce NO notification.)
 - [ ] **Race identity opt-in.** With a race goal set, the bound race space shows the "Show on your profile" toggle (and ONLY there — other race spaces must not). Toggle on → your profile shows "Training for {race} · N wks" in coral, linking to the space. Toggle off → chip gone. After race day passes, the chip must disappear ON ITS OWN (display gate) even if the toggle was left on.
 - [ ] **Communities feed source.** Feed → source sheet → "My communities": joined-space posts newest-first under space-name eyebrows; empty states are the join prompt (no spaces) or the quiet-week line (spaces joined, nothing posted) — never a blank column. Pull-to-refresh refetches this stream while active.
-- [ ] **Rules deploys landed.** Firebase Console → Firestore Rules contains `match /likes/{likeUid}`, `match /comments/{commentId}` (both read-only), and the `trainingForSpaceId` value gate on the public profile. Three rules deploys shipped today — verify the LAST one is live.
+- [x] _(Proven 2026-10-17: Run 39063239262 'firestore / deploy' passed 'Verify active Firestore Rules source' (scripts/verify_deployed_rules.py compares the live ruleset to firestore.rules). main's firestore.rules has match /likes/{likeUid} (l.1316), match /comments/{commentId} (l.1326) and the trainingForSpaceId value gate (l.590-599). No rules diff since.)_ **Rules deploys landed.** Firebase Console → Firestore Rules contains `match /likes/{likeUid}`, `match /comments/{commentId}` (both read-only), and the `trainingForSpaceId` value gate on the public profile. Three rules deploys shipped today — verify the LAST one is live.
 
 ## A removed post leaves every feed (`onActivityDeleted`, 2026-09-28)
 
@@ -1924,11 +1928,11 @@ sign-in, the more private answer winning.
       refused (put back, with a toast) and keeps its answers on the device.
       Released by run 36610165567 (2026-09-29); the live ruleset matched
       `firestore.rules` by SHA-256.
-- [ ] **One answer on every device.** Set Runs to Never in Settings on the
+- [x] _(Proven 2026-10-17: src/lib/**tests**/shareDefaultsAccount.test.tsx: 'Settings saves it on users/{uid}, one field per type, and a device that had 'public' saved no longer auto-posts', and 'a finish screen acts on a change another device made while this one kept the app open'. The rules allowing it are live (row 1921 [x], and the run 39063239262 rules verify).)_ **One answer on every device.** Set Runs to Never in Settings on the
       web, then finish a run on a phone that had the app open since before:
       nothing is posted, and the finish screen offers its one-off share
       button instead.
-- [ ] **A phone's old answer moves.** On a phone that answered on an older
+- [x] _(Proven 2026-10-17: shareDefaultsAccount.test.tsx 'moving a device's own answers to the account': 'moves an answer the account does not have, then forgets it', 'keeps the account's answer when the device's is less private', 'moves the device's answer when it is more private', 'offline, applies the device's answer without moving it, and moves it once online'.)_ **A phone's old answer moves.** On a phone that answered on an older
       build, open the app online after updating: Settings on the web shows
       that answer, or the account's own where it was more private.
 
@@ -1936,7 +1940,7 @@ sign-in, the more private answer winning.
 
 Affects: `functions/lib/challengeDefs.js` (new `global-monthly-*` hybrid definition), `functions/index.js` (`onWorkoutCreated` / `onRunCreated` now sync `hybrid_score`). Deploys via `deploy-functions.yml`. The daily `rolloverChallenges` cron materialises the new challenge doc; the trigger sync feeds it.
 
-- [ ] **Deployed-source spot-check (do first).** In the Console (`…/onRunCreated/source`), confirm the bundle contains `"hybrid_score"` in a `syncChallengeProgress` call. Per the dedup gotcha — `.js` change, dedup shouldn't bite, but verify.
+- [x] _(Proven 2026-10-17: The literal check is outdated: hybrid_score moved into functions/lib/challengeBackfill.js runChallengeIncrements/workoutChallengeIncrements, which index.js loops over (pinned by challengeBackfill.test.js 'onWorkoutCreated and onRunCreated iterate the increments helpers'). Run 39063239262 verified the deployed onRunCreated/onWorkoutCreated index.js byte-identical.)_ **Deployed-source spot-check (do first).** In the Console (`…/onRunCreated/source`), confirm the bundle contains `"hybrid_score"` in a `syncChallengeProgress` call. Per the dedup gotcha — `.js` change, dedup shouldn't bite, but verify.
 - [ ] **Rollover materialises it.** After the next 00:05 UTC `rolloverChallenges`, confirm `challenges/global-monthly-<YYYY-MM-01>` exists with `metric: "hybrid_score"`, `participantCount: 0`.
 - [ ] **Hybrid accrues from BOTH disciplines.** Join the global challenge, log a run (≥threshold) and a workout with volume; confirm the participant `currentValue` increases by ≈`km×100` (run) + `kg×0.1` (workout). Two separate sessions → two increments (different `applied/<sourceId>` markers).
 - [ ] **Autumn Push revival (Sep–Nov only).** The seasonal `hybrid_score` challenge that previously never progressed should now accrue identically — spot-check during its window.
@@ -1986,7 +1990,7 @@ shared (pinned by the "profile:" cases in `firestore.rules.test.ts`).
 - [ ] **Follow from a post** on Explore: the link turns to "Following",
       the line over the feed counts the follow, and the person's other
       posts lose their Follow link at the same moment.
-- [ ] **Race chips:** the country sheet, the distance chips, and "Clear
+- [x] _(Proven 2026-10-17: src/features/spaces/**tests**/SpacesDirectory.test.tsx "keeps filters visible through no matches and recovers across countries" on main. It opens the Country sheet, picks Germany, checks the sheet closes, picks the Half distance chip, reaches "No matching races" and then "Clear filters" restores both races.)_ **Race chips:** the country sheet, the distance chips, and "Clear
       filters" from no matches.
 - [ ] **Share your week** from the recap's first card exports a card with
       last week's numbers.
@@ -2033,14 +2037,14 @@ kg and cm whatever was chosen.
       operation for `onFollowerCreated`, and successful update operations for
       the senders (`toggleKudosCallable`, `addCommentCallable`, the two
       space-post callables, `onGoalSpaceEventCreated`).
-- [ ] **A switch stops its kind.** With two accounts: A turns Props off and
+- [x] _(Proven 2026-10-17: Proven link by link. (1) Client write: ActivityNotificationsGroup.test.tsx plus notificationPreferences.cross.test.ts pin the client keys to the server's. (2) Rules: ticked row above, run 36916879108. (3) Server gate: functions/**tests**/socialFanout.test.js "skips each kind whose switch is off, and only that kind" (kudos->kudos, with a matching delivery for each case). toggleKudosCallable sends type "kudos" through socialFanout.createNotification (functions/index.js ~6328). (4) Deployed: ticked deploy row, run 36916879108, update op for toggleKudosCallable.)_ **A switch stops its kind.** With two accounts: A turns Props off and
       B gives one of A's posts props; nothing new under A's bell. A turns it
       back on and B gives props on another post; it arrives.
-- [ ] **New followers.** A turns New followers on and B follows A: "B
+- [x] _(Proven 2026-10-17: functions/**tests**/integration/followerNotification.test.js runs the real onFollowerCreated trigger against the emulator. All 3 cases passed in emulator-tests run 39073527575 (2026-10-17): off by default, off when the switch is off, and one row (id follow_<uid>) however often the trigger runs. The trigger path followers/{uid}/users/{followerUid} matches the client write in socialApi.ts. NotificationsSheet.test.tsx renders "Robin started following you". The create op was deployed in run 36916879108.)\_ **New followers.** A turns New followers on and B follows A: "B
       started following you" under A's bell, in one row however often B
       unfollows and follows again. With the switch off (the default),
       nothing.
-- [ ] **Pounds and feet on Profile.** With lb and ft chosen, Profile shows
+- [x] _(Proven 2026-10-17: src/components/settings/**tests**/ProfileInfoSection.test.tsx, "weight and height in the chosen units" block: "shows pounds, and saves what is typed in pounds as kg" (weightKg 72.57), "shows feet and inches, and saves them as cm" (heightCm 182.9), plus no-rounding and range cases. A lb/ft edit writes the same weightKg/heightCm through the same updateProfile call as a kg edit, so the calorie target follows the same path.)_ **Pounds and feet on Profile.** With lb and ft chosen, Profile shows
       the weight in pounds and the height in feet and inches. Change both
       and check the calorie target moves as it does for a kg edit.
 
@@ -2062,12 +2066,12 @@ on the phone and failed the save as "Check your connection". "Prefer not to
 say" was dropped by the server. The review showed cm to a feet-and-inches
 user. The plan's start weight was overwritten.
 
-- [ ] **Functions before the client.** `completeOnboarding` must drop its
+- [x] _(Proven 2026-10-17: Deploy production run 36984078331 (#2553 merge a81a37db, 2026-10-02). functions/deploy logged "completeOnboarding Successful update operation" at 08:34:02Z and "Verified deployed source: completeOnboarding" at 08:35:40Z. Hosting started at 08:35:47Z, after both. The check is gone on main (functions/index.js ~712, comment in its place). `gh run list -w deploy-ios.yml` returns no runs, so CI never made a TestFlight build from the branch.)_ **Functions before the client.** `completeOnboarding` must drop its
       verified-email check before a build without the verify screen reaches
       anyone, or an unverified email account cannot finish setup. Deploy
       production releases Functions before Hosting; a TestFlight build made
       from the branch before the merge is the case to avoid.
-- [ ] **Deploy verification.** The functions deploy log shows a successful
+- [x] _(Proven 2026-10-17: Run 36984078331, job 110766224059 (functions / deploy): "✔ functions[completeOnboarding(us-central1)] Successful update operation." at 2026-10-02T08:34:02Z. The bundle marker is "// CI build: a81a37db…" and the source read-back passed.)_ **Deploy verification.** The functions deploy log shows a successful
       update operation for `completeOnboarding`.
 - [ ] **An email sign-up on a phone:** no wall before the questions, the
       link arrives during onboarding, and after tapping it in Mail and
@@ -2185,8 +2189,8 @@ Why gated: `storage.rules` now reads Firestore (`accountDeletionRequests` / `del
 
 Rollout sequence (operator, not agent) — do these in order, ideally after packet 10's Functions deploy:
 
-- [ ] ~~**Grant cross-service access.** Run `firebase deploy --only storage --project adaptive-fitness-af8bb` **from a project-owner machine** and approve the Firebase prompt that lets Storage Rules read Firestore. (This first deploy is intentionally a human action — do not try to route the approval through the CI service account.)~~ Superseded by the STATUS above: CI released the rules first, so this command no longer prompts.
-- [ ] **Verify the freeze on a NON-production project first:** seed an `accountDeletionRequests/<uid>` doc with `status: "running"` (or a `deletedAccounts/<uid>` tombstone) and confirm an owner upload/delete to `progress-photos/<uid>/…` is denied, while reads still succeed and a user with no deletion record can still upload.
+- [x] _(No longer applies, 2026-10-17: Struck through in the row itself and superseded by the STATUS 2026-09-27/28 notes. CI released the rules first (run 34976838538), and Deploy production run 36443298145's "Confirm Storage rules can read Firestore" check found the role in place. Every backend release re-runs scripts/verify_storage_rules_iam.py.)_ ~~**Grant cross-service access.** Run `firebase deploy --only storage --project adaptive-fitness-af8bb` **from a project-owner machine** and approve the Firebase prompt that lets Storage Rules read Firestore. (This first deploy is intentionally a human action — do not try to route the approval through the CI service account.)~~ Superseded by the STATUS above: CI released the rules first, so this command no longer prompts.
+- [x] _(Proven 2026-10-17: These 12 cases no longer skip. Firebase Emulator Tests run 39073527575 (main 4fdf5a12, 2026-10-17) ran storage.rules.test.ts with REQUIRE_STORAGE_EMULATOR=1 and REQUIRE_FIRESTORE_EMULATOR=1 on demo-tropos: "account-deletion write freeze (12)" passed, 29/29, none skipped. The 12 are 4 prefixes × (active deletion denies write/delete but read works; tombstone freezes; requested/cancelled/no-tombstone keep write access). The 2026-08-02 audit's objection was that they self-skipped, which no longer happens in CI.)_ **Verify the freeze on a NON-production project first:** seed an `accountDeletionRequests/<uid>` doc with `status: "running"` (or a `deletedAccounts/<uid>` tombstone) and confirm an owner upload/delete to `progress-photos/<uid>/…` is denied, while reads still succeed and a user with no deletion record can still upload.
 - [x] **(Optional) re-enable CI auto-deploy** — set 2026-09-15, between the first attempt of run 34976838538 (deploy skipped) and its re-run (deployed). For future storage.rules changes: set the repo variable `STORAGE_XSERVICE_APPROVED=true` (GitHub → Settings → Secrets and variables → Actions → Variables). Until then the ONLY way to ship a storage-rules change is the manual `firebase deploy` above — **re-running Deploy production (`workflow_dispatch`) does not work as an escape hatch here**, unlike for functions. The `deploy` job's `if: vars.STORAGE_XSERVICE_APPROVED == 'true'` is evaluated for dispatch runs too, so a manual re-run skips the deploy and still reports green. (This doc line claimed the opposite until 2026-07-26; an operator following it in an incident would have believed the rules shipped when nothing had.) The `report-not-deployed` job now fails on any gated run so the skip is legible instead of silent.
 - [x] Spot-check the deployed rule in the Firebase Console (Storage → Rules) contains `isDeletionWriteFrozen`. Automated: each backend release's `Verify active Storage Rules source` step matches the live ruleset to `storage.rules`, which carries it.
 
