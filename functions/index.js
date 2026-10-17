@@ -1567,7 +1567,8 @@ exports.analyzeFoodText = functions
         }
 
         // F1b — daily text-AI scan quota. Independent of image_ai
-        // (lock pin #7). Free=10/day, Pro=100/day server-side cap.
+        // (lock pin #7). Free=0 (no AI on the free plan),
+        // Pro=100/day server-side cap.
         const quota = await aiScanQuota.checkDailyAiQuota(admin.firestore(), {
           uid: authUser.uid,
           action: aiScanQuota.ACTION_TEXT_AI,

@@ -33,8 +33,9 @@ import { describe, it, expect } from "vitest";
 import { DAILY_AI_LIMITS } from "@/lib/subscription";
 
 /** The composer's gate, transcribed. */
+const gate = (isUnlimited: boolean, limit: number) => !isUnlimited && limit > 0;
 const captionRenders = (isUnlimited: boolean, action: "image_ai" | "text_ai") =>
-  !isUnlimited && DAILY_AI_LIMITS[isUnlimited ? "pro" : "free"][action] > 0;
+  gate(isUnlimited, DAILY_AI_LIMITS[isUnlimited ? "pro" : "free"][action]);
 
 describe("ScanQuotaIndicator reachability on the Food surface", () => {
   it("is unreachable for image_ai — the action Food.tsx actually uses", () => {
@@ -57,11 +58,13 @@ describe("ScanQuotaIndicator reachability on the Food surface", () => {
     expect(DAILY_AI_LIMITS.pro.image_ai).toBeGreaterThan(0);
   });
 
-  it("would be reachable for text_ai, which nothing renders it with", () => {
+  it("would be reachable with any free allowance at all", () => {
     /* The paired positive: the gate is satisfiable in principle, so the
        result above is a fact about the limits table and not about a
-       condition that could never hold for any input. */
-    expect(captionRenders(false, "text_ai")).toBe(true);
-    expect(DAILY_AI_LIMITS.free.text_ai).toBeGreaterThan(0);
+       condition that could never hold for any input. The free plan has
+       no AI of either kind (#1102), so neither action reaches it today. */
+    expect(gate(false, 1)).toBe(true);
+    expect(captionRenders(false, "text_ai")).toBe(false);
+    expect(DAILY_AI_LIMITS.free.text_ai).toBe(0);
   });
 });

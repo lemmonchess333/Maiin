@@ -3,7 +3,7 @@
  *
  * Pinned-by-test invariants (lock = F1b → B+C hybrid, 8 pins):
  *
- *   1. Free user + text_ai: 10/day, transactional increment.
+ *   1. Free user + text_ai: BLOCKED at 0 (no AI on the free plan, #1102).
  *   2. Free user + image_ai: BLOCKED at 0 (image-AI is Pro-only).
  *   3. Pro user + image_ai: 100/day server-side cap.
  *   4. Pro user + text_ai: 100/day server-side cap.
@@ -68,10 +68,10 @@ function makeFirestoreStub({ userData = null, usageData = null } = {}) {
 }
 
 describe("checkDailyAiQuota", () => {
-  it("Cycle 1 (tracer): free user + text_ai allowed under 10/day, increments counter", async () => {
+  it("Cycle 1 (tracer): pro user + text_ai allowed, increments counter", async () => {
     const { checkDailyAiQuota } = require("../lib/aiScanQuota");
     const { firestore, writes } = makeFirestoreStub({
-      userData: { subscriptionTier: "free" },
+      userData: { subscriptionTier: "pro" },
       usageData: null, // first call ever
     });
     const now = new Date("2026-05-25T15:00:00Z");
@@ -81,12 +81,29 @@ describe("checkDailyAiQuota", () => {
       now,
     });
     expect(result.allowed).toBe(true);
-    expect(result.limit).toBe(10);
-    expect(result.remaining).toBe(9);
-    expect(result.tier).toBe("free");
+    expect(result.limit).toBe(100);
+    expect(result.remaining).toBe(99);
+    expect(result.tier).toBe("pro");
     expect(writes).toHaveLength(1);
     expect(writes[0].data.text_ai).toEqual({ day: "2026-05-25", count: 1 });
     expect(writes[0].opts).toEqual({ merge: true });
+  });
+
+  it("Cycle 1 (free): free user + text_ai is blocked at 0 — no AI on the free plan (#1102)", async () => {
+    const { checkDailyAiQuota } = require("../lib/aiScanQuota");
+    const { firestore, writes } = makeFirestoreStub({
+      userData: { subscriptionTier: "free" },
+    });
+    const result = await checkDailyAiQuota(firestore, {
+      uid: "uid_alice",
+      action: "text_ai",
+      now: new Date("2026-05-25T15:00:00Z"),
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.limit).toBe(0);
+    expect(result.remaining).toBe(0);
+    expect(result.tier).toBe("free");
+    expect(writes).toHaveLength(0);
   });
 
   it("Cycle 2: free user + image_ai is blocked at 0 (lock: image-AI is Pro-only)", async () => {
@@ -181,8 +198,8 @@ describe("checkDailyAiQuota", () => {
     const { checkDailyAiQuota } = require("../lib/aiScanQuota");
     // User maxed out yesterday but it's now a fresh day.
     const { firestore } = makeFirestoreStub({
-      userData: { subscriptionTier: "free" },
-      usageData: { text_ai: { day: "2026-05-24", count: 10 } },
+      userData: { subscriptionTier: "pro" },
+      usageData: { text_ai: { day: "2026-05-24", count: 100 } },
     });
     const result = await checkDailyAiQuota(firestore, {
       uid: "uid_frank",
@@ -190,7 +207,7 @@ describe("checkDailyAiQuota", () => {
       now: new Date("2026-05-25T00:01:00Z"),
     });
     expect(result.allowed).toBe(true);
-    expect(result.remaining).toBe(9);
+    expect(result.remaining).toBe(99);
   });
 
   it("Cycle 6 (timezone): user in Pacific/Auckland gets midnight reset 12h ahead of UTC user", async () => {
@@ -217,10 +234,10 @@ describe("checkDailyAiQuota", () => {
     // "2026-05-25" should be ignored because today is "2026-05-26".
     const { firestore } = makeFirestoreStub({
       userData: {
-        subscriptionTier: "free",
+        subscriptionTier: "pro",
         timezone: "Pacific/Auckland",
       },
-      usageData: { text_ai: { day: "2026-05-25", count: 10 } },
+      usageData: { text_ai: { day: "2026-05-25", count: 100 } },
     });
     const result = await checkDailyAiQuota(firestore, {
       uid: "uid_grace",
@@ -228,7 +245,7 @@ describe("checkDailyAiQuota", () => {
       now: new Date("2026-05-25T13:00:00Z"),
     });
     expect(result.allowed).toBe(true);
-    expect(result.remaining).toBe(9);
+    expect(result.remaining).toBe(99);
   });
 
   it("Cycle 7: invalid timezone falls back to UTC (fail-closed, not silent-grant)", () => {
@@ -265,7 +282,7 @@ describe("checkDailyAiQuota", () => {
   it("Cycle 9: legacy {count, month} doc shape is treated as fresh window (no migration needed)", async () => {
     const { checkDailyAiQuota } = require("../lib/aiScanQuota");
     const { firestore, writes } = makeFirestoreStub({
-      userData: { subscriptionTier: "free" },
+      userData: { subscriptionTier: "pro" },
       // Pre-F1b shape — does NOT have action-keyed sub-objects.
       usageData: { count: 7, month: "2026-05" },
     });
@@ -275,7 +292,7 @@ describe("checkDailyAiQuota", () => {
       now: new Date("2026-05-25T15:00:00Z"),
     });
     expect(result.allowed).toBe(true);
-    expect(result.remaining).toBe(9); // fresh — 1 of 10 used today
+    expect(result.remaining).toBe(99); // fresh — 1 of 100 used today
     // Write adds the new action-keyed field; merge:true means the
     // legacy fields stay until naturally aged out (no migration
     // script needed).
@@ -314,6 +331,6 @@ describe("checkDailyAiQuota", () => {
     });
     expect(result.allowed).toBe(false);
     expect(result.error).toBe("quota-check-failed");
-    expect(result.limit).toBe(10); // free fallback
+    expect(result.limit).toBe(0); // free fallback
   });
 });

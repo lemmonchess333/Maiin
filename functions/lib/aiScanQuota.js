@@ -5,10 +5,11 @@
  *
  *   action     | free / day | pro / day | Notes
  *   -----------|------------|-----------|----------------------------------
- *   text_ai    | 10         | 100       | Pro user-facing copy says
- *               |            |           | "unlimited"; 100 is the
- *               |            |           | server-side abuse-protection cap.
+ *   text_ai    | 0          | 100       | 100 is the server-side
+ *               |            |           | abuse-protection cap.
  *   image_ai   | 0          | 100       | Image-AI is Pro-only (free=0).
+ *
+ * The free plan has no AI: Apple's 7-day trial is how someone tries it.
  *
  * Window: 24 h, anchored to the user's LOCAL midnight when a
  * `timezone` field is set on the user doc (IANA name, e.g.
@@ -57,7 +58,7 @@ const ACTION_IMAGE_AI = "image_ai";
 const VALID_ACTIONS = Object.freeze([ACTION_TEXT_AI, ACTION_IMAGE_AI]);
 
 const DAILY_LIMITS = Object.freeze({
-  free: { text_ai: 10, image_ai: 0 },
+  free: { text_ai: 0, image_ai: 0 },
   pro: { text_ai: 100, image_ai: 100 },
 });
 

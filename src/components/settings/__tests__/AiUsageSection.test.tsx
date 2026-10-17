@@ -2,7 +2,8 @@
  * F1b lock pin #6 — Settings daily-usage pill tests.
  *
  * Pinned behaviours:
- *   1. Free user — shows text-AI counter + "Image is Pro-only" hint.
+ *   1. Free user — no counters (no AI on the free plan, #1102); says AI
+ *      food logging is part of Pro.
  *   2. Free user — whole row is a button; tap routes to /upgrade.
  *   3. Pro user — shows both counters; no upgrade CTA.
  *   4. Pro user — row is non-interactive (no button role).
@@ -81,28 +82,23 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("AiUsageSection — Sub1a F1b lock pin #6", () => {
-  it("Cycle 1: free user shows text-AI counter + 'Image is Pro-only' hint", () => {
-    useScanUsageMock.mockImplementation((action) => {
-      if (action === "text_ai") {
-        return makeUsage({ used: 3, limit: 10 }, "text_ai");
-      }
-      return makeUsage({ used: 0, limit: 0 }, "image_ai"); // free image limit
-    });
+  it("Cycle 1: free user sees that AI food logging is part of Pro, with no counters", () => {
+    useScanUsageMock.mockImplementation((action) =>
+      makeUsage({ used: 0, limit: 0 }, action)
+    );
     renderSection();
-    expect(screen.getByText(/AI usage today/)).toBeTruthy();
-    expect(screen.getByText(/Text: 3 \/ 10/)).toBeTruthy();
-    expect(screen.getByText(/Image is Pro-only/)).toBeTruthy();
+    expect(screen.getByText("AI food logging")).toBeTruthy();
+    expect(screen.getByText(/is part of Pro/)).toBeTruthy();
+    expect(screen.queryByText(/Text:/)).toBeNull();
+    expect(screen.queryByText(/ \/ 0/)).toBeNull();
   });
 
   it("Cycle 2: free user — whole row is a button; tap navigates to the offer page, tagged as Settings", () => {
     useScanUsageMock.mockImplementation((action) =>
-      makeUsage(
-        action === "text_ai" ? { used: 5, limit: 10 } : { used: 0, limit: 0 },
-        action
-      )
+      makeUsage({ used: 0, limit: 0 }, action)
     );
     renderSection();
-    const row = screen.getByRole("button", { name: /AI usage today/ });
+    const row = screen.getByRole("button", { name: /AI food logging/ });
     fireEvent.click(row);
     expect(navigateMock).toHaveBeenCalledWith("/upgrade?from=settings");
   });
@@ -158,12 +154,14 @@ describe("AiUsageSection — Sub1a F1b lock pin #6", () => {
   it("Cycle 7: counter text uses tabular-nums for alignment", () => {
     useScanUsageMock.mockImplementation((action) =>
       makeUsage(
-        action === "text_ai" ? { used: 3, limit: 10 } : { used: 0, limit: 0 },
+        action === "text_ai"
+          ? { used: 3, limit: 100, isUnlimited: true }
+          : { used: 0, limit: 100, isUnlimited: true },
         action
       )
     );
     renderSection();
-    const counter = screen.getByText(/Text: 3 \/ 10/);
+    const counter = screen.getByText(/Text: 3 \/ 100/);
     expect(counter.className).toMatch(/tabular-nums/);
   });
 });

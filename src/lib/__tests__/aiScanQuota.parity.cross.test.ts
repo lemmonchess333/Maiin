@@ -30,13 +30,13 @@ describe("AI scan quota — client DAILY_AI_LIMITS ↔ server DAILY_LIMITS parit
   // (which the equality test alone would pass) still surfaces in review.
   it("pins the locked F1b tiers/actions", () => {
     expect(DAILY_AI_LIMITS).toEqual({
-      free: { text_ai: 10, image_ai: 0 },
+      free: { text_ai: 0, image_ai: 0 },
       pro: { text_ai: 100, image_ai: 100 },
     });
   });
 
-  it("keeps image AI Pro-only (free = 0 drives the upgrade CTA)", () => {
-    expect(DAILY_AI_LIMITS.free.image_ai).toBe(0);
-    expect(DAILY_LIMITS.free.image_ai).toBe(0);
+  it("keeps AI Pro-only (free = 0 drives the upgrade CTA; #1102)", () => {
+    expect(DAILY_AI_LIMITS.free).toEqual({ text_ai: 0, image_ai: 0 });
+    expect(DAILY_LIMITS.free).toEqual({ text_ai: 0, image_ai: 0 });
   });
 });
