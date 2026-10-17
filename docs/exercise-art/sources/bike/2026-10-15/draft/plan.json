@@ -1,0 +1,43 @@
+{
+  "exerciseId": "bike",
+  "name": "Stationary Bike",
+  "status": "Outside-repository two-opposed-position candidate; native/equipment/independent/mobile/card/release checks pending",
+  "canonicalReference": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\identity\\athlete-anatomy-v3.png",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "ownerAuthorization": "Root applies the owner's earlier slight relaxation to an honest two-position guide, preserving model/equipment/contact standards. No new request or retry of the blocked front phase.",
+  "physicalPoses": 2,
+  "separateBeatPaths": 6,
+  "sourcePoseOrder": [1, 1, 2, 2, 1, 1],
+  "positionCoordinates": [0, 0, 0.5, 0.5, 0, 0],
+  "positionCoordinateMeaning": "Two representative opposed positions, not calibrated crank angles or evidence of a sampled forward trajectory. Display stepping uses original images; no in-between human pose is synthesized.",
+  "authoredSetupInstructions": [
+    "Adjust the seat so your leg has a slight bend at the bottom of the pedal.",
+    "Sit with a neutral spine, grip the bars loosely."
+  ],
+  "retainedCatalogueInstructions": [
+    "Adjust the seat so your leg has a slight bend at the bottom of the pedal.",
+    "Sit with a neutral spine, grip the bars loosely.",
+    "Pedal at a steady cadence, adjusting resistance to hit your target effort.",
+    "Keep the cadence smooth — no yanking up on the stroke."
+  ],
+  "primary": ["Quads"],
+  "secondary": ["Hamstrings"],
+  "muscleMapping": "Catalogue Cardio is an activity category, not a colourable anatomical region. Its listed Quads/Hamstrings are mapped as working quadriceps primary and hamstrings secondary. Unlisted existing calf colour is neutralized only inside existing source fields.",
+  "scope": "Two opposed seated pedalling positions repeated for cue reading. Intermediate crank travel is not shown. This is not claimed a smooth sampled revolution or six unique physical drawings.",
+  "limitations": [
+    "Upper far trainer/strap/pedal are naturally hidden by the original opaque housing; do not claim independent visible validation.",
+    "Small source head/torso contour variation and whole-scene registration tolerance are disclosed, not pixel-identical cross-pose anatomy.",
+    "No forward-trajectory/direction/continuous-revolution mechanics claim follows from two images.",
+    "First coarse-mask colour draft is held and preserved; corrected colour draft requires native and independent review."
+  ],
+  "anatomyTransforms": false,
+  "scale": 1,
+  "wholeSceneOffsets": [
+    [0, 0],
+    [-1, 16]
+  ],
+  "commonCrop": [48, 32, 977, 1464],
+  "productionRegistered": false,
+  "newImageRequests": 0,
+  "completionCredit": false
+}

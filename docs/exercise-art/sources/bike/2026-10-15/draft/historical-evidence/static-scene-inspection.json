@@ -1,0 +1,36 @@
+{
+  "status": "Diagnostic pair; visual motion/contact review required before acceptance",
+  "scope": "Stationary equipment areas constrain one whole-scene framing translation. No body fitting, scaling, limb fitting or warping.",
+  "wholeSceneTranslation": {
+    "x": -1,
+    "y": 16,
+    "cost": 8.832746996764554
+  },
+  "individualEquipmentDiagnostics": {
+    "frontMast": {
+      "cost": 3.8542192318474906,
+      "x": -3,
+      "y": 14
+    },
+    "frontBase": {
+      "cost": 7.687803965581743,
+      "x": -1,
+      "y": 15
+    },
+    "rearBase": {
+      "cost": 9.176756885090219,
+      "x": 2,
+      "y": 15
+    },
+    "baseBeam": {
+      "cost": 7.282586850416307,
+      "x": 1,
+      "y": 16
+    }
+  },
+  "nonBlackSourceClipped": false,
+  "sha256": {
+    "3-lower-direct-original.png": "d472dff2a1ecae8c2db250870f37e9611ddf72b3c72fcc1772c55ce0327ec2c8",
+    "6-upper-direct-original.png": "5ab3dda61201910648ef64c9e894e0e4a301aef5efb1c237ecbb746e6f54bfda"
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "exerciseId": "swimming",
+  "version": "anatomy-v3-2026-10-17-gemini-front-crawl-v1",
+  "width": 1264,
+  "height": 848,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Claude Code, session_015b5TWTtYEo43etRFZF8nJr",
+  "reviewedAt": "2026-10-17T13:39:01+00:00",
+  "reference": {
+    "path": "form-frames/swimming/2.webp",
+    "sha256": "f63e3fd3e9882676ab137d67d88f77ce2b94a212743b9e094138826dc6162bc0"
+  },
+  "cueSha256": "8518bb27027847fd0425b39f1264ed62ebc84b880771921aab1ad9a0520b2415",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Unverified. Observed: The canonical faceless anatomy-v3 athlete in every frame, seen on the contact sheet."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Unverified. Observed: One fixed side view at the water's surface in all six frames."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Unverified. Observed: No extra or missing limbs seen at contact-sheet size; not inspected at native size frame by frame."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Unverified. Observed: No equipment; one thin water line held at one height."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Contacts look plausible at contact-sheet size; no anchors were measured."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Unverified. Observed: The stroke runs catch, pull, breath and entry for each arm in turn."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Unverified. Observed: The colours follow the brief's strongest-purple and lilac hierarchy at contact-sheet size."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Each cue names the beat its frame shows."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Unverified. Observed: The six beats advance one step each through the stroke, 6 to 1 included, so the loop keeps swimming."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Not reviewed in the app's player at phone size; the owner reviewed contact sheets."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Not reviewed in the app's player at phone size; the owner reviewed contact sheets."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/swimming/1.webp",
+      "sha256": "a9b363e9b0549b672343fc07b7461db18696b164d54b8cc7d05b7d2069c9665a",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-17/1.png",
+        "sha256": "cac01596166f673bc667c1726e218c77bf5512b3b627d3935a0a42fc6a3aef3b",
+        "generatedSha256": "e0c11d1d243bc9d1cca862a30365e25c391a356a55795de812da11c51ec60843"
+      }
+    },
+    {
+      "path": "form-frames/swimming/2.webp",
+      "sha256": "f63e3fd3e9882676ab137d67d88f77ce2b94a212743b9e094138826dc6162bc0",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-17/2.png",
+        "sha256": "34dac2b421a8387522af13538970745261d3b398e58652459464e3f095b5391a",
+        "generatedSha256": "1c4044f2c5a0133e14d80fd793057626eb8169f9773995a1c5e3f9bab2f06342"
+      }
+    },
+    {
+      "path": "form-frames/swimming/3.webp",
+      "sha256": "cf27e09711e61f2de75ef21ed5aa9ad8a32be9ab2f28b93bd63b405ecdb5ab35",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-17/3.png",
+        "sha256": "f480b3e93ad5ee4db8061bb7c48d1e7e3459151061b3568f749c43f11e72d814",
+        "generatedSha256": "dc062da4ff7e0c70ae90670fe88ca0f9764805f61950303f77f186c8bbc65683"
+      }
+    },
+    {
+      "path": "form-frames/swimming/4.webp",
+      "sha256": "f9963b37ee84f6282bc4524b11593792051067b53c42a984c89eb2dff543e20e",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-17/4.png",
+        "sha256": "526ecdf95d170cb5ed33dac2dd9fc40e960133738b9443009bd6ac2de729ae05",
+        "generatedSha256": "b9c8dd7d0722c321b3f417b6be72e958993029e6bcf826a3108f263d15343da3"
+      }
+    },
+    {
+      "path": "form-frames/swimming/5.webp",
+      "sha256": "4ea89c16bf5405fb7276ed728f72a57f75a8d4800f08bb9f79c1b98928c90bba",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-17/5.png",
+        "sha256": "b22bf04b44b0003c89c961a77d914539d3ab9ea0a8d9f7d057bc1ad65b5358bf",
+        "generatedSha256": "2253e8eab7d7231f00fcd87389932b411733ffa6fff89e1c3acd5729fb5be30b"
+      }
+    },
+    {
+      "path": "form-frames/swimming/6.webp",
+      "sha256": "7f3767b57b1edb611b3ea0a31413a81574cc4f43e2502211a793b4edf7a964e6",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-17/6.png",
+        "sha256": "f23633f8c4035fe97dfb9c63bd36822d248b8ba567cf4035ff4de883feda19fc",
+        "generatedSha256": "c16920bad3d9eac61983335d285b8e12e3dc325b1e651bba63a587281e263416"
+      }
+    }
+  ],
+  "recordStage": "Owner release recorded; project verification, CI and merge remain separate gates",
+  "approval": {
+    "actor": "The owner, in this session",
+    "instruction": "\"Do the rest\", sent with a new Gemini key after the Turkish get-up and assault bike were released, where the owner had said \"it's ok if it's not perfect but I've been trying to release this for ages\".",
+    "context": "The owner asked for the exercises without art to be generated in the house style with their Gemini key. They had seen this set as a contact sheet earlier in the session, then asked for the remaining sets to be finished and released, knowing the findings below."
+  },
+  "findings": [
+    "The head of frames 1, 2, 4, 5 and 6 was edited down into the water in one image edit each (only the head and neck); frame 3 keeps the head up for the breath.",
+    "From the side, the two arms' beats look alike: frames 1 and 4, and 2 and 5, differ mainly in which arm is nearer.",
+    "The water is one thin line; there is no pool.",
+    "The card picture is cut from frame 2 with the water line removed (docs/exercise-art/cutout-sources/swimming.json); one pixel-sized speck remains where the line touches the toes.",
+    "No contacts or anchors were measured."
+  ],
+  "provenance": {
+    "method": "gemini-3-pro-image through scripts/art/gemini-image.py, with the canonical athlete attached to every generation. Frame 1 is a master and frames 2-6 are edits from the nearest beat. The head of frames 1, 2, 4, 5 and 6 was then edited down into the water, one edit each, asking for nothing else to change. Every frame is kept at the 1264 x 848 it came back at. Nothing was redrawn by hand.",
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  }
+}

@@ -1,0 +1,162 @@
+{
+  "method": "Actual floor-mount plate external silhouette maxRGB>30 within original source ROI60,1080,200,1120. Corners are observed material outline features, not ROI/canvas coordinates.",
+  "commonCrop": [41, 226, 959, 1262],
+  "frames": [
+    {
+      "frame": 1,
+      "anchors": {
+        "frontApex": {
+          "x": 73.0,
+          "y": 886.0
+        },
+        "rightCorner": {
+          "x": 152.0,
+          "y": 871.0
+        }
+      },
+      "invariantDimensions": {
+        "leftSlopingMountPlateEdge": 53.50934497823721,
+        "rightSlopingMountPlateEdge": 80.4114419718985
+      },
+      "observedOriginalSourceCorners": {
+        "leftCorner": [65.0, 1090.5],
+        "rightCorner": [193.0, 1097.0],
+        "frontApex": [114.0, 1112.0]
+      },
+      "notes": "Front apex moves0.5px/right corner1px; actual sloping edge lengths vary below1%. Articulated yoke pin and projected rotating shaft length are not invariants.",
+      "path": "form-frames/t-bar-row/1.webp",
+      "sha256": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+      "sourcePose": 1
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "frontApex": {
+          "x": 73.0,
+          "y": 886.0
+        },
+        "rightCorner": {
+          "x": 152.0,
+          "y": 871.0
+        }
+      },
+      "invariantDimensions": {
+        "leftSlopingMountPlateEdge": 53.50934497823721,
+        "rightSlopingMountPlateEdge": 80.4114419718985
+      },
+      "observedOriginalSourceCorners": {
+        "leftCorner": [65.0, 1090.5],
+        "rightCorner": [193.0, 1097.0],
+        "frontApex": [114.0, 1112.0]
+      },
+      "notes": "Front apex moves0.5px/right corner1px; actual sloping edge lengths vary below1%. Articulated yoke pin and projected rotating shaft length are not invariants.",
+      "path": "form-frames/t-bar-row/2.webp",
+      "sha256": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+      "sourcePose": 1
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "frontApex": {
+          "x": 73.5,
+          "y": 886.0
+        },
+        "rightCorner": {
+          "x": 153.0,
+          "y": 871.0
+        }
+      },
+      "invariantDimensions": {
+        "leftSlopingMountPlateEdge": 53.25645500782041,
+        "rightSlopingMountPlateEdge": 80.9027193609708
+      },
+      "observedOriginalSourceCorners": {
+        "leftCorner": [66.0, 1090.0],
+        "rightCorner": [194.0, 1097.0],
+        "frontApex": [114.5, 1112.0]
+      },
+      "notes": "Front apex moves0.5px/right corner1px; actual sloping edge lengths vary below1%. Articulated yoke pin and projected rotating shaft length are not invariants.",
+      "path": "form-frames/t-bar-row/3.webp",
+      "sha256": "04776e18e6ea03f6772056901fd78840a801572ff940cc74c53eaf59628966e4",
+      "sourcePose": 2
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "frontApex": {
+          "x": 73.5,
+          "y": 886.0
+        },
+        "rightCorner": {
+          "x": 153.0,
+          "y": 871.0
+        }
+      },
+      "invariantDimensions": {
+        "leftSlopingMountPlateEdge": 53.25645500782041,
+        "rightSlopingMountPlateEdge": 80.9027193609708
+      },
+      "observedOriginalSourceCorners": {
+        "leftCorner": [66.0, 1090.0],
+        "rightCorner": [194.0, 1097.0],
+        "frontApex": [114.5, 1112.0]
+      },
+      "notes": "Front apex moves0.5px/right corner1px; actual sloping edge lengths vary below1%. Articulated yoke pin and projected rotating shaft length are not invariants.",
+      "path": "form-frames/t-bar-row/4.webp",
+      "sha256": "04776e18e6ea03f6772056901fd78840a801572ff940cc74c53eaf59628966e4",
+      "sourcePose": 2
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "frontApex": {
+          "x": 73.0,
+          "y": 886.0
+        },
+        "rightCorner": {
+          "x": 152.0,
+          "y": 871.0
+        }
+      },
+      "invariantDimensions": {
+        "leftSlopingMountPlateEdge": 53.50934497823721,
+        "rightSlopingMountPlateEdge": 80.4114419718985
+      },
+      "observedOriginalSourceCorners": {
+        "leftCorner": [65.0, 1090.5],
+        "rightCorner": [193.0, 1097.0],
+        "frontApex": [114.0, 1112.0]
+      },
+      "notes": "Front apex moves0.5px/right corner1px; actual sloping edge lengths vary below1%. Articulated yoke pin and projected rotating shaft length are not invariants.",
+      "path": "form-frames/t-bar-row/5.webp",
+      "sha256": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+      "sourcePose": 1
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "frontApex": {
+          "x": 73.0,
+          "y": 886.0
+        },
+        "rightCorner": {
+          "x": 152.0,
+          "y": 871.0
+        }
+      },
+      "invariantDimensions": {
+        "leftSlopingMountPlateEdge": 53.50934497823721,
+        "rightSlopingMountPlateEdge": 80.4114419718985
+      },
+      "observedOriginalSourceCorners": {
+        "leftCorner": [65.0, 1090.5],
+        "rightCorner": [193.0, 1097.0],
+        "frontApex": [114.0, 1112.0]
+      },
+      "notes": "Front apex moves0.5px/right corner1px; actual sloping edge lengths vary below1%. Articulated yoke pin and projected rotating shaft length are not invariants.",
+      "path": "form-frames/t-bar-row/6.webp",
+      "sha256": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+      "sourcePose": 1
+    }
+  ]
+}

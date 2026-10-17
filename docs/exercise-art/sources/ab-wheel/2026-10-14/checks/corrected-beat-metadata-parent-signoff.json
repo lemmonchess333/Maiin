@@ -1,0 +1,30 @@
+{
+  "status": "parent-reviewed-t-only-position-metadata-correction",
+  "reviewer": "Parent Codex actual source, patch, visual carry-forward and terminal focused-test review",
+  "reviewedAt": "2026-10-14T23:13:59.636851+00:00",
+  "checks": {
+    "exactTOnlyCodeDiff": {
+      "passed": true,
+      "evidence": "Parent reviewed the saved exact original/current placard snapshots and five numeric substitutions. The helper reconstructed the entire current file from the historical reviewed bytes with only those substitutions; independent focused-run reconstruction agrees. All other image, card, registry, master and source bytes remain unchanged."
+    },
+    "poseCoordinateMeaning": {
+      "passed": true,
+      "evidence": "The actual Ab Wheel source order is1,2,3,3,2,1. Pose excursion must be0,.5,1,1,.5,0, rather than monotonic phase time. Parent inspected the bodyRig closure assertion and source semantics; the representative intermediate coordinate does not claim physically calibrated halfway wheel travel."
+    },
+    "framePlayerBehaviorAndVisualCarryForward": {
+      "passed": true,
+      "evidence": "Parent read ExerciseFormFrames and ExerciseRigDemo: the supplied-art player selects images by index and uses1200/2400ms timers, with no t consumption. Labels, cues, paths, order and all reviewed image bytes are unchanged. Parent also visually inspected the native Reach image again. Original light/dark/control screenshots remain historical visual evidence; no post-correction browser run or corrected-t review is retroactively claimed."
+    },
+    "normalFocusedChecks": {
+      "passed": true,
+      "evidence": "Parent read the actual terminal normal npm run test invocation covering bodyRig, formArtOwnerRelease, form-art-releases, trainingBlock.timezone and release-debug-token whole files:5 files/100 tests passed, exit0. No name filters, retries or timeout changes; input bytes/status/HEAD and snapshot remained exact. The original full Windows run remains non-green and final required current-head CI remains mandatory."
+    }
+  },
+  "reviewedEvidenceHashes": {
+    "checks/ab-wheel-code-before.ts.txt": "af092871b6dda8fe0117f970f5e4633355b1c07dfe37155cf68e95781cc06939",
+    "checks/ab-wheel-code-after.ts.txt": "551a25ebbc70557a36be597a8b14e1cd52479d275746d86fb3208851f8d68dda",
+    "checks/ab-wheel-t-only.patch": "ae727404179d94a149b4a3f258a50a8da0c6bf8e04bdece001a05322d998a711",
+    "checks/focused-correction-result.json": "aebdb6e33d5c890fc7b377f83b9c2923462530007785e15debd37b1a486c19ff",
+    "checks/focused-correction.log": "b093be98ebb3ff464495e294d1ccbd6fad4d4bfa7480da6e86a2cceab6976bb9"
+  }
+}

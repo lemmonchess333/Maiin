@@ -15,10 +15,12 @@
  * the save code stays out of the Social screen.
  */
 import { EXERCISES } from "@/lib/exercises";
+import { getFormArtCutout, type FormArtCutout } from "@/lib/formArtCutouts";
 import { formatExerciseSummary } from "@/lib/exerciseSummary";
 import { workoutTonnageKg, type WorkoutExercise } from "@/lib/savedWorkouts";
 import type { ActivityPreview, ShareDecision } from "@/lib/shareComposer";
 import type { ActivityPost, PostedExercise } from "@/lib/activityPost";
+import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "@/lib/liftLoad";
 
 /** A saved lift, as its post describes it. */
 export interface LiftForPost {
@@ -68,7 +70,10 @@ function liftFigures(lift: LiftForPost) {
 }
 
 /** What the share sheet shows before a lift is posted. */
-export function liftPostPreview(lift: LiftForPost): ActivityPreview {
+export function liftPostPreview(
+  lift: LiftForPost,
+  unit: LiftUnit = "kg"
+): ActivityPreview {
   const { done, tonnageKg } = liftFigures(lift);
   return {
     type: "workout",
@@ -76,7 +81,7 @@ export function liftPostPreview(lift: LiftForPost): ActivityPreview {
     meta: [
       `${done.length} exercise${done.length === 1 ? "" : "s"}`,
       tonnageKg > 0
-        ? `${Math.round(tonnageKg).toLocaleString()} kg volume`
+        ? `${Math.round(liftVolumeIn(tonnageKg, unit)).toLocaleString()} ${liftUnitLabel(unit)} volume`
         : "",
       lift.durationMinutes > 0 ? `${lift.durationMinutes} min` : "",
     ].filter(Boolean),
@@ -142,7 +147,10 @@ const isNumber = (value: unknown): value is number =>
  * The summary is formatted from the figures when there are any, so a
  * bodyweight or timed lift reads the same on every post.
  */
-export function liftPostRows(raw: unknown): LiftPostRow[] {
+export function liftPostRows(
+  raw: unknown,
+  unit: LiftUnit = "kg"
+): LiftPostRow[] {
   if (!Array.isArray(raw)) return [];
   const rows: LiftPostRow[] = [];
   for (const item of raw) {
@@ -181,9 +189,32 @@ export function liftPostRows(raw: unknown): LiftPostRow[] {
         : EXERCISES.find((e) => e.name === name)?.id;
     rows.push({
       name,
-      summary: formatExerciseSummary({ ...structured, exerciseId }),
+      summary: formatExerciseSummary({ ...structured, exerciseId }, unit),
       structured,
     });
   }
   return rows;
+}
+
+/**
+ * The drawing a lift post leads with: the first exercise done that has a
+ * card cut-out, which the post's own order makes the session's lead lift.
+ * Older posts carry no ids, and the catalogue names the lift. Null when
+ * no exercise on the post has a drawing.
+ */
+export function liftPostLeadArt(raw: unknown): FormArtCutout | null {
+  if (!Array.isArray(raw)) return null;
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const ex = item as Record<string, unknown>;
+    const id =
+      typeof ex.exerciseId === "string" && ex.exerciseId
+        ? ex.exerciseId
+        : typeof ex.name === "string"
+          ? EXERCISES.find((e) => e.name === ex.name)?.id
+          : undefined;
+    const cutout = id ? getFormArtCutout(id) : null;
+    if (cutout) return cutout;
+  }
+  return null;
 }

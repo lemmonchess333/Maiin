@@ -1,0 +1,1115 @@
+[
+  {
+    "ms": 31660,
+    "observedAt": "2026-10-16T18:25:39.746Z",
+    "src": "/form-frames/incline-db-curl/6.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/6.webp",
+    "alt": "Incline Dumbbell Curl, Alternate",
+    "playing": false,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Alternate",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Repeat with the opposite arm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ALTERNATE 6/6\n\nPlay\nNormal"
+  },
+  {
+    "ms": 31941,
+    "observedAt": "2026-10-16T18:25:40.027Z",
+    "src": "/form-frames/incline-db-curl/6.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/6.webp",
+    "alt": "Incline Dumbbell Curl, Alternate",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Alternate",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Repeat with the opposite arm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ALTERNATE 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 33158,
+    "observedAt": "2026-10-16T18:25:41.245Z",
+    "src": "/form-frames/incline-db-curl/1.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/1.webp",
+    "alt": "Incline Dumbbell Curl, Set",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Alternate",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Repeat with the opposite arm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 33170,
+    "observedAt": "2026-10-16T18:25:41.256Z",
+    "src": "/form-frames/incline-db-curl/1.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/1.webp",
+    "alt": "Incline Dumbbell Curl, Set",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the near arm hang beside you.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 34383,
+    "observedAt": "2026-10-16T18:25:42.469Z",
+    "src": "/form-frames/incline-db-curl/2.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/2.webp",
+    "alt": "Incline Dumbbell Curl, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the near arm hang beside you.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 34397,
+    "observedAt": "2026-10-16T18:25:42.483Z",
+    "src": "/form-frames/incline-db-curl/2.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/2.webp",
+    "alt": "Incline Dumbbell Curl, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your upper arm beside the bench.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 35613,
+    "observedAt": "2026-10-16T18:25:43.699Z",
+    "src": "/form-frames/incline-db-curl/3.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/3.webp",
+    "alt": "Incline Dumbbell Curl, Curl",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your upper arm beside the bench.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CURL 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 35628,
+    "observedAt": "2026-10-16T18:25:43.714Z",
+    "src": "/form-frames/incline-db-curl/3.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/3.webp",
+    "alt": "Incline Dumbbell Curl, Curl",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Curl",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Curl toward your shoulder; keep wrist straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CURL 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 36850,
+    "observedAt": "2026-10-16T18:25:44.936Z",
+    "src": "/form-frames/incline-db-curl/4.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/4.webp",
+    "alt": "Incline Dumbbell Curl, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Curl",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Curl toward your shoulder; keep wrist straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 36865,
+    "observedAt": "2026-10-16T18:25:44.951Z",
+    "src": "/form-frames/incline-db-curl/4.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/4.webp",
+    "alt": "Incline Dumbbell Curl, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Pause without swinging your upper arm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 38092,
+    "observedAt": "2026-10-16T18:25:46.178Z",
+    "src": "/form-frames/incline-db-curl/5.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/5.webp",
+    "alt": "Incline Dumbbell Curl, Lower",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Pause without swinging your upper arm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "LOWER 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 38108,
+    "observedAt": "2026-10-16T18:25:46.194Z",
+    "src": "/form-frames/incline-db-curl/5.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/5.webp",
+    "alt": "Incline Dumbbell Curl, Lower",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Lower",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Lower the weight under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "LOWER 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 39310,
+    "observedAt": "2026-10-16T18:25:47.396Z",
+    "src": "/form-frames/incline-db-curl/6.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/6.webp",
+    "alt": "Incline Dumbbell Curl, Alternate",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Lower",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Lower the weight under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ALTERNATE 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 39330,
+    "observedAt": "2026-10-16T18:25:47.416Z",
+    "src": "/form-frames/incline-db-curl/6.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/6.webp",
+    "alt": "Incline Dumbbell Curl, Alternate",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Alternate",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Repeat with the opposite arm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ALTERNATE 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 40522,
+    "observedAt": "2026-10-16T18:25:48.608Z",
+    "src": "/form-frames/incline-db-curl/1.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/1.webp",
+    "alt": "Incline Dumbbell Curl, Set",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Alternate",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Repeat with the opposite arm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 40544,
+    "observedAt": "2026-10-16T18:25:48.630Z",
+    "src": "/form-frames/incline-db-curl/1.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/1.webp",
+    "alt": "Incline Dumbbell Curl, Set",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the near arm hang beside you.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SET 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 41734,
+    "observedAt": "2026-10-16T18:25:49.820Z",
+    "src": "/form-frames/incline-db-curl/2.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/2.webp",
+    "alt": "Incline Dumbbell Curl, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Set",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the near arm hang beside you.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 41754,
+    "observedAt": "2026-10-16T18:25:49.840Z",
+    "src": "/form-frames/incline-db-curl/2.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/2.webp",
+    "alt": "Incline Dumbbell Curl, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your upper arm beside the bench.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 42940,
+    "observedAt": "2026-10-16T18:25:51.026Z",
+    "src": "/form-frames/incline-db-curl/3.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/3.webp",
+    "alt": "Incline Dumbbell Curl, Curl",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your upper arm beside the bench.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CURL 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 42961,
+    "observedAt": "2026-10-16T18:25:51.047Z",
+    "src": "/form-frames/incline-db-curl/3.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/3.webp",
+    "alt": "Incline Dumbbell Curl, Curl",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Curl",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Curl toward your shoulder; keep wrist straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CURL 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 43251,
+    "observedAt": "2026-10-16T18:25:51.337Z",
+    "src": "/form-frames/incline-db-curl/3.webp",
+    "currentSrc": "http://127.0.0.1:62333/form-frames/incline-db-curl/3.webp",
+    "alt": "Incline Dumbbell Curl, Curl",
+    "playing": false,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Curl",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Curl toward your shoulder; keep wrist straight.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Set",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Curl",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Lower",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Alternate",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 992,
+    "naturalHeight": 784,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CURL 3/6\n\nPlay\nNormal"
+  }
+]

@@ -4890,6 +4890,39 @@ describe("form beats — the caption is a claim about the frame", () => {
         expect(beats[5].cue).toContain("return to a braced plank");
         continue;
       }
+      if (id === "turkish-get-up") {
+        // The get-up's positions one after another on the way up; the
+        // last cue sends the lifter back down the same way.
+        expect(beats.map((beat) => beat.t)).toEqual([0, 0.2, 0.4, 0.6, 0.8, 1]);
+        expect(beats.map((beat) => beat.label)).toEqual([
+          "Press",
+          "Elbow",
+          "Hand",
+          "Bridge",
+          "Kneel",
+          "Stand",
+        ]);
+        expect(beats[5].cue).toContain("reverse each step");
+        continue;
+      }
+      if (id === "swimming") {
+        // Front crawl advances through a periodic stroke, each arm's catch,
+        // pull and entry in turn. The wrap keeps the stroke rate.
+        for (let i = 0; i < beats.length; i++) {
+          const next = beats[(i + 1) % beats.length].t;
+          expect((next - beats[i].t + 1) % 1).toBeCloseTo(1 / 6);
+        }
+        expect(beats.map((beat) => beat.label)).toEqual([
+          "Catch",
+          "Pull",
+          "Breathe",
+          "Switch",
+          "Drive",
+          "Enter",
+        ]);
+        expect(beats[2].cue).toContain("breathe");
+        continue;
+      }
       if (id === "treadmill" || id === "incline-treadmill-walk") {
         // Walking advances through a periodic gait phase, rather than
         // reversing a joint excursion. The wrap must preserve cadence.
@@ -5164,17 +5197,28 @@ describe("a placard goes live with its art, not before", () => {
      exercise must play exactly as it did — authoring content is not a
      product change. */
   it("an authored placard with no frames is not live", () => {
-    const authored = FORM_BEAT_IDS.filter(
-      (id) => !getAuthoredBeats(id)!.every((b) => b.image)
-    );
-    expect(
-      authored.length,
-      "expected some positions authored ahead"
-    ).toBeGreaterThan(0);
-    for (const id of authored) {
-      expect(getAuthoredBeats(id), id).not.toBeNull();
+    const id = "bench-press";
+    const authored = getAuthoredBeats(id)!;
+    expect(getFormBeats(id)).not.toBeNull();
+    expect(authored).toHaveLength(6);
+    const images = authored.map((beat) => beat.image);
+    expect(images.every(Boolean)).toBe(true);
+    try {
+      // Use a missing-art fixture; releasing every placard is valid progress.
+      delete authored[0].image;
+      expect(
+        getFormBeats(id),
+        `${id} went live with a partial card`
+      ).toBeNull();
+      for (const beat of authored) delete beat.image;
+      expect(getAuthoredBeats(id)).toBe(authored);
       expect(getFormBeats(id), `${id} went live without its card`).toBeNull();
+    } finally {
+      authored.forEach((beat, i) => {
+        beat.image = images[i];
+      });
     }
+    expect(getFormBeats(id)).not.toBeNull();
   });
 
   it("a placard whose frames are all present IS live", () => {

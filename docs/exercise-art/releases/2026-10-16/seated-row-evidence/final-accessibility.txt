@@ -1,0 +1,3 @@
+Browser tab: 60, Title: "Seated Cable Row actual registered component review", URL: "http://127.0.0.1:62328/integrated-review.html".
+There has been no change in the accessibility tree.
+The focused UI element is 44 button Play

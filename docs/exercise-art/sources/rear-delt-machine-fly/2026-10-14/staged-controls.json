@@ -1,0 +1,13 @@
+{
+  "selectSix": "/form-frames/rear-delt-machine-fly/6.webp",
+  "nextWrap": "/form-frames/rear-delt-machine-fly/1.webp",
+  "previousWrap": "/form-frames/rear-delt-machine-fly/6.webp",
+  "slowerPressed": "true",
+  "slowerStartedAfterMs": 218504,
+  "consoleErrors": [],
+  "timing": {
+    "normalMedianMs": 1209,
+    "slowerMedianMs": 2410.0,
+    "ratio": 1.9933829611248965
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "artifactName": "extension-draft-native-bent.json",
+  "observation": {
+    "display": [
+      1319,
+      1056
+    ],
+    "natural": [
+      1319,
+      1056
+    ],
+    "src": "/draft/frames/1.webp",
+    "viewport": [
+      1440,
+      1500
+    ]
+  }
+}

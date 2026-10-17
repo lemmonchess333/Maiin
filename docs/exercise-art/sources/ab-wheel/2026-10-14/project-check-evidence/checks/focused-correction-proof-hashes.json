@@ -1,0 +1,40 @@
+{
+  "status": "focused-result-and-first-full-evidence-verified",
+  "focusedHashes": {
+    "focused-correction-input-manifest.json": "dfdc526c6c0f88db9c55e58f72e493381b1182feb2b54e0d80ab785806a53b66",
+    "focused-correction-placard-before-run.ts.txt": "551a25ebbc70557a36be597a8b14e1cd52479d275746d86fb3208851f8d68dda",
+    "focused-correction-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "focused-correction-result.json": "aebdb6e33d5c890fc7b377f83b9c2923462530007785e15debd37b1a486c19ff",
+    "focused-correction.log": "b093be98ebb3ff464495e294d1ccbd6fad4d4bfa7480da6e86a2cceab6976bb9",
+    "run-focused-correction.py": "1fcba43c2237ae2f6a8060e3753095c6442613ced92099216937614f669d8608"
+  },
+  "firstFullProofSha256": "ec891b4aaf8b19581ca3b21b13c1c1665eec7a1d7041ec49a641407b847c85df",
+  "allFirstFullEvidenceHashesStillExact": true,
+  "firstFullRemainsNonGreen": true,
+  "onlyActualTMetadataCorrection": {
+    "file": "src/lib/releasedFormPlacards.ts",
+    "beforeT": [0, 0.2, 0.4, 0.6, 0.8, 1],
+    "afterT": [0, 0.5, 1, 1, 0.5, 0],
+    "onlyNumericPositionsChangedProvenByReconstructionHash": true,
+    "beforeFileSha256": "af092871b6dda8fe0117f970f5e4633355b1c07dfe37155cf68e95781cc06939",
+    "afterFileSha256": "551a25ebbc70557a36be597a8b14e1cd52479d275746d86fb3208851f8d68dda",
+    "allOtherFrozenFileBytesUnchanged": true,
+    "imagesLabelsCuesSetupUnchanged": true
+  },
+  "allFiveWholeFilesPassed": true,
+  "tests": {
+    "failed": 0,
+    "passed": 100,
+    "skipped": 0,
+    "total": 100
+  },
+  "files": {
+    "failed": 0,
+    "passed": 5,
+    "skipped": 0,
+    "total": 5
+  },
+  "inputStatePreserved": true,
+  "snapshotWasUnchangedByFocusedBatch": true,
+  "finalFullCurrentHeadCIStillRequired": true
+}

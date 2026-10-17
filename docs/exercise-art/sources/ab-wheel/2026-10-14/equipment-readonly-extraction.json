@@ -1,0 +1,179 @@
+[
+  {
+    "file": "master-brace-original.png",
+    "nearVisibleEndcap": {
+      "box": [625, 765, 650, 807],
+      "threshold": 30,
+      "boundsInclusive": [633, 771, 649, 799],
+      "leftmostFirstY": 781,
+      "rightmostFirstY": 771
+    },
+    "farVisibleEndcap": {
+      "box": [910, 744, 936, 789],
+      "threshold": 30,
+      "boundsInclusive": [910, 747, 922, 779],
+      "leftmostFirstY": 747,
+      "rightmostFirstY": 762
+    },
+    "outerAxleProjectedHorizontalSpan": 289,
+    "padLeft": {
+      "box": [230, 808, 258, 849],
+      "threshold": 40,
+      "boundsInclusive": [236, 810, 257, 842],
+      "leftmostFirstY": 822,
+      "rightmostFirstY": 810
+    },
+    "padRight": {
+      "box": [575, 802, 600, 846],
+      "threshold": 40,
+      "boundsInclusive": [575, 806, 588, 836],
+      "leftmostFirstY": 806,
+      "rightmostFirstY": 810
+    },
+    "padProjectedHorizontalSpan": 352,
+    "wheelTangentBrightnessMeasurements": [
+      {
+        "threshold": 16,
+        "topY": 686,
+        "bottomY": 882,
+        "verticalTireBrightSpan": 196
+      },
+      {
+        "threshold": 20,
+        "topY": 686,
+        "bottomY": 880,
+        "verticalTireBrightSpan": 194
+      },
+      {
+        "threshold": 24,
+        "topY": 686,
+        "bottomY": 879,
+        "verticalTireBrightSpan": 193
+      },
+      {
+        "threshold": 30,
+        "topY": 686,
+        "bottomY": 879,
+        "verticalTireBrightSpan": 193
+      }
+    ]
+  },
+  {
+    "file": "roll-original.png",
+    "nearVisibleEndcap": {
+      "box": [1014, 781, 1045, 824],
+      "threshold": 30,
+      "boundsInclusive": [1021, 782, 1044, 817],
+      "leftmostFirstY": 796,
+      "rightmostFirstY": 786
+    },
+    "farVisibleEndcap": {
+      "box": [1286, 753, 1310, 800],
+      "threshold": 30,
+      "boundsInclusive": [1286, 753, 1298, 787],
+      "leftmostFirstY": 786,
+      "rightmostFirstY": 772
+    },
+    "outerAxleProjectedHorizontalSpan": 277,
+    "padLeft": {
+      "box": [230, 808, 258, 849],
+      "threshold": 40,
+      "boundsInclusive": [237, 811, 257, 842],
+      "leftmostFirstY": 815,
+      "rightmostFirstY": 811
+    },
+    "padRight": {
+      "box": [575, 802, 600, 846],
+      "threshold": 40,
+      "boundsInclusive": [575, 807, 588, 836],
+      "leftmostFirstY": 807,
+      "rightmostFirstY": 810
+    },
+    "padProjectedHorizontalSpan": 351,
+    "wheelTangentBrightnessMeasurements": [
+      {
+        "threshold": 16,
+        "topY": 689,
+        "bottomY": 897,
+        "verticalTireBrightSpan": 208
+      },
+      {
+        "threshold": 20,
+        "topY": 689,
+        "bottomY": 897,
+        "verticalTireBrightSpan": 208
+      },
+      {
+        "threshold": 24,
+        "topY": 690,
+        "bottomY": 894,
+        "verticalTireBrightSpan": 204
+      },
+      {
+        "threshold": 30,
+        "topY": 690,
+        "bottomY": 894,
+        "verticalTireBrightSpan": 204
+      }
+    ]
+  },
+  {
+    "file": "reach-original.png",
+    "nearVisibleEndcap": {
+      "box": [1214, 797, 1243, 843],
+      "threshold": 30,
+      "boundsInclusive": [1219, 797, 1242, 836],
+      "leftmostFirstY": 818,
+      "rightmostFirstY": 804
+    },
+    "farVisibleEndcap": {
+      "box": [1472, 782, 1495, 831],
+      "threshold": 30,
+      "boundsInclusive": [1472, 782, 1479, 807],
+      "leftmostFirstY": 791,
+      "rightmostFirstY": 791
+    },
+    "outerAxleProjectedHorizontalSpan": 260,
+    "padLeft": {
+      "box": [230, 808, 258, 849],
+      "threshold": 40,
+      "boundsInclusive": [236, 810, 257, 842],
+      "leftmostFirstY": 818,
+      "rightmostFirstY": 810
+    },
+    "padRight": {
+      "box": [575, 802, 600, 846],
+      "threshold": 40,
+      "boundsInclusive": [575, 807, 588, 836],
+      "leftmostFirstY": 807,
+      "rightmostFirstY": 810
+    },
+    "padProjectedHorizontalSpan": 352,
+    "wheelTangentBrightnessMeasurements": [
+      {
+        "threshold": 16,
+        "topY": 705,
+        "bottomY": 913,
+        "verticalTireBrightSpan": 208
+      },
+      {
+        "threshold": 20,
+        "topY": 705,
+        "bottomY": 911,
+        "verticalTireBrightSpan": 206
+      },
+      {
+        "threshold": 24,
+        "topY": 705,
+        "bottomY": 911,
+        "verticalTireBrightSpan": 206
+      },
+      {
+        "threshold": 30,
+        "topY": 705,
+        "bottomY": 911,
+        "verticalTireBrightSpan": 206
+      }
+    ]
+  }
+]

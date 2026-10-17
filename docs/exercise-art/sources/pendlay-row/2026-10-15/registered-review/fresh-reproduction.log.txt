@@ -1,0 +1,13 @@
+{
+  "mode": "build",
+  "candidate": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\pendlay-row\\reviewed-whole-pair-20261015\\portable-reproduction-verification-20261015\\fresh",
+  "physicalPoses": 2,
+  "frames": 6,
+  "ORAs": 4,
+  "dimensions": [
+    1180,
+    892
+  ],
+  "manifestSha256": "31b714641b350b9c95bb49cb2cca5ea613f001628d37c81b87305b034be7fcff",
+  "finalAcceptance": false
+}

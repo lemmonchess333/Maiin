@@ -1,0 +1,52 @@
+{
+  "status": "Staged unregistered source set, not completion",
+  "sourcePoseOrder": [1, 1, 2, 3, 3, 2],
+  "distinctPhysicalPoses": 3,
+  "qualitativeTNote": "Knee state at qualitative .3 of remaining range, not exact3D interpolation. Floor/lockout pauses and reuse disclosed.",
+  "losslessDecodedPixelsExact": true,
+  "individualHumanFitting": false,
+  "frames": [
+    {
+      "frame": 1,
+      "sourcePose": 1,
+      "sha256": "36d4e9098a3e46b3257e17e063d15e37c591a145c2e043d4604f13cb27407d2d",
+      "decodedPixelsExact": true,
+      "size": [940, 940]
+    },
+    {
+      "frame": 2,
+      "sourcePose": 1,
+      "sha256": "36d4e9098a3e46b3257e17e063d15e37c591a145c2e043d4604f13cb27407d2d",
+      "decodedPixelsExact": true,
+      "size": [940, 940]
+    },
+    {
+      "frame": 3,
+      "sourcePose": 2,
+      "sha256": "e52bf124cc279ed6c91e3be8085b7aa625f394db15b170a5b84cbf04340a0610",
+      "decodedPixelsExact": true,
+      "size": [940, 940]
+    },
+    {
+      "frame": 4,
+      "sourcePose": 3,
+      "sha256": "e3fe48a2b611e800e41360589e10dbfd5cf85f2ca12ea894c197a6db32b12946",
+      "decodedPixelsExact": true,
+      "size": [940, 940]
+    },
+    {
+      "frame": 5,
+      "sourcePose": 3,
+      "sha256": "e3fe48a2b611e800e41360589e10dbfd5cf85f2ca12ea894c197a6db32b12946",
+      "decodedPixelsExact": true,
+      "size": [940, 940]
+    },
+    {
+      "frame": 6,
+      "sourcePose": 2,
+      "sha256": "e52bf124cc279ed6c91e3be8085b7aa625f394db15b170a5b84cbf04340a0610",
+      "decodedPixelsExact": true,
+      "size": [940, 940]
+    }
+  ]
+}

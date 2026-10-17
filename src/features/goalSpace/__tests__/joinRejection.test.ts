@@ -25,7 +25,7 @@ const SERVER = resolve(
   here,
   "../../../../functions/lib/goalSpaceMembership.js"
 );
-const source = readFileSync(SERVER, "utf8");
+const source = readFileSync(SERVER, "utf8").replace(/\r\n/g, "\n");
 
 /** The `joinGoalSpace` body, plus the helper it calls that can refuse. */
 function joinPathSource(): string {

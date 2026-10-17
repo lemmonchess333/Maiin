@@ -1,0 +1,102 @@
+{
+  "scope": "One bounded alpha-coverage correction; pixel/editable/export integrity only, no visual QA, strict model or release approval.",
+  "sourceSha256": "89d0866e0f165831b539839a8c0d7e45b9dc8a77533d916cc4d23a38465d1bc3",
+  "canonicalReferenceSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "nativeDimensions": [
+    1536,
+    1024
+  ],
+  "commonCrop": [
+    32,
+    168,
+    1512,
+    864
+  ],
+  "dimensions": [
+    1480,
+    696
+  ],
+  "removedMarginsMaximumRgb": 9,
+  "physicalPoses": 1,
+  "sourcePoseOrder": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "sourceChromaComponents": [
+    {
+      "pixels": 6996,
+      "boundsInclusive": [
+        358,
+        223,
+        484,
+        317
+      ]
+    },
+    {
+      "pixels": 51456,
+      "boundsInclusive": [
+        279,
+        344,
+        636,
+        612
+      ]
+    },
+    {
+      "pixels": 9022,
+      "boundsInclusive": [
+        121,
+        449,
+        217,
+        606
+      ]
+    }
+  ],
+  "existingSourceColourPixels": 67474,
+  "actualChangedPixels": 67381,
+  "allOutsideOriginalColourSupportRgbaExact": true,
+  "sourceAlphaExact": true,
+  "allContactAndTrainerPixelsExact": true,
+  "nativeCoordinatesUnchanged": true,
+  "commonCropOnlyNoScaleOrRotation": true,
+  "independentInheritedDetailLayer": true,
+  "nativeAndFramedOraReopenedExact": true,
+  "sixSeparateLosslessFramesDecodedExact": true,
+  "sixFramesAreOneIdenticalPhysicalHold": true,
+  "exactPrimaryOutputPixels": 251,
+  "exactSecondaryOutputPixels": 69,
+  "frameHashes": {
+    "draft/frames/1.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc",
+    "draft/frames/2.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc",
+    "draft/frames/3.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc",
+    "draft/frames/4.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc",
+    "draft/frames/5.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc",
+    "draft/frames/6.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc"
+  },
+  "outputHashes": {
+    "1-framed.ora": "b5fc2577182b42154d217c66576aa1d2943a4db02eed2ef7ad9e8210f23bfb80",
+    "1-framed.png": "01bfbb6a16b913635833d8f9bc850fb4517accc4df675f5ef9f3cf6fa096744d",
+    "1-inherited-contours-and-shading-layer.png": "2b5a4278161b8a4b9e70b4cc2261550a100c655806e845363c6f2a2544a65fc0",
+    "1-native-finished.png": "bedd28dd156ba89b5997bde64af44954f08dd2eac089ba96a4133a8723c46338",
+    "1-native.ora": "3ca464d49350d80aac08589b95f53d7d97d683d1f15415cf586ef14d1c44a5b3",
+    "1-palette-layer.png": "357f713bf693e41d9c0a01b42d6277ecf24802ba4ad8d64476e23f137f967969",
+    "frames/1.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc",
+    "frames/2.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc",
+    "frames/3.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc",
+    "frames/4.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc",
+    "frames/5.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc",
+    "frames/6.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc",
+    "masks/actual-changed-pixels.png": "1af5d1f58bb9d50bad7ddaf1cd90ad1d03221039a3a41f4a354ee4fb249e83f9",
+    "masks/opaque-source-field-interior.png": "b2679e4f1b99f09c7a94ce7934049a4936fab873d6f83d578947aea2c4464ab9",
+    "masks/primary-role-within-existing-fields.png": "141c8db09f11ae09840dea04765d16fb3c02c9df3e35fbf4cc7f3bdd314d58fc",
+    "masks/secondary-role-within-existing-fields.png": "08661825a599c78e9076a08387fa8329f898d49df4e9f873146b191e37e042a4",
+    "masks/source-colour-alpha.png": "8cd8142d850052f96a7a938e3a390a88916562a794621b1dd496e9b93ad60d47",
+    "masks/source-existing-colour-support.png": "2577fea77842241d557bbdf7e12a7fcfc9789fb390afaebd798cd62ec268be6c",
+    "reference.png": "705a47ced2e7f536c7813dddc37216786cf4c133b220d66dd6adc8e4dc6e1521"
+  },
+  "releaseApproved": false,
+  "completionCredit": false
+}

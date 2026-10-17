@@ -1,0 +1,10 @@
+{
+  "normalCommand": "npm run art:cutouts -- --only=side-plank",
+  "generatorSha256": "a465f712bcb21078a171e6ddfd24f74112a5d379192c7159f133a0fb869f0f2f",
+  "previewMatchesRegisteredExact": true,
+  "sha256": "fafcaa0f236b7309ccd75c57370493e8192e2b786fa9821f37dfee847bcb3c1a",
+  "reference": "form-frames/side-plank/3.webp",
+  "width": 480,
+  "height": 226,
+  "bytes": 17700
+}

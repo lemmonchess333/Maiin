@@ -1,0 +1,47 @@
+{
+  "status": "applied-exact-parent-requested-cue-only-change-format-pending",
+  "beforeProofHashes": {
+    "releasedFormPlacards-before.ts.txt": "d50ab4bd5dab7add986a4aaac1263bf1ee23001666e49e5aa0fec59ad4e5a5a7",
+    "sequence-plan-before.json": "8f1196d2e3f6c001f07057977e33468d7bf66bf17f6c6d1e0f9fd99e1c194a44",
+    "release-before.json": "e754479944dfe6881523f66438541aa6ba4bf543954624cd29ae241b05d3b53b"
+  },
+  "oldCueSha256": "465a757d976867ff47bfc9ef01a4a170611124c4a4633dbd071df8358ab068b7",
+  "newCueSha256": "56e28e9d01418ebeeafd0b3540677531fb85812d30932287ff520b56653bf68b",
+  "newCues": [
+    {
+      "label": "Reach",
+      "cue": "Extend arms toward pulley, palms down.",
+      "words": 6
+    },
+    {
+      "label": "Brace",
+      "cue": "Stay steady; set your shoulder blades.",
+      "words": 6
+    },
+    {
+      "label": "Rotate",
+      "cue": "Pull toward face, separating grips past ears.",
+      "words": 7
+    },
+    {
+      "label": "Squeeze",
+      "cue": "Keep elbows high and knuckles up.",
+      "words": 6
+    },
+    {
+      "label": "Return",
+      "cue": "Return slowly with your elbows high.",
+      "words": 6
+    },
+    {
+      "label": "Reset",
+      "cue": "Straighten arms; keep cable tension.",
+      "words": 5
+    }
+  ],
+  "sequencePlanSha256": "c84ab270929558d02c66964c4d114d786debe8b083ace64699707920e56ea64c",
+  "labelsPositionsSetupMusclesImagesUnchanged": true,
+  "releaseChange": "cueSha256 scalar only; observations/checks/status untouched",
+  "testsRun": false,
+  "imageChanges": false
+}

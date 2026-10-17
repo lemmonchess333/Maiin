@@ -1,0 +1,138 @@
+"""Portable Elliptical owner-guide candidate. Pillow+NumPy, relative paths only.
+
+--build makes the ONE defined palette finish; --out NEW_DIR reproduces there.
+--verify checks saved files/ORAs/frames read-only. No optimizer, generator,
+network, body fitting, repository access, integration or release acceptance.
+"""
+from pathlib import Path
+from io import BytesIO
+import argparse,hashlib,importlib.util,json,shutil,sys,zipfile
+import xml.etree.ElementTree as ET
+import numpy as np
+from PIL import Image,ImageDraw,__version__ as pillow_version
+sys.dont_write_bytecode=True
+HERE=Path(__file__).resolve().parent
+SIZE=(1536,1120);CROP=(242,37,1289,1109);ORDER=[1,1,4,4,1,1]
+CANONICAL='fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b'
+SOURCE={1:'e40913b14089d9ac1f9032e3d1afb636ee0b6dd3c1777bf9462b5315ca5c6433',4:'649036cf174307e0d7b091774880d5210196a5707368fde858e6df31aa01e3be'}
+VERSION='anatomy-v3-2026-10-15-custom-rear-drive-elliptical-v1'
+BEATS=[(0,'Stride A','Stand tall; keep both feet on pedals.'),(0,'Hold A','Keep both feet planted in the pedals.'),(1,'Stride B','Coordinate your push and pull with legs.'),(1,'Hold B','Hold both grips; keep your chest tall.'),(0,'Return A','Return smoothly to the first shown stride.'),(0,'Reset','Keep your torso tall without leaning forward.')]
+FINDINGS=['Custom rear-drive four-bar, passive pitching trays and mirrored offset-bearing D grips; no exact manufacturer-model or recovered source3D claim.','Near/far locked stem and pedal-bearing settings differ but stay fixed across both poses; dimensions/camera/phase closure are exposed in authoring/fixed-geometry.json.','Two genuine intact source body states repeated across six distinct paths. No generated human intermediates or continuous human trajectory claim.','Original source shading/contours and minor source pose/activation differences retained. Pose4posterior-thigh field is secondaryHamstrings, not silently relabelled as primaryQuads.','Five original dark upper-cylinder antialias pixels near pose4far index edge differ from new hardware. Parent reviewed this as a minor equipment edge finding, not missing white finger anatomy.','Shaded charcoal custom apparatus differs from original generated machine style and equipment geometry; parent source-construction eligibility is not final palette/mobile or strict acceptance.']
+
+sha=lambda f:hashlib.sha256(f.read_bytes()).hexdigest()
+load=lambda p:json.loads(p.read_bytes())
+def save(p,v):p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dumps(v,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
+def opened(p):return Image.open(p).convert('RGBA')
+def pixel(im):return hashlib.sha256(im.convert('RGBA').tobytes()).hexdigest()
+def png(im):b=BytesIO();im.save(b,format='PNG');return b.getvalue()
+def allfiles(root):return {p.relative_to(root).as_posix():sha(p) for p in sorted(root.rglob('*')) if p.is_file() and '__pycache__' not in p.parts and p.name!='candidate-payload-manifest.json'}
+
+def palette(source,guard,pose,recipe):
+    a=np.asarray(source);rgb=a[:,:,:3].astype(float);r,g,b=rgb[:,:,0],rgb[:,:,1],rgb[:,:,2];rules=recipe['sourceSupportRules']
+    support=(b-r>=rules['bMinusRMin'])&(b-g>=rules['bMinusGMin'])&(r-g>=rules['rMinusGMin'])&(np.asarray(guard)>0)
+    yy=np.indices(support.shape)[0];upper=support&(yy<=recipe['upperFieldSecondaryMaxY'])
+    trace=Image.new('L',(SIZE[0]*4,SIZE[1]*4));d=ImageDraw.Draw(trace)
+    for poly in recipe['posteriorThighSecondaryTraces'][str(pose)]:d.polygon([(x*4,y*4) for x,y in poly],fill=255)
+    trace=trace.resize(SIZE,Image.Resampling.LANCZOS);ham=np.asarray(trace,dtype=float)/255;ham[~support]=0;ham[upper]=0
+    u=upper.astype(float);primary=np.where(support,1.-u-ham,0.)
+    maximum=np.max(rgb,axis=2);chroma=(maximum-g)/np.maximum(maximum,1);neutral=maximum[:,:,None]
+    den=recipe['sourceTintStrengthDenominators']
+    def mapped(target,key):
+        k=np.minimum(chroma/den[key],1.)
+        return neutral+(np.asarray(target)*maximum[:,:,None]/255-neutral)*k[:,:,None]
+    out=mapped(recipe['primary'],'primary')*primary[:,:,None]+mapped(recipe['secondary'],'upperSecondary')*u[:,:,None]+mapped(recipe['secondary'],'hamstringSecondary')*ham[:,:,None]
+    colour=np.zeros_like(a);colour[support,:3]=np.rint(np.clip(out[support],0,255)).astype(np.uint8);colour[support,3]=255
+    proof={'existingSourceChromaPixels':int(support.sum()),'primaryPixelsAboveHalf':int(np.count_nonzero(primary>.5)),'upperSecondaryPixels':int(upper.sum()),'hamstringSecondaryPixelsAboveHalf':int(np.count_nonzero(ham>.5)),'neutralPixelsNotSelected':True,'noNewFieldOrBodyGradient':True,'sourceTonalCalibration':den,'roleSelection':'Existing source chroma only. PrimaryQuads+Glutes; secondaryFrontDelts+UpperBack, plus source4Hamstrings selected along the visible white fascia separation.','exactUncolouredSourceRecovered':False}
+    masks={'source-colour-support':Image.fromarray((support*255).astype(np.uint8)),'primary-role':Image.fromarray(np.rint(primary*255).astype(np.uint8)),'secondary-role':Image.fromarray(np.rint((u+ham)*255).astype(np.uint8)),'hamstring-secondary-trace':trace}
+    return Image.fromarray(colour),support,masks,proof
+
+def ora(path,layers,expected):
+    doc=ET.Element('image',w=str(expected.width),h=str(expected.height),name='Elliptical intact source + fixed equipment + source-tonal palette REVIEW')
+    stack=ET.SubElement(doc,'stack');members={'mimetype':b'image/openraster','mergedimage.png':png(expected)}
+    for i,(name,im) in reversed(list(enumerate(layers))):
+        key=f'data/layer{i}.png';members[key]=png(im);ET.SubElement(stack,'layer',name=name,src=key,x='0',y='0',opacity='1.0',visibility='visible',**{'composite-op':'svg:src-over'})
+    members['stack.xml']=ET.tostring(doc,encoding='utf-8')
+    with zipfile.ZipFile(path,'x') as z:
+        for name,data in members.items():
+            entry=zipfile.ZipInfo(name,(2026,10,15,0,0,0));entry.compress_type=zipfile.ZIP_STORED if name=='mimetype' else zipfile.ZIP_DEFLATED;z.writestr(entry,data)
+    return verify_ora(path,expected)
+
+def verify_ora(path,expected):
+    with zipfile.ZipFile(path) as z:
+        assert z.testzip() is None and len(z.namelist())==len(set(z.namelist()))==8
+        doc=ET.fromstring(z.read('stack.xml'));stack=doc.find('stack');out=Image.new('RGBA',(int(doc.attrib['w']),int(doc.attrib['h'])))
+        for el in reversed(stack.findall('layer')):out=Image.alpha_composite(out,Image.open(BytesIO(z.read(el.attrib['src']))).convert('RGBA'))
+        merged=Image.open(BytesIO(z.read('mergedimage.png'))).convert('RGBA')
+        assert pixel(out)==pixel(merged)==pixel(expected)
+    return {'path':path.name,'sha256':sha(path),'layers':5,'members':8,'stackAndMergedRgbaExact':True,'pixelSha256':pixel(expected)}
+
+def verify(root):
+    manifest=load(root/'candidate-payload-manifest.json');assert allfiles(root)==manifest['files']
+    plan=load(root/'sequence-plan.json');assert plan['physicalPoses']==2 and plan['sourcePoseOrder']==ORDER and plan['positions']==[0,0,1,1,0,0]
+    assert sha(root/'originals/canonical-review-reference.png')==CANONICAL
+    report=[]
+    for pose in [1,4]:
+        assert sha(root/f'originals/{pose}-original.png')==SOURCE[pose]
+        native=opened(root/f'draft/{pose}-native.png');framed=opened(root/f'draft/{pose}-framed.png');assert pixel(native.crop(CROP))==pixel(framed)
+        for suffix,im in [('native',native),('framed',framed)]:report.append(verify_ora(root/f'draft/{pose}-{suffix}.ora',im))
+    for n,pose in enumerate(ORDER,1):
+        frame=root/f'draft/frames/{n}.webp';assert sha(frame)==plan['frameHashes'][f'draft/frames/{n}.webp']
+        assert pixel(opened(frame))==pixel(opened(root/f'draft/{pose}-framed.png'))
+    return {'payloadFiles':len(manifest['files']),'fourOraReadbacks':report,'sixLosslessFrameSlotsExact':True,'repositoryAccess':False,'approval':False}
+
+def build(root):
+    draft=root/'draft';assert not draft.exists(),'Never overwrite an existing palette pass'
+    (draft/'frames').mkdir(parents=True);(draft/'masks').mkdir();(draft/'layers').mkdir()
+    recipe=load(root/'authoring/palette-recipe.json');catalogue=load(root/'authoring/catalogue-snapshot.json');eligible=load(root/'evidence/root-source-construction-eligibility.json')
+    assert eligible['sourceConstructionEligible'] is True and eligible['paletteReviewed'] is False
+    assert sha(root/'originals/canonical-review-reference.png')==CANONICAL
+    spec=importlib.util.spec_from_file_location('fixed_equipment',root/'authoring/render-fixed-equipment.py');renderer=importlib.util.module_from_spec(spec);spec.loader.exec_module(renderer)
+    details={};oras=[];frame_hashes={};render_hashes={}
+    for pose in [1,4]:
+        assert sha(root/f'originals/{pose}-original.png')==SOURCE[pose]
+        raw=opened(root/f'originals/{pose}-original.png');base=Image.new('RGBA',SIZE,(0,0,0,255));base.paste(raw,(0,0))
+        guard=Image.open(root/f'authoring/{pose}-human-and-grip-guard.png').convert('L');ga=np.asarray(guard)>0
+        removal=opened(root/f'authoring/{pose}-equipment-removal.png');gear=opened(root/f'authoring/{pose}-fixed-equipment.png')
+        rendered,contacts,faces=renderer.apparatus(pose);assert pixel(rendered)==pixel(gear),'Fixed renderer changed accepted geometry/material pixels'
+        assert hashlib.sha256(png(rendered)).hexdigest()==sha(root/f'authoring/{pose}-fixed-equipment.png')
+        render_hashes[str(pose)]=sha(root/f'authoring/{pose}-fixed-equipment.png')
+        body=np.array(base);body[:,:,3]=np.where(ga,255,0);body=Image.fromarray(body)
+        clean=Image.alpha_composite(Image.alpha_composite(Image.alpha_composite(base,removal),gear),body)
+        clean_sha=hashlib.sha256(png(clean)).hexdigest();assert clean_sha==eligible['reviewedNativeFiles'][str(pose)]['sha256'],'Accepted uncoloured construction not reproduced'
+        colour,support,masks,proof=palette(base,guard,pose,recipe)
+        native=Image.alpha_composite(clean,colour);framed=native.crop(CROP)
+        before=np.asarray(clean);after=np.asarray(native);source=np.asarray(base)
+        assert np.array_equal(after[~support],before[~support]) and np.array_equal(after[:,:,3],before[:,:,3])
+        assert np.array_equal(after[ga&~support],source[ga&~support]),'Neutral source anatomy changed'
+        colour.save(draft/f'layers/{pose}-colour.png')
+        for name,im in masks.items():im.save(draft/f'masks/{pose}-{name}.png')
+        native.save(draft/f'{pose}-native.png');framed.save(draft/f'{pose}-framed.png')
+        layers=[('Exact original intact source, native placement + black bottom padding',base),('Old equipment removal outside original human guard',removal),('Exact fixed v2 three-dimensional custom equipment',gear),('Exact original human contours and agreed wrapped source grip pixels',body),('Existing source muscle colour fields only, semantic roles',colour)]
+        oras.append(ora(draft/f'{pose}-native.ora',layers,native));oras.append(ora(draft/f'{pose}-framed.ora',[(name,im.crop(CROP)) for name,im in layers],framed))
+        details[str(pose)]={**proof,'acceptedUncolouredConstructionSha256':clean_sha,'allNeutralGuardedBodyRgbaExact':True,'allOutsideSourceColourSupportRgbaExactToAcceptedConstruction':True,'equipmentRenderSha256':render_hashes[str(pose)],'equipmentRenderPortableRgbaAndPngExact':True,'meshFaces':faces,'bodyTransforms':0,'bodyColourChangedPixels':int(np.count_nonzero(np.any(after!=before,axis=2))),'nativePixelSha256':pixel(native),'framedPixelSha256':pixel(framed)}
+    for n,pose in enumerate(ORDER,1):
+        frame=draft/f'frames/{n}.webp';opened(draft/f'{pose}-framed.png').save(frame,format='WEBP',lossless=True,quality=100,method=6,exact=True);assert pixel(opened(frame))==pixel(opened(draft/f'{pose}-framed.png'));frame_hashes[f'draft/frames/{n}.webp']=sha(frame)
+    for t,label,cue in BEATS:assert len(cue.split())<=7
+    plan={'exerciseId':'elliptical','name':'Elliptical','version':VERSION,'physicalPoses':2,'sourcePoseOrder':ORDER,'positions':[0,0,1,1,0,0],'registeredCanvas':list(SIZE),'originalSourceCanvas':[1536,1024],'commonPadding':[0,0,0,96],'commonCrop':list(CROP),'dimensions':[CROP[2]-CROP[0],CROP[3]-CROP[1]],'primary':['Quads','Glutes'],'secondary':['Front Delts','Upper Back','Hamstrings'],'catalogueMuscleGroup':catalogue['muscleGroup'],'catalogueSecondaryMuscles':catalogue['secondaryMuscles'],'equipment':catalogue['equipment'],'setup':catalogue['instructions'][:2],'beats':[{'t':t,'label':label,'cue':cue} for t,label,cue in BEATS],'frameHashes':frame_hashes,'referenceFrame':1,'scope':'Two retained whole-athlete stride states with repeated hold beats. Written push/pull/return instructions do not assert anatomical near/far lead identity, a complete opposite human stride, or drawn intermediate poses.','equipmentScope':'A custom rear-drive cross-trainer, not a claimed E25/95Xi replica. One fixed camera and closing four-bar plus passive pitching trays and swivelling offset grips.','findings':FINDINGS,'finalPaletteReviewed':False,'registeredReviewComplete':False,'strictCertified':False,'completionCredit':False}
+    save(root/'sequence-plan.json',plan)
+    sources={str(pose):{'path':f'originals/{pose}-original.png','sha256':SOURCE[pose],'promptMetadata':{'path':f'originals/{pose}-prompt.json','sha256':sha(root/f'originals/{pose}-prompt.json'),'generationId':load(root/f'originals/{pose}-prompt.json')['sourceGenerationId']}} for pose in [1,4]}
+    provenance={'exerciseId':'elliptical','version':VERSION,'canonicalSha256':CANONICAL,'sources':sources,'sourceHistory':'originals/sequence-candidates.json','source1HistoricalFraming':'originals/framing.json','paletteRecipe':'authoring/palette-recipe.json','fixedGeometry':'authoring/fixed-geometry.json','fixedRenderer':'authoring/render-fixed-equipment.py','sourceConstructionReview':'evidence/root-source-construction-eligibility.json','reviewedCleanProofSha256':sha(root/'evidence/clean-construction-proof.json'),'fivePixelSourceEdgeFinding':'evidence/five-pixel-contact-diagnosis.json','physicalPoses':2,'sourcePoseOrder':ORDER,'commonCrop':list(CROP),'framedDimensions':plan['dimensions'],'newImageRequests':0,'bodyTransforms':0,'roleLegendIsSourceSpecific':True,'catalogueSnapshot':'authoring/catalogue-snapshot.json','findings':FINDINGS,'portableDependencies':['Pillow','NumPy'],'recipeScope':'Fixed equipment rendering and source-preserving layer composition only. No solver/newfit/service request.','recipeSha256':sha(root/'reproduce.py'),'finalPaletteReviewed':False,'registeredReviewComplete':False,'completionCredit':False}
+    save(root/'source-provenance.json',provenance)
+    proof={'scope':'One palette pass on parent-eligible equipment construction, not final native/mobile/release approval.','palettePasses':1,'dependencies':{'pillow':pillow_version,'numpy':np.__version__},'recipeSha256':sha(root/'reproduce.py'),'canonicalSha256':CANONICAL,'poses':details,'oraReadbacks':oras,'frameOrder':ORDER,'allSixFramesLosslessRgbaExact':True,'commonCropContainsAllForegroundWith24pxMargin':True,'originalBodyCoordinatesUnchanged':True,'newSpatialBodyGradients':False,'anatomicalWarpsOrGrafts':False,'newImageRequests':0,'projectTestsBuildsGitOrRepositoryWrites':0,'acceptance':False}
+    save(draft/'pixel-and-editable-proof.json',proof)
+    inputs={p.relative_to(root).as_posix():sha(p) for folder in ['originals','authoring','evidence'] for p in sorted((root/folder).rglob('*')) if p.is_file()};inputs['reproduce.py']=sha(root/'reproduce.py');save(root/'input-file-hashes.json',inputs)
+    save(root/'candidate-payload-manifest.json',{'scope':'Curated source/editable candidate, no runtime caches or past QA archive. Final palette/native/mobile review pending.','files':allfiles(root),'approval':False})
+    return verify(root)
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__);mode=parser.add_mutually_exclusive_group(required=True);mode.add_argument('--build',action='store_true');mode.add_argument('--verify',action='store_true');parser.add_argument('--out',type=Path,default=HERE);args=parser.parse_args();root=args.out.resolve()
+    if args.build:
+        if root!=HERE:
+            assert not root.exists(),'Use a new reproduction folder';root.mkdir(parents=True)
+            for folder in ['originals','authoring','evidence']:shutil.copytree(HERE/folder,root/folder)
+            shutil.copyfile(HERE/'reproduce.py',root/'reproduce.py')
+        result=build(root)
+    else:result=verify(root)
+    print(json.dumps({'candidate':str(root),'manifestSha256':sha(root/'candidate-payload-manifest.json'),**result},indent=2))
+
+if __name__=='__main__':main()

@@ -1,0 +1,9 @@
+{
+  "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\sources\\leg-extension\\2026-10-15\\inputs\\4-source-kept-base.png",
+  "sourceSha256": "c16dea5e03c08f94182801e3911f8f5da13d419e95f5fe03e4184b253679a513",
+  "wholeScenePaddingUndoCrop": [0, 40, 1536, 1064],
+  "nativeSize": [1536, 1024],
+  "anatomicalScale": 1,
+  "individualLimbTransforms": 0,
+  "acceptedMasterSha256": "0ffa89a3a5f235e7034fe5933259f749e567eb6fc49027b5a42328c5677d1ebe"
+}

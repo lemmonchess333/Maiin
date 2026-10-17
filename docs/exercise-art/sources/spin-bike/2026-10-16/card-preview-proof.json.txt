@@ -1,0 +1,29 @@
+{
+  "scope": "Preview only, exact current normal pure functions and encoding; final registered normal generator must match",
+  "generator": "scripts/art/cut-out-form-art.ts",
+  "generatorSha256": "a465f712bcb21078a171e6ddfd24f74112a5d379192c7159f133a0fb869f0f2f",
+  "verbatimDefinitionSha256": "f95042479cc61ffb5b292b7da463d4479963f1f76d7b3b98e3175f4d2b12487c",
+  "encodeBlockSha256": "55c1d7a913962aabaff1eb2c506ab5ec7fe308803c13ab07b0ea3dacf69130f7",
+  "extractionEolRepresentation": "LF for exact block comparison; complete generator raw bytes separately pinned",
+  "helperSha256": "5695f33259e5c9fb40c6da1a0c793c1e22e8a2605420785f95da9e9d5c3adabb",
+  "exerciseId": "spin-bike",
+  "planSha256": "7a4fecb770978e957129bb28e9ae14d3781c50cc748933d8adaab7f00c6d8826",
+  "reference": "draft/frames/1.webp",
+  "referenceSha256": "4778b11213b83f0a6574bf61a5084764c406fdbd0e4949edc0c9ee42f81d3bab",
+  "output": "draft/card.webp",
+  "width": 304,
+  "height": 480,
+  "keyed": true,
+  "contentBox": {
+    "left": 0,
+    "top": 26,
+    "width": 431,
+    "height": 681
+  },
+  "sha256": "273c462c1dec1af3711b9788a2c62d442e6f820b1d06f49e4681345414f5c1e0",
+  "bytes": 21140,
+  "noThresholdOrAlphaOverride": true,
+  "productionMainInvoked": false,
+  "noRegistryOrPublicMutation": true,
+  "qaAcceptance": false
+}

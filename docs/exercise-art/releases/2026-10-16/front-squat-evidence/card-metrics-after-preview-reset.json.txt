@@ -1,0 +1,13 @@
+{
+  "advice": true,
+  "cards": [],
+  "page": [
+    380,
+    380
+  ],
+  "preparation": true,
+  "viewport": [
+    390,
+    844
+  ]
+}

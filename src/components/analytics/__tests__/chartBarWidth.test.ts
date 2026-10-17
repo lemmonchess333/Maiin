@@ -57,7 +57,7 @@ function rechartsBarFiles(): string[] {
       const body = readFileSync(f, "utf8");
       return /from\s+"recharts"/.test(body) && /<Bar[\s\n]/.test(body);
     })
-    .map((f) => f.slice(srcRoot.length + 1));
+    .map((f) => f.slice(srcRoot.length + 1).replaceAll("\\", "/"));
 }
 
 /** Each <Bar …> element's opening tag, so props can be inspected. */

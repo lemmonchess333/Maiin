@@ -1,0 +1,22 @@
+{
+  "sourceConstructionEligible": true,
+  "paletteReviewed": false,
+  "rootActualReview": "Parent explicitly accepted actualA/B/C700native views +original1254sheet+peer data/notes for colour and packaging eligibility. Final palette/mobile/card/release review still required.",
+  "rootInstruction": "Retain tinyC oldhardwarestub as minor contourfinding; do not repaint or mask-loop. Use3realstatesA/B/C, sourceC whole(+6,+7), commoncrop[117,4,549,711] after30blackbottompadding. PrimaryQuads; secondaryCore,Calves, actual posterior-thighHamstrings. No anatomy moves.",
+  "reviewedNativeFiles": {
+    "A": {
+      "sha256": "a790e3443ab83609303e4cda908c012841430788cdee76fb1671fd959e7ac304"
+    },
+    "B": {
+      "sha256": "171e78a562d58f91dd1d853a545a7d9ada29ec0b0bc3744dfe2be2ce63b25e31"
+    },
+    "C": {
+      "sha256": "c82f28ecacc2784eee588515c2f775c64c35c59b9429fb1b7858601fbe2ea9ba"
+    }
+  },
+  "nativeProofSha256": "a7ca7b78ece6b39894ffba431a8a5ead7a1aa5aaddb429507319f8f674b1d5f5",
+  "peerNativeReviewSha256": "1ceea85266453649c9a186ba65dec858662155163fa943f0bb18b85284e77b01",
+  "strictCertification": false,
+  "finalPaletteAcceptance": false,
+  "completionCredit": false
+}

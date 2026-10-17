@@ -1,0 +1,271 @@
+{
+  "artifactName": "calf-draft-native-playback.json",
+  "observations": [
+    {
+      "ms": 163531,
+      "src": "/draft/frames/3.webp",
+      "alt": "Single-Leg Calf Raise, Top",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        626,
+        1209
+      ],
+      "viewport": [
+        900,
+        1800
+      ],
+      "sectionText": "TOP 3/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 164745,
+      "src": "/draft/frames/4.webp",
+      "alt": "Single-Leg Calf Raise, Hold",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        626,
+        1209
+      ],
+      "viewport": [
+        900,
+        1800
+      ],
+      "sectionText": "HOLD 4/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 165955,
+      "src": "/draft/frames/5.webp",
+      "alt": "Single-Leg Calf Raise, Lower",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        626,
+        1209
+      ],
+      "viewport": [
+        900,
+        1800
+      ],
+      "sectionText": "LOWER 5/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 167171,
+      "src": "/draft/frames/6.webp",
+      "alt": "Single-Leg Calf Raise, Reset",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        626,
+        1209
+      ],
+      "viewport": [
+        900,
+        1800
+      ],
+      "sectionText": "RESET 6/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 168378,
+      "src": "/draft/frames/1.webp",
+      "alt": "Single-Leg Calf Raise, Low",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        626,
+        1209
+      ],
+      "viewport": [
+        900,
+        1800
+      ],
+      "sectionText": "LOW 1/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 169590,
+      "src": "/draft/frames/2.webp",
+      "alt": "Single-Leg Calf Raise, Brace",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        626,
+        1209
+      ],
+      "viewport": [
+        900,
+        1800
+      ],
+      "sectionText": "BRACE 2/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 170796,
+      "src": "/draft/frames/3.webp",
+      "alt": "Single-Leg Calf Raise, Top",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        626,
+        1209
+      ],
+      "viewport": [
+        900,
+        1800
+      ],
+      "sectionText": "TOP 3/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 172005,
+      "src": "/draft/frames/4.webp",
+      "alt": "Single-Leg Calf Raise, Hold",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        626,
+        1209
+      ],
+      "viewport": [
+        900,
+        1800
+      ],
+      "sectionText": "HOLD 4/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 173220,
+      "src": "/draft/frames/5.webp",
+      "alt": "Single-Leg Calf Raise, Lower",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        626,
+        1209
+      ],
+      "viewport": [
+        900,
+        1800
+      ],
+      "sectionText": "LOWER 5/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 174434,
+      "src": "/draft/frames/6.webp",
+      "alt": "Single-Leg Calf Raise, Reset",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        626,
+        1209
+      ],
+      "viewport": [
+        900,
+        1800
+      ],
+      "sectionText": "RESET 6/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 175644,
+      "src": "/draft/frames/1.webp",
+      "alt": "Single-Leg Calf Raise, Low",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        626,
+        1209
+      ],
+      "viewport": [
+        900,
+        1800
+      ],
+      "sectionText": "LOW 1/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 176854,
+      "src": "/draft/frames/2.webp",
+      "alt": "Single-Leg Calf Raise, Brace",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        626,
+        1209
+      ],
+      "viewport": [
+        900,
+        1800
+      ],
+      "sectionText": "BRACE 2/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 178064,
+      "src": "/draft/frames/3.webp",
+      "alt": "Single-Leg Calf Raise, Top",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        626,
+        1209
+      ],
+      "viewport": [
+        900,
+        1800
+      ],
+      "sectionText": "TOP 3/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 179276,
+      "src": "/draft/frames/4.webp",
+      "alt": "Single-Leg Calf Raise, Hold",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        626,
+        1209
+      ],
+      "viewport": [
+        900,
+        1800
+      ],
+      "sectionText": "HOLD 4/6\n\nPause\nNormal"
+    }
+  ]
+}

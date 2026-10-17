@@ -1,0 +1,149 @@
+Browser tab: 30, Title: "Face Pulls native draft review", URL: "http://127.0.0.1:62319/native-review.html".
+1 AXWebArea Face Pulls native draft review, URL: 127.0.0.1:62319/native-review.html
+	2 container native-review
+		3 heading Face Pulls: native actual ExerciseFormFrames, Value: 1
+			4 text Face Pulls: native actual ExerciseFormFrames
+		5 text Two complete physical endpoints repeated across six instruction paths; no separately illustrated intermediate or continuous trajectory claimed.
+		6 button Dark theme
+		7 container Face Pulls form guide
+			22 image Face Pulls, Squeeze
+			9 container
+				10 text SQUEEZE 4 /6
+			11 button Previous frame
+			12 button Play
+			13 button Next frame
+			14 checkbox Description: Slower playback, Value: 1
+		15 text Hold the finish with elbows high and knuckles up.
+		16 container
+			17 text Primary:  Rear Delts . Secondary:  Rhomboids, Traps, Rotator Cuff .
+		18 button (collapsed) Card at 480px and 160px, Secondary Actions: Expand
+			19 text Card at 480px and 160px
+		20 button (collapsed) Observed playback evidence, Secondary Actions: Expand
+			21 text Observed playback evidence
+
+The focused UI element is 13 button Next frame
+
+Browser tab: 30, Title: "Face Pulls native draft review", URL: "http://127.0.0.1:62319/native-review.html".
+1 AXWebArea Face Pulls native draft review, URL: 127.0.0.1:62319/native-review.html
+	2 container native-review
+		3 heading Face Pulls: native actual ExerciseFormFrames, Value: 1
+			4 text Face Pulls: native actual ExerciseFormFrames
+		5 text Two complete physical endpoints repeated across six instruction paths; no separately illustrated intermediate or continuous trajectory claimed.
+		6 button Dark theme
+		7 container Face Pulls form guide
+			22 image Face Pulls, Return
+			9 container
+				10 text RETURN 5 /6
+			11 button Previous frame
+			12 button Play
+			13 button Next frame
+			14 checkbox Description: Slower playback, Value: 1
+		15 text Return slowly, keeping your elbows high.
+		16 container
+			17 text Primary:  Rear Delts . Secondary:  Rhomboids, Traps, Rotator Cuff .
+		18 button (collapsed) Card at 480px and 160px, Secondary Actions: Expand
+			19 text Card at 480px and 160px
+		20 button (collapsed) Observed playback evidence, Secondary Actions: Expand
+			21 text Observed playback evidence
+
+The focused UI element is 13 button Next frame
+
+Browser tab: 30, Title: "Face Pulls native draft review", URL: "http://127.0.0.1:62319/native-review.html".
+1 AXWebArea Face Pulls native draft review, URL: 127.0.0.1:62319/native-review.html
+	2 container native-review
+		3 heading Face Pulls: native actual ExerciseFormFrames, Value: 1
+			4 text Face Pulls: native actual ExerciseFormFrames
+		5 text Two complete physical endpoints repeated across six instruction paths; no separately illustrated intermediate or continuous trajectory claimed.
+		6 button Dark theme
+		7 container Face Pulls form guide
+			22 image Face Pulls, Reset
+			9 container
+				10 text RESET 6 /6
+			11 button Previous frame
+			12 button Play
+			13 button Next frame
+			14 checkbox Description: Slower playback, Value: 1
+		15 text Finish with arms extended and keep cable tension.
+		16 container
+			17 text Primary:  Rear Delts . Secondary:  Rhomboids, Traps, Rotator Cuff .
+		18 button (collapsed) Card at 480px and 160px, Secondary Actions: Expand
+			19 text Card at 480px and 160px
+		20 button (collapsed) Observed playback evidence, Secondary Actions: Expand
+			21 text Observed playback evidence
+
+The focused UI element is 13 button Next frame
+
+Browser tab: 30, Title: "Face Pulls native draft review", URL: "http://127.0.0.1:62319/native-review.html".
+1 AXWebArea Face Pulls native draft review, URL: 127.0.0.1:62319/native-review.html
+	2 container native-review
+		3 heading Face Pulls: native actual ExerciseFormFrames, Value: 1
+			4 text Face Pulls: native actual ExerciseFormFrames
+		5 text Two complete physical endpoints repeated across six instruction paths; no separately illustrated intermediate or continuous trajectory claimed.
+		6 button Dark theme
+		7 container Face Pulls form guide
+			22 image Face Pulls, Reach
+			9 container
+				10 text REACH 1 /6
+			11 button Previous frame
+			12 button Play
+			13 button Next frame
+			14 checkbox Description: Slower playback, Value: 1
+		15 text Begin with arms extended straight toward the pulley, palms down.
+		16 container
+			17 text Primary:  Rear Delts . Secondary:  Rhomboids, Traps, Rotator Cuff .
+		18 button (collapsed) Card at 480px and 160px, Secondary Actions: Expand
+			19 text Card at 480px and 160px
+		20 button (collapsed) Observed playback evidence, Secondary Actions: Expand
+			21 text Observed playback evidence
+
+The focused UI element is 13 button Next frame
+
+Browser tab: 30, Title: "Face Pulls native draft review", URL: "http://127.0.0.1:62319/native-review.html".
+1 AXWebArea Face Pulls native draft review, URL: 127.0.0.1:62319/native-review.html
+	2 container native-review
+		3 heading Face Pulls: native actual ExerciseFormFrames, Value: 1
+			4 text Face Pulls: native actual ExerciseFormFrames
+		5 text Two complete physical endpoints repeated across six instruction paths; no separately illustrated intermediate or continuous trajectory claimed.
+		6 button Dark theme
+		7 container Face Pulls form guide
+			22 image Face Pulls, Brace
+			9 container
+				10 text BRACE 2 /6
+			11 button Previous frame
+			12 button Play
+			13 button Next frame
+			14 checkbox Description: Slower playback, Value: 1
+		15 text Keep your stance steady and your shoulder blades set.
+		16 container
+			17 text Primary:  Rear Delts . Secondary:  Rhomboids, Traps, Rotator Cuff .
+		18 button (collapsed) Card at 480px and 160px, Secondary Actions: Expand
+			19 text Card at 480px and 160px
+		20 button (collapsed) Observed playback evidence, Secondary Actions: Expand
+			21 text Observed playback evidence
+
+The focused UI element is 13 button Next frame
+
+Browser tab: 30, Title: "Face Pulls native draft review", URL: "http://127.0.0.1:62319/native-review.html".
+1 AXWebArea Face Pulls native draft review, URL: 127.0.0.1:62319/native-review.html
+	2 container native-review
+		3 heading Face Pulls: native actual ExerciseFormFrames, Value: 1
+			4 text Face Pulls: native actual ExerciseFormFrames
+		5 text Two complete physical endpoints repeated across six instruction paths; no separately illustrated intermediate or continuous trajectory claimed.
+		6 button Dark theme
+		7 container Face Pulls form guide
+			22 image Face Pulls, Rotate
+			9 container
+				10 text ROTATE 3 /6
+			11 button Previous frame
+			12 button Play
+			13 button Next frame
+			14 checkbox Description: Slower playback, Value: 1
+		15 text Pull toward your face, separating the grips past your ears.
+		16 container
+			17 text Primary:  Rear Delts . Secondary:  Rhomboids, Traps, Rotator Cuff .
+		18 button (collapsed) Card at 480px and 160px, Secondary Actions: Expand
+			19 text Card at 480px and 160px
+		20 button (collapsed) Observed playback evidence, Secondary Actions: Expand
+			21 text Observed playback evidence
+
+The focused UI element is 13 button Next frame

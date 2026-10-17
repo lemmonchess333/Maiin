@@ -28,6 +28,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   act,
+  cleanup,
   render,
   screen,
   fireEvent,
@@ -443,6 +444,50 @@ describe("ProgrammeRunSection — the no-run card names the day it is on", () =>
     expect(screen.getByText(/^Rest day\./)).toBeInTheDocument();
     expect(screen.queryByText(/^Lift day\./)).toBeNull();
   });
+
+  it("opens the running form guide from the runner", async () => {
+    renderSection(
+      {
+        ...commonProps(),
+        profile: makeProfile({
+          weekSchedule: scheduleWithTodayAs("rest"),
+        } as Partial<UserProfile>),
+      },
+      makeProgramState([])
+    );
+    // The words under the card's lines stand in for the runner where it
+    // gives way.
+    const [words, runner] = screen.getAllByRole("button", {
+      name: "Running form",
+    });
+    expect(runner).toHaveClass("@max-[14em]:hidden");
+    expect(words).toHaveClass("hidden", "@max-[14em]:inline-flex");
+    fireEvent.click(runner);
+    expect(
+      await screen.findByRole("region", { name: "Running form guide" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Land under your hips, not out front.")
+    ).toBeInTheDocument();
+  });
+
+  it("draws the easy runner beside the words", () => {
+    const { container } = renderSection(
+      {
+        ...commonProps(),
+        profile: makeProfile({
+          weekSchedule: scheduleWithTodayAs("rest"),
+        } as Partial<UserProfile>),
+      },
+      makeProgramState([])
+    );
+    expect(screen.getByText("No run scheduled")).toBeInTheDocument();
+    expect(
+      container
+        .querySelector('img[src$="/form-art/run-easy.webp"]')
+        ?.getAttribute("aria-hidden")
+    ).toBe("true");
+  });
 });
 
 describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
@@ -725,6 +770,46 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
       screen.getByRole("button", { name: /View run/i })
     ).toBeInTheDocument();
     expect(screen.queryByText(/^Next ·/i)).not.toBeInTheDocument();
+  });
+
+  it("draws the runner on the run card, the fast stride for a tempo", () => {
+    const runnerOnCard = () =>
+      screen
+        .getByRole("button", { name: /View run/i })
+        .closest("section")!
+        .querySelector("img")
+        ?.getAttribute("src");
+    const props = commonProps();
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        programState={makeProgramState([
+          makeRunDay({
+            status: "planned",
+            date: TODAY_KEY,
+            dayIndex: TODAY_DOW,
+          }),
+        ])}
+      />
+    );
+    expect(runnerOnCard()).toMatch(/\/form-art\/run-easy\.webp$/);
+    cleanup();
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        programState={makeProgramState([
+          makeRunDay({
+            id: "runday_tempo_20",
+            templateId: "tempo_20",
+            type: "tempo",
+            status: "planned",
+            date: TODAY_KEY,
+            dayIndex: TODAY_DOW,
+          }),
+        ])}
+      />
+    );
+    expect(runnerOnCard()).toMatch(/\/form-art\/run-fast\.webp$/);
   });
 
   it("says a recovery week is easy runs, in words", () => {
@@ -1372,6 +1457,62 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
     );
     expect(screen.getByText(/We marked this as no-show/i)).toBeInTheDocument();
     expect(screen.queryByText(/Recovery complete/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("ProgrammeRunSection — recovery counts local calendar days", () => {
+  beforeEach(() => {
+    vi.stubEnv("TZ", "Europe/London");
+    vi.useFakeTimers({ toFake: ["Date"] });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllEnvs();
+  });
+
+  function recoveringUntil(recoveryEndDate: string) {
+    const raceGoal = {
+      distance: "marathon" as const,
+      targetDate: localDateString(addLocalDays(new Date(), -1)),
+    };
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={makeProfile({ runMode: "race_prep", raceGoal })}
+        programState={makeProgramState([], {
+          runPlan: {
+            mode: "race_prep",
+            raceGoal,
+            phase: "recovery",
+            recoveryEndDate,
+            totalWeeks: 17,
+            currentWeek: 16,
+          },
+        })}
+      />
+    );
+  }
+
+  it.each([
+    ["2026-10-15T00:30:00+01:00", "2026-11-11"], // BST → GMT adds an hour.
+    ["2026-10-15T02:00:00+01:00", "2026-11-11"],
+    ["2026-03-15T23:30:00+00:00", "2026-04-11"], // GMT → BST removes an hour.
+    ["2026-01-15T00:30:00+00:00", "2026-02-11"], // No clock change.
+  ])("shows 27 calendar days from %s until %s", (now, end) => {
+    vi.setSystemTime(new Date(now));
+    recoveringUntil(end);
+    expect(screen.getByText("Recovering · 27 days left")).toBeInTheDocument();
+  });
+
+  it("updates the count on the next local date while recovery remains active", () => {
+    vi.setSystemTime(new Date("2026-10-14T23:59:00+01:00"));
+    recoveringUntil("2026-11-10");
+    expect(screen.getByText("Recovering · 27 days left")).toBeInTheDocument();
+    act(() => {
+      vi.setSystemTime(new Date("2026-10-15T00:01:00+01:00"));
+      window.dispatchEvent(new Event("focus"));
+    });
+    expect(screen.getByText("Recovering · 26 days left")).toBeInTheDocument();
   });
 });
 

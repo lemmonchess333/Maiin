@@ -1,0 +1,152 @@
+{
+  "artifactName": "side-draft-manual-dark.json",
+  "observations": [
+    {
+      "alt": "Side Plank, Time",
+      "complete": true,
+      "cues": [
+        "Unregistered single-pose timed hold",
+        "Time 6/6",
+        "Hold for time; then repeat opposite side."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "overflow": false,
+      "src": "/draft/frames/6.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Side Plank, Support",
+      "complete": true,
+      "cues": [
+        "Unregistered single-pose timed hold",
+        "Support 1/6",
+        "Keep your elbow beneath your shoulder."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "overflow": false,
+      "src": "/draft/frames/1.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Side Plank, Stack",
+      "complete": true,
+      "cues": [
+        "Unregistered single-pose timed hold",
+        "Stack 2/6",
+        "Keep your feet stacked and steady."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "overflow": false,
+      "src": "/draft/frames/2.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Side Plank, Align",
+      "complete": true,
+      "cues": [
+        "Unregistered single-pose timed hold",
+        "Align 3/6",
+        "Keep head, hips and feet aligned."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "overflow": false,
+      "src": "/draft/frames/3.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Side Plank, Brace",
+      "complete": true,
+      "cues": [
+        "Unregistered single-pose timed hold",
+        "Brace 4/6",
+        "Keep your hips raised and core braced."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "overflow": false,
+      "src": "/draft/frames/4.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Side Plank, Breathe",
+      "complete": true,
+      "cues": [
+        "Unregistered single-pose timed hold",
+        "Breathe 5/6",
+        "Breathe normally without dropping your hips."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "overflow": false,
+      "src": "/draft/frames/5.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Side Plank, Time",
+      "complete": true,
+      "cues": [
+        "Unregistered single-pose timed hold",
+        "Time 6/6",
+        "Hold for time; then repeat opposite side."
+      ],
+      "display": [
+        334,
+        360
+      ],
+      "overflow": false,
+      "src": "/draft/frames/6.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    }
+  ]
+}

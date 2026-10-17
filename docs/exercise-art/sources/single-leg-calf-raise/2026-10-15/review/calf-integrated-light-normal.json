@@ -1,0 +1,157 @@
+{
+  "artifactName": "calf-integrated-light-normal.json",
+  "observations": [
+    {
+      "ms": 205154,
+      "src": "/form-frames/single-leg-calf-raise/4.webp",
+      "alt": "Single-Leg Calf Raise, Hold",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "HOLD 4/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 206357,
+      "src": "/form-frames/single-leg-calf-raise/5.webp",
+      "alt": "Single-Leg Calf Raise, Lower",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "LOWER 5/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 207559,
+      "src": "/form-frames/single-leg-calf-raise/6.webp",
+      "alt": "Single-Leg Calf Raise, Reset",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "RESET 6/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 208766,
+      "src": "/form-frames/single-leg-calf-raise/1.webp",
+      "alt": "Single-Leg Calf Raise, Low",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "LOW 1/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 209973,
+      "src": "/form-frames/single-leg-calf-raise/2.webp",
+      "alt": "Single-Leg Calf Raise, Brace",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "BRACE 2/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 211179,
+      "src": "/form-frames/single-leg-calf-raise/3.webp",
+      "alt": "Single-Leg Calf Raise, Top",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "TOP 3/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 212385,
+      "src": "/form-frames/single-leg-calf-raise/4.webp",
+      "alt": "Single-Leg Calf Raise, Hold",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "HOLD 4/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 213587,
+      "src": "/form-frames/single-leg-calf-raise/5.webp",
+      "alt": "Single-Leg Calf Raise, Lower",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 626,
+      "naturalHeight": 1209,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "LOWER 5/6\n\nPause\nNormal"
+    }
+  ]
+}

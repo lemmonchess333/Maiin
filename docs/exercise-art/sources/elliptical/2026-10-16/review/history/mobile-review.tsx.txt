@@ -1,0 +1,29 @@
+import { createRoot } from 'react-dom/client';
+import { useState } from 'react';
+import '../../Maiin-burpees/src/index.css';
+import ExerciseFormFrames from '../../Maiin-burpees/src/components/ExerciseFormFrames';
+import { CardViews, PlaybackEvidence, ThemeControl } from './review-shared';
+import plan from './candidate/sequence-plan.json';
+import catalogue from './candidate/authoring/catalogue-snapshot.json';
+
+const beats = plan.beats.map(({ t, label, cue }, index) => ({ t, label, cue, image: `candidate/draft/frames/${index + 1}.webp` }));
+function Review() {
+  const [index, setIndex] = useState(0);
+  return <main data-review-scope="unregistered-mobile-two-stride-state" className="min-h-screen bg-background text-foreground p-4">
+    <div style={{ maxWidth: 390, margin: '0 auto' }} className="space-y-3">
+      <h1 className="text-h2 font-bold">Elliptical</h1>
+      <ThemeControl />
+      <p>Unregistered two-stride-state owner draft with custom equipment. Review at a real 390×844 browser viewport.</p>
+      <ExerciseFormFrames name="Elliptical" beats={beats} onStep={setIndex} />
+      <p data-testid="draft-selected-cue">{index + 1}. {beats[index].label}: {beats[index].cue}</p>
+      <p>Catalogue technique: {catalogue.instructions.join(' ')}</p>
+      <p>Primary: {plan.primary.join(', ')}. Secondary: {plan.secondary.join(', ')}.</p>
+      <ol className="list-decimal pl-6 space-y-2">{beats.map((beat, i) => <li key={i}>{beat.label}: {beat.cue}</li>)}</ol>
+      <CardViews src="/candidate/draft/card.webp" />
+      <PlaybackEvidence />
+    </div>
+  </main>;
+}
+const root = createRoot(document.getElementById('root')!);
+root.render(<Review />);
+if (import.meta.hot) import.meta.hot.dispose(() => root.unmount());

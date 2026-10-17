@@ -12,7 +12,7 @@
  *   - Weight 0 + BW exercise  → "{sets}×{reps} BW".
  *   - Weight 0 + weighted ex. → "{sets}×{reps}" (uncalibrated — don't
  *                                fabricate "BW" for a barbell lift).
- *   - Otherwise               → "{sets}×{reps}×{weight}kg".
+ *   - Otherwise               → "{sets}×{reps}×{weight} kg", or lb.
  *
  * `BW` is the universal lifter shorthand and reads cleanly in feed
  * cards; "Bodyweight" is too long for the right-aligned slot.
@@ -25,6 +25,8 @@
 
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { isTimedExerciseId } from "@/features/program/repUnits";
+import { liftUnitLabel, type LiftUnit } from "@/lib/liftLoad";
+import { kitLoadIn } from "@/features/program/loadSteps";
 
 export interface ExerciseSummaryInput {
   setCount: number;
@@ -35,7 +37,12 @@ export interface ExerciseSummaryInput {
   exerciseId?: string;
 }
 
-export function formatExerciseSummary(input: ExerciseSummaryInput): string {
+/** `unit` is the reader's (Lift18): a post stores kg, and the summary it
+ *  stores is written in kg, as the fallback for a post with no figures. */
+export function formatExerciseSummary(
+  input: ExerciseSummaryInput,
+  unit: LiftUnit = "kg"
+): string {
   const sets = Math.max(0, Math.round(input.setCount || 0));
   const reps = Math.max(0, Math.round(input.targetReps || 0));
   const weight = Math.max(0, Number(input.targetWeightKg) || 0);
@@ -53,10 +60,10 @@ export function formatExerciseSummary(input: ExerciseSummaryInput): string {
       ? `${sets}×${reps} BW`
       : `${sets}×${reps}`;
   }
+  const shown =
+    unit === "lbs" ? kitLoadIn(weight, unit, input.exerciseId) : weight;
   // Drop trailing .0 on round weights so "100 kg" doesn't become "100.0 kg".
-  const weightStr = Number.isInteger(weight)
-    ? String(weight)
-    : weight.toFixed(1);
+  const weightStr = Number.isInteger(shown) ? String(shown) : shown.toFixed(1);
   // Spaced unit — the app's one unit treatment ("60 kg", never "60kg").
-  return `${count}${timed ? " × " : "×"}${weightStr} kg`;
+  return `${count}${timed ? " × " : "×"}${weightStr} ${liftUnitLabel(unit)}`;
 }

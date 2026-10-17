@@ -1,0 +1,102 @@
+{
+  "scope": "Completed bounded source-strength alpha correction; pixel/editable/export integrity only, no visual QA, strict model or release approval.",
+  "sourceSha256": "89d0866e0f165831b539839a8c0d7e45b9dc8a77533d916cc4d23a38465d1bc3",
+  "canonicalReferenceSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "nativeDimensions": [
+    1536,
+    1024
+  ],
+  "commonCrop": [
+    32,
+    168,
+    1512,
+    864
+  ],
+  "dimensions": [
+    1480,
+    696
+  ],
+  "removedMarginsMaximumRgb": 9,
+  "physicalPoses": 1,
+  "sourcePoseOrder": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "sourceChromaComponents": [
+    {
+      "pixels": 6996,
+      "boundsInclusive": [
+        358,
+        223,
+        484,
+        317
+      ]
+    },
+    {
+      "pixels": 51456,
+      "boundsInclusive": [
+        279,
+        344,
+        636,
+        612
+      ]
+    },
+    {
+      "pixels": 9022,
+      "boundsInclusive": [
+        121,
+        449,
+        217,
+        606
+      ]
+    }
+  ],
+  "existingSourceColourPixels": 67474,
+  "actualChangedPixels": 67379,
+  "allOutsideOriginalColourSupportRgbaExact": true,
+  "sourceAlphaExact": true,
+  "allContactAndTrainerPixelsExact": true,
+  "nativeCoordinatesUnchanged": true,
+  "commonCropOnlyNoScaleOrRotation": true,
+  "independentInheritedDetailLayer": true,
+  "nativeAndFramedOraReopenedExact": true,
+  "sixSeparateLosslessFramesDecodedExact": true,
+  "sixFramesAreOneIdenticalPhysicalHold": true,
+  "exactPrimaryOutputPixels": 251,
+  "exactSecondaryOutputPixels": 69,
+  "frameHashes": {
+    "draft/frames/1.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/frames/2.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/frames/3.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/frames/4.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/frames/5.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/frames/6.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032"
+  },
+  "outputHashes": {
+    "1-framed.ora": "91dbe1ef239c11961e9e74954f61fcebc00a40f8e0ebcaa67be87f7863e12f09",
+    "1-framed.png": "6469a48d2725737ba7d6c71eaad8dea50682d459b3b85eb85cb9e5da176f5b98",
+    "1-inherited-contours-and-shading-layer.png": "2b5a4278161b8a4b9e70b4cc2261550a100c655806e845363c6f2a2544a65fc0",
+    "1-native-finished.png": "269517853df41de92d91225696530c778ca9d4f469aac15958994940cf5978cc",
+    "1-native.ora": "c960c1bde71d3dd0737866b967d5c4c35d07f22d27be8919f42815669fee34cb",
+    "1-palette-layer.png": "e061dadc3b121b0bb4afda68536f3a91ec5ebcb54146922524333498dc280150",
+    "frames/1.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "frames/2.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "frames/3.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "frames/4.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "frames/5.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "frames/6.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "masks/actual-changed-pixels.png": "c9721083a81e932be7150885afe2b5044fcd6d05f51b6fa0200287bbadde4e11",
+    "masks/opaque-source-field-interior.png": "b2679e4f1b99f09c7a94ce7934049a4936fab873d6f83d578947aea2c4464ab9",
+    "masks/primary-role-within-existing-fields.png": "141c8db09f11ae09840dea04765d16fb3c02c9df3e35fbf4cc7f3bdd314d58fc",
+    "masks/secondary-role-within-existing-fields.png": "9a4e970c0c1e9537e54309cf4c45c066af8760319291cbbd0783153e52a77554",
+    "masks/source-colour-alpha.png": "bbac0ec86c50b5e84982ffe03c68665fe998f166f55c0740186c44cc02e307a0",
+    "masks/source-existing-colour-support.png": "2577fea77842241d557bbdf7e12a7fcfc9789fb390afaebd798cd62ec268be6c",
+    "reference.png": "c287fda2095940e6023aaabac153432da29591a626ee15ba18c2f5294e1448da"
+  },
+  "releaseApproved": false,
+  "completionCredit": false
+}

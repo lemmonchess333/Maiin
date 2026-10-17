@@ -1,0 +1,29 @@
+{
+  "status": "new-apparatus-draft-plan-not-an-accepted-guide",
+  "variation": "Fixed-seat double-beam lever press with forward/down footplate travel",
+  "changedFromInitialPlan": "The new genuinely hip-and-knee-flexed native source has a foot position above and behind the extended endpoint. It fits a forward/down press plate family, rather than the initially proposed horizontal translation.",
+  "primaryEvidence": {
+    "url": "https://bodysolid.com/body-solid-fusion-leg-press-attachment",
+    "manual": "https://bodysolid.com/content/manuals/FLP.pdf",
+    "observed": "Manufacturer describes a double-beam pivoting plate with forward/down travel. Manual assembly names leg frame, connector frame, footplate and pivot shafts.",
+    "scope": "Movement-family evidence only. The custom draft is plate loaded and is not a replica of this cable-loaded product or its stated 1:2 ratio."
+  },
+  "nativeSourceSize": [1536, 1024],
+  "sourceScale": 1,
+  "anatomicalWarps": 0,
+  "proposedFootplateTranslationBMinusA": [245, -100],
+  "fixedPivot": [592.5, 894],
+  "footplateJoints": { "A": [350, 650], "B": [595, 550] },
+  "secondBeamOffset": [130, 25],
+  "loading": "A rigid perpendicular load arm raises actual plates during extension. This draft has no invented cable or pulley ratio.",
+  "calibratedHumanCamera": false,
+  "needsReview": [
+    "native sole/plate contact",
+    "consistent beam lengths and fixed pivots",
+    "load rises on extension",
+    "no floor collision",
+    "athlete proportion and shading continuity",
+    "final native and mobile playback"
+  ],
+  "completionCredit": false
+}

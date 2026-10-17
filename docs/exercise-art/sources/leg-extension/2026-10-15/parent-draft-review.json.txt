@@ -1,0 +1,33 @@
+{
+  "reviewedAt": "2026-10-15T19:54:59.892087+00:00",
+  "exerciseId": "leg-extension",
+  "version": "anatomy-v3-2026-10-15-material-endpoint-leg-extension-v1",
+  "planSha256": "718a1752e1fe1b6bd47ac081aeb89f33eaba2a30253239833dcc7731cac30eed",
+  "cardSha256": "66473827c8e846bf9ee25fbca2f38b237212c3516e1bec10ed9d1f1a38f512d2",
+  "allowLocalIntegration": true,
+  "completionCredit": false,
+  "strictChecksRemainNull": true,
+  "findings": [
+    "Independent generic covered selectorized apparatus, not an exact branded replica.",
+    "A constructed common apparatus camera is used, not an original human-camera/depth recovery.",
+    "Covered resistance routing and unseen cams/belts/weights are not verified.",
+    "Original source body/seat/head/hand variations remain; human pixels are not fitted.",
+    "The held middle source2 and earlier long-pad diagnostic are not delivered.",
+    "Minor neutral-metal facet bands and simplified covered panels remain.",
+    "Only a constructed apparatus camera is proven; original human depth and covered resistance routing remain uncertain."
+  ],
+  "observations": {
+    "identity": "Parent viewed FA56 and original/final native endpoints. Original bald faceless grey-white athlete without shorts, full white trainers and anatomical contour detail remain. Small original head/seat/hand differences remain disclosed; no exact canonical pixel identity certification.",
+    "camera": "Original source1/4 intact scenes retain coordinates after the common whole-scene placement(0,+40) on1536x1104. Common crop[114,14,1433,1070] yields1319x1056. Replacement apparatus has one explicit orthographic3D camera; it does not establish the original human camera or unseen joint depth.",
+    "anatomy": "All human shapes remain from intact successful originals. No anatomical warping, limb fitting, head/shoe graft or hidden reconstruction. Parent final native pair and mobile views show readable bent and extended legs without obvious material body distortion.",
+    "equipment": "Both states use the same constructed fixed covered generic selectorized chassis and dual independent rotary working units. Actual world arm lengths, pad radii/lengths and axes remain constant. Short pads have documented positive axial clearance. Original foreground/occlusion masks and all unoccluded replacement gear layers are retained for inspection. Neutral material finish now follows original contour/shading detail; minor facet bands/simpler panels remain. Covered cams/belts/resistance and brand-specific routing are unverified.",
+    "contact": "Preserved hands grip original seat handles and hips/back remain supported. True rotary pad contact targets project onto the original shin positions at both endpoints; feet remain free. Source depth assumptions and joint-centre estimates remain disclosed, rather than a biomechanical calibration. No visible mobile collision or major contact gap observed.",
+    "physics": "Actual bent/extended states show knee extension while hips remain seated and hands retain support. A common rigid apparatus geometry explains both pad positions, without frame-specific shrinking arms or separate fitted SVG paths. Two endpoints are repeated; no drawn intermediate or continuous mechanics certification. Hidden resistance transmission remains unverified.",
+    "muscles": "Existing Quads primary and Hip Flexors secondary colour fields remap to base#7B72E9/#9590E0 using source-local maximum-channel/chroma. Original fibre shading, neutral contours and support alpha are retained. No spatial body shading gradient is authored. Native and mobile final colours/shadows are coherent with retained approved source style.",
+    "cueAgreement": "All six paths manually selected plus wrap in both390x844 themes; labels/cues match each visible bent/extended endpoint, all cues at most7words. Setup uses exact catalogue shin-pad placement. Registered guide review remains pending.",
+    "sequenceAndLoop": "Actual native player1319x1056 and mobile390x844 playback observed all six paths and automatic6-to-1 wraps. Normal intervals approximately1.2s, slower2.4s; manual previous1-to-6 and next6-to-1 verified. Source order[1,1,4,4,1,1],2physical poses. No six-unique-pose claim.",
+    "mobileLight": "Parent actual390x844 light view checked all6cues, normal/slower playback, full athlete/equipment and normal-generator transparent480/160px cards. No horizontal overflow, major clipping or unreadable cue observed. Final integrated guide review remains pending.",
+    "mobileDark": "Parent actual390x844 dark view checked all6cues, normal playback and normal-generator transparent480/160px cards. Full athlete/equipment remains readable; no material clipping/contact defect. Captured browser warnings/errors empty. Final integrated guide review remains pending."
+  },
+  "draftActualUiOnly": "Final integrated guide/card, normal project checks, CI, merge and preservation audit remain pending."
+}

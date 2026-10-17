@@ -1,0 +1,26 @@
+{
+  "allImageAndOraBytesExact": true,
+  "imagesAndEditables": {
+    "draft/A-colour-full.png": "9c6fd13295f7660194fcc9c92ea34e8be6586a769d110f7180e61cca6f68a6b8",
+    "draft/A-colour-overlay.png": "b2defc204d245cc88952e74481933dc131bc21ab6d64a4ac8bec128cb334f630",
+    "draft/A-head-and-palms-native.png": "d5385f7305854992134664924feaa8cc893a921af8aed1fea856c3e06b7f391d",
+    "draft/A-native.ora": "d3bddf2e2d74c1cdb7880cbaa42fb9b146c7f138e329b0f1644c270075f41872",
+    "draft/A-native.png": "739e3688daaa064f9f37c957bb8721344bde52b746179604898f41bcc5025616",
+    "draft/A-primary-mask.png": "35d3be6da93b562d17f51ef37a5b240d58abe2f65fecd9af48be53a7ae6461e7",
+    "draft/A-secondary-mask.png": "4ff139e2aa0b0360510864190817f6008b5ad9cdb482276b41c0211bb3a2cd57",
+    "draft/B-colour-full.png": "94054e4d81542eb86d748349f56884796ea5a6cd64fc11746842ddfde4327da4",
+    "draft/B-colour-overlay.png": "60ee1201531d3d2b2519f992d88477902dd3b01c96abdce95fb7397c3308a2b6",
+    "draft/B-head-and-palms-native.png": "f65bc1825485214316e16245e8be1768068b02fb6b7d87aa52e0333137cf6912",
+    "draft/B-native.ora": "ac731104f5573b23a3495df5eeef9d52cfee411152d9f8a40dfb2be74999a5ec",
+    "draft/B-native.png": "59d762b0fbc66e6c4d406fbbe796f9b48e2096c10b59f388bfa13f019098c795",
+    "draft/B-primary-mask.png": "4845c8921c7614ba6f575185a4a05b4af6a4ec6de82c8f8141b1fa27bcaccd68",
+    "draft/B-secondary-mask.png": "9394667ca0a4602e273252d3718a9bf735bb51f71d73130613b386ddecc223cb",
+    "draft/frames/1.webp": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905",
+    "draft/frames/2.webp": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905",
+    "draft/frames/3.webp": "f042c84b2a1d70f7fc287a39515a22b2148c36a9830c8d8ea7e2f002afcd4b59",
+    "draft/frames/4.webp": "f042c84b2a1d70f7fc287a39515a22b2148c36a9830c8d8ea7e2f002afcd4b59",
+    "draft/frames/5.webp": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905",
+    "draft/frames/6.webp": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905"
+  },
+  "framesIncluded": 6
+}

@@ -1,0 +1,71 @@
+{
+  "reviewedAt": "2026-10-14T22:10:05.247095+00:00",
+  "reviewer": "other_retained_pose_rescue",
+  "exerciseId": "ab-wheel",
+  "status": "native-master-physical-source-pass; provisional-sequence-source-only",
+  "scope": "Independent native original master and canonical FA56 visual review. No image generation, pixel edits, staging, registration, counters or publication by this reviewer. One starting pose is not a complete exercise conversion.",
+  "source": {
+    "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\ab-wheel\\intact-whole-athlete-production-20261014\\master-brace-original.png",
+    "sha256": "92cbc7bf52bf72258c762e52ddffec70dbaed32406e8c32850da5888f6399c0f",
+    "nativeDimensions": [1536, 1024]
+  },
+  "canonical": {
+    "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\identity\\athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "matchesRequiredFA56": true
+  },
+  "physicalChecks": {
+    "identityAndNoShorts": {
+      "passed": true,
+      "evidence": "Recognizable bald featureless head, lean white/light-grey anatomical model, fine clinical contours and neutral inherited body shading. Smooth featureless pelvis without shorts, waistband or garment seams; both white trainers intact. Anatomical continuity from torso through pelvis/thighs and from shoulders through forearms is readable."
+    },
+    "wholeAnatomyAndProportions": {
+      "passed": true,
+      "evidence": "Whole head, torso, pelvis, both upper/lower legs, shoes, arms and gripping hands are present in one coherent whole-source pose. No severed, grafted or floating limb, gross global scale break or obvious upper/lower-arm mismatch found. Projected lengths are not asserted to be calibrated physical limb lengths."
+    },
+    "neutralBraceAndStartingPose": {
+      "passed": true,
+      "evidence": "Kneeling hips broadly over knee support, torso inclined forward, arms long with hands under/slightly forward of shoulders in the oblique projection. Posterior trunk is continuous and neutral, without an obvious lumbar sag or exaggerated arch. Pelvic brace/tuck reads plausibly; static art cannot prove muscular contraction."
+    },
+    "kneePadSupport": {
+      "passed": true,
+      "evidence": "Both knees meet the top of one low pad, with lower legs extending behind. Near and far knee contacts are visibly supported; no dangling knee or intervening floor gap is visible. Image-y differences between floor objects are perspective, not evidence of unequal ground depth."
+    },
+    "twoHandGrips": {
+      "passed": true,
+      "evidence": "Both closed fists wrap the two ends of the same horizontal-in-space wheel axle. Near shaft end, hub and far shaft end are continuous through the wheel; no extra handle, detached grip or hand floating above an axle is visible."
+    },
+    "wheelGroundAndOrdinaryEquipment": {
+      "passed": true,
+      "evidence": "One modest ordinary broad-tread wheel with a central hub/axle and two grips, plus one knee pad. Wheel bottom touches the visible shadowed floor with no obvious unsupported gap. Oblique wheel face/tread projection and axle-end height difference are coherent. No calibration/no-slip roll claim is made."
+    },
+    "cameraAndRolloutRoom": {
+      "passed": true,
+      "evidence": "Fixed front-side oblique view exposes both hands, both knees and wheel contact. Starting figure/equipment occupies roughly x65-925, leaving substantial empty room toward screen right for controlled rollout. A later extended source must still demonstrate whole-body framing, contact and neutral spine; this margin alone does not approve it."
+    }
+  },
+  "colourAndMuscleFields": {
+    "finalColourAccepted": false,
+    "authorisedFieldOnlyFinishingSuitable": true,
+    "observedRoles": "Abdominal/lateral core is visually stronger purple; both deltoid caps and upper lateral/back region are lighter purple. Legs, chest, forearms, pelvis, shoes and wheel remain neutral.",
+    "finishNeeded": "Original muscle fields contain graded purple shading and do not yet establish exact flat #7B72E9 primary/#9590E0 secondary ownership and fine inherited neutral contours. Do not treat this original palette as a final accepted field pass.",
+    "boundaryFinding": {
+      "status": "review-before-finishing; not-significant-physical-hold",
+      "nativeApproximateRegion": [480, 280, 545, 402],
+      "evidence": "The near posterior upper-arm/lateral-back purple patch below/behind the deltoid could include posterior upper-arm tissue rather than only the requested Lats. Native oblique overlap makes the precise ownership less certain. Review that source contour region separately; do not indiscriminately classify every purple patch as Lats or extend muscle fill across an arm boundary. Any correction must stay colour/field-only and preserve anatomy, contacts and neutral pixels.",
+      "coordinateLimit": "Region is a visual inspection ROI, not an exact tissue segmentation or generation anchor."
+    }
+  },
+  "significantPhysicalDefects": [],
+  "notYetProven": [
+    "A matching intermediate and controlled extended whole-athlete source with preserved model, pad/knee support and wheel geometry",
+    "Full rollout and return scope, neutral spine through range and appropriate wheel displacement",
+    "Final muscle-role boundary/palette/contour finishing",
+    "Six distinct beat paths with honest source reuse and actual native playback/loop",
+    "Mobile light/dark, editable/provenance/project checks and merge"
+  ],
+  "decision": "Use this intact no-shorts master provisionally for adjacent source authoring. Do not regenerate or alter its anatomy merely for colour mismatch. Reassess actual generated adjacent sources before further states; no sequence acceptance or completion credit from this one pose.",
+  "generationRequestsByReviewer": 0,
+  "imageEditsByReviewer": 0,
+  "completionCredit": 0
+}

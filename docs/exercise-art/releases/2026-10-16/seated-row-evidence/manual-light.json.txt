@@ -1,0 +1,98 @@
+[
+  {
+    "alt": "Seated Cable Row, Reach",
+    "cue": "Reach forward; keep both feet braced.",
+    "natural": [
+      1335,
+      942
+    ],
+    "scrollWidth": 380,
+    "selected": "Show frame 1: Reach",
+    "src": "/form-frames/seated-row/1.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "alt": "Seated Cable Row, Set",
+    "cue": "Keep knees soft and wrists straight.",
+    "natural": [
+      1335,
+      942
+    ],
+    "scrollWidth": 380,
+    "selected": "Show frame 2: Set",
+    "src": "/form-frames/seated-row/2.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "alt": "Seated Cable Row, Row",
+    "cue": "Draw elbows back; bring chest upright.",
+    "natural": [
+      1335,
+      942
+    ],
+    "scrollWidth": 380,
+    "selected": "Show frame 3: Row",
+    "src": "/form-frames/seated-row/3.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "alt": "Seated Cable Row, Squeeze",
+    "cue": "Bring the handle toward your lower ribs.",
+    "natural": [
+      1335,
+      942
+    ],
+    "scrollWidth": 380,
+    "selected": "Show frame 4: Squeeze",
+    "src": "/form-frames/seated-row/4.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "alt": "Seated Cable Row, Return",
+    "cue": "Extend arms; hinge forward under control.",
+    "natural": [
+      1335,
+      942
+    ],
+    "scrollWidth": 380,
+    "selected": "Show frame 5: Return",
+    "src": "/form-frames/seated-row/5.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "alt": "Seated Cable Row, Reset",
+    "cue": "Keep feet braced; avoid bouncing.",
+    "natural": [
+      1335,
+      942
+    ],
+    "scrollWidth": 380,
+    "selected": "Show frame 6: Reset",
+    "src": "/form-frames/seated-row/6.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  }
+]

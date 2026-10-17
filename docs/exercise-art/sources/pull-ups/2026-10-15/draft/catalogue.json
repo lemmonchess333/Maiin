@@ -1,0 +1,14 @@
+{
+  "id": "pull-ups",
+  "name": "Pull-Ups",
+  "category": "Back",
+  "muscleGroup": "Lats",
+  "secondaryMuscles": ["Biceps", "Rear Delts", "Core"],
+  "equipment": "Bodyweight",
+  "instructions": [
+    "Hang from the bar with an overhand grip slightly wider than shoulders.",
+    "Pull your shoulder blades down and back before your arms start to move.",
+    "Pull your chest toward the bar until your chin clears it.",
+    "Lower under control to a full dead hang \u2014 no kipping, no swing."
+  ]
+}

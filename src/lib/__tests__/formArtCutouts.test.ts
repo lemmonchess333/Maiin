@@ -2,18 +2,21 @@
  * The card cut-outs stay bound to the released drawings they were cut from.
  *
  * `scripts/art/cut-out-form-art.ts` derives one transparent image per
- * released set from that set's reference frame. The reviewed frames are
- * never edited (their release records pin every frame's hash), so the
- * failure this guards is the other direction: a reference frame replaced
- * or re-released while its cut-out keeps showing the old drawing on Home.
+ * released set from that set's card frame: its reference, unless
+ * `formArtCardFrames` lists a frame that shows the exercise better. The
+ * reviewed frames are never edited (their release records pin every
+ * frame's hash), so the failure this guards is the other direction: a
+ * frame replaced or re-released while its cut-out keeps showing the old
+ * drawing on Home.
  */
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FORM_ARTWORK, getReleasedFormArtwork } from "../formArtwork";
 import { FORM_ART_CUTOUTS } from "../formArtCutouts.data";
 import { getFormArtCutout } from "../formArtCutouts";
+import { CARD_FRAMES, cardFrameOf } from "../formArtCardFrames";
 
 const sha = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
 const publicFile = (path: string) =>
@@ -48,13 +51,13 @@ describe("form art cut-outs", () => {
     expect(Object.keys(FORM_ART_CUTOUTS).sort()).toEqual(released);
   });
 
-  it.each(released)("%s is cut from its current reference frame", (id) => {
+  it.each(released)("%s is cut from its current card frame", (id) => {
     const art = getReleasedFormArtwork(id)!;
     const cutout = FORM_ART_CUTOUTS[id];
-    expect(cutout.source).toBe(art.reference);
+    expect(cutout.source).toBe(cardFrameOf(id, art));
     expect(
       sha(publicFile(cutout.source)),
-      `${art.reference} changed since its cut-out was made — run ` +
+      `${cutout.source} changed since its cut-out was made — run ` +
         `npm run art:cutouts`
     ).toBe(cutout.sourceSha256);
   });
@@ -73,6 +76,14 @@ describe("form art cut-outs", () => {
     expect(Math.max(header.width, header.height)).toBeLessThanOrEqual(480);
   });
 
+  it("hands out no cut-out cut from a frame other than the card frame", () => {
+    // squat's card is its bottom position (frame 4), not its reference.
+    const art = getReleasedFormArtwork("squat")!;
+    expect(cardFrameOf("squat", art)).toBe("form-frames/squat/4.webp");
+    expect(art.reference).toBe("form-frames/squat/1.webp");
+    expect(getFormArtCutout("squat")?.src).toBe("form-art/squat.webp");
+  });
+
   it("keeps the reviewed frame sets out of the cut-out folder", () => {
     for (const cutout of Object.values(FORM_ART_CUTOUTS)) {
       expect(cutout.src.startsWith("form-art/")).toBe(true);
@@ -84,8 +95,32 @@ describe("form art cut-outs", () => {
     const id = released[0];
     expect(getFormArtCutout(id)?.src).toBe(FORM_ART_CUTOUTS[id].src);
     expect(getFormArtCutout("not-an-exercise")).toBeNull();
-    // A pilot that is not released has no cut-out even if one existed.
-    expect(getReleasedFormArtwork("deadlift")).toBeNull();
-    expect(getFormArtCutout("deadlift")).toBeNull();
+  });
+});
+
+describe("card frames", () => {
+  /* The frame a card shows is chosen per set (owner, 2026-10-16: "the
+     exercise itself, not just the outlined version"), never by editing
+     the reviewed reference. */
+  const listed = Object.entries(CARD_FRAMES);
+
+  it.each(listed)("%s lists a frame of a released set", (id, frame) => {
+    const art = getReleasedFormArtwork(id);
+    expect(art, `${id} is not a released set`).not.toBeNull();
+    expect(Number.isInteger(frame) && frame >= 1 && frame <= 6).toBe(true);
+    // A listed frame that is the reference would say nothing.
+    expect(art!.frames[frame - 1]).not.toBe(art!.reference);
+  });
+
+  it("leaves a set with a reviewed hand-made cut-out on its reference", () => {
+    /* docs/exercise-art/cutout-sources holds cut-outs reviewed against
+       their reference frame; a card frame would orphan the review. */
+    const prepared = readdirSync(
+      resolve(process.cwd(), "docs/exercise-art/cutout-sources")
+    )
+      .filter((f) => f.endsWith(".json"))
+      .map((f) => f.replace(/\.json$/, ""));
+    expect(prepared).toContain("ab-wheel");
+    for (const id of prepared) expect(CARD_FRAMES[id]).toBeUndefined();
   });
 });

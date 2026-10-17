@@ -1,0 +1,22 @@
+{
+  "status": "sidecar-card-visually-reviewed-root-player-mobile-pending",
+  "reviewer": "pullup_source_rescue",
+  "reviewedFiles": [
+    "card-light-full.png",
+    "card-dark-full.png",
+    "card-light-160.png",
+    "card-dark-160.png"
+  ],
+  "findings": [
+    "Full source athlete, both trainers, hands on handles, both consistent plates, shaft and fixed landmine base remain visible.",
+    "Both light and dark full-size composites retain contours;160px previews remain legible.",
+    "Standard black-background alpha keying only; no correction to source RGB, anatomy, equipment or pose."
+  ],
+  "cardSize": [425, 480],
+  "cardSha256": "65ebae4c3a85ac5bb4a2206af5203d10cb9924091bb9614aad4835447d3cda44",
+  "preparedSourceNeeded": false,
+  "parentCardAcceptanceAssessed": false,
+  "nativePlaybackAssessed": false,
+  "mobileAssessed": false,
+  "finalQAFlagsAssigned": false
+}

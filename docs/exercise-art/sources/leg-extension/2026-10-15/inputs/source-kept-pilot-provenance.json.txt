@@ -1,0 +1,146 @@
+{
+  "scope": "Equipment-only revised pilot preserving the full native scene and all pixels outside explicit old-equipment ownership masks; no body extraction, warp, resize or cross-source graft. Not a release.",
+  "revisionReason": "Initial whole-body extraction produced unacceptable segmentation edges. Original scene pixels are now retained; far-pad static axial offset is identical in both states.",
+  "poses": {
+    "1": {
+      "sourceSha256": "cf96479772e0af178578ef771a7930df0d535b1c778d1b30ac2f9245818b8c8e",
+      "explicitEquipmentOwnershipPixelsErased": 177021,
+      "allPixelsOutsideOwnershipUnchangedBeforeNewEquipment": true,
+      "noBodyExtraction": true,
+      "geometry": {
+        "far": {
+          "pivot": [
+            461.840199703047,
+            452.37546504552944
+          ],
+          "rollerFront": [
+            649.3427858203404,
+            683.080191055168
+          ],
+          "projectedArmRadius": 200.00000000000006,
+          "rollerAxisLength": 120,
+          "rollerEndcapRadii": [
+            40,
+            50
+          ],
+          "staticAxialOffset": 50,
+          "calibratedThreeDimensionalMechanism": false
+        },
+        "near": {
+          "pivot": [
+            729.6056714922042,
+            499.8481146331008
+          ],
+          "rollerFront": [
+            709.9875233887784,
+            694.750467775569
+          ],
+          "projectedArmRadius": 200.00000000000009,
+          "rollerAxisLength": 120,
+          "rollerEndcapRadii": [
+            40,
+            50
+          ],
+          "staticAxialOffset": 0,
+          "calibratedThreeDimensionalMechanism": false
+        }
+      }
+    },
+    "2": {
+      "sourceSha256": "48aa43b76a73ba1e3f101eb5fe7d472e6f78b131e34738855e11c5337cda2482",
+      "explicitEquipmentOwnershipPixelsErased": 169942,
+      "allPixelsOutsideOwnershipUnchangedBeforeNewEquipment": true,
+      "noBodyExtraction": true,
+      "geometry": {
+        "far": {
+          "pivot": [
+            461.840199703047,
+            452.37546504552944
+          ],
+          "rollerFront": [
+            550.0,
+            620.0
+          ],
+          "projectedArmRadius": 169.16271213253626,
+          "rollerAxisLength": 120,
+          "rollerEndcapRadii": [
+            40,
+            50
+          ],
+          "staticAxialOffset": 50,
+          "calibratedThreeDimensionalMechanism": false
+        },
+        "near": {
+          "pivot": [
+            729.6056714922042,
+            499.8481146331008
+          ],
+          "rollerFront": [
+            637.0,
+            658.0
+          ],
+          "projectedArmRadius": 174.75125178378556,
+          "rollerAxisLength": 120,
+          "rollerEndcapRadii": [
+            40,
+            50
+          ],
+          "staticAxialOffset": 0,
+          "calibratedThreeDimensionalMechanism": false
+        }
+      }
+    },
+    "4": {
+      "sourceSha256": "0ffa89a3a5f235e7034fe5933259f749e567eb6fc49027b5a42328c5677d1ebe",
+      "explicitEquipmentOwnershipPixelsErased": 125981,
+      "allPixelsOutsideOwnershipUnchangedBeforeNewEquipment": true,
+      "noBodyExtraction": true,
+      "geometry": {
+        "far": {
+          "pivot": [
+            461.840199703047,
+            452.37546504552944
+          ],
+          "rollerFront": [
+            449.5923180447714,
+            493.06771444394644
+          ],
+          "projectedArmRadius": 200.00000000000003,
+          "rollerAxisLength": 120,
+          "rollerEndcapRadii": [
+            40,
+            50
+          ],
+          "staticAxialOffset": 50,
+          "calibratedThreeDimensionalMechanism": false
+        },
+        "near": {
+          "pivot": [
+            729.6056714922042,
+            499.8481146331008
+          ],
+          "rollerFront": [
+            501.00248745336035,
+            514.9997500046874
+          ],
+          "projectedArmRadius": 200.0,
+          "rollerAxisLength": 120,
+          "rollerEndcapRadii": [
+            40,
+            50
+          ],
+          "staticAxialOffset": 0,
+          "calibratedThreeDimensionalMechanism": false
+        }
+      }
+    }
+  },
+  "paletteFinishingPending": true,
+  "realMechanismReference": "https://www.lifefitness.com/en-us/catalog/strength-training/selectorized/hammer-strength-mts-iso-lateral-leg-extension",
+  "noExactBrandedReplicaClaim": true,
+  "threeDimensionalCalibrationUnverified": true,
+  "nativeContactAndMaskReviewPending": true,
+  "newImageRequests": 0,
+  "releaseApproved": false,
+  "completionCredit": false
+}

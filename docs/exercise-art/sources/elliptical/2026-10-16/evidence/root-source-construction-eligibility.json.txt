@@ -1,0 +1,21 @@
+{
+  "source": "Trusted parent /root task message,2026-10-15; a source eligibility decision, not final release or mobile QA.",
+  "exerciseId": "elliptical",
+  "sourceConstructionEligible": true,
+  "reviewedCleanProofSha256": "75b98a96092c33506b0f1ef23cc4b16358a3e4ab04ec5bf5583386057afb0900",
+  "reviewedNativeFiles": {
+    "1": {
+      "historicalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\elliptical\\custom-rear-drive-fourbar-20261015\\offset-bearing-grip-v2\\clean-construction-mask-corrected\\1-clean-whole-frame.png",
+      "sha256": "05babc1ab49d39b94639ac2c95cf50783147eb181ee744d032e7a33b4154d28f"
+    },
+    "4": {
+      "historicalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\elliptical\\custom-rear-drive-fourbar-20261015\\offset-bearing-grip-v2\\clean-construction-mask-corrected\\4-clean-whole-frame.png",
+      "sha256": "f50d899dc678c95c3c2f737e05836680c4de14813c9f9e0adb56c2bf8ffd0cbb"
+    }
+  },
+  "parentDecisionText": "ROOT actual clean native pair +4-far8x original/newgear/clean comparison reviewed. Source/equipment construction ELIGIBLE for separate OWNER-WITH-FINDINGS palette draft: original FA56 whole athlete retained, coherent charcoal rear-drive4bar/linked pedals/rockers/Dgrips, fullsole support/gripwrap plausible atnative. Five uppercylinder dark AAedgepixels are a disclosed minor source/newgear edge finding, NOT a whitefinger gap/bodyrepair demand. No need retouch/gear edit or optimize again. Root does not claim exact3D/strictcert; fixed721sample mechanicalproof scoped to equipment only, twohumanstates no interpolation.",
+  "paletteReviewed": false,
+  "registeredReviewComplete": false,
+  "strictCertified": false,
+  "completionCredit": false
+}

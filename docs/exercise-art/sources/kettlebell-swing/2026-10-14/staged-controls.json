@@ -1,0 +1,13 @@
+{
+  "selectSix": "/form-frames/kettlebell-swing/6.webp",
+  "nextWrap": "/form-frames/kettlebell-swing/1.webp",
+  "previousWrap": "/form-frames/kettlebell-swing/6.webp",
+  "slowerPressed": "true",
+  "slowerStartedAfterMs": 0,
+  "consoleErrors": [],
+  "timing": {
+    "normalMedianMs": 1206.0,
+    "slowerMedianMs": 2412.0,
+    "ratio": 2.0
+  }
+}

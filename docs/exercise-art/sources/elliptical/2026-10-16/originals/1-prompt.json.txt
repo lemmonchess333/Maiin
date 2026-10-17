@@ -1,0 +1,19 @@
+{
+  "scope": "Authored index of exact historical prompt text, not an original service response or a new request.",
+  "sourceGenerationId": "8d75a89c-b003-4c20-97b6-1ba29af61fd9",
+  "historicalPrompts": [
+    {
+      "path": "originals/1-master-prompt.txt",
+      "sha256": "86e357a33ba620b17aff60db702213fd4fd01f8a62efc83fb621f55a369bb352"
+    },
+    {
+      "path": "originals/1-colour-repair-prompt.txt",
+      "sha256": "d243280ea1bcacd4676b4d1434ca3534c70da5c0011261fa320e3aa8db7a9c96"
+    }
+  ],
+  "sourcePath": "originals/1-original.png",
+  "sourceSha256": "e40913b14089d9ac1f9032e3d1afb636ee0b6dd3c1777bf9462b5315ca5c6433",
+  "sourceHistory": "originals/sequence-candidates.json",
+  "framing": "originals/framing.json",
+  "newImageRequests": 0
+}

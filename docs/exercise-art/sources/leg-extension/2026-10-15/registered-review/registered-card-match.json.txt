@@ -1,0 +1,21 @@
+{
+  "exerciseId": "leg-extension",
+  "normalCardCommand": [
+    "C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+    "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\merge-reviewed-20261012\\runtime\\node_modules\\npm\\bin\\npm-cli.js",
+    "run",
+    "art:cutouts",
+    "--",
+    "--only=leg-extension"
+  ],
+  "normalCardExitCode": 0,
+  "normalCardMatchesReviewedPreviewExact": true,
+  "sha256": "66473827c8e846bf9ee25fbca2f38b237212c3516e1bec10ed9d1f1a38f512d2",
+  "dimensions": [
+    480,
+    384
+  ],
+  "referenceSha256": "67009ad87ae8a8d5d12215fda6cc375e94d5898db1ee2afef4f76dbf1fe30d59",
+  "generatorSha256": "a465f712bcb21078a171e6ddfd24f74112a5d379192c7159f133a0fb869f0f2f",
+  "noThresholdOrAlphaOverride": true
+}

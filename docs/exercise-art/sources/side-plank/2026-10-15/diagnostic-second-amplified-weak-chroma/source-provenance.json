@@ -1,0 +1,100 @@
+{
+  "recordedAtUtc": "2026-10-15T19:05:05.022470+00:00",
+  "exerciseId": "side-plank",
+  "status": "outside-only-static-hold-draft-unregistered",
+  "originalRecords": {
+    "draft/originals/raised-contact-drift.png": {
+      "originalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\pilots\\continuation-20261002\\side-plank\\raised-contact-drift.png",
+      "sha256": "89d0866e0f165831b539839a8c0d7e45b9dc8a77533d916cc4d23a38465d1bc3"
+    },
+    "draft/originals/historical-side-plank-provenance.json": {
+      "originalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\pilots\\continuation-20261002\\side-plank\\provenance.json",
+      "sha256": "2a527f8e4d19f783de1273f3247429b9a4a17e6ac3a95d662b1eb4a15e12ffa8"
+    },
+    "draft/originals/historical-side-plank-plan.json": {
+      "originalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\pilots\\continuation-20261002\\side-plank\\plan.json",
+      "sha256": "53bbf17aeaf0bbf36e293814e610620550d6fe76b3bfe6e0b359882ab742346e"
+    },
+    "draft/originals/historical-side-plank-registration.json": {
+      "originalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\pilots\\continuation-20261002\\side-plank\\registration.json",
+      "sha256": "404acf1c2892a11d7745335399956a2dae8255bfab1560e0787aea7ee04bf7fd"
+    },
+    "draft/originals/historical-generation.md": {
+      "originalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\pilots\\continuation-20261002\\GENERATION.md",
+      "sha256": "4bc3f088e32fab21e2b8044ed243efac8a4ea8f1c5d8b83116335f85e2eac167"
+    }
+  },
+  "originalGeneration": {
+    "tool": "image_gen.imagegen",
+    "date": "2026-10-02",
+    "exactRequestId": null,
+    "exactPrompt": null,
+    "promptSummary": "draft/originals/historical-generation.md",
+    "originalPromptSummaryIsNotVerbatim": true,
+    "references": [
+      "FA56 canonical",
+      "corrected low setup master"
+    ],
+    "serviceRefusalRecordedForThisSource": false,
+    "laterLowPoseRefusalIsSeparateRequest": true
+  },
+  "originalIntegrity": "Adjacent original generation record explicitly states no repainting, cropping, resizing or compositing after generation. Original PNG and metadata copies are byte-exact.",
+  "sourceIdentityFindings": "Recognizable canonical white-grey anatomy/no shorts/featureless pelvis. Trainer straps and shading differ in detail from the global canonical image; no strict identity equivalence claimed.",
+  "conversion": {
+    "physicalPoses": 1,
+    "sourcePoseOrder": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "nativeSize": [
+      1536,
+      1024
+    ],
+    "commonCrop": [
+      32,
+      168,
+      1512,
+      864
+    ],
+    "framedSize": [
+      1480,
+      696
+    ],
+    "integerTranslations": [
+      0,
+      0
+    ],
+    "scaling": false,
+    "rotation": false,
+    "anatomicalWarping": false,
+    "grafts": false,
+    "humanContactEdits": false,
+    "colourOnlyWithinExistingSourceFields": true
+  },
+  "canonicalReferenceSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "proofs": {
+    "pixelAndEditable": {
+      "path": "draft/pixel-and-editable-proof.json",
+      "sha256": "17c9a8707db9dff656a6e01034c2d8b5337305263c599ce71452cb69de459bad"
+    },
+    "scopeAudit": {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining17-requirements-audit-20261015\\side-plank-swimming-review.json",
+      "sha256": "f1139e8be32cd2ffc06916f705d1d348e76cc61d53ecdc29742ce02bdf271bcd"
+    }
+  },
+  "recipeHashes": {
+    "reproduce.py": "3c6fffa6c4cd73ba0d77dfa373ec91801f339f673b2054e413acf827249548cd",
+    "palette-recipe.json": "533097db346c0278f37ec0365c8eddfc12f875c100d43a389809ed87bb461f30",
+    "sequence-plan.json": "cc4eb8d5f137f5c4239595bbba01d847c6f2732b598a316f4798b26166cbc35b"
+  },
+  "newImageRequests": 0,
+  "sourceServiceRetries": 0,
+  "publicEdits": false,
+  "registration": false,
+  "releaseApproved": false,
+  "completionCredit": false
+}

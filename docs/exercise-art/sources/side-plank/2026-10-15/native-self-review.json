@@ -1,0 +1,60 @@
+{
+  "reviewer": "spin_rider_first_feasibility",
+  "recordedAtUtc": "2026-10-15T19:10:20.252032+00:00",
+  "status": "final-native-self-observations-awaiting-parent-acceptance",
+  "sourceSha256": "89d0866e0f165831b539839a8c0d7e45b9dc8a77533d916cc4d23a38465d1bc3",
+  "nativeFinishedSha256": "269517853df41de92d91225696530c778ca9d4f469aac15958994940cf5978cc",
+  "framedSha256": "6469a48d2725737ba7d6c71eaad8dea50682d459b3b85eb85cb9e5da176f5b98",
+  "sequencePlanSha256": "1b709e4216adc80a963417f65d16f29e0375de3c228ba3412757f51b0fe50bbd",
+  "decodedSize": [
+    1480,
+    696
+  ],
+  "physicalPoses": 1,
+  "sixSeparatePathsSameHold": true,
+  "literalNativeViews": [
+    "intact original",
+    "canonical FA56",
+    "final native finished",
+    "final framed",
+    "original upper-delt crop",
+    "intermediate upper-delt crop",
+    "final upper-delt crop"
+  ],
+  "observations": {
+    "support": "Clearly visible horizontal forearm/elbow footprint and outer lower-trainer contact, with stacked extended legs and raised hips. Unlike the later foreshortened source, actual forearm support reads here. No easier knee-supported pose substitution.",
+    "model": "Bald faceless lean white-grey anatomical source, neutral featureless pelvis/no shorts and white trainers; trainer straps/source shading more detailed than global canonical. Recognizable compatibility only, not strict FA56 equality.",
+    "palette": "Source saturated lateral/lower-oblique fields use primary; existing rectus/Core and delts use secondary. Strong field shading and fine in-place contours remain; no new muscle boundary or neutral pixel painting.",
+    "correctedWeakDelt": "Faint upper-delt source wash now retains original low strength via sourcechroma/80. Final native crop is soft and no longer shows the amplified contrasting lilac/white speckle. Parent owns final semantic/visual acceptance.",
+    "scope": "One held configuration, six unique captions all describe maintaining the hold or a later switch; setup remains written, no rise/lower/motion claims."
+  },
+  "integrity": {
+    "allOutsideOriginalColourSupportRgbaExact": true,
+    "sourceAlphaExact": true,
+    "allContactAndTrainerPixelsExact": true,
+    "nativeCoordinatesUnchanged": true,
+    "commonCropOnlyNoScaleOrRotation": true,
+    "nativeAndFramedOraReopenedExact": true,
+    "sixSeparateLosslessFramesDecodedExact": true,
+    "exactPrimaryOutputPixels": 251,
+    "exactSecondaryOutputPixels": 69
+  },
+  "alphaCorrectionProof": {
+    "path": "diagnostics/upper-delt-source-strength-correction-proof.json",
+    "sha256": "1bb72716bbe1c20ea726b6aaa46ec025f9aeac44f745276d06e086b4170857d9"
+  },
+  "sourceEvidenceFilesTotal": 5,
+  "sourceEvidenceBreakdown": "One unchanged original PNG plus four exact historical metadata files. Exact prompt/request ID not available; summary is explicitly not verbatim. No service refusal recorded for this original.",
+  "portableRecipe": {
+    "path": "reproduce.py",
+    "sha256": "a7bf7f392d5c7bb34ad7059c4143189cf6f12fd1da05b1520a8f5923fa7b82e9",
+    "command": "python reproduce.py --source draft/originals/raised-contact-drift.png --out NEW_OUTPUT_DIRECTORY",
+    "actualFinalBuildUsedCopiedOriginalWithoutRepoOrCanonicalReads": true
+  },
+  "repoMutations": 0,
+  "newImageRequests": 0,
+  "releaseApproved": false,
+  "cardAcceptance": false,
+  "mobileAcceptance": false,
+  "completionCredit": false
+}

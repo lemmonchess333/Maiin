@@ -60,7 +60,7 @@ describe("no raw Tailwind palette colour classes", () => {
   it("colours come from Tropos tokens, not the stock palette", () => {
     const hits: string[] = [];
     for (const file of walk(SRC_ROOT)) {
-      const rel = file.slice(SRC_ROOT.length + 1);
+      const rel = file.slice(SRC_ROOT.length + 1).replaceAll("\\", "/");
       if (EXEMPT[rel]) continue;
       const lines = stripComments(readFileSync(file, "utf8")).split("\n");
       lines.forEach((line, i) => {

@@ -48,6 +48,8 @@ interface FoodRowProps {
    * machinery is untouched, the row just grows a second line.
    */
   subLabel?: ReactNode;
+  /** Identifies a portion when the diary has several rows with the same name. */
+  accessibleFoodName?: string;
   /**
    * Optional captured-meal photo, as a 52 px thumbnail at the start of
    * the row (Pol1), inside the swipeable surface, so a photo meal keeps
@@ -155,6 +157,7 @@ export default function FoodRow({
   onDelete,
   onEdit,
   subLabel,
+  accessibleFoodName,
   photoUrl,
   slot,
   thumbnailColumn = false,
@@ -221,6 +224,7 @@ export default function FoodRow({
   };
 
   const quantityLabel = formatQuantityLabel(group);
+  const actionName = accessibleFoodName ?? group.foodName;
 
   /* Shared inner content (name, quantity/edited pills, kcal). The row
      used to open with a dot coloured by whichever macro gave the most
@@ -347,7 +351,7 @@ export default function FoodRow({
           <button
             type="button"
             onClick={onEdit}
-            aria-label={`Edit ${group.foodName}`}
+            aria-label={`Edit ${actionName}`}
             className="flex flex-wrap items-center gap-y-1 flex-1 min-w-0 px-3 py-2.5 text-left transition-colors active:bg-muted/40"
           >
             {rowInner}
@@ -360,7 +364,7 @@ export default function FoodRow({
         <button
           type="button"
           onClick={onDelete}
-          aria-label={`Delete ${group.foodName}`}
+          aria-label={`Delete ${actionName}`}
           className="p-2.5 mr-1 rounded-lg text-muted-foreground hover:text-destructive-strong hover:bg-destructive/10 transition active:scale-90"
         >
           <Trash2 aria-hidden="true" className="size-4" />
@@ -398,7 +402,7 @@ export default function FoodRow({
         data-motion-driven
         type="button"
         onClick={onDelete}
-        aria-label={`Delete ${group.foodName}`}
+        aria-label={`Delete ${actionName}`}
         className="absolute inset-0 flex items-center justify-end bg-destructive text-destructive-foreground active:brightness-90"
         style={{ opacity: deletePanelOpacity }}
       >
@@ -431,7 +435,7 @@ export default function FoodRow({
         transition={{ type: "spring", stiffness: 400, damping: 35 }}
         role="button"
         tabIndex={0}
-        aria-label={`Edit ${group.foodName}`}
+        aria-label={`Edit ${actionName}`}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();

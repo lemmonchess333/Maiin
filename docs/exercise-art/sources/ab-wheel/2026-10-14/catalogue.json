@@ -1,0 +1,17 @@
+{
+  "id": "ab-wheel",
+  "name": "Ab Wheel Rollout",
+  "category": "Core",
+  "muscleGroup": "Core",
+  "mechanic": "isolation",
+  "secondaryMuscles": ["Lats", "Shoulders"],
+  "equipment": "Ab Wheel",
+  "caloriesPerMinute": 6,
+  "instructions": [
+    "Kneel on a pad holding the ab wheel with both hands under your shoulders.",
+    "Brace your core and tuck your pelvis so your back is neutral.",
+    "Roll the wheel forward as far as you can control, body staying straight.",
+    "Pull the wheel back toward your knees using your abs, not your hips."
+  ],
+  "tip": "If your lower back arches or you collapse at the bottom, you're past your controlled range. Shorten the rollout until the brace holds, then extend over time."
+}

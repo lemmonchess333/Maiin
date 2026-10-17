@@ -1,0 +1,44 @@
+[
+  {
+    "complete": true,
+    "cue": "Beat 1 / pose 1 — Set and brace — floor pose",
+    "display": [940, 940],
+    "natural": [940, 940],
+    "src": "http://127.0.0.1:8768/final-frames/1.webp"
+  },
+  {
+    "complete": true,
+    "cue": "Beat 2 / pose 1 — Prepare leg drive — reused floor pose",
+    "display": [940, 940],
+    "natural": [940, 940],
+    "src": "http://127.0.0.1:8768/final-frames/2.webp"
+  },
+  {
+    "complete": true,
+    "cue": "Beat 3 / pose 2 — Clear knees — rising",
+    "display": [940, 940],
+    "natural": [940, 940],
+    "src": "http://127.0.0.1:8768/final-frames/3.webp"
+  },
+  {
+    "complete": true,
+    "cue": "Beat 4 / pose 3 — Stand tall — lockout",
+    "display": [940, 940],
+    "natural": [940, 940],
+    "src": "http://127.0.0.1:8768/final-frames/4.webp"
+  },
+  {
+    "complete": true,
+    "cue": "Beat 5 / pose 3 — Begin controlled return — reused lockout",
+    "display": [940, 940],
+    "natural": [940, 940],
+    "src": "http://127.0.0.1:8768/final-frames/5.webp"
+  },
+  {
+    "complete": true,
+    "cue": "Beat 6 / pose 2 — Hinge/lower through knees",
+    "display": [940, 940],
+    "natural": [940, 940],
+    "src": "http://127.0.0.1:8768/final-frames/6.webp"
+  }
+]

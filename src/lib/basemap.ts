@@ -34,25 +34,34 @@ export function basemapStyle(darkMode: boolean): string {
 }
 
 /**
- * How long the credit stays open once the map has loaded. The OSMF's
- * attribution guidelines let a credit fold away after five seconds or on
- * the first interaction, provided it can be found again; MapLibre folds it
- * on the first drag by itself, and the folded control is an (i) that opens
- * it. The live run map is rarely dragged, so without the timer its credit
+ * How long the credit stays open once it shows. The OSMF's attribution
+ * guidelines let a credit fold away after five seconds or on the first
+ * interaction, provided it can be found again; MapLibre folds it on the
+ * first drag by itself, and the folded control is an (i) that opens it.
+ * The live run map is rarely dragged, so without the timer its credit
  * would sit open under the run's own status chips for the whole run.
  */
 export const CREDIT_OPEN_MS = 5000;
 
+/** MapLibre's class for a compact credit that is open. */
+const CREDIT_OPEN_CLASS = "maplibregl-compact-show";
+
 /**
  * Put the basemap's credit on a map: MapLibre's attribution control in its
  * compact form, in the corner the caller keeps clear of its own overlays.
- * It opens with the credit showing and folds to its (i) CREDIT_OPEN_MS
- * after the map loads.
+ * It opens with the credit showing, as soon as the style's source names
+ * it, and folds to its (i) CREDIT_OPEN_MS later, or on a tap on the map.
+ *
+ * The clock starts when the credit shows, not at the map's `load`: `load`
+ * waits for every tile, so on the patchy connection a run often starts on
+ * it kept the credit open, wrapped over two lines under the status chips,
+ * for as long as the tiles took.
  *
  * The map must be built with `attributionControl: false`, or MapLibre adds
  * a second control of its own in the bottom-right corner.
  *
- * Returns a cleanup for the fold timer; call it before `map.remove()`.
+ * Returns a cleanup for the fold timer and the listeners; call it before
+ * `map.remove()`.
  */
 export function addBasemapCredit(
   map: MapLibreMap,
@@ -63,12 +72,22 @@ export function addBasemapCredit(
   let timer: ReturnType<typeof setTimeout> | undefined;
   /* MapLibre's own fold, the one a drag runs. It only ever closes the
      credit, and only once the control has gone compact. */
+  const fold = () => credit._updateCompactMinimize();
+  /* The control fills its text on these same events and is added first,
+     so its own listener has run by the time this one reads the class. */
   const foldLater = () => {
-    timer = setTimeout(() => credit._updateCompactMinimize(), CREDIT_OPEN_MS);
+    if (!credit._container?.classList.contains(CREDIT_OPEN_CLASS)) return;
+    map.off("styledata", foldLater);
+    map.off("sourcedata", foldLater);
+    timer = setTimeout(fold, CREDIT_OPEN_MS);
   };
-  map.once("load", foldLater);
+  map.on("styledata", foldLater);
+  map.on("sourcedata", foldLater);
+  map.on("click", fold);
   return () => {
     clearTimeout(timer);
-    map.off("load", foldLater);
+    map.off("styledata", foldLater);
+    map.off("sourcedata", foldLater);
+    map.off("click", fold);
   };
 }

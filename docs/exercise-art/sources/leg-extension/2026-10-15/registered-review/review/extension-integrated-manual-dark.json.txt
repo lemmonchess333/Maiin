@@ -1,0 +1,215 @@
+{
+  "artifactName": "extension-integrated-manual-dark.json",
+  "observations": [
+    {
+      "alt": "Leg Extension, Set",
+      "complete": true,
+      "cues": [
+        "Set 1/6",
+        "Instructions",
+        "Preparation: Sit in the machine, adjust the pad so it sits on your shins, just above the ankle.",
+        "Keep your back supported and hips seated.",
+        "Brace your torso and grip the handles.",
+        "Straighten your legs and squeeze your quads.",
+        "Keep your hips down and hands gripping.",
+        "Bend your knees slowly; control the resistance.",
+        "Return to bent knees without losing control.",
+        "Watch out",
+        "Slamming to lockout and dropping the weight. Squeeze for a beat at the top, then lower under control."
+      ],
+      "display": [
+        324,
+        360
+      ],
+      "overflow": false,
+      "selectedInstruction": "Show frame 1: Set",
+      "src": "/form-frames/leg-extension/1.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Leg Extension, Brace",
+      "complete": true,
+      "cues": [
+        "Brace 2/6",
+        "Instructions",
+        "Preparation: Sit in the machine, adjust the pad so it sits on your shins, just above the ankle.",
+        "Keep your back supported and hips seated.",
+        "Brace your torso and grip the handles.",
+        "Straighten your legs and squeeze your quads.",
+        "Keep your hips down and hands gripping.",
+        "Bend your knees slowly; control the resistance.",
+        "Return to bent knees without losing control.",
+        "Watch out",
+        "Slamming to lockout and dropping the weight. Squeeze for a beat at the top, then lower under control."
+      ],
+      "display": [
+        324,
+        360
+      ],
+      "overflow": false,
+      "selectedInstruction": "Show frame 2: Brace",
+      "src": "/form-frames/leg-extension/2.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Leg Extension, Squeeze",
+      "complete": true,
+      "cues": [
+        "Squeeze 3/6",
+        "Instructions",
+        "Preparation: Sit in the machine, adjust the pad so it sits on your shins, just above the ankle.",
+        "Keep your back supported and hips seated.",
+        "Brace your torso and grip the handles.",
+        "Straighten your legs and squeeze your quads.",
+        "Keep your hips down and hands gripping.",
+        "Bend your knees slowly; control the resistance.",
+        "Return to bent knees without losing control.",
+        "Watch out",
+        "Slamming to lockout and dropping the weight. Squeeze for a beat at the top, then lower under control."
+      ],
+      "display": [
+        324,
+        360
+      ],
+      "overflow": false,
+      "selectedInstruction": "Show frame 3: Squeeze",
+      "src": "/form-frames/leg-extension/3.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Leg Extension, Hold",
+      "complete": true,
+      "cues": [
+        "Hold 4/6",
+        "Instructions",
+        "Preparation: Sit in the machine, adjust the pad so it sits on your shins, just above the ankle.",
+        "Keep your back supported and hips seated.",
+        "Brace your torso and grip the handles.",
+        "Straighten your legs and squeeze your quads.",
+        "Keep your hips down and hands gripping.",
+        "Bend your knees slowly; control the resistance.",
+        "Return to bent knees without losing control.",
+        "Watch out",
+        "Slamming to lockout and dropping the weight. Squeeze for a beat at the top, then lower under control."
+      ],
+      "display": [
+        324,
+        360
+      ],
+      "overflow": false,
+      "selectedInstruction": "Show frame 4: Hold",
+      "src": "/form-frames/leg-extension/4.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Leg Extension, Return",
+      "complete": true,
+      "cues": [
+        "Return 5/6",
+        "Instructions",
+        "Preparation: Sit in the machine, adjust the pad so it sits on your shins, just above the ankle.",
+        "Keep your back supported and hips seated.",
+        "Brace your torso and grip the handles.",
+        "Straighten your legs and squeeze your quads.",
+        "Keep your hips down and hands gripping.",
+        "Bend your knees slowly; control the resistance.",
+        "Return to bent knees without losing control.",
+        "Watch out",
+        "Slamming to lockout and dropping the weight. Squeeze for a beat at the top, then lower under control."
+      ],
+      "display": [
+        324,
+        360
+      ],
+      "overflow": false,
+      "selectedInstruction": "Show frame 5: Return",
+      "src": "/form-frames/leg-extension/5.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Leg Extension, Reset",
+      "complete": true,
+      "cues": [
+        "Reset 6/6",
+        "Instructions",
+        "Preparation: Sit in the machine, adjust the pad so it sits on your shins, just above the ankle.",
+        "Keep your back supported and hips seated.",
+        "Brace your torso and grip the handles.",
+        "Straighten your legs and squeeze your quads.",
+        "Keep your hips down and hands gripping.",
+        "Bend your knees slowly; control the resistance.",
+        "Return to bent knees without losing control.",
+        "Watch out",
+        "Slamming to lockout and dropping the weight. Squeeze for a beat at the top, then lower under control."
+      ],
+      "display": [
+        324,
+        360
+      ],
+      "overflow": false,
+      "selectedInstruction": "Show frame 6: Reset",
+      "src": "/form-frames/leg-extension/6.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Leg Extension, Set",
+      "complete": true,
+      "cues": [
+        "Set 1/6",
+        "Instructions",
+        "Preparation: Sit in the machine, adjust the pad so it sits on your shins, just above the ankle.",
+        "Keep your back supported and hips seated.",
+        "Brace your torso and grip the handles.",
+        "Straighten your legs and squeeze your quads.",
+        "Keep your hips down and hands gripping.",
+        "Bend your knees slowly; control the resistance.",
+        "Return to bent knees without losing control.",
+        "Watch out",
+        "Slamming to lockout and dropping the weight. Squeeze for a beat at the top, then lower under control."
+      ],
+      "display": [
+        324,
+        360
+      ],
+      "overflow": false,
+      "selectedInstruction": "Show frame 1: Set",
+      "src": "/form-frames/leg-extension/1.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    }
+  ]
+}

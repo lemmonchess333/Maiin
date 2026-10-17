@@ -1,0 +1,76 @@
+{
+  "exerciseId": "t-bar-row",
+  "status": "separate-colour-draft-awaiting-root-native",
+  "width": 918,
+  "height": 1036,
+  "reference": 1,
+  "physicalPoseCount": 2,
+  "sourcePoseOrder": [1, 1, 2, 2, 1, 1],
+  "excursionPositions": [0, 0, 1, 1, 0, 0],
+  "poses": [
+    {
+      "pose": 1,
+      "originalName": "1-master.png",
+      "originalSha256": "423cc79ad773472b9ca0f6b3b7a4ba9a761c5a5f0627467c87082eaf77eafbf7",
+      "nativeSize": [1024, 1536],
+      "commonCrop": [41, 226, 959, 1262],
+      "size": [918, 1036],
+      "neutralRGBOutsideSourceColourExact": true,
+      "neutralPixelCount": 1545617,
+      "sourceAlphaExact": true,
+      "nativeAndFramedOraReopenedExact": true,
+      "anatomyOrEquipmentGeometryEdits": 0,
+      "wholeSceneNewScale": 1,
+      "frameSha256": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438"
+    },
+    {
+      "pose": 2,
+      "originalName": "4-peak-candidate.png",
+      "originalSha256": "9ebd9f1b3562672dddc6927a1156910354108eb1b71510556d662b285276a9c3",
+      "nativeSize": [1024, 1536],
+      "commonCrop": [41, 226, 959, 1262],
+      "size": [918, 1036],
+      "neutralRGBOutsideSourceColourExact": true,
+      "neutralPixelCount": 1552787,
+      "sourceAlphaExact": true,
+      "nativeAndFramedOraReopenedExact": true,
+      "anatomyOrEquipmentGeometryEdits": 0,
+      "wholeSceneNewScale": 1,
+      "frameSha256": "04776e18e6ea03f6772056901fd78840a801572ff940cc74c53eaf59628966e4"
+    }
+  ],
+  "frames": [
+    {
+      "path": "form-frames/t-bar-row/1.webp",
+      "sha256": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+      "sourcePose": 1
+    },
+    {
+      "path": "form-frames/t-bar-row/2.webp",
+      "sha256": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+      "sourcePose": 1
+    },
+    {
+      "path": "form-frames/t-bar-row/3.webp",
+      "sha256": "04776e18e6ea03f6772056901fd78840a801572ff940cc74c53eaf59628966e4",
+      "sourcePose": 2
+    },
+    {
+      "path": "form-frames/t-bar-row/4.webp",
+      "sha256": "04776e18e6ea03f6772056901fd78840a801572ff940cc74c53eaf59628966e4",
+      "sourcePose": 2
+    },
+    {
+      "path": "form-frames/t-bar-row/5.webp",
+      "sha256": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+      "sourcePose": 1
+    },
+    {
+      "path": "form-frames/t-bar-row/6.webp",
+      "sha256": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+      "sourcePose": 1
+    }
+  ],
+  "disclosure": "Two intact stretch/squeeze endpoints across six cue paths; no illustrated intermediate or continuous trajectory.",
+  "registered": false
+}

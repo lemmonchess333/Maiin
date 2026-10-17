@@ -1,0 +1,13 @@
+
+> tropos@1.2.0 test
+> node scripts/run-unit-tests.mjs run src/lib/__tests__/bodyRig.test.ts src/lib/__tests__/formArtOwnerRelease.test.ts src/lib/__tests__/formArtwork.test.ts src/lib/__tests__/formArtCutouts.test.ts scripts/art/form-art-releases.test.ts
+
+
+ RUN  v5.0.4 C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees
+
+
+ Test Files  5 passed (5)
+      Tests  365 passed (365)
+   Start at  14:04:21
+   Duration  8.44s (setup 50%, tests 44%, transform 3%, worker 1%, import 1%)
+

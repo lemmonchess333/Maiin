@@ -1,0 +1,19 @@
+{
+  "exerciseId": "seated-row",
+  "variation": "Controlled torso-hinge seated cable row",
+  "reference": "https://exrx.net/WeightExercises/BackGeneral/CBSeatedRow",
+  "contrastingStraightBackReference": "https://exrx.net/WeightExercises/BackGeneral/CBStraightBackSeatedRow",
+  "actualReview": "Root read primary ExRx preparation, execution and comments in the browser accessibility tree on 2026-10-16. No claim that the full demonstration video was played.",
+  "referenceParaphrase": "The primary seated-row variation reaches forward through the torso as the arms extend, then brings the handle to the waist while the torso extends and the chest comes forward. Feet stay braced and knees slightly bent. Begin light, avoid bouncing, and use a comfortable range. ExRx lists the straight-back version separately.",
+  "newBasis": "These two retained sources were unsuitable for the previously assessed still-torso version. They are assessed here as this explicitly labelled controlled-hinge variation, with matching guide-specific preparation, cues and advice. The earlier upright-version rejection remains valid.",
+  "sourceConstructionEligible": true,
+  "actualNativeReviewed": [
+    "equipment-draft-v3/A-native.png",
+    "equipment-draft-v3/B-native.png"
+  ],
+  "newImageRequests": 0,
+  "bodyWarpsResizesOrGrafts": 0,
+  "strictCertification": false,
+  "registeredReviewComplete": false,
+  "completionCredit": false
+}

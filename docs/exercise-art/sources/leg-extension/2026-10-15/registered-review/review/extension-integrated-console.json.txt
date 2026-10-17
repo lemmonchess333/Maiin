@@ -1,0 +1,4 @@
+{
+  "artifactName": "extension-integrated-console.json",
+  "errors": []
+}

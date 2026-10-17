@@ -70,7 +70,7 @@ describe("functions/ derives dates in UTC", () => {
   it("no source file adds a local-time date accessor", () => {
     const offenders = [];
     for (const file of sourceFiles(functionsRoot)) {
-      const rel = relative(functionsRoot, file);
+      const rel = relative(functionsRoot, file).replaceAll("\\", "/");
       const src = readFileSync(file, "utf8");
       for (const m of src.matchAll(LOCAL_ACCESSOR)) {
         if (isUtc(m[0])) continue;

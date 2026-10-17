@@ -1,0 +1,71 @@
+{
+  reviewLabel: 'elliptical-draft-dark-manual',
+  states: [
+    {
+      cue: '5. Return A: Return smoothly to the first shown stride.',
+      img: [
+        {
+          alt: 'Elliptical, Return A',
+          loaded: true,
+          natural: [Array],
+          src: '/candidate/draft/frames/5.webp'
+        }
+      ]
+    },
+    {
+      cue: '6. Reset: Keep your torso tall without leaning forward.',
+      img: [
+        {
+          alt: 'Elliptical, Reset',
+          loaded: true,
+          natural: [Array],
+          src: '/candidate/draft/frames/6.webp'
+        }
+      ]
+    },
+    {
+      cue: '1. Stride A: Stand tall; keep both feet on pedals.',
+      img: [
+        {
+          alt: 'Elliptical, Stride A',
+          loaded: true,
+          natural: [Array],
+          src: '/candidate/draft/frames/1.webp'
+        }
+      ]
+    },
+    {
+      cue: '2. Hold A: Keep both feet planted in the pedals.',
+      img: [
+        {
+          alt: 'Elliptical, Hold A',
+          loaded: true,
+          natural: [Array],
+          src: '/candidate/draft/frames/2.webp'
+        }
+      ]
+    },
+    {
+      cue: '3. Stride B: Coordinate your push and pull with legs.',
+      img: [
+        {
+          alt: 'Elliptical, Stride B',
+          loaded: true,
+          natural: [Array],
+          src: '/candidate/draft/frames/3.webp'
+        }
+      ]
+    },
+    {
+      cue: '4. Hold B: Hold both grips; keep your chest tall.',
+      img: [
+        {
+          alt: 'Elliptical, Hold B',
+          loaded: true,
+          natural: [Array],
+          src: '/candidate/draft/frames/4.webp'
+        }
+      ]
+    }
+  ]
+}

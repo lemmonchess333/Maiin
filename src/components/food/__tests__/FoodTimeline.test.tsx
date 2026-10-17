@@ -4,7 +4,7 @@
  * thumbnail or its slot's tile.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { Meal } from "@/hooks/useMeals";
 
 const motionPref = vi.hoisted(() => ({ reduce: false }));
@@ -108,5 +108,119 @@ describe("FoodTimeline — thumbnails (Pol1)", () => {
     );
     expect(rowFor("Oats")).not.toBeNull();
     expect(container.querySelector("[data-slot-tile]")).toBeNull();
+  });
+});
+
+describe("FoodTimeline — portion identity", () => {
+  const portion = {
+    name: "Oats",
+    portionSize: "1 bowl",
+    calories: 400,
+    protein: 20,
+    carbs: 40,
+    fat: 10,
+  };
+
+  it.each([
+    { totalCalories: 100 },
+    { totalProtein: 30 },
+    { items: [{ ...portion, name: "Oats and berries" }] },
+    { items: [{ ...portion, portionSize: "2 cups" }] },
+  ])(
+    "keeps incompatible same-name portions separately editable: %j",
+    (change) => {
+      const first = meal("small", "Oats", { items: [portion] });
+      const second = meal("large", "Oats", { items: [portion], ...change });
+      const onEdit = vi.fn();
+      render(
+        <FoodTimeline
+          meals={[first, second]}
+          openRowId={null}
+          setOpenRowId={() => {}}
+          onDelete={() => {}}
+          onEdit={onEdit}
+        />
+      );
+      const rows = screen.getAllByRole("button", { name: /^Edit Oats(?:,|$)/ });
+      expect(rows).toHaveLength(2);
+      rows.forEach((row) => fireEvent.keyDown(row, { key: "Enter" }));
+      expect(
+        onEdit.mock.calls.map(([group]) => group.meals.map((m: Meal) => m.id))
+      ).toEqual([["small"], ["large"]]);
+    }
+  );
+
+  it.each([false, true])(
+    "names each incompatible portion for editing and deletion (Reduce Motion: %s)",
+    (reduce) => {
+      motionPref.reduce = reduce;
+      const onEdit = vi.fn();
+      const onDelete = vi.fn();
+      const records = [
+        meal("small", "Oats", { totalCalories: 100, items: [portion] }),
+        meal("plain", "Oats", { items: [portion] }),
+        meal("protein", "Oats", { totalProtein: 30, items: [portion] }),
+        meal("berries", "Oats", {
+          items: [{ ...portion, name: "Oats and berries" }],
+        }),
+        meal("cups", "Oats", {
+          items: [{ ...portion, portionSize: "2 cups" }],
+        }),
+      ];
+      render(
+        <FoodTimeline
+          meals={records}
+          openRowId={null}
+          setOpenRowId={() => {}}
+          onDelete={onDelete}
+          onEdit={onEdit}
+        />
+      );
+      const labels = [
+        "Oats, Lunch, 100 kcal, 1 serving, 20 g protein, 40 g carbs, 10 g fat, Oats (1 bowl)",
+        "Oats, Lunch, 400 kcal, 1 serving, 20 g protein, 40 g carbs, 10 g fat, Oats (1 bowl)",
+        "Oats, Lunch, 400 kcal, 1 serving, 30 g protein, 40 g carbs, 10 g fat, Oats (1 bowl)",
+        "Oats, Lunch, 400 kcal, 1 serving, 20 g protein, 40 g carbs, 10 g fat, Oats and berries (1 bowl)",
+        "Oats, Lunch, 400 kcal, 1 serving, 20 g protein, 40 g carbs, 10 g fat, Oats (2 cups)",
+      ];
+      labels.forEach((label) => {
+        const edit = screen.getByRole("button", { name: `Edit ${label}` });
+        if (reduce) fireEvent.click(edit);
+        else fireEvent.keyDown(edit, { key: "Enter" });
+      });
+      expect(onEdit.mock.calls.map(([group]) => group.meals[0].id)).toEqual(
+        records.map((record) => record.id)
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: `Delete ${labels[3]}` })
+      );
+      expect(onDelete).toHaveBeenCalledWith(["berries"], "Oats");
+    }
+  );
+
+  it("keeps identical repeats together despite timestamps and revision metadata", () => {
+    const first = meal("first", "Oats", { items: [portion] });
+    const second = meal("second", "Oats", {
+      items: [{ ...portion }],
+      createdAt: new Date(2026, 9, 11, 13, 30),
+      revisionCount: 4,
+      userEditCount: 2,
+    });
+    const onEdit = vi.fn();
+    render(
+      <FoodTimeline
+        meals={[first, second]}
+        openRowId={null}
+        setOpenRowId={() => {}}
+        onDelete={() => {}}
+        onEdit={onEdit}
+      />
+    );
+    fireEvent.keyDown(screen.getByRole("button", { name: "Edit Oats" }), {
+      key: "Enter",
+    });
+    expect(onEdit).toHaveBeenCalledWith(
+      expect.objectContaining({ meals: [first, second] })
+    );
   });
 });

@@ -1,0 +1,27 @@
+{
+  "scope": "Preview only, exact current normal pure functions and encoding; final registered normal generator must match",
+  "generator": "scripts/art/cut-out-form-art.ts",
+  "generatorSha256": "a465f712bcb21078a171e6ddfd24f74112a5d379192c7159f133a0fb869f0f2f",
+  "verbatimDefinitionSha256": "f95042479cc61ffb5b292b7da463d4479963f1f76d7b3b98e3175f4d2b12487c",
+  "encodeBlockSha256": "55c1d7a913962aabaff1eb2c506ab5ec7fe308803c13ab07b0ea3dacf69130f7",
+  "extractionEolRepresentation": "LF for exact block comparison; complete generator raw bytes separately pinned",
+  "helperSha256": "194ffb9662bc260a5939f1dedf95bc4dacad30afa9f7a20c9567927c323ea961",
+  "reference": "draft/frames/3.webp",
+  "referenceSha256": "562e35b61473e979dfb727ea3bcf24187dc6009feb704a5e91ba174eb0208850",
+  "output": "draft/card.webp",
+  "width": 480,
+  "height": 352,
+  "keyed": true,
+  "contentBox": {
+    "left": 0,
+    "top": 0,
+    "width": 1180,
+    "height": 866
+  },
+  "sha256": "05636de34da823f2d03ec2ab83ca5506ee1042e304f99ef25f955b3cc6bc5498",
+  "bytes": 24090,
+  "noThresholdOrAlphaOverride": true,
+  "productionMainInvoked": false,
+  "noRegistryOrPublicMutation": true,
+  "qaAcceptance": false
+}

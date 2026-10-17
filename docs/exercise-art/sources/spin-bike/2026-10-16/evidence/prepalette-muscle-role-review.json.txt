@@ -1,0 +1,40 @@
+{
+  "scope": "Independent actual original-source anatomical role review before the first palette build. No source recolouring or mask changes by this reviewer.",
+  "sourceSha256": "83ad4e7d901d2f73832b7c5ef51766ccd3105bdbcb73138df9ea98fef6462c3b",
+  "reviewedSources": [
+    "Full original four-panel sheet",
+    "Retained latestA/B/Csource bodies",
+    "LiteralBleg source rectangle807,210,1007,420at4xnearest",
+    "Literal A original rectangle180,225,360,410 and C original rectangle200,800,380,1005 at4xnearest"
+  ],
+  "diagnostic": "spin-B-leg-role-original-pixels-4x.png",
+  "approvedPaletteRoles": {
+    "primary": "#7B72E9 quadriceps: visible anterior thigh fields, including A/C far upper-thigh fields",
+    "secondaryCore": "#9590E0 existing oblique/abdominal fields",
+    "secondaryCalves": "#9590E0 existing identifiable posterior lower-leg fields in A/C",
+    "secondaryHamstrings": "#9590E0 existing posterior thigh strips/fields in A, B and C: near posterior fields below/behind quadriceps and existing far-thigh underside strips; broad anterior far-thigh fields remain primary Quads"
+  },
+  "BFieldAnatomicalBasis": "The disputed violet region begins at the seated hip, lies below/behind the raised nearquadriceps and runs toward the far bent knee. The foreground shin crosses it and continues to the white raised trainer. This is posterior thigh/hamstring territory, not a calf region.",
+  "constraints": [
+    "Select only already coloured source pixels; semantic traces may assign roles but must not create new muscle geometry.",
+    "Do not add a hamstring patch where no source tint exists in A/C.",
+    "Do not paint neutral Bshin/calf, pelvis, shoes or other neutral anatomy.",
+    "Preserve inherited tonal shading and fine contours while applying exact two-colour role mapping."
+  ],
+  "paletteBuiltOrViewedByReviewer": false,
+  "strictCertified": false,
+  "productionAccepted": false,
+  "sourceEdits": 0,
+  "completionCredit": 0,
+  "supersedesEarlierReview": {
+    "file": "spin-prepalette-muscle-role-review.json",
+    "sha256": "1f27b826d6b4eb1535157e743c083d3e132547bd75b1c26f9fc7e977b5965fb6",
+    "reason": "Further actual A/C posterior-thigh crops identify existing pale hamstring fields before the first palette build."
+  },
+  "AAndCAdditionalFinding": "Both actual A/C close views show pale tinted posterior-thigh strips from beneath the glute along the back edge of the near thigh. These existing source fields are secondary Hamstrings, not neutral skin or primary Quads. The small existing tinted underside strips under the far anterior thigh are also secondary Hamstrings; the broad far front-thigh field remains primary Quads.",
+  "diagnosticHashes": {
+    "spin-B-leg-role-original-pixels-4x.png": "271ca3298b55f059110cd9b6c6e1dd06bd398664125d5e04fe3500d9009fe83c",
+    "spin-A-posterior-thigh-original-pixels-4x.png": "59655870e44f55ce08f7642fa51a87fdb38aac29570fcc3a2ad27c203c1e9ad0",
+    "spin-C-posterior-thigh-original-pixels-4x.png": "4b621c2c718b3e1ee9d99e9af88f7c46804a5685009b4d4d7e0797566ba1406c"
+  }
+}

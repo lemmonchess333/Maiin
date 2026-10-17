@@ -1,0 +1,59 @@
+{
+  "scope": "Read-only literal native diagnostic, no artwork modification or acceptance",
+  "nativeBoxExclusive": [
+    350,
+    215,
+    500,
+    325
+  ],
+  "sourceSha256": "89d0866e0f165831b539839a8c0d7e45b9dc8a77533d916cc4d23a38465d1bc3",
+  "finishedSha256": "bedd28dd156ba89b5997bde64af44954f08dd2eac089ba96a4133a8723c46338",
+  "maskPath": "draft/masks/source-colour-alpha.png",
+  "maskSha256": "8cd8142d850052f96a7a938e3a390a88916562a794621b1dd496e9b93ad60d47",
+  "exactAlpha": "round(255*clip((B-min(R,G)-3)/18,0,1)) restricted to retained original8-connected weak-purple components",
+  "interiorMaskNotUsedToPromoteAlpha": true,
+  "weakShoulderSourceExcessLevels": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18
+  ],
+  "weakShoulderAlphaLevels": [
+    14,
+    28,
+    42,
+    57,
+    71,
+    85,
+    99,
+    113,
+    128,
+    142,
+    156,
+    170,
+    184,
+    198,
+    212
+  ],
+  "weakShoulderPixels": 6996,
+  "explanation": "A one-channel integer excess increment changes alpha by approximately14/255. Applying literal secondary lilac against a near-white source can therefore amplify original faint per-pixel chroma variation into visible lilac/white grain. The map uses existing source variations rather than random new noise; that preservation fact does not make the resulting visual grain acceptable.",
+  "artworkChangedForDiagnostic": false,
+  "imageGeneration": 0,
+  "visualAcceptance": false,
+  "proofs": {
+    "upper-delt-colour-alpha-native-crop.png": "dc5e2b485f8580bfe0548c125bb2f7124be0b6e71d08c67c9a59989db66f4f0c",
+    "upper-delt-finished-native-crop.png": "adc6972b82a2cebf423198be4207893fa7c86c8d59b9393b1ceab41ba9010791",
+    "upper-delt-original-native-crop.png": "6aa68714e7e58f074415ebb9407d0e353b5d9edf4dbd4a4c8fc320beb6c54398"
+  }
+}

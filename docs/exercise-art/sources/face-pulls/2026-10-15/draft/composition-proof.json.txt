@@ -1,0 +1,94 @@
+{
+  "status": "candidate-composition-and-reproduction-proof-not-visual-acceptance",
+  "pillowVersion": "12.3.0",
+  "libwebpVersion": "1.6.0",
+  "crop": [
+    0,
+    72,
+    982,
+    1330
+  ],
+  "nativeDimensions": [
+    982,
+    1258
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": [
+    1,
+    1,
+    4,
+    4,
+    1,
+    1
+  ],
+  "frames": [
+    {
+      "file": "frames/1.webp",
+      "sourcePose": 1,
+      "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+      "decodedRGBAexact": true
+    },
+    {
+      "file": "frames/2.webp",
+      "sourcePose": 1,
+      "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+      "decodedRGBAexact": true
+    },
+    {
+      "file": "frames/3.webp",
+      "sourcePose": 4,
+      "sha256": "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65",
+      "decodedRGBAexact": true
+    },
+    {
+      "file": "frames/4.webp",
+      "sourcePose": 4,
+      "sha256": "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65",
+      "decodedRGBAexact": true
+    },
+    {
+      "file": "frames/5.webp",
+      "sourcePose": 1,
+      "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+      "decodedRGBAexact": true
+    },
+    {
+      "file": "frames/6.webp",
+      "sourcePose": 1,
+      "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+      "decodedRGBAexact": true
+    }
+  ],
+  "poses": [
+    {
+      "pose": 1,
+      "individualGearLayerRecreatesReviewedProposalExact": true,
+      "individualColourLayerRecreatesReviewedProposalExact": true,
+      "gearColourAlphaIntersectionPixels": 0,
+      "layerOrderCommutesRGBAExact": true,
+      "outsideCombinedSupportRGBAExact": true,
+      "originalAlphaExact": true,
+      "removedRegionMaxRGB": 2,
+      "cropClipsForegroundAbove2RGB": false,
+      "fullRGBAsha256": "bbb8122df163a925787fc69a49ed9ea30d13462ea9159d2e616a2e030cd626a9",
+      "framedRGBAsha256": "a9cb9c59d536a4599cb1bb2b09b20c69a72b7b6ff1fadbbee0fe3dd7b1330359",
+      "fullAndFramedORAsReopenedRGBAExact": true
+    },
+    {
+      "pose": 4,
+      "individualGearLayerRecreatesReviewedProposalExact": true,
+      "individualColourLayerRecreatesReviewedProposalExact": true,
+      "gearColourAlphaIntersectionPixels": 0,
+      "layerOrderCommutesRGBAExact": true,
+      "outsideCombinedSupportRGBAExact": true,
+      "originalAlphaExact": true,
+      "removedRegionMaxRGB": 1,
+      "cropClipsForegroundAbove2RGB": false,
+      "fullRGBAsha256": "7367114b6a28e90d6b8a2136533c3873fc49318426432cb364b1980ffde69ccb",
+      "framedRGBAsha256": "315462b0023d7f7bd70e6b75fae41398a2a3a379b1da3b68379f731100767646",
+      "fullAndFramedORAsReopenedRGBAExact": true
+    }
+  ],
+  "noAnatomicalRescaleOrWarp": true,
+  "noRepoRegistrationOrCredit": true
+}

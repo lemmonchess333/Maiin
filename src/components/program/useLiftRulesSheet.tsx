@@ -1,6 +1,7 @@
 import { Suspense, useState } from "react";
 import type { Experience } from "@/features/program/programTypes";
 import type { LiftPurposeProgramme } from "@/lib/liftSessionPurpose";
+import type { LiftReason } from "@/lib/liftExerciseReasons";
 import { lazyRetry } from "@/lib/lazyRetry";
 
 const LiftRulesSheet = lazyRetry(() => import("./LiftRulesSheet"));
@@ -14,10 +15,12 @@ export function useLiftRulesSheet({
   purpose,
   programme,
   experience,
+  lifts,
 }: {
   purpose: string | null;
   programme: LiftPurposeProgramme | null | undefined;
   experience?: Experience;
+  lifts?: readonly LiftReason[];
 }) {
   const [open, setOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -34,6 +37,7 @@ export function useLiftRulesSheet({
           purpose={purpose}
           programme={programme}
           experience={experience}
+          lifts={lifts}
         />
       </Suspense>
     ) : null,

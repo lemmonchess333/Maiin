@@ -1,0 +1,103 @@
+{
+  "exerciseId": "front-squat",
+  "name": "Front Squat",
+  "version": "anatomy-v3-2026-10-16-worn-reference-harness-source-tone-v1",
+  "variation": "Shoulder-harness variation",
+  "physicalPoses": 2,
+  "sourcePoseOrder": ["A", "A", "B", "B", "A", "A"],
+  "positions": [0, 0, 1, 1, 0, 0],
+  "primary": ["Quads"],
+  "secondary": ["Glutes", "Core"],
+  "commonCrop": [432, 208, 1104, 944],
+  "padding": [32, 32],
+  "dimensions": [736, 800],
+  "setup": [
+    "Shoulder-harness variation: use a fitted harness and start light.",
+    "Set both shoulder pads and bar catches before lifting from a rack.",
+    "Keep feet planted; brace before each squat."
+  ],
+  "advice": {
+    "tip": "Keep the harness supported on both shoulders and the bar secure in its catches.",
+    "commonMistakes": [
+      "Letting the harness tip or lose shoulder contact.",
+      "Lifting your heels or letting knees collapse inward.",
+      "Losing your brace or leaning far forward."
+    ]
+  },
+  "beats": [
+    {
+      "t": 0,
+      "label": "Stand",
+      "cue": "Stand tall; keep the harness supported."
+    },
+    {
+      "t": 0,
+      "label": "Brace",
+      "cue": "Brace; keep both feet firmly planted."
+    },
+    {
+      "t": 1,
+      "label": "Squat",
+      "cue": "Bend hips and knees; keep heels grounded."
+    },
+    {
+      "t": 1,
+      "label": "Control",
+      "cue": "Keep chest lifted and knees tracking outward."
+    },
+    {
+      "t": 0,
+      "label": "Rise",
+      "cue": "Push through your whole feet to stand."
+    },
+    {
+      "t": 0,
+      "label": "Reset",
+      "cue": "Stay braced with both hands stabilising."
+    }
+  ],
+  "referenceFrame": 3,
+  "newImageRequests": 0,
+  "strictCertified": false,
+  "completionCredit": false,
+  "sourceRecords": [
+    {
+      "label": "A",
+      "sourceName": "1-rack-grip-candidate.png",
+      "originalSha256": "4138d453c00c9de84930655df5281bea91ddc53d1364c3e6ed10a80b60deb902",
+      "priorColourFinishSha256": "8710c339aefc4f305969e6cae9308e198a7c199fc19678a9d65b9b9e2a88b49b",
+      "priorEditableLayersReopenedExact": 5,
+      "colourChangedPixels": 24922,
+      "originalShoesExact": true,
+      "wholeHumanScale": 1,
+      "humanTransforms": 0
+    },
+    {
+      "label": "B",
+      "sourceName": "2-squat-candidate.png",
+      "originalSha256": "e6f6b16212becfabf17e24c48fdd79fcac5a9f993148d8d38746c23f58056673",
+      "priorColourFinishSha256": "80a6d04059d675838f67aea8e5d3ed93e9b88c7b446730d59e687e605d6af7f7",
+      "priorEditableLayersReopenedExact": 5,
+      "colourChangedPixels": 19171,
+      "originalShoesExact": true,
+      "wholeHumanScale": 1,
+      "humanTransforms": 0
+    }
+  ],
+  "findings": [
+    "Two genuine intact squat states repeat across six delivery slots; this is a discrete illustrated guide.",
+    "Custom shoulder harness based on a real apparatus principle; not a stock manufacturer replica or ordinary direct-shoulder front rack.",
+    "Equipment projection is illustrative; the source body is not calibrated in3D. The old nominal51mm neck-envelope clearance is not adopted.",
+    "Original neutral source pixels remain exact; original violet fields use the exact target bases and per-pixel source tone. Neutralised source tint is not recovered pre-tint anatomy.",
+    "Retained source plate projections and hand contours have minor illustrative pose differences; a calibrated continuous human movement is not claimed.",
+    "Native scoped review uses the actual worn regular-harness reference for medial upper-shoulder support; strict review and exact anatomical depth remain unverified."
+  ],
+  "frameHashes": {
+    "draft/frames/1.webp": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+    "draft/frames/2.webp": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+    "draft/frames/3.webp": "2a2bb9acc5d0aa8237885c8e8020f66a38af4927c47e745bd0d3dac115f58380",
+    "draft/frames/4.webp": "2a2bb9acc5d0aa8237885c8e8020f66a38af4927c47e745bd0d3dac115f58380",
+    "draft/frames/5.webp": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+    "draft/frames/6.webp": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c"
+  }
+}

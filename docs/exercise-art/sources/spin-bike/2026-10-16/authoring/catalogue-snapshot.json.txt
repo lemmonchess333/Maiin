@@ -1,0 +1,19 @@
+{
+  "exerciseId": "spin-bike",
+  "name": "Spin Bike",
+  "category": "Cardio",
+  "muscleGroup": "Cardio",
+  "secondaryMuscles": [
+    "Quads",
+    "Hamstrings",
+    "Core"
+  ],
+  "equipment": "Machine",
+  "caloriesPerMinute": 9,
+  "instructions": [
+    "Dial in seat and bar height \u2014 seat level with the bars for most.",
+    "Clip or strap in, grip the bars with a firm but relaxed hold.",
+    "Pedal at a high cadence, alternating seated and standing drives.",
+    "Match resistance to the effort \u2014 no flying pedals at max RPM."
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "status": "parent-source-eligibility-approved-for-separate-owner-guide-draft-only",
+  "exerciseId": "rowing-machine",
+  "reviewer": "/root (parent agent)",
+  "recordedAtUtc": "2026-10-15T22:18:42.190651+00:00",
+  "sourceEligible": true,
+  "authoringOnly": true,
+  "sourceDecision": "Root viewed all3 original1536x1024 sources, both native knee crops and Concept2 technique; approved a three-state owner-with-findings draft under the user-authorized slightly relaxed standards and new-conversions-first instruction. Substantial catch-to-long-leg drive with straight arms then handle below ribs and layback is retained without new body pixels.",
+  "sources": {
+    "1": {
+      "path": "originals/1-original.png",
+      "sha256": "54976c3327f10fcd229c6fbe20225d7c31af877896d1d0a77fc5424fb912466e",
+      "actualRetainedSourcePath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\rowing-machine\\1-master.png",
+      "promptMetadata": {
+        "path": "originals/1-prompt.txt",
+        "sha256": "788267a7b3344b5c1ff6b35b5de2d7749aa28e3037c2b090ef69f4b43ebe6701"
+      },
+      "nativeSize": [
+        1536,
+        1024
+      ]
+    },
+    "2": {
+      "path": "originals/2-original.png",
+      "sha256": "c9e9d5359938dfab494dd01d9bbfe6a09d64bd21df669c376fa8bee307579609",
+      "actualRetainedSourcePath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\rowing-machine\\2-leg-drive-candidate.png",
+      "promptMetadata": {
+        "path": "originals/2-prompt.txt",
+        "sha256": "df195d2272224972ce24093d844844955a6a448c3ae4816c7cc33de485d500a6"
+      },
+      "nativeSize": [
+        1536,
+        1024
+      ]
+    },
+    "3": {
+      "path": "originals/3-original.png",
+      "sha256": "b325b7dec503c4c1b2541a636ebc3434791214ac4d6c6e6eb2e6f8ea0db0a046",
+      "actualRetainedSourcePath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\rowing-machine\\3-finish-bent-knees.png",
+      "promptMetadata": {
+        "path": "originals/3-prompt.txt",
+        "sha256": "9c63c9168d685ba46385054b44de0f972c2de098fa28d4f6a31b5d4477422baf"
+      },
+      "nativeSize": [
+        1536,
+        1024
+      ]
+    }
+  },
+  "independentNativeReview": {
+    "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\rowing-machine\\native-reassessment-20261015\\native-source-reassessment.json",
+    "sha256": "98ca090e4484753dd67e8765d639fb63219b26fd4f137a4c115114689b63b056"
+  },
+  "primaryTechniqueReference": "https://www.concept2.com/training/rowing-technique",
+  "findings": [
+    "Visible residual knee flexion at the pulled finish is retained. Modest-versus-moderate projection uncertainty remains; no straight/locked/perfect-leg or strict-certification claim.",
+    "Three real whole retained states are reused as catch/drive/finish/finish/drive/catch. Endpoint cuts are explicit; no invented intermediate motion or calibrated continuous stroke.",
+    "Minor original seated body/seat and leg-contour variation remains. Fixed strapped feet/common rower and original whole anatomy are preserved; no body fitting, pose correction, shoe graft or equipment correction."
+  ],
+  "finalPaletteReviewed": false,
+  "registeredReviewComplete": false,
+  "publicationApproved": false,
+  "strictCertified": false,
+  "completionCredit": false
+}

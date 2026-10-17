@@ -1,0 +1,124 @@
+{
+  "exerciseId": "spin-bike",
+  "version": "anatomy-v3-2026-10-16-custom-perspective-spin-v1",
+  "reviewer": "Codex /root, actual native and browser review",
+  "reviewedAt": "2026-10-16T09:02:56.235620+00:00",
+  "allowLocalIntegration": true,
+  "actualDraftUiReviewComplete": true,
+  "actualRegisteredReviewComplete": false,
+  "strictChecksRemainNull": true,
+  "strictCertified": false,
+  "completionCredit": false,
+  "planSha256": "7a4fecb770978e957129bb28e9ae14d3781c50cc748933d8adaab7f00c6d8826",
+  "payloadManifestSha256": "bc5cb56e72e5a5a56954ad06d1f634222944d843f03fc0140721d6fcca8e2313",
+  "cardSha256": "273c462c1dec1af3711b9788a2c62d442e6f820b1d06f49e4681345414f5c1e0",
+  "actualUiReview": {
+    "viewport": [
+      390,
+      844
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "manualStepsPerTheme": 6,
+    "normalAndSlowerLoopObserved": true,
+    "normalCardLongSideLimits": [
+      480,
+      348,
+      160
+    ]
+  },
+  "observations": {
+    "identity": {
+      "observed": true,
+      "evidence": "Root viewed all three final native-scale framed images against the accepted source construction. FA56 featureless athlete, no shorts, white trainers and inherited fine contours are retained; guarded neutral source pixels independently compare exactly."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "One unchanged native source panel camera per retained whole athlete, with only documented whole-source integer C translation and a common crop. No anatomical resampling, limb fitting or grafts."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "The two seated states and genuine saddle-cleared standing state retain the original source body. No gross head, hand, pelvis, joint or trainer defect observed; minor inherited pose variation remains disclosed."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "One fixed custom charcoal indoor cycle with shared multi-position bars and drive cover. The source is explicitly custom equipment, not a commercial replica."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Root observed forefeet on connected passive platforms and closed hands meeting the shared bars. The B far foot remains source-occluded; no hidden anatomy has been invented."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "The accepted source construction uses one common pinhole camera, opposed equal 170mm cranks and shared mechanism dimensions. This supports three illustrated states; it is not a calibrated continuous human cycle."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Existing anterior-thigh fields use primary #7B72E9; existing Core, Calves and identifiable posterior-thigh Hamstrings use secondary #9590E0 with inherited tonal ramps. Neutral body, trainers and all pixels outside original colour support remain exact."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "All six manual paths in both themes show the correct decoded image, label and corresponding seven-word-or-shorter cue. Catalogue instructions explicitly include seated/standing riding and straps."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Root observed real mobile normal and slower playback through all six paths and 6-to-1 wrap. The three genuine states repeat A,B,B,C,C,A; held states and discrete transitions remain honest."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Actual 390x844 light review includes six manually selected steps, full standing figure and normal transparent card at 480/348/160px long-side limits. No document overflow or console warning/error observed."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Actual 390x844 dark review includes six manually selected steps, full standing figure and compact normal card views. Figure, contours, cues and apparatus remain legible."
+    }
+  },
+  "findings": [
+    "Three actual retained source bodies: seatedA/B and genuine standingC, repeated across six paths. No six-distinct-human or complete continuous calibrated human cycle claim.",
+    "Original sheet is1254x1254 with nominal627cells. C crown extends above nominal lower-panel y627origin; upwardextended y600extract preserves those actual head pixels. WholeC(+6,+7) is relative to nominal origin; all source pixels remain native/unscaled.",
+    "One fixed custom perspective indoor-cycle, ordinary equal170mmopposedcranks,160mmcrankQ,220mmforefootplanes and passive rocking140x100mmpedals; fixed multi-position loopbars support different actual seated/standing grips. No manufacturer replica or recovered source3D/body calibration claim.",
+    "B far pedal support is hidden by the common actual drive cover; no new far shoe or hidden anatomy has been constructed.",
+    "Native source contours/shading and minor pose differences remain. Tiny inherited C silver old-hardware edge at the left calf is retained as a minor contour finding, not repainted.",
+    "Custom shaded apparatus has a more geometric frame than the originally generated equipment. Source627cell quality is preserved; the production crop is not upscaled.",
+    "Existing source anterior-thigh tint is Quads primary. Existing Core, Calves and identifiable posterior-thighHamstrings tint is secondary; neutral source anatomy/trainers are unchanged.",
+    "Actual guide uses discrete illustrated seated/standing steps and repeated holds. Observer records brief React image/cue transition events before the settled matching cue; manual settled paths agree. Strict certification remains unverified."
+  ],
+  "approval": {
+    "actor": "Human owner",
+    "instruction": "ok finish the remaining 11, figure out another way using our model and colours, no shorts, and get them merged. stop repeating failed attempts and asking for approval",
+    "context": "Existing session authorization covers native source/equipment finishing, local registration, checks and merge; this record is root QA, not a new permission request."
+  },
+  "evidenceHashes": {
+    "review/spin-draft-mobile-start-ca6d159bd917-b1-tool-text.txt": "375e40e706dee1c7bcef2dfc105a17782c088c7d9b3efdf4cc19bb69e66d4cf7",
+    "review/spin-draft-mobile-start-ca6d159bd917-b2-tool-text.txt": "5cee4a40a9611ac78e2164427973e519c1795e446d5c93550721341363dfc796",
+    "review/spin-draft-dark-manual-six-be26d58aaade-b1-tool-text.txt": "4288f4fb8e33305e96cea451c1b6865d7e044517b6759d60a897a3cd17504ccb",
+    "review/spin-draft-dark-manual-six-be26d58aaade-b2-tool-text.txt": "5f0c6ea4049cd1bc7acbdaea8660ea2591b49cd1ce16d86ade02e3db32270cde",
+    "review/spin-same-call-multiple-e29789b0e590-b1-tool-text.txt": "0845f5b6a02e4a71de5481aab02f85b08cd2efb271a4a709bb3dd704ad1841b5",
+    "review/spin-draft-dark-manual-six-e29789b0e590-b2-tool-text.txt": "bd7d06021edb90ffdbbefbdca05330d981dcc98521ec2c9762bd031a64b96911",
+    "review/spin-same-call-multiple-e29789b0e590-b3.jpg": "a8c3c1b72abb02ed354621f3478d6c0d902567ed3e92323c2d309b5d6449d667",
+    "review/spin-draft-light-manual-six-f7da3c6a5d03-b1-tool-text.txt": "f6cb4684191e6ac00382deb76ee5743939120d9bb5095dde59be207e85952969",
+    "review/spin-draft-light-manual-six-f7da3c6a5d03-b2-tool-text.txt": "6b053df9f3b6ce17204500b5de14d36a339747bce58c3078aff2286b7d2b80bd",
+    "review/spin-draft-light-manual-six-f7da3c6a5d03-b3.jpg": "cf2e14ecbdaf70b458666558f90cdc8f63ff4c0b31e8a64033c5d1b38c496c6f",
+    "review/spin-draft-mobile-manual-data-87ad05ea404b-b1-tool-text.txt": "fb3ca80ba899bf87dc933b171f67b5cef28af37ae35ec321d1878b04a84356ec",
+    "review/spin-draft-mobile-manual-data-87ad05ea404b-b2-tool-text.txt": "116b3e604533ace934cc6ff5ba9b7f6847eb83c14b32d9e3a35ab4a6fa8d7299",
+    "review/spin-draft-mobile-manual-data-87ad05ea404b-b2-dom.json": "1c5373917877f41a7575f5a19650cf0eeb418ce7f65d6002e5241577d39e473a",
+    "review/spin-draft-mobile-normal-loop-62f49bd57671-b1-tool-text.txt": "c127f3056e64e12c4cfbb57fc738ca610d53d0e3c4075859d5b8f65c44f8115a",
+    "review/spin-draft-mobile-normal-loop-62f49bd57671-b2-tool-text.txt": "e5eadfce7965250cbef5fc04a55a880acbfc0278852ca1f31856216e805b62fc",
+    "review/spin-draft-mobile-normal-loop-62f49bd57671-b2-dom.json": "fd7f6805fe0119f28b5fe3df1ce9266675fd5f3555e825ec96e09a8e89bae562",
+    "review/spin-draft-light-normal-card-2465d64e3f57-b1-tool-text.txt": "cfbb6661a6427dbce53c5c88c505329c2cd0ef513ffbe99c47aa7eddb86e7e60",
+    "review/spin-draft-light-normal-card-2465d64e3f57-b2-tool-text.txt": "041f67222c9a76095465050e11ab3940d7287762bb1358a61f706763af9d22e8",
+    "review/spin-draft-light-normal-card-2465d64e3f57-b2-dom.json": "f696b19a3217ae8ace132dd0091edd6db47636d74ec16f08605ea7cac93076ca",
+    "review/spin-draft-light-normal-card-2465d64e3f57-b3.jpg": "8773eb30a4d0ed68064b55ee1c6d18111d38cbf3314d73d3fb5dd2ffcfe65c0e",
+    "review/spin-same-call-multiple-6b7c8c8353fe-b1-tool-text.txt": "7953e6afe2fb24e5577fc5bd6515b05ecddc35129f6b324993c54e13b92a26e5",
+    "review/spin-draft-mobile-slower-loop-6b7c8c8353fe-b2-tool-text.txt": "23f544f5ca98d2b4b19f687af2e0b27f7d6a749c2223783873891cb5e468cb5a",
+    "review/spin-same-call-multiple-6b7c8c8353fe-b3.jpg": "18b4d116a7c9ac4da9be7a3421d6a40831147b36fe8a0aaa00577fb9002aea27",
+    "review/spin-draft-final-mobile-data-31c0876355df-b1-tool-text.txt": "bc097c6d2729fc8478ba8d4a97a92664266fde6550c2c08ea9a81c803214fd46",
+    "review/spin-draft-final-mobile-data-31c0876355df-b2-tool-text.txt": "a904480fec01de213dd8e25ba5b129ef05ba610e82ba8d9fc661b22e6e870354",
+    "review/spin-draft-final-mobile-data-31c0876355df-b2-dom.json": "dc5d5584d4df4461c18bc99a64fefc2816cf6bb5a8e1fbc9ead8da2db2add54d",
+    "review/spin-tool-return-artifact-index-draft-final.json": "ccb94759a53f7567ddaf7561ad8c8f3539c55f687d632baacd0b8ccecac3c6e3"
+  },
+  "freshReproductionSha256": "7849ea30980eb5a16a80a51f8e954838e667e7a80bcb08383eb872d4a86e61f0",
+  "next": "Local registration, normal registered-card equality, actual integrated mobile review, normal verification/CI disposition and guarded merge/preservation."
+}

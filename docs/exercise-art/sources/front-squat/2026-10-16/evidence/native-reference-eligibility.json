@@ -1,0 +1,26 @@
+{
+  "status": "native-eligible-for-local-integrated-owner-release-review",
+  "actualFinalNativeImages": [
+    "draft/A-native.png",
+    "draft/B-native.png",
+    "draft/A-framed.png",
+    "draft/B-framed.png"
+  ],
+  "nativeImageHashes": {
+    "draft/A-native.png": "719b96a3310e56a1c1f6594c86bda886944e9d56e0194a1767d45276b2149aae",
+    "draft/A-framed.png": "972ec00beef87f2188a97062eec3212919c1d533d1f9e512613706d10afade8d",
+    "draft/B-native.png": "2031190d82f5b72d15563e14682338da70f2a392ab5ff53bc50abb75bacb4563",
+    "draft/B-framed.png": "1d2afc51dc8047ea69888899cf40dd599b5c77346d3b17b9cd9348c0e91af0e4"
+  },
+  "newEvidence": "Manufacturer-linked Getstrength regular harness video, actual front29s/33s/34s and rear43s views. The worn padded arches support the medial upper-shoulder/trap region, rather than requiring outer deltoid-cap placement.",
+  "priorFindingDisposition": "The original ordinary front-rack rejection remains valid. The prior custom-harness review and nominal51mm calculation are retained verbatim as historical evidence. The new worn reference removes the outer-cap criterion as a general rule, not a claim that the manufacturer approves this custom drawing.",
+  "observedSupport": "At both actual native endpoints, the two connected arches wrap the medial upper-shoulder region and continue forward into connected risers/cradles. Original palms/forearms remain in front of the harness at unchanged coordinates; they stabilise the bar rather than supply an ordinary delt shelf.",
+  "observedClearance": "The shaft is visibly foreground to the neck, supported in the two cradles. There is no depicted neck indentation or neck-bearing support; the shorter common front frame is clear of the bottom-state thighs. This is qualitative2D illustrative assessment, not measured3D anatomical clearance.",
+  "scope": "Two genuine squat states, same whole-source camera, unchanged source heads/limbs/trainers, exact approved palette bases using source tone. No ordinary-rack, six-unique-pose, calibrated-motion or manufacturer-replica claim.",
+  "strictCertification": false,
+  "registeredMobileReviewPending": true,
+  "completionCredit": false,
+  "newImageRequests": 0,
+  "newEquipmentGeometryCorrections": 0,
+  "anatomicalTransforms": 0
+}

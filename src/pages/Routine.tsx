@@ -1,5 +1,6 @@
 import type { SessionPrescription } from "@/features/program/sessionCompletion";
 import { completeLift } from "@/lib/liftCompletion";
+import { resolveLiftUnit } from "@/lib/liftLoad";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { auth } from "../lib/firebase";
@@ -119,6 +120,7 @@ export default function Routine() {
           displayName: profile?.displayName,
           photoURL: profile?.photoURL,
         },
+        liftUnit: resolveLiftUnit(profile?.liftingWeightUnit),
         source: "routine",
         completionId: sessionData.completionId,
         startedAt: sessionData.startedAt,

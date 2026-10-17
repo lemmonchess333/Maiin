@@ -1,0 +1,168 @@
+{
+  "status": "copied-immutable-inputs-for-unregistered-candidate",
+  "inputs": {
+    "inputs/1-original.png": {
+      "sha256": "cf96479772e0af178578ef771a7930df0d535b1c778d1b30ac2f9245818b8c8e",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\pilots\\parallel-ten\\leg-extension\\frames\\1.png",
+      "sourceSha256": "cf96479772e0af178578ef771a7930df0d535b1c778d1b30ac2f9245818b8c8e"
+    },
+    "inputs/1-source-kept-base.png": {
+      "sha256": "2a9433f61b2a8ab4e272c5252d3d241e4162a38fccc843c51b64de0c753d2b2e",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\independent-pad-pilot-20261015\\1-source-kept-base.png",
+      "sourceSha256": "2a9433f61b2a8ab4e272c5252d3d241e4162a38fccc843c51b64de0c753d2b2e"
+    },
+    "inputs/1-old-equipment-ownership-mask.png": {
+      "sha256": "2bb40fcdb30343969f63d45c4d0352e17dc7c09a6002a64324baf1e62765b32a",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\independent-pad-pilot-20261015\\1-old-equipment-ownership-mask.png",
+      "sourceSha256": "2bb40fcdb30343969f63d45c4d0352e17dc7c09a6002a64324baf1e62765b32a"
+    },
+    "inputs/1-exact-palette-layer.png": {
+      "sha256": "d56aee5620e74a04f51d17669031b7813aa9025cb52169d1f1ad89ff3a401482",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\independent-pad-pilot-20261015\\1-exact-palette-layer.png",
+      "sourceSha256": "d56aee5620e74a04f51d17669031b7813aa9025cb52169d1f1ad89ff3a401482"
+    },
+    "inputs/1-retained-coloured-contour-layer.png": {
+      "sha256": "3f709fe24e3d33af0f7379e629d14e6b9feaa4dce42099de11615242d6308060",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\independent-pad-pilot-20261015\\1-retained-coloured-contour-layer.png",
+      "sourceSha256": "3f709fe24e3d33af0f7379e629d14e6b9feaa4dce42099de11615242d6308060"
+    },
+    "inputs/4-original.png": {
+      "sha256": "0ffa89a3a5f235e7034fe5933259f749e567eb6fc49027b5a42328c5677d1ebe",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\pilots\\parallel-ten\\leg-extension\\frames\\4.png",
+      "sourceSha256": "0ffa89a3a5f235e7034fe5933259f749e567eb6fc49027b5a42328c5677d1ebe"
+    },
+    "inputs/4-source-kept-base.png": {
+      "sha256": "c16dea5e03c08f94182801e3911f8f5da13d419e95f5fe03e4184b253679a513",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\independent-pad-pilot-20261015\\4-source-kept-base.png",
+      "sourceSha256": "c16dea5e03c08f94182801e3911f8f5da13d419e95f5fe03e4184b253679a513"
+    },
+    "inputs/4-old-equipment-ownership-mask.png": {
+      "sha256": "b7cf1e5850fc2696108c07228bc0e7995bbe7325822677ca335a814adbada532",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\independent-pad-pilot-20261015\\4-old-equipment-ownership-mask.png",
+      "sourceSha256": "b7cf1e5850fc2696108c07228bc0e7995bbe7325822677ca335a814adbada532"
+    },
+    "inputs/4-exact-palette-layer.png": {
+      "sha256": "fc9486952e7a5ea5193d6a5657cebe68382b29eab1b64e554476b499b9ac7495",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\independent-pad-pilot-20261015\\4-exact-palette-layer.png",
+      "sourceSha256": "fc9486952e7a5ea5193d6a5657cebe68382b29eab1b64e554476b499b9ac7495"
+    },
+    "inputs/4-retained-coloured-contour-layer.png": {
+      "sha256": "8da6364d1e75ff892fd0c93bb4aba8c923e5674b1748811e6dc3c29c2ca3d032",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\independent-pad-pilot-20261015\\4-retained-coloured-contour-layer.png",
+      "sourceSha256": "8da6364d1e75ff892fd0c93bb4aba8c923e5674b1748811e6dc3c29c2ca3d032"
+    },
+    "inputs/source-kept-pilot-provenance.json": {
+      "sha256": "0c07153716b78809159bd50eb93bdf83aa109e7568142e206af61486c63f1aca",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\independent-pad-pilot-20261015\\source-kept-pilot-provenance.json",
+      "sourceSha256": "0c07153716b78809159bd50eb93bdf83aa109e7568142e206af61486c63f1aca"
+    },
+    "inputs/palette-candidate-proof.json": {
+      "sha256": "690321c7b98cc0c9438f524239c5a7c06371ab460e3255be27f1bddbdeb767ae",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\independent-pad-pilot-20261015\\palette-candidate-proof.json",
+      "sourceSha256": "690321c7b98cc0c9438f524239c5a7c06371ab460e3255be27f1bddbdeb767ae"
+    },
+    "inputs/prior-construction-proof.json": {
+      "sha256": "fc38eb2d33962a5a37724c9964738b3bdef73b9c5ee537287b8e6e03ea4e0b86",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\independent-pad-pilot-20261015\\endpoint-common-camera-short-pads\\construction-proof.json",
+      "sourceSha256": "fc38eb2d33962a5a37724c9964738b3bdef73b9c5ee537287b8e6e03ea4e0b86"
+    },
+    "inputs/prior-native-mechanics-review.json": {
+      "sha256": "a57ac6bfcb1a747e8de0a36dbaaf77c3de72cc602ae8e48060a5b28b2eae44c1",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\independent-pad-pilot-20261015\\endpoint-common-camera-short-pads\\native-mechanics-review.json",
+      "sourceSha256": "a57ac6bfcb1a747e8de0a36dbaaf77c3de72cc602ae8e48060a5b28b2eae44c1"
+    }
+  },
+  "portableWorkingUnitSource": {
+    "originalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\independent-pad-pilot-20261015\\construct-endpoint-rotary-camera-short-pads.py",
+    "originalSha256": "5b2aa9a051009279961656b103d3ef7d7a15fe5086ed958405926a2fb85952dc",
+    "portableSha256": "e0ecf4587ae3302f4ed80820b8e90a34238d3c140cfaca5d88c0051d30a34749",
+    "changes": "Only the prior package input/output root adaptation and new RGB material renderer; all geometry, camera, vertices, cylinder dimensions and depth guards remain exact.",
+    "materialChangeOnly": "Previous working-unit source, only render function replaced. Geometry/camera/coordinates/cylinder/depth code before/after remain exact.",
+    "previousPathOnlyChanges": "Only input root and output directory; all geometry, camera, materials and depth guards unchanged."
+  },
+  "catalogueSource": {
+    "repoPath": "src/lib/exercises.ts",
+    "sha256": "f285d6cf0e76b9354aa0f2e954363ea292d8ea07e2383d1265d22944546d779f",
+    "capture": "Node+tsx subprocess raw UTF-8 JSON bytes, no terminal text decoding."
+  },
+  "newImageRequests": 0,
+  "productionChanges": false,
+  "completionCredit": false,
+  "materialRevision": "One parent-authorized RGB-only equipment/body-colour finish after prior style HOLD; geometry, camera, pixel coordinates and depth masks are unchanged.",
+  "priorPackage": {
+    "root": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\endpoint-common-camera-production-20261015",
+    "constructionProofSha256": "1d3d788c8cc855de2b72cae303eb6471a57e1de83e902572810c7c224815d86b",
+    "sequencePlanSha256": "cfab1fb89f6b9beb75c57824699e42a05f0237f129098fc9a94b12ae2e9a9d21"
+  },
+  "derivedMaterialInputs": {
+    "inputs/prior-1-equipment-back-alpha.png": {
+      "sha256": "646ccf38c0c7bab67115bc6eec5f6c4cc8c3232d292233cc1702a9517367b6a8",
+      "derivedFrom": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\endpoint-common-camera-production-20261015\\working-unit\\1-equipment-back.png",
+      "sourceSha256": "450fff164c333bdac2396b63c5acf596f241457c2cbdbca9b3436d520d32c6b8",
+      "operation": "Exact original alpha channel only; no RGB or geometry change."
+    },
+    "inputs/prior-1-equipment-front-with-existing-depth-alpha.png": {
+      "sha256": "64ad6263e7f63c3cda81bc816efab2a30262eb15787e31a3af785df66ae61499",
+      "derivedFrom": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\endpoint-common-camera-production-20261015\\working-unit\\1-equipment-front-with-existing-depth.png",
+      "sourceSha256": "54c1d3dc7dad23d8e84e856642742bf06f85967b45f9ee405719a69296a2f4f2",
+      "operation": "Exact original alpha channel only; no RGB or geometry change."
+    },
+    "inputs/prior-1-equipment-front-unoccluded-alpha.png": {
+      "sha256": "64ad6263e7f63c3cda81bc816efab2a30262eb15787e31a3af785df66ae61499",
+      "derivedFrom": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\endpoint-common-camera-production-20261015\\working-unit\\1-equipment-front-unoccluded.png",
+      "sourceSha256": "54c1d3dc7dad23d8e84e856642742bf06f85967b45f9ee405719a69296a2f4f2",
+      "operation": "Exact original alpha channel only; no RGB or geometry change."
+    },
+    "inputs/prior-4-equipment-back-alpha.png": {
+      "sha256": "9e59b0c8269671989a44abc3058c71eb754212562939a88e7b4dab82d9a8409b",
+      "derivedFrom": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\endpoint-common-camera-production-20261015\\working-unit\\4-equipment-back.png",
+      "sourceSha256": "d8c706fc2eb15aa185dea9073651f9f75685caa83e03192feb3060bfc43b20e4",
+      "operation": "Exact original alpha channel only; no RGB or geometry change."
+    },
+    "inputs/prior-4-equipment-front-with-existing-depth-alpha.png": {
+      "sha256": "d1de92e14e352f8c5450f90fce13a10fed554fe339e98cd0a8a55f473ee60133",
+      "derivedFrom": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\endpoint-common-camera-production-20261015\\working-unit\\4-equipment-front-with-existing-depth.png",
+      "sourceSha256": "32b10d738b26c2b6d172573d3842971ca5d6037c30939aba2a96351238ec028a",
+      "operation": "Exact original alpha channel only; no RGB or geometry change."
+    },
+    "inputs/prior-4-equipment-front-unoccluded-alpha.png": {
+      "sha256": "1947d66192ef401790a623b51c48b0070d4c42103bc33a6e8a1e6a7eea7ff750",
+      "derivedFrom": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\endpoint-common-camera-production-20261015\\working-unit\\4-equipment-front-unoccluded.png",
+      "sourceSha256": "46cb2334d6208d0146022a4558cd82cf7dffa35582182a8e79634dabe3bede1b",
+      "operation": "Exact original alpha channel only; no RGB or geometry change."
+    },
+    "inputs/prior-working-unit-proof.json": {
+      "sha256": "fc38eb2d33962a5a37724c9964738b3bdef73b9c5ee537287b8e6e03ea4e0b86",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\endpoint-common-camera-production-20261015\\working-unit\\construction-proof.json",
+      "sourceSha256": "fc38eb2d33962a5a37724c9964738b3bdef73b9c5ee537287b8e6e03ea4e0b86"
+    },
+    "inputs/prior-complete-construction-proof.json": {
+      "sha256": "1d3d788c8cc855de2b72cae303eb6471a57e1de83e902572810c7c224815d86b",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\endpoint-common-camera-production-20261015\\construction-and-preservation-proof.json",
+      "sourceSha256": "1d3d788c8cc855de2b72cae303eb6471a57e1de83e902572810c7c224815d86b"
+    },
+    "inputs/prior-sequence-plan.json": {
+      "sha256": "cfab1fb89f6b9beb75c57824699e42a05f0237f129098fc9a94b12ae2e9a9d21",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\endpoint-common-camera-production-20261015\\sequence-plan.json",
+      "sourceSha256": "cfab1fb89f6b9beb75c57824699e42a05f0237f129098fc9a94b12ae2e9a9d21"
+    },
+    "inputs/prior-static-alpha.png": {
+      "sha256": "532915bda7fd9571c483ba5857920ea4474903bbfdd673134f5277351aeea6f9",
+      "derivedFrom": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\endpoint-common-camera-production-20261015\\draft\\fixed-covered-housings-and-chassis-unoccluded.png",
+      "sourceSha256": "f2b558a3e782eea15b255ed6b660e293dc0d32b0972b9dba2ac991e921787d8f",
+      "operation": "Exact original static gear alpha channel."
+    },
+    "inputs/source-metal-highpass.png": {
+      "sha256": "9977a452b45a3d7b5b0dffd032803fcc1d162d07df5ff5d242ed553f4044ba29",
+      "derivedFrom": "inputs/1-original.png",
+      "sourceSha256": "cf96479772e0af178578ef771a7930df0d535b1c778d1b30ac2f9245818b8c8e",
+      "sourceRoi": [
+        830,
+        760,
+        842,
+        800
+      ],
+      "operation": "Source neutral polished-frame luminance high-pass, clamp\u00b14 levels; equipment material only."
+    }
+  }
+}

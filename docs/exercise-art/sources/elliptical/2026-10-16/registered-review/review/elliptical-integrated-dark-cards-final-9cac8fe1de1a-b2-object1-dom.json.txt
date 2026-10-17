@@ -1,0 +1,63 @@
+{
+  "cards": [
+    {
+      "alt": "Elliptical registered normal card",
+      "complete": true,
+      "display": [
+        348,
+        160
+      ],
+      "natural": [
+        469,
+        480
+      ],
+      "src": "/form-art/elliptical.webp"
+    },
+    {
+      "alt": "Elliptical normal card, 480px long-side limit",
+      "complete": true,
+      "display": [
+        469,
+        480
+      ],
+      "natural": [
+        469,
+        480
+      ],
+      "src": "/form-art/elliptical.webp"
+    },
+    {
+      "alt": "Elliptical normal card, 348px long-side limit",
+      "complete": true,
+      "display": [
+        340,
+        348
+      ],
+      "natural": [
+        469,
+        480
+      ],
+      "src": "/form-art/elliptical.webp"
+    },
+    {
+      "alt": "Elliptical normal card, 160px long-side limit",
+      "complete": true,
+      "display": [
+        156,
+        160
+      ],
+      "natural": [
+        469,
+        480
+      ],
+      "src": "/form-art/elliptical.webp"
+    }
+  ],
+  "docWidth": 380,
+  "reviewLabel": "elliptical-integrated-dark-cards-final",
+  "theme": "dark",
+  "viewport": [
+    390,
+    844
+  ]
+}

@@ -1007,12 +1007,50 @@ export default function Food() {
       return;
     }
     if (confidence === "nl-parse") {
-      const zeroItems = items.filter((i) => i.calories === 0);
-      if (zeroItems.length > 0) {
+      const quantityIssues = items.filter((i) => i.quantityIssue);
+      if (quantityIssues.length > 0) {
+        const corrections = quantityIssues.map((item) => {
+          const issue = item.quantityIssue!;
+          return `${item.name} (${issue.expectedUnit ? `use ${issue.expectedUnit}` : `reference portion: ${issue.referencePortion}`})`;
+        });
         toast.warning(
-          `Couldn't find macros for: ${zeroItems.map((i) => i.name).join(", ")}. Search the foods to fill them in.`,
-          { id: "food-nl-warning" }
+          `Couldn't calculate these quantities: ${corrections.join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
+          {
+            id: "food-nl-warning",
+            duration: 10000,
+            action: {
+              label: "Edit description",
+              onClick: (event) => {
+                // Release the toast's focus restoration before handing
+                // focus to the editable draft.
+                event.currentTarget.blur();
+                inputRef.current?.focus();
+              },
+            },
+          }
         );
+        setNlParsing(false);
+        return;
+      }
+      const unresolved = items.filter((i) => i.unrecognized);
+      if (unresolved.length > 0) {
+        toast.warning(
+          `Couldn't find macros for: ${unresolved.map((i) => i.name).join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
+          {
+            id: "food-nl-warning",
+            action: {
+              label: "Edit description",
+              onClick: (event) => {
+                event.currentTarget.blur();
+                inputRef.current?.focus();
+              },
+            },
+          }
+        );
+        // Keep the whole draft: saving a known subtotal would lose the
+        // unresolved foods from the diary and from later corrections.
+        setNlParsing(false);
+        return;
       }
     }
     /* Per-item suspicious-value validation. Runs only on freshly

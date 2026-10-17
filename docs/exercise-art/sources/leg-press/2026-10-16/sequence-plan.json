@@ -1,0 +1,74 @@
+{
+  "name": "Leg Press",
+  "variation": "Seated plate-loaded double-beam lever press",
+  "sourcePoseOrder": ["B", "B", "A", "A", "B", "B"],
+  "positions": [0, 0, 1, 1, 0, 0],
+  "commonCrop": [144, 0, 1344, 1024],
+  "padding": [32, 16],
+  "dimensions": [1264, 1056],
+  "primary": ["Quads"],
+  "secondary": ["Glutes", "Hamstrings"],
+  "beats": [
+    {
+      "pose": "B",
+      "label": "Bend",
+      "cue": "Set both feet flat on the plate.",
+      "t": 0
+    },
+    {
+      "pose": "B",
+      "label": "Brace",
+      "cue": "Brace; keep your back against the pad.",
+      "t": 0
+    },
+    {
+      "pose": "A",
+      "label": "Press",
+      "cue": "Push the plate away through both feet.",
+      "t": 1
+    },
+    {
+      "pose": "A",
+      "label": "Finish",
+      "cue": "Keep knees soft at the finish.",
+      "t": 1
+    },
+    {
+      "pose": "B",
+      "label": "Return",
+      "cue": "Bend hips and knees under control.",
+      "t": 0
+    },
+    {
+      "pose": "B",
+      "label": "Reset",
+      "cue": "Keep your heels down before pressing again.",
+      "t": 0
+    }
+  ],
+  "setup": [
+    "Sit against the back pad and hold the side handles.",
+    "Place both feet on the plate; keep heels supported.",
+    "Control the return and stop before your back rounds."
+  ],
+  "advice": {
+    "tip": "Keep your back supported and press through both feet without snapping your knees straight.",
+    "commonMistakes": [
+      "Rounding the lower back off the pad.",
+      "Lifting the heels off the plate.",
+      "Snapping the knees straight."
+    ]
+  },
+  "findings": [
+    "Two genuine hip-and-knee press endpoints occupy six cue slots; no six-unique-pose or continuous-animation claim.",
+    "New native shin repair and hip-and-knee-flexion authoring preserve the approved athlete. The B moving region is inserted at unchanged native coordinates onto A; the rest of that fixed source scene is byte-identical. A itself is an image-authored shin repair, so no byte-invariance to the older original is claimed.",
+    "A custom double-beam plate-loaded lever is drawn around the intact poses. Both beams retain identical endpoint lengths and fixed pivots; the same three load plates rise85.75px during extension and stay above the illustrated floor. This is screen-space mechanics, not calibrated anatomical3D or a factory replica.",
+    "Large rubber footplate supports both complete trainers in the two positions. Small projected toe/heel pitch differences and layered sole occlusion remain illustrative; no recovered3D contact certificate.",
+    "Source violet quads are finished in#7B72E9; visible source-tone posterior thigh fields use#9590E0. Manual anatomical boundaries are qualitative. No added body shading gradient.",
+    "Strict visual certification remains unverified under the owner-authorized release-with-findings workflow.",
+    "The gluteal surface is largely occluded by the supported pelvis/seat in this camera. It remains in the secondary-muscle legend without painting a false glute highlight onto the abdominal wall."
+  ],
+  "exerciseId": "leg-press",
+  "version": "anatomy-v3-2026-10-16-native-moving-source-v1",
+  "physicalPoses": 2
+}

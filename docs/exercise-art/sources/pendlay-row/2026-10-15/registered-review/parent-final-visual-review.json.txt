@@ -1,0 +1,33 @@
+{
+  "exerciseId": "pendlay-row",
+  "actualRegisteredReviewComplete": true,
+  "strictCertified": false,
+  "completionCredit": false,
+  "parentReviewPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\pendlay-row\\reviewed-whole-pair-20261015\\parent-registered-review.json",
+  "parentReviewSha256": "062a2125fe3e56447f051f0c4326ec43f22714db5371c88a4b52037eda95fa26",
+  "releaseSha256": "ebe7c1edb732fc0fa305e01737db4f42e5a97e520dce7abb5998ea7447fd1b0e",
+  "candidatePayloadManifestSha256": "e8b3e3a58ee721bba6b2f01a4f72b2ecb65a6bef19c499241f1208ec2183b185",
+  "planSha256": "e7e4998f98a9242e935a3d90cc4128afea6c448ba271be0ee38f05895e61f34c",
+  "normalCardMatchesReviewedPreviewExact": true,
+  "cardSha256": "05636de34da823f2d03ec2ab83ca5506ee1042e304f99ef25f955b3cc6bc5498",
+  "copiedEvidenceHashes": {
+    "registered-review/parent-registered-review.json.txt": "062a2125fe3e56447f051f0c4326ec43f22714db5371c88a4b52037eda95fa26",
+    "registered-review/portable-reproduction-proof.json.txt": "cc9d0ebf1e1fb8718753f9c190950e6ca25cb58507a7fe81d49b9b5f7b04f022",
+    "registered-review/fresh-reproduction-result.json.txt": "3b507dc152b3b4db4b72dec520c89adc946efecb95bce16d46135532a0ce3319",
+    "registered-review/fresh-reproduction.log.txt": "ed70b0faf5e4651093fdb05a710ad5a085d412a0782ba24f6902666e90411ba5",
+    "registered-review/baseline-equivalence.json.txt": "7a96ab1516d49fb01d1ce5a17c7ecc5c0a84bce6fb040f74abe2f063d0bdab90",
+    "registered-review/review/pendlay-tool-return-artifact-index-final.json.txt": "aaebea5f5b1b99cf43e8398e676d8231febc8aa6bdc22f8ad8fd1990f111e573",
+    "registered-review/review/pendlay-integrated-dark-manual-4edd93138948-b3-dom.json.txt": "e863c08ddb33b23049f8f32b70727c99d7eecba74f4dc7abd4bba953149190f8",
+    "registered-review/review/pendlay-integrated-dark-normal-8447219f8edd-b3-tool-text.txt": "5ad7a3f83face2db722ff348e0fedcf2699b4b7acc78abd9c15e7da373cec500",
+    "registered-review/review/pendlay-integrated-dark-wrap-ff73566bf1ac-b3-dom.json.txt": "c208995e1645e0e188c226e4598c6b87616b08b3fd0e2ac3c2760a7742f1c14e",
+    "registered-review/review/pendlay-integrated-dark-wrap-ff73566bf1ac-b4.jpg": "cddf62ed8ddc0a976aab82e5031cab6ba7c651a184cb8fe55188b8d8657b2dab",
+    "registered-review/review/pendlay-integrated-initial-b678f5fa1c1b-b3-dom.json.txt": "ae9ec3ae45631b6b19c94a67b64847e5782cfd38cd233bd72926ad73349193d5",
+    "registered-review/review/pendlay-integrated-light-slower-ad91f1c00e6b-b2-tool-text.txt": "1bda53260b9e99a0b5ed3954e27a8a56c079ca17ba505f96b2c590d1c6dc98dd",
+    "registered-review/review/pendlay-integrated-normal-loops-8c9e662394c9-b3-tool-text.txt": "ce34f5006cabe738325e52cc17a3294a0c14e88835788fa7daf5ecc440483900",
+    "registered-review/review/pendlay-same-call-multiple-8c9e662394c9-b4.jpg": "21936ae73d5985ff67938a1397f7cbf539c3aa83fb6d866c843b7b46d576f67b"
+  },
+  "sourceEligibilitySha256": "606cad1560942a9769ef7e5c6c9a2248d66d3ec9e1fb372a8444207a4c3caa41",
+  "portableProofSha256": "cc9d0ebf1e1fb8718753f9c190950e6ca25cb58507a7fe81d49b9b5f7b04f022",
+  "baselineEquivalenceSha256": "7a96ab1516d49fb01d1ce5a17c7ecc5c0a84bce6fb040f74abe2f063d0bdab90",
+  "projectCiMergeRemainPending": true
+}

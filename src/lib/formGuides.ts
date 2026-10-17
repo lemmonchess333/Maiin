@@ -39,6 +39,10 @@ export interface FormBeat {
  *  rather than the rig's own figure — the key that describes THAT art. */
 export interface FormPlacard {
   beats: readonly FormBeat[];
+  /** Preparation before the depicted movement cycle, kept separate from cues. */
+  authoredSetupInstructions?: readonly string[];
+  /** Advice specific to the explicitly named variation in this artwork. */
+  advice?: FormGuideAdvice;
   /** The muscle key for SUPPLIED art. The catalogue names the muscle
    *  groups an exercise trains, which is a true statement about the
    *  exercise and not necessarily about the picture: the dips card
@@ -46,6 +50,11 @@ export interface FormPlacard {
    *  catalogue's "chest / triceps / shoulders" describes. A key is a
    *  key to what is ON SCREEN, so supplied art brings its own. */
   key?: DemoMuscleKey;
+}
+
+export interface FormGuideAdvice {
+  tip: string;
+  commonMistakes: readonly string[];
 }
 
 export interface DemoMuscleKey {
@@ -361,62 +370,6 @@ const FORM_BEATS: Record<string, FormPlacard> = {
     },
   },
 
-  /* ── Authored ahead of the art (2026-09-03) ──────────────────────
-   * Positions only: no `image`, so `getFormBeats` returns null and
-   * these play as ordinary reps until their cards arrive. They exist
-   * so `form-card-prompt.ts` can ask a generator for exactly these six
-   * panels — a prompt built from four catalogue instructions produces
-   * a card the app cannot use.
-   *
-   * This header used to sit above bench-press, and stayed put as three
-   * placards below it were given art — so it went on calling them
-   * imageless long after they stopped being. It belongs immediately
-   * above the first entry it is still true of; move it DOWN again as
-   * the remaining cards arrive.
-   *
-   * `t` runs in each demo's OWN direction, which differs: row locks
-   * out at t=1, squat and deadlift at t=0. The order pins in
-   * bodyRig.test.ts check the labels against that, not against a
-   * convention assumed here. */
-
-  deadlift: {
-    beats: [
-      { t: 1, label: "Set up", cue: "Bar over mid-foot, shins close." },
-      {
-        t: 0.8,
-        label: "Take the slack",
-        cue: "Chest up, lats tight, arms straight.",
-      },
-      {
-        t: 0.5,
-        label: "Break the floor",
-        cue: "Push the legs, bar stays against you.",
-      },
-      {
-        t: 0.25,
-        label: "Past the knees",
-        cue: "Hips and shoulders rise together.",
-      },
-      { t: 0, label: "Lockout", cue: "Stand tall, glutes squeezed." },
-      { t: 1, label: "Return", cue: "Hips back first, then bend the knees." },
-    ],
-  },
-
-  "pull-ups": {
-    beats: [
-      { t: 0, label: "Dead hang", cue: "Arms straight, shoulders active." },
-      {
-        t: 0.3,
-        label: "Initiate",
-        cue: "Pull the shoulder blades down first.",
-      },
-      { t: 0.6, label: "Mid pull", cue: "Elbows drive down toward the ribs." },
-      { t: 1, label: "Top", cue: "Chin over the bar, chest to it." },
-      { t: 0.5, label: "Lower", cue: "Control the descent, no dropping." },
-      { t: 0, label: "Hang", cue: "Back to straight arms, stay tight." },
-    ],
-  },
-
   /* Supplied art, 2026-09-04. The cleanest registration of any set:
      95.8-98.7%, not one shift applied. The shoes are why — a rigid,
      high-contrast ground contact that never moves (L=540, R=762, sole
@@ -499,6 +452,20 @@ export function getFormBeats(exerciseId: string): readonly FormBeat[] | null {
   if (!placard || placard.beats.length !== 6 || !artwork) return null;
   return placard.beats.every((beat, i) => beat.image === artwork.frames[i])
     ? placard.beats
+    : null;
+}
+
+/** Preparation is shown only alongside the exercise's released placard. */
+export function getFormSetup(exerciseId: string): readonly string[] | null {
+  return getFormBeats(exerciseId)
+    ? (FORM_BEATS[exerciseId]?.authoredSetupInstructions ?? null)
+    : null;
+}
+
+/** Variation advice is active only with its exact released six-frame guide. */
+export function getFormAdvice(exerciseId: string): FormGuideAdvice | null {
+  return getFormBeats(exerciseId)
+    ? (FORM_BEATS[exerciseId]?.advice ?? null)
     : null;
 }
 

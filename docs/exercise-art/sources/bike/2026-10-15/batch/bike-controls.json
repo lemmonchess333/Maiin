@@ -1,0 +1,94 @@
+[
+  {
+    "image": [
+      {
+        "box": {
+          "height": 360,
+          "width": 324
+        },
+        "h": 1432,
+        "src": "/form-frames/bike/1.webp",
+        "w": 929
+      }
+    ],
+    "section": "LOWER PEDAL 1/6\n\nPlay\nNormal"
+  },
+  {
+    "image": [
+      {
+        "box": {
+          "height": 360,
+          "width": 324
+        },
+        "h": 1432,
+        "src": "/form-frames/bike/2.webp",
+        "w": 929
+      }
+    ],
+    "section": "POSTURE 2/6\n\nPlay\nNormal"
+  },
+  {
+    "image": [
+      {
+        "box": {
+          "height": 360,
+          "width": 324
+        },
+        "h": 1432,
+        "src": "/form-frames/bike/3.webp",
+        "w": 929
+      }
+    ],
+    "section": "OPPOSED LEGS 3/6\n\nPlay\nNormal"
+  },
+  {
+    "image": [
+      {
+        "box": {
+          "height": 360,
+          "width": 324
+        },
+        "h": 1432,
+        "src": "/form-frames/bike/4.webp",
+        "w": 929
+      }
+    ],
+    "section": "RELAXED GRIP 4/6\n\nPlay\nNormal"
+  },
+  {
+    "image": [
+      {
+        "box": {
+          "height": 360,
+          "width": 324
+        },
+        "h": 1432,
+        "src": "/form-frames/bike/5.webp",
+        "w": 929
+      }
+    ],
+    "section": "CADENCE 5/6\n\nPlay\nNormal"
+  },
+  {
+    "image": [
+      {
+        "box": {
+          "height": 360,
+          "width": 324
+        },
+        "h": 1432,
+        "src": "/form-frames/bike/6.webp",
+        "w": 929
+      }
+    ],
+    "section": "RESISTANCE 6/6\n\nPlay\nNormal"
+  },
+  {
+    "control": "next-six-to-one",
+    "state": "LOWER PEDAL 1/6\n\nPlay\nNormal"
+  },
+  {
+    "control": "previous-one-to-six",
+    "state": "RESISTANCE 6/6\n\nPlay\nNormal"
+  }
+]

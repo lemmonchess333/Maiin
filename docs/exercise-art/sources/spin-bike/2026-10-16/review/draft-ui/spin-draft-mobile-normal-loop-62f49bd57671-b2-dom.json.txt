@@ -1,0 +1,329 @@
+{
+  "kind": "spin-draft-mobile-normal-loop",
+  "trace": [
+    {
+      "alt": "Spin Bike, Seated recovery",
+      "cue": "1. Seated drive: Stay seated; pedal with controlled resistance.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 144748,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Seated recovery",
+      "cue": "2. Seated recovery: Keep your knees tracking over your feet.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 144763,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Hold seated",
+      "cue": "2. Seated recovery: Keep your knees tracking over your feet.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 145954,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Hold seated",
+      "cue": "3. Hold seated: Keep a relaxed hold on the bars.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 145968,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Standing drive",
+      "cue": "3. Hold seated: Keep a relaxed hold on the bars.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 147163,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Standing drive",
+      "cue": "4. Standing drive: Rise from the saddle; keep pedalling controlled.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 147189,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Hold standing",
+      "cue": "4. Standing drive: Rise from the saddle; keep pedalling controlled.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 148372,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Hold standing",
+      "cue": "5. Hold standing: Support yourself through the pedals and bars.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 148388,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Return seated",
+      "cue": "5. Hold standing: Support yourself through the pedals and bars.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 149579,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Return seated",
+      "cue": "6. Return seated: Sit back onto the saddle smoothly.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 149594,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Seated drive",
+      "cue": "6. Return seated: Sit back onto the saddle smoothly.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 150784,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Seated drive",
+      "cue": "1. Seated drive: Stay seated; pedal with controlled resistance.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 150805,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Seated recovery",
+      "cue": "1. Seated drive: Stay seated; pedal with controlled resistance.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 151991,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Seated recovery",
+      "cue": "2. Seated recovery: Keep your knees tracking over your feet.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 152007,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Hold seated",
+      "cue": "2. Seated recovery: Keep your knees tracking over your feet.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 153197,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Hold seated",
+      "cue": "3. Hold seated: Keep a relaxed hold on the bars.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 153216,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Standing drive",
+      "cue": "3. Hold seated: Keep a relaxed hold on the bars.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 154403,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike, Standing drive",
+      "cue": "4. Standing drive: Rise from the saddle; keep pedalling controlled.",
+      "decoded": [
+        432,
+        707
+      ],
+      "documentHidden": false,
+      "ms": 154419,
+      "playing": true,
+      "slower": "false",
+      "src": "/candidate/draft/frames/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  ]
+}

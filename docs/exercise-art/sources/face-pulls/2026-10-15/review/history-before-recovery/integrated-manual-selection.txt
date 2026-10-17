@@ -1,0 +1,43 @@
+Browser tab: 31, Title: "Face Pulls actual registered component review", URL: "http://127.0.0.1:62319/integrated-review.html".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 7, 9-14, 32
++		32 container Face Pulls form guide
++			33 image Face Pulls, Reach
++			34 container
++				35 text REACH 1 /6
++			36 button Previous frame
++			37 button Play
++			38 button Next frame
++			39 checkbox Description: Slower playback, Value: 0
+The focused UI element is 16 button Show frame 1: Reach
+
+Browser tab: 31, Title: "Face Pulls actual registered component review", URL: "http://127.0.0.1:62319/integrated-review.html".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~			33 image Face Pulls, Brace
+~				35 text BRACE 2 /6
+The focused UI element is 18 button Show frame 2: Brace
+
+Browser tab: 31, Title: "Face Pulls actual registered component review", URL: "http://127.0.0.1:62319/integrated-review.html".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~			33 image Face Pulls, Rotate
+~				35 text ROTATE 3 /6
+The focused UI element is 20 button Show frame 3: Rotate
+
+Browser tab: 31, Title: "Face Pulls actual registered component review", URL: "http://127.0.0.1:62319/integrated-review.html".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~			33 text Frame could not load.
+~				35 text SQUEEZE 4 /6
+~			37 button (disabled) Play
++			40 text You can still read the instructions below.
++			41 button Retry images
+The focused UI element is 22 button Show frame 4: Squeeze
+
+Browser tab: 31, Title: "Face Pulls actual registered component review", URL: "http://127.0.0.1:62319/integrated-review.html".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~				35 text RETURN 5 /6
+The focused UI element is 24 button Show frame 5: Return
+
+Browser tab: 31, Title: "Face Pulls actual registered component review", URL: "http://127.0.0.1:62319/integrated-review.html".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~				35 text RESET 6 /6
+The focused UI element is 26 button Show frame 6: Reset

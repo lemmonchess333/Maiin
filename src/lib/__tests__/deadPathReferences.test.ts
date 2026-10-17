@@ -91,22 +91,12 @@ const ALLOWED: Record<string, string> = {
     "synthetic fixture URL in the executed-SW test, names no real file",
 };
 
-function sourceFiles(dir: string, out: string[] = []): string[] {
+function repoFiles(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     if (SKIP_DIRS.has(entry.name)) continue;
     const full = join(dir, entry.name);
-    if (entry.isDirectory()) sourceFiles(full, out);
-    else if (/\.(ts|tsx|js|jsx)$/.test(entry.name)) out.push(full);
-  }
-  return out;
-}
-
-function allRepoBasenames(dir: string, out = new Set<string>()): Set<string> {
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (SKIP_DIRS.has(entry.name)) continue;
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) allRepoBasenames(full, out);
-    else out.add(entry.name);
+    if (entry.isDirectory()) repoFiles(full, out);
+    else out.push(full);
   }
   return out;
 }
@@ -121,33 +111,45 @@ const COMMENT_RE = /\/\*[\s\S]*?\*\/|\/\/[^\n]*/g;
    matches, and they are illustrations, not citations. Scanning self would make
    the gate fail on its own documentation. */
 const SELF = resolve(here, "deadPathReferences.test.ts");
-const SCANNED = [
-  ...sourceFiles(resolve(repoRoot, "src")),
-  ...sourceFiles(resolve(repoRoot, "functions")),
-  ...sourceFiles(resolve(repoRoot, "scripts")),
-].filter((f) => f !== SELF);
-const EXISTING = allRepoBasenames(repoRoot);
+// One inventory serves both the source corpus and basename lookup; each
+// source's comments are then read once for both citation assertions.
+const REPO_FILES = repoFiles(repoRoot);
+const sourceRoots = ["src", "functions", "scripts"].map(
+  (dir) => resolve(repoRoot, dir) + "/"
+);
+const SCANNED = REPO_FILES.filter((file) => {
+  const portable = file.replace(/\\/g, "/");
+  return (
+    file !== SELF &&
+    /\.(ts|tsx|js|jsx)$/.test(file) &&
+    sourceRoots.some((root) => portable.startsWith(root.replace(/\\/g, "/")))
+  );
+});
+const EXISTING = new Set(REPO_FILES.map((file) => basename(file)));
 
 interface DeadRef {
   file: string;
   cited: string;
 }
 
-function findDeadRefs(): DeadRef[] {
-  const dead: DeadRef[] = [];
-  for (const file of SCANNED) {
-    const text = readFileSync(file, "utf8");
-    for (const comment of text.match(COMMENT_RE) ?? []) {
-      for (const m of comment.matchAll(PATH_RE)) {
-        const cited = m[1];
-        if (cited.includes("node_modules")) continue;
-        if (ALLOWED[cited]) continue;
-        if (EXISTING.has(basename(cited))) continue;
-        dead.push({ file: file.slice(repoRoot.length + 1), cited });
-      }
-    }
-  }
-  return dead;
+function citationsIn(text: string): string[] {
+  return (text.match(COMMENT_RE) ?? []).flatMap((comment) =>
+    [...comment.matchAll(PATH_RE)].map((m) => m[1])
+  );
+}
+
+const CITATIONS: DeadRef[] = SCANNED.flatMap((file) =>
+  citationsIn(readFileSync(file, "utf8")).map((cited) => ({
+    file: file.slice(repoRoot.length + 1),
+    cited,
+  }))
+);
+
+function findDeadRefs(citations = CITATIONS): DeadRef[] {
+  return citations.filter(({ cited }) => {
+    if (cited.includes("node_modules")) return false;
+    return !ALLOWED[cited] && !EXISTING.has(basename(cited));
+  });
 }
 
 describe("dead file references in production comments", () => {
@@ -172,16 +174,27 @@ describe("dead file references in production comments", () => {
     ).toEqual([]);
   });
 
+  it("extracts comment citations and rejects a missing file while accepting existing and allowed references", () => {
+    expect(
+      citationsIn(
+        "// covered by lib/useClaimMapForProgram.ts\n/* see lib/auditMissingFile.ts */"
+      )
+    ).toEqual(["lib/useClaimMapForProgram.ts", "lib/auditMissingFile.ts"]);
+    const references = [
+      "lib/useClaimMapForProgram.ts",
+      "lib/auditMissingFile.ts",
+      "./sa.json",
+      "node_modules/package/missing.js",
+    ].map((cited) => ({ file: "fixture", cited }));
+    expect(findDeadRefs(references)).toEqual([
+      { file: "fixture", cited: "lib/auditMissingFile.ts" },
+    ]);
+  });
+
   it("ALLOWED has no stale entries (delete-only ratchet)", () => {
     // An allow-list entry for a citation nobody makes any more is dead weight
     // that hides the next real one. Same discipline as KNOWN_ORPHAN_EXPORTS.
-    const citedSomewhere = new Set<string>();
-    for (const file of SCANNED) {
-      const text = readFileSync(file, "utf8");
-      for (const comment of text.match(COMMENT_RE) ?? []) {
-        for (const m of comment.matchAll(PATH_RE)) citedSomewhere.add(m[1]);
-      }
-    }
+    const citedSomewhere = new Set(CITATIONS.map(({ cited }) => cited));
     const unused = Object.keys(ALLOWED).filter((k) => !citedSomewhere.has(k));
     expect(
       unused,

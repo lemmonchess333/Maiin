@@ -1,0 +1,168 @@
+"""Portable fixed equipment renderer, Pillow+NumPy only.
+No solver, fitting, network, source-image edit, repository access or optimization.
+"""
+from pathlib import Path
+import json,math
+import numpy as np
+from PIL import Image,ImageDraw
+HERE=Path(__file__).resolve().parent
+geometry=json.loads((HERE/'fixed-geometry.json').read_bytes())
+p=geometry['parameters'];SIZE=(1536,1120);AA=3
+PITCH={int(k):v for k,v in geometry['pitch'].items()}
+GRIP={int(k):v for k,v in geometry['gripAxis'].items()}
+LIGHT=np.array([-.35,.80,-.55]);LIGHT/=np.linalg.norm(LIGHT)
+MATERIALS={'steel':(71,77,83),'darksteel':(52,58,64),'rubber':(30,33,36),'tray':(43,48,53),'alloy':(112,119,125),'housing':(52,58,64)}
+def kinematics(p,t,side=None):
+    ss=1 if side=='near' else -1 if side=='far' else 0
+    A=p['crank']*np.array([math.cos(t),math.sin(t)])
+    P=np.array([p['pivotX'],-p['pivotUp']])
+    delta=A-P;d=float(np.linalg.norm(delta));u=delta/max(d,1e-9);n=np.array([-u[1],u[0]])
+    a=(p['rocker']**2-p['coupler']**2+d*d)/(2*max(d,1e-9))
+    h2=p['rocker']**2-a*a
+    B=P+a*u-math.sqrt(max(0,h2))*n # One fixed crossed/open assembly branch.
+    beam=(B-A)/max(float(np.linalg.norm(B-A)),1e-9);normal=np.array([-beam[1],beam[0]])
+    sole=A+(p['along']+ss*p['pedalAsym'])*beam-p['bracket']*normal
+    upper=(P-B)*(p['upper']+ss*p['holdAsym'])/p['rocker']
+    bend=math.radians(p['bend']);ca,sa=math.cos(bend),math.sin(bend)
+    grip=P+np.array([[ca,-sa],[sa,ca]])@upper
+    margin=min(d-abs(p['coupler']-p['rocker']),p['coupler']+p['rocker']-d)
+    return {'crank':A,'pivot':P,'rockerEnd':B,'sole':sole,'grip':grip,'margin':margin,'h2':h2}
+
+def camera(p):
+    yaw,pitch,roll=np.radians([p['yaw'],p['pitch'],p['roll']]);c,s=np.cos(yaw),np.sin(yaw);cp,sp=np.cos(pitch),np.sin(pitch)
+    R=np.array([[c,0,s],[sp*s,-cp,-sp*c],[-cp*s,-sp,cp*c]])
+    rr=np.array([[math.cos(roll),-math.sin(roll),0],[math.sin(roll),math.cos(roll),0],[0,0,1.]])
+    R=rr@R;D=p['focal']/p['scale'];near=R@np.array([0.,0.,-p['width']/2])
+    target=np.array([p['crankX'],p['crankY']]);principal=np.array([768.,512.])
+    T=np.array([*((target-principal)*(D+near[2])/p['focal']-near[:2]),D])
+    return R,T
+
+R,T=camera(p)
+EYE=-R.T@T
+
+def world(xy, z):
+    return np.array([float(xy[0]), -float(xy[1]), float(z)])
+
+def project(w):
+    v = R @ np.asarray(w) + T
+    return np.array([768., 512.]) + p['focal'] * v[:2] / v[2]
+
+def pp(w):
+    return tuple(float(v) for v in project(w))
+
+def projected_axis(xy, z, angle):
+    """A passive side-plane direction under the ONE common camera.
+    Source pitch determines orientation only, not contact centre or link point.
+    """
+    w = world(xy, z)
+    v = R @ w + T
+    basis = np.column_stack((R[:, 0], -R[:, 1]))
+    J = p['focal'] / v[2] * (basis[:2] - np.outer(v[:2] / v[2], basis[2]))
+    direction = np.array([math.cos(math.radians(angle)), math.sin(math.radians(angle))])
+    d = np.linalg.solve(J, direction)
+    return d / np.linalg.norm(d)
+
+def unit(v):
+    v=np.asarray(v,dtype=float);return v/max(np.linalg.norm(v),1e-12)
+
+def projected(w):return pp(w)
+
+class Mesh:
+    def __init__(self):self.faces=[]
+    def face(self,verts,material='steel',factor=1.):
+        self.faces.append((np.asarray(verts,dtype=float),material,factor))
+    def cylinder(self,a,b,r,material='steel',n=20,caps=True):
+        a,b=np.asarray(a),np.asarray(b);axis=unit(b-a)
+        u=unit(np.cross(axis,[0,1,0] if abs(axis[1])<.9 else [1,0,0]));v=np.cross(axis,u)
+        ring=[r*(math.cos(t)*u+math.sin(t)*v) for t in np.linspace(0,2*math.pi,n,endpoint=False)]
+        for i in range(n):j=(i+1)%n;self.face([a+ring[i],a+ring[j],b+ring[j],b+ring[i]],material)
+        if caps:self.face([a+x for x in reversed(ring)],material,.83);self.face([b+x for x in ring],material,1.10)
+    def beam(self,a,b,w=.062,h=.046,material='steel'):
+        a,b=np.asarray(a),np.asarray(b);axis=unit(b-a)
+        u=unit(np.cross(axis,[0,0,1] if abs(axis[2])<.9 else [0,1,0]));v=np.cross(axis,u)
+        bevel=min(w,h)*.17
+        xy=[(-w/2+bevel,-h/2),(w/2-bevel,-h/2),(w/2,-h/2+bevel),(w/2,h/2-bevel),(w/2-bevel,h/2),(-w/2+bevel,h/2),(-w/2,h/2-bevel),(-w/2,-h/2+bevel)]
+        ring=[x*u+y*v for x,y in xy]
+        for i in range(8):j=(i+1)%8;self.face([a+ring[i],a+ring[j],b+ring[j],b+ring[i]],material,1.04 if i%2 else 1.)
+        self.face([a+x for x in reversed(ring)],material,.85);self.face([b+x for x in ring],material,.95)
+    def bolt(self,xy,z,r=.026,wide=.034):
+        a=world(xy,z-wide/2);b=world(xy,z+wide/2)
+        self.cylinder(a,b,r,'darksteel',28)
+        for zz in [z-wide/2-.002,z+wide/2+.002]:
+            self.cylinder(world(xy,zz-.0025),world(xy,zz+.0025),r*.72,'alloy',24)
+            self.cylinder(world(xy,zz-.004),world(xy,zz+.004),r*.36,'darksteel',6)
+    def render(self):
+        image=Image.new('RGBA',(SIZE[0]*AA,SIZE[1]*AA));d=ImageDraw.Draw(image)
+        ordered=[]
+        for vertices,material,factor in self.faces:
+            centre=vertices.mean(axis=0);view=R@centre+T
+            normal=unit(np.cross(vertices[1]-vertices[0],vertices[2]-vertices[0]));eye=unit(EYE-centre)
+            if np.dot(normal,eye)<0:normal=-normal
+            diffuse=max(0,float(np.dot(normal,LIGHT)));half=unit(LIGHT+eye)
+            specular=max(0,float(np.dot(normal,half)))**24
+            reflect=1. if material in ['steel','alloy','housing'] else .35
+            tone=.56+.55*diffuse
+            base=np.asarray(MATERIALS[material]);color=np.clip(base*tone*factor+specular*52*reflect,13,190).astype(np.uint8)
+            points=[tuple(np.array(projected(w))*AA) for w in vertices]
+            ordered.append((float(view[2]),points,tuple(int(c) for c in color)+(255,)))
+        for _,points,color in sorted(ordered,key=lambda r:r[0],reverse=True):d.polygon(points,fill=color)
+        return image.resize(SIZE,Image.Resampling.LANCZOS)
+
+def apparatus(pose):
+    m=Mesh();ground=.50
+    # Fixed cross-axles visibly close the load path into both frame supports.
+    for z in [-.31,.31]:
+        m.beam(world([-.45,ground],z),world([1.8,ground],z),.085,.065)
+        m.beam(world([0,ground],z),world([0,0],z),.070,.055)
+        m.beam(world([1.45,ground],z),world([p['pivotX'],-p['pivotUp']],z),.080,.060)
+    for x in [-.40,1.75]:m.beam(world([x,ground],-.40),world([x,ground],.40),.10,.070)
+    m.cylinder(world([0,0],-.33),world([0,0],.40),.025,'alloy',24)
+    m.cylinder(world([p['pivotX'],-p['pivotUp']],-.34),world([p['pivotX'],-p['pivotUp']],.34),.026,'alloy',24)
+    # A compact resistance housing sits OUTBOARD on the FAR side, beyond both
+    # 170mm trays. It is not the held source's front-drive housing or machine.
+    m.cylinder(world([0,0],.27),world([0,0],.39),.230,'housing',64)
+    m.cylinder(world([0,0],.265),world([0,0],.272),.218,'darksteel',64)
+    m.cylinder(world([0,0],.259),world([0,0],.266),.200,'steel',64)
+    m.cylinder(world([0,0],.253),world([0,0],.260),.045,'darksteel',32)
+    # Foot endcaps keep the same fixed level base, not a drifting floor slab.
+    for x in [-.40,1.75]:
+        for z in [-.40,.40]:m.cylinder(world([x,ground-.006],z-.035),world([x,ground-.006],z+.035),.053,'rubber',12)
+    contacts={}
+    for side,off in [('far',180),('near',0)]:
+        ss=-1 if side=='near' else 1;hand=-ss;z=ss*p['width']/2;zg=ss*p['gripWidth']/2
+        k=kinematics(p,math.radians(p[f'phase{pose}']+off),side)
+        C=world([0,0],z);A=world(k['crank'],z);B=world(k['rockerEnd'],z);P=world(k['pivot'],z);S=world(k['sole'],z);G=world(k['grip'],zg)
+        m.beam(C,A,.048,.036,'alloy');m.beam(A,B,.070,.047);m.beam(P,B,.062,.045)
+        beam=unit(k['rockerEnd']-k['crank']);ss_model=1 if side=='near' else -1
+        mount=k['crank']+(p['along']+ss_model*p['pedalAsym'])*beam
+        m.beam(world(mount,z),S,.045,.034,'alloy')
+        m.cylinder(B,S,.014,'steel',20)
+        m.cylinder(P,G,.024,'steel',24)
+        for xy,zz in [(np.zeros(2),z),(k['crank'],z),(k['rockerEnd'],z),(k['pivot'],z),(k['sole'],z)]:m.bolt(xy,zz)
+        # Exact v2 tray size, centre and passive top-plane orientation.
+        axis=projected_axis(k['sole'],z,PITCH[pose][side]);up=np.array([axis[1],axis[0],0.])
+        along=world(axis,0);across=np.array([0,0,1.]);normal=unit(np.cross(along,across))
+        if normal[1]<0:normal=-normal
+        corners=[S+a*along+b*across for a,b in [(-.20,-.085),(.20,-.085),(.20,.085),(-.20,.085)]]
+        lower=[v-.025*normal for v in corners]
+        m.face(corners,'rubber',.85);m.face(list(reversed(lower)),'tray',.8)
+        for i in range(4):j=(i+1)%4;m.face([corners[i],lower[i],lower[j],corners[j]],'tray')
+        for b in [-.082,.082]:m.cylinder(S-.196*along+b*across+.006*normal,S+.196*along+b*across+.006*normal,.007,'darksteel',12)
+        for a in [-.19,.19]:m.cylinder(S+a*along-.078*across+.005*normal,S+a*along+.078*across+.005*normal,.006,'darksteel',12)
+        for a in np.linspace(-.17,.17,13):m.cylinder(S+a*along-.069*across+.0015*normal,S+a*along+.069*across+.0015*normal,.0018,'tray',8)
+        # Constant mirrored offset-bearing D assembly; all dimensions and
+        # orientations are EXACTLY the saved v2 data, not another contact fit.
+        ga=projected_axis(k['grip'],zg,GRIP[pose][side]);gn=np.array([-ga[1],ga[0]])
+        qxy=k['grip']+hand*.020*gn;qz=zg-ss*.012;Q=world(qxy,qz)
+        ends=[world(qxy+a*ga,qz) for a in [-.11,.11]]
+        local=[(-.11,.020),(-.105,-.005),(-.085,-.030),(-.05,-.044),(0,-.045),(.05,-.044),(.085,-.030),(.105,-.005),(.11,.020)]
+        curve=[world(k['grip']+a*ga+hand*n*gn,qz) for a,n in local]
+        for a,b in zip(curve,curve[1:]):m.cylinder(a,b,.006,'alloy',16)
+        back=world(k['grip']-hand*.045*gn,qz);m.cylinder(G,back,.006,'alloy',16)
+        m.cylinder(*ends,.022,'rubber',28)
+        # Shallow sleeve end bevels/closed caps, shared44mm outer diameter.
+        for e in ends:m.cylinder(e-.003*world(ga,0),e+.003*world(ga,0),.023,'darksteel',28)
+        m.cylinder(G+np.array([0,0,-.012]),G+np.array([0,0,.012]),.016,'alloy',24)
+        m.bolt(k['grip'],zg,.014,.025)
+        contacts[side]={'bearing':list(projected(G)),'sleeveCentre':list(projected(Q)),'sleeveEnds':[list(projected(e)) for e in ends],'trayCorners':[list(projected(e)) for e in corners]}
+    return m.render(),contacts,len(m.faces)

@@ -95,7 +95,8 @@ describe("session purpose command surfaces", () => {
     expect(screen.getByText("Free run")).toBeInTheDocument();
     expect(container).not.toHaveTextContent(/week \d/i);
     fireEvent.click(screen.getByRole("button", { name: "Start run" }));
-    expect(navigate).toHaveBeenCalledExactlyOnceWith("/run");
+    // Starts the free run the card names (startOnArrival).
+    expect(navigate).toHaveBeenCalledExactlyOnceWith("/run?start=1");
   });
 });
 
@@ -220,7 +221,7 @@ describe("Home session actions and metadata", () => {
     expect(container).not.toHaveTextContent(/about/i);
     fireEvent.click(screen.getByRole("button", { name: "Start run" }));
     expect(navigate).toHaveBeenCalledExactlyOnceWith(
-      "/run?template=easy_30&scheduledRunId=planned%20run"
+      "/run?template=easy_30&scheduledRunId=planned%20run&start=1"
     );
   });
 

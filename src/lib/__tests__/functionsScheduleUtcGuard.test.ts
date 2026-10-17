@@ -31,7 +31,7 @@ const repoRoot = resolve(here, "../../..");
 function functionsSources(dir: string): string[] {
   const out: string[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const full = join(dir, entry.name);
+    const full = join(dir, entry.name).replaceAll("\\", "/");
     if (entry.isDirectory()) {
       if (entry.name === "node_modules" || entry.name === "__tests__") continue;
       out.push(...functionsSources(full));

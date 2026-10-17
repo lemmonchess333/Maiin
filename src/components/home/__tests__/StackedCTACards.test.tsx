@@ -339,7 +339,7 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
     );
   });
 
-  it("a startable run launches /run with the template params", function () {
+  it("a startable run launches /run with the template params, to start there and then", function () {
     const navigate = vi.fn();
     renderCards(
       runDay({
@@ -356,8 +356,38 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
     // The E2E journeys start a planned run by this (src/test/journeyScreens.ts).
     fireEvent.click(screen.getByRole("button", { name: RUN.homeStart }));
     expect(navigate).toHaveBeenCalledExactlyOnceWith(
-      "/run?template=easy_30&scheduledRunId=run-2"
+      "/run?template=easy_30&scheduledRunId=run-2&start=1"
     );
+  });
+
+  it("unlocks the voice cues inside the Start tap, before leaving Home", function () {
+    // The Run page starts the run with no tap of its own, and iOS speaks
+    // only for a page that has spoken inside one.
+    const speak = vi.fn();
+    vi.stubGlobal("speechSynthesis", { speak });
+    vi.stubGlobal(
+      "SpeechSynthesisUtterance",
+      class {
+        volume = 1;
+        text: string;
+        constructor(text: string) {
+          this.text = text;
+        }
+      }
+    );
+    try {
+      const navigate = vi.fn();
+      renderCards(runDay(), navigate);
+      fireEvent.click(screen.getByRole("button", { name: RUN.homeStart }));
+      expect(speak).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ text: "", volume: 0 })
+      );
+      expect(speak.mock.invocationCallOrder[0]).toBeLessThan(
+        navigate.mock.invocationCallOrder[0]
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   /* Run21 (5): the card draws the dose `todaySession` decided, and works

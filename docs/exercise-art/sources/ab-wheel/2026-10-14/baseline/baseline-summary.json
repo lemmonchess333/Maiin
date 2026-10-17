@@ -1,0 +1,26 @@
+{
+  "status": "complete-measured-non-green-baseline",
+  "head": "82d6d829ad20ad3c8924933f736ad615b83054f6",
+  "branch": "main",
+  "exitCode": 1,
+  "elapsedSeconds": 1154.761,
+  "testFiles": {
+    "failed": 55,
+    "passed": 1114,
+    "skipped": 10,
+    "total": 1179
+  },
+  "tests": {
+    "failed": 87,
+    "passed": 13130,
+    "skipped": 409,
+    "total": 13626
+  },
+  "failureHeaderCount": 92,
+  "failureFileAccountingComplete": true,
+  "allNormalVerifyStagesInvoked": true,
+  "inputStatePreserved": true,
+  "snapshotRestoredFromThisRunExactBytes": true,
+  "logSha256": "9bed359f766e07164ac82a46a1d1719ff54b1b88bfa659152258e1ba0b01ba41",
+  "oldBaselineResultsImported": false
+}

@@ -1,0 +1,116 @@
+[
+  {
+    "cue": "Set both feet flat on the plate.",
+    "decoded": true,
+    "natural": [
+      1264,
+      1056
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 1: Bend",
+    "src": "/form-frames/leg-press/1.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Brace; keep your back against the pad.",
+    "decoded": true,
+    "natural": [
+      1264,
+      1056
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 2: Brace",
+    "src": "/form-frames/leg-press/2.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Push the plate away through both feet.",
+    "decoded": true,
+    "natural": [
+      1264,
+      1056
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 3: Press",
+    "src": "/form-frames/leg-press/3.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Keep knees soft at the finish.",
+    "decoded": true,
+    "natural": [
+      1264,
+      1056
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 4: Finish",
+    "src": "/form-frames/leg-press/4.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Bend hips and knees under control.",
+    "decoded": true,
+    "natural": [
+      1264,
+      1056
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 5: Return",
+    "src": "/form-frames/leg-press/5.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Keep your heels down before pressing again.",
+    "decoded": true,
+    "natural": [
+      1264,
+      1056
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 6: Reset",
+    "src": "/form-frames/leg-press/6.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  }
+]

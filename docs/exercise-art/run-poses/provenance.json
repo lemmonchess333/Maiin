@@ -1,0 +1,42 @@
+{
+  "generator": "scripts/art/gemini-image.py",
+  "model": "gemini-3-pro-image",
+  "aspect": "1:1",
+  "output": "The API returned JPEG (1024 x 1024); each file is kept exactly as it came back.",
+  "poses": {
+    "run-easy": {
+      "file": "docs/exercise-art/run-poses/run-easy.jpg",
+      "sha256": "9d2bb32bd87954c48fd89ca850d165c8531a4c84aff8ddbf246120dffa674923",
+      "references": [
+        {
+          "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+          "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+          "note": "the canonical athlete"
+        },
+        {
+          "path": "public/form-frames/kettlebell-swing/3.webp",
+          "sha256": "b3c25c2b09318c3951294e6d2767f73ffb94a6bc565b45c2d18329b03c5a590b",
+          "note": "sent as PNG, converted from the WebP"
+        }
+      ],
+      "prompt": "Educational running illustration, one single pose (not a sequence or collage). Reference attached canonical athlete for exact identity: faceless bald white/light-grey anatomical athlete, fine dark contours, smooth neutral featureless pelvis, white trainers. Match the second attached image's rendering style exactly. Easy running, mid-stride, fixed side view, athlete facing right. The trailing foot is just leaving the ground behind the body, only its toes near the ground; the other leg's knee comes through in front, its foot below and slightly ahead of the hips, about to land. Arms bent near 90 degrees and relaxed, swinging opposite to the legs, hands loose. Upright torso with a slight forward lean from the ankles. It must read as running at a glance, never walking. Muscle colours: strongest purple on the glutes, quadriceps, hamstrings and calves; pale lilac on the hip flexors and core; every other muscle white-grey. Pure solid black background. Square canvas, the whole figure filling about 80% of the height with even margins, both feet fully inside the frame. One person only. No floor line, track, road, shadow, scenery, labels, text, logos or arrows."
+    },
+    "run-fast": {
+      "file": "docs/exercise-art/run-poses/run-fast.jpg",
+      "sha256": "57311f7fd24d113bc6f164e6135ed16ad7f4086a52237e51ae6b3c9336344ab4",
+      "references": [
+        {
+          "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+          "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+          "note": "the canonical athlete"
+        },
+        {
+          "path": "public/form-frames/kettlebell-swing/3.webp",
+          "sha256": "b3c25c2b09318c3951294e6d2767f73ffb94a6bc565b45c2d18329b03c5a590b",
+          "note": "sent as PNG, converted from the WebP"
+        }
+      ],
+      "prompt": "Educational running illustration, one single pose (not a sequence or collage). Reference attached canonical athlete for exact identity: faceless bald white/light-grey anatomical athlete, fine dark contours, smooth neutral featureless pelvis, white trainers. Match the second attached image's rendering style exactly. Fast running for tempo, intervals and races, fixed side view, athlete facing right, in the flight phase with both feet off the ground: a long stride, the front knee driven high with the front thigh rising toward horizontal and the lower leg swinging forward; the rear leg extended behind after push-off, its foot below hip height. Strong arm drive: the front hand rises toward chin height with the elbow bent about 90 degrees, the rear elbow driven back past the torso. Torso tall with a slight forward lean from the ankles, relaxed hands. Same identity, scale and camera as an easy-running pose. Muscle colours: strongest purple on the glutes, quadriceps, hamstrings and calves; pale lilac on the hip flexors and core; every other muscle white-grey. Pure solid black background. Square canvas, the whole figure filling about 80% of the height with even margins, both feet fully inside the frame. One person only. No floor line, track, road, shadow, scenery, motion lines, labels, text, logos or arrows."
+    }
+  }
+}

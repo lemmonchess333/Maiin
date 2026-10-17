@@ -1,7 +1,8 @@
 import { useId, useRef, useState } from "react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
-import { liftUnitLabel, loadIn, loadToKg, type LiftUnit } from "@/lib/liftLoad";
+import { liftUnitLabel, type LiftUnit } from "@/lib/liftLoad";
+import { kitLoadIn, kitLoadToKg } from "@/features/program/loadSteps";
 
 /** The ask-first question (`SetValidationWarn`'s words). */
 interface SetQuestion {
@@ -15,6 +16,7 @@ export default function EditSetSheet({
   setName,
   timed,
   unit,
+  exerciseId,
   onSave,
   onClose,
 }: {
@@ -25,6 +27,8 @@ export default function EditSetSheet({
   timed: boolean;
   /** The unit the weight is shown and typed in; `onSave` gets kg. */
   unit: LiftUnit;
+  /** The lift, for its kit: a kettlebell reads in whole lb (Lift18). */
+  exerciseId?: string;
   /** Saves the set, or resolves to a question to ask first: a weight far
    *  past today's plan or the best for these reps (Lift16). Saving again
    *  with `confirmed` logs it. */
@@ -35,7 +39,9 @@ export default function EditSetSheet({
   onClose: () => void;
 }) {
   const id = useId();
-  const [shownWeight] = useState(() => String(loadIn(set.weight, unit)));
+  const [shownWeight] = useState(() =>
+    String(kitLoadIn(set.weight, unit, exerciseId))
+  );
   const [weight, setWeight] = useState(shownWeight);
   const [reps, setReps] = useState(String(set.reps));
   const [saving, setSaving] = useState(false);
@@ -59,7 +65,7 @@ export default function EditSetSheet({
           weight:
             weight === shownWeight
               ? set.weight
-              : loadToKg(Number(weight.replace(",", ".")), unit),
+              : kitLoadToKg(Number(weight.replace(",", ".")), unit, exerciseId),
           reps: Number(reps.replace(",", ".")),
         },
         confirmed

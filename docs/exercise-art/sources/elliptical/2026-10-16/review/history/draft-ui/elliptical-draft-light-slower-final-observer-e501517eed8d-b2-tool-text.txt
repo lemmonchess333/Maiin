@@ -1,0 +1,234 @@
+{
+  docWidth: 380,
+  records: [
+    {
+      alt: 'Elliptical, Stride A',
+      cue: '1. Stride A: Stand tall; keep both feet on pedals.',
+      documentHidden: false,
+      ms: 558380,
+      natural: [ 1047, 1072 ],
+      playing: false,
+      slower: 'true',
+      src: '/candidate/draft/frames/1.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Stride A',
+      cue: '1. Stride A: Stand tall; keep both feet on pedals.',
+      documentHidden: false,
+      ms: 559309,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/1.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Hold A',
+      cue: '1. Stride A: Stand tall; keep both feet on pedals.',
+      documentHidden: false,
+      ms: 561728,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/2.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Hold A',
+      cue: '2. Hold A: Keep both feet planted in the pedals.',
+      documentHidden: false,
+      ms: 561736,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/2.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Stride B',
+      cue: '2. Hold A: Keep both feet planted in the pedals.',
+      documentHidden: false,
+      ms: 564148,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/3.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Stride B',
+      cue: '3. Stride B: Coordinate your push and pull with legs.',
+      documentHidden: false,
+      ms: 564156,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/3.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Hold B',
+      cue: '3. Stride B: Coordinate your push and pull with legs.',
+      documentHidden: false,
+      ms: 566561,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/4.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Hold B',
+      cue: '4. Hold B: Hold both grips; keep your chest tall.',
+      documentHidden: false,
+      ms: 566574,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/4.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Return A',
+      cue: '4. Hold B: Hold both grips; keep your chest tall.',
+      documentHidden: false,
+      ms: 568977,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/5.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Return A',
+      cue: '5. Return A: Return smoothly to the first shown stride.',
+      documentHidden: false,
+      ms: 568986,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/5.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Reset',
+      cue: '5. Return A: Return smoothly to the first shown stride.',
+      documentHidden: false,
+      ms: 571398,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/6.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Reset',
+      cue: '6. Reset: Keep your torso tall without leaning forward.',
+      documentHidden: false,
+      ms: 571407,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/6.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Stride A',
+      cue: '6. Reset: Keep your torso tall without leaning forward.',
+      documentHidden: false,
+      ms: 573815,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/1.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Stride A',
+      cue: '1. Stride A: Stand tall; keep both feet on pedals.',
+      documentHidden: false,
+      ms: 573826,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/1.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Hold A',
+      cue: '1. Stride A: Stand tall; keep both feet on pedals.',
+      documentHidden: false,
+      ms: 576234,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/2.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Hold A',
+      cue: '2. Hold A: Keep both feet planted in the pedals.',
+      documentHidden: false,
+      ms: 576245,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/2.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Stride B',
+      cue: '2. Hold A: Keep both feet planted in the pedals.',
+      documentHidden: false,
+      ms: 578648,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/3.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Stride B',
+      cue: '3. Stride B: Coordinate your push and pull with legs.',
+      documentHidden: false,
+      ms: 578659,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/3.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Hold B',
+      cue: '3. Stride B: Coordinate your push and pull with legs.',
+      documentHidden: false,
+      ms: 581060,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/4.webp',
+      theme: 'light'
+    },
+    {
+      alt: 'Elliptical, Hold B',
+      cue: '4. Hold B: Hold both grips; keep your chest tall.',
+      documentHidden: false,
+      ms: 581069,
+      natural: [ 1047, 1072 ],
+      playing: true,
+      slower: 'true',
+      src: '/candidate/draft/frames/4.webp',
+      theme: 'light'
+    }
+  ],
+  reviewLabel: 'elliptical-draft-light-slower-final-observer',
+  settledCue: '3. Stride B: Coordinate your push and pull with legs.',
+  viewport: [ 390, 844 ],
+  visible: [
+    {
+      alt: 'Elliptical, Stride B',
+      src: '/candidate/draft/frames/3.webp'
+    }
+  ]
+}{ reviewLabel: 'elliptical-draft-console', logs: [] }

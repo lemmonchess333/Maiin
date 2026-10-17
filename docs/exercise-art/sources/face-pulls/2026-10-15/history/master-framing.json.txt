@@ -1,0 +1,9 @@
+{
+  "initialGeneration": "dad2169f-68e7-408c-8004-3c64fd8a5348",
+  "backgroundCleanup": "f0228bce-2f39-4a8f-b8d6-d451a20042ce",
+  "routingCorrection": "89897d53-7883-46bf-83ae-0b0b54067c54",
+  "method": "Uniform whole-scene resize to922px wide and centred padding. No local anatomy edits.",
+  "selectedPlateCount": 6,
+  "stationaryPlateCount": 15,
+  "routing": "One fixed high pulley; redundant middle wheel removed."
+}

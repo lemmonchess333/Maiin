@@ -1,0 +1,34 @@
+import { createRoot } from 'react-dom/client';
+import { useEffect, useState } from 'react';
+import '../../Maiin-burpees/src/index.css';
+import ExerciseFormFrames from '../../Maiin-burpees/src/components/ExerciseFormFrames';
+import plan from './sequence-plan.json';
+import { CardViews, PlaybackEvidence, ThemeControl } from './review-shared';
+
+const beats = plan.beats.map(({ t, label, cue }, index) => ({ t, label, cue, image: `draft/frames/${index + 1}.webp` }));
+
+function Review() {
+  const [index, setIndex] = useState(0);
+  const [size, setSize] = useState<[number, number] | null>(null);
+  useEffect(() => {
+    const image = new Image();
+    image.onload = () => setSize([image.naturalWidth, image.naturalHeight]);
+    image.src = '/draft/1-framed.png';
+    return () => { image.onload = null; };
+  }, []);
+  return <main id="native-review" className="min-h-screen bg-background text-foreground p-4 space-y-3">
+    <h1 className="text-h2 font-bold">Face Pulls: native actual ExerciseFormFrames</h1>
+    <p>{plan.sourceScope}</p>
+    <ThemeControl />
+    {size && <style>{`#native-review section>.bg-stage{width:${size[0] + 24}px}#native-review section>.bg-stage>div.relative{width:${size[0]}px!important;height:${size[1]}px!important;max-width:${size[0]}px!important}#native-review section{max-width:${size[0] + 24}px}`}</style>}
+    <div style={{ overflowX: 'auto' }}><ExerciseFormFrames beats={beats} name="Face Pulls" onStep={setIndex} /></div>
+    <p>{beats[index].cue}</p>
+    <p>Primary: {plan.primary.join(', ')}. Secondary: {plan.secondary.join(', ')}.</p>
+    <CardViews src="/draft/card.webp" />
+    <PlaybackEvidence />
+  </main>;
+}
+
+const root = createRoot(document.getElementById('root')!);
+root.render(<Review />);
+if (import.meta.hot) import.meta.hot.dispose(() => root.unmount());

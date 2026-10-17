@@ -1,0 +1,32 @@
+{
+  "scope": "Only the external seal-source.py was adjusted. Read-only ZIP/source inspection and AST parsing; no seal execution, repository/archive write, test or image request.",
+  "oldSealSha256": "6fefe65854af341233f758c1d38eb66c9b4b62a1918bae9ebe1e54f2df91444d",
+  "newSealSha256": "3360a92590cd2ab321cac2568d9ae94dc84cfb601168c93d2a7bc9ef52fdf254",
+  "change": "The seal checks all existing raw integrated ZIP members, retains matching members without truncation, and appends only missing members verified against the same accepted bytes.",
+  "guards": [
+    "Canonical relative ZIP filenames only; reject absolute paths, traversal, backslashes, colons, NUL, directories and duplicate entries.",
+    "Draft members must match current bytes already pinned by integrated.reviewedAssetHashes; the integrated report itself must match its current accepted raw bytes.",
+    "repo/... members must match both integrated.reviewedPublicAssetHashes and actual current repository bytes.",
+    "The sole named auxiliary validate-integrated.py member must equal both current external and readable archived helper bytes; it is explicitly auxiliary provenance, not a fabricated visual-review binding.",
+    "Reject any other unchecked extra or changed accepted member; recheck final member accounting and byte equality."
+  ],
+  "readOnlyCurrentArchiveProof": {
+    "astSyntaxPassed": true,
+    "sealAfterSha256": "3360a92590cd2ab321cac2568d9ae94dc84cfb601168c93d2a7bc9ef52fdf254",
+    "integratedZipAfterSha256": "6f5005c0678018567e1d82c4b78270bbcacd915265c99b1473df24f2acf82709",
+    "existingMembers": 27,
+    "duplicateMembers": false,
+    "uncheckedExtras": [],
+    "missingRequiredBoundMembers": [],
+    "memberByteMismatches": [],
+    "publicReviewHashMismatches": [],
+    "publicMembers": 12,
+    "auxiliaryHelperCopiesExact": true,
+    "archiveMutation": false,
+    "sealMainExecuted": false
+  },
+  "archiveZipBeforeSha256": "6f5005c0678018567e1d82c4b78270bbcacd915265c99b1473df24f2acf82709",
+  "archiveZipUnchanged": true,
+  "oldPrepublicationReview": "prepublication-registration-review.json remains unchanged and historical; it does not claim review of the new seal hash.",
+  "executionBoundary": "After the frozen full verify, parent must copy this updated script into the source archive, format copied text as usual, then execute sealing. No production merge or completion claim here."
+}

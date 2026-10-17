@@ -1,0 +1,26 @@
+
+> tropos@1.2.0 test
+> node scripts/run-unit-tests.mjs run scripts/art/form-art-releases.test.ts scripts/ios/asc-signing.test.ts scripts/write-functions-env.test.ts src/features/program/__tests__/generatorAudit.test.ts src/features/program/__tests__/useProgramWriters.test.ts src/lib/__tests__/bodyRig.test.ts src/lib/__tests__/formArtCutouts.test.ts src/lib/__tests__/formArtOwnerRelease.test.ts src/lib/__tests__/formArtwork.test.ts src/lib/__tests__/noDisabledTests.test.ts
+
+
+ RUN  v5.0.4 C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees
+
+ ❯ |root-node| scripts/write-functions-env.test.ts (0 test)
+ ❯ |root-node| scripts/ios/asc-signing.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]
+SyntaxError: Invalid or unexpected token
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]
+SyntaxError: Invalid or unexpected token
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 8 passed (10)
+      Tests  470 passed (470)
+   Start at  17:24:25
+   Duration  13.60s (tests 71%, setup 9%, import 9%, environment 7%, transform 3%, worker 1%)
+

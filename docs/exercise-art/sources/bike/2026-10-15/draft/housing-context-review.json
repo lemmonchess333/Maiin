@@ -1,0 +1,152 @@
+{
+  "status": "read-only native housing-context evidence; root physical-continuity decision pending",
+  "exerciseId": "bike",
+  "reviewedAt": "2026-10-15T07:51:38.136843+00:00",
+  "reviewScope": "Source pixels at original scale; no browser review, hardware approval, equipment correction, anatomy edit or completion credit.",
+  "sourceCoordinateSpace": [1024, 1536],
+  "nativeCrop": [350, 950, 800, 1320],
+  "measurementsInputSha256": "14fa53a3b240d996b5b9db8d505bd9a4231b3932754adec877c77763eb4c268b",
+  "scriptSha256": "7bfe28b74c5572fc87b9201a26ee84a070d80dd554d81f7683bf898b2b87cea4",
+  "rows": [
+    {
+      "pose": 1,
+      "source": "3-lower-direct-original.png",
+      "sourceSha256": "d472dff2a1ecae8c2db250870f37e9611ddf72b3c72fcc1772c55ce0327ec2c8",
+      "wholeSceneOffset": [0, 0],
+      "panelBottomDarkOutlineMeanSamples": [
+        [1145, 43.68666666666666],
+        [1146, 43.76],
+        [1147, 43.90666666666666],
+        [1148, 43.81333333333333],
+        [1149, 43.78666666666666],
+        [1150, 44.900000000000006],
+        [1151, 15.586666666666668],
+        [1152, 37.919999999999995],
+        [1153, 75.04666666666667],
+        [1154, 46.73333333333334],
+        [1155, 48.87333333333334],
+        [1156, 48.66000000000001],
+        [1157, 48.56666666666668],
+        [1158, 48.53333333333334],
+        [1159, 48.22666666666667],
+        [1160, 48.30666666666668]
+      ],
+      "panelBottomDarkRowsAtMeanBelow25": [1151],
+      "panelBottomOutlineY": 1151.0,
+      "panelRightOutlineMeanSamples": [
+        [430, 43.13333333333333],
+        [431, 43.06666666666667],
+        [432, 43.43333333333332],
+        [433, 43.477777777777774],
+        [434, 43.75555555555555],
+        [435, 43.7],
+        [436, 44.03333333333333],
+        [437, 43.88888888888889],
+        [438, 44.199999999999996],
+        [439, 43.99999999999999],
+        [440, 45.13333333333332],
+        [441, 37.08888888888889],
+        [442, 24.133333333333333],
+        [443, 45.92222222222223],
+        [444, 56.12222222222223],
+        [445, 51.92222222222221],
+        [446, 52.36666666666667],
+        [447, 52.533333333333346],
+        [448, 52.37777777777778],
+        [449, 52.08888888888888],
+        [450, 52.18888888888889]
+      ],
+      "panelRightOutlineX": 442,
+      "spindleCentroid": [544.4318181818181, 1135.7045454545455],
+      "spindleRelativeToPanelRasterReference": [
+        102.43181818181813, -15.295454545454504
+      ],
+      "visibleSilverBearingRimHorizontalChordAtRoundedSpindleY": {
+        "y": 1136,
+        "inspectedOutlineMinimaX": [512, 577],
+        "chordPx": 65,
+        "method": "Literal visible black outline minima bracketing the silver bearing at the rounded aperture-centroid row, in separately inspected left/right windows. This is a raster chord, not a complete 3D diameter or invariant certification."
+      },
+      "nativeProof": "1-housing-native-source-proof.png",
+      "nativeProofSha256": "59a1d4817ffb22b4df17dff1058c3ae7665a15349f8858c16843ea9df803991d"
+    },
+    {
+      "pose": 2,
+      "source": "6-upper-direct-original.png",
+      "sourceSha256": "5ab3dda61201910648ef64c9e894e0e4a301aef5efb1c237ecbb746e6f54bfda",
+      "wholeSceneOffset": [-1, 16],
+      "panelBottomDarkOutlineMeanSamples": [
+        [1145, 39.846666666666664],
+        [1146, 39.84],
+        [1147, 39.72666666666667],
+        [1148, 39.82000000000001],
+        [1149, 39.86666666666667],
+        [1150, 39.84],
+        [1151, 38.99999999999999],
+        [1152, 43.406666666666666],
+        [1153, 20.206666666666667],
+        [1154, 19.233333333333334],
+        [1155, 68.78],
+        [1156, 46.95333333333333],
+        [1157, 40.300000000000004],
+        [1158, 41.12666666666667],
+        [1159, 40.766666666666666],
+        [1160, 40.89333333333334]
+      ],
+      "panelBottomDarkRowsAtMeanBelow25": [1153, 1154],
+      "panelBottomOutlineY": 1153.5,
+      "panelRightOutlineMeanSamples": [
+        [430, 40.44444444444444],
+        [431, 40.74444444444444],
+        [432, 40.6],
+        [433, 40.91111111111111],
+        [434, 40.78888888888889],
+        [435, 41.07777777777778],
+        [436, 40.93333333333333],
+        [437, 41.27777777777778],
+        [438, 41.54444444444444],
+        [439, 41.67777777777778],
+        [440, 42.733333333333334],
+        [441, 36.62222222222222],
+        [442, 22.74444444444445],
+        [443, 42.67777777777779],
+        [444, 50.233333333333334],
+        [445, 45.377777777777766],
+        [446, 45.277777777777786],
+        [447, 44.6111111111111],
+        [448, 44.03333333333333],
+        [449, 44.05555555555555],
+        [450, 43.66666666666666]
+      ],
+      "panelRightOutlineX": 442,
+      "spindleCentroid": [553.8715596330276, 1121.9816513761468],
+      "spindleRelativeToPanelRasterReference": [
+        111.87155963302757, -31.51834862385317
+      ],
+      "visibleSilverBearingRimHorizontalChordAtRoundedSpindleY": {
+        "y": 1122,
+        "inspectedOutlineMinimaX": [518, 591],
+        "chordPx": 73,
+        "method": "Literal visible black outline minima bracketing the silver bearing at the rounded aperture-centroid row, in separately inspected left/right windows. This is a raster chord, not a complete 3D diameter or invariant certification."
+      },
+      "nativeProof": "2-housing-native-source-proof.png",
+      "nativeProofSha256": "6cfa99b60b8f40966fb2a351ae1825c4979edabf81218950a600a45082cf328c"
+    }
+  ],
+  "spindleNormalizedSceneDeltaPx": [9.439741451209443, -13.722894078398667],
+  "spindleNormalizedSceneDriftPx": 16.656126216879812,
+  "spindleRelativeToPanelRasterReferenceDeltaPx": [
+    9.439741451209443, -16.222894078398667
+  ],
+  "spindleRelativeToPanelRasterReferenceDriftPx": 18.769416904758238,
+  "globalDriftAsPercentOfVisibleRimChords": [
+    25.62480956443048, 22.816611255999742
+  ],
+  "contextInterpretation": "The recessed panel right edge remains at x442 while its bottom dark outline shifts only2.5px down. The bearing aperture shifts9.440px right and13.723px up. Relative to those actual casing outlines the discrepancy remains, rather than being explained by whole-scene registration. The nearby bearing plate also has visibly different projected width; its measured65/73px horizontal outline chords are contextual source redraw findings, not calibrated dimensions.",
+  "impact": "Switching poses can make the fixed bearing visibly hop within the housing while the crank changes orientation. This is a physical equipment-continuity risk at the central mechanism. The strict1px failure remains. Actual native/mobile playback must determine whether the owner relaxation can accept it as minor; otherwise keep the candidate held.",
+  "strictHardwarePassed": false,
+  "rootAcceptance": null,
+  "equipmentOrHumanPixelsEdited": false,
+  "productionRegisteredByThisReview": false,
+  "completionCredit": false
+}

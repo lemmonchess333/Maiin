@@ -30,6 +30,10 @@ import {
 const beatsRef = {
   current: null as { t: number; label: string; cue: string }[] | null,
 };
+const setupRef = { current: null as string[] | null };
+const adviceRef = {
+  current: null as { tip: string; commonMistakes: string[] } | null,
+};
 const keyRef = {
   current: null as {
     primary: string[];
@@ -42,6 +46,8 @@ vi.mock("@/lib/bodyRig", () => ({
 }));
 vi.mock("@/lib/formGuides", () => ({
   getFormBeats: () => beatsRef.current,
+  getFormSetup: () => setupRef.current,
+  getFormAdvice: () => adviceRef.current,
   getDemoMuscleKey: () => keyRef.current,
 }));
 
@@ -92,12 +98,42 @@ const BEATS = [
 
 beforeEach(() => {
   beatsRef.current = null;
+  setupRef.current = null;
+  adviceRef.current = null;
   keyRef.current = null;
   reportStep = undefined;
   requestedStep = undefined;
 });
 
 describe("ExerciseFormContent — the instruction list", () => {
+  it("shows the released variation's advice alongside its movement cues", async () => {
+    beatsRef.current = BEATS;
+    adviceRef.current = {
+      tip: "Use a comfortable controlled hinge.",
+      commonMistakes: ["Bouncing through the return."],
+    };
+    render(<ExerciseFormContent exerciseName="Dips" />);
+    expect(
+      await screen.findByText("Use a comfortable controlled hinge.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Bouncing through the return.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Watch the shoulders.")).toBeNull();
+  });
+
+  it("keeps catalogue advice when a variation has no released beats", async () => {
+    adviceRef.current = {
+      tip: "Advice belonging to an unreleased variation.",
+      commonMistakes: ["Unreleased variation mistake."],
+    };
+    render(<ExerciseFormContent exerciseName="Dips" />);
+    expect(await screen.findByText("Watch the shoulders.")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Advice belonging to an unreleased variation.")
+    ).toBeNull();
+  });
+
   it("requests local instructions when the form surface owns a rig/placard", async () => {
     const lookup = vi.spyOn(exerciseDemoModule, "getExerciseDemo");
     try {
@@ -124,6 +160,53 @@ describe("ExerciseFormContent — the instruction list", () => {
     // short positions are not a wall of text.
     expect(screen.queryByRole("button", { name: /all \d+ steps/i })).toBeNull();
     expect(screen.getByText("Watch the shoulders.")).toBeInTheDocument();
+  });
+
+  it("keeps preparation prose visible alongside six depicted movement cues", async () => {
+    const swingBeats = [
+      { t: 0, label: "Hike", cue: "Guide the bell between your legs." },
+      { t: 0.5, label: "Drive", cue: "Drive through your feet." },
+      { t: 1, label: "Float", cue: "Let the bell float to chest height." },
+      { t: 1, label: "Brace", cue: "Brace without leaning back." },
+      { t: 0.5, label: "Return", cue: "Let the bell fall under control." },
+      { t: 0, label: "Reset", cue: "Hinge as the bell passes your legs." },
+    ];
+    beatsRef.current = swingBeats;
+    setupRef.current = [
+      "Stand with the bell on the floor in front of you.",
+      "Hinge and grip the handle with both hands.",
+    ];
+    render(<ExerciseFormContent exerciseName="Dips" />);
+    const preparation = await screen.findByText(
+      "Stand with the bell on the floor in front of you. Hinge and grip the handle with both hands."
+    );
+    expect(preparation.tagName).toBe("P");
+    expect(preparation).toHaveTextContent("Preparation:");
+    for (const [i, beat] of swingBeats.entries()) {
+      expect(screen.getByText(beat.cue)).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", {
+          name: `Show frame ${i + 1}: ${beat.label}`,
+        })
+      ).toBeInTheDocument();
+    }
+    expect(screen.getAllByRole("button", { name: /^Show frame/ })).toHaveLength(
+      6
+    );
+    expect(
+      screen.queryByRole("button", { name: /floor|pickup|park/i })
+    ).toBeNull();
+    expect(screen.queryByText("Catalogue step one.")).toBeNull();
+  });
+
+  it("does not display authored preparation when the guide has no released beats", async () => {
+    setupRef.current = ["Preparation for an unreleased guide."];
+    render(<ExerciseFormContent exerciseName="Dips" />);
+    expect(await screen.findByText("Catalogue step one.")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Preparation for an unreleased guide.")
+    ).toBeNull();
+    expect(screen.queryByText("Preparation:")).toBeNull();
   });
 
   it("lights the row the player is on, and only that row", async () => {

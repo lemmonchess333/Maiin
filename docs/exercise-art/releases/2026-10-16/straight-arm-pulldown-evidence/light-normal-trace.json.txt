@@ -1,0 +1,7475 @@
+[
+  {
+    "ms": 1476,
+    "observedAt": "2026-10-16T16:39:08.662Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "Loading frame…\n\nREACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 2695,
+    "observedAt": "2026-10-16T16:39:09.881Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 2702,
+    "observedAt": "2026-10-16T16:39:09.888Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 3915,
+    "observedAt": "2026-10-16T16:39:11.101Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 3923,
+    "observedAt": "2026-10-16T16:39:11.109Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 5130,
+    "observedAt": "2026-10-16T16:39:12.316Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 5135,
+    "observedAt": "2026-10-16T16:39:12.321Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 6352,
+    "observedAt": "2026-10-16T16:39:13.537Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 6357,
+    "observedAt": "2026-10-16T16:39:13.543Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 7577,
+    "observedAt": "2026-10-16T16:39:14.763Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 7581,
+    "observedAt": "2026-10-16T16:39:14.767Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 8782,
+    "observedAt": "2026-10-16T16:39:15.967Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 8786,
+    "observedAt": "2026-10-16T16:39:15.972Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 9990,
+    "observedAt": "2026-10-16T16:39:17.176Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 9994,
+    "observedAt": "2026-10-16T16:39:17.180Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 11196,
+    "observedAt": "2026-10-16T16:39:18.382Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 11200,
+    "observedAt": "2026-10-16T16:39:18.386Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 12402,
+    "observedAt": "2026-10-16T16:39:19.588Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 12406,
+    "observedAt": "2026-10-16T16:39:19.592Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 13618,
+    "observedAt": "2026-10-16T16:39:20.804Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 13622,
+    "observedAt": "2026-10-16T16:39:20.808Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 14827,
+    "observedAt": "2026-10-16T16:39:22.013Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 14830,
+    "observedAt": "2026-10-16T16:39:22.016Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 16032,
+    "observedAt": "2026-10-16T16:39:23.218Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 16036,
+    "observedAt": "2026-10-16T16:39:23.222Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 17248,
+    "observedAt": "2026-10-16T16:39:24.434Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 17252,
+    "observedAt": "2026-10-16T16:39:24.438Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 18457,
+    "observedAt": "2026-10-16T16:39:25.643Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 18461,
+    "observedAt": "2026-10-16T16:39:25.647Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 19663,
+    "observedAt": "2026-10-16T16:39:26.849Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 19667,
+    "observedAt": "2026-10-16T16:39:26.852Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 20869,
+    "observedAt": "2026-10-16T16:39:28.054Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 20873,
+    "observedAt": "2026-10-16T16:39:28.059Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 22084,
+    "observedAt": "2026-10-16T16:39:29.270Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 22088,
+    "observedAt": "2026-10-16T16:39:29.274Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 22579,
+    "observedAt": "2026-10-16T16:39:29.765Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": false,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPlay\nNormal"
+  },
+  {
+    "ms": 22964,
+    "observedAt": "2026-10-16T16:39:30.150Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": false,
+    "slower": "true",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPlay\nSlower"
+  },
+  {
+    "ms": 23231,
+    "observedAt": "2026-10-16T16:39:30.416Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 25632,
+    "observedAt": "2026-10-16T16:39:32.818Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 25637,
+    "observedAt": "2026-10-16T16:39:32.822Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 28039,
+    "observedAt": "2026-10-16T16:39:35.225Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 28047,
+    "observedAt": "2026-10-16T16:39:35.233Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 30448,
+    "observedAt": "2026-10-16T16:39:37.634Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 30453,
+    "observedAt": "2026-10-16T16:39:37.639Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 32857,
+    "observedAt": "2026-10-16T16:39:40.043Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 32864,
+    "observedAt": "2026-10-16T16:39:40.050Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 35263,
+    "observedAt": "2026-10-16T16:39:42.449Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 35271,
+    "observedAt": "2026-10-16T16:39:42.457Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 37669,
+    "observedAt": "2026-10-16T16:39:44.855Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 37676,
+    "observedAt": "2026-10-16T16:39:44.862Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 40084,
+    "observedAt": "2026-10-16T16:39:47.270Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 40094,
+    "observedAt": "2026-10-16T16:39:47.280Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 42492,
+    "observedAt": "2026-10-16T16:39:49.678Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 42498,
+    "observedAt": "2026-10-16T16:39:49.684Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 44908,
+    "observedAt": "2026-10-16T16:39:52.093Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 44913,
+    "observedAt": "2026-10-16T16:39:52.099Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 47315,
+    "observedAt": "2026-10-16T16:39:54.500Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 47319,
+    "observedAt": "2026-10-16T16:39:54.505Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 49723,
+    "observedAt": "2026-10-16T16:39:56.909Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 49728,
+    "observedAt": "2026-10-16T16:39:56.914Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 51066,
+    "observedAt": "2026-10-16T16:39:58.252Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 51344,
+    "observedAt": "2026-10-16T16:39:58.530Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 52547,
+    "observedAt": "2026-10-16T16:39:59.733Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 52551,
+    "observedAt": "2026-10-16T16:39:59.737Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 53753,
+    "observedAt": "2026-10-16T16:40:00.939Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 53756,
+    "observedAt": "2026-10-16T16:40:00.942Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 54959,
+    "observedAt": "2026-10-16T16:40:02.145Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 54962,
+    "observedAt": "2026-10-16T16:40:02.148Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 56165,
+    "observedAt": "2026-10-16T16:40:03.351Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 56169,
+    "observedAt": "2026-10-16T16:40:03.355Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 57368,
+    "observedAt": "2026-10-16T16:40:04.553Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 57375,
+    "observedAt": "2026-10-16T16:40:04.561Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 58571,
+    "observedAt": "2026-10-16T16:40:05.757Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 58577,
+    "observedAt": "2026-10-16T16:40:05.763Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 59778,
+    "observedAt": "2026-10-16T16:40:06.964Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 59782,
+    "observedAt": "2026-10-16T16:40:06.968Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 60981,
+    "observedAt": "2026-10-16T16:40:08.167Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 60984,
+    "observedAt": "2026-10-16T16:40:08.170Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 62183,
+    "observedAt": "2026-10-16T16:40:09.369Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 62186,
+    "observedAt": "2026-10-16T16:40:09.372Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 63386,
+    "observedAt": "2026-10-16T16:40:10.572Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 63390,
+    "observedAt": "2026-10-16T16:40:10.576Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 64589,
+    "observedAt": "2026-10-16T16:40:11.775Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 64592,
+    "observedAt": "2026-10-16T16:40:11.778Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 65796,
+    "observedAt": "2026-10-16T16:40:12.982Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 65799,
+    "observedAt": "2026-10-16T16:40:12.985Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 67001,
+    "observedAt": "2026-10-16T16:40:14.187Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 67004,
+    "observedAt": "2026-10-16T16:40:14.190Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 68207,
+    "observedAt": "2026-10-16T16:40:15.393Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 68210,
+    "observedAt": "2026-10-16T16:40:15.396Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 69414,
+    "observedAt": "2026-10-16T16:40:16.599Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 69417,
+    "observedAt": "2026-10-16T16:40:16.603Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 70620,
+    "observedAt": "2026-10-16T16:40:17.806Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 70623,
+    "observedAt": "2026-10-16T16:40:17.808Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 71823,
+    "observedAt": "2026-10-16T16:40:19.008Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 71827,
+    "observedAt": "2026-10-16T16:40:19.013Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 73025,
+    "observedAt": "2026-10-16T16:40:20.211Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 73029,
+    "observedAt": "2026-10-16T16:40:20.214Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 74232,
+    "observedAt": "2026-10-16T16:40:21.418Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 74235,
+    "observedAt": "2026-10-16T16:40:21.421Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 75437,
+    "observedAt": "2026-10-16T16:40:22.623Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 75440,
+    "observedAt": "2026-10-16T16:40:22.626Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 76643,
+    "observedAt": "2026-10-16T16:40:23.829Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 76646,
+    "observedAt": "2026-10-16T16:40:23.832Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 77850,
+    "observedAt": "2026-10-16T16:40:25.036Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 77853,
+    "observedAt": "2026-10-16T16:40:25.039Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 79056,
+    "observedAt": "2026-10-16T16:40:26.242Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 79059,
+    "observedAt": "2026-10-16T16:40:26.244Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 80262,
+    "observedAt": "2026-10-16T16:40:27.448Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 80265,
+    "observedAt": "2026-10-16T16:40:27.451Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 81466,
+    "observedAt": "2026-10-16T16:40:28.652Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 81470,
+    "observedAt": "2026-10-16T16:40:28.656Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 82668,
+    "observedAt": "2026-10-16T16:40:29.854Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 82671,
+    "observedAt": "2026-10-16T16:40:29.857Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 83870,
+    "observedAt": "2026-10-16T16:40:31.056Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 83874,
+    "observedAt": "2026-10-16T16:40:31.060Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 85073,
+    "observedAt": "2026-10-16T16:40:32.259Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 85077,
+    "observedAt": "2026-10-16T16:40:32.263Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 86280,
+    "observedAt": "2026-10-16T16:40:33.466Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 86283,
+    "observedAt": "2026-10-16T16:40:33.469Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 87486,
+    "observedAt": "2026-10-16T16:40:34.672Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 87489,
+    "observedAt": "2026-10-16T16:40:34.675Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 88692,
+    "observedAt": "2026-10-16T16:40:35.878Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 88695,
+    "observedAt": "2026-10-16T16:40:35.881Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 89898,
+    "observedAt": "2026-10-16T16:40:37.084Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 89902,
+    "observedAt": "2026-10-16T16:40:37.087Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 91104,
+    "observedAt": "2026-10-16T16:40:38.290Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 91107,
+    "observedAt": "2026-10-16T16:40:38.293Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 92306,
+    "observedAt": "2026-10-16T16:40:39.492Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 92311,
+    "observedAt": "2026-10-16T16:40:39.497Z",
+    "src": "/form-frames/straight-arm-pulldown/3.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/3.webp",
+    "alt": "Straight-Arm Pulldown, Pull to thighs",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PULL TO THIGHS 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 93510,
+    "observedAt": "2026-10-16T16:40:40.696Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Pull to thighs",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Sweep your upper arms toward your sides.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 93513,
+    "observedAt": "2026-10-16T16:40:40.699Z",
+    "src": "/form-frames/straight-arm-pulldown/4.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/4.webp",
+    "alt": "Straight-Arm Pulldown, Squeeze",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "SQUEEZE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 94717,
+    "observedAt": "2026-10-16T16:40:41.903Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Squeeze",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Finish near thighs without leaning back.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 94722,
+    "observedAt": "2026-10-16T16:40:41.908Z",
+    "src": "/form-frames/straight-arm-pulldown/5.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/5.webp",
+    "alt": "Straight-Arm Pulldown, Control return",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "CONTROL RETURN 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 95919,
+    "observedAt": "2026-10-16T16:40:43.104Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Control return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Let the handles rise under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 95924,
+    "observedAt": "2026-10-16T16:40:43.110Z",
+    "src": "/form-frames/straight-arm-pulldown/6.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/6.webp",
+    "alt": "Straight-Arm Pulldown, Reset",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 97122,
+    "observedAt": "2026-10-16T16:40:44.308Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your stance steady before repeating.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 97125,
+    "observedAt": "2026-10-16T16:40:44.311Z",
+    "src": "/form-frames/straight-arm-pulldown/1.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/1.webp",
+    "alt": "Straight-Arm Pulldown, Reach",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "REACH 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 98324,
+    "observedAt": "2026-10-16T16:40:45.510Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Reach",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Start with handles around shoulder height.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 98328,
+    "observedAt": "2026-10-16T16:40:45.513Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 98725,
+    "observedAt": "2026-10-16T16:40:45.911Z",
+    "src": "/form-frames/straight-arm-pulldown/2.webp",
+    "currentSrc": "http://127.0.0.1:62330/form-frames/straight-arm-pulldown/2.webp",
+    "alt": "Straight-Arm Pulldown, Brace",
+    "playing": false,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace your torso; keep elbows softly fixed.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Reach",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Pull to thighs",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Squeeze",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Control return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1152,
+    "naturalHeight": 1728,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.5,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPlay\nNormal"
+  }
+]

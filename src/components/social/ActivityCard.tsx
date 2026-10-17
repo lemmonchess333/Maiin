@@ -1,5 +1,5 @@
 import { useState, memo } from "react";
-import { formatClock, formatLoadKg } from "@/utils/formatters";
+import { formatClock } from "@/utils/formatters";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Link } from "react-router-dom";
 import InlineFollow from "@/components/social/InlineFollow";
@@ -15,7 +15,10 @@ import {
   activityExercisesToRoutine,
   type SavedRoutineExercise,
 } from "../../lib/savedRoutines";
-import { liftPostRows } from "../../lib/liftPost";
+import { liftPostLeadArt, liftPostRows } from "../../lib/liftPost";
+import { formArtCutoutUrl, type FormArtCutout } from "@/lib/formArtCutouts";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { formatLoad, liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 import { movementCategoryLabel } from "../../lib/exerciseMovementCategory";
 import CommentSheet from "./CommentSheet";
 import SaveRoutineSheet from "./SaveRoutineSheet";
@@ -80,6 +83,12 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
   /* The VIEWER's unit, not the poster's — a feed reads in the units of
      whoever is reading it, which is what every social running app does. */
   const unit = useDistanceUnit();
+  /* Lift18: someone else's loads in the reader's unit, as their distance
+     is. Posts store kg. */
+  const liftUnit = useLiftUnit();
+  const volumeFigure = (kg: number) =>
+    Math.round(liftVolumeIn(kg, liftUnit)).toLocaleString();
+  const volumeLabel = `${liftUnitLabel(liftUnit)} volume`;
   const { addBlocked } = useBlockedUsers();
   const { isRestricted } = useRestrictedStatus(user?.uid);
   const [liked, setLiked] = useState(feedItem.liked ?? false);
@@ -206,16 +215,19 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
   /* Every shape of lift post the feed holds, read one way: a post made
      from a saved workout once wrote rows with no summary, and drawing them
      broke the card. */
-  const exercises = liftPostRows(activity?.exercises);
+  const exercises = liftPostRows(activity?.exercises, liftUnit);
   const prCount = activity?.prCount as number | undefined;
 
   /* ---- Hero panels (Social uplift v1) -------------------------------
      Runs: the GPS trace becomes a glowing scene with the distance
      numeral overlaid ON the art (so the km cell drops out of the stats
-     strip below — no double-printing). Lifts: the brand anatomy figure
-     with this session's muscles tinted, volume numeral + PR chip
-     overlaid the same way. Hybrid cards keep the route scene only —
-     two hero panels on one card would fight. */
+     strip below — no double-printing). Lifts: the drawing of the
+     session's lead lift, its working muscles tinted in the drawing, with
+     the volume numeral and PR chip overlaid the same way; a post with no
+     drawn lift keeps the anatomy figure with its muscles tinted (the
+     owner, on the figure alone: "Why is it just the muscle groups worked?
+     It looks silly"). Hybrid cards keep the route scene only — two hero
+     panels on one card would fight. */
   const routePreview =
     activity?.routePreview &&
     (activity.routePreview as { lat: number; lon: number }[]).length > 1
@@ -224,10 +236,13 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
   const showDistanceOverlay = !!routePreview && (activity?.distance || 0) > 0;
   const muscleCategories =
     (activity?.muscleGroups as string[] | undefined) ?? [];
+  const leadArt =
+    !isRun && !isHybrid ? liftPostLeadArt(activity?.exercises) : null;
   const showMuscleHero =
-    !isRun && !isHybrid && hasMuscleFigure(muscleCategories);
-  const showVolumeOverlay = showMuscleHero && (activity?.totalVolume ?? 0) > 0;
-  const showPrChip = showMuscleHero && (prCount ?? 0) > 0;
+    !leadArt && !isRun && !isHybrid && hasMuscleFigure(muscleCategories);
+  const showLiftHero = !!leadArt || showMuscleHero;
+  const showVolumeOverlay = showLiftHero && (activity?.totalVolume ?? 0) > 0;
+  const showPrChip = showLiftHero && (prCount ?? 0) > 0;
 
   const renderRouteHero = (heightClass: string) => (
     <div
@@ -250,6 +265,57 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
     </div>
   );
 
+  /* The volume numeral and the PR chip a lift's hero carries, whichever
+     hero it is. */
+  const renderVolumeOverlay = () => (
+    <div className="absolute bottom-3 left-4">
+      <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-lifting">
+        {volumeFigure(activity?.totalVolume ?? 0)}
+      </p>
+      <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
+    </div>
+  );
+  const renderPrChip = (side: "left-4" | "right-4") => (
+    <span
+      className={`absolute top-3 ${side} inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-achievement/15 text-achievement-strong`}
+    >
+      <Star className="size-3.5 fill-achievement" />
+      {prCount} PR{prCount === 1 ? "" : "s"}
+    </span>
+  );
+
+  /* The lead lift's drawing at the right, the numbers at the left: Home's
+     Today card, in the feed. Alone, the drawing takes the middle. */
+  const renderDrawingHero = (art: FormArtCutout) => {
+    const flanked = showVolumeOverlay || showPrChip;
+    return (
+      <div
+        className="relative h-40 border-b border-border/50 overflow-hidden"
+        style={{
+          background: `linear-gradient(150deg, ${THEME.lifting}22 0%, ${THEME.lifting}08 55%, ${THEME.lifting}10 100%)`,
+        }}
+      >
+        <img
+          src={formArtCutoutUrl(art)}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          decoding="async"
+          loading="lazy"
+          data-lead-drawing=""
+          className={
+            "pointer-events-none absolute inset-y-3 h-[calc(100%-1.5rem)] object-contain " +
+            (flanked
+              ? "right-3 w-[58%] object-right-bottom"
+              : "inset-x-3 w-[calc(100%-1.5rem)] object-bottom")
+          }
+        />
+        {showVolumeOverlay && renderVolumeOverlay()}
+        {showPrChip && renderPrChip("left-4")}
+      </div>
+    );
+  };
+
   const renderMuscleHero = () => (
     <div
       className="relative h-32 border-b border-border/50 overflow-hidden"
@@ -263,20 +329,8 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
           className="h-full w-auto"
         />
       </div>
-      {showVolumeOverlay && (
-        <div className="absolute bottom-3 left-4">
-          <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-lifting">
-            {Math.round(activity?.totalVolume ?? 0).toLocaleString()}
-          </p>
-          <SectionLabel className="mt-0.5">kg volume</SectionLabel>
-        </div>
-      )}
-      {showPrChip && (
-        <span className="absolute top-3 right-4 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-achievement/15 text-achievement-strong">
-          <Star className="size-3.5 fill-achievement" />
-          {prCount} PR{prCount === 1 ? "" : "s"}
-        </span>
-      )}
+      {showVolumeOverlay && renderVolumeOverlay()}
+      {showPrChip && renderPrChip("right-4")}
     </div>
   );
 
@@ -505,7 +559,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
             );
           })()}
         {/* Workout volume/duration/PR count. Cells already printed on
-            the muscle hero panel (volume numeral, PR chip) drop out
+            the lift's hero panel (volume numeral, PR chip) drop out
             here — same no-double-printing rule as the run card's km. */}
         {/* Two columns rather than an unconstrained flex row. Volume,
             exercises, PRs and duration can all be present at once, and a
@@ -520,9 +574,9 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                matches it so the two paths agree. */
             <div className="min-w-0">
               <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-lifting whitespace-nowrap">
-                {Math.round(activity.totalVolume ?? 0).toLocaleString()}
+                {volumeFigure(activity.totalVolume ?? 0)}
               </p>
-              <SectionLabel className="mt-0.5">kg volume</SectionLabel>
+              <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
             </div>
           )}
           {(activity.exerciseCount ?? 0) > 0 && (
@@ -610,8 +664,10 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
       ) : (
         <>
           {/* Standard run card: route scene on top; standard lift
-              card: muscle-figure scene on top. */}
+              card: the lead lift's drawing on top, or the muscle figure
+              where no lift on the post has one. */}
           {isRun && routePreview && renderRouteHero("h-36")}
+          {leadArt && renderDrawingHero(leadArt)}
           {showMuscleHero && renderMuscleHero()}
 
           <div className="p-4">
@@ -679,8 +735,9 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
               New PR:{" "}
               {feedItem.prExercise || activity?.prExercise || "Personal Record"}{" "}
               {feedItem.prWeight || activity?.prWeight
-                ? formatLoadKg(
-                    (feedItem.prWeight || activity?.prWeight) as number
+                ? formatLoad(
+                    (feedItem.prWeight || activity?.prWeight) as number,
+                    liftUnit
                   )
                 : ""}
             </p>

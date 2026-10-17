@@ -1,0 +1,125 @@
+{
+  "exerciseId": "elliptical",
+  "version": "anatomy-v3-2026-10-15-custom-rear-drive-elliptical-v1",
+  "reviewer": "/root",
+  "reviewedAt": "2026-10-15T23:13:55.268411+00:00",
+  "allowLocalIntegration": true,
+  "completionCredit": false,
+  "strictChecksRemainNull": true,
+  "strictCertified": false,
+  "planSha256": "7dbf525a4f8929f252842d6f860ff4da178de7e0ce83b646a874dbf4b9a591f6",
+  "payloadManifestSha256": "8d94b0c211a4a69a475893e223fe2cfc6bef917adda0851071f5a876de725ab1",
+  "cardSha256": "43021735200a89e72a718b3d5351790528109796abc709fe46175f892e081e5c",
+  "approval": {
+    "actor": "User, in this session",
+    "instruction": "Continue new exercises using the approved athlete without shorts, allow the agreed limited findings, preserve colours and plausible equipment, finish and merge; stop routine approval questions.",
+    "context": "Existing session authorization covers intact-source equipment/colour finishing, local registration/checks and merge. Root accepts this specific reviewed custom-equipment two-state draft with findings; no strict certification is inferred."
+  },
+  "findings": [
+    "Custom rear-drive four-bar, passive pitching trays and mirrored offset-bearing D grips; no exact manufacturer-model or recovered source3D claim.",
+    "Near/far locked stem and pedal-bearing settings differ but stay fixed across both poses; dimensions/camera/phase closure are exposed in authoring/fixed-geometry.json.",
+    "Two genuine intact source body states repeated across six distinct paths. No generated human intermediates or continuous human trajectory claim.",
+    "Original source shading/contours and minor source pose/activation differences retained. Pose4posterior-thigh field is secondaryHamstrings, not silently relabelled as primaryQuads.",
+    "Five original dark upper-cylinder antialias pixels near pose4far index edge differ from new hardware. Parent reviewed this as a minor equipment edge finding, not missing white finger anatomy.",
+    "Shaded charcoal custom apparatus differs from original generated machine style and equipment geometry; parent source-construction eligibility is not final palette/mobile or strict acceptance."
+  ],
+  "observations": {
+    "identity": {
+      "observed": true,
+      "evidence": "Root viewed both final native-framed poses, the FA56 canonical reference and retained original pose4. Same no-shorts athlete, trainers, fine contours and neutral tonal anatomy retained; no replacement model or fitted body parts."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "One fixed equipment camera and identical 1536x1120 scene, with unchanged source body coordinates, common96px bottom padding and crop[242,37,1289,1109] to1047x1072. No individual body fitting, rescaling or recovered-source3D calibration claim."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "The intact original bodies and white anatomy boundaries are preserved by source guards outside existing activation remapping. Native source and palette inspection disclosed retained source pose/activation variation; no new anatomical poses, grafts or warps."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "Root reviewed the corrected clean common rear-drive four-bar apparatus and final native pair. Fixed renderer supplies shaded charcoal frame, axles, trays and mirrored D grips. The custom apparatus is plausible equipment, with explicit geometry and original-style differences; no E25/95Xi replica claim."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Native full-pair and actual mobile/card inspection show both trainers supported by real trays and both hands wrapped around supported D grip sections. Root previously viewed the actual8x far-hand comparison: five original dark AA edge pixels are a minor source/new-gear finding, not a white-finger gap."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "The equipment construction closes across721 sampled phases using one camera and fixed lengths; the two intact human states visibly retain plausible contacts. This validates the custom equipment construction and two illustrated states only, not anatomical near/far assignment, a continuous human trajectory or a complete calibrated stride."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Root reviewed primaryQuads/Glutes and secondaryFrontDelts/UpperBack/Hamstrings in native outputs against FA56. Pose4 posterior-thigh field is explicitly secondaryHamstrings. Exact approved two-colour remap inherits source tones/chroma; neutral pixels are not painted and no new spatial gradient is authored."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Root manually advanced all6 real paths/cues in both390x844 themes. StrideA/HoldA/StrideB/HoldB/ReturnA/Reset describe the actual two-state illustration, planted feet, coordinated drive and tall torso. No opposite anatomical leading-foot claim. All6 settled captions also matched actual normal/slower playback."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Root observed all6 native-size decoded frame paths, both manual wrap directions1to6/6to1, normal dark playback~1209-1225ms and slower light playback~2409-2421ms, including6to1 wraps. Order1,1,4,4,1,1 is two real poses with holds/hard cuts, not six different human poses or a smooth interpolated human cycle."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Actual390x844 light review passed all6 manual paths/cues, full source figure/equipment, readable catalogue/legend/cues and slower loop. Normal469x480 card viewed at native and348/160 long-side limits; global document width380 within viewport390. Native card review alone intentionally uses local horizontal scroll."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Actual390x844 dark review passed all6 manual paths/cues, normal loop and card readability at348/160 long-side limits. Full head/trainers/custom-machine support remained readable; console warning/error query returned[]. No product CSS or art edits were made during these observations."
+    }
+  },
+  "actualDraftUiReviewComplete": true,
+  "actualRegisteredReviewComplete": false,
+  "actualUiReview": {
+    "scope": "Unregistered normal ExerciseFormFrames draft and normal card; actual full registered component review remains a separate required step.",
+    "viewport": [
+      390,
+      844
+    ],
+    "manualAllSixBothThemes": true,
+    "manualPreviousAndNextWraps": true,
+    "normalDarkAndSlowerLightAllSixWithSettledCues": true,
+    "consoleWarningsAndErrors": [],
+    "observerCorrection": "Outside review logger only: added draftSelectedCue to dedupe key and characterData:true. Earlier incomplete observer records and source revisions are preserved. Final records retain actual8-17ms caption-effect transients followed by correct captions; no zero-lag claim.",
+    "cardDimensions": [
+      469,
+      480
+    ],
+    "cardLongSideReviewLimits": [
+      480,
+      348,
+      160
+    ],
+    "docWidth": 380,
+    "evidenceSelection": "17 exact indexed files. Manual tool text retains actual display truncation of nested natural-size arrays; source paths and captions remain explicit. Final normal/slower data are complete literal JSON5 parses of actual returned DOM observations."
+  },
+  "sourceReproduction": {
+    "proof": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\elliptical\\owner-guide-custom-equipment-20261015\\portable-reproduction-verification-20261015\\portable-reproduction-proof.json",
+    "sha256": "8ece18352594fe73d16af9daa6024adb576b33ab792f25daa006a402b33e3645",
+    "allArtworkExact": true,
+    "byteExactPayloads": 57,
+    "comparedPayloads": 58,
+    "onlyDifference": "Original image-build proof recipeSha256 differs from the caption-corrected reproduction recipe. Both actual proofs remain preserved; all artwork and every other field match. Two later normal-card files are separately bound in post-card-extension-20261016/post-card-extension-proof.json and were not fresh-built."
+  },
+  "evidenceHashes": {
+    "review/elliptical-tool-return-artifact-index-draft-final.json": "ee551048a8fa6165d849806d3363fe6830988d63d0ab027ab32d1643fad285b7",
+    "review/elliptical-tool-return-object-split-draft-final.json": "324d011632f0db24c50e7268e21d5009997e6cd5827e33efa6a6377b675ce693",
+    "review/elliptical-draft-dark-manual-717d13c683b0-b2-tool-text.txt": "633055fbefa1aaa2da53b0b02d27ccc532529fde40c14bff0571b16ed2825d44",
+    "review/elliptical-draft-dark-manual-717d13c683b0-b3.jpg": "19433ef833906f1849db1fa65fd10a6ace2ba512d6df0cc1ffc648cfa618a0b5",
+    "review/elliptical-draft-light-manual-card-46992a2ac40f-b3-tool-text.txt": "1f037929d75b0c5f432d34fdfb01275ef6969a22aedef445473af2838eb63cb8",
+    "review/elliptical-draft-light-manual-card-46992a2ac40f-b3-object2-dom.json": "fbcaf7f5d968cfe8268461096af951d53bffc87ddf478130c4a775cbeec8a99c",
+    "review/elliptical-same-call-multiple-46992a2ac40f-b4.jpg": "70340090170b93425fd2a91756dc1e69650e48e7fefe53111a334bc06514e775",
+    "review/elliptical-draft-card-dark-light-complete-7af0c8925c1a-b2-dom.json": "554d32a61f8b64b9745477baf129507bfe934757bb8a00e95759aed56c2638d9",
+    "review/elliptical-draft-card-dark-light-complete-7af0c8925c1a-b3.jpg": "9c8fa51ac4bd12254f3ac6476b4c170a125e4d71aba94363d3d47457bbcd321e",
+    "review/elliptical-draft-card-dark-light-complete-7af0c8925c1a-b4.jpg": "4f66e092a3458593e682e61dd8852f9fe213daf2c0d72cd43754553b57885492",
+    "review/elliptical-draft-dark-normal-final-observer-d08b08b988a8-b3-dom.json": "09938ab79734fec3d8dee55a976af7e9b558459c70584fdaef9a253193e2f3d8",
+    "review/elliptical-draft-light-slower-final-observer-e501517eed8d-b2-tool-text.txt": "658ab3a1ba84e6a8ebbbba0713881d73b3a500749ecf53984154435c1d867623",
+    "review/elliptical-draft-light-slower-final-observer-e501517eed8d-b2-object1-dom.json": "ccce07feffd836b8f2f8e2a6f089e4fc1831f2d07a751d3b6a14d5dd14af6ece",
+    "review/elliptical-draft-light-slower-final-observer-e501517eed8d-b2-object2-dom.json": "415bb058cd779a4c5406375fa67d66451d50682a82b511487671d2294101d90b",
+    "review/elliptical-same-call-multiple-e501517eed8d-b3.jpg": "ea703a2f59035c8d16edcf19250d8546066168df2311ad9e167dcf8301581765",
+    "review/elliptical-draft-previous-and-next-wrap-f001b21405cc-b2-dom.json": "2c19760d2b6dd49be3a072ecf3bebefd9b59aa6e4055bae6cdeaee0fb8569494",
+    "review/elliptical-draft-previous-and-next-wrap-f001b21405cc-b3.jpg": "6b5cd08dd7838c5d4077944c9fca37f8f6570dae6e77e9dc3566a37295ac96d3"
+  },
+  "publication": "Authoring review permits local registration only. Actual normal generator match, registered review, normal hooks/project checks, exact-head CI, merge and preservation audit remain separate; no completion credit."
+}

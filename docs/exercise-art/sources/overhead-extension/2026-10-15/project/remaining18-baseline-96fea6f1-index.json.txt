@@ -1,0 +1,62 @@
+{
+  "label": "remaining18-baseline-96fea6f1",
+  "exitCode": 1,
+  "normalCommand": "npm run verify",
+  "head": "96fea6f1e887fe7be6c760ba427f14069e85c42b",
+  "logSha256": "28126b9dcb9942154f5fdf85b60c07090f4d450d43bcf338bdbc0bb1f21723af",
+  "inputCount": 2663,
+  "inputsUnchanged": true,
+  "counts": {
+    "Test Files": {
+      "failed": 3,
+      "passed": 1171,
+      "skipped": 10,
+      "total": 1184,
+      "verbatim": "Test Files  3 failed | 1171 passed | 10 skipped (1184)"
+    },
+    "Tests": {
+      "failed": 1,
+      "passed": 13436,
+      "skipped": 409,
+      "total": 13846,
+      "verbatim": "Tests  1 failed | 13436 passed | 409 skipped (13846)"
+    }
+  },
+  "stages": [
+    "lint",
+    "check:form-art",
+    "check:form-drafts",
+    "check:cycles",
+    "build",
+    "check:dist-size",
+    "test"
+  ],
+  "failures": {
+    "root-node|scripts/write-functions-env.test.ts|[suite]": {
+      "diagnosticSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+      "byteStart": 52319,
+      "byteEndExclusive": 52360,
+      "headerLine": 559
+    },
+    "root-node|scripts/ios/asc-signing.test.ts|[suite]": {
+      "diagnosticSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+      "byteStart": 52529,
+      "byteEndExclusive": 52570,
+      "headerLine": 563
+    },
+    "node|src/features/program/__tests__/useProgramWriters.test.ts|RUN-RESCHEDULE-01 \u2014 moveRunDay > refuses to move a race slot (immovable identity)": {
+      "diagnosticSha256": "63ef6b308cff2ebc724df224077c89898af25dcf3be3c3cb031063af155a087a",
+      "byteStart": 52870,
+      "byteEndExclusive": 53781,
+      "headerLine": 570
+    }
+  },
+  "snapshotRestores": [
+    {
+      "path": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+      "originalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "testOutputSha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "restoredExact": true
+    }
+  ]
+}

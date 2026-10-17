@@ -1,0 +1,11 @@
+{
+  "kind": "pendlay-integrated-dark-wrap",
+  "previous": {
+    "alt": "Pendlay Row, Reset",
+    "src": "/form-frames/pendlay-row/6.webp"
+  },
+  "next": {
+    "alt": "Pendlay Row, Set",
+    "src": "/form-frames/pendlay-row/1.webp"
+  }
+}

@@ -1,0 +1,36 @@
+"""Adapt the existing frozen-input proof wrapper to this single ten-file run."""
+from pathlib import Path
+import ast
+import hashlib
+import json
+
+d = Path(__file__).resolve().parent
+source = (d/'run-face-art-whole-files.py').read_text(encoding='utf-8')
+tree = ast.parse(source)
+node = next(n for n in tree.body if isinstance(n, ast.Assign)
+            and any(isinstance(t, ast.Name) and t.id == 'FILES' for t in n.targets))
+files = [
+    'src/components/__tests__/WorkoutSessionCompletion.test.tsx',
+    'src/pages/__tests__/Home.firstVisitGuide.test.tsx',
+    'src/features/program/__tests__/useProgramWriters.test.ts',
+    'src/lib/__tests__/performanceEngineConsumers.test.ts',
+    'src/lib/__tests__/weekAnchorProse.test.ts',
+    'src/lib/__tests__/bodyRig.test.ts',
+    'src/lib/__tests__/formArtOwnerRelease.test.ts',
+    'src/lib/__tests__/formArtwork.test.ts',
+    'src/lib/__tests__/formArtCutouts.test.ts',
+    'scripts/art/form-art-releases.test.ts',
+]
+lines = source.splitlines(keepends=True)
+lines[node.lineno-1:node.end_lineno] = ['FILES = '+repr(files)+'\n']
+source = ''.join(lines).replace('five complete files', 'ten complete files')
+source = source.replace("OUT = CHECKS/'face-pulls-cue-fix-whole-files'", "OUT = CHECKS/'face-pulls-final-cues-whole-files'")
+source = source.replace('ordinaryFiveFileCohortExitZero', 'ordinaryCompleteFileCohortExitZero')
+needle = "save('inputs-before.json',before)"
+assert source.count(needle) == 1
+source = source.replace(needle, "assert before == json.loads((CHECKS/'face-pulls-final-cues-2efdec417/inputs-before.json').read_bytes()), 'Current source inputs differ from final full run'\n"+needle)
+out = d/'run-face-final-cues-whole-files.py'
+assert not out.exists()
+ast.parse(source)
+out.write_text(source, encoding='utf-8')
+print(json.dumps({'helper': str(out), 'sha256': hashlib.sha256(out.read_bytes()).hexdigest(), 'completeFiles': files}))

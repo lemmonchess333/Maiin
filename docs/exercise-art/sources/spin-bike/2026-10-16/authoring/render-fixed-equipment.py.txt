@@ -1,0 +1,131 @@
+"""Fixed accepted equipment renderer; no solver, body or source-bank access.
+
+Derived from the author-owned reviewed construction renderer. Pillow+NumPy only.
+The700x700 equipment canvas and3xAA affect new mesh pixels only.
+"""
+from pathlib import Path
+import json,math
+import numpy as np
+from PIL import Image
+HERE=Path(__file__).resolve().parent
+data=json.loads((HERE/'fixed-geometry.json').read_bytes())
+p=data['best']['parameters'];R=np.array(data['best']['rotation']);T=np.array(data['best']['translation'])
+SIZE=(700,700);PAD=np.array([20.,40.]);PRINCIPAL=np.array([313.5,313.5]);AA=3
+MATERIALS={'steel':(80,84,89),'dark':(44,48,52),'rubber':(26,29,32),'alloy':(133,138,143),'cover':(59,64,69)}
+LIGHT=np.array([-.3,.8,-.5]);LIGHT/=np.linalg.norm(LIGHT);EYE=-R.T@(T*np.array([1.,-1.,1.]))
+
+def unit(a):a=np.asarray(a,dtype=float);return a/max(np.linalg.norm(a),1e-12)
+
+def project(w):
+    a=R@np.array(w);a[1]*=-1;a+=T
+    return PRINCIPAL+p['focalPixels']*a[:2]/a[2]+PAD
+
+def at(screen,z=0.):
+    # Backproject a fixed apparatus point onto one declared world-Z plane.
+    u,v=(np.array(screen)-PRINCIPAL)/p['focalPixels'];r=R.copy();r[1]*=-1
+    A=np.array([[r[0,0]-u*r[2,0],r[0,1]-u*r[2,1]],[r[1,0]-v*r[2,0],r[1,1]-v*r[2,1]]])
+    b=np.array([u*(r[2,2]*z+T[2])-r[0,2]*z-T[0],v*(r[2,2]*z+T[2])-r[1,2]*z-T[1]])
+    x,y=np.linalg.solve(A,b);return np.array([x,y,z])
+
+class Mesh:
+    def __init__(self):self.faces=[]
+    def face(self,vs,m='steel',factor=1.):
+        vs=np.array(vs)
+        if len(vs)>4:
+            centre=vs.mean(axis=0)
+            for i in range(len(vs)):self.faces.append((np.array([centre,vs[i],vs[(i+1)%len(vs)]]),m,factor))
+        else:self.faces.append((vs,m,factor))
+    def cylinder(self,a,b,r,m='steel',n=20):
+        a,b=np.array(a),np.array(b);axis=unit(b-a);u=unit(np.cross(axis,[0,1,0] if abs(axis[1])<.9 else [1,0,0]));v=np.cross(axis,u)
+        ring=[r*(math.cos(t)*u+math.sin(t)*v) for t in np.linspace(0,2*math.pi,n,endpoint=False)]
+        for i in range(n):j=(i+1)%n;self.face([a+ring[i],a+ring[j],b+ring[j],b+ring[i]],m)
+        self.face([a+x for x in reversed(ring)],m,.9);self.face([b+x for x in ring],m,1.08)
+    def beam(self,a,b,w=.05,h=.04,m='steel'):
+        a,b=np.array(a),np.array(b);axis=unit(b-a);u=unit(np.cross(axis,[0,0,1] if abs(axis[2])<.9 else [0,1,0]));v=np.cross(axis,u)
+        ring=[x*u+y*v for x,y in [(-w/2,-h/2),(w/2,-h/2),(w/2,h/2),(-w/2,h/2)]]
+        for i in range(4):j=(i+1)%4;self.face([a+ring[i],a+ring[j],b+ring[j],b+ring[i]],m)
+        self.face([a+x for x in reversed(ring)],m,.85);self.face([b+x for x in ring],m,.95)
+    def render(self):
+        width,height=SIZE[0]*AA,SIZE[1]*AA
+        pixels=np.zeros((height,width,4),dtype=np.uint8);depth=np.full((height,width),np.inf)
+        for vertices,m,factor in self.faces:
+            centre=vertices.mean(axis=0);normal=unit(np.cross(vertices[1]-vertices[0],vertices[2]-vertices[0]));eye=unit(EYE-centre)
+            if np.dot(normal,eye)<0:normal=-normal
+            diffuse=max(0,float(normal@LIGHT));half=unit(LIGHT+eye);spec=max(0,float(normal@half))**24
+            color=np.clip(np.array(MATERIALS[m])*(.58+.53*diffuse)*factor+spec*(40 if m!='rubber' else 9),12,198).astype(np.uint8)
+            points=np.array([project(w)*AA for w in vertices]);zz=np.array([(R@w+T)[2] for w in vertices])
+            for i in range(1,len(vertices)-1):
+                pp=points[[0,i,i+1]];z=zz[[0,i,i+1]]
+                xmin=max(0,int(np.floor(pp[:,0].min())));xmax=min(width-1,int(np.ceil(pp[:,0].max())));ymin=max(0,int(np.floor(pp[:,1].min())));ymax=min(height-1,int(np.ceil(pp[:,1].max())))
+                if xmin>xmax or ymin>ymax:continue
+                den=(pp[1,1]-pp[2,1])*(pp[0,0]-pp[2,0])+(pp[2,0]-pp[1,0])*(pp[0,1]-pp[2,1])
+                if abs(den)<1e-10:continue
+                yy,xx=np.mgrid[ymin:ymax+1,xmin:xmax+1];xx=xx+.5;yy=yy+.5
+                b0=((pp[1,1]-pp[2,1])*(xx-pp[2,0])+(pp[2,0]-pp[1,0])*(yy-pp[2,1]))/den
+                b1=((pp[2,1]-pp[0,1])*(xx-pp[2,0])+(pp[0,0]-pp[2,0])*(yy-pp[2,1]))/den;b2=1-b0-b1
+                inside=(b0>=-1e-10)&(b1>=-1e-10)&(b2>=-1e-10);inv=b0/z[0]+b1/z[1]+b2/z[2];candidate=np.where(inside& (inv>0),1/np.maximum(inv,1e-12),np.inf)
+                target=depth[ymin:ymax+1,xmin:xmax+1];closer=candidate<target
+                target[closer]=candidate[closer];pixels[ymin:ymax+1,xmin:xmax+1][closer]=[*color,255]
+        return Image.fromarray(pixels).resize(SIZE,Image.Resampling.LANCZOS)
+
+def passive_axis(pin,slope):
+    # One actual passive rocking bearing per pedal; common hardware dimensions.
+    base=project(pin);eps=.0001;J=np.array([(project(pin+np.array([eps,0,0]))-base)/eps,(project(pin+np.array([0,eps,0]))-base)/eps]).T
+    xy=unit(np.linalg.solve(J,np.array([1.,slope])));return np.array([xy[0],xy[1],0.])
+
+def apparatus(label,clear=False):
+    m=Mesh();groundY=-.30;rear=np.array([-.65,groundY,0.]);front=np.array([.50,groundY,0.])
+    # One fixed two-rail chassis, two cross feet and grounded flywheel support.
+    for z in [-.18,.18]:
+        m.beam([rear[0],groundY,z],[front[0],groundY,z],.065,.05)
+        m.beam([rear[0]+.06,groundY,z],[-.32,.55,z],.06,.045)
+        m.beam([front[0]-.04,groundY,z],at([441,249],z),.065,.05)
+        m.beam([-.32,.55,z],[.32,.04,z],.07,.05)
+    for x in [rear[0],front[0]]:
+        m.cylinder([x,groundY,-.3],[x,groundY,.3],.037,'dark',24)
+        for z in [-.3,.3]:m.cylinder([x-.035,groundY,z],[x+.035,groundY,z],.047,'rubber',16)
+    m.cylinder([0,0,-.095],[0,0,.095],.024,'alloy',28)
+    # Common belt drive enclosure. The far B support projects behind it.
+    fly=at([424,450]);cx,cy=fly[:2]
+    if not clear:
+        m.cylinder([cx,cy,-.055],[cx,cy,.075],.224,'alloy',64)
+        m.cylinder([cx,cy,-.061],[cx,cy,-.055],.202,'dark',64)
+        m.cylinder([cx,cy,-.066],[cx,cy,-.06],.176,'steel',64)
+    z=-.066
+    outline=[]
+    # Convex belt cover around the shared crank axis and fixed flywheel axle.
+    for a in np.linspace(math.pi/2,3*math.pi/2,40):outline.append([.165*math.cos(a),.165*math.sin(a),z])
+    for a in np.linspace(-math.pi/2,math.pi/2,40):outline.append([cx+.145*math.cos(a),cy+.145*math.sin(a),z])
+    if not clear:m.face(outline,'cover');m.cylinder([0,0,z-.006],[0,0,z],.068,'dark',40)
+    # Fixed saddle and post; A/B have literal identical seated support.
+    saddle=at([210,266]);post=saddle-np.array([.015,.045,0]);m.cylinder([post[0],groundY,0],post,.032,'alloy',24)
+    m.beam(post,saddle,.04,.04,'dark')
+    m.cylinder(saddle+np.array([0,0,-.11]),saddle+np.array([0,0,.11]),.065,'rubber',36)
+    # One fixed multi-position loop per side. Seated and standing sources grip
+    # different already-present sleeves, rather than moving an apparatus bar.
+    central=at([437,267]);m.cylinder(at([455,450]),central,.028,'steel',28)
+    handproof={}
+    for side,zg in [('near',-.045),('far',.045)]:
+        loop=[at(q,-.045) for q in [[397,239],[448,217],[466,224],[415,246],[397,239]]]
+        loop=[np.array([q[0],q[1],zg]) for q in loop]
+        for i,(a,b) in enumerate(zip(loop,loop[1:])):m.cylinder(a,b,.014,'rubber' if i in [0,2] else 'steel',24)
+        m.cylinder(central,loop[3],.016,'steel',24)
+        handproof[side]={'fixedLoopScreen':[project(q).tolist() for q in loop],'seatedSleeve': [project(loop[i]).tolist() for i in [0,1]],'standingSleeve':[project(loop[i]).tolist() for i in [2,3]]}
+    contact={}
+    if clear:
+        # True inspection isolation: same fixed world camera and exact moving
+        # geometry, with all chassis/guards/bars hidden, no alternative rig.
+        m=Mesh();m.cylinder([0,0,-.095],[0,0,.095],.024,'alloy',28)
+    for side,sign in [('far',1),('near',-1)]:
+        theta=math.radians(p['phase'+label+'Degrees'])+(math.pi if sign==1 else 0);xy=.17*np.array([math.cos(theta),math.sin(theta)])
+        crank=np.array([*xy,sign*.08]);pin=np.array([*xy,sign*.11]);axle=np.array([0,0,sign*.08])
+        m.beam(axle,crank,.031,.021,'alloy');m.cylinder(crank,pin,.011,'dark',20)
+        # Same140 x100 mm platform,30 mm source-independent bearing height.
+        along=passive_axis(pin,{'A':.10,'B':.15,'C':.20}[label]);across=np.array([0,0,1.]);normal=unit(np.cross(across,along))
+        if normal[1]<0:normal=-normal
+        top=pin+.025*normal;corners=[top+a*along+b*across for a,b in [(-.07,-.05),(.07,-.05),(.07,.05),(-.07,.05)]];lower=[q-.022*normal for q in corners]
+        m.face(corners,'rubber');m.face(list(reversed(lower)),'dark')
+        for i in range(4):j=(i+1)%4;m.face([corners[i],lower[i],lower[j],corners[j]],'dark')
+        for a in [-.06,-.03,0,.03,.06]:m.cylinder(top+a*along-.044*across,top+a*along+.044*across,.002,'steel',8)
+        contact[side]={'crankPin':project(pin).tolist(),'topCorners':[project(q).tolist() for q in corners],'worldCrankPin':pin.tolist(),'worldTopCentre':top.tolist(),'platformDimensionsMetres':[.14,.10,.022],'passiveAxisWorld':along.tolist()}
+    return m.render(),{'contacts':contact,'fixedGrips':handproof,'meshFaces':len(m.faces),'fixedFloorYMetres':float(groundY)}

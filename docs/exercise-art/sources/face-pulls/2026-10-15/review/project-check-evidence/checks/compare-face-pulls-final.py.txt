@@ -1,0 +1,219 @@
+"""Read completed normal verification evidence; never run tests or edit the repo.
+
+Uses the original baseline indexer's exact failure identity/boundary algorithm,
+then verifies its complete baseline output against the immutable saved index.
+Added and byte-changed diagnostics remain unresolved whole-file review items.
+"""
+from pathlib import Path
+from datetime import datetime, timezone
+import argparse
+import hashlib
+import json
+import re
+import sys
+
+ROOT = Path(__file__).resolve().parent
+HEAD = '2efdec417e43a868bb2ece7a63baff8de6271db3'
+BASELINE = ROOT / 'baseline-main-2efdec417'
+BASELINE_INDEX = ROOT / 'baseline-main-2efdec417-failure-index-independent.json'
+BASELINE_INDEX_SHA = '7cb0982a4ffc7c796b8757556d8c21f8004a65302c71e7bc337456fdbf59bfd9'
+BASELINE_PARSER = ROOT / 'index-fresh-baseline.py'
+BASELINE_PARSER_SHA = '6733c4044a9e71c89c3cdc9450375849bd2b154b4665b7e845006e6eef3d7b5e'
+STAGES = ['lint', 'check:form-art', 'check:form-drafts', 'check:cycles', 'build', 'check:dist-size', 'test']
+PROOF_FILES = ['verify.log', 'result.json', 'inputs-before.json', 'inputs-after.json', 'start.json']
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+def load(path):
+    return json.loads(path.read_bytes())
+
+def require(condition, message):
+    if not condition:
+        raise RuntimeError(message)
+
+def parse_log(raw):
+    raw.decode('utf-8')
+    raw_lines = raw.splitlines(keepends=True)
+    lines = [line.decode('utf-8').rstrip('\r\n') for line in raw_lines]
+    offsets = [0]
+    for line in raw_lines:
+        offsets.append(offsets[-1] + len(line))
+    header_pattern = re.compile(r'^\s*FAIL\s+\|(?P<project>[^|]+)\|\s+(?P<file>\S+?\.test\.[cm]?[jt]sx?)(?P<tail>.*)$')
+    separator_pattern = re.compile(r'^\s*⎯+\[\d+/\d+\]⎯*\s*$')
+    headers = [i for i, line in enumerate(lines) if re.match(r'^\s*FAIL\s+', line)]
+    failures = []
+    for ordinal, index in enumerate(headers, 1):
+        match = header_pattern.fullmatch(lines[index])
+        require(match is not None, f'Unparsed failure header at line {index+1}')
+        project = match['project']
+        name = match['file'].replace('\\', '/')
+        require(not name.startswith(('/', './')) and '..' not in Path(name).parts, 'Unsafe failure path')
+        tail = match['tail'].strip()
+        if tail.startswith('> '):
+            case, kind = tail[2:], 'test'
+        else:
+            suite = re.fullmatch(r'\[\s*(.*?)\s*\]', tail)
+            require(suite is not None and suite[1].replace('\\', '/') == name, 'Unparsed suite failure')
+            case, kind = None, 'suite'
+        limit = headers[ordinal] if ordinal < len(headers) else len(lines)
+        end = next((i for i in range(index+1, limit) if separator_pattern.fullmatch(lines[i])), None)
+        require(end is not None, f'Missing own diagnostic boundary at line {index+1}')
+        start = index + 1
+        while start < end and not lines[start].strip():
+            start += 1
+        while end > start and not lines[end-1].strip():
+            end -= 1
+        require(start < end, 'Empty own diagnostic')
+        diagnostic = raw[offsets[start]:offsets[end]]
+        failures.append({
+            'canonicalId': f'{project}|{name}|{case if case is not None else "[suite]"}',
+            'project': project, 'file': name, 'kind': kind, 'case': case,
+            'headerLine': index+1, 'headerRawSha256': sha(raw_lines[index]),
+            'diagnostic': {'startLine': start+1, 'endLineInclusive': end,
+                           'byteStart': offsets[start], 'byteEndExclusive': offsets[end],
+                           'rawSha256': sha(diagnostic), 'firstOwnLine': lines[start]},
+        })
+    def summary(label):
+        matches = [line for line in lines if re.match(r'^\s*'+re.escape(label)+r'\s+\d', line)]
+        require(len(matches) == 1, f'Expected one completed {label} summary')
+        text = matches[0]
+        values = {status: int(count) for count, status in re.findall(r'(\d+)\s+(failed|passed|skipped)', text)}
+        total = re.search(r'\((\d+)\)\s*$', text)
+        require(total is not None and sum(values.values()) == int(total[1]), f'Invalid {label} total')
+        return {**values, 'total': int(total[1]), 'verbatim': text.strip()}
+    files, tests = summary('Test Files'), summary('Tests')
+    observed = [m[1] for line in lines if (m := re.fullmatch(r'>\s+\S+@\S+\s+(\S+)', line)) and m[1] in STAGES]
+    require(observed == STAGES, 'Normal verification did not complete all seven stages; no full failure comparison')
+    require(len({item['canonicalId'] for item in failures}) == len(failures), 'Duplicate failure identity')
+    require(sum(item['kind'] == 'test' for item in failures) == tests.get('failed', 0), 'Test failure accounting incomplete')
+    require(len({(item['project'], item['file']) for item in failures}) == files.get('failed', 0), 'Failed-file accounting incomplete')
+    return {'normalStagesObserved': observed, 'testFiles': files, 'tests': tests,
+            'failureHeaderCount': len(failures), 'testFailureHeaders': sum(item['kind'] == 'test' for item in failures),
+            'suiteFailureHeaders': sum(item['kind'] == 'suite' for item in failures), 'failures': failures}
+
+def read_run(folder):
+    proof_bytes = {name: (folder/name).read_bytes() for name in PROOF_FILES}
+    result = json.loads(proof_bytes['result.json'])
+    start = json.loads(proof_bytes['start.json'])
+    before, after = json.loads(proof_bytes['inputs-before.json']), json.loads(proof_bytes['inputs-after.json'])
+    raw = proof_bytes['verify.log']
+    require(result['normalCommand'] == 'npm run verify', 'Not the normal full verification command')
+    require(result['headBefore'] == result['headAfter'] == start['head'] == HEAD, 'Wrong or changed HEAD')
+    require(result['headUnchanged'] is True and result['statusRestored'] is True, 'HEAD/status preservation not proved')
+    require(result['statusBefore'] == result['statusAfter'] == start['status'], 'Frozen status differs')
+    require(before == after and len(before) == result['inputCount'], 'Input maps differ')
+    require(result['allInputsUnchanged'] is True and result['changedInputsAfterRestoration'] == [], 'Input mutation reported')
+    require(result['logSha256'] == sha(raw), 'Raw log hash does not match terminal result')
+    require(result['fullVerificationPassed'] is (result['exitCode'] == 0), 'False full verification status')
+    require(start['startedAt'] == result['startedAt'] and result['finishedAt'] >= result['startedAt'], 'Missing terminal timing')
+    require(start['command'][-2:] == ['run', 'verify'] and len(start['command']) == 4, 'Unexpected command argv')
+    require(len(start['snapshotPaths']) == len(set(start['snapshotPaths'])), 'Duplicate captured snapshot paths')
+    snapshot_proof_hashes, snapshot_captures = {}, []
+    for index, name in enumerate(start['snapshotPaths']):
+        require(isinstance(name, str) and 'planSweep' in name and name.endswith('.snap'), 'Unexpected captured snapshot')
+        filename = f'snapshot-before-{index}.snap'
+        original_sha = sha((folder/filename).read_bytes())
+        if name in before:
+            require(original_sha == before[name], 'Captured snapshot differs from before-input manifest')
+        snapshot_proof_hashes[filename] = original_sha
+        snapshot_captures.append({'sourcePath': name, 'capturedFile': filename, 'sha256': original_sha,
+                                  'boundByInputManifest': name in before})
+    for restored in result['snapshotRestores']:
+        name = restored['path']
+        require(name in start['snapshotPaths'], 'Restored snapshot outside captured list')
+        index = start['snapshotPaths'].index(name)
+        require(restored['restoredExact'] is True, 'Snapshot was not restored exactly')
+        require(sha((folder/f'snapshot-before-{index}.snap').read_bytes()) == restored['originalSha256'] == before[name], 'Original snapshot binding differs')
+        require(sha((folder/f'snapshot-test-output-{index}.snap').read_bytes()) == restored['testOutputSha256'], 'Snapshot test output binding differs')
+        snapshot_proof_hashes[f'snapshot-test-output-{index}.snap'] = restored['testOutputSha256']
+    parsed = parse_log(raw)
+    require((parsed['testFiles'].get('failed', 0) == 0) == (result['exitCode'] == 0), 'Terminal exit and complete unit summary disagree')
+    return {'folder': str(folder), 'result': result, 'start': start, 'inputs': before, 'raw': raw,
+            'sourceProofHashes': {name: sha(data) for name, data in proof_bytes.items()},
+            'snapshotProofHashes': snapshot_proof_hashes, 'capturedSnapshotProofs': snapshot_captures, **parsed}
+
+def own_excerpt(run, failure):
+    info = failure['diagnostic']
+    data = run['raw'][info['byteStart']:info['byteEndExclusive']]
+    require(sha(data) == info['rawSha256'], 'Own diagnostic range/hash mismatch')
+    return data.decode('utf-8').splitlines()[:3]
+
+def main():
+    sys.stdout.reconfigure(encoding='utf-8')
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--label', default='face-pulls-final-2efdec417')
+    args = parser.parse_args()
+    require(re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*', args.label) is not None, 'Unsafe run label')
+    require(args.label != BASELINE.name, 'Candidate cannot be the baseline')
+    candidate_folder = ROOT / args.label
+    output = ROOT / f'{args.label}-failure-comparison-independent.json'
+    require(not output.exists(), 'Refuse to overwrite a completed comparison')
+    require(sha(BASELINE_INDEX.read_bytes()) == BASELINE_INDEX_SHA, 'Baseline index changed')
+    require(sha(BASELINE_PARSER.read_bytes()) == BASELINE_PARSER_SHA, 'Original baseline parser changed')
+    saved = load(BASELINE_INDEX)
+    baseline, candidate = read_run(BASELINE), read_run(candidate_folder)
+    require(saved['baselineHead'] == HEAD and saved['failures'] == baseline['failures'], 'Original baseline identity/diagnostic parse differs')
+    require(saved['sourceProofHashes'] == baseline['sourceProofHashes'], 'Original baseline proof changed')
+    require(saved['testFiles'] == baseline['testFiles'] and saved['tests'] == baseline['tests'], 'Baseline summary changed')
+    require(baseline['result']['statusBefore'] == baseline['result']['statusAfter'] == '', 'Baseline was not clean')
+    require(len(baseline['inputs']) == 2656 and baseline['failureHeaderCount'] == 82, 'Wrong measured baseline')
+    for key in ['command', 'nodeSha256', 'npmCliSha256', 'helperSha256', 'tree']:
+        require(baseline['start'][key] == candidate['start'][key], f'Normal runtime/runner/base tree mismatch: {key}')
+    old = {row['canonicalId']: row for row in baseline['failures']}
+    new = {row['canonicalId']: row for row in candidate['failures']}
+    added = sorted(new.keys() - old.keys())
+    removed = sorted(old.keys() - new.keys())
+    shared = old.keys() & new.keys()
+    changed = sorted(key for key in shared if old[key]['diagnostic']['rawSha256'] != new[key]['diagnostic']['rawSha256'])
+    identical = sorted(shared - set(changed))
+    def detail(key, prior, current):
+        return {'canonicalId': key,
+                'baseline': ({**prior, 'firstThreeOwnLines': own_excerpt(baseline, prior)} if prior else None),
+                'candidate': ({**current, 'firstThreeOwnLines': own_excerpt(candidate, current)} if current else None)}
+    unresolved = {}
+    for key in added + changed:
+        row = new[key]
+        filekey = (row['project'], row['file'])
+        unresolved.setdefault(filekey, []).append(key)
+    input_delta = sorted(name for name in baseline['inputs'].keys() | candidate['inputs'].keys()
+                         if baseline['inputs'].get(name) != candidate['inputs'].get(name))
+    report = {
+        'status': 'completed-normal-runs-compared-exactly-no-failure-disposition',
+        'comparedAt': datetime.now(timezone.utc).isoformat(), 'baselineHead': HEAD,
+        'candidateLabel': args.label, 'normalCommand': 'npm run verify',
+        'baseline': {key: baseline[key] for key in ['folder', 'sourceProofHashes', 'snapshotProofHashes', 'capturedSnapshotProofs', 'testFiles', 'tests', 'failureHeaderCount', 'testFailureHeaders', 'suiteFailureHeaders']},
+        'candidate': {key: candidate[key] for key in ['folder', 'sourceProofHashes', 'snapshotProofHashes', 'capturedSnapshotProofs', 'testFiles', 'tests', 'failureHeaderCount', 'testFailureHeaders', 'suiteFailureHeaders']},
+        'normalStagesObserved': candidate['normalStagesObserved'],
+        'baselineExitCode': baseline['result']['exitCode'], 'candidateExitCode': candidate['result']['exitCode'],
+        'candidateFullVerificationPassed': candidate['result']['fullVerificationPassed'],
+        'candidateInputsPreserved': True, 'candidateInputCount': len(candidate['inputs']),
+        'candidateSnapshotRestores': candidate['result']['snapshotRestores'],
+        'baselineToCandidateChangedInputPaths': input_delta,
+        'identityDefinition': saved['identityDefinition'], 'diagnosticHashDefinition': saved['diagnosticHashDefinition'],
+        'baselineIndexSha256': BASELINE_INDEX_SHA, 'baselineParserSha256': BASELINE_PARSER_SHA,
+        'comparisonHelperSha256': sha(Path(__file__).read_bytes()),
+        'counts': {'added': len(added), 'removed': len(removed), 'changedDiagnostics': len(changed), 'identicalDiagnostics': len(identical)},
+        'added': [detail(key, None, new[key]) for key in added],
+        'removed': [detail(key, old[key], None) for key in removed],
+        'changedDiagnostics': [detail(key, old[key], new[key]) for key in changed],
+        'presentInBothWithIdenticalDiagnosticBytes': identical,
+        'candidateFailures': candidate['failures'],
+        'requiredWholeFileFocus': [{'project': project, 'file': name, 'failureIds': sorted(ids),
+                                    'status': 'unresolved-needs-normal-complete-file-evidence',
+                                    'evidence': None} for (project, name), ids in sorted(unresolved.items())],
+        'dispositionPolicy': 'Added or byte-changed failures are unresolved, including suite failures. Use normal complete-file test evidence for each affected file, with exact command, terminal counts, input/snapshot preservation and own diagnostics. Aggregate subset totals do not establish an individual suite pass. Removed failures are merely absent from this full-run failure report, not automatically fixed. Identical failures only describe these two measured runs; no broader pre-existing claim is made.',
+        'testsRunByComparer': False, 'repositoryModifiedByComparer': False, 'rawLogsModified': False,
+        'completionOrPublicationClaim': False,
+    }
+    require(all(sha((candidate_folder/name).read_bytes()) == digest for name, digest in candidate['sourceProofHashes'].items()), 'Candidate evidence changed during comparison')
+    require(all(sha((BASELINE/name).read_bytes()) == digest for name, digest in baseline['sourceProofHashes'].items()), 'Baseline evidence changed during comparison')
+    require(all(sha((candidate_folder/name).read_bytes()) == digest for name, digest in candidate['snapshotProofHashes'].items()), 'Candidate raw snapshot evidence changed during comparison')
+    require(all(sha((BASELINE/name).read_bytes()) == digest for name, digest in baseline['snapshotProofHashes'].items()), 'Baseline raw snapshot evidence changed during comparison')
+    output.write_text(json.dumps(report, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
+    print(json.dumps({'output': str(output), 'sha256': sha(output.read_bytes()), 'counts': report['counts'],
+                      'requiredWholeFileFocus': report['requiredWholeFileFocus'],
+                      'candidateFullVerificationPassed': report['candidateFullVerificationPassed']}, ensure_ascii=False))
+
+if __name__ == '__main__':
+    main()

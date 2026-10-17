@@ -1,0 +1,51 @@
+{
+  "advice": true,
+  "cards": [
+    {
+      "decoded": true,
+      "display": [
+        480,
+        377
+      ],
+      "limit": "480",
+      "natural": [
+        480,
+        377
+      ]
+    },
+    {
+      "decoded": true,
+      "display": [
+        347.9895935058594,
+        273.32293701171875
+      ],
+      "limit": "348",
+      "natural": [
+        480,
+        377
+      ]
+    },
+    {
+      "decoded": true,
+      "display": [
+        160,
+        125.66667175292967
+      ],
+      "limit": "160",
+      "natural": [
+        480,
+        377
+      ]
+    }
+  ],
+  "page": [
+    390,
+    390
+  ],
+  "preparation": true,
+  "theme": "dark",
+  "viewport": [
+    390,
+    844
+  ]
+}

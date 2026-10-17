@@ -1,0 +1,185 @@
+{
+  "exerciseId": "single-leg-calf-raise",
+  "version": "anatomy-v3-2026-10-15-retained-single-leg-calf-two-endpoint-v1",
+  "width": 626,
+  "height": 1209,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Parent actual native, standard-card, registered390x844 light/dark and playback review under existing owner relaxation authorization",
+  "reviewedAt": "2026-10-15T19:29:36.504624+00:00",
+  "recordStage": "Actual integrated review complete; project verification, CI and publication separately gated",
+  "reference": {
+    "path": "form-frames/single-leg-calf-raise/3.webp",
+    "sha256": "1d9a123655b12cd30e9dd25fc102acbe8c3a0b6519489da14339114d61b57fa3"
+  },
+  "cueSha256": "36bfdb7cff92252d94446e2767605d34850997a188873accebe58c19d87df99c",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Parent viewed canonical FA56 and the intact original/final native art. Bald faceless white-grey athlete without shorts, anatomical contours and full white trainers retained. Source trainer/shading detail differences remain disclosed; this is not pixel-identical canonical identity certification."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Source1 remains in place; source3 receives only whole-scene integer translation(0,+32). Common empty-margin crop[217,158,843,1367], final626x1209, native actual player626x1209. No scaling or body-part alignment."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: All original human geometry remains intact. Colour layers stay within the documented original muscle fields; no body warping, limb fitting, head/shoe grafting or hidden anatomy reconstruction. Parent native and mobile observation found no obvious material body distortion."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Original step and balance rail remain unredrawn. Whole-scene registration leaves several-pixel native contour/base differences, disclosed as findings rather than pixel-fixed hardware certification."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Native forefoot remains supported by the step at both endpoints, heel hangs free, unloaded far foot remains off support, and near hand retains its original rail contact. Small inherited hand/foot/gear differences remain; no major mobile foot slide was observed."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Intact unilateral low and clearly plantarflexed raised endpoints show the stance knee extended and other leg unloaded. Lower heel is modestly below the step, not a claimed deep/maximum stretch. Only two endpoints are repeated; no drawn intermediate."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Catalogue primary ['Calves'], secondary ['Soleus']. Palette bases primary#7B72E9 and secondary#9590E0; inherited shading/fade and contours retained in documented independent layers. No unrelated new highlight field or spatial gradient is authored."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Parent selected all six actual ExerciseFormContent instruction buttons plus wrap in390x844 light and dark; each decoded public path/label matches its cue. The prescribed muscle key and exact catalogue preparation are visibly present. Reference3 normal card is byte-identical to the reviewed draft preview."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual native and registered390x844 traces contain all six paths with automatic6-to-1 wraps. Parent exercised pause/manual selection, previous1-to-6 and next6-to-1. Registered slower intervals approximately2.4s versus normal1.2s. PhysicalPoses2, source order[1, 1, 3, 3, 1, 1]; no additional trajectory drawings are claimed."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Parent reviewed actual unchanged ExerciseFormContent at verified390x844 light, full athlete/supports and normal registered card, prescribed muscle legend, preparation, six instruction selections and playback. No horizontal overflow or material clipping/contact defect observed. Draft cards at480/160px reviewed in both themes; actual registered export is byte-identical. Registered browser warnings/errors empty."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Parent reviewed actual unchanged ExerciseFormContent at verified390x844 dark, full athlete/supports and normal registered card, prescribed muscle legend, preparation, six instruction selections and playback. No horizontal overflow or material clipping/contact defect observed. Draft cards at480/160px reviewed in both themes; actual registered export is byte-identical. Registered browser warnings/errors empty."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/single-leg-calf-raise/1.webp",
+      "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/single-leg-calf-raise/2026-10-15/draft/1-framed.png",
+        "sha256": "83c93f37fbd71df43f7d22279191fa2edd57295d41765548b163ec3e700e18a9"
+      }
+    },
+    {
+      "path": "form-frames/single-leg-calf-raise/2.webp",
+      "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/single-leg-calf-raise/2026-10-15/draft/1-framed.png",
+        "sha256": "83c93f37fbd71df43f7d22279191fa2edd57295d41765548b163ec3e700e18a9"
+      }
+    },
+    {
+      "path": "form-frames/single-leg-calf-raise/3.webp",
+      "sha256": "1d9a123655b12cd30e9dd25fc102acbe8c3a0b6519489da14339114d61b57fa3",
+      "sourcePose": 3,
+      "source": {
+        "path": "docs/exercise-art/sources/single-leg-calf-raise/2026-10-15/draft/3-framed.png",
+        "sha256": "9bf51e383a8a6461c7c1bf3560ab7569c0cd8c7f6b46d4424a6912d6448d9965"
+      }
+    },
+    {
+      "path": "form-frames/single-leg-calf-raise/4.webp",
+      "sha256": "1d9a123655b12cd30e9dd25fc102acbe8c3a0b6519489da14339114d61b57fa3",
+      "sourcePose": 3,
+      "source": {
+        "path": "docs/exercise-art/sources/single-leg-calf-raise/2026-10-15/draft/3-framed.png",
+        "sha256": "9bf51e383a8a6461c7c1bf3560ab7569c0cd8c7f6b46d4424a6912d6448d9965"
+      }
+    },
+    {
+      "path": "form-frames/single-leg-calf-raise/5.webp",
+      "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/single-leg-calf-raise/2026-10-15/draft/1-framed.png",
+        "sha256": "83c93f37fbd71df43f7d22279191fa2edd57295d41765548b163ec3e700e18a9"
+      }
+    },
+    {
+      "path": "form-frames/single-leg-calf-raise/6.webp",
+      "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/single-leg-calf-raise/2026-10-15/draft/1-framed.png",
+        "sha256": "83c93f37fbd71df43f7d22279191fa2edd57295d41765548b163ec3e700e18a9"
+      }
+    }
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": [1, 1, 3, 3, 1, 1],
+  "positionCoordinates": [0, 0, 1, 1, 0, 0],
+  "setup": [
+    "Stand on one foot on a step's edge, ball of the foot planted, heel hanging free.",
+    "Hold a wall or rail for balance only \u2014 don't pull yourself up with it."
+  ],
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "approval": {
+    "actor": "User through explicit continuing completion/merge request and prior slight-requirements relaxation.",
+    "instruction": "Continue and merge completed exercises, preserve the current model without shorts, avoid repeated failed requests, and stop asking routine approvals.",
+    "context": "Use the existing owner-with-findings route, keep strict checks null and disclose residual source differences. Acceptance does not excuse implausible anatomy, equipment, contact or mechanics. Final registered review, project checks, CI and actual merge remain required."
+  },
+  "findings": [
+    "Modest pictured below-step heel range, not a deep or maximum stretch claim.",
+    "Small inherited posture/contour differences; no established material proportion failure, no claim of exact anatomical identity.",
+    "Several-pixel residual original step/rail and hand/forefoot contact differences; not strict1px hardware certification.",
+    "Two physical endpoints repeated honestly across six paths; no authored intermediate or continuous trajectory.",
+    "Only the source-visible near calf/soleus is coloured; no invented hidden-side muscle geometry."
+  ],
+  "observedQaChecks": {
+    "identity": {
+      "observed": true,
+      "evidence": "Parent viewed canonical FA56 and the intact original/final native art. Bald faceless white-grey athlete without shorts, anatomical contours and full white trainers retained. Source trainer/shading detail differences remain disclosed; this is not pixel-identical canonical identity certification."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "Source1 remains in place; source3 receives only whole-scene integer translation(0,+32). Common empty-margin crop[217,158,843,1367], final626x1209, native actual player626x1209. No scaling or body-part alignment."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "All original human geometry remains intact. Colour layers stay within the documented original muscle fields; no body warping, limb fitting, head/shoe grafting or hidden anatomy reconstruction. Parent native and mobile observation found no obvious material body distortion."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "Original step and balance rail remain unredrawn. Whole-scene registration leaves several-pixel native contour/base differences, disclosed as findings rather than pixel-fixed hardware certification."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Native forefoot remains supported by the step at both endpoints, heel hangs free, unloaded far foot remains off support, and near hand retains its original rail contact. Small inherited hand/foot/gear differences remain; no major mobile foot slide was observed."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "Intact unilateral low and clearly plantarflexed raised endpoints show the stance knee extended and other leg unloaded. Lower heel is modestly below the step, not a claimed deep/maximum stretch. Only two endpoints are repeated; no drawn intermediate."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Catalogue primary ['Calves'], secondary ['Soleus']. Palette bases primary#7B72E9 and secondary#9590E0; inherited shading/fade and contours retained in documented independent layers. No unrelated new highlight field or spatial gradient is authored."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Parent selected all six actual ExerciseFormContent instruction buttons plus wrap in390x844 light and dark; each decoded public path/label matches its cue. The prescribed muscle key and exact catalogue preparation are visibly present. Reference3 normal card is byte-identical to the reviewed draft preview."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Actual native and registered390x844 traces contain all six paths with automatic6-to-1 wraps. Parent exercised pause/manual selection, previous1-to-6 and next6-to-1. Registered slower intervals approximately2.4s versus normal1.2s. PhysicalPoses2, source order[1, 1, 3, 3, 1, 1]; no additional trajectory drawings are claimed."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Parent reviewed actual unchanged ExerciseFormContent at verified390x844 light, full athlete/supports and normal registered card, prescribed muscle legend, preparation, six instruction selections and playback. No horizontal overflow or material clipping/contact defect observed. Draft cards at480/160px reviewed in both themes; actual registered export is byte-identical. Registered browser warnings/errors empty."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Parent reviewed actual unchanged ExerciseFormContent at verified390x844 dark, full athlete/supports and normal registered card, prescribed muscle legend, preparation, six instruction selections and playback. No horizontal overflow or material clipping/contact defect observed. Draft cards at480/160px reviewed in both themes; actual registered export is byte-identical. Registered browser warnings/errors empty."
+    }
+  },
+  "integrationValidation": "Actual native and registered390x844 light/dark guides, six selections, normal/slower loops, wrap controls and standard card reviewed. All strict checks remain null. Project verification, current-head CI, actual merge and preservation audit remain separate gates.",
+  "publicationGate": "No completion credit until final review, normal checks, actual current-head CI, merge and preservation audit."
+}

@@ -1,0 +1,53 @@
+{
+  "exerciseId": "leg-press",
+  "states": [
+    {
+      "pose": "A",
+      "sourceSha256": "f4f68aff6a9ef3c7bfba4a083755a03357f53cc376b03ec316d08d099c209651",
+      "primaryPixels": 14508,
+      "secondaryPixels": 0,
+      "mechanics": {
+        "joint": [350.0, 650.0],
+        "fixedPivot": [592.5, 894.0],
+        "secondFixedPivot": [722.5, 919.0],
+        "beamLength": 344.00908418238026,
+        "loadCentre": [677.9, 809.125],
+        "loadPlateCount": 3,
+        "loadPlateRadiusY": 61,
+        "plateTranslation": [0.0, 0.0],
+        "sourceScale": 1,
+        "anatomicalTransforms": 0
+      },
+      "headAndFixedScene": "All pixels outside the documented B moving region come from A at unchanged coordinates. A itself is the retained native source; no original-master outside-pixel invariance claimed.",
+      "anatomicalTransforms": 0
+    },
+    {
+      "pose": "B",
+      "sourceSha256": "77047b44701d46fac7a8c84e43bb6293dfe9e7df5dace66b15e21d71851dd945",
+      "primaryPixels": 7526,
+      "secondaryPixels": 0,
+      "mechanics": {
+        "joint": [595.0, 550.0],
+        "fixedPivot": [592.5, 894.0],
+        "secondFixedPivot": [722.5, 919.0],
+        "beamLength": 344.00908418238026,
+        "loadCentre": [712.9, 894.875],
+        "loadPlateCount": 3,
+        "loadPlateRadiusY": 61,
+        "plateTranslation": [245.0, -100.0],
+        "sourceScale": 1,
+        "anatomicalTransforms": 0
+      },
+      "headAndFixedScene": "All pixels outside the documented B moving region come from A at unchanged coordinates. A itself is the retained native source; no original-master outside-pixel invariance claimed.",
+      "anatomicalTransforms": 0
+    }
+  ],
+  "sourceScale": 1,
+  "commonCrop": [144, 0, 1344, 1024],
+  "integerPadding": [32, 16],
+  "dimensions": [1264, 1056],
+  "anatomicalTransforms": 0,
+  "newImageRequestsInRecipe": 0,
+  "strictCertified": false,
+  "completionCredit": false
+}

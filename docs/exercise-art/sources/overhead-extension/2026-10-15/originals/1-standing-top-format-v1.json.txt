@@ -1,0 +1,18 @@
+{
+  "source": "1-standing-top-candidate-v1.png",
+  "sourceSize": [
+    932,
+    1688
+  ],
+  "uniformWholeFrameScale": 1.0987124463519313,
+  "scaledSize": [
+    1024,
+    1855
+  ],
+  "commonCanvas": [
+    1024,
+    1856
+  ],
+  "blackBottomPadding": 1,
+  "landmarkFittingUsed": false
+}

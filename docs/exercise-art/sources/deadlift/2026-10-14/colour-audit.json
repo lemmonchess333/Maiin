@@ -1,0 +1,106 @@
+[
+  {
+    "pose": 1,
+    "sourceComponents": [
+      {
+        "pixels": 25794,
+        "bbox": [635, 349, 896, 655],
+        "meanSourceChroma": 102.90990152748701,
+        "role": "Source connected colour region; not anatomical ownership classification"
+      }
+    ],
+    "primaryColourOwnershipBoundary": [
+      [615, 478],
+      [647, 478],
+      [665, 468],
+      [681, 465],
+      [700, 468],
+      [718, 466],
+      [743, 467],
+      [766, 479],
+      [787, 500],
+      [830, 522],
+      [910, 662],
+      [615, 670]
+    ],
+    "ownershipMethod": "Source-tinted muscle regions plus native traced lumbar/glute boundary, not certified segmentation",
+    "colourLightingMethod": "Existing source maximum-channel luminance retained relative to each exact base colour; no new gradient treatment",
+    "editableReopenedExact": true,
+    "exactPrimaryPixels": 1262,
+    "exactSecondaryPixels": 4755,
+    "colourChangeOutsideScope": 0,
+    "bodyWarpGraftFitting": false,
+    "commonCrop": [370, 25, 1270, 905],
+    "commonPaddingOffset": [20, 50],
+    "nativeSize": [940, 940],
+    "reviewStatus": "Muscle ownership/native sequence pending"
+  },
+  {
+    "pose": 2,
+    "sourceComponents": [
+      {
+        "pixels": 31694,
+        "bbox": [667, 215, 894, 651],
+        "meanSourceChroma": 111.62860478323972,
+        "role": "Source connected colour region; not anatomical ownership classification"
+      }
+    ],
+    "primaryColourOwnershipBoundary": [
+      [640, 434],
+      [667, 427],
+      [683, 415],
+      [709, 411],
+      [730, 414],
+      [750, 421],
+      [774, 437],
+      [812, 485],
+      [904, 658],
+      [640, 669]
+    ],
+    "ownershipMethod": "Source-tinted muscle regions plus native traced lumbar/glute boundary, not certified segmentation",
+    "colourLightingMethod": "Existing source maximum-channel luminance retained relative to each exact base colour; no new gradient treatment",
+    "editableReopenedExact": true,
+    "exactPrimaryPixels": 1149,
+    "exactSecondaryPixels": 7289,
+    "colourChangeOutsideScope": 0,
+    "bodyWarpGraftFitting": false,
+    "commonCrop": [370, 25, 1270, 905],
+    "commonPaddingOffset": [20, 50],
+    "nativeSize": [940, 940],
+    "reviewStatus": "Muscle ownership/native sequence pending"
+  },
+  {
+    "pose": 3,
+    "sourceComponents": [
+      {
+        "pixels": 32265,
+        "bbox": [700, 135, 839, 646],
+        "meanSourceChroma": 103.34703238803657,
+        "role": "Source connected colour region; not anatomical ownership classification"
+      }
+    ],
+    "primaryColourOwnershipBoundary": [
+      [672, 440],
+      [694, 422],
+      [711, 407],
+      [739, 395],
+      [766, 395],
+      [785, 405],
+      [813, 431],
+      [843, 499],
+      [877, 661],
+      [672, 666]
+    ],
+    "ownershipMethod": "Source-tinted muscle regions plus native traced lumbar/glute boundary, not certified segmentation",
+    "colourLightingMethod": "Existing source maximum-channel luminance retained relative to each exact base colour; no new gradient treatment",
+    "editableReopenedExact": true,
+    "exactPrimaryPixels": 592,
+    "exactSecondaryPixels": 7943,
+    "colourChangeOutsideScope": 0,
+    "bodyWarpGraftFitting": false,
+    "commonCrop": [370, 25, 1270, 905],
+    "commonPaddingOffset": [20, 50],
+    "nativeSize": [940, 940],
+    "reviewStatus": "Muscle ownership/native sequence pending"
+  }
+]

@@ -1,0 +1,124 @@
+{
+  "scope": "Supplemental data-only parsing from saved exact official text; no new capture, image/source edit or QA assertion.",
+  "originalIndex": {
+    "path": "review/elliptical-tool-return-artifact-index-draft-final.json",
+    "sha256": "ee551048a8fa6165d849806d3363fe6830988d63d0ab027ab32d1643fad285b7"
+  },
+  "literalSplitting": "Full-input balanced bracket/quote scanner, followed by finite JSON/JSON5 data parse without evaluation.",
+  "helperSha256": "123acd84b85768261607a89f098a0e1d3f960eacde0402ad443142e26660b824",
+  "archiverSha256": "c5a66cf207b022087fc4bf391cfa57828ee8ffa4029e5c2dc997f31a1d66c3be",
+  "artifacts": [
+    {
+      "callId": "call_46992a2ac40f4ce98f1118f3d8bfb92d",
+      "callRecordSha256": "90e6ba4c94712d37353d641773894aa9eaa83eb8975b4e1da5cd21f5f0131311",
+      "outputRecordSha256": "ec9b42d593db0dd3625597414d2162074d07ea0bc839679dea843b39ae29771f",
+      "callByteStart": 5448807985,
+      "callByteEndExclusive": 5448809807,
+      "outputByteStart": 5448878131,
+      "outputByteEndExclusive": 5448956777,
+      "file": "review/elliptical-draft-light-manual-card-46992a2ac40f-b3-object2-dom.json",
+      "sha256": "fbcaf7f5d968cfe8268461096af951d53bffc87ddf478130c4a775cbeec8a99c",
+      "bytes": 901,
+      "kind": "elliptical-draft-light-card-sizes",
+      "sourceText": "review/elliptical-draft-light-manual-card-46992a2ac40f-b3-tool-text.txt",
+      "sourceTextSha256": "1f037929d75b0c5f432d34fdfb01275ef6969a22aedef445473af2838eb63cb8",
+      "objectOrdinal": 2,
+      "parsing": "JSON5 data-literal parse; no evaluation",
+      "viewportScope": {
+        "topLevelViewport": [
+          390,
+          844
+        ],
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    },
+    {
+      "callId": "call_e501517eed8d4145ba34535b43912125",
+      "callRecordSha256": "c716df9a5534f7a7766390be76c07b9744a6c8be75d523f259e9f27abe84d5b4",
+      "outputRecordSha256": "f7b054b180e02bb49c6b583915f671c1b40e8ef779fdb93078ae98b254a14773",
+      "callByteStart": 5450229104,
+      "callByteEndExclusive": 5450230667,
+      "outputByteStart": 5450298724,
+      "outputByteEndExclusive": 5450368465,
+      "file": "review/elliptical-draft-light-slower-final-observer-e501517eed8d-b2-object1-dom.json",
+      "sha256": "ccce07feffd836b8f2f8e2a6f089e4fc1831f2d07a751d3b6a14d5dd14af6ece",
+      "bytes": 7132,
+      "kind": "elliptical-draft-light-slower-final-observer",
+      "sourceText": "review/elliptical-draft-light-slower-final-observer-e501517eed8d-b2-tool-text.txt",
+      "sourceTextSha256": "658ab3a1ba84e6a8ebbbba0713881d73b3a500749ecf53984154435c1d867623",
+      "objectOrdinal": 1,
+      "parsing": "JSON5 data-literal parse; no evaluation",
+      "viewportScope": {
+        "topLevelViewport": [
+          390,
+          844
+        ],
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    },
+    {
+      "callId": "call_e501517eed8d4145ba34535b43912125",
+      "callRecordSha256": "c716df9a5534f7a7766390be76c07b9744a6c8be75d523f259e9f27abe84d5b4",
+      "outputRecordSha256": "f7b054b180e02bb49c6b583915f671c1b40e8ef779fdb93078ae98b254a14773",
+      "callByteStart": 5450229104,
+      "callByteEndExclusive": 5450230667,
+      "outputByteStart": 5450298724,
+      "outputByteEndExclusive": 5450368465,
+      "file": "review/elliptical-draft-light-slower-final-observer-e501517eed8d-b2-object2-dom.json",
+      "sha256": "415bb058cd779a4c5406375fa67d66451d50682a82b511487671d2294101d90b",
+      "bytes": 62,
+      "kind": "elliptical-draft-console",
+      "sourceText": "review/elliptical-draft-light-slower-final-observer-e501517eed8d-b2-tool-text.txt",
+      "sourceTextSha256": "658ab3a1ba84e6a8ebbbba0713881d73b3a500749ecf53984154435c1d867623",
+      "objectOrdinal": 2,
+      "parsing": "JSON5 data-literal parse; no evaluation",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [],
+        "containsNon390x844Viewport": false,
+        "classification": "viewport not established",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    }
+  ],
+  "unparsedObservations": [
+    {
+      "file": "review/elliptical-draft-initial-d705f99e4840-b2-tool-text.txt",
+      "reason": "Non-data text retained raw instead",
+      "sourceTextSha256": "aea1a99eab37f07f87d967f7af2705cb6daa8f44d44d67920cf6f9411feec0e1"
+    },
+    {
+      "file": "review/elliptical-draft-dark-manual-717d13c683b0-b2-tool-text.txt",
+      "objectOrdinal": 1,
+      "reason": "No complete finite matching-kind data object; raw preserved",
+      "sourceTextSha256": "633055fbefa1aaa2da53b0b02d27ccc532529fde40c14bff0571b16ed2825d44"
+    },
+    {
+      "file": "review/elliptical-draft-light-manual-card-46992a2ac40f-b3-tool-text.txt",
+      "objectOrdinal": 1,
+      "reason": "No complete finite matching-kind data object; raw preserved",
+      "sourceTextSha256": "1f037929d75b0c5f432d34fdfb01275ef6969a22aedef445473af2838eb63cb8"
+    }
+  ],
+  "originalIndexAndSourceTextUnchanged": true,
+  "qaAcceptance": false
+}

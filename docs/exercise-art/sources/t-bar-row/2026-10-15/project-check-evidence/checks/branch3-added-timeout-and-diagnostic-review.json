@@ -1,0 +1,131 @@
+{
+  "status": "read-only diagnosis; proposed dispositions need parent review, no failure waiver",
+  "reviewedAt": "2026-10-15T09:11:58.488715+00:00",
+  "reviewedInputs": {
+    "baseline/baseline-verify.log": "19e900e82a22ab227a5d15c3e1194b301d32166d1d47ca0730563f7f8c7edd24",
+    "checks/branch3-verify.log": "03b61570f019d7ac343f255395b1c4cae82e8f824726b4a1dcd793d4699c0d07",
+    "checks/branch3-failure-comparison.json": "99330e812c272b5914b41047e70e2cc2685207440a84e56cb3edea35f8f1037a"
+  },
+  "foodCamera": {
+    "addedIdentity": "FAIL  |dom| src/components/__tests__/FoodCameraModal.photoLock.test.tsx > FoodCameraModal — photo scanning not on the tier > names the offer the way the Pro line under the composer does once the trial is used",
+    "actualFailure": "DOM afterEach at src/test/setup.ts:41 exceeded10000ms; the hook drains a real zero-delay timer after cleanup unless fake timers are active. No content assertion failure is reported.",
+    "differentBaselineCaseSameHook": [
+      {
+        "identity": "FAIL  |dom| src/components/__tests__/FoodCameraModal.photoLock.test.tsx > FoodCameraModal — photo scanning not on the tier > the offer's buttons: Pro hands off to the page, Scan a barcode goes back to Barcode",
+        "project": "dom",
+        "file": "src/components/__tests__/FoodCameraModal.photoLock.test.tsx",
+        "suiteImportFailure": false,
+        "firstDetailLines": [
+          "Error: Hook timed out in 10000ms.",
+          "If this is a long-running hook, pass a timeout value as the last argument or configure it globally with \"hookTimeout\".",
+          "❯ src/test/setup.ts:41:3"
+        ]
+      }
+    ],
+    "testProductionAndSetupBytesUnchanged": true,
+    "cause": "Unproven. The timeout moved between case identities in the same unchanged file. This is context, not proof that this new case is pre-existing or harmless.",
+    "currentDisposition": "Retain added full-run failure; genuine-fix preflight is a current-code check only. Later full-run comparison/appropriate unchanged-code whole-file review remains required.",
+    "normalWholeFile": "src/components/__tests__/FoodCameraModal.photoLock.test.tsx",
+    "noTimeoutRetryConcurrencyOverrides": true
+  },
+  "proposedChangedDetailReviews": [
+    {
+      "identity": "FAIL  |node| src/lib/__tests__/leaderboard.test.ts > leaderboard weekly cutoff — local vs UTC date string > uses the LOCAL date of `since` under a positive-offset TZ (regression)",
+      "baselineDetailLines": [
+        "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+        "import { localDateString } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\dateHelpers.ts\";",
+        "// pretend \"now\" is Sun 2025-01-05 09:00 local Tokyo"
+      ],
+      "branchDetailLines": [
+        "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+        "import { localDateString } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\dateHelpers.ts\";",
+        "// pretend \"now\" is Sun 2025-01-05 09:00 local Tokyo"
+      ],
+      "classification": "reviewed-existing-diagnostic-change",
+      "rationale": "Full Windows ERR_UNSUPPORTED_ESM_URL_SCHEME diagnostic for c: absolute import is identical after only isolated-checkout/active-repo roots and corresponding relative loader path are normalized. No fix or resolved failure is claimed.",
+      "ownDiagnosticsEqualAfterDocumentedPathNormalization": true,
+      "baselineOwnDiagnostic": "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval \n      import { localDateString } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\dateHelpers.ts\";\n      // pretend \"now\" is Sun 2025-01-05 09:00 local Tokyo\n      const now = new Date(2025, 0, 5, 9, 0, 0);\n      const since = new Date(now);\n      since.setDate(since.getDate() - since.getDay()); // already Sunday\n      since.setHours(0, 0, 0, 0);\n      process.stdout.write(JSON.stringify({\n        local: localDateString(since),\n        utc: since.toISOString().split(\"T\")[0],\n      }));\n    \nnode:internal/modules/esm/load:193\n    throw new ERR_UNSUPPORTED_ESM_URL_SCHEME(parsed, schemes);\n          ^\n\nError [ERR_UNSUPPORTED_ESM_URL_SCHEME]: Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs. Received protocol 'c:'\n    at throwIfUnsupportedURLScheme (node:internal/modules/esm/load:193:11)\n    at defaultLoadSync (node:internal/modules/esm/load:146:3)\n    at #loadAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:802:12)\n    at nextStep (node:internal/modules/customization_hooks:189:26)\n    at load (file:///C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/tsx/dist/register-SoqaU4rg.mjs:2:5714)\n    at nextStep (node:internal/modules/customization_hooks:189:26)\n    at loadWithHooks (node:internal/modules/customization_hooks:374:18)\n    at #loadSync (node:internal/modules/esm/loader:825:16)\n    at ModuleLoader.load (node:internal/modules/esm/loader:783:26)\n    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:494:31) {\n  code: 'ERR_UNSUPPORTED_ESM_URL_SCHEME'\n}\n\nNode.js v24.19.0\n\n ❯ load ../../Maiin-burpees/node_modules/tsx/dist/register-SoqaU4rg.mjs:2:5714\n ❯ src/lib/__tests__/leaderboard.test.ts:48:17\n     46|       }));\n     47|     `;\n     48|     const out = execFileSync(\n       |                 ^\n     49|       process.execPath,\n     50|       [\"--import\", \"tsx\", \"--input-type=module\", \"--eval\", script],",
+      "branchOwnDiagnostic": "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval \n      import { localDateString } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\dateHelpers.ts\";\n      // pretend \"now\" is Sun 2025-01-05 09:00 local Tokyo\n      const now = new Date(2025, 0, 5, 9, 0, 0);\n      const since = new Date(now);\n      since.setDate(since.getDate() - since.getDay()); // already Sunday\n      since.setHours(0, 0, 0, 0);\n      process.stdout.write(JSON.stringify({\n        local: localDateString(since),\n        utc: since.toISOString().split(\"T\")[0],\n      }));\n    \nnode:internal/modules/esm/load:193\n    throw new ERR_UNSUPPORTED_ESM_URL_SCHEME(parsed, schemes);\n          ^\n\nError [ERR_UNSUPPORTED_ESM_URL_SCHEME]: Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs. Received protocol 'c:'\n    at throwIfUnsupportedURLScheme (node:internal/modules/esm/load:193:11)\n    at defaultLoadSync (node:internal/modules/esm/load:146:3)\n    at #loadAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:802:12)\n    at nextStep (node:internal/modules/customization_hooks:189:26)\n    at load (file:///C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/tsx/dist/register-SoqaU4rg.mjs:2:5714)\n    at nextStep (node:internal/modules/customization_hooks:189:26)\n    at loadWithHooks (node:internal/modules/customization_hooks:374:18)\n    at #loadSync (node:internal/modules/esm/loader:825:16)\n    at ModuleLoader.load (node:internal/modules/esm/loader:783:26)\n    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:494:31) {\n  code: 'ERR_UNSUPPORTED_ESM_URL_SCHEME'\n}\n\nNode.js v24.19.0\n\n ❯ load node_modules/tsx/dist/register-SoqaU4rg.mjs:2:5714\n ❯ src/lib/__tests__/leaderboard.test.ts:48:17\n     46|       }));\n     47|     `;\n     48|     const out = execFileSync(\n       |                 ^\n     49|       process.execPath,\n     50|       [\"--import\", \"tsx\", \"--input-type=module\", \"--eval\", script],",
+      "normalizedOwnDiagnosticSha256": "345bb0a2b458649e201ed99c0e7fce205abbb0cbb21cfc3949ab5f568b7269bf"
+    },
+    {
+      "identity": "FAIL  |node| src/lib/__tests__/performanceEngine.test.ts > localWeekKey / weekKeyMinusN — UTC/local drift > localWeekKey keys a late-Sunday-night local time to its local week under a negative-offset TZ",
+      "baselineDetailLines": [
+        "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+        "import { weekKeyMinusN } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\performanceEngine.ts\";",
+        "import { localWeekKey } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\dateHelpers.ts\";"
+      ],
+      "branchDetailLines": [
+        "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+        "import { weekKeyMinusN } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\performanceEngine.ts\";",
+        "import { localWeekKey } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\dateHelpers.ts\";"
+      ],
+      "classification": "reviewed-existing-diagnostic-change",
+      "rationale": "Full Windows ERR_UNSUPPORTED_ESM_URL_SCHEME diagnostic for c: absolute import is identical after only isolated-checkout/active-repo roots and corresponding relative loader path are normalized. No fix or resolved failure is claimed.",
+      "ownDiagnosticsEqualAfterDocumentedPathNormalization": true,
+      "baselineOwnDiagnostic": "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval \n      import { weekKeyMinusN } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\performanceEngine.ts\";\n      import { localWeekKey } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\dateHelpers.ts\";\n      const d = new Date(2025, 0, 5, 23, 30, 0); // local Sun 23:30\n      process.stdout.write(JSON.stringify({\n        weekKey: localWeekKey(d),\n        minus1: weekKeyMinusN(localWeekKey(d), 1),\n      }));\n    \nnode:internal/modules/esm/load:193\n    throw new ERR_UNSUPPORTED_ESM_URL_SCHEME(parsed, schemes);\n          ^\n\nError [ERR_UNSUPPORTED_ESM_URL_SCHEME]: Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs. Received protocol 'c:'\n    at throwIfUnsupportedURLScheme (node:internal/modules/esm/load:193:11)\n    at defaultLoadSync (node:internal/modules/esm/load:146:3)\n    at #loadAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:802:12)\n    at nextStep (node:internal/modules/customization_hooks:189:26)\n    at load (file:///C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/tsx/dist/register-SoqaU4rg.mjs:2:5714)\n    at nextStep (node:internal/modules/customization_hooks:189:26)\n    at loadWithHooks (node:internal/modules/customization_hooks:374:18)\n    at #loadSync (node:internal/modules/esm/loader:825:16)\n    at ModuleLoader.load (node:internal/modules/esm/loader:783:26)\n    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:494:31) {\n  code: 'ERR_UNSUPPORTED_ESM_URL_SCHEME'\n}\n\nNode.js v24.19.0\n\n ❯ load ../../Maiin-burpees/node_modules/tsx/dist/register-SoqaU4rg.mjs:2:5714\n ❯ src/lib/__tests__/performanceEngine.test.ts:97:17\n     95|       }));\n     96|     `;\n     97|     const out = execFileSync(\n       |                 ^\n     98|       process.execPath,\n     99|       [\"--import\", \"tsx\", \"--input-type=module\", \"--eval\", script],",
+      "branchOwnDiagnostic": "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval \n      import { weekKeyMinusN } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\performanceEngine.ts\";\n      import { localWeekKey } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\dateHelpers.ts\";\n      const d = new Date(2025, 0, 5, 23, 30, 0); // local Sun 23:30\n      process.stdout.write(JSON.stringify({\n        weekKey: localWeekKey(d),\n        minus1: weekKeyMinusN(localWeekKey(d), 1),\n      }));\n    \nnode:internal/modules/esm/load:193\n    throw new ERR_UNSUPPORTED_ESM_URL_SCHEME(parsed, schemes);\n          ^\n\nError [ERR_UNSUPPORTED_ESM_URL_SCHEME]: Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs. Received protocol 'c:'\n    at throwIfUnsupportedURLScheme (node:internal/modules/esm/load:193:11)\n    at defaultLoadSync (node:internal/modules/esm/load:146:3)\n    at #loadAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:802:12)\n    at nextStep (node:internal/modules/customization_hooks:189:26)\n    at load (file:///C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/node_modules/tsx/dist/register-SoqaU4rg.mjs:2:5714)\n    at nextStep (node:internal/modules/customization_hooks:189:26)\n    at loadWithHooks (node:internal/modules/customization_hooks:374:18)\n    at #loadSync (node:internal/modules/esm/loader:825:16)\n    at ModuleLoader.load (node:internal/modules/esm/loader:783:26)\n    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:494:31) {\n  code: 'ERR_UNSUPPORTED_ESM_URL_SCHEME'\n}\n\nNode.js v24.19.0\n\n ❯ load node_modules/tsx/dist/register-SoqaU4rg.mjs:2:5714\n ❯ src/lib/__tests__/performanceEngine.test.ts:97:17\n     95|       }));\n     96|     `;\n     97|     const out = execFileSync(\n       |                 ^\n     98|       process.execPath,\n     99|       [\"--import\", \"tsx\", \"--input-type=module\", \"--eval\", script],",
+      "normalizedOwnDiagnosticSha256": "a8586c70abe60acf25a65ac084c28997307bc0983e2ce71d759b9eceb1ce76a8"
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]",
+      "baselineDetailLines": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/94]⎯",
+        "⎯⎯⎯⎯⎯⎯ Failed Tests 83 ⎯⎯⎯⎯⎯⎯⎯"
+      ],
+      "branchDetailLines": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/83]⎯",
+        "FAIL  |node| src/lib/__tests__/iosProjectWiring.test.ts [ src/lib/__tests__/iosProjectWiring.test.ts ]"
+      ],
+      "classification": "reviewed-existing-diagnostic-change",
+      "rationale": "Own one-line SyntaxError is identical in both full logs. Changed parser details are only separator ordinal and following failure/section context, not this suite diagnostic.",
+      "ownDiagnosticsEqualAfterDocumentedPathNormalization": true,
+      "baselineOwnDiagnostic": "SyntaxError: Invalid or unexpected token",
+      "branchOwnDiagnostic": "SyntaxError: Invalid or unexpected token",
+      "normalizedOwnDiagnosticSha256": "a3b9d1f9b6d61e59bab237017be6aa3e6b1b8dd775d0e95cc31c8666800d992f"
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]",
+      "baselineDetailLines": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/94]⎯",
+        "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+      ],
+      "branchDetailLines": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/83]⎯",
+        "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+      ],
+      "classification": "reviewed-existing-diagnostic-change",
+      "rationale": "Own one-line SyntaxError is identical in both full logs. Changed parser details are only separator ordinal and following failure/section context, not this suite diagnostic.",
+      "ownDiagnosticsEqualAfterDocumentedPathNormalization": true,
+      "baselineOwnDiagnostic": "SyntaxError: Invalid or unexpected token",
+      "branchOwnDiagnostic": "SyntaxError: Invalid or unexpected token",
+      "normalizedOwnDiagnosticSha256": "a3b9d1f9b6d61e59bab237017be6aa3e6b1b8dd775d0e95cc31c8666800d992f"
+    }
+  ],
+  "sourceHashesIdenticalAcrossBaselineBranch3Current": {
+    "package-lock.json": "ac49d54ee31c36d7ce4b5b98de4078bbce0ca54d6e3d17678c30a1cfec88d7b3",
+    "package.json": "bea80b4ef11c1da2fdc9292ea4758eed099841599f13553e406fed83871a3af0",
+    "scripts/ios/asc-signing.mjs": "e11b2474c685cc0c97bf407a2272c7bd3b47621234db4db4fe75c1ebb467db1d",
+    "scripts/ios/asc-signing.test.ts": "ff58b240237f9ce0c6a6645dc83a8af85a6bc49c1328d28325fcffd9eaf83866",
+    "scripts/run-unit-tests.mjs": "1c4f457b525ebbac9f598e12d4cc68a7f52319ed3e3cfa7ae4223e87e1533762",
+    "scripts/write-functions-env.mjs": "8ab9b35811ffd2dcd9b0623c13384be6f17a1689e661e681eb2a63a90c006326",
+    "scripts/write-functions-env.test.ts": "6a35cca7231aff25a613564664777a233fe916d81cce906c611d6916ad0885d6",
+    "src/components/FoodCameraModal.tsx": "cd0c282815dab39a26223c587ec3f23e5a801ca5a57658750953ad0da65ca30a",
+    "src/components/__tests__/FoodCameraModal.photoLock.test.tsx": "14c5b0fc1a1bd6557ea76d086bc791ce505fc0abb0ccddfa0ab6e14b710b0876",
+    "src/lib/__tests__/leaderboard.test.ts": "fa1281ef87d99358a45842341e1548dbaf111c9d92470e7ff078c94cb9ea198e",
+    "src/lib/__tests__/performanceEngine.test.ts": "ff26e9b55e18d11e302d7cd6ed0821fa52f20234530ad159a2324848145b2781",
+    "src/lib/dateHelpers.ts": "ee9ce959f6a2bb6943abea070fa290c66170a2f4212bd64e36658f80cf10f5e2",
+    "src/lib/performanceEngine.ts": "fd4e970064e7901af27f730d9292d3ecb456dc0dfd8048680eee0cedf026baee",
+    "src/test/setup.ts": "16f8d702b708ffde529ecd2a7fb5e1a92ad8dac550068bfed4be420958fa4697"
+  },
+  "existingFocusRunnerBlocksGenuineFixPreflight": true,
+  "preparedSeparatePreflight": "checks/run-genuine-fix-preflight.py",
+  "preflightExecution": "Root-authorized current-code6-file preflight session97868; no result claimed here.",
+  "fullWindowsRemainsNonGreen": true,
+  "repoEdits": false,
+  "completionCredit": false
+}

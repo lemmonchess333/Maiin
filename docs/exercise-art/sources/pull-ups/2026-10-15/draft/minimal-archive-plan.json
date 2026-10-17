@@ -1,0 +1,53 @@
+{
+  "status": "plan-only-not-registered",
+  "sourceOriginals": [
+    "originals/1-matching-hang-generated.png",
+    "originals/2-pull-generated.png",
+    "originals/matching-hang-prompt.txt",
+    "originals/high-pull-prompt.txt",
+    "originals/fixed-rig-1-master.png",
+    "originals/fixed-rig-1-hang-prompt.txt",
+    "originals/fixed-rig-1-grip-tint-prompt.txt"
+  ],
+  "editable": ["1-native.ora", "2-native.ora", "1-framed.ora", "2-framed.ora"],
+  "artwork": [
+    "reference.png",
+    "final-frames/1.webp",
+    "final-frames/2.webp",
+    "final-frames/3.webp",
+    "final-frames/4.webp",
+    "final-frames/5.webp",
+    "final-frames/6.webp",
+    "card-cutout.webp"
+  ],
+  "metadata": [
+    "catalogue.json",
+    "catalogue-source.ts.txt",
+    "draft-beats.json",
+    "frame-package.json",
+    "source-provenance.json",
+    "v2/colour-finishing-provenance.json",
+    "v2/normalization-and-preservation.json",
+    "v2/native-quality-review.json",
+    "staged-card-provenance.json",
+    "hardware-measurements.json",
+    "card-pixel-proof.json",
+    "card-visual-review.json",
+    "editable-reproduction-verification.json"
+  ],
+  "reproduction": ["reproduce-reviewed-frames.py", "stage-card.mts"],
+  "reviewEvidenceToAddAfterActualReview": [
+    "native trace/controls",
+    "actual mobile light/dark trace/controls/screenshots",
+    "final parent native/mobile/card acceptance",
+    "project check evidence",
+    "required CI/merge evidence"
+  ],
+  "excludedFromMinimalApprovedArchive": [
+    "unaccepted v1 colour draft",
+    "all exploratory diagnostic grids",
+    "unrelated source searches",
+    "old failed authoring families"
+  ],
+  "notSealed": true
+}

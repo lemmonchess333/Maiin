@@ -1,0 +1,12 @@
+{
+  "status": "historical-sequence-plan-retained-exact-actual-scope-explained",
+  "sequencePlan": "sequence-plan.json.txt",
+  "sequencePlanSha256": "8f1196d2e3f6c001f07057977e33468d7bf66bf17f6c6d1e0f9fd99e1c194a44",
+  "note": "The plan retains its original pre-acceptance status strings and historical noProductionChanges flag. Those are preparation history, not current runtime state. Actual final review supersedes pending native/card/mobile statements. The real release scope is two physical endpoint drawings, six paths [1,1,4,4,1,1], positions [0,0,1,1,0,0]; no intermediate or continuous trajectory is claimed.",
+  "finalParentReview": "final-parent-review.json.txt",
+  "finalParentReviewSha256": "73d325fb950bfa2b4429e3e5ac1d85013df5b157403b3b0047181c567090451a",
+  "finalReviewObservedStatementsPreserved": true,
+  "strictCertification": false,
+  "projectChecksNotReady": true,
+  "sourceSealNotPerformed": true
+}

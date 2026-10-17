@@ -233,7 +233,7 @@ function orphanExports(): string[] {
 
   const found: string[] = [];
   for (const file of files) {
-    const rel = file.slice(repoRoot.length + 1);
+    const rel = file.slice(repoRoot.length + 1).replaceAll("\\", "/");
     if (isTest(file) || !DOMAIN_ROOTS.some((r) => rel.startsWith(r))) continue;
     const src = readFileSync(file, "utf8");
     // Declarations are matched against RAW source (so `@oracle` docs and

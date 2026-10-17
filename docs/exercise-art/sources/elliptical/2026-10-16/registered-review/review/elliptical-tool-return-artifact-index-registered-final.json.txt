@@ -1,0 +1,824 @@
+{
+  "archivedAtUtc": "2026-10-15T23:34:32.902238+00:00",
+  "sinceUtc": "2026-10-15T23:29:00Z",
+  "scopeFilter": "integrated",
+  "officialLog": "C:\\Users\\myles\\.codex\\sessions\\2026\\10\\04\\rollout-2026-10-04T14-18-53-01a10711-412c-7ce2-8907-eb9f63d462da.jsonl",
+  "logSnapshotBytes": 5452654213,
+  "boundedTailBytes": 120000000,
+  "source": "Only current-turn explicit elliptical-draft-* / elliptical-integrated-* official mcp__cua_repl.js returns",
+  "scope": "Exact screenshot bytes and original tool text are copied. JSON/JSON5 parses contain data only, never code execution. No capture, render, image edit, new image request, app mutation or QA acceptance.",
+  "mobileLimitation": "Earlier1280px traces remain real observations but are not390x844 mobile proof. Viewport values are retained/tagged per object; screenshot pixel dimensions do not independently establish CSS viewport. Only root can accept actual matching review observations.",
+  "helperSha256": "c5a66cf207b022087fc4bf391cfa57828ee8ffa4029e5c2dc997f31a1d66c3be",
+  "artifacts": [
+    {
+      "title": "Verify registered frame selection, cues and dark mobile appearance",
+      "callTimestamp": "2026-10-15T23:31:15.011Z",
+      "declaredKinds": [
+        "elliptical-integrated-dark-manual",
+        "elliptical-integrated-initial"
+      ],
+      "callRecordSha256": "7025fdd32707850cd1a249ea2497d03f0e16d83172c48aefa9682481995dcc98",
+      "callByteStart": 5451754695,
+      "callByteEndExclusive": 5451756666,
+      "callId": "call_bcb43de263e448d6a801e7b5ca6646ef",
+      "outputTimestamp": "2026-10-15T23:31:21.629Z",
+      "outputRecordSha256": "8cf237a46742f087f3b1d092ac9ce825c8836a6a23b4ff93c6ed7b877e75fd0a",
+      "outputByteStart": 5451825129,
+      "outputByteEndExclusive": 5451882355,
+      "file": "review/elliptical-same-call-multiple-bcb43de263e4-b1-tool-text.txt",
+      "sha256": "d18a6837572ba75d542317b00fa4a2963ca88dc51447f2d872ee9e254fb6e5dc",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-dark-manual",
+        "elliptical-integrated-initial"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify registered frame selection, cues and dark mobile appearance",
+      "callTimestamp": "2026-10-15T23:31:15.011Z",
+      "declaredKinds": [
+        "elliptical-integrated-dark-manual",
+        "elliptical-integrated-initial"
+      ],
+      "callRecordSha256": "7025fdd32707850cd1a249ea2497d03f0e16d83172c48aefa9682481995dcc98",
+      "callByteStart": 5451754695,
+      "callByteEndExclusive": 5451756666,
+      "callId": "call_bcb43de263e448d6a801e7b5ca6646ef",
+      "outputTimestamp": "2026-10-15T23:31:21.629Z",
+      "outputRecordSha256": "8cf237a46742f087f3b1d092ac9ce825c8836a6a23b4ff93c6ed7b877e75fd0a",
+      "outputByteStart": 5451825129,
+      "outputByteEndExclusive": 5451882355,
+      "file": "review/elliptical-integrated-dark-manual-bcb43de263e4-b2-tool-text.txt",
+      "sha256": "49fa1c55115e59d976665ec42bfe9603967d0776d582f2ce65b1a5116c523958",
+      "bytes": 3084,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-dark-manual",
+        "elliptical-integrated-initial"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify registered frame selection, cues and dark mobile appearance",
+      "callTimestamp": "2026-10-15T23:31:15.011Z",
+      "declaredKinds": [
+        "elliptical-integrated-dark-manual",
+        "elliptical-integrated-initial"
+      ],
+      "callRecordSha256": "7025fdd32707850cd1a249ea2497d03f0e16d83172c48aefa9682481995dcc98",
+      "callByteStart": 5451754695,
+      "callByteEndExclusive": 5451756666,
+      "callId": "call_bcb43de263e448d6a801e7b5ca6646ef",
+      "outputTimestamp": "2026-10-15T23:31:21.629Z",
+      "outputRecordSha256": "8cf237a46742f087f3b1d092ac9ce825c8836a6a23b4ff93c6ed7b877e75fd0a",
+      "outputByteStart": 5451825129,
+      "outputByteEndExclusive": 5451882355,
+      "file": "review/elliptical-same-call-multiple-bcb43de263e4-b3.jpg",
+      "sha256": "19675011e6b962759ab800206a869d0f98e18b339a46729a75b52c9f3c307cb7",
+      "bytes": 40032,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-dark-manual",
+        "elliptical-integrated-initial"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "dimensions": [
+        380,
+        822
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Check registered wrap controls and observe normal playback",
+      "callTimestamp": "2026-10-15T23:31:34.687Z",
+      "declaredKinds": [
+        "elliptical-integrated-prev-wrap"
+      ],
+      "callRecordSha256": "2ea1899eb00928f63fe5f825305784162f99854a4be52dfc506de5992ce2b774",
+      "callByteStart": 5451886309,
+      "callByteEndExclusive": 5451887840,
+      "callId": "call_f186743b919542008a04f32028f626c1",
+      "outputTimestamp": "2026-10-15T23:31:39.626Z",
+      "outputRecordSha256": "589f71d68fa4a365712d9e12e30d8550216f18cbacf3e3c9bc3ff2d689458252",
+      "outputByteStart": 5451955870,
+      "outputByteEndExclusive": 5451957219,
+      "file": "review/elliptical-integrated-prev-wrap-f186743b9195-b1-tool-text.txt",
+      "sha256": "7cefb99860164c2548a912f6b802c5dbabbd0b536acfe10582d0ab49e4cef56c",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-prev-wrap"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check registered wrap controls and observe normal playback",
+      "callTimestamp": "2026-10-15T23:31:34.687Z",
+      "declaredKinds": [
+        "elliptical-integrated-prev-wrap"
+      ],
+      "callRecordSha256": "2ea1899eb00928f63fe5f825305784162f99854a4be52dfc506de5992ce2b774",
+      "callByteStart": 5451886309,
+      "callByteEndExclusive": 5451887840,
+      "callId": "call_f186743b919542008a04f32028f626c1",
+      "outputTimestamp": "2026-10-15T23:31:39.626Z",
+      "outputRecordSha256": "589f71d68fa4a365712d9e12e30d8550216f18cbacf3e3c9bc3ff2d689458252",
+      "outputByteStart": 5451955870,
+      "outputByteEndExclusive": 5451957219,
+      "file": "review/elliptical-integrated-prev-wrap-f186743b9195-b2-tool-text.txt",
+      "sha256": "6962a71d9cae0e8711d6ec8b99fdaeeb10665334908985d0b5206ed44cc44ce2",
+      "bytes": 613,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-prev-wrap"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check registered wrap controls and observe normal playback",
+      "callTimestamp": "2026-10-15T23:31:34.687Z",
+      "declaredKinds": [
+        "elliptical-integrated-prev-wrap"
+      ],
+      "callRecordSha256": "2ea1899eb00928f63fe5f825305784162f99854a4be52dfc506de5992ce2b774",
+      "callByteStart": 5451886309,
+      "callByteEndExclusive": 5451887840,
+      "callId": "call_f186743b919542008a04f32028f626c1",
+      "outputTimestamp": "2026-10-15T23:31:39.626Z",
+      "outputRecordSha256": "589f71d68fa4a365712d9e12e30d8550216f18cbacf3e3c9bc3ff2d689458252",
+      "outputByteStart": 5451955870,
+      "outputByteEndExclusive": 5451957219,
+      "file": "review/elliptical-integrated-prev-wrap-f186743b9195-b3-tool-text.txt",
+      "sha256": "ebd8c875c349c9c672dc276144969fd9a5a3738292ef29ad441934a42f813705",
+      "bytes": 128,
+      "kind": "elliptical-integrated-prev-wrap",
+      "sameCallKinds": [
+        "elliptical-integrated-prev-wrap"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check registered wrap controls and observe normal playback",
+      "callTimestamp": "2026-10-15T23:31:34.687Z",
+      "declaredKinds": [
+        "elliptical-integrated-prev-wrap"
+      ],
+      "callRecordSha256": "2ea1899eb00928f63fe5f825305784162f99854a4be52dfc506de5992ce2b774",
+      "callByteStart": 5451886309,
+      "callByteEndExclusive": 5451887840,
+      "callId": "call_f186743b919542008a04f32028f626c1",
+      "outputTimestamp": "2026-10-15T23:31:39.626Z",
+      "outputRecordSha256": "589f71d68fa4a365712d9e12e30d8550216f18cbacf3e3c9bc3ff2d689458252",
+      "outputByteStart": 5451955870,
+      "outputByteEndExclusive": 5451957219,
+      "file": "review/elliptical-integrated-prev-wrap-f186743b9195-b3-dom.json",
+      "sha256": "989f3bdded5c0e126dbf561d1d90635851dcd4a83399ace2d229b39e1638d4b0",
+      "bytes": 135,
+      "kind": "elliptical-integrated-prev-wrap",
+      "block": 3,
+      "actualDomObservation": true,
+      "parseMethod": "JSON5 data-literal parse; no evaluation",
+      "originalTextFile": "review/elliptical-integrated-prev-wrap-f186743b9195-b3-tool-text.txt",
+      "originalTextSha256": "ebd8c875c349c9c672dc276144969fd9a5a3738292ef29ad441934a42f813705",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [],
+        "containsNon390x844Viewport": false,
+        "classification": "viewport not established",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Verify registered normal playback and all light-theme selections",
+      "callTimestamp": "2026-10-15T23:32:24.366Z",
+      "declaredKinds": [
+        "elliptical-integrated-dark-normal",
+        "elliptical-integrated-light-manual"
+      ],
+      "callRecordSha256": "e93d06d46d190cd70d064fcfbeaf8a584d9c7e152c792e7f34ae987553fad1b5",
+      "callByteStart": 5451983737,
+      "callByteEndExclusive": 5451985973,
+      "callId": "call_3a9e1fc12abf46c18b7f36b05b45263f",
+      "outputTimestamp": "2026-10-15T23:32:30.510Z",
+      "outputRecordSha256": "ce82b38ea880fd4327fa18a5f6c31799f1f1d09ca0c29af32d795140d6b729a4",
+      "outputByteStart": 5452054703,
+      "outputByteEndExclusive": 5452117581,
+      "file": "review/elliptical-same-call-multiple-3a9e1fc12abf-b1-tool-text.txt",
+      "sha256": "2da0c051e695cef6f7d7969ba7a8c53d92a63631fff1f94605aa52226e250319",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-dark-normal",
+        "elliptical-integrated-light-manual"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify registered normal playback and all light-theme selections",
+      "callTimestamp": "2026-10-15T23:32:24.366Z",
+      "declaredKinds": [
+        "elliptical-integrated-dark-normal",
+        "elliptical-integrated-light-manual"
+      ],
+      "callRecordSha256": "e93d06d46d190cd70d064fcfbeaf8a584d9c7e152c792e7f34ae987553fad1b5",
+      "callByteStart": 5451983737,
+      "callByteEndExclusive": 5451985973,
+      "callId": "call_3a9e1fc12abf46c18b7f36b05b45263f",
+      "outputTimestamp": "2026-10-15T23:32:30.510Z",
+      "outputRecordSha256": "ce82b38ea880fd4327fa18a5f6c31799f1f1d09ca0c29af32d795140d6b729a4",
+      "outputByteStart": 5452054703,
+      "outputByteEndExclusive": 5452117581,
+      "file": "review/elliptical-integrated-dark-normal-3a9e1fc12abf-b2-tool-text.txt",
+      "sha256": "b5d2590649acf889263fe2e6df1b1a44cea3bc39a4e0cb37f21540fa00c4088e",
+      "bytes": 8470,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-dark-normal",
+        "elliptical-integrated-light-manual"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify registered normal playback and all light-theme selections",
+      "callTimestamp": "2026-10-15T23:32:24.366Z",
+      "declaredKinds": [
+        "elliptical-integrated-dark-normal",
+        "elliptical-integrated-light-manual"
+      ],
+      "callRecordSha256": "e93d06d46d190cd70d064fcfbeaf8a584d9c7e152c792e7f34ae987553fad1b5",
+      "callByteStart": 5451983737,
+      "callByteEndExclusive": 5451985973,
+      "callId": "call_3a9e1fc12abf46c18b7f36b05b45263f",
+      "outputTimestamp": "2026-10-15T23:32:30.510Z",
+      "outputRecordSha256": "ce82b38ea880fd4327fa18a5f6c31799f1f1d09ca0c29af32d795140d6b729a4",
+      "outputByteStart": 5452054703,
+      "outputByteEndExclusive": 5452117581,
+      "file": "review/elliptical-same-call-multiple-3a9e1fc12abf-b3.jpg",
+      "sha256": "8e2a11950582e00b5ce3d72b7a030b1ed827cb25e30fb1b836540c9f59e99abb",
+      "bytes": 40120,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-dark-normal",
+        "elliptical-integrated-light-manual"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "dimensions": [
+        380,
+        822
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Review actual registered card sizes while normal playback runs",
+      "callTimestamp": "2026-10-15T23:32:47.372Z",
+      "declaredKinds": [
+        "elliptical-integrated-light-cards"
+      ],
+      "callRecordSha256": "25b3c2f96a9e06391ea8434ee3db557e7205f30834fd18df3cbd2736050eeb4f",
+      "callByteStart": 5452125011,
+      "callByteEndExclusive": 5452126775,
+      "callId": "call_ec4d8540d79c4df197200e516750a9d8",
+      "outputTimestamp": "2026-10-15T23:32:52.082Z",
+      "outputRecordSha256": "d18c7de5cd1fb9b6c73729ed520a1ee4c9e65f22a6cc3ce433eb2f9751db9cfb",
+      "outputByteStart": 5452195046,
+      "outputByteEndExclusive": 5452250691,
+      "file": "review/elliptical-integrated-light-cards-ec4d8540d79c-b1-tool-text.txt",
+      "sha256": "221ff5b8c20317af2ca21b70b655e7a1ba8251fb99ca49f2847ca15acd78f0f8",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-light-cards"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Review actual registered card sizes while normal playback runs",
+      "callTimestamp": "2026-10-15T23:32:47.372Z",
+      "declaredKinds": [
+        "elliptical-integrated-light-cards"
+      ],
+      "callRecordSha256": "25b3c2f96a9e06391ea8434ee3db557e7205f30834fd18df3cbd2736050eeb4f",
+      "callByteStart": 5452125011,
+      "callByteEndExclusive": 5452126775,
+      "callId": "call_ec4d8540d79c4df197200e516750a9d8",
+      "outputTimestamp": "2026-10-15T23:32:52.082Z",
+      "outputRecordSha256": "d18c7de5cd1fb9b6c73729ed520a1ee4c9e65f22a6cc3ce433eb2f9751db9cfb",
+      "outputByteStart": 5452195046,
+      "outputByteEndExclusive": 5452250691,
+      "file": "review/elliptical-integrated-light-cards-ec4d8540d79c-b2-tool-text.txt",
+      "sha256": "2d78d008585826d994105209bf425817d36605a806327985e29eaad8daf045ed",
+      "bytes": 889,
+      "kind": "elliptical-integrated-light-cards",
+      "sameCallKinds": [
+        "elliptical-integrated-light-cards"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Review actual registered card sizes while normal playback runs",
+      "callTimestamp": "2026-10-15T23:32:47.372Z",
+      "declaredKinds": [
+        "elliptical-integrated-light-cards"
+      ],
+      "callRecordSha256": "25b3c2f96a9e06391ea8434ee3db557e7205f30834fd18df3cbd2736050eeb4f",
+      "callByteStart": 5452125011,
+      "callByteEndExclusive": 5452126775,
+      "callId": "call_ec4d8540d79c4df197200e516750a9d8",
+      "outputTimestamp": "2026-10-15T23:32:52.082Z",
+      "outputRecordSha256": "d18c7de5cd1fb9b6c73729ed520a1ee4c9e65f22a6cc3ce433eb2f9751db9cfb",
+      "outputByteStart": 5452195046,
+      "outputByteEndExclusive": 5452250691,
+      "file": "review/elliptical-integrated-light-cards-ec4d8540d79c-b2-dom.json",
+      "sha256": "0c44b6cadb3914816966da47fa697a061c56a61ed9c985e22a40554dcbe53d90",
+      "bytes": 1124,
+      "kind": "elliptical-integrated-light-cards",
+      "block": 2,
+      "actualDomObservation": true,
+      "parseMethod": "JSON5 data-literal parse; no evaluation",
+      "originalTextFile": "review/elliptical-integrated-light-cards-ec4d8540d79c-b2-tool-text.txt",
+      "originalTextSha256": "2d78d008585826d994105209bf425817d36605a806327985e29eaad8daf045ed",
+      "viewportScope": {
+        "topLevelViewport": [
+          390,
+          844
+        ],
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Review actual registered card sizes while normal playback runs",
+      "callTimestamp": "2026-10-15T23:32:47.372Z",
+      "declaredKinds": [
+        "elliptical-integrated-light-cards"
+      ],
+      "callRecordSha256": "25b3c2f96a9e06391ea8434ee3db557e7205f30834fd18df3cbd2736050eeb4f",
+      "callByteStart": 5452125011,
+      "callByteEndExclusive": 5452126775,
+      "callId": "call_ec4d8540d79c4df197200e516750a9d8",
+      "outputTimestamp": "2026-10-15T23:32:52.082Z",
+      "outputRecordSha256": "d18c7de5cd1fb9b6c73729ed520a1ee4c9e65f22a6cc3ce433eb2f9751db9cfb",
+      "outputByteStart": 5452195046,
+      "outputByteEndExclusive": 5452250691,
+      "file": "review/elliptical-integrated-light-cards-ec4d8540d79c-b3.jpg",
+      "sha256": "752a91548d9ba0ada1a4fef9a6a019fdf169806ce6a0b962d049cf8b8b796c9c",
+      "bytes": 40579,
+      "kind": "elliptical-integrated-light-cards",
+      "sameCallKinds": [
+        "elliptical-integrated-light-cards"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "dimensions": [
+        380,
+        822
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [
+          {
+            "kind": "elliptical-integrated-light-cards",
+            "viewportScope": {
+              "topLevelViewport": [
+                390,
+                844
+              ],
+              "explicitViewportPairs": [
+                [
+                  390,
+                  844
+                ]
+              ],
+              "containsNon390x844Viewport": false,
+              "classification": "all explicit viewports are390x844; observations still require root review",
+              "qaAcceptance": false
+            }
+          }
+        ],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Confirm the light normal loop and observe slower registered playback",
+      "callTimestamp": "2026-10-15T23:33:08.075Z",
+      "declaredKinds": [
+        "elliptical-integrated-light-normal"
+      ],
+      "callRecordSha256": "e04f31ab144e7bb6a63b88158dd26ae595c445d9dcd1e25fb752d3340c6166b4",
+      "callByteStart": 5452277971,
+      "callByteEndExclusive": 5452279744,
+      "callId": "call_6c2783241b9742519435133eddbcdce5",
+      "outputTimestamp": "2026-10-15T23:33:13.776Z",
+      "outputRecordSha256": "df39dc70320117c7011521d430a63f777616b2d658c56eab2f466bda38c76a45",
+      "outputByteStart": 5452348019,
+      "outputByteEndExclusive": 5452356243,
+      "file": "review/elliptical-integrated-light-normal-6c2783241b97-b1-tool-text.txt",
+      "sha256": "d9975bb4b304649aca3d5f4042a30c027ad1e06ce5ecb9cc5c1a6ec375a427a3",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-light-normal"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Confirm the light normal loop and observe slower registered playback",
+      "callTimestamp": "2026-10-15T23:33:08.075Z",
+      "declaredKinds": [
+        "elliptical-integrated-light-normal"
+      ],
+      "callRecordSha256": "e04f31ab144e7bb6a63b88158dd26ae595c445d9dcd1e25fb752d3340c6166b4",
+      "callByteStart": 5452277971,
+      "callByteEndExclusive": 5452279744,
+      "callId": "call_6c2783241b9742519435133eddbcdce5",
+      "outputTimestamp": "2026-10-15T23:33:13.776Z",
+      "outputRecordSha256": "df39dc70320117c7011521d430a63f777616b2d658c56eab2f466bda38c76a45",
+      "outputByteStart": 5452348019,
+      "outputByteEndExclusive": 5452356243,
+      "file": "review/elliptical-integrated-light-normal-6c2783241b97-b2-tool-text.txt",
+      "sha256": "058fd4d3da2bfab66b46fd101c43887f99d8a1a93714e8ff85ee3413c48d267a",
+      "bytes": 1139,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-light-normal"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Confirm the light normal loop and observe slower registered playback",
+      "callTimestamp": "2026-10-15T23:33:08.075Z",
+      "declaredKinds": [
+        "elliptical-integrated-light-normal"
+      ],
+      "callRecordSha256": "e04f31ab144e7bb6a63b88158dd26ae595c445d9dcd1e25fb752d3340c6166b4",
+      "callByteStart": 5452277971,
+      "callByteEndExclusive": 5452279744,
+      "callId": "call_6c2783241b9742519435133eddbcdce5",
+      "outputTimestamp": "2026-10-15T23:33:13.776Z",
+      "outputRecordSha256": "df39dc70320117c7011521d430a63f777616b2d658c56eab2f466bda38c76a45",
+      "outputByteStart": 5452348019,
+      "outputByteEndExclusive": 5452356243,
+      "file": "review/elliptical-integrated-light-normal-6c2783241b97-b3-tool-text.txt",
+      "sha256": "d7ab82a99745c6fbf78529c22808cbdc4800b7134c239edc9dd3fa033f142a68",
+      "bytes": 6238,
+      "kind": "elliptical-integrated-light-normal",
+      "sameCallKinds": [
+        "elliptical-integrated-light-normal"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Confirm the light normal loop and observe slower registered playback",
+      "callTimestamp": "2026-10-15T23:33:08.075Z",
+      "declaredKinds": [
+        "elliptical-integrated-light-normal"
+      ],
+      "callRecordSha256": "e04f31ab144e7bb6a63b88158dd26ae595c445d9dcd1e25fb752d3340c6166b4",
+      "callByteStart": 5452277971,
+      "callByteEndExclusive": 5452279744,
+      "callId": "call_6c2783241b9742519435133eddbcdce5",
+      "outputTimestamp": "2026-10-15T23:33:13.776Z",
+      "outputRecordSha256": "df39dc70320117c7011521d430a63f777616b2d658c56eab2f466bda38c76a45",
+      "outputByteStart": 5452348019,
+      "outputByteEndExclusive": 5452356243,
+      "file": "review/elliptical-integrated-light-normal-6c2783241b97-b3-dom.json",
+      "sha256": "edc6151e7cdaa70eabf464324c60eb87a49bea014b1a10a3bf04875a834fbda5",
+      "bytes": 7011,
+      "kind": "elliptical-integrated-light-normal",
+      "block": 3,
+      "actualDomObservation": true,
+      "parseMethod": "JSON5 data-literal parse; no evaluation",
+      "originalTextFile": "review/elliptical-integrated-light-normal-6c2783241b97-b3-tool-text.txt",
+      "originalTextSha256": "d7ab82a99745c6fbf78529c22808cbdc4800b7134c239edc9dd3fa033f142a68",
+      "viewportScope": {
+        "topLevelViewport": [
+          390,
+          844
+        ],
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Finish slower playback and inspect the whole registered figure in both themes",
+      "callTimestamp": "2026-10-15T23:33:45.773Z",
+      "declaredKinds": [
+        "elliptical-integrated-full-figure",
+        "elliptical-integrated-light-slower"
+      ],
+      "callRecordSha256": "35e45756aff93842c01f33c1ac2545391f40624b63019067391018c7f41d34e3",
+      "callByteStart": 5452374768,
+      "callByteEndExclusive": 5452377067,
+      "callId": "call_eacf2d6e16d94137af2d88dc011d388b",
+      "outputTimestamp": "2026-10-15T23:33:51.282Z",
+      "outputRecordSha256": "6010ed02fa275e35423f5ddb86b2717d40935b79d3abc7397290219071cd30ed",
+      "outputByteStart": 5452445850,
+      "outputByteEndExclusive": 5452531127,
+      "file": "review/elliptical-same-call-multiple-eacf2d6e16d9-b1-tool-text.txt",
+      "sha256": "a1ae38872cb1054252a6adf60359aec51cb21e3943332e60d266a0612dd12032",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-full-figure",
+        "elliptical-integrated-light-slower"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Finish slower playback and inspect the whole registered figure in both themes",
+      "callTimestamp": "2026-10-15T23:33:45.773Z",
+      "declaredKinds": [
+        "elliptical-integrated-full-figure",
+        "elliptical-integrated-light-slower"
+      ],
+      "callRecordSha256": "35e45756aff93842c01f33c1ac2545391f40624b63019067391018c7f41d34e3",
+      "callByteStart": 5452374768,
+      "callByteEndExclusive": 5452377067,
+      "callId": "call_eacf2d6e16d94137af2d88dc011d388b",
+      "outputTimestamp": "2026-10-15T23:33:51.282Z",
+      "outputRecordSha256": "6010ed02fa275e35423f5ddb86b2717d40935b79d3abc7397290219071cd30ed",
+      "outputByteStart": 5452445850,
+      "outputByteEndExclusive": 5452531127,
+      "file": "review/elliptical-integrated-light-slower-eacf2d6e16d9-b2-tool-text.txt",
+      "sha256": "73cc7d17dce8aafe17df7ffef2fc6310641fa88417f14142a5c6777b3a12e27b",
+      "bytes": 6579,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-full-figure",
+        "elliptical-integrated-light-slower"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Finish slower playback and inspect the whole registered figure in both themes",
+      "callTimestamp": "2026-10-15T23:33:45.773Z",
+      "declaredKinds": [
+        "elliptical-integrated-full-figure",
+        "elliptical-integrated-light-slower"
+      ],
+      "callRecordSha256": "35e45756aff93842c01f33c1ac2545391f40624b63019067391018c7f41d34e3",
+      "callByteStart": 5452374768,
+      "callByteEndExclusive": 5452377067,
+      "callId": "call_eacf2d6e16d94137af2d88dc011d388b",
+      "outputTimestamp": "2026-10-15T23:33:51.282Z",
+      "outputRecordSha256": "6010ed02fa275e35423f5ddb86b2717d40935b79d3abc7397290219071cd30ed",
+      "outputByteStart": 5452445850,
+      "outputByteEndExclusive": 5452531127,
+      "file": "review/elliptical-same-call-multiple-eacf2d6e16d9-b3.jpg",
+      "sha256": "3c6ca75883ae24756dc6f913b01e815a9c12e22cd4b685620fad58b909723df0",
+      "bytes": 30187,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-full-figure",
+        "elliptical-integrated-light-slower"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "dimensions": [
+        380,
+        822
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Finish slower playback and inspect the whole registered figure in both themes",
+      "callTimestamp": "2026-10-15T23:33:45.773Z",
+      "declaredKinds": [
+        "elliptical-integrated-full-figure",
+        "elliptical-integrated-light-slower"
+      ],
+      "callRecordSha256": "35e45756aff93842c01f33c1ac2545391f40624b63019067391018c7f41d34e3",
+      "callByteStart": 5452374768,
+      "callByteEndExclusive": 5452377067,
+      "callId": "call_eacf2d6e16d94137af2d88dc011d388b",
+      "outputTimestamp": "2026-10-15T23:33:51.282Z",
+      "outputRecordSha256": "6010ed02fa275e35423f5ddb86b2717d40935b79d3abc7397290219071cd30ed",
+      "outputByteStart": 5452445850,
+      "outputByteEndExclusive": 5452531127,
+      "file": "review/elliptical-same-call-multiple-eacf2d6e16d9-b4.jpg",
+      "sha256": "41514e0bf448f7aceba99a46a064caa208dee3daccb417948ae474df0ad525d8",
+      "bytes": 28135,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-full-figure",
+        "elliptical-integrated-light-slower"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 4,
+      "dimensions": [
+        380,
+        822
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Finish registered dark-card and console checks, then clean up",
+      "callTimestamp": "2026-10-15T23:34:03.620Z",
+      "declaredKinds": [
+        "elliptical-integrated-cleanup",
+        "elliptical-integrated-console-final",
+        "elliptical-integrated-dark-cards-final"
+      ],
+      "callRecordSha256": "c71a7e0b962d6014d1d5a1b0dcef398f2d9679a2408e304ba97729d033d4cff0",
+      "callByteStart": 5452535422,
+      "callByteEndExclusive": 5452537012,
+      "callId": "call_9cac8fe1de1a417092e85f119342876a",
+      "outputTimestamp": "2026-10-15T23:34:06.792Z",
+      "outputRecordSha256": "0184b8331168d1dd93cf77358803a689a239d9dcc7dce320b4c3e72d39b34c41",
+      "outputByteStart": 5452589612,
+      "outputByteEndExclusive": 5452639876,
+      "file": "review/elliptical-same-call-multiple-9cac8fe1de1a-b1-tool-text.txt",
+      "sha256": "812dcf71c392412314f0b671ff7608490c47a260d4cc51c9e29867f85cad4def",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-cleanup",
+        "elliptical-integrated-console-final",
+        "elliptical-integrated-dark-cards-final"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Finish registered dark-card and console checks, then clean up",
+      "callTimestamp": "2026-10-15T23:34:03.620Z",
+      "declaredKinds": [
+        "elliptical-integrated-cleanup",
+        "elliptical-integrated-console-final",
+        "elliptical-integrated-dark-cards-final"
+      ],
+      "callRecordSha256": "c71a7e0b962d6014d1d5a1b0dcef398f2d9679a2408e304ba97729d033d4cff0",
+      "callByteStart": 5452535422,
+      "callByteEndExclusive": 5452537012,
+      "callId": "call_9cac8fe1de1a417092e85f119342876a",
+      "outputTimestamp": "2026-10-15T23:34:06.792Z",
+      "outputRecordSha256": "0184b8331168d1dd93cf77358803a689a239d9dcc7dce320b4c3e72d39b34c41",
+      "outputByteStart": 5452589612,
+      "outputByteEndExclusive": 5452639876,
+      "file": "review/elliptical-integrated-dark-cards-final-9cac8fe1de1a-b2-tool-text.txt",
+      "sha256": "ed034e90cc40db9b15469a84b2e5e209bf7214509e7fc2f01ffcee2300506ae3",
+      "bytes": 1067,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-cleanup",
+        "elliptical-integrated-console-final",
+        "elliptical-integrated-dark-cards-final"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Finish registered dark-card and console checks, then clean up",
+      "callTimestamp": "2026-10-15T23:34:03.620Z",
+      "declaredKinds": [
+        "elliptical-integrated-cleanup",
+        "elliptical-integrated-console-final",
+        "elliptical-integrated-dark-cards-final"
+      ],
+      "callRecordSha256": "c71a7e0b962d6014d1d5a1b0dcef398f2d9679a2408e304ba97729d033d4cff0",
+      "callByteStart": 5452535422,
+      "callByteEndExclusive": 5452537012,
+      "callId": "call_9cac8fe1de1a417092e85f119342876a",
+      "outputTimestamp": "2026-10-15T23:34:06.792Z",
+      "outputRecordSha256": "0184b8331168d1dd93cf77358803a689a239d9dcc7dce320b4c3e72d39b34c41",
+      "outputByteStart": 5452589612,
+      "outputByteEndExclusive": 5452639876,
+      "file": "review/elliptical-same-call-multiple-9cac8fe1de1a-b3.jpg",
+      "sha256": "338e1269dd1c0eda7ce624e6cc8499b63e97aa92401c7ba079e3f7ac9fa34834",
+      "bytes": 36407,
+      "kind": null,
+      "sameCallKinds": [
+        "elliptical-integrated-cleanup",
+        "elliptical-integrated-console-final",
+        "elliptical-integrated-dark-cards-final"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "dimensions": [
+        380,
+        822
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    }
+  ],
+  "unparsedObservations": [
+    {
+      "callId": "call_bcb43de263e448d6a801e7b5ca6646ef",
+      "file": "review/elliptical-integrated-dark-manual-bcb43de263e4-b2-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    },
+    {
+      "callId": "call_3a9e1fc12abf46c18b7f36b05b45263f",
+      "file": "review/elliptical-integrated-dark-normal-3a9e1fc12abf-b2-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    },
+    {
+      "callId": "call_eacf2d6e16d94137af2d88dc011d388b",
+      "file": "review/elliptical-integrated-light-slower-eacf2d6e16d9-b2-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    },
+    {
+      "callId": "call_9cac8fe1de1a417092e85f119342876a",
+      "file": "review/elliptical-integrated-dark-cards-final-9cac8fe1de1a-b2-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    }
+  ],
+  "callsAwaitingOutputWithinSnapshot": [],
+  "qaAcceptance": false
+}

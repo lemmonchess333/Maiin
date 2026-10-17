@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Kettlebell Swing original-source native draft review</title>
+    <style>
+      body {
+        margin: 0;
+        background: #101010;
+        color: #ddd;
+        font: 16px system-ui;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        background: #202020;
+        padding: 12px;
+        z-index: 2;
+      }
+      button {
+        min-height: 44px;
+        margin: 4px;
+        padding: 8px 16px;
+        font: inherit;
+      }
+      img {
+        display: block;
+        width: 690px;
+        height: 1008px;
+      }
+      p {
+        margin: 8px;
+      }
+      output {
+        display: inline-block;
+        min-width: 260px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong
+        >UNREGISTERED DRAFT — three original physical poses / six paths</strong
+      >
+      <p>
+        Three retained originals; colour and inherited contours only. No human
+        geometry or equipment changes. Native690×1008.
+      </p>
+      <button id="play">Play</button><button id="next">Next beat</button
+      ><button id="slow">Slow (1200ms)</button
+      ><button data-beat="0">Beat 1</button><button data-beat="1">Beat 2</button
+      ><button data-beat="2">Beat 3</button><button data-beat="3">Beat 4</button
+      ><button data-beat="4">Beat 5</button><button data-beat="5">Beat 6</button
+      ><output></output>
+    </header>
+    <img
+      alt="Kettlebell Swing original-source draft"
+      width="690"
+      height="1008"
+    />
+    <script>
+      const paths = [2, 3, 1, 1, 3, 2],
+        cues = [
+          "Hinge back; guide bell between your legs.",
+          "Drive through your feet and extend hips.",
+          "Let the bell float to chest height.",
+          "Brace your abs without leaning back.",
+          "Let the bell fall; keep arms relaxed.",
+          "Hinge back as bell passes your legs.",
+        ];
+      let beat = 0,
+        timer = null,
+        delay = 600;
+      const pic = document.querySelector("img"),
+        out = document.querySelector("output");
+      const loaded = paths.map((p, n) => {
+        const i = new Image();
+        i.src = "final-frames/" + (n + 1) + ".webp";
+        return i;
+      });
+      window.nativeTrace = [];
+      pic.onload = () =>
+        window.nativeTrace.push({
+          ms: Math.round(performance.now()),
+          src: pic.getAttribute("src"),
+          beat: beat + 1,
+          natural: [pic.naturalWidth, pic.naturalHeight],
+          display: [pic.clientWidth, pic.clientHeight],
+          complete: pic.complete,
+          viewport: [innerWidth, innerHeight],
+        });
+      function draw() {
+        pic.src = loaded[beat].src;
+        out.textContent =
+          "Beat " + (beat + 1) + " / pose " + paths[beat] + " — " + cues[beat];
+      }
+      function stop() {
+        clearInterval(timer);
+        timer = null;
+        document.querySelector("#play").textContent = "Play";
+      }
+      function play() {
+        timer = setInterval(() => {
+          beat = (beat + 1) % 6;
+          draw();
+        }, delay);
+        document.querySelector("#play").textContent = "Pause";
+      }
+      document.querySelector("#play").onclick = () => (timer ? stop() : play());
+      document.querySelector("#next").onclick = () => {
+        stop();
+        beat = (beat + 1) % 6;
+        draw();
+      };
+      document.querySelector("#slow").onclick = () => {
+        delay = 1200;
+        if (timer) {
+          stop();
+          play();
+        }
+      };
+      document.querySelectorAll("[data-beat]").forEach(
+        (b) =>
+          (b.onclick = () => {
+            stop();
+            beat = Number(b.dataset.beat);
+            draw();
+          })
+      );
+      draw();
+    </script>
+  </body>
+</html>

@@ -78,7 +78,7 @@ const EXCLUDED = [
 
 function sourceFiles(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
-    const p = join(dir, entry);
+    const p = join(dir, entry).replaceAll("\\", "/");
     if (EXCLUDED.some((k) => p.includes(k))) continue;
     if (statSync(p).isDirectory()) sourceFiles(p, out);
     else if (p.endsWith(".tsx") || p.endsWith(".ts")) out.push(p);
@@ -153,7 +153,7 @@ function offenders(): string[] {
         if (!isTitleCase(phrase)) continue;
         const line = src.slice(0, m.index).split("\n").length;
         found.push(
-          `${relative(ROOT, file)}:${line}  ${JSON.stringify(phrase)}`
+          `${relative(ROOT, file).replaceAll("\\", "/")}:${line}  ${JSON.stringify(phrase)}`
         );
       }
     }

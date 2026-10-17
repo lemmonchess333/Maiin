@@ -1,0 +1,13 @@
+{
+  "status": "native-cleaned-extended-source-eligible-for-next-local-pose-authoring",
+  "actuallyViewed": [
+    "Complete1536x1024 generated source",
+    "Native before/after shin and ankle contact crop",
+    "Approved original whole body and original masked source",
+    "Canonical identity"
+  ],
+  "observed": "The new source restores continuous shin/ankle surfaces across the old roller gap. Existing soft extended knees, lean source anatomy, complete white trainers, supported pelvis/back/head, both hands and the original bench remain visually coherent. No source resizing, body fitting or head/shoe graft was performed.",
+  "scope": "Source identity/leg-continuity eligibility only. The image is not a finished leg press: footplate/apparatus and an actual hip-and-knee-flexed bottom are still missing. No new published guide or completion credit.",
+  "nextOperation": "One local leg-pose edit, canonical plus accepted original master attached. Keep supported upper body and bench fixed; author actual hip-and-knee flexion rather than using the old leg-extension bent pose.",
+  "completionCredit": false
+}

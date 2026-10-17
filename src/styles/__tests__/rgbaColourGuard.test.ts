@@ -135,7 +135,7 @@ describe("no hardcoded coloured rgba()", () => {
   it("colours come from tokens, not decimal rgba literals", () => {
     const hits: string[] = [];
     for (const file of walk(SRC_ROOT)) {
-      const rel = file.slice(SRC_ROOT.length + 1);
+      const rel = file.slice(SRC_ROOT.length + 1).replaceAll("\\", "/");
       if (EXEMPT[rel]) continue;
       for (const hit of findHits(stripComments(readFileSync(file, "utf8")))) {
         hits.push(`${rel}:${hit}`);

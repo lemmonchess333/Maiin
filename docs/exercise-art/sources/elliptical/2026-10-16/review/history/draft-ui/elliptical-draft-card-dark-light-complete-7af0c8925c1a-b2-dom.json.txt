@@ -1,0 +1,47 @@
+{
+  "cards": [
+    {
+      "alt": "Elliptical normal card, 480px long-side limit",
+      "display": [
+        469,
+        480
+      ],
+      "loaded": true,
+      "natural": [
+        469,
+        480
+      ]
+    },
+    {
+      "alt": "Elliptical normal card, 348px long-side limit",
+      "display": [
+        340,
+        348
+      ],
+      "loaded": true,
+      "natural": [
+        469,
+        480
+      ]
+    },
+    {
+      "alt": "Elliptical normal card, 160px long-side limit",
+      "display": [
+        156,
+        160
+      ],
+      "loaded": true,
+      "natural": [
+        469,
+        480
+      ]
+    }
+  ],
+  "docWidth": 380,
+  "reviewLabel": "elliptical-draft-card-dark-light-complete",
+  "theme": "dark",
+  "viewport": [
+    390,
+    844
+  ]
+}

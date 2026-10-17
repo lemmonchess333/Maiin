@@ -1,0 +1,160 @@
+{
+  "status": "Native review required; not a release",
+  "onlyExistingCompleteSources": true,
+  "noGeneratorRequests": true,
+  "noShoeHeadHandGrafts": true,
+  "noHumanWarpsOrIndependentFitting": true,
+  "sixProvisionalPaths": [1, 1, 2, 3, 3, 2],
+  "diagnosticLimits": "Pixel threshold silhouettes and observed shaft bands, not calibrated body joint or3D hardware measurements",
+  "rows": [
+    {
+      "pose": 1,
+      "source": "1-rebuilt-master.png",
+      "originalSha256": "0ffc0c9e887c3c1ef23ed183703dd58ae1837dd57ed38d1c501ac5af7e0dbef1",
+      "wholeSceneTranslation": [0, 11],
+      "registrationRationale": "Single whole-scene shift aligning both posterior heel/sole contacts; no independent shoe/body fitting",
+      "shoes": [
+        {
+          "side": "far",
+          "ROI": [665, 810, 789, 865],
+          "brightSoleBottom": 855,
+          "lowerBandXMedian": 709.0,
+          "posteriorHeelX": 683,
+          "brightShoeLowerWidth": 101
+        },
+        {
+          "side": "near",
+          "ROI": [788, 820, 935, 878],
+          "brightSoleBottom": 868,
+          "lowerBandXMedian": 823.5,
+          "posteriorHeelX": 793,
+          "brightShoeLowerWidth": 124
+        }
+      ],
+      "shaftAxes": [
+        {
+          "side": "left",
+          "shaftCentreY": 754.5,
+          "bandTop": 747,
+          "bandBottom": 762,
+          "ROI": [631, 400, 634, 820]
+        },
+        {
+          "side": "right",
+          "shaftCentreY": 769.5,
+          "bandTop": 762,
+          "bandBottom": 777,
+          "ROI": [970, 400, 973, 820]
+        }
+      ],
+      "changedPixelsOutsideEquipmentRects": 0,
+      "equipmentChangedPixels": 0
+    },
+    {
+      "pose": 2,
+      "source": "3-rebuilt.png",
+      "originalSha256": "7701217f647a3b278eed9dc90a8d70056ac8c98f11ac8b281dc4f1b891474bb6",
+      "wholeSceneTranslation": [4, 25],
+      "registrationRationale": "Single whole-scene shift aligning both posterior heel/sole contacts; no independent shoe/body fitting",
+      "shoes": [
+        {
+          "side": "far",
+          "ROI": [665, 810, 789, 865],
+          "brightSoleBottom": 854,
+          "lowerBandXMedian": 709.0,
+          "posteriorHeelX": 682,
+          "brightShoeLowerWidth": 107
+        },
+        {
+          "side": "near",
+          "ROI": [788, 820, 935, 878],
+          "brightSoleBottom": 868,
+          "lowerBandXMedian": 829.0,
+          "posteriorHeelX": 794,
+          "brightShoeLowerWidth": 135
+        }
+      ],
+      "shaftAxes": [
+        {
+          "side": "left",
+          "shaftCentreY": 603.5,
+          "bandTop": 596,
+          "bandBottom": 611,
+          "ROI": [631, 400, 634, 820]
+        },
+        {
+          "side": "right",
+          "shaftCentreY": 613.0,
+          "bandTop": 605,
+          "bandBottom": 621,
+          "ROI": [970, 400, 973, 820]
+        }
+      ],
+      "equipmentCopies": [
+        {
+          "masterRegion": [390, 630, 635, 910],
+          "translation": [0, -151]
+        },
+        {
+          "masterRegion": [970, 630, 1250, 910],
+          "translation": [0, -156]
+        }
+      ],
+      "changedPixelsOutsideEquipmentRects": 0,
+      "equipmentChangedPixels": 185232
+    },
+    {
+      "pose": 3,
+      "source": "4-lockout-candidate.png",
+      "originalSha256": "361243bf1eafcf8e4317d5a2e2574b95e6d75cf967e258b204a7e78a2af155ee",
+      "wholeSceneTranslation": [5, 0],
+      "registrationRationale": "Single whole-scene shift aligning both posterior heel/sole contacts; no independent shoe/body fitting",
+      "shoes": [
+        {
+          "side": "far",
+          "ROI": [665, 810, 789, 865],
+          "brightSoleBottom": 855,
+          "lowerBandXMedian": 709.0,
+          "posteriorHeelX": 682,
+          "brightShoeLowerWidth": 107
+        },
+        {
+          "side": "near",
+          "ROI": [788, 820, 935, 878],
+          "brightSoleBottom": 868,
+          "lowerBandXMedian": 827.0,
+          "posteriorHeelX": 794,
+          "brightShoeLowerWidth": 135
+        }
+      ],
+      "shaftAxes": [
+        {
+          "side": "left",
+          "shaftCentreY": 536.0,
+          "bandTop": 529,
+          "bandBottom": 543,
+          "ROI": [631, 400, 634, 820]
+        },
+        {
+          "side": "right",
+          "shaftCentreY": 541.5,
+          "bandTop": 534,
+          "bandBottom": 549,
+          "ROI": [970, 400, 973, 820]
+        }
+      ],
+      "equipmentCopies": [
+        {
+          "masterRegion": [390, 630, 635, 910],
+          "translation": [0, -218]
+        },
+        {
+          "masterRegion": [970, 630, 1250, 910],
+          "translation": [0, -228]
+        }
+      ],
+      "changedPixelsOutsideEquipmentRects": 0,
+      "equipmentChangedPixels": 123414
+    }
+  ]
+}

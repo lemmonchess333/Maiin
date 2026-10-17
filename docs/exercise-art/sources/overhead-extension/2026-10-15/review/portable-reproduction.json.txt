@@ -1,0 +1,40 @@
+{
+  "dimensions": [
+    461,
+    1547
+  ],
+  "sourcePoseOrder": [
+    1,
+    1,
+    4,
+    4,
+    1,
+    1
+  ],
+  "wholeFrameTranslation": [
+    -13,
+    37
+  ],
+  "addedResizing": false,
+  "anatomicalWarpOrGraft": false,
+  "sixFramesReproducedPixelExactly": true,
+  "fourEditableOrasReopenedExactly": {
+    "1-full.ora": {
+      "layers": 2,
+      "pixelExact": true
+    },
+    "1-framed.ora": {
+      "layers": 2,
+      "pixelExact": true
+    },
+    "4-full.ora": {
+      "layers": 8,
+      "pixelExact": true
+    },
+    "4-framed.ora": {
+      "layers": 8,
+      "pixelExact": true
+    }
+  },
+  "card": "Normal repository cutout export from reference frame3; see authoring/card-preview-proof.json.txt and review/registered-card-match.json.txt. This recipe does not replace that exporter."
+}

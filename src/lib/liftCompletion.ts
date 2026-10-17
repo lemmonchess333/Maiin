@@ -34,6 +34,7 @@ import {
   type ProgrammeCompletionContext,
 } from "@/lib/workoutCompletion";
 import { liftPost, liftPostPreview, type LiftForPost } from "@/lib/liftPost";
+import type { LiftUnit } from "@/lib/liftLoad";
 import { logger } from "@/lib/logger";
 import type {
   ProgramExercise,
@@ -190,6 +191,9 @@ export interface FinishedLift {
   /** A programme day's completion: the plan moves on in the same
    *  transaction as the workout is saved. */
   completion?: ProgrammeCompletionContext;
+  /** The unit the lifter reads loads in (Lift18), for the share sheet's
+   *  preview. The post itself stores kg. Kg when missing. */
+  liftUnit?: LiftUnit;
 }
 
 export interface LiftCompletion extends LiftCompletionReceipt {
@@ -276,7 +280,7 @@ export async function completeLift(
     uid,
     type: "workout",
     source: { kind: "workout", id: workoutId },
-    preview: () => liftPostPreview(lift),
+    preview: () => liftPostPreview(lift, finished.liftUnit),
     payload: (decision) =>
       liftPost({ uid, ...finished.author }, lift, decision),
   });

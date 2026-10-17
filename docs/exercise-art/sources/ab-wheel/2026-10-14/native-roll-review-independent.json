@@ -1,0 +1,113 @@
+{
+  "reviewedAt": "2026-10-14T22:12:59.992190+00:00",
+  "reviewer": "other_retained_pose_rescue",
+  "exerciseId": "ab-wheel",
+  "status": "native-roll-physical-source-pass; provisional-pair-only",
+  "sources": [
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\ab-wheel\\intact-whole-athlete-production-20261014\\master-brace-original.png",
+      "sha256": "92cbc7bf52bf72258c762e52ddffec70dbaed32406e8c32850da5888f6399c0f",
+      "nativeDimensions": [1536, 1024]
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\ab-wheel\\intact-whole-athlete-production-20261014\\roll-original.png",
+      "sha256": "959af45a9d7614cb06bae131d7feaad9e036f6106e2b6ab93b729c7086dfaaa6",
+      "nativeDimensions": [1536, 1024]
+    }
+  ],
+  "scope": "Native source at unchanged1536x1024 compared with previously reviewed brace master. No source transformations, generation or image edits. No endpoint or complete sequence acceptance.",
+  "actualPhase": "A substantially advanced rollout with hips opening and torso lowering toward an extended line. It is farther along than the requested early fraction; retain it as its actual intermediate Roll physical state, not a claimed quarter-range source. Honest uneven state spacing is allowed.",
+  "nativeVisualChecks": {
+    "identityNoShortsAndWholeAnatomy": {
+      "passed": true,
+      "evidence": "Same recognizable no-shorts canonical anatomical model, smooth neutral pelvis, white trainers and continuous whole limb chains. Head contour/pitch and projected limb lengths change with articulation; no gross source scale change or detached limb is visible."
+    },
+    "neutralSpineAndRollMechanics": {
+      "passed": true,
+      "evidence": "Hips move forward, shoulder-to-knee chain opens, trunk lowers and long arms move the wheel forward. Posterior torso remains continuous and neutrally braced without clear lumbar sag/hyperextension. This is roll progress, not a kneeling hip-fold-only return."
+    },
+    "twoGripsAndWheelSupport": {
+      "passed": true,
+      "evidence": "Both closed fists retain the two axle-end grips, and the hub/handle assembly is readable as one ordinary wheel. Wheel remains floor-supported. No detached finger/hand, added handle or unsupported wheel is visible."
+    },
+    "kneePadAndLowerSupport": {
+      "passed": true,
+      "evidence": "Both knees remain on the same pad at native support locations; rear shoes and lower support remain visually stable. Source pixels are NOT exact in these regions, so preservation is not claimed. Small source redraw/contact-outline differences do not show significant knee sliding or support loss."
+    },
+    "ordinaryEquipmentConsistency": {
+      "passed": true,
+      "evidence": "Same one broad-tread wheel and central axle/two grips, with modest comparable overall dimensions and handle span. Native rim height is approximately195-200px in both images; projected tread/face/hand overlap changes are modest. No visible doubling of diameter, widened grip scale or changed apparatus topology. This is a static visual consistency judgment, not an exact calibrated hardware-invariance pass."
+    },
+    "cameraAndFraming": {
+      "passed": true,
+      "evidence": "Fixed native framing keeps the pad/shoe locations stable and the whole athlete and wheel in view. The wheel advances roughly380px right and slightly down in the same oblique floor projection. Do not infer a different floor plane or demand identical image-y solely from that projected travel."
+    }
+  },
+  "readOnlySupportDiagnostics": {
+    "pixelChecks": [
+      {
+        "region": "rearTrainers",
+        "nativeRoi": [64, 626, 286, 829],
+        "rgbaPixelExact": false,
+        "changedPixels": 39261,
+        "meaning": "Whole-source redraw/shading differs; this is not a measured contact displacement."
+      },
+      {
+        "region": "padExposedFront",
+        "nativeRoi": [237, 836, 590, 864],
+        "rgbaPixelExact": false,
+        "changedPixels": 9569,
+        "meaning": "Whole-source redraw/shading differs; this is not a measured contact displacement."
+      },
+      {
+        "region": "nearKneeContactBand",
+        "nativeRoi": [358, 789, 440, 834],
+        "rgbaPixelExact": false,
+        "changedPixels": 3595,
+        "meaning": "Whole-source redraw/shading differs; this is not a measured contact displacement."
+      },
+      {
+        "region": "farKneeContactBand",
+        "nativeRoi": [476, 786, 552, 821],
+        "rgbaPixelExact": false,
+        "changedPixels": 2654,
+        "meaning": "Whole-source redraw/shading differs; this is not a measured contact displacement."
+      }
+    ],
+    "neutralBrightSilhouetteChecks": [
+      {
+        "region": "rearTrainers",
+        "roi": [64, 626, 286, 829],
+        "bestIntegerOffset": [0, 0],
+        "binaryIoU": 0.9510535921685748
+      },
+      {
+        "region": "nearKneeContactBand",
+        "roi": [358, 789, 440, 834],
+        "bestIntegerOffset": [1, 1],
+        "binaryIoU": 0.9881546134663342
+      },
+      {
+        "region": "farKneeContactBand",
+        "roi": [476, 786, 552, 821],
+        "bestIntegerOffset": [3, 1],
+        "binaryIoU": 0.9538539553752535
+      }
+    ],
+    "method": "Neutral bright RGB minimum>125, channel spread<24, local integer search within+/-8px. No image is altered. These source/shading silhouette matches are supporting diagnostics, not physical joint centres, precise knee motion, a no-slip test or automatic approval.",
+    "excludedDiagnostic": "A homogeneous rear shin ROI had its best overlap at the search boundary and does not establish a useful physical displacement; not treated as an anchor measurement."
+  },
+  "paletteAndBoundaryGate": "Final exact field ownership, primary/secondary cores and contour finishing remain pending. Original secondary upper lateral-back/posterior-arm border requires the same focused source-contour role review noted for the master; do not alter anatomy or classify all purple pixels indiscriminately.",
+  "significantPhysicalDefects": [],
+  "decision": "Keep this actual advanced Roll source provisionally and review the one requested whole endpoint source before continuing. Do not re-create a smaller early pose merely to match the original requested fraction. Actual endpoint continuity/equipment/neutral-brace checks, honest source reuse and native/mobile loop gates still govern.",
+  "notYetPassed": [
+    "Endpoint source consistency",
+    "Complete rollout-return scope",
+    "Exact field/palette/contour finishing",
+    "Actual native three-pose/six-path playback and closure",
+    "Mobile light/dark, editables, release/project checks and merge"
+  ],
+  "generationRequestsByReviewer": 0,
+  "imageEditsByReviewer": 0,
+  "completionCredit": 0
+}
