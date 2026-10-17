@@ -1,0 +1,144 @@
+{
+  "exerciseId": "stairmaster",
+  "version": "anatomy-v3-2026-10-17-gemini-stepmill-v1",
+  "width": 1264,
+  "height": 848,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Claude Code, session_015b5TWTtYEo43etRFZF8nJr",
+  "reviewedAt": "2026-10-17T13:39:01+00:00",
+  "reference": {
+    "path": "form-frames/stairmaster/1.webp",
+    "sha256": "62a945275bd8c65c36992878dbc6bf6e24128760a2d6e25e50a345970c074e67"
+  },
+  "cueSha256": "e1c03ab37ef0fc06f68b5431c44577119100ed37972e0fd0445f0e5f62a24f71",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Unverified. Observed: The canonical faceless anatomy-v3 athlete in every frame, seen on the contact sheet."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Unverified. Observed: One fixed right-facing side view; the machine holds still between the two poses."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Unverified. Observed: No extra or missing limbs seen at contact-sheet size; not inspected at native size frame by frame."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Unverified. Observed: The stepmill, rails and console match between the two poses at contact-sheet size."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Contacts look plausible at contact-sheet size; no anchors were measured."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Two moments of the climb: a foot planted on the step above, and the other knee driving through."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Unverified. Observed: The colours follow the brief's strongest-purple and lilac hierarchy at contact-sheet size."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Unverified. Observed: The cues coach the whole climb over its two positions, as the elliptical's do."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Reviewed as a loop: two beats of the step, two of the knee drive, two of the step again, the elliptical's pattern."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Not reviewed in the app's player at phone size; the owner reviewed contact sheets."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Not reviewed in the app's player at phone size; the owner reviewed contact sheets."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/stairmaster/1.webp",
+      "sha256": "62a945275bd8c65c36992878dbc6bf6e24128760a2d6e25e50a345970c074e67",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-17/step.png",
+        "sha256": "c397c6af3e1976727a72b18e417fffc1a121f29c2199bd1ba153c6015ac8f840",
+        "generatedSha256": "1775907d29d0e4db70bbb72088666fa276acb71d72a5b39d9131bbed50c98bab"
+      }
+    },
+    {
+      "path": "form-frames/stairmaster/2.webp",
+      "sha256": "62a945275bd8c65c36992878dbc6bf6e24128760a2d6e25e50a345970c074e67",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-17/step.png",
+        "sha256": "c397c6af3e1976727a72b18e417fffc1a121f29c2199bd1ba153c6015ac8f840",
+        "generatedSha256": "1775907d29d0e4db70bbb72088666fa276acb71d72a5b39d9131bbed50c98bab"
+      }
+    },
+    {
+      "path": "form-frames/stairmaster/3.webp",
+      "sha256": "52671dd396053aa77b337176a15828d6000625700159763d796701e128a0f417",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-17/knee-through.png",
+        "sha256": "8f5f9757ec32080afe007383c7bf13690374f9a6d42617c747dd1c3efcb72d09",
+        "generatedSha256": "03defeb539b3fc208d85b5ffdb72ad02758b426c660951da1f89627cf2a152e6"
+      }
+    },
+    {
+      "path": "form-frames/stairmaster/4.webp",
+      "sha256": "52671dd396053aa77b337176a15828d6000625700159763d796701e128a0f417",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-17/knee-through.png",
+        "sha256": "8f5f9757ec32080afe007383c7bf13690374f9a6d42617c747dd1c3efcb72d09",
+        "generatedSha256": "03defeb539b3fc208d85b5ffdb72ad02758b426c660951da1f89627cf2a152e6"
+      }
+    },
+    {
+      "path": "form-frames/stairmaster/5.webp",
+      "sha256": "62a945275bd8c65c36992878dbc6bf6e24128760a2d6e25e50a345970c074e67",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-17/step.png",
+        "sha256": "c397c6af3e1976727a72b18e417fffc1a121f29c2199bd1ba153c6015ac8f840",
+        "generatedSha256": "1775907d29d0e4db70bbb72088666fa276acb71d72a5b39d9131bbed50c98bab"
+      }
+    },
+    {
+      "path": "form-frames/stairmaster/6.webp",
+      "sha256": "62a945275bd8c65c36992878dbc6bf6e24128760a2d6e25e50a345970c074e67",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-17/step.png",
+        "sha256": "c397c6af3e1976727a72b18e417fffc1a121f29c2199bd1ba153c6015ac8f840",
+        "generatedSha256": "1775907d29d0e4db70bbb72088666fa276acb71d72a5b39d9131bbed50c98bab"
+      }
+    }
+  ],
+  "recordStage": "Owner release recorded; project verification, CI and merge remain separate gates",
+  "approval": {
+    "actor": "The owner, in this session",
+    "instruction": "\"Do the rest\", sent with a new Gemini key after the Turkish get-up and assault bike were released, where the owner had said \"it's ok if it's not perfect but I've been trying to release this for ages\".",
+    "context": "The owner asked for the exercises without art to be generated in the house style with their Gemini key. They had seen this set as a contact sheet earlier in the session, then asked for the remaining sets to be finished and released, knowing the findings below."
+  },
+  "findings": [
+    "Two physical poses only: frames 3 and 4 show the knee coming through, and frames 1, 2, 5 and 6 the step.",
+    "From the side it is hard to tell which leg leads, so the loop reads as stepping rather than as legs alternating.",
+    "No contacts or anchors were measured."
+  ],
+  "provenance": {
+    "method": "gemini-3-pro-image through scripts/art/gemini-image.py, with the canonical athlete and the released elliptical's first frame attached for identity and machine finish. step.png is a master and knee-through.png an edit from it, both kept as they came back (1264 x 848). Frames 1, 2, 5 and 6 are step.png and frames 3 and 4 knee-through.png. Nothing was redrawn by hand.",
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  }
+}

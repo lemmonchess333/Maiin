@@ -4905,6 +4905,24 @@ describe("form beats — the caption is a claim about the frame", () => {
         expect(beats[5].cue).toContain("reverse each step");
         continue;
       }
+      if (id === "swimming") {
+        // Front crawl advances through a periodic stroke, each arm's catch,
+        // pull and entry in turn. The wrap keeps the stroke rate.
+        for (let i = 0; i < beats.length; i++) {
+          const next = beats[(i + 1) % beats.length].t;
+          expect((next - beats[i].t + 1) % 1).toBeCloseTo(1 / 6);
+        }
+        expect(beats.map((beat) => beat.label)).toEqual([
+          "Catch",
+          "Pull",
+          "Breathe",
+          "Switch",
+          "Drive",
+          "Enter",
+        ]);
+        expect(beats[2].cue).toContain("breathe");
+        continue;
+      }
       if (id === "treadmill" || id === "incline-treadmill-walk") {
         // Walking advances through a periodic gait phase, rather than
         // reversing a joint excursion. The wrap must preserve cadence.

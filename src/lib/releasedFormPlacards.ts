@@ -2202,4 +2202,38 @@ export const RELEASED_FORM_PLACARDS = {
       "Hold the moving handles and put both feet on the pedals.",
     ]
   ),
+  swimming: placard(
+    "swimming",
+    ["Lats", "Shoulders", "Triceps"],
+    ["Core", "Glutes", "Quads"],
+    [
+      [0, "Catch", "Reach long and catch the water."],
+      [1 / 6, "Pull", "Pull under your body, elbow high."],
+      [2 / 6, "Breathe", "Roll and breathe as the arm enters."],
+      [3 / 6, "Switch", "Catch with the other arm, face down."],
+      [4 / 6, "Drive", "Pull through; keep your hips high."],
+      [5 / 6, "Enter", "Enter fingertips first; kick small and steady."],
+    ],
+    [
+      "Push off the wall in a long, flat line.",
+      "Swim an easy length first to settle your breathing.",
+    ]
+  ),
+  stairmaster: placard(
+    "stairmaster",
+    ["Quads", "Glutes", "Calves"],
+    ["Hamstrings", "Core"],
+    [
+      [0, "Step", "Stand tall; shoulders stacked over hips."],
+      [0, "Drive", "Drive the whole foot down each step."],
+      [1, "Knee up", "Bring the other knee through to climb."],
+      [1, "Grip", "Keep a light grip on the rails."],
+      [0, "Land", "Land the whole foot on the step."],
+      [0, "Steady", "Hold a pace you can sustain."],
+    ],
+    [
+      "Step on and start at a slow, steady pace.",
+      "Rest your hands lightly on the side rails.",
+    ]
+  ),
 };

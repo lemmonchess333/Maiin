@@ -1337,6 +1337,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "ff8c9e3966701e83295ac40acb5e4c976d466bb5c2007e062278cda22ecfb407",
     sha256: "94c2a54fe5e3f7ed7d85e2d6aa8a59d81f51661a2fe3a06ecb1ea780b31958ab",
   },
+  stairmaster: {
+    src: "form-art/stairmaster.webp",
+    width: 388,
+    height: 480,
+    keyed: true,
+    source: "form-frames/stairmaster/1.webp",
+    sourceSha256:
+      "62a945275bd8c65c36992878dbc6bf6e24128760a2d6e25e50a345970c074e67",
+    sha256: "17efad8187b9d08f4085691372ce16bbce5dc9816d6cb489e21aca2fdcca9952",
+  },
   "standing-calf-raise": {
     src: "form-art/standing-calf-raise.webp",
     width: 320,
@@ -1376,6 +1386,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "d2372dee3ea37ee331b6ea7710a6b7eab86fd0043174606ca1375b73b15a2de1",
     sha256: "9cdc24272c1354a860a4952c06b295c42c77ec40e7419121b774c7d42ee7f49c",
+  },
+  swimming: {
+    src: "form-art/swimming.webp",
+    width: 480,
+    height: 262,
+    keyed: true,
+    source: "form-frames/swimming/2.webp",
+    sourceSha256:
+      "f63e3fd3e9882676ab137d67d88f77ce2b94a212743b9e094138826dc6162bc0",
+    sha256: "058c422e890d29ab4af6923f4cf66ebd3d3f9724ed5c68140c0f63cb5bc08327",
   },
   "t-bar-row": {
     src: "form-art/t-bar-row.webp",
