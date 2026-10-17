@@ -6,9 +6,9 @@ import { useScanUsage } from "@/hooks/useScanUsage";
  * F1b lock pin #6 — Settings page daily-usage pill.
  *
  * Shows the user's per-action AI scan counters (text_ai +
- * image_ai). Free users see their text-AI counter and a Pro-only
- * hint for image-AI; the row is tappable and routes to /upgrade.
- * Pro users see both counters with no upgrade CTA.
+ * image_ai). Free users have no AI (#1102), so they see a line saying
+ * it is part of Pro instead of counters; the row is tappable and
+ * routes to /upgrade. Pro users see both counters with no upgrade CTA.
  *
  * The hook (`useScanUsage`) is the source of truth for the
  * limit + remaining values; the row only renders the display.
@@ -61,22 +61,22 @@ export default function AiUsageSection() {
     );
   }
 
-  // Free user: text counter visible + image is Pro-only. Whole row
-  // taps through to /upgrade — F1b lock pin #6 says "tap → upgrade
-  // flow for free users".
+  // Free user: no AI on the free plan (#1102), so there is no counter
+  // to show. Whole row taps through to /upgrade — F1b lock pin #6 says
+  // "tap → upgrade flow for free users".
   return (
     <button
       type="button"
       onClick={() => navigate("/upgrade?from=settings")}
       className="w-full flex items-center justify-between p-4 rounded-2xl bg-card"
-      aria-label="AI usage today — upgrade to Pro"
+      aria-label="AI food logging is part of Pro — see Pro"
     >
       <div className="flex items-center gap-3">
         <Sparkles className="size-5 text-primary" aria-hidden="true" />
         <div className="text-left">
-          <p className="text-sm font-medium text-foreground">AI usage today</p>
-          <p className="text-xs text-muted-foreground font-mono tabular-nums">
-            Text: {textAi.used} / {textAi.limit} · Image is Pro-only
+          <p className="text-sm font-medium text-foreground">AI food logging</p>
+          <p className="text-xs text-muted-foreground">
+            Logging a meal from a photo or a sentence is part of Pro
           </p>
         </div>
       </div>
