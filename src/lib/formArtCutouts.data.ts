@@ -37,6 +37,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "f2b4f69d46e29a5747105e51108f091311a393bbf670023186e5ff8bea5ba1ce",
     sha256: "4557236aa2ec2e78ad144ddd75a70670b4eec2bae464f666b159c1972b66f6ea",
   },
+  "assault-bike": {
+    src: "form-art/assault-bike.webp",
+    width: 211,
+    height: 480,
+    keyed: true,
+    source: "form-frames/assault-bike/1.webp",
+    sourceSha256:
+      "9ff463d8f00fb6621b87eb272c183ab7477442e75377b04635da94c4a75cc675",
+    sha256: "bad9cb198c02eaf20e7ff7b6b633bdb3e892faf11f6599ce5e54136d507ffe88",
+  },
   "barbell-curl": {
     src: "form-art/barbell-curl.webp",
     width: 275,
@@ -1436,6 +1446,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "cdb73fc3d36a447f70e6c1a12751ffde58e56a730ae33a70c6ebd7108fb351da",
     sha256: "fc5f85d1d0ee7bf4567b6cd4833e80de5bd44979680d7ae060d0b7f2373589e7",
+  },
+  "turkish-get-up": {
+    src: "form-art/turkish-get-up.webp",
+    width: 382,
+    height: 480,
+    keyed: true,
+    source: "form-frames/turkish-get-up/5.webp",
+    sourceSha256:
+      "9de53f6b17a59e2cf4202f9f8144f646b0e5f6cc7966f90603cf00b369eeb0bb",
+    sha256: "2c02cb59973a0b3167cb4ecd6cc41738ae5536a1f4a97b85fb1422b3176c971c",
   },
   "walking-dumbbell-lunges": {
     src: "form-art/walking-dumbbell-lunges.webp",

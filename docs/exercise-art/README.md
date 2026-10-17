@@ -1,6 +1,14 @@
 # Exercise artwork migration
 
-## Current checkpoint — 3 October 2026
+## Current checkpoint — 17 October 2026
+
+Turkish Get-Up and Assault Bike are owner-released with findings ([get-up](releases/2026-10-17/turkish-get-up.json), [bike](releases/2026-10-17/assault-bike.json)), both generated with Gemini through `scripts/art/gemini-image.py`.
+
+- The get-up's six positions were drawn as edits from one another, then set on one scale and one floor.
+- The bike is a straight-on front view and its mirror, because six side-view methods could not draw a second pedal position.
+- Swimming and Stairmaster were drafted in the same session but not released. Their drafts are not in the repo.
+
+## Previous checkpoint — 3 October 2026
 
 The [fifth new-conversion batch](pilots/new-conversions-05-20261003/README.md) adds Ab Wheel Rollout and Kettlebell Swing: twelve native draft frames with measured contact drift and mobile review evidence. The [fourth batch](pilots/new-conversions-04-20261003/REVIEW.md) adds Seated Calf Raise and Farmer’s Carry. All four remain outside production pending their recorded form/contact corrections.
 

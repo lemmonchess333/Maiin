@@ -4890,6 +4890,21 @@ describe("form beats — the caption is a claim about the frame", () => {
         expect(beats[5].cue).toContain("return to a braced plank");
         continue;
       }
+      if (id === "turkish-get-up") {
+        // The get-up's positions one after another on the way up; the
+        // last cue sends the lifter back down the same way.
+        expect(beats.map((beat) => beat.t)).toEqual([0, 0.2, 0.4, 0.6, 0.8, 1]);
+        expect(beats.map((beat) => beat.label)).toEqual([
+          "Press",
+          "Elbow",
+          "Hand",
+          "Bridge",
+          "Kneel",
+          "Stand",
+        ]);
+        expect(beats[5].cue).toContain("reverse each step");
+        continue;
+      }
       if (id === "treadmill" || id === "incline-treadmill-walk") {
         // Walking advances through a periodic gait phase, rather than
         // reversing a joint excursion. The wrap must preserve cadence.

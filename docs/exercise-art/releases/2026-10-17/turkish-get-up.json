@@ -1,0 +1,145 @@
+{
+  "exerciseId": "turkish-get-up",
+  "version": "anatomy-v3-2026-10-17-gemini-get-up-v1",
+  "width": 1024,
+  "height": 1024,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Claude Code, session_015b5TWTtYEo43etRFZF8nJr",
+  "reviewedAt": "2026-10-17T13:04:25+00:00",
+  "reference": {
+    "path": "form-frames/turkish-get-up/1.webp",
+    "sha256": "9104e61c0161063cd48e3190ef6374056ae57d94b827afa25ac88c4335a7502e"
+  },
+  "cueSha256": "ef47e27eedd522dc2a95f35480974a7805650cdbb6dc8dff207b1ea406262925",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Unverified. Observed: The canonical faceless anatomy-v3 athlete with white trainers in every frame, seen on the contact sheet."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Frames 1-4 share one elevated three-quarter camera; frames 5-6 were drawn from the front, so the view turns as the athlete turns to stand."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Unverified. Observed: No extra or missing limbs seen at contact-sheet size; not inspected at native size frame by frame."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Unverified. Observed: One black kettlebell, locked out overhead in the same hand in every frame (frame 6 was redrawn from frame 5 after a first draw swapped hands)."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Floor and equipment contacts look plausible at contact-sheet size; no anchors were measured."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Unverified. Observed: The beats follow the catalogue's sequence: elbow, hand, bridge, kneel, stand."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Unverified. Observed: The colours follow the brief's strongest-purple and lilac hierarchy at contact-sheet size."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Each cue names the beat its frame shows."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Reviewed as an animated loop. Frame 6 to 1 jumps from standing to lying: the set draws the way up, and the last cue says to reverse it."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Not reviewed in the app's player at phone size; the owner reviewed a contact sheet and an animated loop."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Not reviewed in the app's player at phone size; the owner reviewed a contact sheet and an animated loop."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/turkish-get-up/1.webp",
+      "sha256": "9104e61c0161063cd48e3190ef6374056ae57d94b827afa25ac88c4335a7502e",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-17/1.png",
+        "sha256": "c9f3e75f3ccf0fd265cdaeb0f2feb661b1fec3a3a2c01b72c5d16f00df3237d5",
+        "generatedSha256": "a78045c310396d013a64b136cb21ee1e25abb010a8b97ce851047fac45cce52f"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/2.webp",
+      "sha256": "44b211ee08dee80748925c55ae55752edaa76446161d2c9419d16ac021365dda",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-17/2.png",
+        "sha256": "20d4a46eb5895ec7ee7d46841b0ac21170a063cf9d5a4d4e2d80a3340fab7abd",
+        "generatedSha256": "08aa587681f5812d0708b2e76ba3fcbd25484273ea5488dbce3377f4db5878cb"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/3.webp",
+      "sha256": "506c513b72aa00428fd36eb7314841c830e50c0d7e596d8d1112d9ee7bd6551a",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-17/3.png",
+        "sha256": "580bc5f08729ee99b96169aa5dd881c9ee0ab867417482f60be64ddc71a0eb04",
+        "generatedSha256": "51837689d46dc1fafb1d82c8357ed82d5fb8cab4a8bef4d609a62d8abdc2d811"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/4.webp",
+      "sha256": "7738ba30c2ed3672b0c0c85d5ffda572da066a9d25e7cb0c3abc62577d013d99",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-17/4.png",
+        "sha256": "c7a1fa16fffbf3f3a5ee0d5fa24a738e3898fb5083a8906f7b50daf88f163d7f",
+        "generatedSha256": "cb1a8d51d6b9b7703331f07af2328249cb65ea84123da8dda705073718e41405"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/5.webp",
+      "sha256": "9de53f6b17a59e2cf4202f9f8144f646b0e5f6cc7966f90603cf00b369eeb0bb",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-17/5.png",
+        "sha256": "a9b072c1e8c0005f21d9ccf3c6d4f52d112147585cbc895d749a60d9ac9b52fe",
+        "generatedSha256": "422bda30a37a0d4663a2aefffcf288944963caaafcb47206bd330f9ba3388ea5"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/6.webp",
+      "sha256": "01b649ebc33f3e5da640e9bbcd562cbda07d3e9c37457b132b296a3ad5298863",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-17/6.png",
+        "sha256": "c53cadfcffa81796908acac09c9c39237cc1025d57f958b1b2e8e7e0505e2251",
+        "generatedSha256": "f3a06b5686454267ab9f96033b9a754aa214c91fc31dbf537cbb4df0f2df63c2"
+      }
+    }
+  ],
+  "recordStage": "Owner release recorded; project verification, CI and merge remain separate gates",
+  "approval": {
+    "actor": "The owner, in this session",
+    "instruction": "Answered \"Release it\" to \"Release the Turkish get-up (six beats, as in the sheet and playback)? Finding: the view turns from side-on while lying to front-on for the kneel and stand.\"",
+    "context": "The owner asked for the exercises without art to be generated in the house style with their Gemini key, saw this set as a contact sheet and an animated loop, and released it knowing the findings below."
+  },
+  "findings": [
+    "The camera turns: frames 1-4 are an elevated three-quarter view of the floor stages, and frames 5-6 face the athlete from the front.",
+    "Frames 1-5 were each scaled by one uniform resample to frame 6's size, because a standing figure with the bell overhead only fits the square at that size. The lying figures are small in the frame.",
+    "Frame 6 to frame 1 jumps from standing to lying: the descent is in the last cue, not drawn.",
+    "No contacts or anchors were measured."
+  ],
+  "provenance": {
+    "method": "gemini-3-pro-image through scripts/art/gemini-image.py, with the canonical athlete attached to every generation. Frame 1 is a master. Frames 3 and 4 are edits from the pose before. Frame 2 was drawn between frames 1 and 3 with both attached. Frame 6 is an edit of an earlier half-kneel, and frame 5 an edit of frame 6 back down to a half-kneel, so the bell stays in one hand. Frames 1-4 came back 3:2 and were padded square with black above. Every frame was then scaled (frames 1-5 by 0.78 x 0.93, frame 6 by 0.93) and set, centred, with its lowest drawn pixel on one floor line. Nothing was redrawn by hand.",
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  }
+}
