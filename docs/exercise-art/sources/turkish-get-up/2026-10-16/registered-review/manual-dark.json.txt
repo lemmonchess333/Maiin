@@ -1,0 +1,146 @@
+[
+  {
+    "requestedFrame": 1,
+    "dom": "- main:\n  - heading \"Turkish Get-Up\" [level=1]\n  - button \"Light theme\"\n  - paragraph: \"Registered owner-released-with-findings: anatomy-v3-2026-10-16-joint-checkpoint-source-v1, 688×640.\"\n  - img \"Turkish Get-Up registered normal card\"\n  - generic: Full Body\n  - generic: Kettlebell\n  - region \"Turkish Get-Up form guide\":\n    - img \"Turkish Get-Up, Floor\"\n    - paragraph:\n      - text: Floor\n      - generic: 1/6\n    - button \"Previous frame\":\n    - button \"Play\":\n      - text: Play\n    - button \"Next frame\":\n    - button \"Slower playback\": Normal\n  - generic: Primary\n  - generic: Abs, Front Deltoids\n  - generic: Secondary\n  - generic: Glutes, Obliques\n  - paragraph: Instructions\n  - paragraph: \"Preparation: Start on your back with one kettlebell pressed above its shoulder. Bend the knee on the bell side; extend the opposite leg. Move through elbow, hand, bridge and kneeling before standing. Reverse each checkpoint to return, then repeat on the opposite side.\"\n  - 'button \"Show frame 1: Floor\" [active]': \"1\"\n  - paragraph: Keep one knee bent; bell above shoulder.\n  - 'button \"Show frame 2: Elbow\"': \"2\"\n  - paragraph: Rest on your free elbow and forearm.\n  - 'button \"Show frame 3: Hand\"': \"3\"\n  - paragraph: Keep your free palm planted.\n  - 'button \"Show frame 4: Bridge\"': \"4\"\n  - paragraph: Support hips on your hand and foot.\n  - 'button \"Show frame 5: Kneel\"': \"5\"\n  - paragraph: Front foot flat; rear knee down.\n  - 'button \"Show frame 6: Stand\"': \"6\"\n  - paragraph: Stand tall; reverse each step down.\n  - paragraph: Watch out\n  - paragraph: Keep the bell controlled above its shoulder; pause at each support change.\n  - paragraph: Common mistakes\n  - list:\n    - generic: Bending the loaded elbow or losing control of the bell.\n    - generic: Rushing the hand, foot or knee transfers.\n    - generic: Skipping the controlled return to the floor.\n  - 'generic \"Normal card preview: native 480px / 348px / 160px long-side limits\"'\n  - generic \"Actual registered asset paths\"\n  - generic \"Observed playback evidence\"",
+    "image": [
+      {
+        "alt": "Turkish Get-Up, Floor",
+        "complete": true,
+        "natural": [
+          688,
+          640
+        ],
+        "src": "/form-frames/turkish-get-up/1.webp",
+        "visible": "visible"
+      }
+    ],
+    "pageWidth": 380,
+    "selected": "Show frame 1: Floor",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ],
+    "screenshot": "C:/Users/myles/Documents/Codex/2026-10-04/lg/work/turkish-get-up/joint-checkpoint-source-20261016/review/dark-frame-1-fullpage.png"
+  },
+  {
+    "requestedFrame": 2,
+    "dom": "- main:\n  - heading \"Turkish Get-Up\" [level=1]\n  - button \"Light theme\"\n  - paragraph: \"Registered owner-released-with-findings: anatomy-v3-2026-10-16-joint-checkpoint-source-v1, 688×640.\"\n  - img \"Turkish Get-Up registered normal card\"\n  - generic: Full Body\n  - generic: Kettlebell\n  - region \"Turkish Get-Up form guide\":\n    - img \"Turkish Get-Up, Elbow\"\n    - paragraph:\n      - text: Elbow\n      - generic: 2/6\n    - button \"Previous frame\":\n    - button \"Play\":\n      - text: Play\n    - button \"Next frame\":\n    - button \"Slower playback\": Normal\n  - generic: Primary\n  - generic: Abs, Front Deltoids\n  - generic: Secondary\n  - generic: Glutes, Obliques\n  - paragraph: Instructions\n  - paragraph: \"Preparation: Start on your back with one kettlebell pressed above its shoulder. Bend the knee on the bell side; extend the opposite leg. Move through elbow, hand, bridge and kneeling before standing. Reverse each checkpoint to return, then repeat on the opposite side.\"\n  - 'button \"Show frame 1: Floor\"': \"1\"\n  - paragraph: Keep one knee bent; bell above shoulder.\n  - 'button \"Show frame 2: Elbow\" [active]': \"2\"\n  - paragraph: Rest on your free elbow and forearm.\n  - 'button \"Show frame 3: Hand\"': \"3\"\n  - paragraph: Keep your free palm planted.\n  - 'button \"Show frame 4: Bridge\"': \"4\"\n  - paragraph: Support hips on your hand and foot.\n  - 'button \"Show frame 5: Kneel\"': \"5\"\n  - paragraph: Front foot flat; rear knee down.\n  - 'button \"Show frame 6: Stand\"': \"6\"\n  - paragraph: Stand tall; reverse each step down.\n  - paragraph: Watch out\n  - paragraph: Keep the bell controlled above its shoulder; pause at each support change.\n  - paragraph: Common mistakes\n  - list:\n    - generic: Bending the loaded elbow or losing control of the bell.\n    - generic: Rushing the hand, foot or knee transfers.\n    - generic: Skipping the controlled return to the floor.\n  - 'generic \"Normal card preview: native 480px / 348px / 160px long-side limits\"'\n  - generic \"Actual registered asset paths\"\n  - generic \"Observed playback evidence\"",
+    "image": [
+      {
+        "alt": "Turkish Get-Up, Elbow",
+        "complete": true,
+        "natural": [
+          688,
+          640
+        ],
+        "src": "/form-frames/turkish-get-up/2.webp",
+        "visible": "visible"
+      }
+    ],
+    "pageWidth": 380,
+    "selected": "Show frame 2: Elbow",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ],
+    "screenshot": "C:/Users/myles/Documents/Codex/2026-10-04/lg/work/turkish-get-up/joint-checkpoint-source-20261016/review/dark-frame-2-fullpage.png"
+  },
+  {
+    "requestedFrame": 3,
+    "dom": "- main:\n  - heading \"Turkish Get-Up\" [level=1]\n  - button \"Light theme\"\n  - paragraph: \"Registered owner-released-with-findings: anatomy-v3-2026-10-16-joint-checkpoint-source-v1, 688×640.\"\n  - img \"Turkish Get-Up registered normal card\"\n  - generic: Full Body\n  - generic: Kettlebell\n  - region \"Turkish Get-Up form guide\":\n    - img \"Turkish Get-Up, Hand\"\n    - paragraph:\n      - text: Hand\n      - generic: 3/6\n    - button \"Previous frame\":\n    - button \"Play\":\n      - text: Play\n    - button \"Next frame\":\n    - button \"Slower playback\": Normal\n  - generic: Primary\n  - generic: Abs, Front Deltoids\n  - generic: Secondary\n  - generic: Glutes, Obliques\n  - paragraph: Instructions\n  - paragraph: \"Preparation: Start on your back with one kettlebell pressed above its shoulder. Bend the knee on the bell side; extend the opposite leg. Move through elbow, hand, bridge and kneeling before standing. Reverse each checkpoint to return, then repeat on the opposite side.\"\n  - 'button \"Show frame 1: Floor\"': \"1\"\n  - paragraph: Keep one knee bent; bell above shoulder.\n  - 'button \"Show frame 2: Elbow\"': \"2\"\n  - paragraph: Rest on your free elbow and forearm.\n  - 'button \"Show frame 3: Hand\" [active]': \"3\"\n  - paragraph: Keep your free palm planted.\n  - 'button \"Show frame 4: Bridge\"': \"4\"\n  - paragraph: Support hips on your hand and foot.\n  - 'button \"Show frame 5: Kneel\"': \"5\"\n  - paragraph: Front foot flat; rear knee down.\n  - 'button \"Show frame 6: Stand\"': \"6\"\n  - paragraph: Stand tall; reverse each step down.\n  - paragraph: Watch out\n  - paragraph: Keep the bell controlled above its shoulder; pause at each support change.\n  - paragraph: Common mistakes\n  - list:\n    - generic: Bending the loaded elbow or losing control of the bell.\n    - generic: Rushing the hand, foot or knee transfers.\n    - generic: Skipping the controlled return to the floor.\n  - 'generic \"Normal card preview: native 480px / 348px / 160px long-side limits\"'\n  - generic \"Actual registered asset paths\"\n  - generic \"Observed playback evidence\"",
+    "image": [
+      {
+        "alt": "Turkish Get-Up, Hand",
+        "complete": true,
+        "natural": [
+          688,
+          640
+        ],
+        "src": "/form-frames/turkish-get-up/3.webp",
+        "visible": "visible"
+      }
+    ],
+    "pageWidth": 380,
+    "selected": "Show frame 3: Hand",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ],
+    "screenshot": "C:/Users/myles/Documents/Codex/2026-10-04/lg/work/turkish-get-up/joint-checkpoint-source-20261016/review/dark-frame-3-fullpage.png"
+  },
+  {
+    "requestedFrame": 4,
+    "dom": "- main:\n  - heading \"Turkish Get-Up\" [level=1]\n  - button \"Light theme\"\n  - paragraph: \"Registered owner-released-with-findings: anatomy-v3-2026-10-16-joint-checkpoint-source-v1, 688×640.\"\n  - img \"Turkish Get-Up registered normal card\"\n  - generic: Full Body\n  - generic: Kettlebell\n  - region \"Turkish Get-Up form guide\":\n    - img \"Turkish Get-Up, Bridge\"\n    - paragraph:\n      - text: Bridge\n      - generic: 4/6\n    - button \"Previous frame\":\n    - button \"Play\":\n      - text: Play\n    - button \"Next frame\":\n    - button \"Slower playback\": Normal\n  - generic: Primary\n  - generic: Abs, Front Deltoids\n  - generic: Secondary\n  - generic: Glutes, Obliques\n  - paragraph: Instructions\n  - paragraph: \"Preparation: Start on your back with one kettlebell pressed above its shoulder. Bend the knee on the bell side; extend the opposite leg. Move through elbow, hand, bridge and kneeling before standing. Reverse each checkpoint to return, then repeat on the opposite side.\"\n  - 'button \"Show frame 1: Floor\"': \"1\"\n  - paragraph: Keep one knee bent; bell above shoulder.\n  - 'button \"Show frame 2: Elbow\"': \"2\"\n  - paragraph: Rest on your free elbow and forearm.\n  - 'button \"Show frame 3: Hand\"': \"3\"\n  - paragraph: Keep your free palm planted.\n  - 'button \"Show frame 4: Bridge\" [active]': \"4\"\n  - paragraph: Support hips on your hand and foot.\n  - 'button \"Show frame 5: Kneel\"': \"5\"\n  - paragraph: Front foot flat; rear knee down.\n  - 'button \"Show frame 6: Stand\"': \"6\"\n  - paragraph: Stand tall; reverse each step down.\n  - paragraph: Watch out\n  - paragraph: Keep the bell controlled above its shoulder; pause at each support change.\n  - paragraph: Common mistakes\n  - list:\n    - generic: Bending the loaded elbow or losing control of the bell.\n    - generic: Rushing the hand, foot or knee transfers.\n    - generic: Skipping the controlled return to the floor.\n  - 'generic \"Normal card preview: native 480px / 348px / 160px long-side limits\"'\n  - generic \"Actual registered asset paths\"\n  - generic \"Observed playback evidence\"",
+    "image": [
+      {
+        "alt": "Turkish Get-Up, Bridge",
+        "complete": true,
+        "natural": [
+          688,
+          640
+        ],
+        "src": "/form-frames/turkish-get-up/4.webp",
+        "visible": "visible"
+      }
+    ],
+    "pageWidth": 380,
+    "selected": "Show frame 4: Bridge",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ],
+    "screenshot": "C:/Users/myles/Documents/Codex/2026-10-04/lg/work/turkish-get-up/joint-checkpoint-source-20261016/review/dark-frame-4-fullpage.png"
+  },
+  {
+    "requestedFrame": 5,
+    "dom": "- main:\n  - heading \"Turkish Get-Up\" [level=1]\n  - button \"Light theme\"\n  - paragraph: \"Registered owner-released-with-findings: anatomy-v3-2026-10-16-joint-checkpoint-source-v1, 688×640.\"\n  - img \"Turkish Get-Up registered normal card\"\n  - generic: Full Body\n  - generic: Kettlebell\n  - region \"Turkish Get-Up form guide\":\n    - img \"Turkish Get-Up, Kneel\"\n    - paragraph:\n      - text: Kneel\n      - generic: 5/6\n    - button \"Previous frame\":\n    - button \"Play\":\n      - text: Play\n    - button \"Next frame\":\n    - button \"Slower playback\": Normal\n  - generic: Primary\n  - generic: Abs, Front Deltoids\n  - generic: Secondary\n  - generic: Glutes, Obliques\n  - paragraph: Instructions\n  - paragraph: \"Preparation: Start on your back with one kettlebell pressed above its shoulder. Bend the knee on the bell side; extend the opposite leg. Move through elbow, hand, bridge and kneeling before standing. Reverse each checkpoint to return, then repeat on the opposite side.\"\n  - 'button \"Show frame 1: Floor\"': \"1\"\n  - paragraph: Keep one knee bent; bell above shoulder.\n  - 'button \"Show frame 2: Elbow\"': \"2\"\n  - paragraph: Rest on your free elbow and forearm.\n  - 'button \"Show frame 3: Hand\"': \"3\"\n  - paragraph: Keep your free palm planted.\n  - 'button \"Show frame 4: Bridge\"': \"4\"\n  - paragraph: Support hips on your hand and foot.\n  - 'button \"Show frame 5: Kneel\" [active]': \"5\"\n  - paragraph: Front foot flat; rear knee down.\n  - 'button \"Show frame 6: Stand\"': \"6\"\n  - paragraph: Stand tall; reverse each step down.\n  - paragraph: Watch out\n  - paragraph: Keep the bell controlled above its shoulder; pause at each support change.\n  - paragraph: Common mistakes\n  - list:\n    - generic: Bending the loaded elbow or losing control of the bell.\n    - generic: Rushing the hand, foot or knee transfers.\n    - generic: Skipping the controlled return to the floor.\n  - 'generic \"Normal card preview: native 480px / 348px / 160px long-side limits\"'\n  - generic \"Actual registered asset paths\"\n  - generic \"Observed playback evidence\"",
+    "image": [
+      {
+        "alt": "Turkish Get-Up, Kneel",
+        "complete": true,
+        "natural": [
+          688,
+          640
+        ],
+        "src": "/form-frames/turkish-get-up/5.webp",
+        "visible": "visible"
+      }
+    ],
+    "pageWidth": 380,
+    "selected": "Show frame 5: Kneel",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ],
+    "screenshot": "C:/Users/myles/Documents/Codex/2026-10-04/lg/work/turkish-get-up/joint-checkpoint-source-20261016/review/dark-frame-5-fullpage.png"
+  },
+  {
+    "requestedFrame": 6,
+    "dom": "- main:\n  - heading \"Turkish Get-Up\" [level=1]\n  - button \"Light theme\"\n  - paragraph: \"Registered owner-released-with-findings: anatomy-v3-2026-10-16-joint-checkpoint-source-v1, 688×640.\"\n  - img \"Turkish Get-Up registered normal card\"\n  - generic: Full Body\n  - generic: Kettlebell\n  - region \"Turkish Get-Up form guide\":\n    - img \"Turkish Get-Up, Stand\"\n    - paragraph:\n      - text: Stand\n      - generic: 6/6\n    - button \"Previous frame\":\n    - button \"Play\":\n      - text: Play\n    - button \"Next frame\":\n    - button \"Slower playback\": Normal\n  - generic: Primary\n  - generic: Abs, Front Deltoids\n  - generic: Secondary\n  - generic: Glutes, Obliques\n  - paragraph: Instructions\n  - paragraph: \"Preparation: Start on your back with one kettlebell pressed above its shoulder. Bend the knee on the bell side; extend the opposite leg. Move through elbow, hand, bridge and kneeling before standing. Reverse each checkpoint to return, then repeat on the opposite side.\"\n  - 'button \"Show frame 1: Floor\"': \"1\"\n  - paragraph: Keep one knee bent; bell above shoulder.\n  - 'button \"Show frame 2: Elbow\"': \"2\"\n  - paragraph: Rest on your free elbow and forearm.\n  - 'button \"Show frame 3: Hand\"': \"3\"\n  - paragraph: Keep your free palm planted.\n  - 'button \"Show frame 4: Bridge\"': \"4\"\n  - paragraph: Support hips on your hand and foot.\n  - 'button \"Show frame 5: Kneel\"': \"5\"\n  - paragraph: Front foot flat; rear knee down.\n  - 'button \"Show frame 6: Stand\" [active]': \"6\"\n  - paragraph: Stand tall; reverse each step down.\n  - paragraph: Watch out\n  - paragraph: Keep the bell controlled above its shoulder; pause at each support change.\n  - paragraph: Common mistakes\n  - list:\n    - generic: Bending the loaded elbow or losing control of the bell.\n    - generic: Rushing the hand, foot or knee transfers.\n    - generic: Skipping the controlled return to the floor.\n  - 'generic \"Normal card preview: native 480px / 348px / 160px long-side limits\"'\n  - generic \"Actual registered asset paths\"\n  - generic \"Observed playback evidence\"",
+    "image": [
+      {
+        "alt": "Turkish Get-Up, Stand",
+        "complete": true,
+        "natural": [
+          688,
+          640
+        ],
+        "src": "/form-frames/turkish-get-up/6.webp",
+        "visible": "visible"
+      }
+    ],
+    "pageWidth": 380,
+    "selected": "Show frame 6: Stand",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ],
+    "screenshot": "C:/Users/myles/Documents/Codex/2026-10-04/lg/work/turkish-get-up/joint-checkpoint-source-20261016/review/dark-frame-6-fullpage.png"
+  }
+]

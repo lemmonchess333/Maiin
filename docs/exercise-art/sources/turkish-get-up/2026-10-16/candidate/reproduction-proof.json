@@ -1,0 +1,65 @@
+{
+  "dimensions": [688, 640],
+  "commonCrop": [304, 80, 928, 656],
+  "integerPadding": [32, 32],
+  "sourcePoseOrder": ["A", "B", "C", "D", "E", "F"],
+  "automaticPlayback": [0, 1, 2, 3, 4, 5, 4, 3, 2, 1],
+  "states": [
+    {
+      "pose": "A",
+      "sourceSha256": "0b4c95db793084922b7509f1b61d43bdac021fdb90d7da4f700a9d269e0c2236",
+      "wholeSourceUniformFraming": 1,
+      "individualBodyPartTransforms": 0,
+      "primaryPixels": 1544,
+      "secondaryPixels": 1298,
+      "neutralisedChestPixels": 2566
+    },
+    {
+      "pose": "B",
+      "sourceSha256": "206cc83410130980f4972970f9218cc00632d14c580b6681a02f694cf491a76a",
+      "wholeSourceUniformFraming": 0.5,
+      "individualBodyPartTransforms": 0,
+      "primaryPixels": 2624,
+      "secondaryPixels": 3875,
+      "neutralisedChestPixels": 4118
+    },
+    {
+      "pose": "C",
+      "sourceSha256": "94533fcd5f8716633997b4ee25d61e5105b22d0b5fb0e5be523f4a2a3e75e2a1",
+      "wholeSourceUniformFraming": 1,
+      "individualBodyPartTransforms": 0,
+      "primaryPixels": 3742,
+      "secondaryPixels": 2225,
+      "neutralisedChestPixels": 5101
+    },
+    {
+      "pose": "D",
+      "sourceSha256": "ab441a89098f661a7653fc5189ee0b347f891975b9c760942ea0fd08eb0f8678",
+      "wholeSourceUniformFraming": 1,
+      "individualBodyPartTransforms": 0,
+      "primaryPixels": 2882,
+      "secondaryPixels": 2429,
+      "neutralisedChestPixels": 2640
+    },
+    {
+      "pose": "E",
+      "sourceSha256": "f7f7835699a9981df0d143e49e8c56b5fb96d6719f6f01ab7cf8712742f4e029",
+      "wholeSourceUniformFraming": 1,
+      "individualBodyPartTransforms": 0,
+      "primaryPixels": 2009,
+      "secondaryPixels": 2946,
+      "neutralisedChestPixels": 2397
+    },
+    {
+      "pose": "F",
+      "sourceSha256": "7ae313945c9d54dbf618e9f484776e2fc08a5ec9b1ffba01ac4887310b0e80a3",
+      "wholeSourceUniformFraming": 1,
+      "individualBodyPartTransforms": 0,
+      "primaryPixels": 2234,
+      "secondaryPixels": 1379,
+      "neutralisedChestPixels": 2611
+    }
+  ],
+  "strictCertified": false,
+  "completionCredit": false
+}

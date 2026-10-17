@@ -29,6 +29,87 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 describe("six-frame form guide", () => {
+  it("plays the ascent and controlled return without a standing-to-floor jump", () => {
+    const onStep = vi.fn();
+    const view = render(
+      <ExerciseFormFrames
+        name="Get-up"
+        beats={beats}
+        playback="forward-and-reverse"
+        onStep={onStep}
+      />
+    );
+    for (let i = 0; i < 10; i++) {
+      load(view.container);
+      act(() => vi.advanceTimersByTime(1200));
+      expect(view.container.querySelectorAll("img")).toHaveLength(2);
+    }
+    expect(onStep.mock.calls.map(([index]) => index)).toEqual([
+      0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0,
+    ]);
+  });
+  it("preloads the return from standing and retains ordinary manual position selection", () => {
+    const view = render(
+      <ExerciseFormFrames
+        name="Get-up"
+        beats={beats}
+        playback="forward-and-reverse"
+        initialIndex={5}
+        autoPlay={false}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+    expect(
+      view.container.querySelector('img[aria-hidden="true"]')
+    ).toHaveAttribute("src", "/form-frames/test/5.webp");
+    load(view.container);
+    act(() => vi.advanceTimersByTime(1200));
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "alt",
+      "Get-up, Position 5"
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Next frame" }));
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "alt",
+      "Get-up, Position 6"
+    );
+    expect(screen.getByRole("button", { name: "Play" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Slower playback" }));
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+    load(view.container);
+    act(() => vi.advanceTimersByTime(1200));
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "alt",
+      "Get-up, Position 6"
+    );
+    act(() => vi.advanceTimersByTime(1200));
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "alt",
+      "Get-up, Position 5"
+    );
+  });
+  it("keeps reverse playback still and manually accessible with reduced motion", () => {
+    reduced.value = true;
+    const onStep = vi.fn();
+    const view = render(
+      <ExerciseFormFrames
+        name="Get-up"
+        beats={beats}
+        playback="forward-and-reverse"
+        initialIndex={5}
+        onStep={onStep}
+      />
+    );
+    load(view.container);
+    act(() => vi.advanceTimersByTime(12000));
+    expect(onStep.mock.calls.map(([index]) => index)).toEqual([5]);
+    expect(view.container.querySelectorAll("img")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Previous frame" }));
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "alt",
+      "Get-up, Position 5"
+    );
+  });
   it("waits for current and adjacent images before advancing, with only two mounted", () => {
     const view = render(<ExerciseFormFrames name="Squat" beats={beats} />);
     expect(view.container.querySelectorAll("img")).toHaveLength(2);

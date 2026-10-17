@@ -4,10 +4,15 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import type { FormBeat } from "@/lib/formGuides";
+import {
+  getFormFrameOrder,
+  type FormFramePlayback,
+} from "@/lib/formFramePlayback";
 
 interface Props {
   beats: readonly FormBeat[];
   name: string;
+  playback?: FormFramePlayback;
   active?: boolean;
   initialIndex?: number;
   autoPlay?: boolean;
@@ -24,10 +29,15 @@ export default function ExerciseFormFrames({
   active = true,
   initialIndex = 0,
   autoPlay = true,
+  playback = "loop",
   onStep,
 }: Props) {
   const reducedMotion = useReducedMotion();
-  const [index, setIndex] = useState(Math.max(0, Math.min(5, initialIndex)));
+  const order = getFormFrameOrder(playback);
+  const [position, setPosition] = useState(
+    Math.max(0, Math.min(5, initialIndex))
+  );
+  const index = order[position];
   const [playing, setPlaying] = useState(autoPlay);
   const [slow, setSlow] = useState(false);
   const [loaded, setLoaded] = useState<Record<number, boolean>>({});
@@ -49,7 +59,8 @@ export default function ExerciseFormFrames({
 
   const complete =
     beats.length === 6 && beats.every((beat) => Boolean(beat.image));
-  const next = (index + 1) % 6;
+  const nextPosition = (position + 1) % order.length;
+  const next = order[nextPosition];
   const running =
     complete &&
     playing &&
@@ -59,9 +70,12 @@ export default function ExerciseFormFrames({
     failed === null;
   useEffect(() => {
     if (!running || !loaded[index] || !loaded[next]) return;
-    const timer = window.setTimeout(() => setIndex(next), slow ? 2400 : 1200);
+    const timer = window.setTimeout(
+      () => setPosition(nextPosition),
+      slow ? 2400 : 1200
+    );
     return () => window.clearTimeout(timer);
-  }, [running, loaded, index, next, slow]);
+  }, [running, loaded, index, next, nextPosition, slow]);
 
   if (!complete)
     return (
@@ -73,7 +87,7 @@ export default function ExerciseFormFrames({
   const select = (value: number) => {
     setPlaying(false);
     setFailed(null);
-    setIndex((value + 6) % 6);
+    setPosition((value + 6) % 6);
   };
   const fail = (value: number) => {
     setFailed(value);
@@ -162,7 +176,7 @@ export default function ExerciseFormFrames({
         <IconButton
           aria-label="Next frame"
           icon={<ChevronRight />}
-          onClick={() => select(next)}
+          onClick={() => select(index + 1)}
         />
         {!reducedMotion && (
           <Button

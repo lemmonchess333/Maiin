@@ -19,6 +19,35 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "turkish-get-up": {
+    ...placard(
+      "turkish-get-up",
+      ["Abs", "Front deltoids"],
+      ["Glutes", "Obliques"],
+      [
+        [0, "Floor", "Keep one knee bent; bell above shoulder."],
+        [0.2, "Elbow", "Rest on your free elbow and forearm."],
+        [0.4, "Hand", "Keep your free palm planted."],
+        [0.6, "Bridge", "Support hips on your hand and foot."],
+        [0.8, "Kneel", "Front foot flat; rear knee down."],
+        [1, "Stand", "Stand tall; reverse each step down."],
+      ],
+      [
+        "Start on your back with one kettlebell pressed above its shoulder.",
+        "Bend the knee on the bell side; extend the opposite leg.",
+        "Move through elbow, hand, bridge and kneeling before standing. Reverse each checkpoint to return, then repeat on the opposite side.",
+      ],
+      {
+        tip: "Keep the bell controlled above its shoulder; pause at each support change.",
+        commonMistakes: [
+          "Bending the loaded elbow or losing control of the bell.",
+          "Rushing the hand, foot or knee transfers.",
+          "Skipping the controlled return to the floor.",
+        ],
+      }
+    ),
+    playback: "forward-and-reverse" as const,
+  },
   "incline-db-curl": placard(
     "incline-db-curl",
     ["Biceps"],

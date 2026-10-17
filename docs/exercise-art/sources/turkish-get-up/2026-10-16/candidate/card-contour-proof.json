@@ -1,0 +1,12 @@
+{
+  "source": "F-native.png",
+  "sourceSha256": "7e543ba1e81a5efde01a0dc3c69ce448d07a0a1b09d609b681e37861ee8b1e79",
+  "imageSha256": "5e592d1adb83d27818201d17c86f2f4485beddf820dbe1630fc1913a936b2052",
+  "dimensions": [688, 640],
+  "allRgbBytesUnchanged": true,
+  "alphaOnly": true,
+  "bodyPartFittingOrTransforms": 0,
+  "method": "Native contour matte using bright body/load core, one-pixel contour growth and enclosed-hole fill; no body RGB replacement. Grey floor removed only from the separate card source. Six delivered guide frames unchanged.",
+  "reviewStatus": "native light/dark review pending",
+  "strictCertified": false
+}

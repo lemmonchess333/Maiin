@@ -1,0 +1,68 @@
+{
+  "canvas": [1024, 704],
+  "poses": [
+    {
+      "pose": "A",
+      "source": "original",
+      "sourceSha256": "4dd1037e82d129c790841bfe41c75827cd88104c616737480ec3c8cdfccc7be7",
+      "sourceCrop": [0, 0, 512, 448],
+      "integerPlacement": [353, 205],
+      "sourceScale": 1,
+      "anatomicalTransforms": 0,
+      "allSourceHumanAndEquipmentPixelsRetained": true
+    },
+    {
+      "pose": "B",
+      "source": "original",
+      "sourceSha256": "4dd1037e82d129c790841bfe41c75827cd88104c616737480ec3c8cdfccc7be7",
+      "sourceCrop": [512, 0, 1024, 448],
+      "integerPlacement": [322, 205],
+      "sourceScale": 1,
+      "anatomicalTransforms": 0,
+      "allSourceHumanAndEquipmentPixelsRetained": true
+    },
+    {
+      "pose": "C",
+      "source": "original",
+      "sourceSha256": "4dd1037e82d129c790841bfe41c75827cd88104c616737480ec3c8cdfccc7be7",
+      "sourceCrop": [1024, 0, 1536, 448],
+      "integerPlacement": [314, 182],
+      "sourceScale": 1,
+      "anatomicalTransforms": 0,
+      "allSourceHumanAndEquipmentPixelsRetained": true
+    },
+    {
+      "pose": "D",
+      "source": "original",
+      "sourceSha256": "4dd1037e82d129c790841bfe41c75827cd88104c616737480ec3c8cdfccc7be7",
+      "sourceCrop": [0, 470, 512, 1024],
+      "integerPlacement": [347, 120],
+      "sourceScale": 1,
+      "anatomicalTransforms": 0,
+      "allSourceHumanAndEquipmentPixelsRetained": true
+    },
+    {
+      "pose": "E",
+      "source": "correction",
+      "sourceSha256": "1b4b4c602fb23ef0fbd515c8cc6c92367653fc7b0ccc02f0d1122ab55dc7fb3f",
+      "sourceCrop": [512, 470, 1024, 1024],
+      "integerPlacement": [294, 124],
+      "sourceScale": 1,
+      "anatomicalTransforms": 0,
+      "allSourceHumanAndEquipmentPixelsRetained": true
+    },
+    {
+      "pose": "F",
+      "source": "original",
+      "sourceSha256": "4dd1037e82d129c790841bfe41c75827cd88104c616737480ec3c8cdfccc7be7",
+      "sourceCrop": [1024, 470, 1536, 1024],
+      "integerPlacement": [494, 109],
+      "sourceScale": 1,
+      "anatomicalTransforms": 0,
+      "allSourceHumanAndEquipmentPixelsRetained": true
+    }
+  ],
+  "scope": "Unfinished native-review draft. Whole panels translated only. Earlier four and standing F use original source bytes; only corrected E uses the connected new kneeling source. No limb fitting, reflection, head/shoe graft or source rescaling. Manually estimated support-sole registration is qualitative, not calibrated3D.",
+  "strictCertified": false,
+  "completionCredit": false
+}

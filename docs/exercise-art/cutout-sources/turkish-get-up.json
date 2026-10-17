@@ -1,0 +1,11 @@
+{
+  "reviewStatus": "reviewed",
+  "reference": "form-frames/turkish-get-up/6.webp",
+  "referenceSha256": "5795c20ce77606b9b4846820782622421908b3d52e1d7e179d4eeb56532643eb",
+  "image": "turkish-get-up.png",
+  "imageSha256": "5e592d1adb83d27818201d17c86f2f4485beddf820dbe1630fc1913a936b2052",
+  "reviewer": "Codex /root",
+  "reviewScope": "Actual native alpha-only contour reviewed on light and dark backgrounds: complete bell, closed hand, head, both arms and white trainers retained; no floor rectangle. All source RGB bytes unchanged; alpha-only edit under standing code-contour authorization. Actual integrated normal-card review completed at 390x844 in light/dark with 480/348/160 long-side previews. This remains separate from strict certification.",
+  "sourceRecipe": "docs/exercise-art/sources/turkish-get-up/2026-10-16/prepare-card-cutout.py",
+  "strictCertified": false
+}

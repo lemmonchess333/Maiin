@@ -1,0 +1,14 @@
+{
+  "sourceSha256": "206cc83410130980f4972970f9218cc00632d14c580b6681a02f694cf491a76a",
+  "sourceDimensions": [1512, 1040],
+  "wholeImageUniformFraming": 0.5,
+  "framedDimensions": [756, 520],
+  "integerPlacement": [195, 165],
+  "canvas": [1024, 704],
+  "inversePreviewZoomClaim": false,
+  "individualBodyPartTransforms": 0,
+  "rationale": "Frame the entire new landscape source on the common scene canvas while preserving all internal proportions. No body-part fitting, head/shoe graft or anatomical warping.",
+  "sourceReview": "New connected elbow-supported roll; actual open hand and forearm rest along floor, elbow beneath free shoulder.",
+  "strictCertified": false,
+  "completionCredit": false
+}

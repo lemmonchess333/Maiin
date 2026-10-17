@@ -1,0 +1,208 @@
+{
+  "exerciseId": "turkish-get-up",
+  "version": "anatomy-v3-2026-10-16-joint-checkpoint-source-v1",
+  "width": 688,
+  "height": 640,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex /root (actual native and integrated browser review); /root/finish_tgu_publication (evidence sealing)",
+  "reviewedAt": "2026-10-17T21:01:10.463405+00:00",
+  "recordStage": "Registered assets and actual integrated mobile review complete; publication checks remain separate",
+  "reference": {
+    "path": "form-frames/turkish-get-up/6.webp",
+    "sha256": "5795c20ce77606b9b4846820782622421908b3d52e1d7e179d4eeb56532643eb"
+  },
+  "cueSha256": "d2b2b90b56e81ea61a77e61685b0fecc804de6cdf21a3abee3129fc113beee6c",
+  "frames": [
+    {
+      "path": "form-frames/turkish-get-up/1.webp",
+      "sha256": "8ff4d752303073d1b8dfbba996c96059ab7fc2b5874cd85e5391196880b04002",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-16/candidate/A-native.png",
+        "sha256": "b2f2cae7b66ba1e50235aca153f3c8cb10e44ec697b846b0ff7c47bb81ff0335"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/2.webp",
+      "sha256": "3d3b0bb96d0fd29bea55de038eb340b841c1e228cbdd5e4f020f95f4b49a2b58",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-16/candidate/B-native.png",
+        "sha256": "dde29fc130c3d2cde52cb8bde603e25c644c29d4b11d9ee1e95398a69fd2f94e"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/3.webp",
+      "sha256": "f091e075813dea59fd7c232c31ffa915dace796986c2333682a1ec6990f5e5d6",
+      "sourcePose": "C",
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-16/candidate/C-native.png",
+        "sha256": "41cfa253e025f3cafcc29f242f7a10b11211b9231af67a96aae2bbf48f5003bd"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/4.webp",
+      "sha256": "b6872cb1f7fa077d2e3186320c5e5749e45548cc7ea2a9075966d8533535252e",
+      "sourcePose": "D",
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-16/candidate/D-native.png",
+        "sha256": "839344f66dfcbda231b3a99e87b4cc1f0f498fea1d73a56e0889289d0cb0e6f2"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/5.webp",
+      "sha256": "4dcb9423ec85fb36c5021fac04c8c586dfdde3fe8e8a1fee319ccdc421b5cf6d",
+      "sourcePose": "E",
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-16/candidate/E-native.png",
+        "sha256": "211309d157e7c346670d40c8b9fe2b91ac9a492dd6c63b57b21af66623efdf2f"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/6.webp",
+      "sha256": "5795c20ce77606b9b4846820782622421908b3d52e1d7e179d4eeb56532643eb",
+      "sourcePose": "F",
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-16/candidate/F-native.png",
+        "sha256": "7e543ba1e81a5efde01a0dc3c69ce448d07a0a1b09d609b681e37861ee8b1e79"
+      }
+    }
+  ],
+  "physicalPoses": 6,
+  "sourcePoseOrder": ["A", "B", "C", "D", "E", "F"],
+  "positionCoordinates": [0, 0.2, 0.4, 0.6, 0.8, 1],
+  "playback": "forward-and-reverse",
+  "automaticFrameIndices": [0, 1, 2, 3, 4, 5, 4, 3, 2, 1],
+  "setup": [
+    "Start on your back with one kettlebell pressed above its shoulder.",
+    "Bend the knee on the bell side; extend the opposite leg.",
+    "Move through elbow, hand, bridge and kneeling before standing. Reverse each checkpoint to return, then repeat on the opposite side."
+  ],
+  "advice": {
+    "tip": "Keep the bell controlled above its shoulder; pause at each support change.",
+    "commonMistakes": [
+      "Bending the loaded elbow or losing control of the bell.",
+      "Rushing the hand, foot or knee transfers.",
+      "Skipping the controlled return to the floor."
+    ]
+  },
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "approval": {
+    "actor": "Human owner",
+    "instruction": "ok carry on with the remaining8, same model and colours, no shorts. figure out another way to finish them and get them merged, stop repeating failed attempts and asking for approval",
+    "context": "Standing authorization covers local source conversions, palette/equipment work, registration, required playback fixes, validation, owner release with findings, PR and merge. No strict certification implied."
+  },
+  "findings": [
+    "Six connected whole-source checkpoints depict one side of the Turkish get-up. The player must reverse through kneel, bridge, hand and elbow before returning to floor; standing-to-floor reset is not a valid loop.",
+    "New whole-pose elbow-supported source has the free elbow and forearm resting on the floor, replacing the earlier fist-supported roll. This entire1512x1040 source is uniformly framed to756x520; this is whole-image framing, not an inverse preview-zoom claim or a fitted limb. The other five are native panel crops and integer translations.",
+    "Corrected half kneel faces right after the bridge, with front working foot planted and opposite knee down. Standing uses the original sheet's mild frontal view; the projected camera/body turn is a qualitative finding, not a fixed-camera certificate.",
+    "Canonical FA56 was attached to the joint sheet and each pose correction. The lean faceless white-grey athlete, featureless pelvis without shorts, fine contours and white trainers are reviewed qualitatively. Exact3D identity and segment measurements remain unverified.",
+    "Source-colour anatomical fields use the existing grey tone and contours: abs/front deltoids#7B72E9, obliques/glutes#9590E0. Chest is neutralised. Contour-following seeded palette regions are saved/reproducible; boundaries remain qualitative and some shoulder fields are occluded.",
+    "One grey kettlebell remains in the same working-side closed hand. Source-painted contact shadows and floor depth are illustrative; no recovered3D physical-contact or load-scale certificate.",
+    "The six images are held checkpoints, not continuously interpolated anatomy. Unshown transfer motion is explained in preparation/cues; opposite-side repetition is stated explicitly.",
+    "Standing is the normal-card reference for legibility; the six-checkpoint guide still starts on the floor. Normal card export and mobile review remain separate from strict certification."
+  ],
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Native six complete checkpoints reviewed directly against canonical FA56; lean faceless white-grey athlete, fine contours, smooth shading, no shorts and white trainers. Qualitative identity only."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Five source panels are native crops and integer translations. The entire separate elbow source uses documented uniform50% framing. Common output688x640; no individual-part fitting, reflection or anatomical warp. Standing has a mild frontal body/view turn."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Six connected whole-body sources, two arms/two legs and complete extremities each. Actual new elbow-supported roll and right-facing half kneel reviewed. Exact3D identity/lengths unverified."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Strict certification unverified. One restrained-grey kettlebell held by the working-side hand in every checkpoint. Shape/scale are illustrative, not calibrated factory geometry."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Elbow/forearm, palm, planted working foot, rear kneeling knee and standing feet visibly support their respective checkpoints. Projected source shadows/depth are qualitative."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Six genuine whole-body checkpoints were reviewed natively. Actual integrated normal and slower playback in both themes visibly traverses floor, elbow, hand, bridge, kneel, stand, kneel, bridge, hand, elbow and floor. This is qualitative source/load review, not calibrated three-dimensional physics."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Existing source tone and contours preserved by source-colour masks: abs/front-deltoid violet#7B72E9, oblique/glute lilac#9590E0. Chest neutralised. Boundaries and partially occluded shoulder fields remain qualitative."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Actual registered instructions, preparation, advice and all six cue selections reviewed at 390x844 in light and dark. Each cue selects and describes its delivered checkpoint; standing cue and preparation explicitly require the controlled return and opposite-side repetition."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Actual normal and slower loops in light and dark follow frame indices 0,1,2,3,4,5,4,3,2,1,0 with no standing-to-floor reset. Raw frame/cue events and manual captures archived in registered-review; scoped player regression tests retain default loop, manual selection, image preload, reduced motion and pause behavior."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Actual 390x844 light review: all six manual frame/cue selections load the registered 688x640 assets; full normal and slower ascent/return cycles observed; normal 172x480 card reviewed at 480/348/160 long-side limits; document width 380px."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Actual 390x844 dark review: all six manual frame/cue selections load the registered 688x640 assets; full normal and slower ascent/return cycles observed; normal 172x480 card reviewed at 480/348/160 long-side limits; document width 380px."
+    }
+  },
+  "observedQaChecks": {
+    "identity": {
+      "observed": true,
+      "evidence": "Native six complete checkpoints reviewed directly against canonical FA56; lean faceless white-grey athlete, fine contours, smooth shading, no shorts and white trainers. Qualitative identity only."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "Five source panels are native crops and integer translations. The entire separate elbow source uses documented uniform50% framing. Common output688x640; no individual-part fitting, reflection or anatomical warp. Standing has a mild frontal body/view turn."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "Six connected whole-body sources, two arms/two legs and complete extremities each. Actual new elbow-supported roll and right-facing half kneel reviewed. Exact3D identity/lengths unverified."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "One restrained-grey kettlebell held by the working-side hand in every checkpoint. Shape/scale are illustrative, not calibrated factory geometry."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Elbow/forearm, palm, planted working foot, rear kneeling knee and standing feet visibly support their respective checkpoints. Projected source shadows/depth are qualitative."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "Six genuine whole-body checkpoints were reviewed natively. Actual integrated normal and slower playback in both themes visibly traverses floor, elbow, hand, bridge, kneel, stand, kneel, bridge, hand, elbow and floor. This is qualitative source/load review, not calibrated three-dimensional physics."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Existing source tone and contours preserved by source-colour masks: abs/front-deltoid violet#7B72E9, oblique/glute lilac#9590E0. Chest neutralised. Boundaries and partially occluded shoulder fields remain qualitative."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Actual registered instructions, preparation, advice and all six cue selections reviewed at 390x844 in light and dark. Each cue selects and describes its delivered checkpoint; standing cue and preparation explicitly require the controlled return and opposite-side repetition."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Actual normal and slower loops in light and dark follow frame indices 0,1,2,3,4,5,4,3,2,1,0 with no standing-to-floor reset. Raw frame/cue events and manual captures archived in registered-review; scoped player regression tests retain default loop, manual selection, image preload, reduced motion and pause behavior."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Actual 390x844 light review: all six manual frame/cue selections load the registered 688x640 assets; full normal and slower ascent/return cycles observed; normal 172x480 card reviewed at 480/348/160 long-side limits; document width 380px."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Actual 390x844 dark review: all six manual frame/cue selections load the registered 688x640 assets; full normal and slower ascent/return cycles observed; normal 172x480 card reviewed at 480/348/160 long-side limits; document width 380px."
+    }
+  },
+  "publicationGate": "No completion credit before integrated review, verification disposition, required CI, actual merge and preservation audit.",
+  "cardReferenceFrame": 6,
+  "integratedReview": {
+    "path": "docs/exercise-art/sources/turkish-get-up/2026-10-16/registered-review-summary.json",
+    "viewport": [390, 844],
+    "themes": ["light", "dark"],
+    "allSixManualFrames": true,
+    "fullNormalAndSlowerForwardAndReverseCycles": true,
+    "normalCardLongSideLimits": [480, 348, 160],
+    "browserWarningsErrors": []
+  }
+}

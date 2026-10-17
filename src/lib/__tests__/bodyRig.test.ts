@@ -14,6 +14,8 @@ import {
   getFormBeats,
   renderBodyDemo,
 } from "../bodyRig";
+import { getFormPlayback } from "../formGuides";
+import { getFormFrameOrder } from "../formFramePlayback";
 import { PLACARD_CUE_WORDS } from "../exerciseTempo";
 import { ANTERIOR, POSTERIOR } from "../bodyModelData";
 import { EXERCISES } from "../exercises";
@@ -4823,12 +4825,16 @@ describe("form beats — the caption is a claim about the frame", () => {
 
   it("the loop closes from the start pose or a controlled return towards it", () => {
     // Six authored stills need not duplicate the first pose at the end.
-    // A partial return must continue in the same direction across 6→1,
+    // Use the actual player's order, including an authored reverse path.
+    // A partial return must continue in the same direction across its wrap,
     // with a closing distance no larger than an earlier authored step.
     for (const id of FORM_BEAT_IDS) {
       const beats = getAuthoredBeats(id)!;
-      const first = beats[0].t;
-      const last = beats[beats.length - 1].t;
+      const playback = getFormFrameOrder(getFormPlayback(id)).map(
+        (i) => beats[i]
+      );
+      const first = playback[0].t;
+      const last = playback[playback.length - 1].t;
       if (id === "jump-rope") {
         // Rope rotation continues forward through flight and landing.
         expect(beats.map((beat) => beat.t)).toEqual([
@@ -4957,13 +4963,13 @@ describe("form beats — the caption is a claim about the frame", () => {
         continue;
       }
       if (last === first) continue;
-      const previous = beats[beats.length - 2].t;
+      const previous = playback[playback.length - 2].t;
       expect(
         (last - previous) * (first - last),
         `${id}: return direction`
       ).toBeGreaterThan(0);
       const largestStep = Math.max(
-        ...beats.slice(1).map((beat, i) => Math.abs(beat.t - beats[i].t))
+        ...playback.slice(1).map((beat, i) => Math.abs(beat.t - playback[i].t))
       );
       expect(
         Math.abs(last - first),

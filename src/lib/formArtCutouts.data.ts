@@ -1437,6 +1437,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "4a040d5f7ad81019320c56eb16496e6b0ddc43111da97c67e672509d22d67cb4",
     sha256: "0793176a293774f3aa56e6e285a8edf6632b3915b8085204d52681c735cda6e0",
   },
+  "turkish-get-up": {
+    src: "form-art/turkish-get-up.webp",
+    width: 172,
+    height: 480,
+    keyed: false,
+    source: "form-frames/turkish-get-up/6.webp",
+    sourceSha256:
+      "5795c20ce77606b9b4846820782622421908b3d52e1d7e179d4eeb56532643eb",
+    sha256: "0e1f716147177558f949355a0307d2f4287759ac539f8dfb49683da9abd66913",
+  },
   "walking-dumbbell-lunges": {
     src: "form-art/walking-dumbbell-lunges.webp",
     width: 445,

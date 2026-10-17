@@ -1,0 +1,6097 @@
+[
+  {
+    "ms": 1158,
+    "observedAt": "2026-10-16T21:46:21.160Z",
+    "src": "/form-frames/turkish-get-up/1.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/1.webp",
+    "alt": "Turkish Get-Up, Floor",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Floor",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep one knee bent; bell above shoulder.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "Loading frame…\n\nFLOOR 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 2372,
+    "observedAt": "2026-10-16T21:46:22.374Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Floor",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep one knee bent; bell above shoulder.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 2381,
+    "observedAt": "2026-10-16T21:46:22.383Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 3589,
+    "observedAt": "2026-10-16T21:46:23.591Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 3596,
+    "observedAt": "2026-10-16T21:46:23.597Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 4807,
+    "observedAt": "2026-10-16T21:46:24.809Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 4813,
+    "observedAt": "2026-10-16T21:46:24.815Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 6029,
+    "observedAt": "2026-10-16T21:46:26.031Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 6036,
+    "observedAt": "2026-10-16T21:46:26.038Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 7243,
+    "observedAt": "2026-10-16T21:46:27.245Z",
+    "src": "/form-frames/turkish-get-up/6.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/6.webp",
+    "alt": "Turkish Get-Up, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 7248,
+    "observedAt": "2026-10-16T21:46:27.249Z",
+    "src": "/form-frames/turkish-get-up/6.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/6.webp",
+    "alt": "Turkish Get-Up, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; reverse each step down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 8454,
+    "observedAt": "2026-10-16T21:46:28.456Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; reverse each step down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 8459,
+    "observedAt": "2026-10-16T21:46:28.461Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 9661,
+    "observedAt": "2026-10-16T21:46:29.663Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 9666,
+    "observedAt": "2026-10-16T21:46:29.668Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 10867,
+    "observedAt": "2026-10-16T21:46:30.869Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 10875,
+    "observedAt": "2026-10-16T21:46:30.877Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 12074,
+    "observedAt": "2026-10-16T21:46:32.076Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 12081,
+    "observedAt": "2026-10-16T21:46:32.083Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 13280,
+    "observedAt": "2026-10-16T21:46:33.281Z",
+    "src": "/form-frames/turkish-get-up/1.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/1.webp",
+    "alt": "Turkish Get-Up, Floor",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "FLOOR 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 13286,
+    "observedAt": "2026-10-16T21:46:33.288Z",
+    "src": "/form-frames/turkish-get-up/1.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/1.webp",
+    "alt": "Turkish Get-Up, Floor",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Floor",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep one knee bent; bell above shoulder.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "FLOOR 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 14486,
+    "observedAt": "2026-10-16T21:46:34.488Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Floor",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep one knee bent; bell above shoulder.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 14491,
+    "observedAt": "2026-10-16T21:46:34.493Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 15692,
+    "observedAt": "2026-10-16T21:46:35.693Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 15695,
+    "observedAt": "2026-10-16T21:46:35.696Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 16898,
+    "observedAt": "2026-10-16T21:46:36.900Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 16901,
+    "observedAt": "2026-10-16T21:46:36.903Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 18104,
+    "observedAt": "2026-10-16T21:46:38.106Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 18108,
+    "observedAt": "2026-10-16T21:46:38.109Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 19310,
+    "observedAt": "2026-10-16T21:46:39.311Z",
+    "src": "/form-frames/turkish-get-up/6.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/6.webp",
+    "alt": "Turkish Get-Up, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 19313,
+    "observedAt": "2026-10-16T21:46:39.315Z",
+    "src": "/form-frames/turkish-get-up/6.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/6.webp",
+    "alt": "Turkish Get-Up, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; reverse each step down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 20516,
+    "observedAt": "2026-10-16T21:46:40.517Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; reverse each step down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 20519,
+    "observedAt": "2026-10-16T21:46:40.521Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 21722,
+    "observedAt": "2026-10-16T21:46:41.724Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 21727,
+    "observedAt": "2026-10-16T21:46:41.729Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 22928,
+    "observedAt": "2026-10-16T21:46:42.930Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 22932,
+    "observedAt": "2026-10-16T21:46:42.933Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 24134,
+    "observedAt": "2026-10-16T21:46:44.136Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 24137,
+    "observedAt": "2026-10-16T21:46:44.139Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 25340,
+    "observedAt": "2026-10-16T21:46:45.342Z",
+    "src": "/form-frames/turkish-get-up/1.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/1.webp",
+    "alt": "Turkish Get-Up, Floor",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "FLOOR 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 25343,
+    "observedAt": "2026-10-16T21:46:45.345Z",
+    "src": "/form-frames/turkish-get-up/1.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/1.webp",
+    "alt": "Turkish Get-Up, Floor",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Floor",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep one knee bent; bell above shoulder.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "FLOOR 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 26546,
+    "observedAt": "2026-10-16T21:46:46.548Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Floor",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep one knee bent; bell above shoulder.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 26550,
+    "observedAt": "2026-10-16T21:46:46.552Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 27752,
+    "observedAt": "2026-10-16T21:46:47.754Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 27756,
+    "observedAt": "2026-10-16T21:46:47.757Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 28958,
+    "observedAt": "2026-10-16T21:46:48.960Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 28963,
+    "observedAt": "2026-10-16T21:46:48.965Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 30164,
+    "observedAt": "2026-10-16T21:46:50.166Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 30171,
+    "observedAt": "2026-10-16T21:46:50.173Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 31371,
+    "observedAt": "2026-10-16T21:46:51.373Z",
+    "src": "/form-frames/turkish-get-up/6.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/6.webp",
+    "alt": "Turkish Get-Up, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 31378,
+    "observedAt": "2026-10-16T21:46:51.379Z",
+    "src": "/form-frames/turkish-get-up/6.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/6.webp",
+    "alt": "Turkish Get-Up, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; reverse each step down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 32576,
+    "observedAt": "2026-10-16T21:46:52.578Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; reverse each step down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 32580,
+    "observedAt": "2026-10-16T21:46:52.582Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 33783,
+    "observedAt": "2026-10-16T21:46:53.784Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 33788,
+    "observedAt": "2026-10-16T21:46:53.790Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 34988,
+    "observedAt": "2026-10-16T21:46:54.990Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 34993,
+    "observedAt": "2026-10-16T21:46:54.995Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 36194,
+    "observedAt": "2026-10-16T21:46:56.196Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 36200,
+    "observedAt": "2026-10-16T21:46:56.202Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 37401,
+    "observedAt": "2026-10-16T21:46:57.402Z",
+    "src": "/form-frames/turkish-get-up/1.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/1.webp",
+    "alt": "Turkish Get-Up, Floor",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "FLOOR 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 37405,
+    "observedAt": "2026-10-16T21:46:57.407Z",
+    "src": "/form-frames/turkish-get-up/1.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/1.webp",
+    "alt": "Turkish Get-Up, Floor",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Floor",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep one knee bent; bell above shoulder.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "FLOOR 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 38606,
+    "observedAt": "2026-10-16T21:46:58.608Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Floor",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep one knee bent; bell above shoulder.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 38610,
+    "observedAt": "2026-10-16T21:46:58.612Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 39813,
+    "observedAt": "2026-10-16T21:46:59.814Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 39817,
+    "observedAt": "2026-10-16T21:46:59.819Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 41018,
+    "observedAt": "2026-10-16T21:47:01.020Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 41024,
+    "observedAt": "2026-10-16T21:47:01.026Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 42225,
+    "observedAt": "2026-10-16T21:47:02.227Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 42233,
+    "observedAt": "2026-10-16T21:47:02.234Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 43430,
+    "observedAt": "2026-10-16T21:47:03.432Z",
+    "src": "/form-frames/turkish-get-up/6.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/6.webp",
+    "alt": "Turkish Get-Up, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 43434,
+    "observedAt": "2026-10-16T21:47:03.436Z",
+    "src": "/form-frames/turkish-get-up/6.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/6.webp",
+    "alt": "Turkish Get-Up, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; reverse each step down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 44637,
+    "observedAt": "2026-10-16T21:47:04.638Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; reverse each step down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 44642,
+    "observedAt": "2026-10-16T21:47:04.644Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 45843,
+    "observedAt": "2026-10-16T21:47:05.845Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 45848,
+    "observedAt": "2026-10-16T21:47:05.850Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 47049,
+    "observedAt": "2026-10-16T21:47:07.050Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 47052,
+    "observedAt": "2026-10-16T21:47:07.054Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 48255,
+    "observedAt": "2026-10-16T21:47:08.257Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 48261,
+    "observedAt": "2026-10-16T21:47:08.263Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 49461,
+    "observedAt": "2026-10-16T21:47:09.463Z",
+    "src": "/form-frames/turkish-get-up/1.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/1.webp",
+    "alt": "Turkish Get-Up, Floor",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "FLOOR 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 49464,
+    "observedAt": "2026-10-16T21:47:09.466Z",
+    "src": "/form-frames/turkish-get-up/1.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/1.webp",
+    "alt": "Turkish Get-Up, Floor",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Floor",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep one knee bent; bell above shoulder.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "FLOOR 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 50667,
+    "observedAt": "2026-10-16T21:47:10.669Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Floor",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep one knee bent; bell above shoulder.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 50670,
+    "observedAt": "2026-10-16T21:47:10.672Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 51873,
+    "observedAt": "2026-10-16T21:47:11.875Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 51880,
+    "observedAt": "2026-10-16T21:47:11.881Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 53079,
+    "observedAt": "2026-10-16T21:47:13.081Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 53083,
+    "observedAt": "2026-10-16T21:47:13.084Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 54285,
+    "observedAt": "2026-10-16T21:47:14.287Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 54288,
+    "observedAt": "2026-10-16T21:47:14.290Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 55491,
+    "observedAt": "2026-10-16T21:47:15.493Z",
+    "src": "/form-frames/turkish-get-up/6.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/6.webp",
+    "alt": "Turkish Get-Up, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 55496,
+    "observedAt": "2026-10-16T21:47:15.497Z",
+    "src": "/form-frames/turkish-get-up/6.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/6.webp",
+    "alt": "Turkish Get-Up, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; reverse each step down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 56697,
+    "observedAt": "2026-10-16T21:47:16.698Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; reverse each step down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 56701,
+    "observedAt": "2026-10-16T21:47:16.703Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 57903,
+    "observedAt": "2026-10-16T21:47:17.905Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 57908,
+    "observedAt": "2026-10-16T21:47:17.910Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 59109,
+    "observedAt": "2026-10-16T21:47:19.111Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 59115,
+    "observedAt": "2026-10-16T21:47:19.117Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 60315,
+    "observedAt": "2026-10-16T21:47:20.317Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 60322,
+    "observedAt": "2026-10-16T21:47:20.324Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 61521,
+    "observedAt": "2026-10-16T21:47:21.523Z",
+    "src": "/form-frames/turkish-get-up/1.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/1.webp",
+    "alt": "Turkish Get-Up, Floor",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "FLOOR 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 61527,
+    "observedAt": "2026-10-16T21:47:21.528Z",
+    "src": "/form-frames/turkish-get-up/1.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/1.webp",
+    "alt": "Turkish Get-Up, Floor",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Floor",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep one knee bent; bell above shoulder.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "FLOOR 1/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 62727,
+    "observedAt": "2026-10-16T21:47:22.729Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 1: Floor",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep one knee bent; bell above shoulder.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 62731,
+    "observedAt": "2026-10-16T21:47:22.733Z",
+    "src": "/form-frames/turkish-get-up/2.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/2.webp",
+    "alt": "Turkish Get-Up, Elbow",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "ELBOW 2/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 63934,
+    "observedAt": "2026-10-16T21:47:23.936Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 2: Elbow",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Rest on your free elbow and forearm.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 63938,
+    "observedAt": "2026-10-16T21:47:23.940Z",
+    "src": "/form-frames/turkish-get-up/3.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/3.webp",
+    "alt": "Turkish Get-Up, Hand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "HAND 3/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 65139,
+    "observedAt": "2026-10-16T21:47:25.141Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 3: Hand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your free palm planted.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 65143,
+    "observedAt": "2026-10-16T21:47:25.145Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 66345,
+    "observedAt": "2026-10-16T21:47:26.347Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 66349,
+    "observedAt": "2026-10-16T21:47:26.351Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 67549,
+    "observedAt": "2026-10-16T21:47:27.551Z",
+    "src": "/form-frames/turkish-get-up/6.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/6.webp",
+    "alt": "Turkish Get-Up, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 67554,
+    "observedAt": "2026-10-16T21:47:27.555Z",
+    "src": "/form-frames/turkish-get-up/6.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/6.webp",
+    "alt": "Turkish Get-Up, Stand",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; reverse each step down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "STAND 6/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 68757,
+    "observedAt": "2026-10-16T21:47:28.759Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 6: Stand",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Stand tall; reverse each step down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": "step"
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 68761,
+    "observedAt": "2026-10-16T21:47:28.763Z",
+    "src": "/form-frames/turkish-get-up/5.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/5.webp",
+    "alt": "Turkish Get-Up, Kneel",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "KNEEL 5/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 69963,
+    "observedAt": "2026-10-16T21:47:29.965Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 5: Kneel",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Front foot flat; rear knee down.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  },
+  {
+    "ms": 69967,
+    "observedAt": "2026-10-16T21:47:29.968Z",
+    "src": "/form-frames/turkish-get-up/4.webp",
+    "currentSrc": "http://127.0.0.1:62334/form-frames/turkish-get-up/4.webp",
+    "alt": "Turkish Get-Up, Bridge",
+    "playing": true,
+    "slower": "false",
+    "selectedInstruction": "Show frame 4: Bridge",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Support hips on your hand and foot.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Floor",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Elbow",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Hand",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Bridge",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Kneel",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Stand",
+        "current": null
+      }
+    ],
+    "theme": "dark",
+    "documentHidden": false,
+    "naturalWidth": 688,
+    "naturalHeight": 640,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRIDGE 4/6\n\nPause\nNormal"
+  }
+]

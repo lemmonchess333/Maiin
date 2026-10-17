@@ -1,0 +1,49 @@
+{
+  "cards": [
+    {
+      "complete": true,
+      "display": [
+        172,
+        480
+      ],
+      "limit": "480",
+      "natural": [
+        172,
+        480
+      ],
+      "src": "/form-art/turkish-get-up.webp"
+    },
+    {
+      "complete": true,
+      "display": [
+        124.69792175292967,
+        348
+      ],
+      "limit": "348",
+      "natural": [
+        172,
+        480
+      ],
+      "src": "/form-art/turkish-get-up.webp"
+    },
+    {
+      "complete": true,
+      "display": [
+        57.33333587646485,
+        160
+      ],
+      "limit": "160",
+      "natural": [
+        172,
+        480
+      ],
+      "src": "/form-art/turkish-get-up.webp"
+    }
+  ],
+  "pageWidth": 380,
+  "theme": "light",
+  "viewport": [
+    390,
+    844
+  ]
+}

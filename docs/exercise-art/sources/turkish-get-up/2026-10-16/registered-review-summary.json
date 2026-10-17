@@ -1,0 +1,105 @@
+{
+  "exerciseId": "turkish-get-up",
+  "reviewer": "Codex /root (actual native and integrated browser review); /root/finish_tgu_publication (evidence sealing)",
+  "reviewedAt": "2026-10-17T21:01:10.463405+00:00",
+  "manualAndCards": {
+    "dark": {
+      "viewport": [390, 844],
+      "allSixManualFramesLoaded": true,
+      "horizontalOverflowObserved": false,
+      "normalCardNaturalDimensions": [172, 480],
+      "normalCardLongSideLimits": [480, 348, 160],
+      "rawManualEvidence": "manual-dark.json.txt",
+      "rawCardEvidence": "dark-card-metrics.json.txt"
+    },
+    "light": {
+      "viewport": [390, 844],
+      "allSixManualFramesLoaded": true,
+      "horizontalOverflowObserved": false,
+      "normalCardNaturalDimensions": [172, 480],
+      "normalCardLongSideLimits": [480, 348, 160],
+      "rawManualEvidence": "manual-light.json.txt",
+      "rawCardEvidence": "light-card-metrics.json.txt"
+    }
+  },
+  "playback": {
+    "dark-normal-playback.json": {
+      "speed": "normal",
+      "observedFrameSequence": [
+        1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 5, 4, 3
+      ],
+      "fullAscentAndControlledReturnObserved": true,
+      "rawEvidence": "dark-normal-playback.json.txt",
+      "rawSha256": "406364ac1ace7ba229e58b32d910497f7784285045f83c3c62a48f449e6ff272"
+    },
+    "dark-slower-playback.json": {
+      "speed": "slower",
+      "observedFrameSequence": [
+        1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 2, 3, 4,
+        5, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 5, 4, 3
+      ],
+      "fullAscentAndControlledReturnObserved": true,
+      "rawEvidence": "dark-slower-playback.json.txt",
+      "rawSha256": "0c8c77ac567cd49a1c11fbe1e280ccb13d2fa42893488717a40559393d16b04d"
+    },
+    "light-normal-playback.json": {
+      "speed": "normal",
+      "observedFrameSequence": [
+        1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 2, 3, 4,
+        5, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 5, 4,
+        3, 2, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 2,
+        3
+      ],
+      "fullAscentAndControlledReturnObserved": true,
+      "rawEvidence": "light-normal-playback.json.txt",
+      "rawSha256": "27c382fc38f07a916f4b1ac3f42cdb421cbf890e2c40911d9a780443ae0f61ee"
+    },
+    "light-slower-final-playback.json": {
+      "speed": "slower",
+      "observedFrameSequence": [
+        1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 5
+      ],
+      "fullAscentAndControlledReturnObserved": true,
+      "rawEvidence": "light-slower-final-playback.json.txt",
+      "rawSha256": "6dc2c27bcdc4a8a9e9a4c9fd788f4d43cb68095123ad8e46335ff4d81f467491"
+    }
+  },
+  "browserWarningsErrors": [],
+  "retainedHistoricalEvidence": "Initial desktop and earlier playback logs are retained under explicit original names; accepted mobile/manual and full-cycle evidence is listed above.",
+  "rawEvidenceFiles": {
+    "after-card-reference-change-raw-playback.json.txt": "59916573aa9ad1b8a85a7195952c74a80948381d6242090958e00eb1fee81ce3",
+    "browser-warnings-errors.json.txt": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "dark-card-metrics.json.txt": "53ef20a913989a1e567bc91e30d049fb134bcf234183c65bbd8560dcdd152135",
+    "dark-final-fullpage.png": "617ffac9ecaa3fac381ce1a56c739edc9973a9b2e9af2968048936904e7d389a",
+    "dark-frame-1-fullpage.png": "aec779c075ddef11511951e0a9ead075654eafd7baf1d0ff2bc7a3e3d8f49f30",
+    "dark-frame-2-fullpage.png": "c1a0c6686c699baebf7788ff10feb2c045eca918e7e8de32da8013610ae0f8f3",
+    "dark-frame-3-fullpage.png": "9e8f6c1ec6655c2dc608f8f56896ccd0e105a40083cc0e571db65d22cddc2592",
+    "dark-frame-4-fullpage.png": "3435eda880a04f69a19436533e4d66c190cbf2d3324618924fbe7fa4d9124282",
+    "dark-frame-5-fullpage.png": "372078ce4588dbc97b06ee1e3ee68b4919c2096699aa46a087aa1883f3ec0ee7",
+    "dark-frame-6-fullpage.png": "9369b8623c0e2245c2de395cb81c07c1f5f7622e5b9ebeda71642901ca1747e4",
+    "dark-normal-playback.json.txt": "406364ac1ace7ba229e58b32d910497f7784285045f83c3c62a48f449e6ff272",
+    "dark-slower-playback.json.txt": "0c8c77ac567cd49a1c11fbe1e280ccb13d2fa42893488717a40559393d16b04d",
+    "desktop-initial-dark-frame-1.png": "a38153ad283ece031d534ac4533d8233cf298edecd24b764de353ae57ddbef9d",
+    "desktop-initial-dark-frame-2.png": "affaa53384bddfdc2faf96d8712d09d4a49a96e11982d057383cfbf3d779fc14",
+    "desktop-initial-dark-frame-3.png": "29bffd6fb0c924f01c9805605fa8bad2caeeb3f5d081b64abe7c05b88256dcc2",
+    "desktop-initial-dark-frame-4.png": "905cab446d0b77ee92d16fa6bb2cdcc3aa61bb63d1139063fc188143d1739162",
+    "desktop-initial-dark-frame-5.png": "6ee541ecf38df8eb90cb7b1e482f5437aaecf2c806124aa530cfcc989ee562a7",
+    "desktop-initial-dark-frame-6.png": "9fe8eefe02e81752043c0ff2897fb98c6bc33c44458d09904e2d14a559a5a65c",
+    "light-card-metrics.json.txt": "50a34e5b5bbc7e92eba029e9005af29aa66ef36204674e1c5c22725011d12965",
+    "light-final-fullpage.png": "c9f64d7b0dc05f07df4cb31857c910ec5718f30e21bc0a8738d525c932136cff",
+    "light-frame-1-fullpage.png": "0234c1aff7b49467e1563feb4b162ad4b64e4b4dd8ff2c6436361c57a8546f23",
+    "light-frame-2-fullpage.png": "6d61c3a141d0ac7a6681899c818f3ab22db48b5302e7f76307c69840ae0a1430",
+    "light-frame-3-fullpage.png": "e17051da03d169c9391387f0411566a0e4b342bca1ae635b00834788eb385f33",
+    "light-frame-4-fullpage.png": "2f7fb27cdd5504252aeb71115251d2b76a4ee89f8e0406f3237f3e8867203a7e",
+    "light-frame-5-fullpage.png": "17a748e2c33eb5bfbd9a7ed96493e6e7bd7342b0d9375ed7adde1b07c55a2bcd",
+    "light-frame-6-fullpage.png": "1f170020c621e99ec90edec7deaf054afc4936137bc2c2fe27f9436b952f2754",
+    "light-normal-playback.json.txt": "27c382fc38f07a916f4b1ac3f42cdb421cbf890e2c40911d9a780443ae0f61ee",
+    "light-slower-final-playback.json.txt": "6dc2c27bcdc4a8a9e9a4c9fd788f4d43cb68095123ad8e46335ff4d81f467491",
+    "light-slower-playback.json.txt": "51807fe3c4ea8ef577ea077df5b155b302dd3e865c95d270806790f7397d075f",
+    "manual-dark-initial-desktop.json.txt": "aab25f7e193b032676c7521cc4078d384c2b595cfb619b8b5a593f7dfab15730",
+    "manual-dark.json.txt": "b86e6846497a137c0500a03717f5cc69e17ee250327e76d2da0923030cea6356",
+    "manual-light.json.txt": "191a46a64cb06a33cb9cae14308b00149189a29d36428566d51107dd6d91f2a8"
+  },
+  "strictCertified": false,
+  "completionCredit": false
+}

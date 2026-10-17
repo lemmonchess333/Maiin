@@ -1,3 +1,4 @@
+import type { FormFramePlayback } from "./formFramePlayback";
 import { RELEASED_FORM_PLACARDS } from "./releasedFormPlacards";
 import { getReleasedFormArtwork } from "./formArtwork";
 
@@ -38,6 +39,8 @@ export interface FormBeat {
 /** A placard: the positions, and — where the frames are supplied art
  *  rather than the rig's own figure — the key that describes THAT art. */
 export interface FormPlacard {
+  /** Controls the actual authored still order, including controlled returns. */
+  playback?: FormFramePlayback;
   beats: readonly FormBeat[];
   /** Preparation before the depicted movement cycle, kept separate from cues. */
   authoredSetupInstructions?: readonly string[];
@@ -486,4 +489,11 @@ export const FORM_BEAT_IDS = Object.keys(FORM_BEATS);
  *  it tints the muscles the catalogue names). */
 export function getDemoMuscleKey(exerciseId: string): DemoMuscleKey | null {
   return FORM_BEATS[exerciseId]?.key ?? null;
+}
+
+/** Playback is enabled only alongside the exact released frame sequence. */
+export function getFormPlayback(exerciseId: string): FormFramePlayback {
+  return getFormBeats(exerciseId)
+    ? (FORM_BEATS[exerciseId]?.playback ?? "loop")
+    : "loop";
 }
