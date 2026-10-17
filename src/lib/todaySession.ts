@@ -24,7 +24,7 @@ import { racePaceWorkFor, type RacePaceWork } from "@/lib/racePace";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { runSessionName } from "@/lib/runSessionAbout";
 import { getExerciseById } from "@/lib/exercises";
-import { liftDayLine } from "@/lib/liftDayLabel";
+import { liftDayNameIn } from "@/lib/liftDayLabel";
 import {
   addLocalDays,
   localDateString,
@@ -77,6 +77,9 @@ export interface TodayLift {
   workout: WorkoutDay | null;
   /** Its place in the programme, for `?day=N`. */
   index: number | null;
+  /** Its name as Train names it in its week ("Pull B"), or null with no
+   *  workout. Absent reads as the day's name without its week. */
+  name?: string | null;
   isStartable: boolean;
   status: LiftSlotStatus;
   /** Up to three muscle groups, "Chest · Shoulders · Triceps". */
@@ -108,7 +111,14 @@ export interface TomorrowSession {
 export type RestDayOffer =
   /** A new lifter's first workout: lifts follow the rotation, not the
    *  weekday (ADR-0002), so it is ready any day. */
-  | { kind: "first-workout"; workout: WorkoutDay; index: number }
+  | {
+      kind: "first-workout";
+      workout: WorkoutDay;
+      index: number;
+      /** As Train names it in its week. Absent reads as the day's name
+       *  without its week. */
+      name?: string;
+    }
   /** Free running plans no days, so a free runner's rest day offers a run. */
   | { kind: "free-run" }
   /** A new person with no meal logged yet. */
@@ -182,6 +192,9 @@ export function todaySession(input: TodaySessionInput): TodaySession {
       ? {
           workout: homeLift.workout,
           index: homeLift.index,
+          name: homeLift.workout
+            ? weekDayName(programState, homeLift.index, homeLift.workout)
+            : null,
           isStartable: homeLift.isStartable,
           status: homeLift.status,
           muscleGroups: muscleGroupsOf(homeLift.workout),
@@ -233,7 +246,13 @@ function restDayOffer(
   if (day.firstWorkout) {
     const index = nextUpIndex(programState);
     const workout = index >= 0 ? programState?.workouts?.[index] : undefined;
-    if (workout) return { kind: "first-workout", workout, index };
+    if (workout)
+      return {
+        kind: "first-workout",
+        workout,
+        index,
+        name: weekDayName(programState, index, workout),
+      };
   }
   if (
     profile?.runMode === "freeform" &&
@@ -279,9 +298,9 @@ function tomorrowSession(
         workout: next.lift.workout,
       })
     : null;
-  // Named as the workout and finish screens say it: "Pull · Lat focus".
+  // Named as Train names it in its week: "Pull B".
   const liftName = tomorrowLift
-    ? liftDayLine(tomorrowLift.workout.dayName)
+    ? weekDayName(programState, tomorrowLift.index, tomorrowLift.workout)
     : null;
   const runDay = next.run.runDay;
   /* A run day whose week has no runs written yet is named by its type.
@@ -330,6 +349,19 @@ function runDose(
   return template
     ? runDoseLine(template, planningEasyPaceSPerKm(profile?.runFitness))
     : null;
+}
+
+/** A programme day's name as Train shows it in its week ("Pull B"). */
+function weekDayName(
+  programState: ProgramState | null,
+  index: number | null,
+  workout: WorkoutDay
+): string {
+  return liftDayNameIn(
+    (programState?.workouts ?? []).map((w) => w.dayName),
+    index ?? -1,
+    workout.dayName
+  );
 }
 
 /** Up to three of a workout's muscle groups, then "+ more". */

@@ -1,37 +1,105 @@
 /**
- * The word a lift day's selector cell carries.
+ * What a lift day is called on screen.
  *
- * Every programme day is named `<category> — <focus> Focus`
- * ("Push — Chest Focus", "Full Body — Squat Focus"), and the cell takes
- * the FOCUS.
+ * The programme generator names its days `<category> — <focus> Focus`
+ * ("Push — Chest Focus", "Full Body — Squat Focus"), and those STORED
+ * names stay as they are: the engine finds a person's saved days by them
+ * when it rebuilds a plan (`alignExistingTo`), a schema migration matches
+ * them, and a workout draft, an offline save's replay and every programme
+ * edit's precondition key on them. Renaming them would cut a saved plan
+ * loose from its weights at the next settings change.
  *
- * The category is the half that REPEATS: a Full Body programme names
- * all three days "Full Body", and a Push/Pull/Legs x2 week names days 1
- * and 4 both "Push". It is also already on the page, as the header's
- * subtitle. A cell labelled with it spends its one line restating the
- * programme and none distinguishing the day it numbers.
- *
- * The focus is what varies within a week, by construction: it is the
- * emphasis that makes day 1's Push different from day 4's.
- *
- * The separator must be SPACED. A bare hyphen character is not one:
- * "Upper-Lower — Squat Focus" has to split at the em dash, not inside
- * the category, and the old `[—–-]` class split at the first hyphen it
- * met. A name with no separator at all (a custom or renamed day) is its
- * own label.
+ * So the words change here and only here (Lift19). A generated day shows
+ * as its type ("Push"), with a letter when its week holds another day of
+ * the same type ("Push A", "Push B"), the way Push/Pull/Legs plans name
+ * their days. "Lat", "Squat" and "Row" under the circles mixed a muscle,
+ * a lift and a movement; the session card says which lift a day starts
+ * with instead. A day the person built or renamed keeps its own name.
  */
+
+/**
+ * The type of each day the generator names (`programEngine.ts`).
+ * `liftDayLabel.test.ts` fails if the generator produces a name this does
+ * not cover.
+ */
+const GENERATED_DAY_TYPES: Readonly<Record<string, string>> = {
+  "Full Body — Squat Focus": "Full Body",
+  "Full Body — Deadlift Focus": "Full Body",
+  "Full Body — Posterior Focus": "Full Body",
+  "Upper — Chest & Back": "Upper",
+  "Upper — Shoulders & Arms": "Upper",
+  "Lower — Squat Focus": "Lower",
+  "Lower — Deadlift Focus": "Lower",
+  "Push — Chest Focus": "Push",
+  "Push — Shoulder Focus": "Push",
+  "Pull — Lat Focus": "Pull",
+  "Pull — Row Focus": "Pull",
+  "Legs — Squat Focus": "Legs",
+  "Legs — Deadlift Focus": "Legs",
+};
+
+/** The type of a day the generator named ("Pull"), or null for any other
+ *  name. Where the week is not to hand (a saved session, a post), this is
+ *  the day's whole name. */
+export function generatedDayType(dayName: string): string | null {
+  return GENERATED_DAY_TYPES[dayName.trim()] ?? null;
+}
+
+/**
+ * The on-screen names of a week's days, in order. A generated day is its
+ * type, lettered in the week's order when the type comes more than once
+ * (a 6-day week: Push A, Pull A, Legs A, Push B, Pull B, Legs B; a 5-day
+ * one: Push, Pull, Legs, Upper, Lower). Any other day is its own name, as
+ * `liftDayLine` reads it.
+ */
+export function liftWeekDayNames(week: readonly string[]): string[] {
+  const types = week.map(generatedDayType);
+  const seen = new Map<string, number>();
+  return week.map((name, i) => {
+    const type = types[i];
+    if (!type) return liftDayLine(name);
+    const count = types.filter((t) => t === type).length;
+    if (count < 2) return type;
+    const n = seen.get(type) ?? 0;
+    seen.set(type, n + 1);
+    return `${type} ${String.fromCharCode(65 + n)}`;
+  });
+}
+
+/**
+ * One day's on-screen name within its week. `week` is the plan's day
+ * names in order and `index` the day's place in it; a day the week does
+ * not hold at that place is named without a letter.
+ */
+export function liftDayNameIn(
+  week: readonly string[],
+  index: number,
+  dayName: string
+): string {
+  return week[index]?.trim() === dayName.trim()
+    ? liftWeekDayNames(week)[index]
+    : liftDayLine(dayName);
+}
 
 /** ` — `, ` – ` or ` - `: a dash with whitespace on both sides. */
 const SEPARATOR = /\s+[—–-]\s+/;
 
-/** The trailing noun the templates append to every focus. Dropping it
- *  leaves one word ("Squat", "Chest", "Posterior") under a numbered
- *  circle, which is the whole budget a cell has. Unanchored whitespace,
- *  so a name whose focus is only the noun strips to nothing and takes
- *  the whole-name fallback rather than labelling a day "Focus". */
+/** The trailing noun a custom name may carry. Dropping it leaves one word
+ *  under a numbered circle, which is the whole budget a cell has.
+ *  Unanchored whitespace, so a name whose focus is only the noun strips to
+ *  nothing and takes the whole-name fallback rather than labelling a day
+ *  "Focus". */
 const FOCUS_SUFFIX = /\s*Focus$/i;
 
+/**
+ * The word a custom day's selector cell carries: the part of its name
+ * after the dash, which is the part that differs from day to day. A
+ * generated day's cell takes its week name (`liftWeekDayNames`); without
+ * the week, this gives its type.
+ */
 export function dayFocusLabel(dayName: string): string {
+  const type = generatedDayType(dayName);
+  if (type) return type;
   const full = dayName.trim();
   const parts = full.split(SEPARATOR);
   if (parts.length < 2) return full;
@@ -40,22 +108,19 @@ export function dayFocusLabel(dayName: string): string {
 }
 
 /**
- * A lift day's name split for a card: the category above ("Pull") and the
- * focus as the title ("Lat focus"), from "Pull — Lat Focus".
- *
- * Home's Today card (DS3) puts the category in its eyebrow and the focus
- * in the title; it shows no place in the rotation. Train's session card
- * does the same, with the day's status beside the category ("Pull · Up
- * next"). Setting the whole name as a title broke it at the dash on a
- * phone ("Pull —" over "Lat Focus"). The trailing noun stays, lower-cased,
- * because a title can afford "focus" where a selector cell cannot. A name
- * with no separator (a custom or renamed day) is the title, with no
- * category.
+ * A lift day's name for a card: the title, and the category above it when
+ * a custom name carries one. A generated day is its type alone here;
+ * a card that knows the week titles it with `liftDayNameIn`. A custom name
+ * with a dash splits there ("Arms" above "Pump"), since setting it whole
+ * broke it at the dash on a phone. A name with no separator is the title,
+ * with no category.
  */
 export function liftDayTitle(dayName: string): {
   category: string | null;
   title: string;
 } {
+  const type = generatedDayType(dayName);
+  if (type) return { category: null, title: type };
   const full = dayName.trim();
   // Only the first separator divides the name. A routine's own name can
   // carry more, and after the first they are the lifter's wording.
@@ -72,10 +137,10 @@ export function liftDayTitle(dayName: string): {
 }
 
 /**
- * A lift day's name on one line, as the workout screen, the finish screen
- * and its "Next:" line say it: "Pull · Lat focus" from "Pull — Lat Focus".
- * The same split as `liftDayTitle`, joined with the middot the app uses
- * between a thing and its detail. A routine's own name is itself.
+ * A lift day's name on one line, where the week is not to hand: a
+ * generated day's type ("Pull"), a custom name's two halves joined with
+ * the middot the app uses between a thing and its detail. A routine's own
+ * name is itself.
  */
 export function liftDayLine(dayName: string): string {
   const { category, title } = liftDayTitle(dayName);

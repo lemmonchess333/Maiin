@@ -498,8 +498,10 @@ describe("inspect the generated week", () => {
     fireEvent.click(screen.getByText("See the exercises this builds"));
     fireEvent.click(screen.getByRole("button", { name: /Mon: lift/ }));
     const preview = screen.getByRole("region", { name: "Draft week" });
+    // Monday's day is the 3-day week's first, named as Train names it.
+    expect(updated.dayName).toMatch(/^Full Body — /);
     expect(
-      within(preview).getByRole("heading", { name: updated.dayName })
+      within(preview).getByRole("heading", { name: "Full Body A" })
     ).toBeInTheDocument();
     for (const exercise of updated.exercises)
       expect(within(preview).getByText(exercise.name)).toBeInTheDocument();

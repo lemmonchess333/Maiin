@@ -1930,9 +1930,10 @@ describe("Plate-Club badges are awarded the moment the workout saves", () => {
 
 /* DS3: the screen names the day as Train does and says what comes next. */
 describe("wayfinding between exercises", () => {
-  function openPullDay() {
+  function openPullDay(dayLabel?: string) {
     render(
       <WorkoutSession
+        dayLabel={dayLabel}
         day={{
           dayName: "Pull — Lat Focus",
           dayType: "upper",
@@ -1963,9 +1964,15 @@ describe("wayfinding between exercises", () => {
     );
   }
 
-  it("names the day as Train and Home do", () => {
+  it("names the day as Train names it in its week", () => {
+    openPullDay("Pull B");
+    expect(screen.getByText("Pull B")).toBeInTheDocument();
+    expect(screen.queryByText("Pull — Lat Focus")).toBeNull();
+  });
+
+  it("names a day handed no week by its type", () => {
     openPullDay();
-    expect(screen.getByText("Pull · Lat focus")).toBeInTheDocument();
+    expect(screen.getByText("Pull")).toBeInTheDocument();
     expect(screen.queryByText("Pull — Lat Focus")).toBeNull();
   });
 

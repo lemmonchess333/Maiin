@@ -182,8 +182,13 @@ describe("a row's drawing opens the exercise's form guide", () => {
 });
 
 describe("the day cells name the day, not the programme", () => {
-  it("labels each cell with its focus", () => {
-    expect(code).toMatch(/bottomLabel: dayFocusLabel\(/);
+  it("labels each cell with the day's name in its week", () => {
+    /* "Push A", "Pull B": a generated day's week name, and the part of its
+       own name that varies for a day the person built. What the names are
+       is pinned in liftDayLabel.test.ts. */
+    expect(code).toMatch(
+      /bottomLabel: generatedDayType\(w\.dayName\)\s*\?\s*weekDayNames\[i\]\s*:\s*dayFocusLabel\(w\.dayName\)/
+    );
     expect(code).toContain('from "@/lib/liftDayLabel"');
   });
 

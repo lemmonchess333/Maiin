@@ -16,6 +16,7 @@ import {
   type SavedRoutineExercise,
 } from "../../lib/savedRoutines";
 import { liftPostLeadArt, liftPostRows } from "../../lib/liftPost";
+import { generatedDayType } from "@/lib/liftDayLabel";
 import { formArtCutoutUrl, type FormArtCutout } from "@/lib/formArtCutouts";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { formatLoad, liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
@@ -132,9 +133,15 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
     ? activityExercisesToRoutine(rawExercises)
     : [];
 
-  const activityTitle = (activity?.activityTitle ||
+  const rawTitle = (activity?.activityTitle ||
     activity?.workoutName ||
     activity?.runName) as string | undefined;
+  /* A programme lift posts under its day's stored name ("Pull — Lat
+     Focus"); the feed names it by its type ("Pull"), as the app does where
+     the week is not to hand (Lift19). */
+  const activityTitle = rawTitle
+    ? (generatedDayType(rawTitle) ?? rawTitle)
+    : undefined;
   const isRun = feedItem.type === "run";
   const isHybrid = !!(
     activity?.routePreview &&
@@ -903,7 +910,10 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
           open={showSaveRoutine}
           onClose={() => setShowSaveRoutine(false)}
           defaultName={
-            (activity?.workoutName as string | undefined) ||
+            (activity?.workoutName
+              ? (generatedDayType(activity.workoutName as string) ??
+                (activity.workoutName as string))
+              : undefined) ||
             activityTitle ||
             "Saved routine"
           }

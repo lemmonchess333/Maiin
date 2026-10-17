@@ -988,7 +988,8 @@ describe("DayPeekCard — why this lift", () => {
 
   it("gives the planned lift's reason on a tap, with the plan's rules", async () => {
     renderDay(liftProgramme());
-    expect(screen.getByText("Pull — Lat Focus")).toBeInTheDocument();
+    // Named as Train names it: the type, with no letter in a week of one.
+    expect(screen.getByText("Pull")).toBeInTheDocument();
     // Closed until asked for.
     expect(screen.queryByText(/built for muscle growth/)).toBeNull();
     const why = await openWhy();
@@ -1018,7 +1019,7 @@ describe("DayPeekCard — why this lift", () => {
 
   it("shows no reason for a programme it cannot place", () => {
     renderDay(liftProgramme({ weekNumber: 0 }));
-    expect(screen.getByText("Pull — Lat Focus")).toBeInTheDocument();
+    expect(screen.getByText("Pull")).toBeInTheDocument();
     expect(screen.queryByText("Why this session")).not.toBeInTheDocument();
   });
 

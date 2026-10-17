@@ -629,15 +629,18 @@ describe("Home — the rest-day card names tomorrow", () => {
     expect(restCardLine()).not.toContain("Tomorrow:");
   });
 
-  it("names a lift day the way the rest of the app does", () => {
-    // "Pull · Lat focus", as the workout and finish screens say it.
+  it("names a lift day as Train names it in its week", () => {
+    // "Pull A": the day's type, lettered because the week holds two.
     pinClock(SUNDAY);
-    h.profile = profileWith({ 1: "lift" });
+    h.profile = profileWith({ 1: "lift", 4: "lift" });
     h.programState = programStateWith({
-      workouts: [workoutDay("Pull — Lat Focus")],
+      workouts: [
+        workoutDay("Pull — Lat Focus"),
+        workoutDay("Pull — Row Focus"),
+      ],
     });
     renderHome();
-    expect(restCardLine()).toContain("Tomorrow: Pull · Lat focus.");
+    expect(restCardLine()).toContain("Tomorrow: Pull A.");
   });
 });
 
@@ -656,7 +659,7 @@ describe("Home — a new account's first days", () => {
     });
     renderHome();
     const card = document.querySelector('[aria-label="Today’s training"]');
-    expect(card?.textContent).toMatch(/Chest/);
+    expect(card?.textContent).toMatch(/Push/);
     expect(card?.textContent).not.toMatch(/Quad/);
   });
 

@@ -29,7 +29,13 @@ import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
-import { dayFocusLabel, liftDayLine, liftDayTitle } from "@/lib/liftDayLabel";
+import {
+  dayFocusLabel,
+  generatedDayType,
+  liftDayNameIn,
+  liftDayTitle,
+  liftWeekDayNames,
+} from "@/lib/liftDayLabel";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import LiftPurpose from "@/components/program/LiftPurpose";
 import LiftRulesInfo from "@/components/program/LiftRulesInfo";
@@ -714,6 +720,9 @@ function ProgramInner() {
   if (idx !== selectedDayIndex) setSelectedDayIndex(idx);
 
   const selectedWorkout = displayWorkouts[idx];
+  /* The week's days as the screen names them (Lift19): Push A … Legs B on
+     a 6-day week. The stored names stay the engine's keys. */
+  const weekDayNames = liftWeekDayNames(displayWorkouts.map((w) => w.dayName));
   const isSelectedToday = !isViewingHistory && idx === todayIndex;
   // Older saves have no explicit link. Only a unique current-week match is
   // safe; historical/ambiguous records retain the History fallback.
@@ -748,14 +757,12 @@ function ProgramInner() {
     (w, i) => ({
       key: String(i),
       center: String(i + 1),
-      // The day's FOCUS ("Squat", "Chest", "Shoulder"), not its split
-      // category. The chip is one `truncate`d line, so the full "Push —
-      // Chest Focus" cannot go here, and the category is the wrong half to
-      // keep: it is already the page header's subtitle, and it REPEATS —
-      // a Full Body rotation labels all three days "Full Body", and a
-      // Push/Pull/Legs x2 week labels days 1 and 4 both "Push". The
-      // focus is what varies within a week by construction.
-      bottomLabel: dayFocusLabel(w.dayName),
+      // The day's name in its week ("Push A", "Pull B"): the type, lettered
+      // where the week repeats it, so no two cells read the same. A day
+      // the person built keeps the part of its own name that varies.
+      bottomLabel: generatedDayType(w.dayName)
+        ? weekDayNames[i]
+        : dayFocusLabel(w.dayName),
       status: w.completed ? "completed" : w.skipped ? "skipped" : "upcoming",
       isToday: !isViewingHistory && i === todayIndex,
     })
@@ -791,7 +798,13 @@ function ProgramInner() {
      the day's status in the eyebrow and the focus is the title, as on
      Home. The picture is the muscles the day works; the rows below carry
      each exercise's drawing. */
-  const sessionTitle = liftDayTitle(selectedWorkout?.dayName ?? "");
+  const sessionTitle =
+    selectedWorkout && generatedDayType(selectedWorkout.dayName)
+      ? { category: null, title: weekDayNames[idx] }
+      : liftDayTitle(selectedWorkout?.dayName ?? "");
+  /* Which lift the day opens with, for the line under its name: the main
+     lift, unless the person has moved another to the top. */
+  const sessionFirstLift = selectedWorkout?.exercises[0]?.name;
   const sessionStatusLabel = LIFT_DAY_STATUS_LABEL[status];
   const sessionMuscleCategories = (selectedWorkout?.exercises ?? []).map(
     (ex) => ex.movementCategory
@@ -1273,7 +1286,12 @@ function ProgramInner() {
                         meta={
                           status === "completed" || missed
                             ? []
-                            : [`~${estimatedMinutes} min`]
+                            : [
+                                ...(sessionFirstLift
+                                  ? [`Starts with ${sessionFirstLift}`]
+                                  : []),
+                                `~${estimatedMinutes} min`,
+                              ]
                         }
                         /* The card always carries the day's ONE action.
                            Start on the startable day; on an upcoming one
@@ -1822,12 +1840,15 @@ function ProgramInner() {
       {/* Skip Confirmation Sheet */}
       <SkipConfirmSheet
         open={showSkipConfirm}
-        /* The day as the workout and finish screens name it ("Full Body ·
-           Squat focus"), not its stored name ("Full Body — Squat Focus"),
-           which the card above never shows. */
+        /* The day as the card and the workout screen name it ("Pull B"),
+           not its stored name, which the screen never shows. */
         sessionName={
           skipTargetDay !== null
-            ? liftDayLine(displayWorkouts[skipTargetDay]?.dayName ?? "")
+            ? liftDayNameIn(
+                displayWorkouts.map((w) => w.dayName),
+                skipTargetDay,
+                displayWorkouts[skipTargetDay]?.dayName ?? ""
+              )
             : ""
         }
         onConfirm={async () => {
@@ -1866,6 +1887,7 @@ function ProgramInner() {
             : null
         }
         easierRecommendation={easierRecommendation}
+        weekDayNames={programState.workouts.map((w) => w.dayName)}
         lighterDay={
           expressChooserDay !== null
             ? pickLighterDay(
@@ -1935,6 +1957,11 @@ function ProgramInner() {
                 plan ? { ...storedDay, exercises: plan.exercises } : storedDay
               }
               dayIndex={sessionDayIndex}
+              dayLabel={liftDayNameIn(
+                programState.workouts.map((w) => w.dayName),
+                sessionDayIndex,
+                storedDay.dayName
+              )}
               planContext={liftCompletionContext(
                 programState,
                 sessionDayIndex,

@@ -179,14 +179,14 @@ describe("SessionCommandCard — the picture at the right (DS3)", () => {
     // title names the day, so the picture beside it adds nothing to hear.
     const { container } = renderCard({
       sport: "lift",
-      eyebrow: "Pull · Up next",
-      title: "Lat focus",
+      eyebrow: "Up next",
+      title: "Pull A",
       figure: <MiniMuscleFigure categories={["vertical_pull"]} />,
     });
     // Anchored: the figure is drawn, and the card is named by its day.
     expect(container.querySelector("svg polygon")).not.toBeNull();
     expect(
-      screen.getByRole("region", { name: "Pull · Up next — Lat focus" })
+      screen.getByRole("region", { name: "Up next — Pull A" })
     ).toBeInTheDocument();
     expect(screen.queryByRole("img")).toBeNull();
   });
