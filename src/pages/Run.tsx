@@ -19,7 +19,7 @@ import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
 import { useAuth } from "../lib/auth";
 import { warmPrivacyZones } from "../hooks/usePrivacyZones";
-import { useGPS, type GPSSignalQuality } from "../hooks/useGPS";
+import { useGPS } from "../hooks/useGPS";
 import { track as trackLifecycleEvent } from "@/lib/lifecycleAnalytics";
 import { useRunTimer } from "../hooks/useRunTimer";
 import { useWakeLock } from "../hooks/useWakeLock";
@@ -86,12 +86,14 @@ import RunBottomSheet from "../components/run/RunBottomSheet";
 import { RunControlButton } from "@/components/ui/RunControlButton";
 import BackToStartChip from "../components/run/BackToStartChip";
 import RouteFollowChip from "../components/run/RouteFollowChip";
+import GpsSignalChip from "../components/run/GpsSignalChip";
 import GhostDeltaChip from "../components/run/GhostDeltaChip";
 import RouteSetupSection from "../components/run/RouteSetupSection";
 import type { SavedRouteSource } from "../lib/savedRoutes";
 import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
 import { useHeartRate } from "../hooks/useHeartRate";
 import { THEME } from "../lib/theme";
+import { gpsSignalBars } from "../lib/gpsSignal";
 import { isRunWalkTemplateId, RUN_TEMPLATES } from "../lib/workoutTemplates";
 import {
   isOutdoorGpsRun,
@@ -162,67 +164,6 @@ function sessionSegmentsFor(
    native iOS/Android shell. The old `navigator.vibrate`-only
    inline was a no-op on iOS Safari (the Vibrate API has never
    shipped on iOS), so the iOS path now fires correctly. */
-
-/* Live HUD chip for GPS state during an active run.
- *
- * Phase B2: consumes `signalQuality` from useGPS directly rather
- * than re-deriving thresholds locally. Pre-B2 this component
- * duplicated the bucket logic (<10/<20/<30 vs the hook's 8/15/30)
- * which meant the chip could disagree with the rest of the system
- * about whether the signal was 'good' vs 'fair'. Single source of
- * truth lives in useGPS.getSignalQuality. */
-function GPSIndicator({
-  accuracy,
-  isTracking,
-  pointCount,
-  signalQuality,
-}: {
-  accuracy: number | null;
-  isTracking: boolean;
-  pointCount: number;
-  signalQuality: GPSSignalQuality;
-}) {
-  if (!isTracking) return null;
-  if (pointCount === 0 || signalQuality === "searching") {
-    return (
-      <div className="flex items-center gap-2">
-        <div className="size-2 rounded-full bg-warning motion-safe:animate-pulse" />
-        <span className="text-xs text-warning-strong/90">Acquiring GPS...</span>
-      </div>
-    );
-  }
-  const color =
-    signalQuality === "strong" || signalQuality === "good"
-      ? "bg-success"
-      : signalQuality === "fair"
-        ? "bg-warning"
-        : "bg-destructive";
-  const text =
-    signalQuality === "weak"
-      ? "text-destructive-strong/90"
-      : signalQuality === "fair"
-        ? "text-warning-strong/90"
-        : "text-success-strong/90";
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex items-end gap-0.5 h-3">
-        <div className={`size-1 rounded-sm ${color}`} />
-        <div
-          className={`size-1.5 rounded-sm ${signalQuality !== "weak" ? color : "bg-white/20"}`}
-        />
-        <div
-          className={`w-1 h-2 rounded-sm ${signalQuality === "strong" || signalQuality === "good" ? color : "bg-white/20"}`}
-        />
-        <div
-          className={`w-1 h-3 rounded-sm ${signalQuality === "strong" ? color : "bg-white/20"}`}
-        />
-      </div>
-      <span className={`text-xs font-mono tabular-nums ${text}`}>
-        {accuracy ? `\u00B1${Math.round(accuracy)} m` : ""}
-      </span>
-    </div>
-  );
-}
 
 export default function Run() {
   const unit = useDistanceUnit();
@@ -1646,22 +1587,7 @@ export default function Run() {
         (() => {
           const acc = gps.gpsAccuracy;
           const quality = gps.signalQuality;
-          const bars =
-            quality === "strong"
-              ? 4
-              : quality === "good"
-                ? 3
-                : quality === "fair"
-                  ? 2
-                  : quality === "weak"
-                    ? 1
-                    : 0;
-          const barColor =
-            quality === "strong" || quality === "good"
-              ? THEME.semantic.positive
-              : quality === "fair"
-                ? THEME.warning
-                : THEME.semantic.vitals;
+          const { lit: bars, colour: barColor } = gpsSignalBars(quality);
           return (
             <div
               className="flex-1 flex flex-col items-center justify-center px-8"
@@ -1887,7 +1813,7 @@ export default function Run() {
             }
           >
             <div className="absolute top-[calc(var(--safe-top)+0.75rem)] left-4 z-50">
-              <GPSIndicator
+              <GpsSignalChip
                 accuracy={gps.gpsAccuracy}
                 isTracking={gps.isTracking}
                 pointCount={gps.points.length}
