@@ -16,14 +16,26 @@ logic.
 Add files with these exact stems (any of `.webp .avif .jpg .jpeg .png`;
 prefer WebP ≤ 120 KB, landscape, ≥ 800 px wide):
 
-| File                    | Used for                                     |
-| ----------------------- | -------------------------------------------- |
-| `challenge-run.webp`    | running challenges (total_km, fastest)       |
-| `challenge-lift.webp`   | lifting challenges (volume, count)           |
-| `challenge-hybrid.webp` | hybrid + any other metric                    |
-| `space-<spaceId>.webp`  | Community Space cards (directory + header) — |
-|                         | one per id in `spaceDefs.ts` SPACE_DEFS,     |
-|                         | e.g. `space-trail-running.webp`              |
+| File                             | Used for                                       |
+| -------------------------------- | ---------------------------------------------- |
+| `challenge-weekly.webp`          | Weekly Warrior; lifting metrics from elsewhere |
+| `challenge-mileage.webp`         | `<Month>` Mileage; km from elsewhere           |
+| `challenge-hybrid-hero.webp`     | `<Month>` Hybrid Hero; any other metric        |
+| `challenge-season-<season>.webp` | Spring Reset, Summer Shred, Autumn Push,       |
+|                                  | Winter Bulk                                    |
+| `challenge-fastest-5k.webp`      | Fastest 5K                                     |
+| `challenge-together.webp`        | Together: 1,000 km                             |
+| `space-<spaceId>.webp`           | Community Space cards (directory + header) —   |
+|                                  | one per id in `spaceDefs.ts` SPACE_DEFS,       |
+|                                  | e.g. `space-trail-running.webp`                |
+
+Each challenge the server defines (`functions/lib/challengeDefs.js`) has
+its own photo, by the id prefix its definition stamps
+(`challengeEditorialStem`). **No two files may be the same photo**:
+`editorialImages.test.ts` fails on a byte-identical pair, and on a
+challenge definition with no photo or another's. Until 2026-10 three
+photos were shared by metric and several race cards shared a city view;
+the owner's word for it was "recycled".
 
 They're picked up at **build time** (`import.meta.glob`) — no code
 change needed. Until a file exists, the surface renders its designed
@@ -177,3 +189,43 @@ hashes and reuse references are in
 The new locations are Bournemouth, Sheffield, Lincoln, the Forth road bridges,
 the Kelpies, the South Downs, Avebury and the Chiltern Hills. These illustrate
 the destination or region, not an official race image or course guarantee.
+
+### One photo per challenge and per race — 2026-10-17
+
+The owner, on Social: "needs to have a lot more, these are just recycled".
+Three photos had covered every challenge by metric, two of them shared with
+the Lifters and Hybrid Training spaces, and seven race covers reused another
+race's city photograph. Sixteen licensed Unsplash photographs replace them:
+nine challenge covers, one for each challenge the server defines, and seven
+race covers. `challenge-lift`, `challenge-run` and `challenge-hybrid` are
+retired (their records stay in the 2026-09-14 source files); `space-lifters`
+and `space-hybrid-training` keep their photographs, now on one card each.
+Credits, source pages, hashes, crops, encodings and the race covers' location
+evidence are in [`sources-2026-10-17.json`](./sources-2026-10-17.json).
+
+| Asset                     | Photographer      | Subject                                   |
+| ------------------------- | ----------------- | ----------------------------------------- |
+| `challenge-weekly`        | Morrow Solutions  | Back squat set-up, dark gym               |
+| `challenge-mileage`       | lucas Favre       | Runner on a wet road at dusk              |
+| `challenge-hybrid-hero`   | Alora Griffiths   | Kettlebells and a hex bar on a track      |
+| `challenge-season-spring` | Fran Couto        | Runner on a forest singletrack            |
+| `challenge-season-summer` | Milos Lopusina    | Beach run at sunset                       |
+| `challenge-season-autumn` | Greg Rosenke      | Two runners on a misty leaf-covered trail |
+| `challenge-season-winter` | Corey Young       | Deadlift set-up, black and white          |
+| `challenge-fastest-5k`    | R\_ INVSCIMENTO   | Track race, panned blur                   |
+| `challenge-together`      | Gaëtan Spinhayer  | Runners strung along a ridge at dusk      |
+| `space-edinburgh-5k`      | Rob Wingate       | Calton Hill at twilight                   |
+| `space-edinburgh-half`    | Joan              | The castle above autumn trees             |
+| `space-bournemouth-5k`    | Belinda Fewings   | Boscombe Pier in a storm                  |
+| `space-bournemouth-half`  | Tomas Kostadinov  | Sunset over the beach                     |
+| `space-river-ness-5k`     | Ben Wicks         | Inverness from the River Ness             |
+| `space-valencia-half`     | Northleg Official | Torres de Quart                           |
+| `space-york-10k`          | Scott Precious    | The Minster through the city walls        |
+
+All are landscape WebP at 1200 × 753, original colour, below 120 KB, and were
+checked at 3x brightness. The kettlebell's moulded "24KG" is its weight, not a
+maker's mark. The Dugald Stewart Monument's carved name on Calton Hill is
+faint at 3x and treated like the city signage above. Northleg asks for a
+credit link (northleg.com); the Unsplash License does not require one. In the
+challenge card's 361 × 112 band `challenge-weekly` loses the lifter's head;
+the bar and back still read.
