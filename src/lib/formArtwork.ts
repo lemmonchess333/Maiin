@@ -53,6 +53,19 @@ const ownerReleased = (
   reviewFile: `docs/exercise-art/releases/2026-09-owner/${id}.json`,
 });
 
+const legacyRedrawn = (
+  id: string,
+  width: number,
+  height: number,
+  reference: number
+): HandListedFormArtwork => ({
+  ...existing(id, width, height),
+  reference: `form-frames/${id}/${reference}.webp`,
+  version: "anatomy-v3-2026-10-17-legacy-redraw-v1",
+  status: "owner-released-with-findings",
+  reviewFile: `docs/exercise-art/releases/2026-10-17/${id}.json`,
+});
+
 /**
  * A set approved by strict review. Every fact here comes from its release
  * record, through APPROVED_FORM_ART_RELEASES, which `npm run art:releases`
@@ -229,49 +242,12 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
   "goblet-squat": ownerReleased("goblet-squat", 1024, 1536),
   squat: ownerReleased("squat", 1024, 1536),
   "barbell-curl": ownerReleased("barbell-curl", 1024, 1536),
-  "barbell-row": {
-    ...existing("barbell-row", 1140, 1024),
-    reference: "form-frames/barbell-row/4.webp",
-    version: "anatomy-v3-2026-10-17-legacy-redraw-v1",
-    status: "owner-released-with-findings",
-    reviewFile: "docs/exercise-art/releases/2026-10-17/barbell-row.json",
-  },
-  "bench-press": {
-    ...existing("bench-press", 888, 1024),
-    reference: "form-frames/bench-press/4.webp",
-    version: "anatomy-v3-2026-10-17-legacy-redraw-v1",
-    status: "owner-released-with-findings",
-    reviewFile: "docs/exercise-art/releases/2026-10-17/bench-press.json",
-  },
-  dips: {
-    ...existing("dips", 880, 1088),
-    reference: "form-frames/dips/4.webp",
-    version: "anatomy-v3-2026-10-17-legacy-redraw-v1",
-    status: "owner-released-with-findings",
-    reviewFile: "docs/exercise-art/releases/2026-10-17/dips.json",
-  },
-  "overhead-press": {
-    ...existing("overhead-press", 1024, 1536),
-    reference: "form-frames/overhead-press/4.webp",
-    version: "anatomy-v3-2026-10-17-legacy-redraw-v1",
-    status: "owner-released-with-findings",
-    reviewFile: "docs/exercise-art/releases/2026-10-17/overhead-press.json",
-  },
-  "rope-tricep-pushdown": {
-    ...existing("rope-tricep-pushdown", 1024, 1600),
-    reference: "form-frames/rope-tricep-pushdown/1.webp",
-    version: "anatomy-v3-2026-10-17-legacy-redraw-v1",
-    status: "owner-released-with-findings",
-    reviewFile:
-      "docs/exercise-art/releases/2026-10-17/rope-tricep-pushdown.json",
-  },
-  "skull-crushers": {
-    ...existing("skull-crushers", 870, 1072),
-    reference: "form-frames/skull-crushers/3.webp",
-    version: "anatomy-v3-2026-10-17-legacy-redraw-v1",
-    status: "owner-released-with-findings",
-    reviewFile: "docs/exercise-art/releases/2026-10-17/skull-crushers.json",
-  },
+  "barbell-row": legacyRedrawn("barbell-row", 1140, 1024, 4),
+  "bench-press": legacyRedrawn("bench-press", 888, 1024, 4),
+  dips: legacyRedrawn("dips", 880, 1088, 4),
+  "overhead-press": legacyRedrawn("overhead-press", 1024, 1536, 4),
+  "rope-tricep-pushdown": legacyRedrawn("rope-tricep-pushdown", 1024, 1600, 1),
+  "skull-crushers": legacyRedrawn("skull-crushers", 870, 1072, 3),
 };
 
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
