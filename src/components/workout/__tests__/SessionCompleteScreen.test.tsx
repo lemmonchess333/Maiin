@@ -464,6 +464,35 @@ describe("SessionCompleteScreen — what the session did (DS3)", () => {
       "Chest3 sets",
       "Triceps1 set",
     ]);
+    /* The picture is the main lift drawn, as Train and Home picture the
+       day, not the muscle figure. */
+    expect(
+      heading
+        .closest("div")!
+        .parentElement!.querySelector("[data-lead-drawing]")
+    ).toHaveAttribute("data-lead-drawing", "Bench Press");
+    expect(
+      screen.queryByRole("img", { name: "Muscles trained this session" })
+    ).toBeNull();
+  });
+
+  it("draws the first lift that got a working set, and the muscles when none is drawn", () => {
+    const skipped = {
+      ...exercise("Bench Press", 3),
+      exerciseId: "bench-press",
+      movementCategory: "horizontal_push",
+    } as ProgramExercise;
+    const custom = {
+      ...exercise("My Cable Thing", 2),
+      exerciseId: "custom-cable-thing",
+      movementCategory: "arms_triceps",
+    } as ProgramExercise;
+    renderWith(
+      {},
+      [[], [{ reps: 10, weight: 20, completed: true, type: "working" }]],
+      [skipped, custom]
+    );
+    expect(document.querySelector("[data-lead-drawing]")).toBeNull();
     expect(
       screen.getByRole("img", { name: "Muscles trained this session" })
     ).toBeInTheDocument();

@@ -17,7 +17,7 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
  * DS3: the sport wash is 12%, the Home Today card's, and the halo that sat
  * behind the icon corner is gone with the app's other glows. The title is
  * the card's one big line (the H2 step). A lift day passes `figure`, the
- * muscles the day works, which stands at the right. A run passes its
+ * drawing of its main lift, which stands at the right. A run passes its
  * runner, the one Home's run card draws, so the two Today cards and
  * Train's two tabs share one layout.
  */
@@ -54,10 +54,11 @@ interface SessionCommandCardProps {
   primaryActionVariant?: ButtonVariant;
   onManage?: () => void;
   /** A picture of the session, drawn at the right of the title in place
-   *  of the sport icon tile. Lift passes the day's muscles, run its
-   *  runner. Hidden from screen readers like the tile, since the title
-   *  names the day: the muscle figure's own label speaks of muscles
-   *  trained, which a day not yet done has not been. */
+   *  of the sport icon tile. Lift passes its main lift's drawing (the
+   *  muscles the day works when no lift is drawn), run its runner.
+   *  Hidden from screen readers like the tile, since the title names the
+   *  day: the muscle figure's own label speaks of muscles trained, which
+   *  a day not yet done has not been. */
   figure?: ReactNode;
   /** Makes the picture a button that opens a guide to the session, as a
    *  lift row's drawing opens its form pictures; it is then named for

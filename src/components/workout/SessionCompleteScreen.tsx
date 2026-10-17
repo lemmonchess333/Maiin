@@ -7,6 +7,7 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import StatFigure from "@/components/ui/StatFigure";
 import { Card } from "@/components/ui/Card";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
+import { formArtCutoutUrl, sessionLeadArt } from "@/lib/formArtCutouts";
 import MiniMuscleFigure, {
   hasMuscleFigure,
 } from "@/components/social/MiniMuscleFigure";
@@ -195,6 +196,14 @@ export default function SessionCompleteScreen({
   });
   const muscleRows = [...setsByCategory.entries()].sort((a, b) => b[1] - a[1]);
   const muscleCategories = muscleRows.map(([category]) => category);
+  /* The card's picture is the session's main lift, drawn, as Train and
+     Home picture the day: the first exercise with a drawing that got a
+     working set. The muscle figure stands in when none has one. */
+  const leadArt = sessionLeadArt(
+    exercises.filter((_, exIdx) =>
+      (setLogs[exIdx] ?? []).some((s) => s.completed && s.type !== "warmup")
+    )
+  );
 
   const exerciseSummary = exercises
     .map((ex, exIdx) => {
@@ -375,10 +384,22 @@ export default function SessionCompleteScreen({
 
         {hasMuscleFigure(muscleCategories) && (
           <Card className="flex items-center gap-4">
-            <MiniMuscleFigure
-              categories={muscleCategories}
-              className="h-32 w-auto shrink-0"
-            />
+            {leadArt ? (
+              <img
+                src={formArtCutoutUrl(leadArt.cutout)}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                decoding="async"
+                data-lead-drawing={leadArt.exerciseName}
+                className="h-32 w-28 shrink-0 object-contain"
+              />
+            ) : (
+              <MiniMuscleFigure
+                categories={muscleCategories}
+                className="h-32 w-auto shrink-0"
+              />
+            )}
             <div className="min-w-0 flex-1">
               <SectionHeading size="compact" as="h3">
                 Muscles worked
