@@ -269,6 +269,18 @@ describe("ExerciseRowSummary — one row's words", () => {
     expect(container).toHaveTextContent("Pause at the chest");
   });
 
+  it("leaves its drawing to a row that draws it as a button of its own", () => {
+    /* Train's drawing opens the form guide, and a button cannot sit in
+       the row's own; the reorder rows keep the summary's. */
+    const { rerender, container } = render(
+      <ExerciseRowSummary exercise={exercise()} />
+    );
+    expect(container.querySelector("[data-thumb]")).not.toBeNull();
+    rerender(<ExerciseRowSummary exercise={exercise()} showThumb={false} />);
+    expect(container.querySelector("[data-thumb]")).toBeNull();
+    expect(container).toHaveTextContent("Bench Press");
+  });
+
   it("lists every set of the last session, not just the best", () => {
     // A weight held after 12, 12, 10 explains itself only if the 10 shows.
     const { container } = render(

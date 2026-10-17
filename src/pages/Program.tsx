@@ -36,6 +36,8 @@ import LiftRulesInfo from "@/components/program/LiftRulesInfo";
 import { deloadDismissKey, pickLiftAdvice } from "@/lib/programNotices";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
+import ExerciseThumb from "@/components/program/ExerciseThumb";
+import ExerciseFormSheet from "@/components/program/ExerciseFormSheet";
 import MiniMuscleFigure, {
   hasMuscleFigure,
 } from "@/components/social/MiniMuscleFigure";
@@ -375,6 +377,12 @@ function ProgramInner() {
     x: number;
     y: number;
   } | null>(null);
+  /* The exercise whose form guide a row's drawing opened. The name stays
+     while the sheet closes, so its title does not blank on the way out. */
+  const [formGuide, setFormGuide] = useState<{
+    name: string;
+    open: boolean;
+  }>({ name: "", open: false });
   const [replaceTarget, setReplaceTarget] = useState<{
     dayIndex: number;
     exIndex: number;
@@ -1441,10 +1449,14 @@ function ProgramInner() {
                           </DndContext>
                         ) : (
                           /* One card, one row per exercise, each with its
-                             drawing (DS3). A row still opens the exercise's
-                             Form tab, still swipes and long-presses to its
-                             manage menu, and still has the "…" that opens
-                             that menu visibly. */
+                             drawing (DS3). The drawing opens the exercise's
+                             form guide over the list (owner, 2026-10-16:
+                             "click on these on the left hand side to see
+                             form pics"). The rest of the row still opens
+                             the exercise's page on its Form tab, still
+                             swipes and long-presses to its manage menu,
+                             and still has the "…" that opens that menu
+                             visibly. */
                           <div className="rounded-2xl bg-card card-shadow overflow-hidden divide-y divide-border">
                             {selectedWorkout.exercises.map((ex, i) => (
                               <div
@@ -1462,7 +1474,29 @@ function ProgramInner() {
                                     long-press. The "…" opens the same
                                     manage menu (Replace / Remove / Move)
                                     visibly; swipe and long-press stay. */}
-                                  <div className="flex items-center">
+                                  <div className="@container/exrow flex items-center">
+                                    {/* Its own button, before the row's: a
+                                      button cannot hold another. It gives
+                                      way to the name where the summary's
+                                      own drawing did, at 10em of summary
+                                      (14.5em of row at the designed text
+                                      size). */}
+                                    <button
+                                      type="button"
+                                      aria-label={`How to do ${ex.name}`}
+                                      onClick={() => {
+                                        haptic("light");
+                                        setFormGuide({
+                                          name: ex.name,
+                                          open: true,
+                                        });
+                                      }}
+                                      className="flex shrink-0 items-center self-stretch pl-3 transition-opacity active:opacity-60 @max-[14.5em]/exrow:hidden"
+                                    >
+                                      <ExerciseThumb
+                                        exerciseId={ex.exerciseId}
+                                      />
+                                    </button>
                                     <button
                                       type="button"
                                       onClick={() =>
@@ -1494,6 +1528,7 @@ function ProgramInner() {
                                         exercise={ex}
                                         lastSets={lastSetsOf(ex)}
                                         showNotes
+                                        showThumb={false}
                                       />
                                     </button>
                                     <IconButton
@@ -1775,6 +1810,14 @@ function ProgramInner() {
           </>
         )}
       </AnimatePresence>
+
+      {formGuide.name && (
+        <ExerciseFormSheet
+          exerciseName={formGuide.name}
+          open={formGuide.open}
+          onOpenChange={(open) => setFormGuide((g) => ({ ...g, open }))}
+        />
+      )}
 
       {/* Skip Confirmation Sheet */}
       <SkipConfirmSheet
