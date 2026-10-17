@@ -1694,12 +1694,14 @@ test reaches is a real iPad, a real storefront and App Store Connect.
       yearly card, the CTA, the line under it and the timeline's Day 7 are
       all in dollars, and nothing on either beat or in ProModal shows £.
       The prices match Apple's purchase sheet.
-- [ ] **The trial copy against Apple's sheet.** The paywall decides whether
-      to show the trial from the account's `hasUsedTrial`; Apple grants the
-      introductory offer per Apple Account. On a sandbox account that has
-      already used the intro offer, check what the sheet says against the
-      paywall's "7 days free, then …". If they disagree, the paywall needs
-      RevenueCat's intro-eligibility check (not built).
+- [ ] **The trial copy against Apple's sheet.** Apple grants the
+      introductory offer per Apple Account, so the paywall now also asks
+      RevenueCat's intro-eligibility check (`useStoreTrialEligibility`,
+      2026-10-17) and drops the trial copy when Apple says no; when
+      RevenueCat can't tell, the account's `hasUsedTrial` decides. On a
+      sandbox account that has already used the intro offer, the Pro page,
+      the Pro sheet and Home's strip show the price, not "7 days free";
+      on a fresh one they show the trial. Both agree with Apple's sheet.
 - [ ] **App Store Connect after the first iPhone-only upload**: the build
       lists iPhone only, and the version page asks for iPhone screenshots
       only. Nothing has been released with iPad support, which is the only

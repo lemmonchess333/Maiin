@@ -249,3 +249,51 @@ export async function rcGetLocalizedPrices(): Promise<Record<
     return null;
   }
 }
+
+/** RevenueCat's INTRO_ELIGIBILITY_STATUS values. Importing the enum would
+ *  bring the plugin into the web bundle, which only loads it dynamically;
+ *  revenuecatTrialEligibility.test.ts pins these against the enum. */
+export const INTRO_STATUS = {
+  ineligible: 1,
+  eligible: 2,
+  noIntroOffer: 3,
+} as const;
+
+/** The App Store's answer on a product's free trial for this Apple ID. */
+export type StoreTrialEligibility = "eligible" | "ineligible" | "unknown";
+
+/**
+ * Whether this Apple ID can still take each product's free trial. Apple
+ * gives one introductory offer per subscription group to an Apple ID,
+ * whichever Tropos account is signed in, so the account's own record
+ * (`isCheckoutTrialEligible`) can promise a trial to someone who had it
+ * under another account. A product with no trial set up reads as
+ * ineligible. "unknown" (RevenueCat couldn't tell) and a failed check
+ * (null) are left to the caller.
+ */
+export async function rcTrialEligibility(
+  productIds: readonly string[]
+): Promise<Record<string, StoreTrialEligibility> | null> {
+  if (!isRevenueCatEnabled()) return null;
+  try {
+    const Purchases = await loadPurchases();
+    const statuses = await Purchases.checkTrialOrIntroductoryPriceEligibility({
+      productIdentifiers: [...productIds],
+    });
+    const eligibility: Record<string, StoreTrialEligibility> = {};
+    for (const id of productIds) {
+      const status: number | undefined = statuses[id]?.status;
+      eligibility[id] =
+        status === INTRO_STATUS.eligible
+          ? "eligible"
+          : status === INTRO_STATUS.ineligible ||
+              status === INTRO_STATUS.noIntroOffer
+            ? "ineligible"
+            : "unknown";
+    }
+    return eligibility;
+  } catch (err) {
+    logger.error("[RevenueCat] trial eligibility check failed", err);
+    return null;
+  }
+}

@@ -98,6 +98,21 @@ vi.mock("@/hooks/useProPlanPrices", () => ({
   useProPlanPrices: () => plansMock(),
 }));
 
+// The App Store's answer on the trial: none on the web (null), and what a
+// test says on the iPhone. `offersTrial` stays real.
+const storeTrialMock = vi.fn<
+  () => Record<
+    "monthly" | "yearly",
+    "eligible" | "ineligible" | "unknown"
+  > | null
+>(() => null);
+vi.mock("@/hooks/useStoreTrialEligibility", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("@/hooks/useStoreTrialEligibility")
+  >()),
+  useStoreTrialEligibility: () => storeTrialMock(),
+}));
+
 import Upgrade from "../Upgrade";
 // The E2E journeys end setup on these two (src/test/journeyScreens.ts).
 import { OFFER } from "@/test/journeyScreens";
@@ -136,6 +151,7 @@ beforeEach(() => {
   isNativeIOSMock.mockReturnValue(false);
   plansMock.mockReset();
   plansMock.mockReturnValue(PRO_PLANS);
+  storeTrialMock.mockReturnValue(null);
   // Baseline: free user on web with the post-trial flag set (so the
   // existing pricing-page tests rendering "Start Pro — £X" still pass).
   authProfileMock.mockReturnValue({ hasUsedTrial: true });
@@ -392,6 +408,33 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
       screen.getByRole("list", { name: "How your free trial works" })
         .textContent
     ).toContain("Day 7 — Your subscription starts at £34.99 a year");
+  });
+
+  it("shows the price when the App Store says this Apple ID has had the trial", () => {
+    // The account has never had one, but Apple gives one per Apple ID:
+    // someone who trialled under another account gets the price on
+    // Apple's sheet, so the page mustn't promise the free week.
+    authProfileMock.mockReturnValue({ hasUsedTrial: false });
+    storeTrialMock.mockReturnValue({
+      monthly: "ineligible",
+      yearly: "ineligible",
+    });
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(
+      screen.getByRole("button", { name: /Start Pro — £/ })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/free trial/i)).toBeNull();
+  });
+
+  it("keeps the trial when the App Store can't tell", () => {
+    authProfileMock.mockReturnValue({ hasUsedTrial: false });
+    storeTrialMock.mockReturnValue({ monthly: "unknown", yearly: "unknown" });
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(
+      screen.getByRole("button", { name: "Start your 7-day free trial" })
+    ).toBeInTheDocument();
   });
 
   it("after the onboarding free week the page shows the price — one trial per account, flag stamped or not", () => {

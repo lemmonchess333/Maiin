@@ -71,6 +71,10 @@ import TrialDetails from "@/components/TrialDetails";
 import { runningTrial } from "@/lib/subscriptionTrial";
 import TrialTimeline from "@/components/TrialTimeline";
 import { useProPlanPrices } from "@/hooks/useProPlanPrices";
+import {
+  offersTrial,
+  useStoreTrialEligibility,
+} from "@/hooks/useStoreTrialEligibility";
 import { useAuth } from "@/lib/auth";
 import { track, type PaywallSource } from "@/lib/paywallAnalytics";
 import { THEME } from "@/lib/theme";
@@ -135,7 +139,10 @@ export default function Upgrade() {
   // One trial per account: the onboarding free week counts, so after it
   // this page shows the price. Client-side hint; the server is
   // authoritative (`checkoutTrial.js`).
-  const withTrial = isCheckoutTrialEligible(profile);
+  const accountTrialEligible = isCheckoutTrialEligible(profile);
+  // The App Store's own answer, on the iPhone: one trial per Apple ID,
+  // whichever account is signed in.
+  const storeTrialEligibility = useStoreTrialEligibility();
   const { isPro, isInTrial, trialDaysLeft, tier } = useSubscription();
   // A store trial in progress (Sub1, STATUS 2026-10-06): the Pro card says
   // when it ends and offers the phone reminder.
@@ -171,6 +178,11 @@ export default function Upgrade() {
   // these plans, never looked up by id, so it is all in one currency.
   const plans = useProPlanPrices();
   const selected = findPlan(plans, selectedPlan);
+  const withTrial = offersTrial(
+    accountTrialEligible,
+    storeTrialEligibility,
+    selectedPlan
+  );
 
   const { loading, error, startCheckout } = useProCheckout();
 

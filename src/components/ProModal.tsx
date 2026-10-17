@@ -43,6 +43,10 @@ import { isNativeIOS } from "@/lib/purchaseProvider";
 import { useProCheckout } from "@/hooks/useProCheckout";
 import TrialTimeline from "@/components/TrialTimeline";
 import { useProPlanPrices } from "@/hooks/useProPlanPrices";
+import {
+  offersTrial,
+  useStoreTrialEligibility,
+} from "@/hooks/useStoreTrialEligibility";
 import { track } from "@/lib/paywallAnalytics";
 import { DAILY_AI_LIMITS, isCheckoutTrialEligible } from "@/lib/subscription";
 import { X, Sparkles, Utensils } from "lucide-react";
@@ -149,13 +153,19 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   // the disclosure all read the selected plan from these, never by id.
   const plans = useProPlanPrices();
   const selected = findPlan(plans, selectedPlan);
+  const storeTrialEligibility = useStoreTrialEligibility();
 
   // Sub1a P1 — trial offer eligibility (client-side hint; server is
   // authoritative via `hasUsedTrial` in checkoutTrial.js). Missing
   // profile (cold-start, race) defaults to true so the more generous
   // CTA wins on uncertainty — the server still rejects a second
-  // trial if the user actually has `hasUsedTrial: true`.
-  const withTrial = isCheckoutTrialEligible(profile);
+  // trial if the user actually has `hasUsedTrial: true`. On the iPhone
+  // the App Store has the last word: one trial per Apple ID.
+  const withTrial = offersTrial(
+    isCheckoutTrialEligible(profile),
+    storeTrialEligibility,
+    selectedPlan
+  );
 
   const platform: "web" | "ios" = isNativeIOS() ? "ios" : "web";
   const showRestore = isNativeIOS();

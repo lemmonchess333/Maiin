@@ -62,6 +62,21 @@ vi.mock("@/lib/purchaseProvider", () => ({
   isNativeIOS: () => isNativeIOSMock(),
 }));
 
+// The App Store's answer on the trial: none on the web (null), and what a
+// test says on the iPhone. `offersTrial` stays real.
+const storeTrialMock = vi.fn<
+  () => Record<
+    "monthly" | "yearly",
+    "eligible" | "ineligible" | "unknown"
+  > | null
+>(() => null);
+vi.mock("@/hooks/useStoreTrialEligibility", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("@/hooks/useStoreTrialEligibility")
+  >()),
+  useStoreTrialEligibility: () => storeTrialMock(),
+}));
+
 import ProModal from "../ProModal";
 
 function renderModal(props: Parameters<typeof ProModal>[0]) {
@@ -85,6 +100,7 @@ beforeEach(() => {
   // eligibility cycles explicitly set `hasUsedTrial: false` or
   // `null` to cover the trial path.
   authProfileMock.mockReturnValue({ hasUsedTrial: true });
+  storeTrialMock.mockReturnValue(null);
 });
 
 afterEach(cleanup);
@@ -343,6 +359,17 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
     expect(timeline.textContent).toContain(
       "Day 7 — Your subscription starts at £34.99 a year unless you've cancelled."
     );
+  });
+
+  it("offers the price, not the trial, to an Apple ID the App Store says has had it", () => {
+    authProfileMock.mockReturnValue({ hasUsedTrial: false });
+    storeTrialMock.mockReturnValue({
+      monthly: "ineligible",
+      yearly: "ineligible",
+    });
+    renderModal({ onClose: () => {} });
+    expect(screen.getByRole("button", { name: /Start Pro/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /free trial/i })).toBeNull();
   });
 
   it("after the onboarding free week — flag stamped or not — the CTA is the price, never a second trial", () => {

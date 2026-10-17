@@ -95,6 +95,11 @@ import TrialEndedDialog from "@/components/home/TrialEndedDialog";
 import { recalibrationCheckIn } from "@/lib/recalibrationCheckIn";
 import { shouldShowHomeProStrip } from "@/lib/homeProStrip";
 import { isCheckoutTrialEligible } from "@/lib/subscription";
+import { DEFAULT_PLAN } from "@/lib/proPlans";
+import {
+  offersTrial,
+  useStoreTrialEligibility,
+} from "@/hooks/useStoreTrialEligibility";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
 
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
@@ -381,8 +386,14 @@ export default function Home() {
   );
   // Home's Pro strip for a free account (homeProStrip.ts). Trial
   // eligibility decides the copy: a first-timer is offered the trial,
-  // an account that has had one is offered the plans.
-  const proStripTrialEligible = isCheckoutTrialEligible(profile);
+  // an account that has had one is offered the plans, and so is anyone
+  // the App Store says has had it under another account.
+  const storeTrialEligibility = useStoreTrialEligibility();
+  const proStripTrialEligible = offersTrial(
+    isCheckoutTrialEligible(profile),
+    storeTrialEligibility,
+    DEFAULT_PLAN
+  );
   const showProStrip = shouldShowHomeProStrip({
     isPro,
     isInTrial,
