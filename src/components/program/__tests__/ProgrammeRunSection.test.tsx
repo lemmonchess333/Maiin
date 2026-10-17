@@ -28,6 +28,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   act,
+  cleanup,
   render,
   screen,
   fireEvent,
@@ -443,6 +444,24 @@ describe("ProgrammeRunSection — the no-run card names the day it is on", () =>
     expect(screen.getByText(/^Rest day\./)).toBeInTheDocument();
     expect(screen.queryByText(/^Lift day\./)).toBeNull();
   });
+
+  it("draws the easy runner beside the words", () => {
+    const { container } = renderSection(
+      {
+        ...commonProps(),
+        profile: makeProfile({
+          weekSchedule: scheduleWithTodayAs("rest"),
+        } as Partial<UserProfile>),
+      },
+      makeProgramState([])
+    );
+    expect(screen.getByText("No run scheduled")).toBeInTheDocument();
+    expect(
+      container
+        .querySelector('img[src$="/form-art/run-easy.webp"]')
+        ?.getAttribute("aria-hidden")
+    ).toBe("true");
+  });
 });
 
 describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
@@ -725,6 +744,46 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
       screen.getByRole("button", { name: /View run/i })
     ).toBeInTheDocument();
     expect(screen.queryByText(/^Next ·/i)).not.toBeInTheDocument();
+  });
+
+  it("draws the runner on the run card, the fast stride for a tempo", () => {
+    const runnerOnCard = () =>
+      screen
+        .getByRole("button", { name: /View run/i })
+        .closest("section")!
+        .querySelector("img")
+        ?.getAttribute("src");
+    const props = commonProps();
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        programState={makeProgramState([
+          makeRunDay({
+            status: "planned",
+            date: TODAY_KEY,
+            dayIndex: TODAY_DOW,
+          }),
+        ])}
+      />
+    );
+    expect(runnerOnCard()).toMatch(/\/form-art\/run-easy\.webp$/);
+    cleanup();
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        programState={makeProgramState([
+          makeRunDay({
+            id: "runday_tempo_20",
+            templateId: "tempo_20",
+            type: "tempo",
+            status: "planned",
+            date: TODAY_KEY,
+            dayIndex: TODAY_DOW,
+          }),
+        ])}
+      />
+    );
+    expect(runnerOnCard()).toMatch(/\/form-art\/run-fast\.webp$/);
   });
 
   it("says a recovery week is easy runs, in words", () => {
