@@ -1,0 +1,390 @@
+{
+  "scope": "Read-only indexing of already completed normal npm run verify; no new tests, commands, repo edits or failure disposition. Root compares final normal run later.",
+  "parserPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension-independent-reproduction-20261015\\index-leg-extension-normal-verify.py",
+  "parserSha256": "33a3efb953e53e2f5a6552fc258067195900a2ef581bcb298f544ca57783747c",
+  "parserEntryPoint": "generic read_run(folder), baseline=False; CLI/main and hardcoded synthetic baseline not used",
+  "folder": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining19-execution-20261015\\checks\\legacy-six-baseline-c1e82e09",
+  "head": "c1e82e093c6ca2d1e389b5071eb4b57ec3a2f018",
+  "cleanStatusBefore": "",
+  "normalCommand": "npm run verify",
+  "startedAt": "2026-10-17T21:10:34.088524+00:00",
+  "finishedAt": "2026-10-17T21:22:16.540802+00:00",
+  "elapsedSeconds": 700.484999999986,
+  "exitCode": 1,
+  "fullVerificationPassed": false,
+  "inputsPreserved": true,
+  "inputCount": 2704,
+  "snapshotRestores": [
+    {
+      "path": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+      "originalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "testOutputSha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "restoredExact": true
+    }
+  ],
+  "allNormalVerifyStagesPresent": true,
+  "stages": [
+    {
+      "name": "lint",
+      "startLine": 6,
+      "outcome": "completed successfully: later stage observed in normal chained verify",
+      "outcomeBasis": "inferred from subsequent stage in normal chained command, not an individual stored exit code",
+      "proof": {
+        "startLine": 6,
+        "endLineInclusive": 6,
+        "byteStart": 179,
+        "byteEndExclusive": 199,
+        "rawSha256": "a4f8b2c8d32b2439915ecf707c8d49fd71ce6fd6760ee2d53a796f1982f9c4ea",
+        "byteLength": 20
+      }
+    },
+    {
+      "name": "check:form-art",
+      "startLine": 10,
+      "outcome": "completed successfully: later stage observed in normal chained verify",
+      "outcomeBasis": "inferred from subsequent stage in normal chained command, not an individual stored exit code",
+      "proof": {
+        "startLine": 10,
+        "endLineInclusive": 10,
+        "byteStart": 229,
+        "byteEndExclusive": 259,
+        "rawSha256": "ba7411a844c779a0015926b5c9fd8bf0a41b02dff43a0f199ba0726701c8e78e",
+        "byteLength": 30
+      }
+    },
+    {
+      "name": "check:form-drafts",
+      "startLine": 23,
+      "outcome": "completed successfully: later stage observed in normal chained verify",
+      "outcomeBasis": "inferred from subsequent stage in normal chained command, not an individual stored exit code",
+      "proof": {
+        "startLine": 23,
+        "endLineInclusive": 23,
+        "byteStart": 474,
+        "byteEndExclusive": 507,
+        "rawSha256": "bad0a19101177e5e2d4acd32919d491f1e36c5d8bacfc6087d049463aab2ce17",
+        "byteLength": 33
+      }
+    },
+    {
+      "name": "check:cycles",
+      "startLine": 35,
+      "outcome": "completed successfully: later stage observed in normal chained verify",
+      "outcomeBasis": "inferred from subsequent stage in normal chained command, not an individual stored exit code",
+      "proof": {
+        "startLine": 35,
+        "endLineInclusive": 35,
+        "byteStart": 699,
+        "byteEndExclusive": 727,
+        "rawSha256": "56262e88261c728e32576536d83f3052f363020ecf2a01b320e6d2d0adbedc98",
+        "byteLength": 28
+      }
+    },
+    {
+      "name": "build",
+      "startLine": 44,
+      "outcome": "completed successfully: later stage observed in normal chained verify",
+      "outcomeBasis": "inferred from subsequent stage in normal chained command, not an individual stored exit code",
+      "proof": {
+        "startLine": 44,
+        "endLineInclusive": 44,
+        "byteStart": 896,
+        "byteEndExclusive": 917,
+        "rawSha256": "deb23f2fda5594fe5e10eb8cf5665853fe255092698f42d7e7ca1172206d4e1f",
+        "byteLength": 21
+      }
+    },
+    {
+      "name": "check:dist-size",
+      "startLine": 541,
+      "outcome": "completed successfully: later stage observed in normal chained verify",
+      "outcomeBasis": "inferred from subsequent stage in normal chained command, not an individual stored exit code",
+      "proof": {
+        "startLine": 541,
+        "endLineInclusive": 541,
+        "byteStart": 52644,
+        "byteEndExclusive": 52675,
+        "rawSha256": "4dd3ee7775ae72deb97c38996d78fe403165c1a6ec767a9b9e3654a200148256",
+        "byteLength": 31
+      }
+    },
+    {
+      "name": "test",
+      "startLine": 558,
+      "outcome": "failed (normal full unit run exit1)",
+      "outcomeBasis": "terminal result and complete Vitest summary",
+      "proof": {
+        "startLine": 558,
+        "endLineInclusive": 558,
+        "byteStart": 53358,
+        "byteEndExclusive": 53378,
+        "rawSha256": "d6b835dac15e4af35a81a747c41de8d6cd16b9c84642bafc5ec35c7015702dc8",
+        "byteLength": 20
+      }
+    }
+  ],
+  "testFiles": {
+    "failed": 9,
+    "passed": 1182,
+    "skipped": 10,
+    "total": 1201,
+    "verbatim": "Test Files  9 failed | 1182 passed | 10 skipped (1201)",
+    "proof": {
+      "startLine": 781,
+      "endLineInclusive": 781,
+      "byteStart": 63599,
+      "byteEndExclusive": 63655,
+      "rawSha256": "db8a45d4e21f3fb1846b89bb822deba2a748a1c5e98dd68204142373c1f88457",
+      "byteLength": 56
+    }
+  },
+  "tests": {
+    "failed": 7,
+    "passed": 13738,
+    "skipped": 409,
+    "total": 14154,
+    "verbatim": "Tests  7 failed | 13738 passed | 409 skipped (14154)",
+    "proof": {
+      "startLine": 782,
+      "endLineInclusive": 782,
+      "byteStart": 63655,
+      "byteEndExclusive": 63714,
+      "rawSha256": "42d96e29bdaa982e9e6a55043feeda9502b4d031a67d820d28184cd3ba627aaf",
+      "byteLength": 59
+    }
+  },
+  "failureHeaderCount": 9,
+  "testFailureHeaders": 7,
+  "suiteFailureHeaders": 2,
+  "diagnosticGroupCount": 9,
+  "failures": [
+    {
+      "canonicalId": "root-node|scripts/write-functions-env.test.ts|[suite]",
+      "project": "root-node",
+      "file": "scripts/write-functions-env.test.ts",
+      "kind": "suite",
+      "case": null,
+      "headerLine": 648,
+      "headerVerbatim": " FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]",
+      "diagnosticGroupId": "diagnostic-group-1",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 649,
+        "endLineInclusive": 649,
+        "byteStart": 57721,
+        "byteEndExclusive": 57762,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": ["SyntaxError: Invalid or unexpected token"]
+      }
+    },
+    {
+      "canonicalId": "root-node|scripts/ios/asc-signing.test.ts|[suite]",
+      "project": "root-node",
+      "file": "scripts/ios/asc-signing.test.ts",
+      "kind": "suite",
+      "case": null,
+      "headerLine": 652,
+      "headerVerbatim": " FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]",
+      "diagnosticGroupId": "diagnostic-group-2",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 653,
+        "endLineInclusive": 653,
+        "byteStart": 57931,
+        "byteEndExclusive": 57972,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": ["SyntaxError: Invalid or unexpected token"]
+      }
+    },
+    {
+      "canonicalId": "dom|src/components/__tests__/WorkoutSessionCompletion.test.tsx|a reconnect rejection keeps the session and retries the same completion",
+      "project": "dom",
+      "file": "src/components/__tests__/WorkoutSessionCompletion.test.tsx",
+      "kind": "test",
+      "case": "a reconnect rejection keeps the session and retries the same completion",
+      "headerLine": 659,
+      "headerVerbatim": " FAIL  |dom| src/components/__tests__/WorkoutSessionCompletion.test.tsx > a reconnect rejection keeps the session and retries the same completion",
+      "diagnosticGroupId": "diagnostic-group-3",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 660,
+        "endLineInclusive": 673,
+        "byteStart": 58261,
+        "byteEndExclusive": 58710,
+        "rawSha256": "60b40de27fa014303296c45e022011b5effd0c355e7ae18bf96a568594566aa7",
+        "byteLength": 449,
+        "firstOwnLine": "Error: expect(element).toBeVisible()",
+        "firstThreeLines": [
+          "Error: expect(element).toBeVisible()",
+          "",
+          "Received element is not visible:"
+        ]
+      }
+    },
+    {
+      "canonicalId": "dom|src/features/goalSpace/__tests__/circleTitle.test.ts|every Circle name drawn in the app goes through circleTitle > finds no space.title read outside circleTitle.ts",
+      "project": "dom",
+      "file": "src/features/goalSpace/__tests__/circleTitle.test.ts",
+      "kind": "test",
+      "case": "every Circle name drawn in the app goes through circleTitle > finds no space.title read outside circleTitle.ts",
+      "headerLine": 677,
+      "headerVerbatim": " FAIL  |dom| src/features/goalSpace/__tests__/circleTitle.test.ts > every Circle name drawn in the app goes through circleTitle > finds no space.title read outside circleTitle.ts",
+      "diagnosticGroupId": "diagnostic-group-4",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 678,
+        "endLineInclusive": 694,
+        "byteStart": 58972,
+        "byteEndExclusive": 59432,
+        "rawSha256": "c7e9a3ddc2b699c99e5bc4fa9a04b6a87cf464fd7907e9561544fb290a9d7f4f",
+        "byteLength": 460,
+        "firstOwnLine": "AssertionError: expected [ 'features\\goalSpace\\circleTitle.ts' ] to deeply equal []",
+        "firstThreeLines": [
+          "AssertionError: expected [ 'features\\goalSpace\\circleTitle.ts' ] to deeply equal []",
+          "",
+          "- Expected"
+        ]
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/bodyRig.test.ts|supplied placard frames > all of a sequence's frames share one canvas",
+      "project": "node",
+      "file": "src/lib/__tests__/bodyRig.test.ts",
+      "kind": "test",
+      "case": "supplied placard frames > all of a sequence's frames share one canvas",
+      "headerLine": 698,
+      "headerVerbatim": " FAIL  |node| src/lib/__tests__/bodyRig.test.ts > supplied placard frames > all of a sequence's frames share one canvas",
+      "diagnosticGroupId": "diagnostic-group-5",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 699,
+        "endLineInclusive": 707,
+        "byteStart": 59635,
+        "byteEndExclusive": 60106,
+        "rawSha256": "a9c754de62b689fd4c8782cd0678252719ba6213590b364cad97f1da6869afed",
+        "byteLength": 471,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/lib/__tests__/bodyRig.test.ts:5142:3"
+        ]
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/leaderboard.test.ts|boardFigure > converts the volume board, and only that one",
+      "project": "node",
+      "file": "src/lib/__tests__/leaderboard.test.ts",
+      "kind": "test",
+      "case": "boardFigure > converts the volume board, and only that one",
+      "headerLine": 711,
+      "headerVerbatim": " FAIL  |node| src/lib/__tests__/leaderboard.test.ts > boardFigure > converts the volume board, and only that one",
+      "diagnosticGroupId": "diagnostic-group-6",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 712,
+        "endLineInclusive": 720,
+        "byteStart": 60302,
+        "byteEndExclusive": 60853,
+        "rawSha256": "50eeed1323c7562de37f86af1374d568211f695cdfb22aa9c0b3d521857c4c06",
+        "byteLength": 551,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/lib/__tests__/leaderboard.test.ts:68:3"
+        ]
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/noDisabledTests.test.ts|no test is switched off outright > finds no unconditional skip in src/ or functions/",
+      "project": "node",
+      "file": "src/lib/__tests__/noDisabledTests.test.ts",
+      "kind": "test",
+      "case": "no test is switched off outright > finds no unconditional skip in src/ or functions/",
+      "headerLine": 724,
+      "headerVerbatim": " FAIL  |node| src/lib/__tests__/noDisabledTests.test.ts > no test is switched off outright > finds no unconditional skip in src/ or functions/",
+      "diagnosticGroupId": "diagnostic-group-7",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 725,
+        "endLineInclusive": 733,
+        "byteStart": 61079,
+        "byteEndExclusive": 61542,
+        "rawSha256": "661366c2c55a6f5d11ec18de3ca7ada9f2db570e7d3131479bfd87951fbfad3e",
+        "byteLength": 463,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/lib/__tests__/noDisabledTests.test.ts:65:3"
+        ]
+      }
+    },
+    {
+      "canonicalId": "node|src/features/program/__tests__/generatorAudit.test.ts|generator audit — every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+      "project": "node",
+      "file": "src/features/program/__tests__/generatorAudit.test.ts",
+      "kind": "test",
+      "case": "generator audit — every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+      "headerLine": 737,
+      "headerVerbatim": " FAIL  |node| src/features/program/__tests__/generatorAudit.test.ts > generator audit — every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+      "diagnosticGroupId": "diagnostic-group-8",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 738,
+        "endLineInclusive": 746,
+        "byteStart": 61817,
+        "byteEndExclusive": 62364,
+        "rawSha256": "b23bfc7d5409dfeef7a855c216093984474602f74a0222dfe237771e08735b4f",
+        "byteLength": 547,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/features/program/__tests__/generatorAudit.test.ts:147:3"
+        ]
+      }
+    },
+    {
+      "canonicalId": "node|src/features/program/__tests__/useProgramWriters.test.ts|RUN-RESCHEDULE-01 — moveRunDay > refuses to move a race slot (immovable identity)",
+      "project": "node",
+      "file": "src/features/program/__tests__/useProgramWriters.test.ts",
+      "kind": "test",
+      "case": "RUN-RESCHEDULE-01 — moveRunDay > refuses to move a race slot (immovable identity)",
+      "headerLine": 750,
+      "headerVerbatim": " FAIL  |node| src/features/program/__tests__/useProgramWriters.test.ts > RUN-RESCHEDULE-01 — moveRunDay > refuses to move a race slot (immovable identity)",
+      "diagnosticGroupId": "diagnostic-group-9",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 751,
+        "endLineInclusive": 776,
+        "byteStart": 62604,
+        "byteEndExclusive": 63515,
+        "rawSha256": "63ef6b308cff2ebc724df224077c89898af25dcf3be3c3cb031063af155a087a",
+        "byteLength": 911,
+        "firstOwnLine": "AssertionError: expected true to be false // Object.is equality",
+        "firstThreeLines": [
+          "AssertionError: expected true to be false // Object.is equality",
+          "",
+          "Ignored nodes: comments, script, style"
+        ]
+      }
+    }
+  ],
+  "unhandledErrors": [],
+  "sourceProofHashes": {
+    "result.json": "18ff5429050edf302e33f330030d37b7e7e3e7caff01a2b1f7b36a5c546fea29",
+    "verify.log": "007363ebdb1ba45440ee6a59abb6d0132e0335460f789f159a946425fc26025a",
+    "inputs-before.json": "e3d51a5a006a75e7522751ba8f09e2b7cc792a3dcd147f172fb53e13a8a4a168",
+    "inputs-after.json": "e3d51a5a006a75e7522751ba8f09e2b7cc792a3dcd147f172fb53e13a8a4a168",
+    "start.json": "1969e62700d67525522a7932ceea118e796439d6ae3b0bddd4a8452756292644"
+  },
+  "fullIndexPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\legacy-six-redraw-20261017\\audit\\baseline-normal-verify-index.json",
+  "fullIndexSha256": "9b02067d64b29a376ecdcb97f870a313ddf5513327721fc1c4471376bfd8445b",
+  "comparisonOrPreExistingDisposition": "Not assigned. This is measured baseline evidence only."
+}

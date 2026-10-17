@@ -1,0 +1,118 @@
+{
+  "exerciseId": "rope-tricep-pushdown",
+  "date": "2026-10-17",
+  "tool": "built-in image_gen; no CLI fallback/model switch",
+  "canonicalReference": {
+    "path": "originals/canonical-reference.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "actualImagegenOperations": 5,
+  "extraCorrectionGenerations": 0,
+  "sources": [
+    {
+      "source": "originals\\01-master.png",
+      "sha256": "1401d86245a9168498f9d004903beb4887e2db8b55bc5f90c3d1c1400a23a94b",
+      "operationId": "exec-6e1d65e0-75a6-44fc-9055-133306d4ebd9",
+      "defaultToolPath": "C:/Users/myles/.codex/generated_images/01a14ba9-b51d-7641-b0c6-8345eba112d9/exec-6e1d65e0-75a6-44fc-9055-133306d4ebd9.png",
+      "references": [
+        {
+          "path": "originals/canonical-reference.png",
+          "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+        }
+      ],
+      "prompt": "originals\\01-master-prompt.txt",
+      "promptSha256": "19d5e23610dde7e264905d99eb441ed7d3d7bd7dac777ee9024052e2d4d2b7c4",
+      "nativeCanvas": [1024, 1536]
+    },
+    {
+      "source": "originals\\02-early.png",
+      "sha256": "e614296b2e65a3a8457a03361ada917e3426671f1393b639369ad6285fa85c54",
+      "operationId": "exec-842a1587-7564-4fd9-9443-6e3a8f3befc7",
+      "defaultToolPath": "C:/Users/myles/.codex/generated_images/01a14ba9-b51d-7641-b0c6-8345eba112d9/exec-842a1587-7564-4fd9-9443-6e3a8f3befc7.png",
+      "references": [
+        {
+          "path": "originals/01-master.png",
+          "sha256": "1401d86245a9168498f9d004903beb4887e2db8b55bc5f90c3d1c1400a23a94b"
+        },
+        {
+          "path": "originals/canonical-reference.png",
+          "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+        }
+      ],
+      "prompt": "originals\\02-early-prompt.txt",
+      "promptSha256": "0d9bb7124841310beaa98caaf49f36ba333819a105724760240ddeb7e655dbd2",
+      "nativeCanvas": [1024, 1536]
+    },
+    {
+      "source": "originals\\03-middle.png",
+      "sha256": "1820fe0ff991fcb18e8fdba94bb6dc1d7b1f6fafab5ff943a277dd2c735b564f",
+      "operationId": "exec-6dd06ddc-e69b-4475-9b2c-79b1af9c3030",
+      "defaultToolPath": "C:/Users/myles/.codex/generated_images/01a14ba9-b51d-7641-b0c6-8345eba112d9/exec-6dd06ddc-e69b-4475-9b2c-79b1af9c3030.png",
+      "references": [
+        {
+          "path": "originals/02-early.png",
+          "sha256": "e614296b2e65a3a8457a03361ada917e3426671f1393b639369ad6285fa85c54"
+        },
+        {
+          "path": "originals/01-master.png",
+          "sha256": "1401d86245a9168498f9d004903beb4887e2db8b55bc5f90c3d1c1400a23a94b"
+        },
+        {
+          "path": "originals/canonical-reference.png",
+          "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+        }
+      ],
+      "prompt": "originals\\03-middle-prompt.txt",
+      "promptSha256": "03ffe73818c61d1bd43e215524e62641a754bba73481dfa15b46105986a773aa",
+      "nativeCanvas": [1024, 1536]
+    },
+    {
+      "source": "originals\\04-late.png",
+      "sha256": "0fa41fcaf23c5894af94d21e90f5734087fc512ff1a3ba2e76ebe8f12c82eecc",
+      "operationId": "exec-3555b7c4-dd3b-4a25-b557-b15ada8e7664",
+      "defaultToolPath": "C:/Users/myles/.codex/generated_images/01a14ba9-b51d-7641-b0c6-8345eba112d9/exec-3555b7c4-dd3b-4a25-b557-b15ada8e7664.png",
+      "references": [
+        {
+          "path": "originals/03-middle.png",
+          "sha256": "1820fe0ff991fcb18e8fdba94bb6dc1d7b1f6fafab5ff943a277dd2c735b564f"
+        },
+        {
+          "path": "originals/01-master.png",
+          "sha256": "1401d86245a9168498f9d004903beb4887e2db8b55bc5f90c3d1c1400a23a94b"
+        },
+        {
+          "path": "originals/canonical-reference.png",
+          "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+        }
+      ],
+      "prompt": "originals\\04-late-prompt.txt",
+      "promptSha256": "e8041d57bc92daa80c229503a8c0fe9dc8aed865e1cb0a1875ea593f3366a83e",
+      "nativeCanvas": [1024, 1536]
+    },
+    {
+      "source": "originals\\05-lockout.png",
+      "sha256": "80a592a87df8752c32271b23b1b1ec63ed2c0a0241f131084a1fe2f823baaa27",
+      "operationId": "exec-8bf8aeff-c6f6-4ae1-9ab3-6d8d1dfc24ab",
+      "defaultToolPath": "C:/Users/myles/.codex/generated_images/01a14ba9-b51d-7641-b0c6-8345eba112d9/exec-8bf8aeff-c6f6-4ae1-9ab3-6d8d1dfc24ab.png",
+      "references": [
+        {
+          "path": "originals/04-late.png",
+          "sha256": "0fa41fcaf23c5894af94d21e90f5734087fc512ff1a3ba2e76ebe8f12c82eecc"
+        },
+        {
+          "path": "originals/01-master.png",
+          "sha256": "1401d86245a9168498f9d004903beb4887e2db8b55bc5f90c3d1c1400a23a94b"
+        },
+        {
+          "path": "originals/canonical-reference.png",
+          "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+        }
+      ],
+      "prompt": "originals\\05-lockout-prompt.txt",
+      "promptSha256": "5b7345845a994c499c0a646bcefadea7f7b9c46fafbce4936d058664582249e5",
+      "nativeCanvas": [1024, 1536]
+    }
+  ],
+  "sourceUse": "Each adjacent operation was visually inspected before deriving its next pose. Native source images retain minor fixed-region generative changes; only the documented connected native upper-body moving window is composited onto master. No anatomy warps, mirrors, resizing or grafts.",
+  "status": "candidate, not integrated or released"
+}

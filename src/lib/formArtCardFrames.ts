@@ -22,7 +22,6 @@ import type { FormArtwork } from "./formArtwork";
 
 export const CARD_FRAMES: Readonly<Record<string, number>> = {
   "barbell-curl": 4,
-  "barbell-row": 4,
   "barbell-shrug": 3,
   "bayesian-cable-curl": 3,
   "bodyweight-squat": 3,
@@ -62,7 +61,6 @@ export const CARD_FRAMES: Readonly<Record<string, number>> = {
   "meadows-row": 3,
   "mountain-climbers": 4,
   "muscle-ups": 4,
-  "overhead-press": 4,
   "pallof-press": 3,
   "preacher-curl": 3,
   "rear-delt-machine-fly": 3,
@@ -71,7 +69,6 @@ export const CARD_FRAMES: Readonly<Record<string, number>> = {
   "seated-leg-curl": 3,
   "shoulder-press-machine": 4,
   "sissy-squat": 3,
-  "skull-crushers": 3,
   "smith-machine-squat": 3,
   "smith-shoulder-press": 4,
   "spider-db-curl": 3,

@@ -69,13 +69,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   "barbell-row": {
     src: "form-art/barbell-row.webp",
-    width: 282,
-    height: 480,
-    keyed: false,
+    width: 480,
+    height: 438,
+    keyed: true,
     source: "form-frames/barbell-row/4.webp",
     sourceSha256:
-      "8e39ee33ac2ac729426eadb109a851acf5453d1eaf81d3485e1857bfd6475f77",
-    sha256: "b5e2d922cfcc44693bc58d90f9c2a824757c879d9d8931352a4c2d590a83146b",
+      "89d5812fc5e0168144ae8a5148c99e10a4eeb7579fdbe2cf9d36172f9a3fbb81",
+    sha256: "1ae58ed1e517ef175aab3fcd82ec1c9cce452e228d5408e972e88c12b0c1682b",
   },
   "barbell-shrug": {
     src: "form-art/barbell-shrug.webp",
@@ -140,12 +140,12 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   "bench-press": {
     src: "form-art/bench-press.webp",
     width: 480,
-    height: 395,
-    keyed: false,
-    source: "form-frames/bench-press/1.webp",
+    height: 445,
+    keyed: true,
+    source: "form-frames/bench-press/4.webp",
     sourceSha256:
-      "a7ec02db586a7f3a54fd801c40e12ab8dff11b386216e033516d40089ec3bc0f",
-    sha256: "0a947b06f123aaf03f6489215fc9e38832932df52c671770d717905268ebcc09",
+      "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd",
+    sha256: "91224a73d156bb63a49fd2c5e441123d0aed251f45f2dfaa62ba0c99e0a28121",
   },
   "bicycle-crunch": {
     src: "form-art/bicycle-crunch.webp",
@@ -509,13 +509,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   dips: {
     src: "form-art/dips.webp",
-    width: 339,
+    width: 422,
     height: 480,
-    keyed: false,
-    source: "form-frames/dips/1.webp",
+    keyed: true,
+    source: "form-frames/dips/4.webp",
     sourceSha256:
-      "abd79b7a1788a4902a09f3709538df390a5c8b580761882fb9bb6244707be9f8",
-    sha256: "335f739987f1a5ee6b8f513d243f475eaaf794fda16834e248aeef72d0fdfa55",
+      "75a13530bf854620789b4dc106f20a12fe3576a5419fda3fa537d40976a44f08",
+    sha256: "584c5345336e4cce881e0d0e962db0d41422f263043eb4fb6cdb09acd9ba455f",
   },
   "donkey-calf-raise": {
     src: "form-art/donkey-calf-raise.webp",
@@ -949,13 +949,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   "overhead-press": {
     src: "form-art/overhead-press.webp",
-    width: 468,
+    width: 340,
     height: 480,
-    keyed: false,
+    keyed: true,
     source: "form-frames/overhead-press/4.webp",
     sourceSha256:
-      "633ce93d0467b6c90f341fb0eeaa0221188c12bc8450ebaf769e9fdd5ea49450",
-    sha256: "a2fafa45046aec18ef7474ded4df01ccc0c631765d58efc28f1722e3f823350c",
+      "b37c0fca9825a423d9539adb63394174b86bc749e9b45656639f02361238bc45",
+    sha256: "5a3f968ba9695ee86f44b5c615d1d3229fda490f00ac0fb1f8e25a14f7444ffe",
   },
   "pallof-press": {
     src: "form-art/pallof-press.webp",
@@ -1119,13 +1119,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   "rope-tricep-pushdown": {
     src: "form-art/rope-tricep-pushdown.webp",
-    width: 272,
+    width: 268,
     height: 480,
-    keyed: false,
+    keyed: true,
     source: "form-frames/rope-tricep-pushdown/1.webp",
     sourceSha256:
-      "a177e100adc921d2741d6e7fcb68ffd67c8f0604105ee78d6c20f6b05f2f4cba",
-    sha256: "5b4d852abbd3033f9d785107093ff6d8f9765b00fd2e179844de358f681f809e",
+      "67b3ab4460e2bcd4240feffe4cf7e27619301cfc9880b326e597243d21ebde69",
+    sha256: "7fc9c18f351cb961dd79be6f5944430a22d96c42e30a5d174c648552eae48885",
   },
   "rowing-machine": {
     src: "form-art/rowing-machine.webp",
@@ -1259,13 +1259,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   "skull-crushers": {
     src: "form-art/skull-crushers.webp",
-    width: 480,
-    height: 311,
-    keyed: false,
+    width: 418,
+    height: 480,
+    keyed: true,
     source: "form-frames/skull-crushers/3.webp",
     sourceSha256:
-      "a195242600257f0b909ad0475e8f9d36ec14333a1bb1522326f89623fe8a5dd5",
-    sha256: "c1f2a04d0cea4cfbc29100fc4eefe79a888a78d1252029defc4a3672f551e5d4",
+      "873cb45c1bf762f9ac06477787ce2ae3080e14ea96e75c1d106800539430553c",
+    sha256: "b3945f6aa74a51f92addf6a89b219993c59eab92f96af979f477bd79b752625d",
   },
   "sled-push-pull": {
     src: "form-art/sled-push-pull.webp",

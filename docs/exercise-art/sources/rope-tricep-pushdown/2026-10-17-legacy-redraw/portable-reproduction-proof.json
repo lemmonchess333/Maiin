@@ -1,0 +1,58 @@
+{
+  "status": "passed",
+  "freshDirectory": "portable-fresh-check",
+  "recipeSha256": "3f730695e6375ffd697ab1b95614684fa26b7b7efa2f0ef0ccae168fa0a39bc1",
+  "freshInputHashes": {
+    "originals\\01-master-prompt.txt": "19d5e23610dde7e264905d99eb441ed7d3d7bd7dac777ee9024052e2d4d2b7c4",
+    "originals\\01-master.png": "1401d86245a9168498f9d004903beb4887e2db8b55bc5f90c3d1c1400a23a94b",
+    "originals\\02-early-prompt.txt": "0d9bb7124841310beaa98caaf49f36ba333819a105724760240ddeb7e655dbd2",
+    "originals\\02-early.png": "e614296b2e65a3a8457a03361ada917e3426671f1393b639369ad6285fa85c54",
+    "originals\\03-middle-prompt.txt": "03ffe73818c61d1bd43e215524e62641a754bba73481dfa15b46105986a773aa",
+    "originals\\03-middle.png": "1820fe0ff991fcb18e8fdba94bb6dc1d7b1f6fafab5ff943a277dd2c735b564f",
+    "originals\\04-late-prompt.txt": "e8041d57bc92daa80c229503a8c0fe9dc8aed865e1cb0a1875ea593f3366a83e",
+    "originals\\04-late.png": "0fa41fcaf23c5894af94d21e90f5734087fc512ff1a3ba2e76ebe8f12c82eecc",
+    "originals\\05-lockout-prompt.txt": "5b7345845a994c499c0a646bcefadea7f7b9c46fafbce4936d058664582249e5",
+    "originals\\05-lockout.png": "80a592a87df8752c32271b23b1b1ec63ed2c0a0241f131084a1fe2f823baaa27",
+    "originals\\canonical-reference.png": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "originals\\native-input-analysis.json": "e01368c0e162bfa98fb83fdd2ee631593b2f90c06404c750c62a709f4c267983"
+  },
+  "outputs": [
+    {
+      "frame": 1,
+      "pngBytesExact": true,
+      "webpBytesExact": true,
+      "allDecompressedOraMembersExact": true
+    },
+    {
+      "frame": 2,
+      "pngBytesExact": true,
+      "webpBytesExact": true,
+      "allDecompressedOraMembersExact": true
+    },
+    {
+      "frame": 3,
+      "pngBytesExact": true,
+      "webpBytesExact": true,
+      "allDecompressedOraMembersExact": true
+    },
+    {
+      "frame": 4,
+      "pngBytesExact": true,
+      "webpBytesExact": true,
+      "allDecompressedOraMembersExact": true
+    },
+    {
+      "frame": 5,
+      "pngBytesExact": true,
+      "webpBytesExact": true,
+      "allDecompressedOraMembersExact": true
+    },
+    {
+      "frame": 6,
+      "pngBytesExact": true,
+      "webpBytesExact": true,
+      "allDecompressedOraMembersExact": true
+    }
+  ],
+  "normalPythonDependencies": ["Pillow", "NumPy"]
+}

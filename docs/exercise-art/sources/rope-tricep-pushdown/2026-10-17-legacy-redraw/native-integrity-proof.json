@@ -1,0 +1,136 @@
+{
+  "status": "native-reconstruction-passed; visual/release checks remain pending",
+  "frames": [
+    {
+      "frame": 1,
+      "size": [1024, 1600],
+      "webpLosslessExact": true,
+      "sevenLayerOraRecompositionExact": true,
+      "oraMemberHashes": {
+        "mimetype": "6ff9869d75bef2c16a4551178dd6a80ab321ac0d2875e42fb29a5d7ae3dfc1f4",
+        "data/layer-0.png": "33219e6d329ecf1f8729440be52c6f4e7cf231d12827bc7c2a829bf0b444ed0d",
+        "data/layer-1.png": "657e3c950c25e62eaff5b5615d9185e16dc2b36e1b50ae0c37cf313ab1f2b84c",
+        "data/layer-2.png": "c889b6789de0bd033b72f8beb014d7fdc53728b08a0668f0ea4cf30bc3daa300",
+        "data/layer-3.png": "d2439b6fa653b2b89a7255cb0ad2f60d2c993d512f6b400516af2d7695c90abf",
+        "data/layer-4.png": "d487c5a69a6850e11009952925bc914aaafc119089448733b4cd23e50eb7b239",
+        "data/layer-5.png": "a4f4abd04f51c052c49f43193375b421266a3d50114c1679ed23980d684e83e4",
+        "data/layer-6.png": "d5d5257b1a7a5a60456c7a008a635671de8be4320b7953d3657a23ceb8defa6b",
+        "stack.xml": "5adf0486281ae4136e0bcde638a7f192648466acbe73f4e583f60a2efc0721e9",
+        "mergedimage.png": "9c186681dfa2fbeb8b09ac497c9dec0165c42cc19fba5d4f56dd080ac632b530"
+      },
+      "pngSha256": "a9a1cecb8eecf2c818368536b513eebf96b8a8ecb101d899aa65c4a6c4bb2e0c",
+      "webpSha256": "67b3ab4460e2bcd4240feffe4cf7e27619301cfc9880b326e597243d21ebde69"
+    },
+    {
+      "frame": 2,
+      "size": [1024, 1600],
+      "webpLosslessExact": true,
+      "sevenLayerOraRecompositionExact": true,
+      "oraMemberHashes": {
+        "mimetype": "6ff9869d75bef2c16a4551178dd6a80ab321ac0d2875e42fb29a5d7ae3dfc1f4",
+        "data/layer-0.png": "039f9d04476cade1dcf98f3b477a8f032778092b6a3f5964e777ba6f794cdd99",
+        "data/layer-1.png": "139f925781444ecc213d88ec0d34e5fe23e2fb0b62d4674315b174ef7f9bc340",
+        "data/layer-2.png": "88560ebc83a63737f07353686994c0ba51c585c3da2d5c73fdad583ff7f642b6",
+        "data/layer-3.png": "d2439b6fa653b2b89a7255cb0ad2f60d2c993d512f6b400516af2d7695c90abf",
+        "data/layer-4.png": "bd1845b6113d2de3c429415c260890f2745944449f08acc789e8b7f62cbb8757",
+        "data/layer-5.png": "a4f4abd04f51c052c49f43193375b421266a3d50114c1679ed23980d684e83e4",
+        "data/layer-6.png": "d5d5257b1a7a5a60456c7a008a635671de8be4320b7953d3657a23ceb8defa6b",
+        "stack.xml": "aef65bf28d2217647314e2077e8be8a03f2cca5abb6a902973129cc331508db7",
+        "mergedimage.png": "4e83270bf0288af9a8157816d82f7effcd6708d24b5c64b6feaf502a8c2c8568"
+      },
+      "pngSha256": "c94921639aa8651de832c716225d6619d8c9ad71885ec4e6731a2799628eef19",
+      "webpSha256": "944d99b432c5f7c2cfdc8415896d0105f8a2da5049d16c5b4080817d1e519c92"
+    },
+    {
+      "frame": 3,
+      "size": [1024, 1600],
+      "webpLosslessExact": true,
+      "sevenLayerOraRecompositionExact": true,
+      "oraMemberHashes": {
+        "mimetype": "6ff9869d75bef2c16a4551178dd6a80ab321ac0d2875e42fb29a5d7ae3dfc1f4",
+        "data/layer-0.png": "cac74f5b8eb8ba9cacb6f1bb7ea8ead56309515e9fe520f4cc3a26f6e72c0fef",
+        "data/layer-1.png": "c3aeeaefbe026ee08734e2f58cb8e5d0d92bebcad83e5deffbb2b244fb73f5f4",
+        "data/layer-2.png": "0f3f470a10e0cc853f0c9a996aafe304910740ff2edf7d13daea63fa1b6ff5e9",
+        "data/layer-3.png": "d2439b6fa653b2b89a7255cb0ad2f60d2c993d512f6b400516af2d7695c90abf",
+        "data/layer-4.png": "4b87480a3eb92748d2650a4428a0ec6493c59e613e930e0129a1a8cefd648367",
+        "data/layer-5.png": "a4f4abd04f51c052c49f43193375b421266a3d50114c1679ed23980d684e83e4",
+        "data/layer-6.png": "d5d5257b1a7a5a60456c7a008a635671de8be4320b7953d3657a23ceb8defa6b",
+        "stack.xml": "7ee4e66a5a0d5c9008af356ea4f8ee656228a1ad5184e3d01b60818992d3d368",
+        "mergedimage.png": "8814fd4885ac18bef78847942e39738b0613060a84c5eaff708bfbd65ca93ba8"
+      },
+      "pngSha256": "7b04b5a5d71f776f8a4782086e0ae829ef07b654cb6a033fd68d02584b8a60fe",
+      "webpSha256": "81651d17870a516b45d0bdbc9f5995d5c1e702689ee0298345bc2be6126859c7"
+    },
+    {
+      "frame": 4,
+      "size": [1024, 1600],
+      "webpLosslessExact": true,
+      "sevenLayerOraRecompositionExact": true,
+      "oraMemberHashes": {
+        "mimetype": "6ff9869d75bef2c16a4551178dd6a80ab321ac0d2875e42fb29a5d7ae3dfc1f4",
+        "data/layer-0.png": "d8b8ac5def55c70077f12d3bd95acdd4995d8ba2216fd30e6b71424572a69a14",
+        "data/layer-1.png": "dd47a52633577059abe3a7e3115046e10eb1d0146e6a6b243ad70522ccc9c1c6",
+        "data/layer-2.png": "2f4d7412e717940951f24603dbc38f18d613aac1c79a6babf05510eb8fccca7a",
+        "data/layer-3.png": "d2439b6fa653b2b89a7255cb0ad2f60d2c993d512f6b400516af2d7695c90abf",
+        "data/layer-4.png": "ea0982e09f1c0369bf8b1b358000558d476b46c4d3ef06c137bc947bbe454a11",
+        "data/layer-5.png": "a4f4abd04f51c052c49f43193375b421266a3d50114c1679ed23980d684e83e4",
+        "data/layer-6.png": "d5d5257b1a7a5a60456c7a008a635671de8be4320b7953d3657a23ceb8defa6b",
+        "stack.xml": "93e558700babdff0eedb0f45d59a4e507c3059b9fe85abf7c5b617221af3a747",
+        "mergedimage.png": "3a54e4f294f0e6abd9304cafcbf79ec8574437d7f8c7071b696e9bd8fea4459b"
+      },
+      "pngSha256": "a9c23f6c19a1d7c01264beb8e9d8d64e3955e8b1ab353892a59e28b7ece8b7a6",
+      "webpSha256": "59ada174352e0019f32b040d2e696f46c832594c57d7250ae38d6cc79cd4a938"
+    },
+    {
+      "frame": 5,
+      "size": [1024, 1600],
+      "webpLosslessExact": true,
+      "sevenLayerOraRecompositionExact": true,
+      "oraMemberHashes": {
+        "mimetype": "6ff9869d75bef2c16a4551178dd6a80ab321ac0d2875e42fb29a5d7ae3dfc1f4",
+        "data/layer-0.png": "346e298f62cfdef6be78ed78852adae2c749366b2065df86bab2d77482193b6a",
+        "data/layer-1.png": "c534a251193d6aa052c1a4249da0bcaa7647740fba1d6e2baba1fcab4d164708",
+        "data/layer-2.png": "50fcea2bc59e67403c283ce19d707c741921581594f937c4774a87d360ed9869",
+        "data/layer-3.png": "d2439b6fa653b2b89a7255cb0ad2f60d2c993d512f6b400516af2d7695c90abf",
+        "data/layer-4.png": "0113e6ef52c698257816cdf63826a1ad72469a4668d3358cc9245014912c7eab",
+        "data/layer-5.png": "a4f4abd04f51c052c49f43193375b421266a3d50114c1679ed23980d684e83e4",
+        "data/layer-6.png": "d5d5257b1a7a5a60456c7a008a635671de8be4320b7953d3657a23ceb8defa6b",
+        "stack.xml": "16368650901310c8ffce788be0acb589e02121aad178bd12bd703f2496bf5dc4",
+        "mergedimage.png": "2e14504a1e19b8a2b62d102fe40069beb0dd8361148c357b8624ee61c0bc512f"
+      },
+      "pngSha256": "d982cb822fa6bc9ab1aba7181bcbf094a13e2da79d4af92db873480d9daef158",
+      "webpSha256": "5d974624a444d28cdd7b4e3745274d37bef09a9e7a34d43c339b340a430f613d"
+    },
+    {
+      "frame": 6,
+      "size": [1024, 1600],
+      "webpLosslessExact": true,
+      "sevenLayerOraRecompositionExact": true,
+      "oraMemberHashes": {
+        "mimetype": "6ff9869d75bef2c16a4551178dd6a80ab321ac0d2875e42fb29a5d7ae3dfc1f4",
+        "data/layer-0.png": "33219e6d329ecf1f8729440be52c6f4e7cf231d12827bc7c2a829bf0b444ed0d",
+        "data/layer-1.png": "657e3c950c25e62eaff5b5615d9185e16dc2b36e1b50ae0c37cf313ab1f2b84c",
+        "data/layer-2.png": "c889b6789de0bd033b72f8beb014d7fdc53728b08a0668f0ea4cf30bc3daa300",
+        "data/layer-3.png": "d2439b6fa653b2b89a7255cb0ad2f60d2c993d512f6b400516af2d7695c90abf",
+        "data/layer-4.png": "d487c5a69a6850e11009952925bc914aaafc119089448733b4cd23e50eb7b239",
+        "data/layer-5.png": "a4f4abd04f51c052c49f43193375b421266a3d50114c1679ed23980d684e83e4",
+        "data/layer-6.png": "d5d5257b1a7a5a60456c7a008a635671de8be4320b7953d3657a23ceb8defa6b",
+        "stack.xml": "5adf0486281ae4136e0bcde638a7f192648466acbe73f4e583f60a2efc0721e9",
+        "mergedimage.png": "9c186681dfa2fbeb8b09ac497c9dec0165c42cc19fba5d4f56dd080ac632b530"
+      },
+      "pngSha256": "a9a1cecb8eecf2c818368536b513eebf96b8a8ecb101d899aa65c4a6c4bb2e0c",
+      "webpSha256": "67b3ab4460e2bcd4240feffe4cf7e27619301cfc9880b326e597243d21ebde69"
+    }
+  ],
+  "distinctNativeHumanSources": 5,
+  "headAndTrainerSourceBodyPixelsExactAcrossSix": {
+    "head-ear-neck-upper": [350, 100, 535, 310],
+    "near-trainer": [200, 1320, 410, 1500],
+    "far-trainer": [405, 1280, 630, 1410]
+  },
+  "fixedRegionMask": "Actual original master body pixels maxRGB>18 within each specified ROI; excludes unrelated rope on black near head.",
+  "sourceNativePlacement": [0, 64],
+  "anatomicalTransforms": [],
+  "maxCableConservationError": 2.2737367544323206e-13,
+  "fullAppMobileOrPlaybackReviewedByThisAgent": false
+}

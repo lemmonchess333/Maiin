@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-17",
+  "exercise": "dips",
+  "scope": "replace legacy chest dip; do not modify weighted-chest-dip donor or substitute upright tricep dip",
+  "status": "source-only candidate awaiting root review/integration",
+  "tool": "built-in image_gen.imagegen",
+  "canonicalAthlete": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "donors": [
+    {
+      "approvedRepositoryPath": "public/form-frames/weighted-chest-dip/1.webp",
+      "webpSha256": "36c7e31ed1727d6222035b72747299bf7c36ec84269ea57673384e24321167f8",
+      "nativePng": "originals/1-weighted-source-native.png",
+      "nativePngSha256": "52642bb6c1d5656d3d882aeb9f0770aedfd03b83e6b85e4e7d96c0cd07ea2ca3",
+      "decodedRgbExact": true
+    },
+    {
+      "approvedRepositoryPath": "public/form-frames/weighted-chest-dip/2.webp",
+      "webpSha256": "5893c83b95dac334b2a6b8763176a47a3b9acb8ec7a275ac3820ae369819031f",
+      "nativePng": "originals/2-weighted-source-native.png",
+      "nativePngSha256": "c8c84aaabd47011aa624821c4a6c648317094ee6445a2a6e0dfeb3bdc16cee6a",
+      "decodedRgbExact": true
+    },
+    {
+      "approvedRepositoryPath": "public/form-frames/weighted-chest-dip/3.webp",
+      "webpSha256": "ccaa32e90551f1f43e7615ce0a049343e7ead61c9c8602c98045603e77087ce2",
+      "nativePng": "originals/3-weighted-source-native.png",
+      "nativePngSha256": "98a738765c6bc36160ba8279cdd053c82447f7ef9065d11560b1b0ed245fc228",
+      "decodedRgbExact": true
+    }
+  ],
+  "requests": [
+    {
+      "prompt": "top-belt-chain-removal-prompt.txt",
+      "promptSha256": "54843068f5a0389ed43db1c0ecd422c811ba9d807c3f36296e62e7a7f25b0d32",
+      "generatedSource": "originals/1-unweighted-top-generated-native.png",
+      "generatedSha256": "755d7a8bb5f104861547b63e44df6762c3863eaab540a8f72ac76f0ad3b0cf9a",
+      "toolOutputName": "exec-842173f6-a253-4595-81b0-a7e45873d294.png",
+      "disposition": "accepted native occlusion-authoring source after documented registration/mask review"
+    },
+    {
+      "prompt": "mid-belt-chain-removal-prompt.txt",
+      "promptSha256": "4cec34fc9fdb5c529b2c1d21dc7f3f83b77b26379b24439fb2ec5e4a0e22af90",
+      "generatedSource": "originals/2-unweighted-mid-generated-native.png",
+      "generatedSha256": "28e92692c30f24dbf4cc36aac4f03918ab7321955cfd86ba7e1344c412abcba4",
+      "toolOutputName": "exec-a1436cad-275c-4bc9-ad38-f0ca826a3c1f.png",
+      "disposition": "accepted native occlusion-authoring source after documented registration/mask review"
+    },
+    {
+      "prompt": "bottom-belt-chain-removal-prompt.txt",
+      "promptSha256": "ff85056bf748e5a69721c66b2c2f411578a11f91ed0d01d90ead781d52458d4c",
+      "generatedSource": "originals/3-unweighted-bottom-generated-native.png",
+      "generatedSha256": "274d0db455c271b4f815d63b9101c68b494869ca6eae99d973e1e2d13ccfff3c",
+      "toolOutputName": "exec-ea3c2cd8-76c6-4faf-b8ab-a58024bdf9a6.png",
+      "disposition": "accepted native occlusion-authoring source after documented registration/mask review"
+    }
+  ],
+  "requestCount": 3,
+  "targetedCorrections": 0,
+  "serviceHoldsOrRefusals": 0,
+  "defaultImagegenDirectory": "C:/Users/myles/.codex/generated_images/01a14baa-14a3-7b91-b4f0-fd901cf24221",
+  "nativeCoordinateSelection": "Only generated belt-chain-plate removal windows are selected onto exact approved donor poses. No anatomy warp, rotation, rescaling, reflection, fitting of limbs, head/shoe insertions or pelvis graft. Previously occluded surfaces are image-generated together in the current pose. Window edge1.5px seam antialias; exact silhouettes are in recipe and masks.",
+  "bottomRegistration": "The entire generated bottom image was shifted UP32px by the service. Native registration undoes this with one whole-image(0,+32) integer translation. Left upright, right upright and both base feet independently select exactly that shift; this is framing registration, not inverse preview zoom or body fitting.",
+  "framing": {
+    "sourceSize": [1536, 1024],
+    "commonCrop": [352, 0, 1168, 1024],
+    "padding": [32, 32],
+    "publicationSize": [880, 1088],
+    "scale": 1,
+    "resampling": false
+  },
+  "sequence": ["A", "B", "B", "C", "B", "A"],
+  "physicalT": [0, 0.5, 0.5, 1, 0.5, 0],
+  "genuinePoseCount": 3,
+  "key": {
+    "primary": ["Pectoralis major"],
+    "secondary": ["Triceps", "Anterior deltoids"],
+    "secondaryFill": "solid"
+  },
+  "recipe": "reproduce.py",
+  "recipeSha256": "d3ad9bd1bd30126fc69599cdcaa7c97b04bb01e42e130317bf1de74f5dfd0557"
+}
