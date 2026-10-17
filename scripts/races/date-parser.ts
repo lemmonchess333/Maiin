@@ -178,7 +178,7 @@ export function parseOfficialDates(html: string, source: DateSource): string[] {
         const normalized =
           source.dateFormat === "dmy"
             ? text.replace(
-                /\b(\d{1,2})[/-](\d{1,2})[/-](20\d{2})\b/g,
+                /\b(\d{1,2})\s*[./-]\s*(\d{1,2})\s*[./-]\s*(20\d{2})\b/g,
                 (_match, d, m, y) =>
                   `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`
               )

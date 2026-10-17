@@ -39,6 +39,7 @@ function byStem(stem: string): string | null {
    the definition that measures the same thing. */
 const CHALLENGE_STEM_BY_PREFIX: readonly (readonly [string, string])[] = [
   ["weekly-", "challenge-weekly"],
+  ["strength-monthly-", "challenge-strength"],
   ["global-monthly-", "challenge-hybrid-hero"],
   ["monthly-", "challenge-mileage"],
   ["fastest-5k-", "challenge-fastest-5k"],

@@ -164,6 +164,17 @@ function buildCurrentChallenges(now = new Date()) {
       endDate: monthEnd,
     },
     {
+      id: `strength-monthly-${ymd(monthStart)}`,
+      name: `${monthName} Strength Builder`,
+      description: "Your logged lifting volume this month. Follow your usual plan.",
+      type: "monthly",
+      metric: "total_volume",
+      icon: "dumbbell",
+      tiers: { bronze: 5000, silver: 15000, gold: 30000 },
+      startDate: monthStart,
+      endDate: monthEnd,
+    },
+    {
       // SOCIAL S4 (Soc8) — the featured "This month on Tropos" global
       // challenge. A TRUE km+kg HYBRID: hybrid_score = km×100 + kg×0.1,
       // summed server-side from onRunCreated (+km×100) and

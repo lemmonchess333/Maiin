@@ -11,6 +11,26 @@ imagery (route scenes, muscle figures) by design. See `GLOSSARY.md` →
 "Editorial imagery" and `src/lib/editorialImages.ts` for the resolution
 logic.
 
+### Marathon and seasonal refresh — 2026-10-17
+
+Eight new destination covers show Cape Town, Rome, Athens, Prague, Vienna,
+Frankfurt, Honolulu and Los Angeles. They are real licensed Unsplash photographs
+of the destination, not official race images or a course guarantee.
+
+The four seasonal covers now use generated generic editorial athletes, with
+clear spring greenery, summer coast, autumn foliage and winter gym light.
+`challenge-strength.webp` is a separate generated lifting image for the new
+monthly Strength Builder. These depict neither real Tropos members nor a named
+race. The built-in image generation tool produced each asset separately; full
+prompts, source/output hashes, crops and encoding settings are recorded in
+[`sources-marathons-challenges-2026-10-17.json`](./sources-marathons-challenges-2026-10-17.json).
+The earlier seasonal source records below are retained as history.
+
+Every new asset is a local landscape WebP, 1200 px wide and under 120 KB.
+Challenge cards have a taller photo band so the subject remains readable on
+small screens. The four seasonal covers and monthly strength use an upper focal
+point. Existing unique challenge covers continue to resolve by challenge ID.
+
 ## Drop-in contract
 
 Add files with these exact stems (any of `.webp .avif .jpg .jpeg .png`;

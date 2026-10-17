@@ -1,0 +1,295 @@
+{
+  "updatedOn": "2026-10-17",
+  "notes": "Eight real destination photographs and five generated generic challenge covers. Existing seasonal photo records are retained in sources-2026-10-17.json. New assets are original colour, without added logos or filters.",
+  "images": [
+    {
+      "asset": "space-cape-town-marathon.webp",
+      "sourceUrl": "https://unsplash.com/photos/table-mountain-overlooks-a-city-under-cloudy-skies-jHgNgTtYykM",
+      "downloadUrl": "https://images.unsplash.com/photo-1755251418399-c56a9579858f?w=2400&q=85&fm=jpg",
+      "photographer": "Asher Pardey",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "locationEvidence": "Table mountain overlooks a city under cloudy skies - Free Photo on Unsplash",
+      "sourceSha256": "6880dad4db869a600341c83cace277bb9932e6c0be2a9c86a8d07a64c8ded90c",
+      "crop": {
+        "left": 0,
+        "top": 47,
+        "width": 2400,
+        "height": 1506
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 76,
+        "bytes": 105592,
+        "sha256": "9cee47a950f3178222eb8510f812cc627b9191890dbb816585698520d1f14077"
+      }
+    },
+    {
+      "asset": "space-rome-marathon.webp",
+      "sourceUrl": "https://unsplash.com/photos/coliseum-rome-italy-VhlLC2eNSuo",
+      "downloadUrl": "https://images.unsplash.com/photo-1526026697130-3f870884a6e3?w=2400&q=85&fm=jpg",
+      "photographer": "Cristina Gottardi",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "locationEvidence": "Coliseum Rome, Italy - Free Photo on Unsplash",
+      "sourceSha256": "a7b9bccb3ef0b31bc9cdfebc2e1c864dc994fa0ec8eb895f4f8168d49d6e336b",
+      "crop": {
+        "left": 0,
+        "top": 47,
+        "width": 2400,
+        "height": 1506
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 76,
+        "bytes": 108502,
+        "sha256": "8b772a14e4d030bb93a84c9129cca8322ba4cf109e34f782712ce107fb8f9876"
+      }
+    },
+    {
+      "asset": "space-athens-marathon.webp",
+      "sourceUrl": "https://unsplash.com/photos/acropolis-in-athens-greece-kLT5Lne_ESk",
+      "downloadUrl": "https://images.unsplash.com/photo-1571759796533-4aa0e23f040c?w=2400&q=85&fm=jpg",
+      "photographer": "Magnus Engø",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "locationEvidence": "Acropolis in Athens, Greece - Free Photo on Unsplash",
+      "sourceSha256": "cab7cb642c95c9d4c6ecad69396d61fcf48f816500b2ad5ad698488b80bd3094",
+      "crop": {
+        "left": 0,
+        "top": 47,
+        "width": 2400,
+        "height": 1506
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 80,
+        "bytes": 76198,
+        "sha256": "bb0fa9b783e00db941a5369038fe8e65e740df4515125825d3e16a86b81cbaec"
+      }
+    },
+    {
+      "asset": "space-prague-marathon.webp",
+      "sourceUrl": "https://unsplash.com/photos/charles-bridge-spans-vltava-river-in-prague-at-dawn-3Ovurn490hw",
+      "downloadUrl": "https://images.unsplash.com/photo-1763305102178-4448e7a5a7a0?w=2400&q=85&fm=jpg",
+      "photographer": "Mushvig Niftaliyev",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "locationEvidence": "Charles bridge spans vltava river in prague at dawn - Free Photo on Unsplash",
+      "sourceSha256": "d02ae4c21ab382a32be33b3d5001f143c9361f51695425f82dd33e8e042059ef",
+      "crop": {
+        "left": 0,
+        "top": 47,
+        "width": 2400,
+        "height": 1506
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 80,
+        "bytes": 60938,
+        "sha256": "f2116e73ff42870c1abbd0e5d856cedb1c0fbda8bcbc2e6247edef6a12d3b8ab"
+      }
+    },
+    {
+      "asset": "space-vienna-marathon.webp",
+      "sourceUrl": "https://unsplash.com/photos/gray-concrete-building-during-daytime-3GfJsiXCrME",
+      "downloadUrl": "https://images.unsplash.com/photo-1618325262870-03a840ed0a3d?w=2400&q=85&fm=jpg",
+      "photographer": "Anthony",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "locationEvidence": "Gray concrete building during daytime - Free Photo on Unsplash",
+      "sourceSha256": "abdc9521b5e5b419e4392e8a16f3ebe455331e3ac601defe98a25a9a961e4f38",
+      "crop": {
+        "left": 0,
+        "top": 475,
+        "width": 2400,
+        "height": 1506
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 80,
+        "bytes": 86282,
+        "sha256": "9d675ecdb754ab5ae5cbcb77d468c37ebcb780fe3cef67ed3d9f9d6263fb95e0"
+      }
+    },
+    {
+      "asset": "space-frankfurt-marathon.webp",
+      "sourceUrl": "https://unsplash.com/photos/a-view-of-a-city-from-across-a-river-G8Lv3oKontE",
+      "downloadUrl": "https://images.unsplash.com/photo-1726481217859-ac727beb246d?w=2400&q=85&fm=jpg",
+      "photographer": "Marco J Haenssgen",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "locationEvidence": "A view of a city from across a river - Free Photo on Unsplash",
+      "sourceSha256": "e83b5253e126990e66c95100c6a122bfbf77dac12b0a023104ba5522035347d7",
+      "crop": {
+        "left": 0,
+        "top": 47,
+        "width": 2400,
+        "height": 1506
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 80,
+        "bytes": 95498,
+        "sha256": "a89e7cd34db6d04d7c65a556997ebe758486ddfc139833af128d576bd922e394"
+      }
+    },
+    {
+      "asset": "space-honolulu-marathon.webp",
+      "sourceUrl": "https://unsplash.com/photos/waikiki-beach-with-diamond-head-and-honolulu-city-skyline-ZHl2BhtEYX0",
+      "downloadUrl": "https://images.unsplash.com/photo-1779636813904-7900421432f6?w=2400&q=85&fm=jpg",
+      "photographer": "Blake Wisz",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "locationEvidence": "Waikiki beach with diamond head and honolulu city skyline - Free Photo on Unsplash",
+      "sourceSha256": "19e8542f7e953c51782def0885b1af82da1f6ee5eeb6c7da60c4d9692804c50d",
+      "crop": {
+        "left": 0,
+        "top": 47,
+        "width": 2400,
+        "height": 1506
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 80,
+        "bytes": 98818,
+        "sha256": "16f811814e9191d90cf3fd3d8231d71c35eaef2558f3fd6132c46bca2cc16e59"
+      }
+    },
+    {
+      "asset": "space-los-angeles-marathon.webp",
+      "sourceUrl": "https://unsplash.com/photos/los-angeles-skyline-and-residential-sprawl-RVIVcZT8Qms",
+      "downloadUrl": "https://images.unsplash.com/photo-1788628633297-bf33cd57076a?w=2400&q=85&fm=jpg",
+      "photographer": "Bobby Thapa",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "locationEvidence": "Los Angeles skyline and residential sprawl - Free Photo on Unsplash",
+      "sourceSha256": "87cfae6056cddb58a34379486e7b0c216a363390a0b7f13839c932871f75b2e7",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 2400,
+        "height": 1392
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 52,
+        "bytes": 117856,
+        "sha256": "17b234f00232f9a3d5983c94af6382ecaf2f5a5c9011a4556f11293b25436bcb"
+      }
+    },
+    {
+      "asset": "challenge-season-spring.webp",
+      "source": "Built-in image_gen",
+      "generatedOn": "2026-10-17",
+      "content": "Generated generic editorial athletes; not real Tropos members or a named race.",
+      "prompt": "Use case: photorealistic-natural. Create a premium editorial FITNESS PHOTOGRAPH, landscape 3:2 at high resolution, for a calm iPhone fitness challenge card. Natural credible bodies and candid effort; lifelike textures, editorial camera realism. This must be a full bleed photograph, no typography, no layout, no watermarks, NO logos or brand marks on clothing, shoes or equipment. Subject must read clearly in an extremely wide 3.2:1 crop across the MIDDLE of the frame, with the athlete at center-right, fully inside the central horizontal band, and calm dark lower-left negative space for white UI text. Natural colour, clear details and visible light, no heavy haze, no tinted filters. Anonymous adult recreational athletes, no celebrities, no event branding. Spring fitness challenge: an athletic adult woman and man jogging comfortably along a park path with fresh green leaves and subtle blossom. Medium-wide side view; runners at center-right in the middle band, warm soft morning light; calm natural colour and a realistic green park. No racing bibs.",
+      "sourceSha256": "8650b61ccf6ce7d72cd37ede45e5596134dc3dd7233bd57aecf5fa9093091c54",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 1536,
+        "height": 768
+      },
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 66,
+        "bytes": 119146,
+        "sha256": "a513068b4036b8902f325fe6f5068b8015369749f08cd4aac1585aa7a522e9de"
+      }
+    },
+    {
+      "asset": "challenge-season-summer.webp",
+      "source": "Built-in image_gen",
+      "generatedOn": "2026-10-17",
+      "content": "Generated generic editorial athletes; not real Tropos members or a named race.",
+      "prompt": "Use case: photorealistic-natural. Create a premium editorial FITNESS PHOTOGRAPH, landscape 3:2 at high resolution, for a calm iPhone fitness challenge card. Natural credible bodies and candid effort; lifelike textures, editorial camera realism. This must be a full bleed photograph, no typography, no layout, no watermarks, NO logos or brand marks on clothing, shoes or equipment. Subject must read clearly in an extremely wide 3.2:1 crop across the MIDDLE of the frame, with the athlete at center-right, fully inside the central horizontal band, and calm dark lower-left negative space for white UI text. Natural colour, clear details and visible light, no heavy haze, no tinted filters. Anonymous adult recreational athletes, no celebrities, no event branding. Summer fitness challenge: an adult woman running along a sunlit coastal promenade, a broad blue sea behind her, low warm morning sunlight. Frame the whole side-profile runner medium-wide at center-right, in central horizontal band; understated unbranded clothing, natural blue sea and warm stone path, realistic pace and natural anatomy.",
+      "sourceSha256": "3c3c39320700019bacda3fbf7830fa20aa679976136e2a40ae3baa33ae876399",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 1536,
+        "height": 768
+      },
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 82,
+        "bytes": 63708,
+        "sha256": "f31e88ee368f8baab5d86b86a0c679d9123870247a6bf5e74e41e4bec1fe9bfb"
+      }
+    },
+    {
+      "asset": "challenge-season-autumn.webp",
+      "source": "Built-in image_gen",
+      "generatedOn": "2026-10-17",
+      "content": "Generated generic editorial athletes; not real Tropos members or a named race.",
+      "prompt": "Use case: photorealistic-natural. Create a premium editorial FITNESS PHOTOGRAPH, landscape 3:2 at high resolution, for a calm iPhone fitness challenge card. Natural credible bodies and candid effort; lifelike textures, editorial camera realism. This must be a full bleed photograph, no typography, no layout, no watermarks, NO logos or brand marks on clothing, shoes or equipment. Subject must read clearly in an extremely wide 3.2:1 crop across the MIDDLE of the frame, with the athlete at center-right, fully inside the central horizontal band, and calm dark lower-left negative space for white UI text. Natural colour, clear details and visible light, no heavy haze, no tinted filters. Anonymous adult recreational athletes, no celebrities, no event branding. Autumn fitness challenge: two adult runners, a woman and man, side by side at an easy conversational pace through a park with crisp amber and russet autumn leaves. Low-angle warm morning sunlight, a dry leaf-covered path. Runners clearly visible at center-right in the central horizontal band; vibrant natural autumn colours, no fog, no logos, no exaggerated running form.",
+      "sourceSha256": "1b4ecc518f2c2cff67154c763ec91e70742f3d36dec24e642f1693bd59cff5eb",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 1536,
+        "height": 768
+      },
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 74,
+        "bytes": 115508,
+        "sha256": "ecb6b137a8948301c573293db2be70a667051fb2d3f0e973f87726ff3caa5278"
+      }
+    },
+    {
+      "asset": "challenge-season-winter.webp",
+      "source": "Built-in image_gen",
+      "generatedOn": "2026-10-17",
+      "content": "Generated generic editorial athletes; not real Tropos members or a named race.",
+      "prompt": "Use case: photorealistic-natural. Create a premium editorial FITNESS PHOTOGRAPH, landscape 3:2 at high resolution, for a calm iPhone fitness challenge card. Natural credible bodies and candid effort; lifelike textures, editorial camera realism. This must be a full bleed photograph, no typography, no layout, no watermarks, NO logos or brand marks on clothing, shoes or equipment. Subject must read clearly in an extremely wide 3.2:1 crop across the MIDDLE of the frame, with the athlete at center-right, fully inside the central horizontal band, and calm dark lower-left negative space for white UI text. Natural colour, clear details and visible light, no heavy haze, no tinted filters. Anonymous adult recreational athletes, no celebrities, no event branding. Winter strength training challenge: a strong adult woman preparing a controlled barbell deadlift on a clean gym platform in an unbranded minimalist gym. Realistic safe barbell setup, hands gripping straight bar just outside legs; side three-quarter view, full athlete and plates clearly readable across the central horizontal band, large windows with cool winter daylight in background, warm natural skin tones. No snow indoors, no slogans or brand marks.",
+      "sourceSha256": "6cb1a4a3b749e72f1d1e834f45ffd27c6461073b37b68fc108630d232a45c946",
+      "crop": {
+        "left": 0,
+        "top": 70,
+        "width": 1536,
+        "height": 768
+      },
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 82,
+        "bytes": 65442,
+        "sha256": "623c43b7c8e5e700306b55117d63af0e04cc10304d57aec802892d5bcf922131"
+      }
+    },
+    {
+      "asset": "challenge-strength.webp",
+      "source": "Built-in image_gen",
+      "generatedOn": "2026-10-17",
+      "content": "Generated generic editorial athletes; not real Tropos members or a named race.",
+      "prompt": "Use case: photorealistic-natural. Create a premium editorial FITNESS PHOTOGRAPH, landscape 3:2 at high resolution, for a calm iPhone fitness challenge card. Natural credible bodies and candid effort; lifelike textures, editorial camera realism. This must be a full bleed photograph, no typography, no layout, no watermarks, NO logos or brand marks on clothing, shoes or equipment. Subject must read clearly in an extremely wide 3.2:1 crop across the MIDDLE of the frame, with the athlete at center-right, fully inside the central horizontal band, and calm dark lower-left negative space for white UI text. Natural colour, clear details and visible light, no heavy haze, no tinted filters. Anonymous adult recreational athletes, no celebrities, no event branding. Monthly strength challenge: a strong adult man loading a plain black iron weight plate onto a barbell on a squat rack, candid preparation before a set in a minimalist gym. Wide side view with face, arms and barbell all readable across central horizontal band, warm natural light, realistic proportions and hands, unbranded black plates and plain training clothes. Calm purposeful feeling.",
+      "sourceSha256": "6181b439b8c021c5f8c7c05d021f56476cee2612a6b57cc35607f88b3481d56e",
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 1536,
+        "height": 768
+      },
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 82,
+        "bytes": 54144,
+        "sha256": "4c09e765f1a52652428c7cf293356406ecf551de5143ea7fa10ea17a8a0ae492"
+      }
+    }
+  ]
+}

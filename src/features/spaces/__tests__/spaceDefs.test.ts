@@ -13,13 +13,14 @@ import {
   spaceDef,
   raceSpaceDefs,
   upcomingRaceSpaceDefs,
+  RACE_COUNTRIES,
 } from "../spaceDefs";
 
 describe("SPACE_DEFS config invariants", () => {
-  it("ships the curated sets: 8 interest + 57 races", () => {
+  it("ships the curated sets: 8 interest + 65 races", () => {
     expect(SPACE_DEFS.filter((d) => d.kind === "interest")).toHaveLength(8);
-    expect(SPACE_DEFS.filter((d) => d.kind === "race")).toHaveLength(57);
-    expect(SPACE_DEFS).toHaveLength(65);
+    expect(SPACE_DEFS.filter((d) => d.kind === "race")).toHaveLength(65);
+    expect(SPACE_DEFS).toHaveLength(73);
   });
 
   it("ids are unique, url-safe slugs", () => {
@@ -71,10 +72,7 @@ describe("race event blocks (Races & Events plan, locked 2026-07-19)", () => {
         expect(d.event.distanceKm, d.id).toBeUndefined();
       }
       expect(d.event.city.length, d.id).toBeGreaterThan(0);
-      expect(
-        ["GB", "US", "FR", "DE", "IE", "ES", "JP", "AU", "NL", "DK"],
-        d.id
-      ).toContain(d.event.countryCode);
+      expect(Object.keys(RACE_COUNTRIES), d.id).toContain(d.event.countryCode);
       expect(d.event.countryFlag.length, d.id).toBeGreaterThan(0);
       expect(d.event.websiteUrl, d.id).toMatch(/^https:\/\//);
       if (d.event.elevation !== undefined) {
@@ -91,7 +89,7 @@ describe("race event blocks (Races & Events plan, locked 2026-07-19)", () => {
 
   it("raceSpaceDefs() returns all races sorted soonest first", () => {
     const races = raceSpaceDefs();
-    expect(races).toHaveLength(57);
+    expect(races).toHaveLength(65);
     const keys = races.map((d) => d.event!.dateKey);
     expect(keys).toEqual([...keys].sort());
   });

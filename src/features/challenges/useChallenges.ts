@@ -17,6 +17,7 @@ import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { toast } from "@/lib/toast";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { showRestrictedToast } from "@/lib/accountRestriction";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
@@ -25,7 +26,7 @@ import {
   isTierAchieved,
   type ChallengeTier,
 } from "./challengeTiers";
-import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
+import { parseLocalDate } from "@/lib/dateHelpers";
 
 // Re-exported so existing importers (ChallengeCard, tests) keep one import site.
 // The tier logic lives in ./challengeTiers (mirrored server-side).
@@ -210,6 +211,7 @@ async function readMyProgress(
 
 export function useChallenges() {
   const uid = useUid();
+  const todayKey = useLocalDateKey();
   // A restricted account can leave a challenge but not join one (S4e).
   const { isRestricted } = useRestrictedStatus(uid ?? undefined);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
@@ -227,6 +229,8 @@ export function useChallenges() {
   >({});
   const [loading, setLoading] = useState(true);
 
+  // Upcoming definitions may not change at midnight. The day dependency also
+  // re-reads the cached snapshot on app resume, without needing a server write.
   useEffect(() => {
     /* Read-only subscription, gated on `user` so it runs after Firebase
        auth resolves. Challenge definitions are SERVER-OWNED: the
@@ -247,7 +251,6 @@ export function useChallenges() {
       (snap) => {
         clearTimeout(timeout);
         const now = new Date();
-        const todayKey = localDateString(now);
         const all = snap.docs.map(
           (d) => ({ id: d.id, ...d.data() }) as Challenge
         );
@@ -283,7 +286,7 @@ export function useChallenges() {
       clearTimeout(timeout);
       unsub();
     };
-  }, [uid]);
+  }, [uid, todayKey]);
 
   /* Extracted so pull-to-refresh can re-run it on demand (SOC-P1d): the
      challenge DOCS are a live subscription above, but per-user progress

@@ -254,6 +254,10 @@ export function ChallengeList({
 
   return (
     <div className="space-y-4">
+      <p className="text-small text-muted-foreground">
+        Monthly challenges refresh on the 1st. Join each new edition to take
+        part. Seasonal challenges run for three months.
+      </p>
       {/* A restricted account can follow its challenges and leave them,
           but not join one (S4e). */}
       {restricted && availableChallenges.length > 0 && <RestrictedNotice />}

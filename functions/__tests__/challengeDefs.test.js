@@ -20,7 +20,7 @@ import { challengeContainsActivityDate } from "../lib/challengeActivityWindow";
 const MON_JUN_1 = new Date(Date.UTC(2026, 5, 1, 12, 0, 0));
 
 describe("buildCurrentChallenges", () => {
-  it("returns the six canonical challenges with prefixed, dated IDs", () => {
+  it("returns the seven canonical challenges with prefixed, dated IDs", () => {
     const defs = buildCurrentChallenges(MON_JUN_1);
     const ids = defs.map((d) => d.id).sort();
     expect(ids).toEqual([
@@ -29,6 +29,7 @@ describe("buildCurrentChallenges", () => {
       "group-goal-2026-06-01",
       "monthly-2026-06-01",
       "seasonal-2026-06-01",
+      "strength-monthly-2026-06-01",
       "weekly-2026-06-01",
     ]);
   });
@@ -93,6 +94,31 @@ describe("buildCurrentChallenges", () => {
     expect(jul.find((d) => d.id.startsWith("group-goal-")).id).toBe(
       "group-goal-2026-07-01"
     );
+    expect(jul.find((d) => d.id.startsWith("strength-monthly-")).id).toBe(
+      "strength-monthly-2026-07-01"
+    );
+  });
+
+  it("refreshes monthly strength in November while Autumn keeps its window", () => {
+    const october = buildCurrentChallenges(new Date(Date.UTC(2026, 9, 31, 12)));
+    const november = buildCurrentChallenges(
+      new Date(Date.UTC(2026, 10, 1, 12))
+    );
+    const strength = november.find((d) => d.id.startsWith("strength-monthly-"));
+    expect(strength).toMatchObject({
+      id: "strength-monthly-2026-11-01",
+      name: "November Strength Builder",
+      metric: "total_volume",
+      tiers: { bronze: 5000, silver: 15000, gold: 30000 },
+      startDate: new Date("2026-11-01T00:00:00Z"),
+      endDate: new Date("2026-12-01T00:00:00Z"),
+    });
+    expect(november.find((d) => d.type === "seasonal")).toEqual(
+      october.find((d) => d.type === "seasonal")
+    );
+    expect(
+      buildUpcomingChallenges(new Date("2026-10-31T00:05:00Z"))
+    ).toContainEqual(strength);
   });
 
   it("selects the season by UTC month", () => {
