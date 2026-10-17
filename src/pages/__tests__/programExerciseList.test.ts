@@ -182,8 +182,13 @@ describe("a row's drawing opens the exercise's form guide", () => {
 });
 
 describe("the day cells name the day, not the programme", () => {
-  it("labels each cell with its focus", () => {
-    expect(code).toMatch(/bottomLabel: dayFocusLabel\(/);
+  it("labels each cell with the day's name in its week", () => {
+    /* "Push A", "Pull B": a generated day's week name, and the part of its
+       own name that varies for a day the person built. What the names are
+       is pinned in liftDayLabel.test.ts. */
+    expect(code).toMatch(
+      /bottomLabel: generatedDayType\(w\.dayName\)\s*\?\s*weekDayNames\[i\]\s*:\s*dayFocusLabel\(w\.dayName\)/
+    );
     expect(code).toContain('from "@/lib/liftDayLabel"');
   });
 
@@ -205,5 +210,19 @@ describe("the two repeats the card no longer carries", () => {
   it("does not number the day above a day cell already numbered", () => {
     expect(code).toMatch(/<ProgrammeWeekSelector/);
     expect(code).not.toMatch(/· Day \$\{idx \+ 1\}/);
+  });
+});
+
+describe("the card says which lift the day starts with", () => {
+  it("on a line of its own that wraps, not in the meta", () => {
+    /* The day is named by its type ("Pull A"), so the lift it opens with
+       is said in words. A meta item holds together, so a long lift's name
+       there would run past the card at the largest text; the description
+       wraps. A finished or missed day drops it with the minutes. */
+    expect(code).toMatch(
+      /description=\{\s*sessionFirstLift && status !== "completed" && !missed\s*\?\s*`Starts with \$\{sessionFirstLift\}`/
+    );
+    expect(code).not.toMatch(/meta=\{[^}]*Starts with/);
+    expect(card).toMatch(/\{description && \(/);
   });
 });

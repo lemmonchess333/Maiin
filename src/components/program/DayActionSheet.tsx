@@ -1,3 +1,4 @@
+import { liftDayNameIn } from "@/lib/liftDayLabel";
 import RunPlanPurpose from "@/components/run/RunPlanPurpose";
 import LiftPurpose from "@/components/program/LiftPurpose";
 /**
@@ -769,7 +770,11 @@ export default function DayActionSheet({
               <div className="min-w-0 flex-1">
                 <SectionLabel>Lift</SectionLabel>
                 <p className="text-lg font-extrabold leading-tight text-foreground truncate">
-                  {lift.workout.dayName || "Lift"}
+                  {liftDayNameIn(
+                    (programState?.workouts ?? []).map((w) => w.dayName),
+                    lift.index,
+                    lift.workout.dayName
+                  ) || "Lift"}
                 </p>
                 <LiftPurpose
                   programme={programState}

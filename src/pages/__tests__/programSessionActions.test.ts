@@ -133,13 +133,15 @@ describe("the week waits while a session is open", () => {
 });
 
 describe("the session's sheets and menu speak as the card does", () => {
-  it("names a skipped session as the workout screen does, not by its stored name", () => {
-    /* "Skip Full Body — Squat Focus?" under a card titled "Squat focus":
+  it("names a skipped session as the card does, not by its stored name", () => {
+    /* "Skip Full Body — Squat Focus?" under a card titled "Full Body A":
        the stored name, which nothing else on Train shows. */
     const at = code.indexOf("<SkipConfirmSheet");
     expect(at).toBeGreaterThan(-1);
     const props = code.slice(at, code.indexOf("onConfirm=", at));
-    expect(props).toContain("liftDayLine(displayWorkouts[skipTargetDay]");
+    expect(props).toMatch(
+      /liftDayNameIn\(\s*displayWorkouts\.map\(\(w\) => w\.dayName\),\s*skipTargetDay,/
+    );
   });
 
   it("offers Replace exercise in sentence case, beside Remove exercise", () => {

@@ -7,6 +7,7 @@ import {
   liftIndexForDayOfWeek,
   type ScheduleDay,
 } from "@/lib/scheduleUtils";
+import { liftDayNameIn } from "@/lib/liftDayLabel";
 import type {
   WorkoutDay,
   ScheduledRunDay,
@@ -52,9 +53,10 @@ export default function WeekPreview({
   // A free-running-only week has open days, not seven prescribed rest days.
   const openWeek =
     freeRunning && lifts === 0 && runs === 0 && workouts.length === 0;
-  const workout = detail
-    ? workouts[liftIndexForDayOfWeek(schedule, detail.day)]
-    : undefined;
+  const workoutIndex = detail
+    ? liftIndexForDayOfWeek(schedule, detail.day)
+    : -1;
+  const workout = detail ? workouts[workoutIndex] : undefined;
   const run =
     detail &&
     runDays.find(
@@ -135,7 +137,11 @@ export default function WeekPreview({
         {workout && (
           <div className="space-y-2">
             <h3 className="text-base font-semibold text-lifting-strong">
-              {workout.dayName}
+              {liftDayNameIn(
+                workouts.map((w) => w.dayName),
+                workoutIndex,
+                workout.dayName
+              )}
             </h3>
             <ul className="divide-y divide-border">
               {workout.exercises.map((exercise, index) => (

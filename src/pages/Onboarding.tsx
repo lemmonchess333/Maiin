@@ -69,6 +69,7 @@ import { newRunnerUntil } from "@/features/program/newRunner";
 import { runDoseLine } from "@/lib/runDose";
 import { smallPlatesHint } from "@/lib/liftRules";
 import { liftUnitForBodyWeight } from "@/lib/liftLoad";
+import { liftDayNameIn } from "@/lib/liftDayLabel";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
@@ -1726,7 +1727,12 @@ export default function Onboarding() {
                       (effectiveRunMode === "race_prep"
                         ? `${racePreview.distanceLabel} plan`
                         : "Free running"))
-                    : firstWorkout?.dayName}
+                    : firstWorkout &&
+                      liftDayNameIn(
+                        plan.programState.workouts.map((w) => w.dayName),
+                        0,
+                        firstWorkout.dayName
+                      )}
                 </h2>
                 <p className="text-sm text-muted-foreground">
                   <InlineNumerals>

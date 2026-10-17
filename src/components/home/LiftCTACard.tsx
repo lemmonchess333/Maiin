@@ -11,7 +11,11 @@ import {
   type PricedExercise,
 } from "@/features/program/expressSession";
 import type { RestContext } from "@/features/program/restTime";
-import { liftDayTitle } from "@/lib/liftDayLabel";
+import {
+  generatedDayType,
+  liftDayLine,
+  liftDayTitle,
+} from "@/lib/liftDayLabel";
 
 type LiftCardExercise = Partial<PricedExercise> & { name: string };
 
@@ -37,6 +41,7 @@ export default function LiftCTACard({
   status,
   eyebrowLabel,
   rest,
+  dayLabel,
 }: {
   nextWorkout: {
     completed?: boolean;
@@ -60,6 +65,9 @@ export default function LiftCTACard({
   eyebrowLabel?: string;
   /** How the session's timer will rest, so the minutes price it. */
   rest?: RestContext;
+  /** The day as Train names it in its week ("Pull B", `liftDayNameIn`).
+   *  Without it a generated day is named by its type alone. */
+  dayLabel?: string;
 }) {
   const dayTarget =
     typeof dayIndex === "number" ? `/program?day=${dayIndex}` : "/program";
@@ -82,14 +90,17 @@ export default function LiftCTACard({
         : "Needs review";
 
   const count = nextWorkout.exercises.length;
-  const { category, title } = liftDayTitle(nextWorkout.dayName);
-  /* The eyebrow is the day's category ("Pull"), a fact about the plan.
-     A name without one keeps "Planned for today", which is what this
-     surface knows and reads as plan beside Train's cursor rather than
-     contradicting it (ADR-0002: Home resolves a lift by weekday, Train by
-     rotation; liftCardRegister.test.tsx). No week or rotation position:
-     Home shows the session and its dose, and the rest lives in the day's
-     details (owner direction, 2026-09-09). */
+  const { category, title: dayTitle } = liftDayTitle(nextWorkout.dayName);
+  /* A generated day is titled as Train names it in its week ("Pull B");
+     its name carries no category, so the eyebrow says "Planned for today",
+     which is what this surface knows and reads as plan beside Train's
+     cursor rather than contradicting it (ADR-0002: Home resolves a lift by
+     weekday, Train by rotation; liftCardRegister.test.tsx). A custom name
+     with a dash keeps its first half above. No week number or rotation
+     count: Home shows the session and its dose, and the rest lives in the
+     day's details (owner direction). */
+  const title =
+    dayLabel && generatedDayType(nextWorkout.dayName) ? dayLabel : dayTitle;
   const eyebrow = eyebrowLabel ?? category ?? "Planned for today";
   const minutes = useMemo(() => {
     const priced = nextWorkout.exercises.filter(
@@ -124,7 +135,7 @@ export default function LiftCTACard({
           trackHomeEvent("home_card_tapped", { card: "today_workout" });
           navigate(dayTarget);
         }}
-        aria-label={`Open ${nextWorkout.dayName} in Train`}
+        aria-label={`Open ${dayLabel ?? liftDayLine(nextWorkout.dayName)} in Train`}
         className="absolute inset-0 z-0 rounded-[inherit] motion-safe:active:bg-lifting/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
       />
       {/* The drawing gives the text the card's width once the card is

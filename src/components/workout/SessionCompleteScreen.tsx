@@ -81,8 +81,8 @@ export default function SessionCompleteScreen({
       : saved
         ? "Workout saved"
         : "Review workout";
-  // The day as Train, Home and the workout screen name it: "Legs ·
-  // Deadlift focus". A routine's own name, with no separator, is itself.
+  // The day as Train and the workout screen name it ("Legs B"), handed
+  // down by the workout screen. A routine's own name is itself.
   const dayLabel = liftDayLine(dayName);
   const reduce = useReducedMotion();
 

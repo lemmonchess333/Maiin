@@ -542,12 +542,12 @@ describe("rest day — tomorrow's session", function () {
     renderCards(
       restDay({
         kind: "rest",
-        tomorrow: { label: "Pull · Lat focus", target: "/program?day=3" },
+        tomorrow: { label: "Pull B", target: "/program?day=3" },
       }),
       navigate
     );
     expect(screen.getByText(/Tomorrow:/)).toHaveTextContent(
-      "Tomorrow: Pull · Lat focus."
+      "Tomorrow: Pull B."
     );
     fireEvent.click(screen.getByRole("button", { name: "See tomorrow" }));
     expect(navigate).toHaveBeenCalledExactlyOnceWith("/program?day=3");
