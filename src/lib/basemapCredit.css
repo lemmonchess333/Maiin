@@ -8,9 +8,49 @@
    pages put their own controls (RunDetail's Replay, the planner's
    Locate): it wraps rather than run under them. 8rem is the reserve
    RunMap's own offline note keeps for a corner control. */
-[data-map-theme] .maplibregl-ctrl-bottom-left,
-[data-map-theme] .maplibregl-ctrl-top-right {
+[data-map-theme] .maplibregl-ctrl-bottom-left {
   max-width: calc(100% - 8rem);
+}
+/* Top right is the live run's corner, which shares its line with the GPS
+   chip at the top left: up to 11rem of it at "Weak GPS ±152 m". At 8rem
+   a credit opened over a weak fix ran across the chip. */
+[data-map-theme] .maplibregl-ctrl-top-right {
+  max-width: calc(100% - 11.5rem);
+}
+
+/* The live run's map runs under the status bar, so MapLibre's 10px put
+   its credit among the clock and battery. Its corner starts where the
+   run's own chips do (`--map-overlay-top`, which Run.tsx sets), centred
+   on the GPS chip's line and in line with the zoom stack's edge. Only
+   the live run puts the credit top right; unset, this is MapLibre's
+   10px. */
+[data-map-theme]
+  .maplibregl-ctrl-top-right
+  > .maplibregl-ctrl-attrib.maplibregl-compact {
+  margin: calc(var(--map-overlay-top, 0.25rem) + 0.375rem) 0.75rem 0 0;
+}
+
+/* Open, the credit is a caption. MapLibre's 20px lines spread its two
+   lines on a phone into a slab beside the run's chips; at 16px with the
+   same 24px for one line, it sits level with the (i) it folds into. */
+[data-map-theme]
+  .maplibregl-ctrl.maplibregl-ctrl-attrib.maplibregl-compact-show {
+  line-height: 16px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+/* MapLibre rings its (i) in blue on every focus, a tap's included, so a
+   credit opened with a finger sat in a blue ring until something else
+   took focus. A keyboard's focus keeps a ring, in the app's colours. */
+[data-map-theme] .maplibregl-ctrl-attrib-button:focus:not(:focus-visible) {
+  box-shadow: none;
+}
+[data-map-theme] .maplibregl-ctrl-attrib-button:focus-visible {
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.5);
+}
+[data-map-theme="dark"] .maplibregl-ctrl-attrib-button:focus-visible {
+  box-shadow: 0 0 0 2px hsl(var(--stage-foreground));
 }
 
 /* The (i) is drawn at 24px; this gives it the 44px Tropos tap target

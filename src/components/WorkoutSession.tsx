@@ -146,8 +146,8 @@ import NewBestMoment, {
 } from "@/components/workout/NewBestMoment";
 import { elapsedSecondsSince } from "@/hooks/useElapsedSeconds";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import ExerciseFormSheet from "@/components/program/ExerciseFormSheet";
 import { IconButton } from "@/components/ui/IconButton";
-import { Spinner } from "@/components/ui/Spinner";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import { localDateString } from "@/lib/dateHelpers";
 import type { SessionShareAction } from "@/lib/sessionPost";
@@ -161,11 +161,6 @@ import {
   kitLoadToKg,
 } from "@/features/program/loadSteps";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
-// Form guide is heavy (react-body-highlighter) — lazy-load so it only hydrates
-// when the user opens the "How to" sheet mid-workout (D-LIFT-14).
-const ExerciseFormContent = lazyRetry(
-  () => import("@/components/ExerciseFormContent")
-);
 // The exercise list for "Swap for today", loaded when it is opened.
 const ExercisePicker = lazyRetry(
   () => import("@/components/program/ExercisePicker")
@@ -2694,26 +2689,11 @@ export default function WorkoutSession({
       />
 
       {currentExercise?.name && (
-        <BottomSheet
+        <ExerciseFormSheet
+          exerciseName={currentExercise.name}
           open={showFormGuide}
           onOpenChange={setShowFormGuide}
-          title={currentExercise.name}
-        >
-          <div className="px-4 pb-6">
-            <Suspense
-              fallback={
-                <div className="py-10 flex justify-center">
-                  <Spinner />
-                </div>
-              }
-            >
-              <ExerciseFormContent
-                exerciseName={currentExercise.name}
-                active={showFormGuide}
-              />
-            </Suspense>
-          </div>
-        </BottomSheet>
+        />
       )}
     </div>
   );
