@@ -1312,15 +1312,19 @@ function ProgramInner() {
                             ? `How to do ${sessionArt.exerciseName}`
                             : undefined
                         }
+                        /* The lift the day opens with, on a line of its own
+                           that wraps: a meta item holds together, and a long
+                           lift's name would run past the card at the
+                           largest text. */
+                        description={
+                          sessionFirstLift && status !== "completed" && !missed
+                            ? `Starts with ${sessionFirstLift}`
+                            : undefined
+                        }
                         meta={
                           status === "completed" || missed
                             ? []
-                            : [
-                                ...(sessionFirstLift
-                                  ? [`Starts with ${sessionFirstLift}`]
-                                  : []),
-                                `~${estimatedMinutes} min`,
-                              ]
+                            : [`~${estimatedMinutes} min`]
                         }
                         /* The card always carries the day's ONE action.
                            Start on the startable day; on an upcoming one

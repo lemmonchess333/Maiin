@@ -212,3 +212,17 @@ describe("the two repeats the card no longer carries", () => {
     expect(code).not.toMatch(/· Day \$\{idx \+ 1\}/);
   });
 });
+
+describe("the card says which lift the day starts with", () => {
+  it("on a line of its own that wraps, not in the meta", () => {
+    /* The day is named by its type ("Pull A"), so the lift it opens with
+       is said in words. A meta item holds together, so a long lift's name
+       there would run past the card at the largest text; the description
+       wraps. A finished or missed day drops it with the minutes. */
+    expect(code).toMatch(
+      /description=\{\s*sessionFirstLift && status !== "completed" && !missed\s*\?\s*`Starts with \$\{sessionFirstLift\}`/
+    );
+    expect(code).not.toMatch(/meta=\{[^}]*Starts with/);
+    expect(card).toMatch(/\{description && \(/);
+  });
+});
