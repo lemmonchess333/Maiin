@@ -3,11 +3,13 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import type { Experience } from "@/features/program/programTypes";
 import { liftRules, liftRulesContext } from "@/lib/liftRules";
 import type { LiftPurposeProgramme } from "@/lib/liftSessionPurpose";
+import type { LiftReason } from "@/lib/liftExerciseReasons";
 
 /**
  * The plan's rules on one sheet, merged with "Why this session" (Lift4
  * (3)): the session's reasons first, when there is a session to explain,
- * then how the plan works. Loaded only when opened (`LiftPurpose`,
+ * then why each of its lifts is in it (`liftExerciseReasons`), then how
+ * the plan works. Loaded only when opened (`LiftPurpose`,
  * `LiftRulesInfo`): the rules read the engine's constants, which a day
  * card on Home has no other need for.
  */
@@ -17,6 +19,7 @@ export default function LiftRulesSheet({
   purpose,
   programme,
   experience,
+  lifts = [],
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -25,6 +28,8 @@ export default function LiftRulesSheet({
   purpose: string | null;
   programme: LiftPurposeProgramme | null | undefined;
   experience?: Experience;
+  /** Each lift in the session and why it is there. */
+  lifts?: readonly LiftReason[];
 }) {
   return (
     <BottomSheet
@@ -41,6 +46,30 @@ export default function LiftRulesSheet({
             <p className="text-sm text-muted-foreground leading-relaxed">
               {purpose}
             </p>
+          </section>
+        )}
+        {purpose && lifts.length > 0 && (
+          <section className="space-y-3">
+            <SectionHeading size="compact" as="h3">
+              The lifts
+            </SectionHeading>
+            <dl className="space-y-4">
+              {lifts.map((lift, i) => (
+                <div key={`${lift.name}-${i}`}>
+                  <dt className="text-sm font-semibold text-foreground">
+                    {lift.name}
+                    <span className="font-normal text-muted-foreground">
+                      {` · ${lift.label}`}
+                    </span>
+                  </dt>
+                  {lift.reason && (
+                    <dd className="mt-0.5 text-sm text-muted-foreground leading-relaxed">
+                      {lift.reason}
+                    </dd>
+                  )}
+                </div>
+              ))}
+            </dl>
           </section>
         )}
         <section className="space-y-3">
