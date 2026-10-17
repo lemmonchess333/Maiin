@@ -5,8 +5,8 @@
  * reference, which for most sets is frame 1: the start of the movement.
  * For a curl, a raise or a squat the start is a figure standing with its
  * arms down, and at a row's 48px it reads as an anatomy outline, not the
- * exercise (owner, 2026-10-16: "Should be able to see the exercise itself
- * not just the outlined version"). The frames listed here show the
+ * exercise (the owner: "Should be able to see the exercise itself not
+ * just the outlined version"). The frames listed here show the
  * position that names the exercise: the bar at the shoulders, the arms
  * out, the bottom of the squat. Each was picked on a contact sheet of the
  * set's six frames and checked as a 48px tile on both themes and in
