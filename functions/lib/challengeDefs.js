@@ -60,6 +60,31 @@ const MONTH_NAMES = [
   "December",
 ];
 
+/** A fixed yearly calendar: one featured goal, renewed every month.
+ * Odd-numbered months favour training days, even-numbered months logged
+ * training time. These metrics use current-source reconciliation rather than
+ * per-activity SUM increments, so edits and same-day sessions stay correct. */
+function featuredMonthlyFor(now) {
+  const monthName = MONTH_NAMES[now.getUTCMonth()];
+  if (now.getUTCMonth() % 2 === 0) {
+    return {
+      name: `${monthName} Active Days`,
+      description:
+        "Log a lift or a run. Each date counts once, with room for rest days.",
+      metric: "active_days",
+      icon: "calendar-days",
+      tiers: { bronze: 8, silver: 12, gold: 20 },
+    };
+  }
+  return {
+    name: `${monthName} Training Minutes`,
+    description: "Your logged running and lifting minutes this month add up.",
+    metric: "training_minutes",
+    icon: "clock",
+    tiers: { bronze: 120, silver: 300, gold: 600 },
+  };
+}
+
 /** Quarter-based season definition (mirrors the retired client logic). */
 function seasonFor(now) {
   const month = now.getUTCMonth();
@@ -139,6 +164,7 @@ function buildCurrentChallenges(now = new Date()) {
   const seasonEnd = seasonEndUTC(now);
   const season = seasonFor(now);
   const monthName = MONTH_NAMES[now.getUTCMonth()];
+  const featured = featuredMonthlyFor(now);
 
   return [
     {
@@ -171,6 +197,13 @@ function buildCurrentChallenges(now = new Date()) {
       metric: "total_volume",
       icon: "dumbbell",
       tiers: { bronze: 5000, silver: 15000, gold: 30000 },
+      startDate: monthStart,
+      endDate: monthEnd,
+    },
+    {
+      id: `featured-monthly-${ymd(monthStart)}`,
+      ...featured,
+      type: "monthly",
       startDate: monthStart,
       endDate: monthEnd,
     },
@@ -281,4 +314,5 @@ module.exports = {
   seasonStartUTC,
   seasonEndUTC,
   seasonFor,
+  featuredMonthlyFor,
 };

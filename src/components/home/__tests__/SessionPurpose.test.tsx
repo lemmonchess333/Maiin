@@ -164,7 +164,7 @@ describe("Home session actions and metadata", () => {
     expect(container).not.toHaveTextContent(/min/);
   });
 
-  it("splits a programme day's name into its category and focus", () => {
+  it("titles a programme day as Train names it in its week", () => {
     const { container } = render(
       <LiftCTACard
         nextWorkout={{
@@ -172,17 +172,39 @@ describe("Home session actions and metadata", () => {
           dayType: "pull",
           exercises: [],
         }}
+        dayLabel="Pull B"
         dayIndex={3}
         navigate={vi.fn()}
       />
     );
-    /* The whole name as a title broke at the dash on a phone ("Pull —"
-       over "Lat Focus"). No rotation position rides the eyebrow: Home
-       shows the session and its dose (owner direction, 2026-09-09). */
-    expect(screen.getByText("Pull")).toBeInTheDocument();
-    expect(screen.getByText("Lat focus")).toBeInTheDocument();
+    /* The stored name never shows: whole, it broke at the dash on a phone
+       ("Pull —" over "Lat Focus"). No rotation position rides the
+       eyebrow: Home shows the session and its dose (owner direction,
+       2026-09-09). */
+    expect(screen.getByText("Pull B")).toBeInTheDocument();
+    expect(screen.getByText("Planned for today")).toBeInTheDocument();
     expect(container).not.toHaveTextContent("Pull —");
+    expect(container).not.toHaveTextContent(/Lat focus/i);
     expect(container).not.toHaveTextContent(/Session \d/);
+    expect(
+      screen.getByRole("button", { name: "Open Pull B in Train" })
+    ).toBeInTheDocument();
+  });
+
+  it("splits a day the person named into its category and title", () => {
+    render(
+      <LiftCTACard
+        nextWorkout={{
+          dayName: "Arms — Pump",
+          dayType: "upper",
+          exercises: [],
+        }}
+        dayLabel="Arms · Pump"
+        navigate={vi.fn()}
+      />
+    );
+    expect(screen.getByText("Arms")).toBeInTheDocument();
+    expect(screen.getByText("Pump")).toBeInTheDocument();
   });
 
   it("names a long run in the reader's unit", () => {

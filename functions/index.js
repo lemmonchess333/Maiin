@@ -36,6 +36,7 @@ const accountDeletionLocks = require("./lib/accountDeletionLocks");
 // Packet 18 — programState command boundary (applyProgramCommand callable).
 const programCommands = require("./lib/programCommands");
 const { reconcileWorkoutMetrics } = require("./lib/workoutCorrections");
+const challengeParticipation = require("./lib/challengeParticipationProgress");
 const {
   mergeChangedFields,
   ProgrammeConflictError,
@@ -4253,24 +4254,35 @@ async function applyFastestEffortToChallenge(
  *     rewritten by a later join elsewhere.
  */
 async function backfillChallengeProgressForParticipant(challengeId, uid) {
+  if (
+    !(await accountDeletionLocks.shouldSystemWriteProceed(
+      db,
+      uid,
+      "challengeJoinBackfill"
+    ))
+  ) {
+    return;
+  }
+
+  const chSnap = await db.collection("challenges").doc(challengeId).get();
+  if (!chSnap.exists) return;
+  const challenge = chSnap.data() || {};
+  const metric = challenge.metric;
+  const window = challengeBackfill.backfillQueryWindow(challenge);
+  if (!metric || !window) return; // fail closed on malformed defs
+
+  // New projections propagate errors to the retryable join trigger. Keep
+  // the legacy per-source backfill's existing error policy below.
+  if (challengeParticipation.isParticipationMetric(metric)) {
+    await challengeParticipation.recomputeParticipationChallenge(
+      db,
+      challengeId,
+      uid
+    );
+    return;
+  }
+
   try {
-    if (
-      !(await accountDeletionLocks.shouldSystemWriteProceed(
-        db,
-        uid,
-        "challengeJoinBackfill"
-      ))
-    ) {
-      return;
-    }
-
-    const chSnap = await db.collection("challenges").doc(challengeId).get();
-    if (!chSnap.exists) return;
-    const challenge = chSnap.data() || {};
-    const metric = challenge.metric;
-    const window = challengeBackfill.backfillQueryWindow(challenge);
-    if (!metric || !window) return; // fail closed on malformed defs
-
     if (challengeBackfill.metricNeedsWorkouts(metric)) {
       const workoutsSnap = await db
         .collection("users")
@@ -4445,7 +4457,7 @@ async function recomputeParticipantCount(challengeId, observedAt) {
 // participant doc don't trigger needless recomputes. TRIGGER_CAP.
 
 exports.onChallengeParticipantCreated = functions
-  .runWith(TRIGGER_CAP)
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("challenges/{challengeId}/participants/{uid}")
   .onCreate(async (_snap, context) => {
     await recomputeParticipantCount(
@@ -4477,7 +4489,7 @@ exports.onChallengeParticipantDeleted = functions
 // ── 4) Trigger: instant recompute on new workout ──
 
 exports.onWorkoutCreated = functions
-  .runWith(TRIGGER_CAP)
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("users/{uid}/workouts/{workoutId}")
   .onCreate(async (snap, context) => {
     const { uid, workoutId } = context.params;
@@ -4506,6 +4518,12 @@ exports.onWorkoutCreated = functions
       }
       return;
     }
+    // Recompute first and let failures retry before legacy side effects.
+    await challengeParticipation.reconcileParticipationChallenges(
+      db,
+      uid,
+      challengeParticipation.affectedActivityDays(snap.data())
+    );
     try {
       const data = snap.data();
       // Which day this session belongs to — the workout's own local date,
@@ -4624,7 +4642,7 @@ exports.onWorkoutCreated = functions
 // ── 5) Trigger: instant recompute on new run ──
 
 exports.onRunCreated = functions
-  .runWith(TRIGGER_CAP)
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("users/{uid}/runs/{runId}")
   .onCreate(async (snap, context) => {
     const { uid, runId } = context.params;
@@ -4648,6 +4666,11 @@ exports.onRunCreated = functions
       }
       return;
     }
+    await challengeParticipation.reconcileParticipationChallenges(
+      db,
+      uid,
+      challengeParticipation.affectedActivityDays(snap.data())
+    );
     try {
       const data = snap.data();
       // The run's own local day — drives challenge-window attribution, so a
@@ -4809,12 +4832,6 @@ exports.onWorkoutUpdated = functions
   .onUpdate(async (change, context) => {
     const before = change.before.data() || {};
     const after = change.after.data() || {};
-    if (
-      !(after.revision > 0) ||
-      (before.revision === after.revision &&
-        before.sharedActivityId === after.sharedActivityId)
-    )
-      return null;
     const { uid, workoutId } = context.params;
     if (
       !(await accountDeletionLocks.shouldSystemWriteProceed(
@@ -4824,6 +4841,19 @@ exports.onWorkoutUpdated = functions
       ))
     )
       return null;
+    // A resumed Finish can overwrite duration without incrementing revision.
+    // Reconcile current source facts before the correction-only gate.
+    await challengeParticipation.reconcileParticipationChallenges(
+      db,
+      uid,
+      challengeParticipation.affectedActivityDays(before, after)
+    );
+    if (
+      !(after.revision > 0) ||
+      (before.revision === after.revision &&
+        before.sharedActivityId === after.sharedActivityId)
+    )
+      return null;
     await reconcileWorkoutMetrics(db, uid, workoutId);
     const current = await change.after.ref.get();
     if (!current.exists) return null;
@@ -4831,6 +4861,32 @@ exports.onWorkoutUpdated = functions
     const todayKey = getWeekKey(new Date());
     const key = triggerComputeKey(current.data().date, todayKey) ?? todayKey;
     await computeAndWritePerformanceForUser(uid, key);
+    return null;
+  });
+
+// Source overwrites and eligibility edits affect participation goals too.
+// Read current sources rather than trusting an out-of-order event snapshot.
+exports.onRunUpdated = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("users/{uid}/runs/{runId}")
+  .onUpdate(async (change, context) => {
+    const { uid } = context.params;
+    if (
+      !(await accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        uid,
+        "onRunUpdated"
+      ))
+    )
+      return null;
+    await challengeParticipation.reconcileParticipationChallenges(
+      db,
+      uid,
+      challengeParticipation.affectedActivityDays(
+        change.before.data(),
+        change.after.data()
+      )
+    );
     return null;
   });
 
@@ -4869,7 +4925,7 @@ exports.onWorkoutUpdated = functions
 // so the correct behaviour is a plain no-op.
 
 exports.onWorkoutDeleted = functions
-  .runWith(TRIGGER_CAP)
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("users/{uid}/workouts/{workoutId}")
   .onDelete(async (snap, context) => {
     const { uid, workoutId } = context.params;
@@ -4882,6 +4938,11 @@ exports.onWorkoutDeleted = functions
     ) {
       return null;
     }
+    await challengeParticipation.reconcileParticipationChallenges(
+      db,
+      uid,
+      challengeParticipation.affectedActivityDays(snap.data())
+    );
     try {
       const data = snap.data() || {};
       await activityReversal.reverseChallengeProgressForSource(
@@ -4909,7 +4970,7 @@ exports.onWorkoutDeleted = functions
   });
 
 exports.onRunDeleted = functions
-  .runWith(TRIGGER_CAP)
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("users/{uid}/runs/{runId}")
   .onDelete(async (snap, context) => {
     const { uid, runId } = context.params;
@@ -4922,6 +4983,11 @@ exports.onRunDeleted = functions
     ) {
       return null;
     }
+    await challengeParticipation.reconcileParticipationChallenges(
+      db,
+      uid,
+      challengeParticipation.affectedActivityDays(snap.data())
+    );
     try {
       const data = snap.data() || {};
       // No isVolumeEligibleRun re-check here, unlike the create side. An

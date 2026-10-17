@@ -1,0 +1,52 @@
+{
+  "updatedOn": "2026-10-18",
+  "notes": "Distinct real licensed photos for the two alternating monthly featured goal categories. No generated athletes or added logos.",
+  "images": [
+    {
+      "asset": "challenge-active-days.webp",
+      "sourceUrl": "https://unsplash.com/photos/group-of-runners-on-a-boardwalk-with-palm-trees-Xp07I3tG68I",
+      "downloadUrl": "https://images.unsplash.com/photo-1769284331730-9955c15e7dac?w=2400&q=85&fm=jpg",
+      "photographer": "Yuval Zukerman",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "content": "Group of runners on a boardwalk with palm trees. Real licensed editorial photograph; not Tropos members.",
+      "sourceSha256": "8883d247fd9ba159717f0a3d164d8fd8aaca2ea41d874d1f9c1b5da9818ad7cf",
+      "crop": {
+        "left": 0,
+        "top": 100,
+        "width": 2400,
+        "height": 1200
+      },
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 78,
+        "bytes": 118948,
+        "sha256": "30003de9a2083906b6b29e5ace7fe73dc69fd039eeae9007009b77e1d7129cab"
+      }
+    },
+    {
+      "asset": "challenge-training-minutes.webp",
+      "sourceUrl": "https://unsplash.com/photos/man-checking-smartwatch-in-a-gym-tT_V3qBCbak",
+      "downloadUrl": "https://images.unsplash.com/photo-1764426445444-5a528029fd62?w=2400&q=85&fm=jpg",
+      "photographer": "Mina Rad",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "content": "Man checking smartwatch in a gym. Real licensed editorial photograph; not Tropos members.",
+      "sourceSha256": "14fd239dbc18d17c478a7b5f3006601a8179f94d2af07e1fb39e87c34a88f41e",
+      "crop": {
+        "left": 0,
+        "top": 200,
+        "width": 2400,
+        "height": 1200
+      },
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 82,
+        "bytes": 48872,
+        "sha256": "ca4fec2030a1b674d4614ef472e4070c2bdfe593e59e2963684fb26e42205625"
+      }
+    }
+  ]
+}

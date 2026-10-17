@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, it, expect } from "vitest";
 import {
   vdotFromRace,
@@ -296,6 +298,27 @@ describe("parseRaceTimeToSeconds", () => {
   it("parses mm:ss and h:mm:ss", () => {
     expect(parseRaceTimeToSeconds("22:30")).toBe(22 * 60 + 30);
     expect(parseRaceTimeToSeconds("1:45:00")).toBe(3600 + 45 * 60);
+  });
+  it("reads the iPhone decimal pad's separators as a colon", () => {
+    // The time boxes open the decimal pad, which has "." (or "," in some
+    // languages) and no ":".
+    expect(parseRaceTimeToSeconds("22.30")).toBe(22 * 60 + 30);
+    expect(parseRaceTimeToSeconds("1.45.00")).toBe(3600 + 45 * 60);
+    expect(parseRaceTimeToSeconds("1,45,00")).toBe(3600 + 45 * 60);
+    expect(parseRaceTimeToSeconds("22 30")).toBe(22 * 60 + 30);
+    expect(parseRaceTimeToSeconds("22.90")).toBeNull();
+    expect(parseRaceTimeToSeconds("22..30")).toBeNull();
+    expect(parseRaceTimeToSeconds("22::30")).toBeNull();
+  });
+  it("is what the time boxes' keypad can type", () => {
+    for (const [file, id] of [
+      ["src/components/settings/RunFitnessSection.tsx", "benchmark-time"],
+      ["src/components/program/RunPlanSettings.tsx", "ps-race-time"],
+    ]) {
+      const src = readFileSync(resolve(process.cwd(), file), "utf8");
+      const input = src.slice(src.indexOf(`id="${id}"`)).split("/>")[0];
+      expect(input, file).toContain('inputMode="decimal"');
+    }
   });
   it("rejects malformed input", () => {
     expect(parseRaceTimeToSeconds("")).toBeNull();

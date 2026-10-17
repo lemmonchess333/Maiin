@@ -25,6 +25,10 @@ import {
   runChallengeIncrements,
 } from "../lib/challengeBackfill";
 import { buildCurrentChallenges } from "../lib/challengeDefs";
+import {
+  isParticipationMetric,
+  participationValue,
+} from "../lib/challengeParticipationProgress";
 
 const JULY = {
   startDate: new Date("2026-07-01T00:00:00Z"),
@@ -61,14 +65,23 @@ describe("canonical challenge crediting throughout the year", () => {
       // metric strings. A definition can render correctly while neither the
       // live trigger nor join-time backfill ever produces its metric.
       const lift = {
+        date: `2027-${String(month + 1).padStart(2, "0")}-15`,
+        durationMinutes: 30,
         exercises: [{ sets: [{ weightKg: 40, reps: 10 }] }],
       };
-      const run = { distance: 5000, duration: 1800 };
+      const run = { date: lift.date, distance: 5000, duration: 1800 };
       const challenges = buildCurrentChallenges(
         new Date(Date.UTC(2027, month, 15))
       );
 
       for (const challenge of challenges) {
+        if (isParticipationMetric(challenge.metric)) {
+          expect(
+            participationValue(challenge, [lift], [run]),
+            `${challenge.id} must project saved activity credit`
+          ).toBeGreaterThan(0);
+          continue;
+        }
         const increments = [
           ...(metricNeedsWorkouts(challenge.metric)
             ? workoutChallengeIncrements(lift)

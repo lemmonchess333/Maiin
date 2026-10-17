@@ -227,7 +227,8 @@ describe("SessionCompleteScreen — header stats agree with each other", () => {
     expect(
       screen.getByRole("heading", { name: "Review workout" })
     ).toBeInTheDocument();
-    expect(screen.getByText("Legs · Deadlift focus")).toBeInTheDocument();
+    // A generated day handed no week is its type (Lift19).
+    expect(screen.getByText("Legs")).toBeInTheDocument();
   });
 });
 

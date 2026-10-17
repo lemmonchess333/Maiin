@@ -138,6 +138,23 @@ describe("todaySession — a lifting day", () => {
       status: "planned",
     });
     expect(session.lift?.workout?.dayName).toBe("Push — Chest Focus");
+    // Named as Train names it; the stored name stays the day's key.
+    expect(session.lift?.name).toBe("Push");
+  });
+
+  it("names the card's day with its letter when the week repeats its type", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "lift" }),
+        programState: programStateWith({
+          workouts: [
+            { ...PUSH, completed: true },
+            workoutDay("Push — Shoulder Focus"),
+          ],
+        }),
+      })
+    );
+    expect(session.lift).toMatchObject({ index: 1, name: "Push B" });
   });
 
   it("keeps a workout finished today on the card, done", () => {
@@ -403,7 +420,11 @@ describe("todaySession — what a rest day offers", () => {
   it("a new lifter's first workout, whatever the weekday", () => {
     const session = todaySession(newAccount(firstWorkoutReady));
     expect(session).toMatchObject({ type: "rest", lift: null, run: null });
-    expect(session.rest).toMatchObject({ kind: "first-workout", index: 0 });
+    expect(session.rest).toMatchObject({
+      kind: "first-workout",
+      index: 0,
+      name: "Push",
+    });
   });
 
   it("the workout chosen to go next, when one was", () => {
@@ -536,8 +557,8 @@ describe("todaySession — the rest day names tomorrow", () => {
     expect(withRuns([undated(1)])).toEqual({ kind: "rest", tomorrow: null });
   });
 
-  it("names a lift day the way the rest of the app does, and opens it", () => {
-    // "Pull · Lat focus", as the workout and finish screens say it.
+  it("names a lift day as Train names it, and opens it", () => {
+    // The day's type: a week of one Pull day gives it no letter.
     const session = todaySession(
       input({
         profile: profileWith({ 4: "lift" }),
@@ -546,7 +567,21 @@ describe("todaySession — the rest day names tomorrow", () => {
     );
     expect(session.rest).toEqual({
       kind: "rest",
-      tomorrow: { label: "Pull · Lat focus", target: "/program?day=0" },
+      tomorrow: { label: "Pull", target: "/program?day=0" },
+    });
+  });
+
+  it("letters the day when its week holds another of its type", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 4: "lift" }),
+        programState: programStateWith({
+          workouts: [PULL, workoutDay("Pull — Row Focus")],
+        }),
+      })
+    );
+    expect(session.rest).toMatchObject({
+      tomorrow: { label: "Pull A", target: "/program?day=0" },
     });
   });
 
@@ -560,7 +595,7 @@ describe("todaySession — the rest day names tomorrow", () => {
       })
     );
     expect(session.rest).toMatchObject({
-      tomorrow: { label: "Pull · Lat focus", target: "/program?day=1" },
+      tomorrow: { label: "Pull", target: "/program?day=1" },
     });
   });
 
@@ -577,7 +612,7 @@ describe("todaySession — the rest day names tomorrow", () => {
     expect(session.rest).toEqual({
       kind: "rest",
       tomorrow: {
-        label: "Pull · Lat focus and Easy 30",
+        label: "Pull and Easy 30",
         target: "/program?day=0",
       },
     });
@@ -598,7 +633,7 @@ describe("todaySession — one day", () => {
     );
     expect(session.type).toBe("rest");
     expect(session.rest).toMatchObject({
-      tomorrow: { label: "Pull · Lat focus" },
+      tomorrow: { label: "Pull" },
     });
   });
 

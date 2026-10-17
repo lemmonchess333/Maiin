@@ -18,6 +18,10 @@ import zipfile
 TRANSIENT_STATUS = frozenset({408, 429, *range(500, 600)})
 # Seconds before each further try: four tries over about a minute.
 RETRY_DELAYS = (5, 15, 45)
+RETRY_REQUIRED = frozenset({
+    "onChallengeParticipantCreated", "onWorkoutCreated", "onRunCreated",
+    "onWorkoutUpdated", "onRunUpdated", "onWorkoutDeleted", "onRunDeleted",
+})
 
 
 def read(request, timeout, opener=urllib.request.urlopen, sleep=time.sleep):
@@ -41,11 +45,8 @@ def read(request, timeout, opener=urllib.request.urlopen, sleep=time.sleep):
         sleep(delay)
 
 
-def verify():
-    token = subprocess.check_output(
-        ["gcloud", "auth", "print-access-token"], text=True
-    ).strip()
-    root = pathlib.Path(__file__).resolve().parent.parent / "functions"
+def source_targets():
+    """The executing exports and source artifacts each release must read back."""
     comment_paths = ["index.js", "package-lock.json", "lib/publicPhotoUrl.js", "lib/socialCounters.js", "lib/spacePostEngagement.js",
                      "lib/restriction.js"]
     training_paths = ["index.js", "package-lock.json", "lib/stateTransition.js", "lib/workoutCorrections.js", "lib/programCommands.js"]
@@ -54,7 +55,12 @@ def verify():
                       "lib/accountDeletionLocks.js", "lib/accountDeletionAuth.js",
                       "lib/accountDeletionLedger.js", "lib/accountDeletionMinimisation.js",
                       "lib/accountDeletionStatus.js"]
-    targets = {
+    challenge_paths = ["index.js", "package-lock.json", "lib/challengeDefs.js",
+                       "lib/challengeBackfill.js", "lib/challengeActivityWindow.js",
+                       "lib/challengeTiers.js", "lib/challengeMarkers.js",
+                       "lib/challengeParticipationProgress.js", "lib/runEligibility.js",
+                       "lib/workoutVolume.js"]
+    return {
         "deleteMyAccount": deletion_paths,
         "resumeAccountDeletions": deletion_paths,
         "completeOnboarding": ["index.js", "lib/accountDeletionLocks.js"],
@@ -72,13 +78,19 @@ def verify():
         "liftRestriction": ["index.js"],
         # Race day: the daily no-show and recovery checks, and the recovery
         # entry a saved race run makes.
-        "dailyRaceReconciliationSweep": ["index.js", "lib/raceReconciliation.js",
-                                         "lib/raceDayCompletion.js"],
-        "onRunCreated": ["index.js", "lib/raceReconciliation.js", "lib/raceDayCompletion.js"],
+        "onRunCreated": challenge_paths + ["lib/raceReconciliation.js", "lib/raceDayCompletion.js"],
         "configurePlan": training_paths,
         "applyProgramCommand": training_paths,
-        "onWorkoutCreated": training_paths,
-        "onWorkoutUpdated": training_paths,
+        "onWorkoutCreated": training_paths + challenge_paths[2:],
+        "onWorkoutUpdated": training_paths + challenge_paths[2:],
+        # Monthly rotation and participation must execute the same source that
+        # passed CI, including the new active-day/minute recomputation helper.
+        # Checking index.js alone misses a stale independently changed library.
+        "rolloverChallenges": ["index.js", "package-lock.json", "lib/challengeDefs.js"],
+        "onChallengeParticipantCreated": challenge_paths,
+        "onRunUpdated": challenge_paths,
+        "onWorkoutDeleted": challenge_paths,
+        "onRunDeleted": challenge_paths,
         "getCurrentWeather": ["index.js", "currentWeather.js", "lib/metWeather.js"],
         # The reminder before a free trial is charged, and the sync it reads.
         "trialReminderSweep": ["index.js", "trialReminders.js", "lib/trialReminder.js",
@@ -88,27 +100,44 @@ def verify():
                                       "lib/trialReminder.js"],
         # The daily race sweep: a no-show, the end of recovery, a finished race with no plan.
         "dailyRaceReconciliationSweep": ["index.js", "lib/raceReconciliation.js",
-                                         "lib/runModeResolution.js", "lib/dateUtils.js"],
+                                         "lib/raceDayCompletion.js", "lib/runModeResolution.js", "lib/dateUtils.js"],
     }
-    for name, paths in targets.items():
-        endpoint = (
-            "https://cloudfunctions.googleapis.com/v1/projects/"
-            f"adaptive-fitness-af8bb/locations/us-central1/functions/{name}"
-        )
-        headers = {"Authorization": f"Bearer {token}"}
-        metadata = json.loads(read(urllib.request.Request(endpoint, headers=headers), 30))
-        if metadata.get("status") != "ACTIVE":
-            raise RuntimeError(f"{name}: deployed function is not ACTIVE")
-        request = urllib.request.Request(
-            endpoint + ":generateDownloadUrl", data=b"{}",
-            headers={**headers, "Content-Type": "application/json"}, method="POST",
-        )
-        download_url = json.loads(read(request, 30))["downloadUrl"]
-        archive = zipfile.ZipFile(io.BytesIO(read(download_url, 60)))
+
+
+def verify_function_source(name, paths, root, token):
+    endpoint = (
+        "https://cloudfunctions.googleapis.com/v1/projects/"
+        f"adaptive-fitness-af8bb/locations/us-central1/functions/{name}"
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+    metadata = json.loads(read(urllib.request.Request(endpoint, headers=headers), 30))
+    if metadata.get("status") != "ACTIVE":
+        raise RuntimeError(f"{name}: deployed function is not ACTIVE")
+    if name in RETRY_REQUIRED:
+        policy = metadata.get("eventTrigger", {}).get("failurePolicy", {})
+        # The v1 API represents enabled retries as {"retry": {}}; testing
+        # its truthiness would mistake that valid empty object for disabled.
+        if not isinstance(policy.get("retry"), dict):
+            raise RuntimeError(f"{name}: deployed event retries are not enabled")
+    request = urllib.request.Request(
+        endpoint + ":generateDownloadUrl", data=b"{}",
+        headers={**headers, "Content-Type": "application/json"}, method="POST",
+    )
+    download_url = json.loads(read(request, 30))["downloadUrl"]
+    with zipfile.ZipFile(io.BytesIO(read(download_url, 60))) as archive:
         for path in paths:
             if archive.read(path) != (root / path).read_bytes():
                 raise RuntimeError(f"{name}: deployed {path} differs from uploaded source")
-        print(f"Verified deployed source: {name}, version {metadata.get('versionId')}, updated {metadata.get('updateTime')}")
+    print(f"Verified deployed source: {name}, version {metadata.get('versionId')}, updated {metadata.get('updateTime')}")
+
+
+def verify():
+    token = subprocess.check_output(
+        ["gcloud", "auth", "print-access-token"], text=True
+    ).strip()
+    root = pathlib.Path(__file__).resolve().parent.parent / "functions"
+    for name, paths in source_targets().items():
+        verify_function_source(name, paths, root, token)
 
 
 if __name__ == "__main__":

@@ -63,6 +63,9 @@ jobs:
       - name: Install function dependencies
         run: npm ci --prefix functions
 
+      - name: Test post-deploy challenge verification (offline)
+        run: node --test scripts/rollover-deployed-challenges.test.mjs
+
       # The functions' plain settings (moderators, the alert inbox, the email
       # sender, the sandbox purchase list…) come from repository variables of
       # the same names: Settings → Secrets and variables → Actions → Variables.
@@ -113,6 +116,13 @@ jobs:
       # green upload log alone does not establish which bundle is executing.
       - name: Verify deployed function source
         run: python3 scripts/verify-deployed-functions-source.py
+
+      # Materialize newly released definitions now, using the existing capped,
+      # idempotent scheduled function. A web release must not expose a new
+      # monthly card before its matching server definition is present.
+      - name: Run challenge rollover and verify current definitions
+        timeout-minutes: 5
+        run: node scripts/rollover-deployed-challenges.mjs
 
       # A failed PRODUCTION deploy must be loud. CI on PRs stays green
       # (deploys only run post-merge), so without this step a deploy

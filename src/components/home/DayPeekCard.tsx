@@ -1,3 +1,4 @@
+import { liftDayNameIn } from "@/lib/liftDayLabel";
 import RunAbout from "@/components/run/RunAbout";
 import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 import { abbreviateK } from "@/utils/formatters";
@@ -317,7 +318,13 @@ export default function DayPeekCard({
   // you WHICH lift / run it is (not a generic "Lift + Run day"). Lift
   // name from the scheduled WorkoutDay; run name from its template
   // (honouring a per-day override).
-  const plannedLiftName = resolved.lift.workout?.dayName ?? null;
+  const plannedLiftName = resolved.lift.workout
+    ? liftDayNameIn(
+        (programState?.workouts ?? []).map((w) => w.dayName),
+        resolved.lift.index ?? -1,
+        resolved.lift.workout.dayName
+      )
+    : null;
   const runTemplateId =
     resolved.run.runDay?.userOverride || resolved.run.runDay?.templateId;
   const runTemplate = RUN_TEMPLATES.find((t) => t.id === runTemplateId);

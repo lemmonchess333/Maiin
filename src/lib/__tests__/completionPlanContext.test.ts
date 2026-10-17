@@ -32,7 +32,7 @@ describe("liftCompletionContext", () => {
       "2026-09-27",
       "intermediate"
     );
-    expect(context.next).toBe("Next: Push · Chest focus");
+    expect(context.next).toBe("Next: Push");
     expect(context.progress).toBe(
       "Week 1 of 4 · 1 of 3 planned lifts complete"
     );
@@ -81,13 +81,27 @@ describe("liftCompletionContext", () => {
       0,
       "2026-09-27"
     );
-    expect(withOverride.next).toBe("Next: Legs · Squat focus");
+    expect(withOverride.next).toBe("Next: Legs");
     const skipped = liftCompletionContext(
       state([week[0], { ...week[1], skipped: true }, week[2]]),
       0,
       "2026-09-27"
     );
-    expect(skipped.next).toBe("Next: Legs · Squat focus");
+    expect(skipped.next).toBe("Next: Legs");
+  });
+
+  it("letters the next lift when its week holds another of its type", () => {
+    const sixDays = state([
+      { dayName: "Push — Chest Focus", completed: true },
+      { dayName: "Pull — Lat Focus", completed: true },
+      { dayName: "Legs — Squat Focus", completed: true },
+      { dayName: "Push — Shoulder Focus" },
+      { dayName: "Pull — Row Focus" },
+      { dayName: "Legs — Deadlift Focus" },
+    ]);
+    expect(liftCompletionContext(sixDays, 2, "2026-09-27").next).toBe(
+      "Next: Push B"
+    );
   });
 
   it("says so when every planned lift is done", () => {

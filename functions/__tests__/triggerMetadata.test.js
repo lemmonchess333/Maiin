@@ -262,6 +262,14 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/users/{uid}/runs/{runId}",
   },
+  onRunUpdated: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.update",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/runs/{runId}",
+  },
   // ADR-0012 — the delete halves. Same collections, same cap: they fire
   // once per document during an account deletion sweep, so an uncapped
   // pair would fan out across a user's entire logged history.

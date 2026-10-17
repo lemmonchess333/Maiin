@@ -81,4 +81,23 @@ describe("what the required check actually runs", () => {
   it("runs lint", () => {
     expect(body).toContain("npm run lint");
   });
+
+  it("runs both offline production verifier suites before a merge", () => {
+    const verifierStep = body
+      .split(/\n {6}- /)
+      .find((step) =>
+        step.includes("name: Test production deploy verifiers (offline)")
+      );
+    expect(
+      verifierStep,
+      "required unit verifier step is missing"
+    ).toBeDefined();
+    expect(verifierStep).toContain(
+      "python3 -m unittest discover -s scripts -p 'test_verify*.py' -v"
+    );
+    expect(verifierStep).toContain(
+      "node --test scripts/rollover-deployed-challenges.test.mjs"
+    );
+    expect(verifierStep).not.toContain("continue-on-error");
+  });
 });

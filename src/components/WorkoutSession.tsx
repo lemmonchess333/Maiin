@@ -242,6 +242,10 @@ interface SetLog {
 interface Props {
   day: WorkoutDay;
   dayIndex: number;
+  /** The day as Train names it in its week ("Pull B", `liftDayNameIn`).
+   *  `day.dayName` stays the stored name, which the draft and the save
+   *  key on; without this the screen names the day without its week. */
+  dayLabel?: string;
   planContext?: { progress: string; next: string };
   /** LIFT-01 draft-identity scope: `"programme"` (default) for
    *  scheduled programme days, `"routine:<id>"` for saved-routine
@@ -286,6 +290,7 @@ interface Props {
 export default function WorkoutSession({
   day: incomingDay,
   dayIndex,
+  dayLabel,
   planContext,
   draftScope,
   draftEpoch,
@@ -1575,7 +1580,7 @@ export default function WorkoutSession({
     return (
       <>
         <SessionCompleteScreen
-          dayName={day.dayName}
+          dayName={dayLabel ?? day.dayName}
           exercises={day.exercises}
           setLogs={setLogs}
           firedPRs={firedPRs}
@@ -1689,13 +1694,12 @@ export default function WorkoutSession({
         </Dialog>
       )}
 
-      {/* Top Bar — the day named as Train and Home name it (DS3): "Pull ·
-          Lat focus" rather than "Pull — Lat Focus". A routine's own name,
-          with no separator, reads as written. */}
+      {/* Top Bar — the day named as Train names it ("Pull B"), never its
+          stored name. A routine's own name reads as written. */}
       <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/50">
         <div className="min-w-0">
           <p className="truncate text-base font-bold text-foreground">
-            {liftDayLine(day.dayName)}
+            {dayLabel ?? liftDayLine(day.dayName)}
           </p>
           <WorkoutProgress
             key={sessionStartedAt}

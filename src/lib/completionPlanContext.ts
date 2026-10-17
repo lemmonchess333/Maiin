@@ -1,7 +1,7 @@
 import type { Experience, ProgramState } from "@/features/program/programTypes";
 import { nextUpIndex } from "@/features/program/nextUpCursor";
 import { blockWeekOf, focusLabel } from "@/features/program/trainingBlock";
-import { liftDayLine } from "@/lib/liftDayLabel";
+import { liftDayNameIn } from "@/lib/liftDayLabel";
 import { liftWeekCounter } from "@/lib/liftWeekLabel";
 
 /** Lift sessions are rotation-ordered, not date-bound (ADR-0002). */
@@ -23,11 +23,16 @@ export function liftCompletionContext(
     (day, index) => day.completed || index === completedIndex
   ).length;
   // Passing over the session just finished: the plan may not show it done.
-  const next = state.workouts[nextUpIndex(state, completedIndex)];
+  const nextIndex = nextUpIndex(state, completedIndex);
+  const next = state.workouts[nextIndex];
   return {
     progress: `${week} · ${done} of ${state.workouts.length} planned lifts complete`,
     next: next
-      ? `Next: ${liftDayLine(next.dayName)}`
+      ? `Next: ${liftDayNameIn(
+          state.workouts.map((w) => w.dayName),
+          nextIndex,
+          next.dayName
+        )}`
       : "All planned lifts complete — review your week on Train",
   };
 }

@@ -36,22 +36,32 @@ point. Existing unique challenge covers continue to resolve by challenge ID.
 
 ## Drop-in contract
 
+The featured monthly goal alternates between Active Days (January, March, May,
+July, September and November) and Training Minutes (February, April, June,
+August, October and December). Each category has a distinct real licensed
+photograph. Active Days shows a running group photographed by Yuval Zukerman;
+Training Minutes shows a gym athlete checking his watch, photographed by Mina
+Rad. Source pages, licences, exact crops and hashes are recorded in
+[`sources-rotating-challenges-2026-10-18.json`](./sources-rotating-challenges-2026-10-18.json).
+
 Add files with these exact stems (any of `.webp .avif .jpg .jpeg .png`;
 prefer WebP ≤ 120 KB, landscape, ≥ 800 px wide):
 
-| File                             | Used for                                       |
-| -------------------------------- | ---------------------------------------------- |
-| `challenge-weekly.webp`          | Weekly Warrior; lifting metrics from elsewhere |
-| `challenge-mileage.webp`         | `<Month>` Mileage; km from elsewhere           |
-| `challenge-hybrid-hero.webp`     | `<Month>` Hybrid Hero; any other metric        |
-| `challenge-strength.webp`        | `<Month>` Strength Builder                     |
-| `challenge-season-<season>.webp` | Spring Reset, Summer Shred, Autumn Push,       |
-|                                  | Winter Bulk                                    |
-| `challenge-fastest-5k.webp`      | Fastest 5K                                     |
-| `challenge-together.webp`        | Together: 1,000 km                             |
-| `space-<spaceId>.webp`           | Community Space cards (directory + header) —   |
-|                                  | one per id in `spaceDefs.ts` SPACE_DEFS,       |
-|                                  | e.g. `space-trail-running.webp`                |
+| File                              | Used for                                       |
+| --------------------------------- | ---------------------------------------------- |
+| `challenge-weekly.webp`           | Weekly Warrior; lifting metrics from elsewhere |
+| `challenge-mileage.webp`          | `<Month>` Mileage; km from elsewhere           |
+| `challenge-hybrid-hero.webp`      | `<Month>` Hybrid Hero; any other metric        |
+| `challenge-strength.webp`         | `<Month>` Strength Builder                     |
+| `challenge-active-days.webp`      | Featured Active Days editions                  |
+| `challenge-training-minutes.webp` | Featured Training Minutes editions             |
+| `challenge-season-<season>.webp`  | Spring Reset, Summer Shred, Autumn Push,       |
+|                                   | Winter Bulk                                    |
+| `challenge-fastest-5k.webp`       | Fastest 5K                                     |
+| `challenge-together.webp`         | Together: 1,000 km                             |
+| `space-<spaceId>.webp`            | Community Space cards (directory + header) —   |
+|                                   | one per id in `spaceDefs.ts` SPACE_DEFS,       |
+|                                   | e.g. `space-trail-running.webp`                |
 
 Each challenge the server defines (`functions/lib/challengeDefs.js`) has
 its own photo, by the id prefix its definition stamps

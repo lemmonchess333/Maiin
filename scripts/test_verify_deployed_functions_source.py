@@ -1,11 +1,15 @@
-"""Offline regressions for the deployed-functions read-back's retries. No cloud calls."""
+"""Offline regressions for deployed source identity and retries. No cloud calls."""
 
 import contextlib
 import importlib.util
 import io
+import json
 from pathlib import Path
+import tempfile
 import unittest
+from unittest.mock import patch
 import urllib.error
+import zipfile
 
 # The script's name has hyphens, so it is loaded by path.
 _SPEC = importlib.util.spec_from_file_location(
@@ -92,6 +96,121 @@ class ReadBackRetryTest(unittest.TestCase):
         self.assertIn("HTTP 503", printed.getvalue())
         self.assertNotIn("token", printed.getvalue())
         self.assertNotIn("https://", printed.getvalue())
+
+
+class ChallengeSourceTargetsTest(unittest.TestCase):
+    def test_rotation_and_every_participation_entry_point_are_verified(self):
+        targets = verifier.source_targets()
+        self.assertTrue({"index.js", "package-lock.json", "lib/challengeDefs.js"}
+                        .issubset(targets["rolloverChallenges"]))
+        artifacts = {
+            "index.js", "package-lock.json", "lib/challengeDefs.js",
+            "lib/challengeParticipationProgress.js", "lib/challengeBackfill.js",
+            "lib/challengeActivityWindow.js", "lib/challengeTiers.js",
+            "lib/challengeMarkers.js", "lib/runEligibility.js", "lib/workoutVolume.js",
+        }
+        for name in ("onChallengeParticipantCreated", "onWorkoutCreated", "onRunCreated",
+                     "onWorkoutUpdated", "onRunUpdated", "onWorkoutDeleted", "onRunDeleted"):
+            with self.subTest(function=name):
+                self.assertTrue(artifacts.issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+
+    def test_expanded_targets_keep_training_and_race_source_checks(self):
+        targets = verifier.source_targets()
+        for name in ("onWorkoutCreated", "onWorkoutUpdated"):
+            with self.subTest(function=name):
+                self.assertTrue({"lib/stateTransition.js", "lib/workoutCorrections.js",
+                                 "lib/programCommands.js"}.issubset(targets[name]))
+        self.assertTrue({"lib/raceReconciliation.js", "lib/raceDayCompletion.js"}
+                        .issubset(targets["onRunCreated"]))
+        self.assertTrue({"lib/raceReconciliation.js", "lib/runModeResolution.js",
+                         "lib/dateUtils.js"}.issubset(targets["dailyRaceReconciliationSweep"]))
+
+    def test_release_reads_back_every_target(self):
+        with patch.object(verifier.subprocess, "check_output", return_value="private-token\n"), \
+                patch.object(verifier, "verify_function_source") as check:
+            verifier.verify()
+        self.assertEqual([call.args[0] for call in check.call_args_list],
+                         list(verifier.source_targets()))
+        self.assertTrue(all(call.args[3] == "private-token" for call in check.call_args_list))
+
+
+class DeployedSourceIdentityTest(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.root = Path(self.directory.name)
+        self.paths = verifier.source_targets()["onRunUpdated"]
+        self.uploaded = {path: f"uploaded {path}\n".encode() for path in self.paths}
+        self.uploaded["index.js"] = b"// CI build: current-commit @ now\nexports.onRunUpdated = handler;\n"
+        for name, contents in self.uploaded.items():
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(contents)
+
+    def deployed(self, contents=None, status="ACTIVE"):
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w") as archive:
+            for path, value in (self.uploaded if contents is None else contents).items():
+                archive.writestr(path, value)
+        return [
+            json.dumps({"status": status, "versionId": "123", "updateTime": "now",
+                        "eventTrigger": {"failurePolicy": {"retry": {}}}}).encode(),
+            b'{"downloadUrl":"https://storage.invalid/source?token=private-signed-url"}',
+            buffer.getvalue(),
+        ]
+
+    def check(self, responses):
+        printed = io.StringIO()
+        with patch.object(verifier, "read", side_effect=responses) as reader, \
+                contextlib.redirect_stdout(printed):
+            verifier.verify_function_source("onRunUpdated", self.paths, self.root, "private-token")
+        return printed.getvalue(), reader
+
+    def test_exact_active_bundle_is_confirmed_without_printing_credentials(self):
+        printed, reader = self.check(self.deployed())
+        self.assertIn("Verified deployed source: onRunUpdated, version 123", printed)
+        self.assertNotIn("private-token", printed)
+        self.assertNotIn("private-signed-url", printed)
+        self.assertNotIn("https://", printed)
+        self.assertEqual(reader.call_count, 3)
+
+    def test_any_stale_participation_artifact_fails_despite_active_metadata(self):
+        for path in self.paths:
+            with self.subTest(artifact=path):
+                stale = {**self.uploaded, path: b"previous deployment"}
+                with self.assertRaisesRegex(RuntimeError,
+                                            f"onRunUpdated: deployed {path} differs from uploaded source"):
+                    self.check(self.deployed(stale))
+
+    def test_previous_commit_marker_fails_even_when_function_and_libraries_match(self):
+        previous = {**self.uploaded,
+                    "index.js": self.uploaded["index.js"].replace(b"current-commit", b"previous-commit")}
+        with self.assertRaisesRegex(RuntimeError, "deployed index.js differs"):
+            self.check(self.deployed(previous))
+
+    def test_missing_new_progress_helper_fails(self):
+        previous = dict(self.uploaded)
+        del previous["lib/challengeParticipationProgress.js"]
+        with self.assertRaises(KeyError):
+            self.check(self.deployed(previous))
+
+    def test_inactive_function_fails_before_reading_its_source(self):
+        with patch.object(verifier, "read", side_effect=self.deployed(status="DEPLOY_IN_PROGRESS")) as reader:
+            with self.assertRaisesRegex(RuntimeError, "onRunUpdated: deployed function is not ACTIVE"):
+                verifier.verify_function_source("onRunUpdated", self.paths, self.root, "private-token")
+        self.assertEqual(reader.call_count, 1)
+
+    def test_participation_exports_require_deployed_retry_policy(self):
+        for name in ("onChallengeParticipantCreated", "onWorkoutCreated", "onRunCreated",
+                     "onWorkoutUpdated", "onRunUpdated", "onWorkoutDeleted", "onRunDeleted"):
+            for policy in ({}, {"retry": False}, {"retry": None}):
+                with self.subTest(function=name, policy=policy):
+                    metadata = json.dumps({"status": "ACTIVE", "eventTrigger": {"failurePolicy": policy}}).encode()
+                    with patch.object(verifier, "read", return_value=metadata) as reader:
+                        with self.assertRaisesRegex(RuntimeError, "deployed event retries are not enabled"):
+                            verifier.verify_function_source(name, self.paths, self.root, "private-token")
+                    self.assertEqual(reader.call_count, 1)
 
 
 if __name__ == "__main__":

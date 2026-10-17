@@ -13,6 +13,7 @@ import {
   Leaf,
   Snowflake,
   Dumbbell,
+  CalendarDays,
 } from "lucide-react";
 import type {
   Challenge,
@@ -72,6 +73,8 @@ const METRIC_ACCENT: Record<string, string> = {
   total_volume: THEME.lifting,
   workout_count: THEME.lifting,
   hybrid_score: THEME.brand,
+  active_days: THEME.brand,
+  training_minutes: THEME.brand,
 };
 
 /* Icon map for challenge cards. The seed definitions in
@@ -95,6 +98,8 @@ const CHALLENGE_ICON_MAP: Record<
   leaf: Leaf,
   snowflake: Snowflake,
   dumbbell: Dumbbell,
+  "calendar-days": CalendarDays,
+  clock: Clock,
 };
 
 function TierMarker({

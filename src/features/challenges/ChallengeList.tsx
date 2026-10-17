@@ -8,6 +8,7 @@ import {
   soonestEndingChallenge,
 } from "./useChallenges";
 import { getWeeklyAccountability } from "./weeklyAccountability";
+import { featuredChallengesFirst } from "./challengeOrder";
 import { ChallengeCard } from "./ChallengeCard";
 import { ChallengeFinaleCard } from "./ChallengeFinaleCard";
 import CollectivePulse from "./CollectivePulse";
@@ -153,17 +154,29 @@ export function ChallengeList({
      CollectivePulse strip at the top of the section — the one ambient
      signal that moves at any user count — so it leaves the card lists. */
   const collectiveCh = challenges.find((c) => (c.collectiveTarget ?? 0) > 0);
-  const otherMy = myChallenges.filter(
-    (c) => c.id !== weeklyCh?.id && c.id !== collectiveCh?.id
+  const otherMy = featuredChallengesFirst(
+    myChallenges.filter(
+      (c) => c.id !== weeklyCh?.id && c.id !== collectiveCh?.id
+    )
   );
-  const otherAvailable = availableChallenges.filter(
-    (c) => c.id !== weeklyCh?.id && c.id !== collectiveCh?.id
+  const otherAvailable = featuredChallengesFirst(
+    availableChallenges.filter(
+      (c) => c.id !== weeklyCh?.id && c.id !== collectiveCh?.id
+    )
+  );
+  // The one rotating invitation stays visible; core goals retain the compact
+  // disclosure until someone chooses to browse the rest.
+  const featuredAvailable = otherAvailable.find((c) =>
+    c.id.startsWith("featured-monthly-")
+  );
+  const remainingAvailable = otherAvailable.filter(
+    (c) => c.id !== featuredAvailable?.id
   );
   /* Soonest-ending available challenge keeps the time pressure visible
      on the collapsed row ("5 days left" was a real join driver).
      Null-safe: the active list keeps docs with no endDate, and the old
      inline reduce crashed the whole section on one of them. */
-  const soonestChallenge = soonestEndingChallenge(otherAvailable);
+  const soonestChallenge = soonestEndingChallenge(remainingAvailable);
   const soonestAvailable = soonestChallenge
     ? getTimeRemaining(soonestChallenge.endDate)
     : null;
@@ -255,7 +268,8 @@ export function ChallengeList({
   return (
     <div className="space-y-4">
       <p className="text-small text-muted-foreground">
-        Monthly challenges refresh on the 1st. Join each new edition to take
+        Monthly challenges refresh on the 1st, with a featured goal alternating
+        between active days and training minutes. Join each new edition to take
         part. Seasonal challenges run for three months.
       </p>
       {/* A restricted account can follow its challenges and leave them,
@@ -456,16 +470,29 @@ export function ChallengeList({
         </div>
       )}
 
+      {featuredAvailable && (
+        <div className="space-y-2">
+          <SectionHeading>Featured this month</SectionHeading>
+          <ChallengeCard
+            challenge={featuredAvailable}
+            leaderboard={leaderboards[featuredAvailable.id]}
+            joined={false}
+            onJoin={() => joinChallenge(featuredAvailable.id)}
+            onLeave={() => {}}
+          />
+        </div>
+      )}
+
       {/* Other available challenges — SOC-P1e: collapsed behind a
           disclosure row. Three full photo-header cards of not-joined
           challenges dominated Together with equal weight to the joined
           surface; the row keeps the entry (with the soonest deadline's
           urgency) without three competing lobbies above the fold. */}
-      {otherAvailable.length > 0 &&
+      {remainingAvailable.length > 0 &&
         (showAllAvailable ? (
           <div className="space-y-2">
             <SectionHeading>Available</SectionHeading>
-            {otherAvailable.map((ch) => (
+            {remainingAvailable.map((ch) => (
               <ChallengeCard
                 key={ch.id}
                 challenge={ch}
@@ -482,7 +509,7 @@ export function ChallengeList({
             fullWidth
             onClick={() => setShowAllAvailable(true)}
           >
-            {moreChallengesLabel(otherAvailable.length, soonestAvailable)}
+            {moreChallengesLabel(remainingAvailable.length, soonestAvailable)}
           </Button>
         ))}
 

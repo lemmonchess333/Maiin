@@ -46,6 +46,7 @@ import {
   type LighterDaySwap,
 } from "@/features/program/easierToday";
 import type { WorkoutDay } from "@/features/program/programTypes";
+import { liftDayNameIn } from "@/lib/liftDayLabel";
 import type { RestContext } from "@/features/program/restTime";
 
 interface ExpressSessionSheetProps {
@@ -69,6 +70,9 @@ interface ExpressSessionSheetProps {
    *  a one-tap swap. Null/absent = no meaningfully lighter alternative,
    *  and the row simply doesn't render. */
   lighterDay?: LighterDaySwap | null;
+  /** The plan's stored day names in order, so the lighter day is named as
+   *  Train names it in its week ("Pull B"). */
+  weekDayNames?: readonly string[];
   /** Launches the swapped day (full prescription) instead of today's. */
   onSwapToDay?: (index: number) => void;
   /**
@@ -88,6 +92,7 @@ export default function ExpressSessionSheet({
   onClose,
   onStart,
   lighterDay = null,
+  weekDayNames = [],
   onSwapToDay,
   blockPrefersShorter = false,
   timeBudgetMinutes,
@@ -159,7 +164,7 @@ export default function ExpressSessionSheet({
     const swapIndex = lighterDay.index;
     choices.push({
       id: "lighter_day",
-      label: `Do ${lighterDay.day.dayName} instead · ~${lighterDay.minutes} min`,
+      label: `Do ${liftDayNameIn(weekDayNames, swapIndex, lighterDay.day.dayName)} instead · ~${lighterDay.minutes} min`,
       sublabel: "The lighter session in your week — today's stays planned.",
       variant: "secondary",
       onSelect: async () => onSwapToDay(swapIndex),

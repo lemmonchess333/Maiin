@@ -12,7 +12,8 @@ next period was created early and Firestore has no new write at midnight.
 ## What changes in November
 
 On 1 November 2026 the monthly editions become November Mileage, November
-Hybrid Hero, November Strength Builder, Fastest 5K and Together: 1,000 km.
+Hybrid Hero, November Strength Builder, November Active Days, Fastest 5K and
+Together: 1,000 km.
 These are fresh editions of the same formats, with their own memberships and
 progress. Users choose which new editions to join. Joining does not change
 their training plan. Existing server backfill credits eligible training already
@@ -28,6 +29,31 @@ Strength Builder uses the existing `total_volume` metric and sums logged
 lifting volume. Its three tiers are stored in kilograms (5,000 / 15,000 /
 30,000) and displayed in the user's lifting unit. It is a record of normal
 training, not a recommendation to add sessions or lift more than planned.
+
+## Rotating featured monthly goal
+
+One featured goal rotates automatically on the first of each month. It stays
+visible above the collapsed list of other available challenges; once joined,
+it leads the person's challenge list. The existing core goals remain available.
+
+| Months                                           | Featured goal    | Bronze / Silver / Gold  |
+| ------------------------------------------------ | ---------------- | ----------------------- |
+| January, March, May, July, September, November   | Active Days      | 8 / 12 / 20 days        |
+| February, April, June, August, October, December | Training Minutes | 120 / 300 / 600 minutes |
+
+Active Days counts each local calendar date once across logged lifts and
+eligible runs. Multiple sessions on the same date count as one day. Rest days
+do not reset progress. Training Minutes sums the saved durations of those
+sessions, including any duration already recorded by the workout logger; the
+challenge does not invent a time estimate. Partial minutes combine, and the
+app displays completed whole minutes.
+
+Both use current saved activity within the month's window. Joining mid-month
+credits earlier eligible sessions. Editing or deleting a session updates the
+total; deleting one of several sessions on a day preserves that active day.
+Leave/rejoin and retried or delayed events recalculate current facts rather
+than applying the same activity twice. New-goal progress is a live subscription
+while the challenge is visible, including the recent finale window.
 
 ## Notifications today
 
@@ -51,7 +77,10 @@ published while the app is closed. Those are separate delivery guarantees.
 
 ## Publishing this change
 
-The UI and new cover assets need the normal web/native release. Deploying
-Functions updates the server definitions; the next daily rollover then adds
-the current month's Strength Builder without overwriting existing challenge
-counts or progress. The source of truth is `functions/lib/challengeDefs.js`.
+The UI and new cover assets need the normal web/native release. The production
+release deploys Functions and verifies the executing source, then triggers the
+existing rollover Scheduler job once and reads back the current canonical
+definitions before publishing the web app. This makes new definitions visible
+at release time. The daily rollover continues maintaining the calendar without
+overwriting existing memberships, counts or progress. The source of truth is
+`functions/lib/challengeDefs.js`.

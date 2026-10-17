@@ -6,10 +6,16 @@
  * most of them are lossless WebP at about 450 KB a frame. Copied as they
  * are, they made up nearly all of a 336 MB build, every byte of it inside
  * the iPhone app. So a build re-saves each lossless frame in its output as
- * lossy WebP at quality 85, same canvas, which took the 756 frames from
- * 335 MB to 32 MB. A frame that is already lossy is left alone, since
- * saving it again only loses more, and so is one the re-save would not
- * make at least a tenth smaller.
+ * lossy WebP at quality 85, which took the 756 frames from 335 MB to 32 MB.
+ *
+ * The re-save also fits each frame inside `FORM_FRAME_MAX_SIDE`, the
+ * pixels the frame's box can show: `ExerciseFormFrames` draws a frame in a
+ * 360-point square, which is 1080 pixels on a 3x iPhone. Most sources are
+ * 1000 to 1700 pixels on their long side, so the rest was bytes no screen
+ * shows; fitting them took the 912 frames from 38 MB to 25 MB. A frame that
+ * is already lossy and already fits is left alone, since saving it again
+ * only loses more; a lossy one bigger than the box is brought down. Either
+ * way a re-save has to make the frame at least a tenth smaller to ship.
  *
  * Results are kept in a cache keyed by the source's bytes, so a rebuild
  * re-saves only frames that changed.
@@ -28,6 +34,11 @@ import { join } from "node:path";
 
 export const FORM_FRAME_QUALITY = 85;
 
+/** The longest side a shipped frame needs: the 360-point box it is drawn
+ *  in, at 3x. `shrink-form-frames.test.ts` pins it to that box. */
+export const FORM_FRAME_BOX_POINTS = 360;
+export const FORM_FRAME_MAX_SIDE = FORM_FRAME_BOX_POINTS * 3;
+
 /** Whether a WebP holds lossless image data (a `VP8L` chunk). */
 export function isLosslessWebp(data: Buffer): boolean {
   if (
@@ -45,11 +56,21 @@ export function isLosslessWebp(data: Buffer): boolean {
   return false;
 }
 
-/** The frame as the build ships it: the lossy re-save when it is a
- *  lossless frame the re-save makes at least a tenth smaller, else null. */
+/** The frame as the build ships it: the lossy re-save, fitted inside the
+ *  box, when the frame is lossless or bigger than the box and the re-save
+ *  makes it at least a tenth smaller; else null. */
 export async function shrunkFormFrame(data: Buffer): Promise<Buffer | null> {
-  if (!isLosslessWebp(data)) return null;
+  const lossless = isLosslessWebp(data);
+  const { width = 0, height = 0 } = await sharp(data).metadata();
+  const oversized = Math.max(width, height) > FORM_FRAME_MAX_SIDE;
+  if (!lossless && !oversized) return null;
   const smaller = await sharp(data)
+    .resize({
+      width: FORM_FRAME_MAX_SIDE,
+      height: FORM_FRAME_MAX_SIDE,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
     .webp({ quality: FORM_FRAME_QUALITY, effort: 4 })
     .toBuffer();
   return smaller.length <= data.length * 0.9 ? smaller : null;
@@ -88,7 +109,7 @@ export async function shrinkFormFrames(
     for (let file = queue.shift(); file; file = queue.shift()) {
       const data = readFileSync(file);
       const key = createHash("sha256")
-        .update(`q${FORM_FRAME_QUALITY}:`)
+        .update(`q${FORM_FRAME_QUALITY}:max${FORM_FRAME_MAX_SIDE}:`)
         .update(data)
         .digest("hex");
       // The cache holds the re-save, or a marker that the frame ships as is.
