@@ -5,7 +5,8 @@ What to enter in App Store Connect for Tropos (Apple ID 6762416918, bundle
 what has to be true before the first submission. Tracked by
 [issue 2542](https://github.com/lemmonchess333/Maiin/issues/2542).
 
-Every claim here was checked against the code on 2026-10-04. When a feature,
+Every claim here was checked against the code on 2026-10-04, and the
+lifting units and form-guide lines again on 2026-10-17. When a feature,
 an SDK or a flow of data changes, change the matching section in the same PR:
 the privacy answers in particular describe what the code does, and Apple
 holds the label, the privacy policy and the app to each other.
@@ -67,11 +68,11 @@ Tell it your goal, the days you can train, your equipment and your experience. I
 
 Lifting
 • 2 to 6 sessions a week, split to suit your days: full body, upper and lower, or push, pull and legs.
-• Starting weights from your bodyweight and experience. Each session starts from what you lifted last time, and the plan adds weight or reps when you hit your targets.
+• Starting weights from your bodyweight and experience, in kg or lb. Each session starts from what you lifted last time, and the plan adds weight or reps when you hit your targets.
 • Warm-up sets, a rest timer and a plate calculator.
 • Shorter versions when time is tight: 45 or 30 minutes with the main lifts kept, or an easier day, without changing the plan.
 • Exercise choices that work around a limitation in your lower back, shoulders, knees, elbows or wrists.
-• Over 150 exercises, many with drawn form guides.
+• Over 150 exercises, each with a drawn form guide.
 • A suggested deload week when your training calls for one, and new personal bests marked as you lift.
 
 Running
@@ -81,6 +82,7 @@ Running
 • Adjust a week when you're unwell or busy, and keep the race date.
 • Plan routes, run them again against your last time, and hide the start and end of the runs you share.
 • Training paces from a recent race time, race predictions and shoe mileage.
+• A drawn guide to running form.
 
 Food
 • Type a meal the way you'd say it, search the food database, or scan a barcode.
