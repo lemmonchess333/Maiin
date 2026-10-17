@@ -265,6 +265,25 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
     </div>
   );
 
+  /* The volume numeral and the PR chip a lift's hero carries, whichever
+     hero it is. */
+  const renderVolumeOverlay = () => (
+    <div className="absolute bottom-3 left-4">
+      <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-lifting">
+        {volumeFigure(activity?.totalVolume ?? 0)}
+      </p>
+      <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
+    </div>
+  );
+  const renderPrChip = (side: "left-4" | "right-4") => (
+    <span
+      className={`absolute top-3 ${side} inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-achievement/15 text-achievement-strong`}
+    >
+      <Star className="size-3.5 fill-achievement" />
+      {prCount} PR{prCount === 1 ? "" : "s"}
+    </span>
+  );
+
   /* The lead lift's drawing at the right, the numbers at the left: Home's
      Today card, in the feed. Alone, the drawing takes the middle. */
   const renderDrawingHero = (art: FormArtCutout) => {
@@ -291,20 +310,8 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
               : "inset-x-3 w-[calc(100%-1.5rem)] object-bottom")
           }
         />
-        {showVolumeOverlay && (
-          <div className="absolute bottom-3 left-4">
-            <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-lifting">
-              {volumeFigure(activity?.totalVolume ?? 0)}
-            </p>
-            <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
-          </div>
-        )}
-        {showPrChip && (
-          <span className="absolute top-3 left-4 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-achievement/15 text-achievement-strong">
-            <Star className="size-3.5 fill-achievement" />
-            {prCount} PR{prCount === 1 ? "" : "s"}
-          </span>
-        )}
+        {showVolumeOverlay && renderVolumeOverlay()}
+        {showPrChip && renderPrChip("left-4")}
       </div>
     );
   };
@@ -322,20 +329,8 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
           className="h-full w-auto"
         />
       </div>
-      {showVolumeOverlay && (
-        <div className="absolute bottom-3 left-4">
-          <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-lifting">
-            {volumeFigure(activity?.totalVolume ?? 0)}
-          </p>
-          <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
-        </div>
-      )}
-      {showPrChip && (
-        <span className="absolute top-3 right-4 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-achievement/15 text-achievement-strong">
-          <Star className="size-3.5 fill-achievement" />
-          {prCount} PR{prCount === 1 ? "" : "s"}
-        </span>
-      )}
+      {showVolumeOverlay && renderVolumeOverlay()}
+      {showPrChip && renderPrChip("right-4")}
     </div>
   );
 
