@@ -124,6 +124,20 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
     status: "owner-released-with-findings",
     reviewFile: "docs/exercise-art/releases/2026-10-16/seated-row.json",
   },
+  swimming: {
+    ...existing("swimming", 1264, 848),
+    reference: "form-frames/swimming/1.webp",
+    version: "anatomy-v3-2026-10-17-gemini-front-crawl-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-17/swimming.json",
+  },
+  stairmaster: {
+    ...existing("stairmaster", 1264, 848),
+    reference: "form-frames/stairmaster/1.webp",
+    version: "anatomy-v3-2026-10-17-gemini-stepmill-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-17/stairmaster.json",
+  },
   "turkish-get-up": {
     ...existing("turkish-get-up", 1024, 1024),
     reference: "form-frames/turkish-get-up/1.webp",

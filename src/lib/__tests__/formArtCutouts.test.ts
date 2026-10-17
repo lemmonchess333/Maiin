@@ -95,9 +95,6 @@ describe("form art cut-outs", () => {
     const id = released[0];
     expect(getFormArtCutout(id)?.src).toBe(FORM_ART_CUTOUTS[id].src);
     expect(getFormArtCutout("not-an-exercise")).toBeNull();
-    // A pilot that is not released has no cut-out even if one existed.
-    expect(getReleasedFormArtwork("stairmaster")).toBeNull();
-    expect(getFormArtCutout("stairmaster")).toBeNull();
   });
 });
 
