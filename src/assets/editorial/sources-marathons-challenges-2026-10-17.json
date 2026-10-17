@@ -1,6 +1,6 @@
 {
   "updatedOn": "2026-10-17",
-  "notes": "Eight real destination photographs and five generated generic challenge covers. Existing seasonal photo records are retained in sources-2026-10-17.json. New assets are original colour, without added logos or filters.",
+  "notes": "Eight real destination photographs, one real licensed lifting photograph and four generated generic seasonal challenge covers. Superseded images retain their original prompts and hashes in supersededImages. Earlier seasonal photo records are retained in sources-2026-10-17.json.",
   "images": [
     {
       "asset": "space-cape-town-marathon.webp",
@@ -272,6 +272,31 @@
     },
     {
       "asset": "challenge-strength.webp",
+      "sourceUrl": "https://unsplash.com/photos/a-woman-lifting-a-barbell-in-a-gym-1PM_MY1zbF4",
+      "downloadUrl": "https://images.unsplash.com/photo-1706029831405-619b27e3260c?w=2400&q=85&fm=jpg",
+      "photographer": "Ambitious Studio* | Rick Barrett",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "content": "Real photograph of a lifter setting up a barbell deadlift. Not a Tropos member.",
+      "sourceSha256": "74d4ccbf719fa538921348bd8917745173dfe1a77a3ffb7f5d530b9991684f02",
+      "crop": {
+        "left": 0,
+        "top": 200,
+        "width": 2400,
+        "height": 1200
+      },
+      "output": {
+        "width": 1200,
+        "height": 600,
+        "quality": 82,
+        "bytes": 91022,
+        "sha256": "9cd51add7750e219ae700d91a88f2a6e8d2e47aff69e8ddf33def02b86ba9f6a"
+      }
+    }
+  ],
+  "supersededImages": [
+    {
+      "asset": "challenge-strength.webp",
       "source": "Built-in image_gen",
       "generatedOn": "2026-10-17",
       "content": "Generated generic editorial athletes; not real Tropos members or a named race.",
@@ -289,7 +314,9 @@
         "quality": 82,
         "bytes": 54144,
         "sha256": "4c09e765f1a52652428c7cf293356406ecf551de5143ea7fa10ea17a8a0ae492"
-      }
+      },
+      "supersededOn": "2026-10-17",
+      "reason": "Owner reported unnatural plate/bar geometry in the generated image. Replaced with licensed real photography."
     }
   ]
 }

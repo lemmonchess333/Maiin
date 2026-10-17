@@ -19,11 +19,14 @@ of the destination, not official race images or a course guarantee.
 
 The four seasonal covers now use generated generic editorial athletes, with
 clear spring greenery, summer coast, autumn foliage and winter gym light.
-`challenge-strength.webp` is a separate generated lifting image for the new
-monthly Strength Builder. These depict neither real Tropos members nor a named
-race. The built-in image generation tool produced each asset separately; full
-prompts, source/output hashes, crops and encoding settings are recorded in
+These depict neither real Tropos members nor a named race. The built-in image
+generation tool produced each seasonal asset separately. Monthly Strength
+Builder now uses a real licensed barbell photograph by Ambitious Studio\* | Rick
+Barrett, replacing the generated plate-loading scene after its equipment geometry
+failed visual review. Full prompts for generated assets, source/output hashes,
+crops and encoding settings are recorded in
 [`sources-marathons-challenges-2026-10-17.json`](./sources-marathons-challenges-2026-10-17.json).
+The superseded generated strength record is retained in `supersededImages`.
 The earlier seasonal source records below are retained as history.
 
 Every new asset is a local landscape WebP, 1200 px wide and under 120 KB.
@@ -41,6 +44,7 @@ prefer WebP ≤ 120 KB, landscape, ≥ 800 px wide):
 | `challenge-weekly.webp`          | Weekly Warrior; lifting metrics from elsewhere |
 | `challenge-mileage.webp`         | `<Month>` Mileage; km from elsewhere           |
 | `challenge-hybrid-hero.webp`     | `<Month>` Hybrid Hero; any other metric        |
+| `challenge-strength.webp`        | `<Month>` Strength Builder                     |
 | `challenge-season-<season>.webp` | Spring Reset, Summer Shred, Autumn Push,       |
 |                                  | Winter Bulk                                    |
 | `challenge-fastest-5k.webp`      | Fastest 5K                                     |

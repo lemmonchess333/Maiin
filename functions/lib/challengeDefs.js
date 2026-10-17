@@ -67,19 +67,19 @@ function seasonFor(now) {
     return {
       name: "Spring Reset",
       description:
-        "Log something every day you can. Your longest run of days counts.",
-      metric: "streak_days",
+        "Your logged lifting sessions this season count. Rest days are welcome.",
+      metric: "workout_count",
       icon: "sprout",
-      tiers: { bronze: 5, silver: 14, gold: 30 },
+      tiers: { bronze: 8, silver: 20, gold: 36 },
     };
   }
   if (month >= 5 && month <= 7) {
     return {
       name: "Summer Shred",
-      description: "Every workout and every run counts.",
-      metric: "combined_score",
+      description: "Running and lifting both count. Train however you like.",
+      metric: "hybrid_score",
       icon: "sun",
-      tiers: { bronze: 20, silver: 50, gold: 100 },
+      tiers: { bronze: 500, silver: 2000, gold: 5000 },
     };
   }
   if (month >= 8 && month <= 10) {

@@ -168,10 +168,10 @@ describe("seasonFor", () => {
     const cases = [
       [0, "Winter Bulk", "total_volume"], // Jan
       [1, "Winter Bulk", "total_volume"], // Feb
-      [2, "Spring Reset", "streak_days"], // Mar (spring starts)
-      [4, "Spring Reset", "streak_days"], // May (spring ends)
-      [5, "Summer Shred", "combined_score"], // Jun (summer starts)
-      [7, "Summer Shred", "combined_score"], // Aug (summer ends)
+      [2, "Spring Reset", "workout_count"], // Mar (spring starts)
+      [4, "Spring Reset", "workout_count"], // May (spring ends)
+      [5, "Summer Shred", "hybrid_score"], // Jun (summer starts)
+      [7, "Summer Shred", "hybrid_score"], // Aug (summer ends)
       [8, "Autumn Push", "hybrid_score"], // Sep (autumn starts)
       [10, "Autumn Push", "hybrid_score"], // Nov (autumn ends)
       [11, "Winter Bulk", "total_volume"], // Dec (winter starts)
@@ -181,6 +181,20 @@ describe("seasonFor", () => {
       expect(s.name, `month ${month}`).toBe(name);
       expect(s.metric, `month ${month}`).toBe(metric);
     }
+  });
+
+  it("gives Spring lifting-session targets and Summer supported hybrid targets", () => {
+    expect(seasonFor(at(2027, 2))).toMatchObject({
+      metric: "workout_count",
+      description:
+        "Your logged lifting sessions this season count. Rest days are welcome.",
+      tiers: { bronze: 8, silver: 20, gold: 36 },
+    });
+    expect(seasonFor(at(2027, 5))).toMatchObject({
+      metric: "hybrid_score",
+      description: "Running and lifting both count. Train however you like.",
+      tiers: { bronze: 500, silver: 2000, gold: 5000 },
+    });
   });
 });
 
