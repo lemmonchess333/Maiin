@@ -8,6 +8,7 @@ Turkish Get-Up and Assault Bike are owner-released with findings ([get-up](relea
 - The bike is a straight-on front view and its mirror, because six side-view methods could not draw a second pedal position.
 - Swimming and Stairmaster followed the same day ([swimming](releases/2026-10-17/swimming.json), [stairmaster](releases/2026-10-17/stairmaster.json)): the swimmer's head was edited down into the water, and the stepmill uses the elliptical's two-pose pattern.
 - Every catalogue exercise now has released art.
+- Running has a form guide of its own ([run-form](run-form/provenance.json)), opened from the runner on Train's run card: a runner coming toward the viewer and its mirror, alternating, because side views overstrode or put both feet down.
 
 ## Previous checkpoint — 3 October 2026
 

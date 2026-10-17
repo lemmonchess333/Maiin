@@ -79,6 +79,7 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import StatFigure from "@/components/ui/StatFigure";
 import { Card } from "@/components/ui/Card";
 import { runPoseFor, runPoseUrl } from "@/lib/runPoses";
+import RunFormSheet from "@/components/run/RunFormSheet";
 import { readString, writeString } from "@/lib/localStore";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -339,6 +340,12 @@ export default function ProgrammeRunSection({
   const raceElapsedDismissKey = `${storageUid}:tropos.dismiss.raceElapsed.${thisWeekKeyForDismissal}`;
   // Run13 (RUN-02): the proactive Adjust-this-week sheet.
   const [adjustOpen, setAdjustOpen] = useState(false);
+  // The running form guide, opened from the runner on the run cards.
+  const [runFormOpen, setRunFormOpen] = useState(false);
+  const openRunForm = () => {
+    haptic();
+    setRunFormOpen(true);
+  };
   // Run14: when the sheet is opened from the ease-week nudge it lands
   // straight on the easier preview; the normal "Adjust this week" entry
   // clears this so it still opens on the intent chooser.
@@ -1595,6 +1602,8 @@ export default function ProgrammeRunSection({
                       className="h-24 w-auto"
                     />
                   }
+                  onFigurePress={openRunForm}
+                  figureLabel="Running form"
                   eyebrow={`${selectedEyebrow} · ${selectedDateLabel}`}
                   title={selectedName}
                   /* Run21 (2): the session's one feel line. Its shape
@@ -1671,15 +1680,31 @@ export default function ProgrammeRunSection({
                               "Lift day. Head out for a free run if you like."
                             : "Rest day. Head out whenever you like."}
                     </p>
+                    {/* Where the runner gives way, its guide is named in
+                        words, as on the run card. */}
+                    <Button
+                      variant="ghost"
+                      className="-ml-4 mt-1 hidden text-running-strong @max-[14em]:inline-flex"
+                      onClick={openRunForm}
+                    >
+                      Running form
+                    </Button>
                   </div>
-                  <img
-                    src={runPoseUrl("run-easy")}
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                    decoding="async"
-                    className="-my-1 h-20 w-auto shrink-0 @max-[14em]:hidden"
-                  />
+                  <Button
+                    variant="ghost"
+                    className="-my-1 h-auto shrink-0 p-0 @max-[14em]:hidden"
+                    aria-label="Running form"
+                    onClick={openRunForm}
+                  >
+                    <img
+                      src={runPoseUrl("run-easy")}
+                      alt=""
+                      aria-hidden="true"
+                      draggable={false}
+                      decoding="async"
+                      className="h-20 w-auto"
+                    />
+                  </Button>
                 </div>
                 {selectedRun.isCompleted && selectedSavedRunId && (
                   <Button
@@ -1937,6 +1962,7 @@ export default function ProgrammeRunSection({
           uid={profile.uid}
         />
       )}
+      <RunFormSheet open={runFormOpen} onOpenChange={setRunFormOpen} />
     </section>
   );
 }
