@@ -121,10 +121,18 @@ interface Hit {
 const STORED_KM =
   /\b(\.km|longestKm|totalDistance)\b[^\n]{0,40}?\}[^\n]{0,8}?\bkm\b/;
 
+/** Test helpers, never on a screen: the simulator's traces print
+ *  kilometres for whoever reads a golden file. The calorie gate excludes
+ *  the same folder (`calorieUnitGate.test.ts`'s NOT_PRODUCT). */
+const NOT_PRODUCT = ["src/test/"];
+
 function scanStoredKm(): Hit[] {
   const out: Hit[] = [];
-  for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot })) {
+  for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot }).map(
+    (file) => file.replaceAll("\\", "/")
+  )) {
     if (rel.includes("__tests__") || rel.includes(".test.")) continue;
+    if (NOT_PRODUCT.some((p) => rel.startsWith(p))) continue;
     const src = stripComments(readFileSync(resolve(repoRoot, rel), "utf8"));
     src.split("\n").forEach((line, i) => {
       if (STORED_KM.test(line))
@@ -136,8 +144,11 @@ function scanStoredKm(): Hit[] {
 
 function scan(): Hit[] {
   const out: Hit[] = [];
-  for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot })) {
+  for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot }).map(
+    (file) => file.replaceAll("\\", "/")
+  )) {
     if (rel.includes("__tests__") || rel.includes(".test.")) continue;
+    if (NOT_PRODUCT.some((p) => rel.startsWith(p))) continue;
     if (rel in NOT_DISPLAY) continue;
     const src = stripComments(readFileSync(resolve(repoRoot, rel), "utf8"));
     src.split("\n").forEach((line, i) => {

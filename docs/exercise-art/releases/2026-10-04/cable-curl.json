@@ -1,0 +1,211 @@
+{
+  "exerciseId": "cable-curl",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 880,
+  "height": 1056,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-05T11:00:23.386Z",
+  "reference": {
+    "path": "form-frames/cable-curl/1.webp",
+    "sha256": "93b8d9c4b1d79c9bacc4e28e48ad63c147be4383e293eb35c749ee10109e659d"
+  },
+  "cueSha256": "b35b610018c48b2476a0ac1ec6e5475817e9adc5b9304b2b88a101d9249b7848",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical v3 bald faceless white-grey athlete, white trainers and neutral featureless pelvis preserved. Moving anatomy remains imagegen authored."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed slight front three-quarter view with both hands/elbows and complete equipment route visible. Common crop280,0,880,1024 plus32top padding, final880x1056."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native setup,middle,top inspected: elbows beside torso, natural elbow flexion, no leaning or shrug. Marked cable removal preserved middle pose; reverted-pose cleanup rejected."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Same short straight handle and connected underhand grips reviewed qualitatively. Exact four selected plate source pixels reused all6; ten unselected plates stationary. Fixed machine and constructed pulleys retained. No calibrated3D grip-span claim."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Two planted soles and tower base measured invariant after stationary copies. Source shoe-patch upper edges fade20px; native boundaries inspected."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Explicit coplanar1:1 route uses exact circular tangent and changing low-pulley wrap arc. Selected rises0,113,183px conserve variable cable length within0.5px after integer placement. This is newly constructed diagram geometry, not a3D calibration of generated pulleys."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary biceps purple, forearms light lilac, remaining anatomy neutral. Hierarchy stable across all six."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues at most seven words agree with Set,Curl,Top,Hold,Lower,Return and constant tension."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All6and6to1 inspected in actual ExerciseFormFrames,1,2,3,3,2,1with deliberate endpoint/reset holds. Autoplay verified separately."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All6and6to1 at390x844light after final routing/contact/crop edits. Full athlete/tower/cable visible, readable cues and stable contacts."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All6and6to1 at390x844dark after final edits. No clipping or contact jump; route and captions visible."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Standing cable curl with planted soles and tower",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["leftSole", "rightSole", "towerBase"],
+      "dimensionNames": ["leftShoeWidth", "rightShoeWidth", "towerBaseWidth"],
+      "evidence": "Pixel-derived sole/tower contacts and widths; independent tangent-path and selected-block pixel checks, plus native grips/arms review."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/cable-curl/1.webp",
+      "sha256": "93b8d9c4b1d79c9bacc4e28e48ad63c147be4383e293eb35c749ee10109e659d",
+      "anchors": {
+        "leftSole": {
+          "x": 601,
+          "y": 960
+        },
+        "rightSole": {
+          "x": 748,
+          "y": 998
+        },
+        "towerBase": {
+          "x": 137,
+          "y": 969
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 137,
+        "rightShoeWidth": 123,
+        "towerBaseWidth": 326
+      }
+    },
+    {
+      "path": "form-frames/cable-curl/2.webp",
+      "sha256": "bd1ff824f084f64f6beac618e039d276c5bcb7183514be5078f5ae01a46ade1c",
+      "anchors": {
+        "leftSole": {
+          "x": 601,
+          "y": 960
+        },
+        "rightSole": {
+          "x": 748,
+          "y": 998
+        },
+        "towerBase": {
+          "x": 137,
+          "y": 969
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 137,
+        "rightShoeWidth": 123,
+        "towerBaseWidth": 326
+      }
+    },
+    {
+      "path": "form-frames/cable-curl/3.webp",
+      "sha256": "7bfbabdc0736694046104029a9845fcd64202159e425556f21f61ceab73aee86",
+      "anchors": {
+        "leftSole": {
+          "x": 601,
+          "y": 960
+        },
+        "rightSole": {
+          "x": 748,
+          "y": 998
+        },
+        "towerBase": {
+          "x": 137,
+          "y": 969
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 137,
+        "rightShoeWidth": 123,
+        "towerBaseWidth": 326
+      }
+    },
+    {
+      "path": "form-frames/cable-curl/4.webp",
+      "sha256": "7bfbabdc0736694046104029a9845fcd64202159e425556f21f61ceab73aee86",
+      "anchors": {
+        "leftSole": {
+          "x": 601,
+          "y": 960
+        },
+        "rightSole": {
+          "x": 748,
+          "y": 998
+        },
+        "towerBase": {
+          "x": 137,
+          "y": 969
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 137,
+        "rightShoeWidth": 123,
+        "towerBaseWidth": 326
+      }
+    },
+    {
+      "path": "form-frames/cable-curl/5.webp",
+      "sha256": "bd1ff824f084f64f6beac618e039d276c5bcb7183514be5078f5ae01a46ade1c",
+      "anchors": {
+        "leftSole": {
+          "x": 601,
+          "y": 960
+        },
+        "rightSole": {
+          "x": 748,
+          "y": 998
+        },
+        "towerBase": {
+          "x": 137,
+          "y": 969
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 137,
+        "rightShoeWidth": 123,
+        "towerBaseWidth": 326
+      }
+    },
+    {
+      "path": "form-frames/cable-curl/6.webp",
+      "sha256": "93b8d9c4b1d79c9bacc4e28e48ad63c147be4383e293eb35c749ee10109e659d",
+      "anchors": {
+        "leftSole": {
+          "x": 601,
+          "y": 960
+        },
+        "rightSole": {
+          "x": 748,
+          "y": 998
+        },
+        "towerBase": {
+          "x": 137,
+          "y": 969
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 137,
+        "rightShoeWidth": 123,
+        "towerBaseWidth": 326
+      }
+    }
+  ]
+}

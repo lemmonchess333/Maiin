@@ -1,0 +1,31 @@
+{
+  "status": "actual-read-only-git-bash-startup-environment-diagnosis",
+  "observedAt": "2026-10-15 09:31:59 UTC",
+  "normalFullPrefix": "branch4",
+  "firstWholeFilePrefix": "focus-branch4-installer",
+  "sourceChanges": false,
+  "testChanges": false,
+  "timeoutChanges": false,
+  "concurrencyChanges": false,
+  "observations": [
+    {
+      "environment": "workspace sandbox use_default",
+      "command": "C:/Program Files/Git/bin/bash.exe --version; report actual child exit code",
+      "chunk_id": "b88c13",
+      "wall_time_seconds": 0.7151288,
+      "exit_code": 0,
+      "original_token_count": 51,
+      "output": "      0 [main] bash (14296) C:\\Program Files\\Git\\bin\\..\\usr\\bin\\bash.exe: *** fatal error - NtCreateDirectoryObject(\\BaseNamedObjects\\msys-2.0S5-1888ae32e00d56aa): 0xC0000022\nbashExitCode=-1073741502\r\n"
+    },
+    {
+      "environment": "host require_escalated",
+      "command": "C:/Program Files/Git/bin/bash.exe --version; report actual child exit code",
+      "chunk_id": "df523b",
+      "wall_time_seconds": 0.3317005,
+      "exit_code": 0,
+      "original_token_count": 80,
+      "output": "GNU bash, version 5.2.37(1)-release (x86_64-pc-msys)\nCopyright (C) 2022 Free Software Foundation, Inc.\nLicense GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n\nThis is free software; you are free to change and redistribute it.\nThere is NO WARRANTY, to the extent permitted by law.\nbashExitCode=0\r\n"
+    }
+  ],
+  "interpretation": "Direct standalone Bash startup is denied by the sandbox MSYS namespace and succeeds on host. This motivates one normal unchanged complete-file check on host; it does not rewrite the full-run result, prove baseline equivalence, or waive any test."
+}

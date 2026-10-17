@@ -1,0 +1,23 @@
+{
+  "status": "prepared-only; not executed",
+  "source": "work\\retained-endpoint-batch-20261015\\checks\\run-focused-whole-files.py",
+  "sourceSha256": "0e99398736e98ba892330eb2ea956d939f4fd20c885502133b60708ea4e07408",
+  "preflight": "work\\retained-endpoint-batch-20261015\\checks\\run-genuine-fix-preflight.py",
+  "preflightSha256": "35aad3c7c23d7ee0b3e93db1aad3a7b0ea85e3bc8907471e2293150a0a048517",
+  "syntaxAstParsed": true,
+  "actualSourceBaseline": "branch3 full run retained with complete comparison",
+  "allowedChangedSrcFiles": [
+    "src/lib/releasedFormPlacards.ts",
+    "src/lib/__tests__/bodyRig.test.ts",
+    "src/components/program/__tests__/ExerciseRowSummary.test.tsx",
+    "src/lib/formArtwork.ts"
+  ],
+  "normalCommand": "npm run test -- <complete test files>",
+  "noFiltersRetriesTimeoutOrConcurrencyChanges": true,
+  "exactCurrentInputAndSnapshotCaptureRestoration": true,
+  "noUnchangedCodeNonReproductionOrFullRunWaiver": true,
+  "executed": false,
+  "rootSignalRequiredBeforeExecution": true,
+  "priorPreparedSha256": "2ef33a5e82c9c330efa9c772b8b22578e7680eb577b082bfa1ee5a35110b3a5d",
+  "formArtworkException": "Only standard. Three -> standard. Five; reversed current bytes must hash to exact branch3 full-run input."
+}

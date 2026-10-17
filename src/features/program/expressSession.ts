@@ -34,7 +34,11 @@
  */
 
 import type { ProgramExercise, WorkoutDay } from "./programTypes";
-import { restSecondsFor, type RestContext } from "./restTime";
+import {
+  restSecondsFor,
+  WARMUP_REST_SECONDS,
+  type RestContext,
+} from "./restTime";
 import { warmupSetCounts } from "./warmupRamp";
 
 /** The time-budgeted express variants this module builds. */
@@ -119,8 +123,9 @@ export interface ExpressPlan {
 
 /** Executing one working set — the reps themselves, plus racking. */
 const WORK_SECONDS_PER_SET = 45;
-/** A warm-up set is light and briefly rested; it is not free. */
-const WARMUP_SECONDS_PER_SET = 60;
+/** A warm-up set is light and briefly rested; it is not free: its reps,
+ *  then the warm-up rest the session's timer runs. */
+const WARMUP_SECONDS_PER_SET = 15 + WARMUP_REST_SECONDS;
 /** Getting to the equipment and setting it up, once per exercise. */
 const SETUP_SECONDS_PER_EXERCISE = 90;
 

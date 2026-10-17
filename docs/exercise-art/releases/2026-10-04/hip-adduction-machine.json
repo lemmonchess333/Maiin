@@ -1,0 +1,181 @@
+{
+  "exerciseId": "hip-adduction-machine",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 1218,
+  "height": 1080,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-07T09:12:44.682Z",
+  "reference": {
+    "path": "form-frames/hip-adduction-machine/1.webp",
+    "sha256": "41f33486badb636550846805c1719f8e687704f2abea31642b5315b104351aee"
+  },
+  "cueSha256": "6f2cd4a65e9314571a1e3cc25c22dab32339b40a4b2d61b558f2571dc8eb58bc",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical v3 athlete retained, smooth neutral pelvic centre; anatomy authored by imagegen."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed front-oblique camera; common170,0,1170,1024 crop and24side/32top/24bottom padding; no whole-scene shifts."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native all6 and loop reviewed. Seated hip adduction with back on pad, knees bent, continuous inside-knee contacts and natural shin/shoe yaw."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Real-machine-grounded paired underseat vertical pivots; rigid knee-pad/footrest assemblies swing inward and outward. Fixed handles, frame, seat/back and enclosed housing retained."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Pixel-derived stationary hand-contact contour anchors and handle-cap diameters pass all6. Exact stationary contact/cap copies; moving feet are supported by rotating footrests and not falsely declared fixed floor contacts."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Thighs drive inward against inside-knee pads; connected supports rotate about original underseat hubs. Stack and drive remain behind opaque housing; no invented cable ratio or calibrated3D claims."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Adductors purple, glutes lilac, quadriceps neutral. Middle muscle rendering corrected to continuous elongated bundles."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six distinct labels Wide, Close, Squeeze, Hold, Open, Reset and six cues of at most seven words agree with the reviewed sequence."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "After Reset label repair, all six and 6-to-1 loop re-reviewed in light and dark at 390x844. Autoplay advanced Wide 1 to Hold 4; pause visibly changed control to Play."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormFrames390x844 light all6 and6-to1 reviewed after final changes; full scene and readable cues."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual390x844 dark all6 and6-to1 reviewed; no clipping, both grips/pads/footrests visible."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Seated adduction with stationary hand-handle contacts",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["leftGrip", "rightGrip"],
+      "dimensionNames": ["leftHandleCapWidth", "rightHandleCapWidth"],
+      "evidence": "Pixel-derived stationary hand contacts and handle-cap diameters, plus native rotating-support and fixed-frame review."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/hip-adduction-machine/1.webp",
+      "sha256": "41f33486badb636550846805c1719f8e687704f2abea31642b5315b104351aee",
+      "anchors": {
+        "leftGrip": {
+          "x": 212,
+          "y": 318
+        },
+        "rightGrip": {
+          "x": 661,
+          "y": 320
+        }
+      },
+      "invariantDimensions": {
+        "leftHandleCapWidth": 27,
+        "rightHandleCapWidth": 27
+      }
+    },
+    {
+      "path": "form-frames/hip-adduction-machine/2.webp",
+      "sha256": "f182028ef90e458d7fdb39f591107c29f8bb54b75c510398414b6a9d2515c018",
+      "anchors": {
+        "leftGrip": {
+          "x": 212,
+          "y": 318
+        },
+        "rightGrip": {
+          "x": 661,
+          "y": 320
+        }
+      },
+      "invariantDimensions": {
+        "leftHandleCapWidth": 27,
+        "rightHandleCapWidth": 27
+      }
+    },
+    {
+      "path": "form-frames/hip-adduction-machine/3.webp",
+      "sha256": "b619444f08fc0de57a889bad7be142aff6ceeac7703ceeda1536f73eda99ed38",
+      "anchors": {
+        "leftGrip": {
+          "x": 212,
+          "y": 318
+        },
+        "rightGrip": {
+          "x": 661,
+          "y": 320
+        }
+      },
+      "invariantDimensions": {
+        "leftHandleCapWidth": 27,
+        "rightHandleCapWidth": 27
+      }
+    },
+    {
+      "path": "form-frames/hip-adduction-machine/4.webp",
+      "sha256": "b619444f08fc0de57a889bad7be142aff6ceeac7703ceeda1536f73eda99ed38",
+      "anchors": {
+        "leftGrip": {
+          "x": 212,
+          "y": 318
+        },
+        "rightGrip": {
+          "x": 661,
+          "y": 320
+        }
+      },
+      "invariantDimensions": {
+        "leftHandleCapWidth": 27,
+        "rightHandleCapWidth": 27
+      }
+    },
+    {
+      "path": "form-frames/hip-adduction-machine/5.webp",
+      "sha256": "f182028ef90e458d7fdb39f591107c29f8bb54b75c510398414b6a9d2515c018",
+      "anchors": {
+        "leftGrip": {
+          "x": 212,
+          "y": 318
+        },
+        "rightGrip": {
+          "x": 661,
+          "y": 320
+        }
+      },
+      "invariantDimensions": {
+        "leftHandleCapWidth": 27,
+        "rightHandleCapWidth": 27
+      }
+    },
+    {
+      "path": "form-frames/hip-adduction-machine/6.webp",
+      "sha256": "41f33486badb636550846805c1719f8e687704f2abea31642b5315b104351aee",
+      "anchors": {
+        "leftGrip": {
+          "x": 212,
+          "y": 318
+        },
+        "rightGrip": {
+          "x": 661,
+          "y": 320
+        }
+      },
+      "invariantDimensions": {
+        "leftHandleCapWidth": 27,
+        "rightHandleCapWidth": 27
+      }
+    }
+  ]
+}

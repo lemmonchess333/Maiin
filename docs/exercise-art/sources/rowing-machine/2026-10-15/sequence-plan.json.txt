@@ -1,0 +1,112 @@
+{
+  "exerciseId": "rowing-machine",
+  "name": "Rowing Machine",
+  "version": "anatomy-v3-2026-10-15-retained-whole-trio-rowing-v1",
+  "physicalPoses": 3,
+  "sourcePoseOrder": [
+    1,
+    2,
+    3,
+    3,
+    2,
+    1
+  ],
+  "positions": [
+    0,
+    0.5,
+    1,
+    1,
+    0.5,
+    0
+  ],
+  "registeredCanvas": [
+    1536,
+    1024
+  ],
+  "commonCrop": [
+    60,
+    90,
+    1476,
+    920
+  ],
+  "dimensions": [
+    1416,
+    830
+  ],
+  "primary": [
+    "Quads",
+    "Upper back"
+  ],
+  "secondary": [
+    "Hamstrings",
+    "Biceps"
+  ],
+  "cataloguePrimary": "Cardio",
+  "catalogueSecondary": [
+    "Back",
+    "Legs",
+    "Core"
+  ],
+  "activationRoles": "Specific existing source activation shown for the catalogue Cardio exercise, as other Cardio guides. No neutral Core is painted.",
+  "setup": [
+    "Strap in, grip the handle, start compressed with shins vertical."
+  ],
+  "techniqueInstructions": [
+    "Strap in, grip the handle, start compressed with shins vertical.",
+    "Drive with your legs first, then lean back, then pull the handle to your ribs.",
+    "Return in reverse order: arms out, hinge forward, then slide the seat in.",
+    "Keep the stroke rhythm smooth — 2:1 return to drive ratio."
+  ],
+  "beats": [
+    {
+      "t": 0,
+      "label": "Catch",
+      "cue": "Compress with straight arms and vertical shins."
+    },
+    {
+      "t": 0.5,
+      "label": "Drive",
+      "cue": "Push with your legs; keep arms straight."
+    },
+    {
+      "t": 1,
+      "label": "Finish",
+      "cue": "Lean back slightly; draw handle below ribs."
+    },
+    {
+      "t": 1,
+      "label": "Relax",
+      "cue": "Stay supported; keep wrists and shoulders relaxed."
+    },
+    {
+      "t": 0.5,
+      "label": "Recover",
+      "cue": "Arms away, then hinge forward before sliding."
+    },
+    {
+      "t": 0,
+      "label": "Reset",
+      "cue": "Recover twice as slowly as you drive."
+    }
+  ],
+  "frameHashes": {
+    "draft/frames/1.webp": "a1fa9793f679c2406885ba5782c111658bed16c0c49bc9482200b579111b15e2",
+    "draft/frames/2.webp": "398603466c885d0f28bca0586bb726ef43004c5c9ae43c57ea5f90256a3f2597",
+    "draft/frames/3.webp": "8c7385705a8396f4068e2ffbf6571509e6764a61efa91a30373d64578cce2aae",
+    "draft/frames/4.webp": "8c7385705a8396f4068e2ffbf6571509e6764a61efa91a30373d64578cce2aae",
+    "draft/frames/5.webp": "398603466c885d0f28bca0586bb726ef43004c5c9ae43c57ea5f90256a3f2597",
+    "draft/frames/6.webp": "a1fa9793f679c2406885ba5782c111658bed16c0c49bc9482200b579111b15e2"
+  },
+  "referenceFrame": 3,
+  "scope": "Three intact physical states, repeated six paths with endpoint cuts. Legs-first straight-arm drive then body swing/handle pull and reverse recovery are taught; no invented or calibrated smooth intermediate trajectory.",
+  "timing": "Teaching slots only. Catalogue smooth2:1 return-to-drive instruction retained as prose; six equal playback slots do not certify actual rowing cadence.",
+  "findings": [
+    "Visible residual knee flexion at the pulled finish is retained. Modest-versus-moderate projection uncertainty remains; no straight/locked/perfect-leg or strict-certification claim.",
+    "Three real whole retained states are reused as catch/drive/finish/finish/drive/catch. Endpoint cuts are explicit; no invented intermediate motion or calibrated continuous stroke.",
+    "Minor original seated body/seat and leg-contour variation remains. Fixed strapped feet/common rower and original whole anatomy are preserved; no body fitting, pose correction, shoe graft or equipment correction."
+  ],
+  "finalPaletteReviewed": false,
+  "registeredReviewComplete": false,
+  "strictCertified": false,
+  "completionCredit": false
+}

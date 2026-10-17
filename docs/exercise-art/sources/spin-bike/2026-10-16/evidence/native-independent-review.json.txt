@@ -1,0 +1,103 @@
+{
+  "scope": "Independent native-source and common apparatus data audit only; no authoring/render/mask code executed.",
+  "proofSha256": "a7ca7b78ece6b39894ffba431a8a5ead7a1aa5aaddb429507319f8f674b1d5f5",
+  "sourceSha256": "83ad4e7d901d2f73832b7c5ef51766ccd3105bdbcb73138df9ea98fef6462c3b",
+  "constructionNotesV2Sha256": "9fc8e75827f677f761eee6a022e0c5821b9abce925eaab1d2d59623ae8d7d118",
+  "standingCRegistration": "WholeC(+6,+7) is relative to nominal source lower-panel originrawy627. Actualcropstarts600to retain27rowsabove that origin, including sourcecrown. It is not fully equivalent to a627-onlycrop. Source/masks/art unchanged.",
+  "rendererSha256": "c564fe3f6fed4dafb57d5bfb3db47d1cb09e2cbb75ad2460334b1852007c5e48",
+  "hashedPayloadFilesVerified": 27,
+  "sourceDimensions": [
+    1254,
+    1254
+  ],
+  "canvas": [
+    700,
+    700
+  ],
+  "poses": {
+    "A": {
+      "guardPixels": 45434,
+      "seedPixels": 39529,
+      "changedGuardPixels": 0,
+      "sourceCropPasteExact": true,
+      "oraFourLayersRecomposedExact": true,
+      "opposed170mmCrankVerified": true,
+      "fixedGripsMatchAllPoses": true,
+      "sameFloorVerified": true
+    },
+    "B": {
+      "guardPixels": 39772,
+      "seedPixels": 34488,
+      "changedGuardPixels": 0,
+      "sourceCropPasteExact": true,
+      "oraFourLayersRecomposedExact": true,
+      "opposed170mmCrankVerified": true,
+      "fixedGripsMatchAllPoses": true,
+      "sameFloorVerified": true
+    },
+    "C": {
+      "guardPixels": 46511,
+      "seedPixels": 40346,
+      "changedGuardPixels": 0,
+      "sourceCropPasteExact": true,
+      "oraFourLayersRecomposedExact": true,
+      "opposed170mmCrankVerified": true,
+      "fixedGripsMatchAllPoses": true,
+      "sameFloorVerified": true
+    }
+  },
+  "actualVisualReview": {
+    "viewed": [
+      "Original1254x1254four-panelsource",
+      "LatestA/B/C700x700nativeconstruction",
+      "LatestA/B/Cunoccludedcrankmechanism"
+    ],
+    "sourceHumanAppearance": "At native size the retained bodies, both visible trainers and wrapping hands remain recognisable original anatomy. StandingC has the full neck/shoulder/hip/forearm and toes; no obvious clipped anatomy remains in this selected construction.",
+    "pedals": "Visible A/C forefeet sit on attached platforms; the unoccluded views show both opposed crank arms with rigid pedal spindle connections. B far support is occluded by the common cover in the normal view; do not claim a newly observed far human foot.",
+    "gripsAndSaddle": "Fixed loop bars meet the retained wrapping hands at seated/standing positions. SeatedA/B use the same saddle, whileC is visibly above it.",
+    "floorAndCamera": "Same custom apparatus projection and floor across all three. Frame feet read as grounded; no new floating visible pedal or free-standing toe plate is evident at native scale.",
+    "qualityLimit": "Equipment is a distinct shaded custom apparatus with a more geometric frame than the retained source. This is source-construction eligibility only; palette/playback/mobile/card review is still required."
+  },
+  "constructionEligibleForRootReview": true,
+  "paletteReviewed": false,
+  "registeredMobileReviewed": false,
+  "strictCertified": false,
+  "productionAccepted": false,
+  "completionCredit": 0,
+  "imageGenerationCalls": 0,
+  "sourceOrRepoMutations": 0,
+  "earlierNativeReviewFile": {
+    "file": "spin-native-independent-peer-review.json",
+    "sha256": "a0853c60a613ee4ddeb4820d5de3bb3a301af2f9636759b4027e399518c3b743"
+  },
+  "supplementalHardwareEdgeFinding": {
+    "scope": "One supplemental source-edge classification after root noticed a small silver mark in standingC. No source/mask/render edits.",
+    "parentPeerReviewSha256": "a0853c60a613ee4ddeb4820d5de3bb3a301af2f9636759b4027e399518c3b743",
+    "actualDiagnosticViewed": "../equipment-route/C-source-silver-stub-literal8x-inspection.png",
+    "literalSourceRectangle": [
+      260,
+      1000,
+      300,
+      1035
+    ],
+    "literalSourcePointNearMark": [
+      273,
+      1014
+    ],
+    "correspondingDraftPoint": [
+      299,
+      434
+    ],
+    "finding": "A small inherited original silver/grey machine diagonal edge beside the standingC calf remains inside the conservative source guard. The actual8xnearest diagnostic shows source machinery meeting the intact calf edge; it is not a hole in anatomy or detached trainer/support.",
+    "disposition": "Retain as a minor inherited hardware-edge finding for root review; construction eligibility remains, and no additional body/mask correction is proposed.",
+    "artworkChanges": 0,
+    "strictCertification": false,
+    "productionAcceptance": false,
+    "supplementSha256": "20bebaf8263ede65b902e2eba928660de96f9da4244adc5f0e6441097095a001"
+  },
+  "prepaletteRoleReview": {
+    "file": "spin-prepalette-muscle-role-review-v2.json",
+    "sha256": "c65b8dd494e13b45cbdd1cdab06a3d14ad2ab09df287da2f52e4ec45174dffe3",
+    "paletteHasNotYetBeenBuilt": true
+  }
+}

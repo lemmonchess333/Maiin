@@ -627,6 +627,11 @@ export default function Space() {
           onOpenChange={(o) => {
             if (!o) setCommentsFor(null);
           }}
+          // The count the post's card shows, as the feed's sheet takes it.
+          commentCount={
+            (posts?.find((p) => p.id === commentsFor)?.commentCount ?? 0) +
+            (commentDeltas[commentsFor] ?? 0)
+          }
           onCountChange={(delta) =>
             setCommentDeltas((prev) => ({
               ...prev,

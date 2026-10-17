@@ -27,6 +27,7 @@ import { ConfirmDialogActions } from "@/components/ui/ConfirmDialog";
 import { distanceUnitLabel } from "@/lib/distanceUnits";
 import { distanceValue } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { Banner } from "@/components/ui/Banner";
 
 interface Props {
   /** Stored run's accumulated seconds at write-time. */
@@ -42,6 +43,8 @@ interface Props {
   onDiscard: () => void;
   /** Leave setup without changing the recoverable snapshot. */
   onBack: () => void;
+  recoveryNote?: string;
+  resumeLabel?: string;
 }
 
 function formatElapsed(seconds: number): string {
@@ -68,6 +71,8 @@ export default function RunResumePrompt({
   onStartNew,
   onDiscard,
   onBack,
+  recoveryNote,
+  resumeLabel = "Resume run",
 }: Props) {
   const unit = useDistanceUnit();
   const distance = distanceValue(distanceMeters, unit, 2);
@@ -103,7 +108,7 @@ export default function RunResumePrompt({
       size={pendingAction ? "sm" : "md"}
       closeOnBackdrop={false}
       overlayClassName="z-[60]"
-      className="z-[60]"
+      className="z-[60] max-h-[calc(100dvh-2rem)] overflow-y-auto"
     >
       {pendingAction ? (
         <ConfirmDialogActions
@@ -118,6 +123,13 @@ export default function RunResumePrompt({
         />
       ) : (
         <div className="space-y-4">
+          {recoveryNote && (
+            <Banner
+              variant="neutral"
+              description={recoveryNote}
+              className="bg-stage-raised border-stage-muted/20 [&_.text-muted-foreground]:text-stage-muted"
+            />
+          )}
           <div
             className="rounded-xl px-4 py-3 flex items-center justify-between"
             style={{ background: "rgba(255,255,255,0.06)" }}
@@ -160,8 +172,9 @@ export default function RunResumePrompt({
               ref={focusAction}
               onClick={onResume}
               leftIcon={<Play size={16} />}
+              className="h-auto min-h-13 whitespace-normal py-3"
             >
-              Resume run
+              {resumeLabel}
             </Button>
             <Button
               variant="secondary"

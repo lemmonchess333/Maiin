@@ -15,7 +15,11 @@
  */
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
-import { BAR_KG } from "./warmupRamp";
+import { BAR_KG, barWeight } from "./warmupRamp";
+import type { LiftUnit } from "@/lib/liftLoad";
+import { equipmentGridFor, loadGridFor } from "./loadSteps";
+import { contraindicatedFor } from "./injurySubstitutions";
+import { MAX_WEEKLY_LIFT_EXPOSURES } from "./overlapModel";
 
 import type {
   Experience,
@@ -24,6 +28,8 @@ import type {
   WorkoutDay,
 } from "./programTypes";
 import {
+  dumbbellVersion,
+  exerciseDisplayName,
   loadFactorFor,
   movementCategoryForExerciseId,
   rescaleForSwap,
@@ -42,6 +48,9 @@ export interface StartingLoadContext {
    *  movement (`sexFactor`); anything non-female is treated as the
    *  male/default. */
   sex?: string;
+  /** The lifter's unit (Lift18): an lb lifter's starts are weights their lb
+   *  kit makes. Kg when absent. */
+  unit?: LiftUnit;
 }
 
 // Working-weight as a fraction of bodyweight, by movement pattern × experience.
@@ -84,14 +93,27 @@ function sexFactor(sex: string | undefined): number {
  * guard for every call site.
  */
 export function loadContextFrom(
-  p: { weightKg?: number; experience?: string; sex?: string } | null | undefined
+  p:
+    | {
+        weightKg?: number;
+        experience?: string;
+        sex?: string;
+        liftingWeightUnit?: string;
+      }
+    | null
+    | undefined
 ): StartingLoadContext | undefined {
   if (!p || !p.weightKg || p.weightKg <= 0) return undefined;
   const experience: Experience =
     p.experience === "intermediate" || p.experience === "advanced"
       ? p.experience
       : "beginner";
-  return { bodyweightKg: p.weightKg, experience, sex: p.sex };
+  return {
+    bodyweightKg: p.weightKg,
+    experience,
+    sex: p.sex,
+    ...(p.liftingWeightUnit === "lbs" ? { unit: "lbs" as const } : {}),
+  };
 }
 
 /**
@@ -248,8 +270,31 @@ export function startingWeightForExercise(
 
   const raw = repScaledSeed(base * factor, targetReps, repUnit);
   if (raw <= 0) return 0;
-  return Math.max(2.5, Math.round(raw / 2.5) * 2.5);
+  if (ctx.unit === "lbs") {
+    // A start an lb lifter's kit makes (Lift18): the lift's own lb grid,
+    // the plates, the rack or the stack, never under its first step.
+    const grid = loadGridFor(exerciseId, false, "lbs");
+    return Math.max(grid.above(0), grid.nearest(raw));
+  }
+  const rounded = Math.max(2.5, Math.round(raw / 2.5) * 2.5);
+  // Dumbbells and kettlebells come in their own weights (`loadSteps.ts`): a
+  // rack of dumbbells goes 7, 8 kg, so a 7.5 kg start is one nobody can pick
+  // up. A start the 2.5 kg step puts off the rack takes the rack's nearest
+  // weight instead; every other start is unchanged.
+  const equipment = exerciseId
+    ? getExerciseById(exerciseId)?.equipment
+    : undefined;
+  const rack =
+    equipment && RACKED.has(equipment)
+      ? equipmentGridFor(exerciseId, false)
+      : null;
+  if (rack && Math.abs(rack.nearest(rounded) - rounded) > 1e-9)
+    return rack.nearest(raw);
+  return rounded;
 }
+
+/** Equipment that comes in set weights rather than plates. */
+const RACKED: ReadonlySet<string> = new Set(["Dumbbells", "Kettlebell"]);
 
 /**
  * Safe working load when an exercise identity changes.
@@ -297,7 +342,13 @@ export function weightAfterExerciseSwap(
           ex.reps,
           ex.repUnit
         );
-  return { weight, movementCategory: targetCategory };
+  // A ratio-scaled weight lands on the 2.5 kg step; an lb lifter's goes to
+  // the new lift's own lb kit instead (Lift18). A fresh seed already does.
+  const onKit =
+    scaled > 0 && ctx?.unit === "lbs"
+      ? loadGridFor(toExerciseId, false, "lbs").nearest(scaled)
+      : weight;
+  return { weight: onKit, movementCategory: targetCategory };
 }
 
 /** Who a plan with no bodyweight is estimated for: the light end of adults,
@@ -334,7 +385,9 @@ const FIRST_GUESS: StartingLoadContext = {
  * what stops a leg curl being seeded like a deadlift.
  *
  * Without a context (no bodyweight) the plan starts from the bar, and the
- * builders' hardcoded weights never reach anyone (Lift4 (5)).
+ * builders' hardcoded weights never reach anyone (Lift4 (5)). With one, a
+ * lift the generator is building never starts under the bar either
+ * (`building`, Pgm8 L15).
  */
 export function seedStartingLoads(
   workouts: WorkoutDay[],
@@ -348,11 +401,21 @@ export function seedStartingLoads(
    *  the programme prescribes. Omitted → the historical ~8-rep anchor, i.e.
    *  byte-identical to the rep-blind behaviour. */
   repAnchor?: number,
-  /** Seed only lifts at 0 kg: a plan the person already has keeps the loads
-   *  it shows, and only a lift with none gets a first guess. */
-  { unloadedOnly = false }: { unloadedOnly?: boolean } = {}
+  {
+    unloadedOnly = false,
+    building,
+  }: {
+    /** Seed only lifts at 0 kg: a plan the person already has keeps the
+     *  loads it shows, and only a lift with none gets a first guess. */
+    unloadedOnly?: boolean;
+    /** Set when the generator builds the week, from nothing or for new
+     *  lift days: the lifts it builds start at the bar or over it
+     *  (`noneUnderTheBar`). Unset, as for a settings save that keeps the
+     *  week, every lift is the person's own. */
+    building?: Building;
+  } = {}
 ): WorkoutDay[] {
-  return workouts.map((day) => ({
+  const seeded = workouts.map((day) => ({
     ...day,
     exercises: day.exercises.map((ex: ProgramExercise) => {
       // "Has history" was the whole calibration test, and it let an
@@ -416,4 +479,120 @@ export function seedStartingLoads(
       };
     }),
   }));
+  return building && ctx
+    ? noneUnderTheBar(seeded, ctx, repAnchor, building)
+    : seeded;
+}
+
+/** What the generator is building on: the plan the person has, if any, and
+ *  the injuries a lift it builds must be safe for. */
+interface Building {
+  /** The plan being rebuilt, whose lifts (by `instanceId`) are the
+   *  person's own. Absent for a plan built from nothing. */
+  kept?: readonly WorkoutDay[];
+  injuries?: readonly string[];
+  /** The week is fitted to its time already (`buildPlan` seeds it again):
+   *  a lift still under the bar is one the generator started at the bar,
+   *  and a dumbbell version now would be a lift the fit never priced. */
+  fitted?: boolean;
+}
+
+/**
+ * Pgm8 L15: a new plan's barbell lift whose first weight would be under the
+ * empty bar is built as its dumbbell version where the bank has one
+ * (`dumbbellVersion`), and one with none starts at the bar. Found by the
+ * simulator (F10): new plans started curls at 5–17.5 kg, skull crushers at
+ * 15–17.5 kg and a weak lifter's press at 12.5–15 kg, under the 20 kg bar,
+ * and a press that light then waited at a stretched rep target (F2).
+ *
+ * Only for a lift the generator is building. One `kept` holds is the
+ * person's own and stays as it is, under the bar or not: existing plans keep
+ * their lifts (Lift4 (2), Pgm5). A rebuild for new lift days keeps the
+ * plan's lifts and builds only the ones it adds this way.
+ *
+ * The dumbbell version takes the slot as it is, its numbers and role
+ * included (it is the same movement with the same mechanic), with its own
+ * first weight on the rack. It must be one the day doesn't hold, the week
+ * holds under twice (`capRepeatedLifts`) and the person's injuries allow;
+ * with none left, the lift starts at the bar. It is chosen before the time
+ * fit, which prices its warm-ups; seeding the fitted week again changes
+ * nothing.
+ */
+function noneUnderTheBar(
+  workouts: WorkoutDay[],
+  ctx: StartingLoadContext,
+  repAnchor: number | undefined,
+  { kept, injuries = [], fitted = false }: Building
+): WorkoutDay[] {
+  const own = new Set(
+    (kept ?? []).flatMap((d) =>
+      d.exercises.flatMap((e) => (e.instanceId ? [e.instanceId] : []))
+    )
+  );
+  const weekly = new Map<string, number>();
+  for (const d of workouts)
+    for (const e of d.exercises)
+      weekly.set(e.exerciseId, (weekly.get(e.exerciseId) ?? 0) + 1);
+  return workouts.map((day) => {
+    const inDay = new Set(day.exercises.map((e) => e.exerciseId));
+    return {
+      ...day,
+      exercises: day.exercises.map((ex) => {
+        if (
+          ex.weight <= 0 ||
+          ex.weight >= barWeight(ctx.unit ?? "kg") - 1e-9 ||
+          getExerciseById(ex.exerciseId)?.equipment !== "Barbell" ||
+          (ex.instanceId !== undefined && own.has(ex.instanceId)) ||
+          (ex.performanceHistory ?? []).some((r) => (r.weight ?? 0) > 0)
+        )
+          return ex;
+        const version = fitted
+          ? undefined
+          : dumbbellVersion(
+              ex.exerciseId,
+              ctx.experience,
+              (id) =>
+                !inDay.has(id) &&
+                (weekly.get(id) ?? 0) < MAX_WEEKLY_LIFT_EXPOSURES &&
+                contraindicatedFor(id, injuries).length === 0
+            );
+        const weight = version
+          ? startingWeightForExercise(
+              version,
+              ex.movementCategory,
+              ctx,
+              ex.isAccessory === true,
+              repAnchor,
+              ex.repUnit
+            )
+          : 0;
+        if (!version || weight <= 0)
+          return {
+            ...ex,
+            weight: barWeight(ctx.unit ?? "kg"),
+            lastSuccessfulWeight: barWeight(ctx.unit ?? "kg"),
+            lastAttemptedWeight: barWeight(ctx.unit ?? "kg"),
+          };
+        inDay.add(version);
+        weekly.set(ex.exerciseId, (weekly.get(ex.exerciseId) ?? 1) - 1);
+        weekly.set(version, (weekly.get(version) ?? 0) + 1);
+        // Not an equipment or injury swap, so no way back to the barbell
+        // (`swappedFrom`); its history, if any, was the barbell's.
+        return {
+          ...ex,
+          exerciseId: version,
+          name: exerciseDisplayName(version),
+          movementCategory:
+            movementCategoryForExerciseId(version) ?? ex.movementCategory,
+          weight,
+          lastSuccessfulWeight: weight,
+          lastAttemptedWeight: weight,
+          consecutiveFailures: 0,
+          plateauCount: 0,
+          performanceHistory: [],
+          lastPerformance: null,
+        };
+      }),
+    };
+  });
 }

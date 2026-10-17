@@ -1,0 +1,272 @@
+{
+  "status": "candidate-pixel-integrity-only-not-native-acceptance",
+  "pillowVersion": "12.3.0",
+  "dimensions": [
+    626,
+    1209
+  ],
+  "commonCrop": [
+    217,
+    158,
+    843,
+    1367
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": [
+    1,
+    1,
+    3,
+    3,
+    1,
+    1
+  ],
+  "poses": [
+    {
+      "pose": 1,
+      "sourceSha256": "fbebd81cfce565ab461ccf22279a7c109d3131fe0bb2358512de271904e0e558",
+      "wholeSceneTranslation": [
+        0,
+        0
+      ],
+      "sourceMappedRGBAExact": true,
+      "equipmentEdited": false,
+      "colour": {
+        "sourceChromaPixels": 8162,
+        "changedRgbPixels": 8162,
+        "outsideSourceColourRGBAExact": true,
+        "originalAlphaExact": true,
+        "neutralPixelsOutsideExistingChromaExact": true,
+        "roleTraceNative": [
+          [
+            454,
+            875
+          ],
+          [
+            460,
+            896
+          ],
+          [
+            466,
+            920
+          ],
+          [
+            470,
+            945
+          ],
+          [
+            470,
+            965
+          ],
+          [
+            462,
+            984
+          ],
+          [
+            456,
+            999
+          ],
+          [
+            449,
+            1017
+          ],
+          [
+            445,
+            1027
+          ],
+          [
+            442,
+            1015
+          ],
+          [
+            437,
+            1002
+          ],
+          [
+            427,
+            992
+          ],
+          [
+            420,
+            979
+          ],
+          [
+            415,
+            961
+          ],
+          [
+            413,
+            944
+          ],
+          [
+            414,
+            924
+          ],
+          [
+            421,
+            904
+          ],
+          [
+            433,
+            890
+          ]
+        ],
+        "sourceColourROI": [
+          405,
+          870,
+          480,
+          1096
+        ],
+        "sourceTintStrengthDenominators": {
+          "primary": 0.92,
+          "secondary": 0.42
+        },
+        "limits": "Palette finishing preserves original field contours/neutral RGB; it does not recover an uncoloured original. Semantic role trace is explicitly editable and requires native visual review."
+      }
+    },
+    {
+      "pose": 3,
+      "sourceSha256": "23a5180acd41518fca84b0bd1334f633da3f4c0da6fce32c483e7c4e144522b2",
+      "wholeSceneTranslation": [
+        0,
+        32
+      ],
+      "sourceMappedRGBAExact": true,
+      "equipmentEdited": false,
+      "colour": {
+        "sourceChromaPixels": 7617,
+        "changedRgbPixels": 7617,
+        "outsideSourceColourRGBAExact": true,
+        "originalAlphaExact": true,
+        "neutralPixelsOutsideExistingChromaExact": true,
+        "roleTraceNative": [
+          [
+            463,
+            779
+          ],
+          [
+            469,
+            793
+          ],
+          [
+            475,
+            814
+          ],
+          [
+            479,
+            838
+          ],
+          [
+            479,
+            862
+          ],
+          [
+            475,
+            885
+          ],
+          [
+            468,
+            900
+          ],
+          [
+            460,
+            917
+          ],
+          [
+            455,
+            931
+          ],
+          [
+            453,
+            923
+          ],
+          [
+            446,
+            917
+          ],
+          [
+            436,
+            904
+          ],
+          [
+            428,
+            889
+          ],
+          [
+            424,
+            873
+          ],
+          [
+            424,
+            850
+          ],
+          [
+            429,
+            828
+          ],
+          [
+            439,
+            807
+          ],
+          [
+            452,
+            791
+          ]
+        ],
+        "sourceColourROI": [
+          415,
+          775,
+          490,
+          985
+        ],
+        "sourceTintStrengthDenominators": {
+          "primary": 0.92,
+          "secondary": 0.42
+        },
+        "limits": "Palette finishing preserves original field contours/neutral RGB; it does not recover an uncoloured original. Semantic role trace is explicitly editable and requires native visual review."
+      }
+    }
+  ],
+  "frames": [
+    {
+      "path": "draft/frames/1.webp",
+      "sourcePose": 1,
+      "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+      "decodedRGBAExact": true
+    },
+    {
+      "path": "draft/frames/2.webp",
+      "sourcePose": 1,
+      "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+      "decodedRGBAExact": true
+    },
+    {
+      "path": "draft/frames/3.webp",
+      "sourcePose": 3,
+      "sha256": "1d9a123655b12cd30e9dd25fc102acbe8c3a0b6519489da14339114d61b57fa3",
+      "decodedRGBAExact": true
+    },
+    {
+      "path": "draft/frames/4.webp",
+      "sourcePose": 3,
+      "sha256": "1d9a123655b12cd30e9dd25fc102acbe8c3a0b6519489da14339114d61b57fa3",
+      "decodedRGBAExact": true
+    },
+    {
+      "path": "draft/frames/5.webp",
+      "sourcePose": 1,
+      "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+      "decodedRGBAExact": true
+    },
+    {
+      "path": "draft/frames/6.webp",
+      "sourcePose": 1,
+      "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+      "decodedRGBAExact": true
+    }
+  ],
+  "allFourORAsReopenedRGBAExact": true,
+  "commonCropExcludesOnlyRgbAtMost2": true,
+  "newImageRequests": 0,
+  "bodyOrEquipmentEdits": 0,
+  "repoChanges": 0
+}

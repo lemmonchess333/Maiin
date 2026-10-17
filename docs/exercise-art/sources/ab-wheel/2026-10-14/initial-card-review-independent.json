@@ -1,0 +1,14 @@
+{
+  "reviewedAt": "2026-10-14T22:27:00.217328+00:00",
+  "status": "initial-card-held-for-single-alpha-only-floor-cleanup",
+  "sourceCardSha256": "2a0e7f57c538c78502f37d02c400eabfc9d0e01c3a234a7f60a8064334d2f687",
+  "sourceCardDimensions": [473, 480],
+  "reviewComposites": [
+    "independent-initial-card-light-composite.png",
+    "independent-initial-card-dark-composite.png"
+  ],
+  "finding": "Large opaque connected floor block below rear trainers/pad reaches card bottom. Obvious on white and still visible on dark. Approximate cardROI x0-270/y420-480; this is not an approved cleanup mask.",
+  "brightAthleteAndTrainers": "Appear full in both themes; preserve all bright native body/trainers opaque and exact native RGB.",
+  "requiredCleanup": "Remove only background/floor alpha. Preserve original hands/grips, dark wheel/axle and actual knee pad. Then use normal trim/padding/480px card algorithm from prepared-card-source.png.",
+  "completedConversion": false
+}

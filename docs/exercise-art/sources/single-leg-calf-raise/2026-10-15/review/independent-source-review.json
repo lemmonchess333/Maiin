@@ -1,0 +1,337 @@
+{
+  "status": "source-preserving-two-endpoint-registration-candidate-not-approved",
+  "createdAtUtc": "2026-10-15T18:56:23.539985+00:00",
+  "head": "0688abd9308df219143bee0cd01386f0d843f821",
+  "repoStatus": [],
+  "sourceFiles": [
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\pilots\\parallel-twenty\\single-leg-calf-raise\\frames\\1.png",
+      "sha256": "fbebd81cfce565ab461ccf22279a7c109d3131fe0bb2358512de271904e0e558"
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\pilots\\parallel-twenty\\single-leg-calf-raise\\frames\\3-rejected.png",
+      "sha256": "23a5180acd41518fca84b0bd1334f633da3f4c0da6fce32c483e7c4e144522b2"
+    }
+  ],
+  "draftFiles": [
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining-non-machine-source-review-20261015\\whole-scene-registration\\1-intact.png",
+      "sha256": "fbebd81cfce565ab461ccf22279a7c109d3131fe0bb2358512de271904e0e558"
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining-non-machine-source-review-20261015\\whole-scene-registration\\3-intact-whole-scene-y32.png",
+      "sha256": "fbd5e91d6feba621dcf4f3f74097a7f98944a1e6f314591e619ace0837d14394"
+    }
+  ],
+  "registration": {
+    "source1": [
+      0,
+      0
+    ],
+    "source3": [
+      0,
+      32
+    ],
+    "canvas": [
+      1024,
+      1536
+    ],
+    "scale": 1,
+    "humanPixelsChanged": 0,
+    "equipmentPixelsChanged": 0,
+    "allMappedNativeRgbaExact": true,
+    "excludedBottom32RowsMaximumRgb": 1,
+    "foregroundClipped": false,
+    "horizontalTranslationApplied": 0,
+    "horizontalTranslationReason": "Both native forefoot support patches overlap around x540-555 after y registration. No real contact requirement justified a horizontal scene shift."
+  },
+  "nativeContactEstimates": {
+    "method": "Read original/native3x nearest-neighbour contact crops, no inferred calibrated3D or automated bone fit. Coordinates approximate; contact regions are source-visible shoe/gear interfaces, not recovered metatarsal centres.",
+    "source1": {
+      "forefootSupportPatch": {
+        "x": [
+          525,
+          560
+        ],
+        "y": [
+          1154,
+          1160
+        ]
+      },
+      "representativeContact": [
+        545,
+        1157
+      ],
+      "heelLowestSoleApprox": [
+        450,
+        1168
+      ],
+      "heelBelowContactLevelPx": 11,
+      "heelDropUncertaintyPx": 4,
+      "railPalmSupportApprox": [
+        681,
+        671
+      ],
+      "railThumbLowestApprox": [
+        706,
+        694
+      ]
+    },
+    "source3Native": {
+      "forefootSupportPatch": {
+        "x": [
+          540,
+          560
+        ],
+        "y": [
+          1118,
+          1124
+        ]
+      },
+      "representativeContact": [
+        547,
+        1121
+      ],
+      "heelSoleApprox": [
+        440,
+        1042
+      ],
+      "railPalmSupportApprox": [
+        681,
+        639
+      ],
+      "railThumbLowestApprox": [
+        706,
+        658
+      ]
+    },
+    "source3Registered": {
+      "forefootSupportPatch": {
+        "x": [
+          540,
+          560
+        ],
+        "y": [
+          1150,
+          1156
+        ]
+      },
+      "representativeContact": [
+        547,
+        1153
+      ],
+      "heelSoleApprox": [
+        440,
+        1074
+      ],
+      "heelAboveContactLevelPx": 79,
+      "heelRiseUncertaintyPx": 7,
+      "railPalmSupportApprox": [
+        681,
+        671
+      ],
+      "railThumbLowestApprox": [
+        706,
+        690
+      ]
+    },
+    "stationarySceneResiduals": "Rail base approximately restored by+32y, rail palm support matches to ordinary drawing precision; step/frontface landmarks have several-pixel shape/position residuals. Both native soles visibly touch the retained top surface and each closed hand wraps its retained rail. These are owner findings, not1px certified invariant hardware.",
+    "lowerRangeLimitation": "Source1 gives a modest heel-below-support position, not a visually deep dorsiflexion. Do not describe the picture as a deep stretch or maximum range."
+  },
+  "proportionDiagnostics": {
+    "headRows": [
+      {
+        "source1": {
+          "y": 250,
+          "firstX": 452,
+          "lastX": 533,
+          "width": 82
+        },
+        "source3": {
+          "y": 171,
+          "firstX": 452,
+          "lastX": 533,
+          "width": 82
+        }
+      },
+      {
+        "source1": {
+          "y": 270,
+          "firstX": 438,
+          "lastX": 544,
+          "width": 107
+        },
+        "source3": {
+          "y": 191,
+          "firstX": 438,
+          "lastX": 544,
+          "width": 107
+        }
+      },
+      {
+        "source1": {
+          "y": 290,
+          "firstX": 435,
+          "lastX": 546,
+          "width": 112
+        },
+        "source3": {
+          "y": 211,
+          "firstX": 435,
+          "lastX": 546,
+          "width": 112
+        }
+      },
+      {
+        "source1": {
+          "y": 310,
+          "firstX": 440,
+          "lastX": 546,
+          "width": 107
+        },
+        "source3": {
+          "y": 231,
+          "firstX": 440,
+          "lastX": 546,
+          "width": 107
+        }
+      },
+      {
+        "source1": {
+          "y": 330,
+          "firstX": 448,
+          "lastX": 544,
+          "width": 97
+        },
+        "source3": {
+          "y": 251,
+          "firstX": 448,
+          "lastX": 543,
+          "width": 96
+        }
+      },
+      {
+        "source1": {
+          "y": 350,
+          "firstX": 446,
+          "lastX": 538,
+          "width": 93
+        },
+        "source3": {
+          "y": 271,
+          "firstX": 446,
+          "lastX": 538,
+          "width": 93
+        }
+      }
+    ],
+    "headBoxApprox": {
+      "source1": [
+        434,
+        234,
+        550,
+        365
+      ],
+      "source3Native": [
+        434,
+        155,
+        550,
+        286
+      ],
+      "uncertaintyPx": 2
+    },
+    "visibleChestWidthApproxPx": {
+      "source1": 139,
+      "source3": 139,
+      "uncertaintyEach": 7,
+      "method": "Manual anatomical contour estimate excluding the separate near upperarm; not whole-athlete silhouette width."
+    },
+    "visibleWaistWidthApproxPx": {
+      "source1": 113,
+      "source3": 113,
+      "uncertaintyEach": 7
+    },
+    "jointEstimates": {
+      "source1": {
+        "hipEstimate": [
+          470,
+          686
+        ],
+        "kneeEstimate": [
+          484,
+          862
+        ],
+        "ankleEstimate": [
+          478,
+          1106
+        ],
+        "upperLegProjectedPx": 176.6,
+        "lowerLegProjectedPx": 244.1
+      },
+      "source3Native": {
+        "hipEstimate": [
+          472,
+          595
+        ],
+        "kneeEstimate": [
+          484,
+          766
+        ],
+        "ankleEstimate": [
+          480,
+          1006
+        ],
+        "upperLegProjectedPx": 171.4,
+        "lowerLegProjectedPx": 240.0
+      }
+    },
+    "landmarkUncertaintyPx": {
+      "hipEachAxis": 16,
+      "kneeEachAxis": 10,
+      "ankleEachAxis": 6
+    },
+    "projectedLengthUncertaintyPx": {
+      "upperLegEach": 26,
+      "lowerLegEach": 16
+    },
+    "interpretation": "Estimated upper-leg176.6vs171.4px and lower-leg244.1vs240.0px are within manual landmark uncertainty. Native head widths are effectively identical, and visible torso/limb silhouettes remain coherent. Earlier patch texture shifts do not prove anatomical stretching. Small hip/knee contour and posture differences remain disclosed; no compelling material human proportion failure is established by this bounded review. This does not certify exact anatomy or replace parent native review."
+  },
+  "mechanicsDecision": {
+    "unilateralSupport": true,
+    "freeLegSuspended": true,
+    "straightWorkingKneeVisuallyPlausible": true,
+    "genuineLowToPlantarflexedEndpoints": true,
+    "lightClosedRailContactVisuallyPlausible": true,
+    "equipmentOnlyRepairNeededAtThisStage": false,
+    "fixedSceneStrictInvariantClaim": false,
+    "scope": "Two intact physical endpoints can support an honest endpoint guide if parent accepts the modest lower range and small original contour/hardware findings. No illustrated intermediates, no claim of continuously authored trajectory."
+  },
+  "reviewImages": [
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining-non-machine-source-review-20261015\\whole-scene-registration\\1-original-foot-native-3x.png",
+      "sha256": "1af6ca979fd93214d6ff63593f3aab4a127177a91c3a1321c7ba990996379699"
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining-non-machine-source-review-20261015\\whole-scene-registration\\1-original-rail-hand-native-3x.png",
+      "sha256": "2cda5e950dc009a1bde8568753dc71bf272e5d58c6af26976b568450eca075b8"
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining-non-machine-source-review-20261015\\whole-scene-registration\\3-translated-foot-native-3x.png",
+      "sha256": "c20bfd10b55e5f1bd8dc6789562e08a782f5b40dee1c49f7c9dd841566bb8143"
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining-non-machine-source-review-20261015\\whole-scene-registration\\3-translated-rail-hand-native-3x.png",
+      "sha256": "e0e700aaab08988544fbe815f29f34f34cafa2e323eff7143561b85bd6809cff"
+    }
+  ],
+  "notPerformed": [
+    "palette finishing",
+    "body/foot/hand edits",
+    "equipment redraw",
+    "generation",
+    "production registration",
+    "tests",
+    "approval",
+    "completion credit"
+  ]
+}

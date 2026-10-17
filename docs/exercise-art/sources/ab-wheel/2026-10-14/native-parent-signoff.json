@@ -1,0 +1,27 @@
+{
+  "reviewer": "Parent Codex actual browser native playback review",
+  "status": "native finished-pose six-beat and loop review passed; mobile/card/project/merge pending",
+  "nativeDimensions": [1448, 924],
+  "actualViewport": [1536, 1120],
+  "manualFramesReviewed": [1, 2, 3, 4, 5, 6],
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "timedPlaybackObserved": true,
+  "loop6to1Observed": true,
+  "identity": "Same bald faceless lean white/light-grey anatomical athlete without shorts, neutral featureless pelvis, full white trainers and inherited neutral fine shading. No anatomical fitting, graft or scale correction.",
+  "mechanics": "Grounded kneeling brace, genuine advanced intermediate rollout and farther/lower controlled reach, matching held endpoint and reversed return. Arms remain straight, hands grasp opposite handles of the same wheel; body stays clear of floor without gross lumbar sag. Residual hip flexion at reach is disclosed; not a perfectly linear or fully horizontal endpoint.",
+  "muscles": "Primary visible core, secondary deltoids and visible lateral lat fields; neutral humeral shafts, chest, legs, hands/trainers/equipment. Source-only colour and inherited-contour overlays, no new broad gradient.",
+  "minorFindings": [
+    "Original source redraw produces small shoe/knee contour and position differences; not represented as pixel-identical body contacts.",
+    "Actual pad features remain within0.5px; pad projected width and tyre contour within1%. Those measured features do not establish all body dimensions.",
+    "Unused projected axle-tip/endcap span varies; native equipment and grips remain coherent. No calibrated3D radius or exact grip-width assertion."
+  ],
+  "evidence": [
+    "native-manual-trace.json",
+    "native-timed-trace.json",
+    "native-playback-proof.png",
+    "native-source-cycle-review-independent.json",
+    "measurements-independent.json",
+    "finishing-audit.json"
+  ],
+  "completionCredit": 0
+}

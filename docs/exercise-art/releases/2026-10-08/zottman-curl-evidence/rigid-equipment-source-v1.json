@@ -1,0 +1,72 @@
+{
+  "status": "DRAFT reusable equipment source; native source/boundary review required before compositing",
+  "canonical": "../Maiin-burpees/docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "master": "1-editable-layers-zottman-v2-draft.png",
+  "masterSha256": "923e8e8401287dbb3ee75498da93b4adc9c12ba764ba4b642e5bf4b43a23543b",
+  "sourcePlate": {
+    "file": "rigid-plate-source-v1.png",
+    "crop": [680, 670, 785, 815],
+    "path": [
+      ["M", 738, 677],
+      ["C", 758, 677, 772, 698, 774, 727],
+      ["C", 778, 756, 768, 788, 751, 800],
+      ["C", 732, 812, 707, 804, 695, 786],
+      ["C", 684, 769, 683, 742, 688, 720],
+      ["C", 694, 694, 713, 677, 738, 677],
+      ["Z"]
+    ],
+    "anatomyOrHandPixelsInOpaquePlate": 0,
+    "mixedEdgePixelsClipped": 3
+  },
+  "near": {
+    "file": "rigid-near-dumbbell-v1.png",
+    "size": [260, 180],
+    "pivot": [129, 89],
+    "plateSource": "rigid-plate-source-v1.png",
+    "fixedLeftPlateRasterSize": [99, 137],
+    "fixedRightPlateRasterSize": [105, 145]
+  },
+  "far": {
+    "file": "rigid-far-dumbbell-v1.png",
+    "size": [245, 170],
+    "pivot": [121.5576923076923, 84.05555555555556]
+  },
+  "poses": [
+    {
+      "frame": 1,
+      "near": [654, 744, 0],
+      "far": [295, 734, 4]
+    },
+    {
+      "frame": 2,
+      "near": [558, 582, 5.5],
+      "far": [270, 552, 8]
+    },
+    {
+      "frame": 3,
+      "near": [560, 345, 3.6],
+      "far": [294, 330, 7]
+    },
+    {
+      "frame": 4,
+      "near": [565, 339, 2],
+      "far": [290, 328, 2]
+    },
+    {
+      "frame": 5,
+      "near": [546, 603, 0],
+      "far": [267, 603, 1]
+    },
+    {
+      "frame": 6,
+      "near": [658, 765, -0.8],
+      "far": [308, 755, 3]
+    }
+  ],
+  "limitations": [
+    "Image-space immutable projected equipment, not manufacturer dimensions or physical millimetres.",
+    "Existing source equipment must be removed before replacement; original hands retained above replacement gear.",
+    "Left/far depth projections are fixed equipment-source parameters, never per-frame corrective scaling.",
+    "No anatomy warp or release approval."
+  ]
+}

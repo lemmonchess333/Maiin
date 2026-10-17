@@ -10,7 +10,7 @@ import {
   scaleLoadForReps,
   BLOCK_AMNESTY_WEEKS,
 } from "../represcribe";
-import { generateProgram, advanceWeek } from "../programEngine";
+import { advanceWeek, assignDayRoles, generateProgram } from "../programEngine";
 import { FOCUS_ORDER, isProgressionHeld } from "../trainingBlock";
 import type {
   ActiveTrainingBlock,
@@ -266,6 +266,22 @@ describe("represcribeWorkouts — what it must not touch", () => {
     expect("lowered" in o).toBe(false);
   });
 
+  it("drops a stretched target's record, whose ceiling was the retired range's (Pgm7 A3)", () => {
+    const stretched = ex({
+      weight: 10,
+      reps: 9,
+      stretched: {
+        exerciseId: "bench-press",
+        weight: 10,
+        next: 12.5,
+        ceiling: 16,
+      },
+    });
+    const o = represcribeWorkouts([day([stretched])], "strength", "beginner")[0]
+      .exercises[0];
+    expect("stretched" in o).toBe(false);
+  });
+
   it("preserves day structure and does not mutate the input", () => {
     const input = [day([ex()], "Upper"), day([ex()], "Lower")];
     const snapshot = JSON.parse(JSON.stringify(input));
@@ -321,6 +337,74 @@ describe("represcribeWorkouts — invertibility", () => {
         );
       }
     }
+  });
+});
+
+/* Lift4 (11): the week's order carries over by moving whole days, so the
+   session that opens a week changes. The heavier and lighter days belong to
+   the sessions (Lift4 (5)), and a block's start and end shift the reps by
+   them: read from a day's position, they moved to other sessions, so a
+   block started after a carried-over week made a lighter session heavy, and
+   its end didn't put back what its start replaced. */
+describe("represcribeWorkouts — a session keeps its role as the order carries over", () => {
+  const plan = () =>
+    generateProgram(
+      4,
+      undefined,
+      "hypertrophy",
+      undefined,
+      undefined,
+      "intermediate"
+    ).workouts;
+  /** The week opened with its second session: the first moved to the end. */
+  const carriedOver = (ws: WorkoutDay[]) => [...ws.slice(1), ws[0]];
+  const reps = (ws: WorkoutDay[]) =>
+    Object.fromEntries(
+      ws.map((d) => [
+        d.dayName,
+        d.exercises.map((e) => [e.reps, e.repRangeMax]),
+      ])
+    );
+
+  it("has a name for each session", () => {
+    const names = plan().map((d) => d.dayName);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  it("gives each session the same prescription wherever it sits in the week", () => {
+    const inOrder = represcribeWorkouts(plan(), "strength", "intermediate");
+    const rotated = represcribeWorkouts(
+      carriedOver(plan()),
+      "strength",
+      "intermediate"
+    );
+    expect(reps(rotated)).toEqual(reps(inOrder));
+  });
+
+  it("ends a block on the prescription it started from, across a carried-over week", () => {
+    const before = plan();
+    const started = represcribeWorkouts(before, "strength", "intermediate");
+    const ended = represcribeWorkouts(
+      carriedOver(started),
+      "hypertrophy",
+      "intermediate"
+    );
+    expect(reps(ended)).toEqual(reps(before));
+  });
+
+  it("keeps the role it read on a plan built before roles were kept", () => {
+    const older = plan().map(({ dayRole: _role, ...day }) => day);
+    const started = represcribeWorkouts(older, "strength", "intermediate");
+    expect(started.map((d) => d.dayRole)).toEqual(assignDayRoles(4));
+    // From here the roles travel with the sessions.
+    const ended = represcribeWorkouts(
+      carriedOver(started),
+      "hypertrophy",
+      "intermediate"
+    );
+    expect(reps(ended)).toEqual(
+      reps(represcribeWorkouts(older, "hypertrophy", "intermediate"))
+    );
   });
 });
 
@@ -446,8 +530,8 @@ describe("blockConsequence — the copy that carries GsPb1", () => {
       hypertrophy: "Build muscle",
       strength: "Get stronger",
       fat_loss: "Lose fat",
-      general: "Stay fit",
-      running: "Running support",
+      general: "General fitness",
+      running: "Support my running",
     })[g];
 
   it("names the exact new target when the focus changes", () => {
@@ -780,8 +864,8 @@ describe("blockReleaseLine — ending a block says what happens (Lift4)", () => 
       hypertrophy: "Build muscle",
       strength: "Get stronger",
       fat_loss: "Lose fat",
-      general: "Stay fit",
-      running: "Running support",
+      general: "General fitness",
+      running: "Support my running",
     })[g];
   const line = (
     focus: PrimaryGoal,

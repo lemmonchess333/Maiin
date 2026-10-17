@@ -1,0 +1,19 @@
+{
+  "algorithmSource": "scripts/art/cut-out-form-art.ts",
+  "preparedCardSource": "prepared-card-source.png",
+  "backgroundOnlyCorrection": {
+    "fromNativeY": 810,
+    "brightSeed": 110,
+    "closeRadius": 1,
+    "growRadius": 2,
+    "originalRGBUnchanged": true,
+    "humanPoseEdited": false
+  },
+  "algorithmCoreSha256": "f95042479cc61ffb5b292b7da463d4479963f1f76d7b3b98e3175f4d2b12487c",
+  "reference": "form-frames/kettlebell-swing/3.webp",
+  "sourceSha256": "b3c25c2b09318c3951294e6d2767f73ffb94a6bc565b45c2d18329b03c5a590b",
+  "width": 307,
+  "height": 480,
+  "keyed": true,
+  "sha256": "1e8b1d6b4f0140fe2eed49b9c90718affa3283e772829ebc916583262a72b9be"
+}

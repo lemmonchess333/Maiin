@@ -7,10 +7,12 @@ import { THEME } from "../../lib/theme";
 import {
   buildLeaderboard,
   CHALLENGE_LABELS,
+  boardFigure,
   type LeaderboardEntry,
   type ChallengeType,
 } from "../../lib/leaderboard";
 import LeaderboardRow from "./LeaderboardRow";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import EmptyState from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 
@@ -101,7 +103,9 @@ export default function LeaderboardCard({
     };
   }, [user, challenge, boardKey]);
 
-  const { title, unit } = CHALLENGE_LABELS[challenge];
+  const { title } = CHALLENGE_LABELS[challenge];
+  const liftUnit = useLiftUnit();
+  const figure = (value: number) => boardFigure(challenge, value, liftUnit);
   const icon = challengeIcons[challenge];
   const top3 = entries.slice(0, 3);
   const selfEntry = entries.find((e) => e.uid === user?.uid);
@@ -156,8 +160,8 @@ export default function LeaderboardCard({
                 uid={entry.uid}
                 name={entry.name}
                 photoURL={entry.photoURL}
-                value={entry.value}
-                unit={unit}
+                value={figure(entry.value).value}
+                unit={figure(entry.value).unit}
                 isSelf={entry.uid === user?.uid}
                 selfInitial={
                   profile?.displayName?.charAt(0) ||
@@ -182,8 +186,8 @@ export default function LeaderboardCard({
                   uid={selfEntry.uid}
                   name="You"
                   photoURL={selfEntry.photoURL}
-                  value={selfEntry.value}
-                  unit={unit}
+                  value={figure(selfEntry.value).value}
+                  unit={figure(selfEntry.value).unit}
                   isSelf
                   selfInitial={
                     profile?.displayName?.charAt(0) ||

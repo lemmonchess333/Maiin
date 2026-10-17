@@ -1,0 +1,818 @@
+{
+  "archivedAtUtc": "2026-10-16T09:02:09.348045+00:00",
+  "sinceUtc": "2026-10-16T08:59:10Z",
+  "scopeFilter": "draft",
+  "officialLog": "C:\\Users\\myles\\.codex\\sessions\\2026\\10\\04\\rollout-2026-10-04T14-18-53-01a10711-412c-7ce2-8907-eb9f63d462da.jsonl",
+  "logSnapshotBytes": 5467149392,
+  "boundedTailBytes": 120000000,
+  "source": "Only current-turn explicit spin-draft-* / spin-integrated-* official mcp__cua_repl.js returns",
+  "scope": "Exact screenshot bytes and original tool text are copied. JSON/JSON5 parses contain data only, never code execution. No capture, render, image edit, new image request, app mutation or QA acceptance.",
+  "mobileLimitation": "Viewport values are retained/tagged per actual observation object; screenshot pixel dimensions do not independently establish CSS viewport. Only root can accept actual matching review observations.",
+  "helperSha256": "7ea2a3dc6bf10d30d625a7307d9963cf2d2940c1a6c60bcd733330eef64929c1",
+  "artifacts": [
+    {
+      "title": "Set and verify the actual mobile viewport",
+      "callTimestamp": "2026-10-16T08:59:12.557Z",
+      "declaredKinds": [
+        "spin-draft-mobile-start"
+      ],
+      "callRecordSha256": "0191419a292d1cc31dd090034b97047fe8ab77226d1b021ca2f9008620a5aaa2",
+      "callByteStart": 5466215353,
+      "callByteEndExclusive": 5466216528,
+      "callId": "call_ca6d159bd9174150a9123924b273cfa6",
+      "outputTimestamp": "2026-10-16T08:59:15.583Z",
+      "outputRecordSha256": "e4f595f072e44dfcc0ec7592caff15984438cff5652013f381a20dc0beda875f",
+      "outputByteStart": 5466284205,
+      "outputByteEndExclusive": 5466288067,
+      "file": "review/spin-draft-mobile-start-ca6d159bd917-b1-tool-text.txt",
+      "sha256": "375e40e706dee1c7bcef2dfc105a17782c088c7d9b3efdf4cc19bb69e66d4cf7",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "spin-draft-mobile-start"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Set and verify the actual mobile viewport",
+      "callTimestamp": "2026-10-16T08:59:12.557Z",
+      "declaredKinds": [
+        "spin-draft-mobile-start"
+      ],
+      "callRecordSha256": "0191419a292d1cc31dd090034b97047fe8ab77226d1b021ca2f9008620a5aaa2",
+      "callByteStart": 5466215353,
+      "callByteEndExclusive": 5466216528,
+      "callId": "call_ca6d159bd9174150a9123924b273cfa6",
+      "outputTimestamp": "2026-10-16T08:59:15.583Z",
+      "outputRecordSha256": "e4f595f072e44dfcc0ec7592caff15984438cff5652013f381a20dc0beda875f",
+      "outputByteStart": 5466284205,
+      "outputByteEndExclusive": 5466288067,
+      "file": "review/spin-draft-mobile-start-ca6d159bd917-b2-tool-text.txt",
+      "sha256": "5cee4a40a9611ac78e2164427973e519c1795e446d5c93550721341363dfc796",
+      "bytes": 3062,
+      "kind": null,
+      "sameCallKinds": [
+        "spin-draft-mobile-start"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check all six Spin Bike steps in mobile dark mode",
+      "callTimestamp": "2026-10-16T08:59:28.756Z",
+      "declaredKinds": [
+        "spin-draft-dark-manual-six"
+      ],
+      "callRecordSha256": "4e4fa825eaa5483b306971cf6c8d69dee3a3abfac640153318e4771e2d17f9dc",
+      "callByteStart": 5466293643,
+      "callByteEndExclusive": 5466295047,
+      "callId": "call_be26d58aaade463485fbac52cc6bfa43",
+      "outputTimestamp": "2026-10-16T08:59:35.873Z",
+      "outputRecordSha256": "b9566b59ec464ca4a432db432c1ac5f25656cd87cb82ea93ce41091e9d63dc9e",
+      "outputByteStart": 5466362948,
+      "outputByteEndExclusive": 5466363966,
+      "file": "review/spin-draft-dark-manual-six-be26d58aaade-b1-tool-text.txt",
+      "sha256": "4288f4fb8e33305e96cea451c1b6865d7e044517b6759d60a897a3cd17504ccb",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "spin-draft-dark-manual-six"
+      ],
+      "labelBinding": "literal call-code kinds only; returned observation not parsed",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check all six Spin Bike steps in mobile dark mode",
+      "callTimestamp": "2026-10-16T08:59:28.756Z",
+      "declaredKinds": [
+        "spin-draft-dark-manual-six"
+      ],
+      "callRecordSha256": "4e4fa825eaa5483b306971cf6c8d69dee3a3abfac640153318e4771e2d17f9dc",
+      "callByteStart": 5466293643,
+      "callByteEndExclusive": 5466295047,
+      "callId": "call_be26d58aaade463485fbac52cc6bfa43",
+      "outputTimestamp": "2026-10-16T08:59:35.873Z",
+      "outputRecordSha256": "b9566b59ec464ca4a432db432c1ac5f25656cd87cb82ea93ce41091e9d63dc9e",
+      "outputByteStart": 5466362948,
+      "outputByteEndExclusive": 5466363966,
+      "file": "review/spin-draft-dark-manual-six-be26d58aaade-b2-tool-text.txt",
+      "sha256": "5f0c6ea4049cd1bc7acbdaea8660ea2591b49cd1ce16d86ade02e3db32270cde",
+      "bytes": 444,
+      "kind": null,
+      "sameCallKinds": [
+        "spin-draft-dark-manual-six"
+      ],
+      "labelBinding": "literal call-code kinds only; returned observation not parsed",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": true
+    },
+    {
+      "title": "Inspect the complete Spin Bike figure on mobile",
+      "callTimestamp": "2026-10-16T08:59:43.649Z",
+      "declaredKinds": [
+        "spin-draft-dark-manual-six",
+        "spin-draft-dark-mobile-view"
+      ],
+      "callRecordSha256": "973da9fade39c3b097539d05af33bf5315dfff100b53022578ffff9206005317",
+      "callByteStart": 5466369624,
+      "callByteEndExclusive": 5466370821,
+      "callId": "call_e29789b0e59043d99f73fad7c8bf5287",
+      "outputTimestamp": "2026-10-16T08:59:46.517Z",
+      "outputRecordSha256": "e5383b1d4466b9e69491819440616f0aec909edf2f1711aa4d9902204518178d",
+      "outputByteStart": 5466438521,
+      "outputByteEndExclusive": 5466494540,
+      "file": "review/spin-same-call-multiple-e29789b0e590-b1-tool-text.txt",
+      "sha256": "0845f5b6a02e4a71de5481aab02f85b08cd2efb271a4a709bb3dd704ad1841b5",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "spin-draft-dark-manual-six",
+        "spin-draft-dark-mobile-view"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Inspect the complete Spin Bike figure on mobile",
+      "callTimestamp": "2026-10-16T08:59:43.649Z",
+      "declaredKinds": [
+        "spin-draft-dark-manual-six",
+        "spin-draft-dark-mobile-view"
+      ],
+      "callRecordSha256": "973da9fade39c3b097539d05af33bf5315dfff100b53022578ffff9206005317",
+      "callByteStart": 5466369624,
+      "callByteEndExclusive": 5466370821,
+      "callId": "call_e29789b0e59043d99f73fad7c8bf5287",
+      "outputTimestamp": "2026-10-16T08:59:46.517Z",
+      "outputRecordSha256": "e5383b1d4466b9e69491819440616f0aec909edf2f1711aa4d9902204518178d",
+      "outputByteStart": 5466438521,
+      "outputByteEndExclusive": 5466494540,
+      "file": "review/spin-draft-dark-manual-six-e29789b0e590-b2-tool-text.txt",
+      "sha256": "bd7d06021edb90ffdbbefbdca05330d981dcc98521ec2c9762bd031a64b96911",
+      "bytes": 1786,
+      "kind": null,
+      "sameCallKinds": [
+        "spin-draft-dark-manual-six",
+        "spin-draft-dark-mobile-view"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Inspect the complete Spin Bike figure on mobile",
+      "callTimestamp": "2026-10-16T08:59:43.649Z",
+      "declaredKinds": [
+        "spin-draft-dark-manual-six",
+        "spin-draft-dark-mobile-view"
+      ],
+      "callRecordSha256": "973da9fade39c3b097539d05af33bf5315dfff100b53022578ffff9206005317",
+      "callByteStart": 5466369624,
+      "callByteEndExclusive": 5466370821,
+      "callId": "call_e29789b0e59043d99f73fad7c8bf5287",
+      "outputTimestamp": "2026-10-16T08:59:46.517Z",
+      "outputRecordSha256": "e5383b1d4466b9e69491819440616f0aec909edf2f1711aa4d9902204518178d",
+      "outputByteStart": 5466438521,
+      "outputByteEndExclusive": 5466494540,
+      "file": "review/spin-same-call-multiple-e29789b0e590-b3.jpg",
+      "sha256": "a8c3c1b72abb02ed354621f3478d6c0d902567ed3e92323c2d309b5d6449d667",
+      "bytes": 40073,
+      "kind": null,
+      "sameCallKinds": [
+        "spin-draft-dark-manual-six",
+        "spin-draft-dark-mobile-view"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "dimensions": [
+        380,
+        822
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Review six Spin Bike steps in mobile light mode",
+      "callTimestamp": "2026-10-16T09:00:04.210Z",
+      "declaredKinds": [
+        "spin-draft-light-manual-six"
+      ],
+      "callRecordSha256": "8cfa9ca65c27d2a273d8188052390600a8d24f8c823ad24ee71811bf42fe6765",
+      "callByteStart": 5466507136,
+      "callByteEndExclusive": 5466508727,
+      "callId": "call_f7da3c6a5d0347998ef54957b2413127",
+      "outputTimestamp": "2026-10-16T09:00:08.930Z",
+      "outputRecordSha256": "e285a1d59a157c009ee0d6a28715a170697d3d48260ea7338d63d56bdb13a895",
+      "outputByteStart": 5466576816,
+      "outputByteEndExclusive": 5466649188,
+      "file": "review/spin-draft-light-manual-six-f7da3c6a5d03-b1-tool-text.txt",
+      "sha256": "f6cb4684191e6ac00382deb76ee5743939120d9bb5095dde59be207e85952969",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "spin-draft-light-manual-six"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Review six Spin Bike steps in mobile light mode",
+      "callTimestamp": "2026-10-16T09:00:04.210Z",
+      "declaredKinds": [
+        "spin-draft-light-manual-six"
+      ],
+      "callRecordSha256": "8cfa9ca65c27d2a273d8188052390600a8d24f8c823ad24ee71811bf42fe6765",
+      "callByteStart": 5466507136,
+      "callByteEndExclusive": 5466508727,
+      "callId": "call_f7da3c6a5d0347998ef54957b2413127",
+      "outputTimestamp": "2026-10-16T09:00:08.930Z",
+      "outputRecordSha256": "e285a1d59a157c009ee0d6a28715a170697d3d48260ea7338d63d56bdb13a895",
+      "outputByteStart": 5466576816,
+      "outputByteEndExclusive": 5466649188,
+      "file": "review/spin-draft-light-manual-six-f7da3c6a5d03-b2-tool-text.txt",
+      "sha256": "6b053df9f3b6ce17204500b5de14d36a339747bce58c3078aff2286b7d2b80bd",
+      "bytes": 14112,
+      "kind": null,
+      "sameCallKinds": [
+        "spin-draft-light-manual-six"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Review six Spin Bike steps in mobile light mode",
+      "callTimestamp": "2026-10-16T09:00:04.210Z",
+      "declaredKinds": [
+        "spin-draft-light-manual-six"
+      ],
+      "callRecordSha256": "8cfa9ca65c27d2a273d8188052390600a8d24f8c823ad24ee71811bf42fe6765",
+      "callByteStart": 5466507136,
+      "callByteEndExclusive": 5466508727,
+      "callId": "call_f7da3c6a5d0347998ef54957b2413127",
+      "outputTimestamp": "2026-10-16T09:00:08.930Z",
+      "outputRecordSha256": "e285a1d59a157c009ee0d6a28715a170697d3d48260ea7338d63d56bdb13a895",
+      "outputByteStart": 5466576816,
+      "outputByteEndExclusive": 5466649188,
+      "file": "review/spin-draft-light-manual-six-f7da3c6a5d03-b3.jpg",
+      "sha256": "cf2e14ecbdaf70b458666558f90cdc8f63ff4c0b31e8a64033c5d1b38c496c6f",
+      "bytes": 41705,
+      "kind": "spin-draft-light-manual-six",
+      "sameCallKinds": [
+        "spin-draft-light-manual-six"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "dimensions": [
+        380,
+        822
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Record the observed mobile manual steps",
+      "callTimestamp": "2026-10-16T09:00:19.698Z",
+      "declaredKinds": [
+        "spin-draft-mobile-manual-data"
+      ],
+      "callRecordSha256": "100d9a002775cc2f057f76e0701c98f96529f35933c022d731658c6acbc34e9c",
+      "callByteStart": 5466654892,
+      "callByteEndExclusive": 5466655546,
+      "callId": "call_87ad05ea404b4fe1acdaed9f1d453e36",
+      "outputTimestamp": "2026-10-16T09:00:22.555Z",
+      "outputRecordSha256": "fef894bb67647569c563b3988e3f8d2de8ee3c7ce5debebc1996d6b6fd3d76da",
+      "outputByteStart": 5466660351,
+      "outputByteEndExclusive": 5466663961,
+      "file": "review/spin-draft-mobile-manual-data-87ad05ea404b-b1-tool-text.txt",
+      "sha256": "fb3ca80ba899bf87dc933b171f67b5cef28af37ae35ec321d1878b04a84356ec",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "spin-draft-mobile-manual-data"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Record the observed mobile manual steps",
+      "callTimestamp": "2026-10-16T09:00:19.698Z",
+      "declaredKinds": [
+        "spin-draft-mobile-manual-data"
+      ],
+      "callRecordSha256": "100d9a002775cc2f057f76e0701c98f96529f35933c022d731658c6acbc34e9c",
+      "callByteStart": 5466654892,
+      "callByteEndExclusive": 5466655546,
+      "callId": "call_87ad05ea404b4fe1acdaed9f1d453e36",
+      "outputTimestamp": "2026-10-16T09:00:22.555Z",
+      "outputRecordSha256": "fef894bb67647569c563b3988e3f8d2de8ee3c7ce5debebc1996d6b6fd3d76da",
+      "outputByteStart": 5466660351,
+      "outputByteEndExclusive": 5466663961,
+      "file": "review/spin-draft-mobile-manual-data-87ad05ea404b-b2-tool-text.txt",
+      "sha256": "116b3e604533ace934cc6ff5ba9b7f6847eb83c14b32d9e3a35ab4a6fa8d7299",
+      "bytes": 2781,
+      "kind": "spin-draft-mobile-manual-data",
+      "sameCallKinds": [
+        "spin-draft-mobile-manual-data"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Record the observed mobile manual steps",
+      "callTimestamp": "2026-10-16T09:00:19.698Z",
+      "declaredKinds": [
+        "spin-draft-mobile-manual-data"
+      ],
+      "callRecordSha256": "100d9a002775cc2f057f76e0701c98f96529f35933c022d731658c6acbc34e9c",
+      "callByteStart": 5466654892,
+      "callByteEndExclusive": 5466655546,
+      "callId": "call_87ad05ea404b4fe1acdaed9f1d453e36",
+      "outputTimestamp": "2026-10-16T09:00:22.555Z",
+      "outputRecordSha256": "fef894bb67647569c563b3988e3f8d2de8ee3c7ce5debebc1996d6b6fd3d76da",
+      "outputByteStart": 5466660351,
+      "outputByteEndExclusive": 5466663961,
+      "file": "review/spin-draft-mobile-manual-data-87ad05ea404b-b2-dom.json",
+      "sha256": "1c5373917877f41a7575f5a19650cf0eeb418ce7f65d6002e5241577d39e473a",
+      "bytes": 4949,
+      "kind": "spin-draft-mobile-manual-data",
+      "block": 2,
+      "actualDomObservation": true,
+      "parseMethod": "JSON",
+      "originalTextFile": "review/spin-draft-mobile-manual-data-87ad05ea404b-b2-tool-text.txt",
+      "originalTextSha256": "116b3e604533ace934cc6ff5ba9b7f6847eb83c14b32d9e3a35ab4a6fa8d7299",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Verify normal looping and select slower playback",
+      "callTimestamp": "2026-10-16T09:00:34.380Z",
+      "declaredKinds": [
+        "spin-draft-mobile-normal-loop"
+      ],
+      "callRecordSha256": "54ba115206395e7085d1de06d44df534427b928453357832bb1d00507455aca5",
+      "callByteStart": 5466670249,
+      "callByteEndExclusive": 5466671512,
+      "callId": "call_62f49bd5767141959926c1bc012d0040",
+      "outputTimestamp": "2026-10-16T09:00:39.287Z",
+      "outputRecordSha256": "4ef46aaab9455a4417545df924b8b07c8a6d9a86b0e6d2e224e35e110f565b51",
+      "outputByteStart": 5466739278,
+      "outputByteEndExclusive": 5466745188,
+      "file": "review/spin-draft-mobile-normal-loop-62f49bd57671-b1-tool-text.txt",
+      "sha256": "c127f3056e64e12c4cfbb57fc738ca610d53d0e3c4075859d5b8f65c44f8115a",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "spin-draft-mobile-normal-loop"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify normal looping and select slower playback",
+      "callTimestamp": "2026-10-16T09:00:34.380Z",
+      "declaredKinds": [
+        "spin-draft-mobile-normal-loop"
+      ],
+      "callRecordSha256": "54ba115206395e7085d1de06d44df534427b928453357832bb1d00507455aca5",
+      "callByteStart": 5466670249,
+      "callByteEndExclusive": 5466671512,
+      "callId": "call_62f49bd5767141959926c1bc012d0040",
+      "outputTimestamp": "2026-10-16T09:00:39.287Z",
+      "outputRecordSha256": "4ef46aaab9455a4417545df924b8b07c8a6d9a86b0e6d2e224e35e110f565b51",
+      "outputByteStart": 5466739278,
+      "outputByteEndExclusive": 5466745188,
+      "file": "review/spin-draft-mobile-normal-loop-62f49bd57671-b2-tool-text.txt",
+      "sha256": "e5eadfce7965250cbef5fc04a55a880acbfc0278852ca1f31856216e805b62fc",
+      "bytes": 4830,
+      "kind": "spin-draft-mobile-normal-loop",
+      "sameCallKinds": [
+        "spin-draft-mobile-normal-loop"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify normal looping and select slower playback",
+      "callTimestamp": "2026-10-16T09:00:34.380Z",
+      "declaredKinds": [
+        "spin-draft-mobile-normal-loop"
+      ],
+      "callRecordSha256": "54ba115206395e7085d1de06d44df534427b928453357832bb1d00507455aca5",
+      "callByteStart": 5466670249,
+      "callByteEndExclusive": 5466671512,
+      "callId": "call_62f49bd5767141959926c1bc012d0040",
+      "outputTimestamp": "2026-10-16T09:00:39.287Z",
+      "outputRecordSha256": "4ef46aaab9455a4417545df924b8b07c8a6d9a86b0e6d2e224e35e110f565b51",
+      "outputByteStart": 5466739278,
+      "outputByteEndExclusive": 5466745188,
+      "file": "review/spin-draft-mobile-normal-loop-62f49bd57671-b2-dom.json",
+      "sha256": "fd7f6805fe0119f28b5fe3df1ce9266675fd5f3555e825ec96e09a8e89bae562",
+      "bytes": 7363,
+      "kind": "spin-draft-mobile-normal-loop",
+      "block": 2,
+      "actualDomObservation": true,
+      "parseMethod": "JSON",
+      "originalTextFile": "review/spin-draft-mobile-normal-loop-62f49bd57671-b2-tool-text.txt",
+      "originalTextSha256": "e5eadfce7965250cbef5fc04a55a880acbfc0278852ca1f31856216e805b62fc",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Review the transparent normal card in light mode",
+      "callTimestamp": "2026-10-16T09:01:02.971Z",
+      "declaredKinds": [
+        "spin-draft-light-normal-card"
+      ],
+      "callRecordSha256": "2cdc50c32ee7f6435a3d87e71ca1e9900551b28a2f6cb451eb0ff6dfc4ff1f50",
+      "callByteStart": 5466831404,
+      "callByteEndExclusive": 5466832587,
+      "callId": "call_2465d64e3f574992b82e08c52b645186",
+      "outputTimestamp": "2026-10-16T09:01:07.788Z",
+      "outputRecordSha256": "3e39437b69b1d19d60719d94b92dd08610d590738216889ea5a4986447a27589",
+      "outputByteStart": 5466900276,
+      "outputByteEndExclusive": 5466948619,
+      "file": "review/spin-draft-light-normal-card-2465d64e3f57-b1-tool-text.txt",
+      "sha256": "cfbb6661a6427dbce53c5c88c505329c2cd0ef513ffbe99c47aa7eddb86e7e60",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "spin-draft-light-normal-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Review the transparent normal card in light mode",
+      "callTimestamp": "2026-10-16T09:01:02.971Z",
+      "declaredKinds": [
+        "spin-draft-light-normal-card"
+      ],
+      "callRecordSha256": "2cdc50c32ee7f6435a3d87e71ca1e9900551b28a2f6cb451eb0ff6dfc4ff1f50",
+      "callByteStart": 5466831404,
+      "callByteEndExclusive": 5466832587,
+      "callId": "call_2465d64e3f574992b82e08c52b645186",
+      "outputTimestamp": "2026-10-16T09:01:07.788Z",
+      "outputRecordSha256": "3e39437b69b1d19d60719d94b92dd08610d590738216889ea5a4986447a27589",
+      "outputByteStart": 5466900276,
+      "outputByteEndExclusive": 5466948619,
+      "file": "review/spin-draft-light-normal-card-2465d64e3f57-b2-tool-text.txt",
+      "sha256": "041f67222c9a76095465050e11ab3940d7287762bb1358a61f706763af9d22e8",
+      "bytes": 610,
+      "kind": "spin-draft-light-normal-card",
+      "sameCallKinds": [
+        "spin-draft-light-normal-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Review the transparent normal card in light mode",
+      "callTimestamp": "2026-10-16T09:01:02.971Z",
+      "declaredKinds": [
+        "spin-draft-light-normal-card"
+      ],
+      "callRecordSha256": "2cdc50c32ee7f6435a3d87e71ca1e9900551b28a2f6cb451eb0ff6dfc4ff1f50",
+      "callByteStart": 5466831404,
+      "callByteEndExclusive": 5466832587,
+      "callId": "call_2465d64e3f574992b82e08c52b645186",
+      "outputTimestamp": "2026-10-16T09:01:07.788Z",
+      "outputRecordSha256": "3e39437b69b1d19d60719d94b92dd08610d590738216889ea5a4986447a27589",
+      "outputByteStart": 5466900276,
+      "outputByteEndExclusive": 5466948619,
+      "file": "review/spin-draft-light-normal-card-2465d64e3f57-b2-dom.json",
+      "sha256": "f696b19a3217ae8ace132dd0091edd6db47636d74ec16f08605ea7cac93076ca",
+      "bytes": 1046,
+      "kind": "spin-draft-light-normal-card",
+      "block": 2,
+      "actualDomObservation": true,
+      "parseMethod": "JSON",
+      "originalTextFile": "review/spin-draft-light-normal-card-2465d64e3f57-b2-tool-text.txt",
+      "originalTextSha256": "041f67222c9a76095465050e11ab3940d7287762bb1358a61f706763af9d22e8",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Review the transparent normal card in light mode",
+      "callTimestamp": "2026-10-16T09:01:02.971Z",
+      "declaredKinds": [
+        "spin-draft-light-normal-card"
+      ],
+      "callRecordSha256": "2cdc50c32ee7f6435a3d87e71ca1e9900551b28a2f6cb451eb0ff6dfc4ff1f50",
+      "callByteStart": 5466831404,
+      "callByteEndExclusive": 5466832587,
+      "callId": "call_2465d64e3f574992b82e08c52b645186",
+      "outputTimestamp": "2026-10-16T09:01:07.788Z",
+      "outputRecordSha256": "3e39437b69b1d19d60719d94b92dd08610d590738216889ea5a4986447a27589",
+      "outputByteStart": 5466900276,
+      "outputByteEndExclusive": 5466948619,
+      "file": "review/spin-draft-light-normal-card-2465d64e3f57-b3.jpg",
+      "sha256": "8773eb30a4d0ed68064b55ee1c6d18111d38cbf3314d73d3fb5dd2ffcfe65c0e",
+      "bytes": 35288,
+      "kind": "spin-draft-light-normal-card",
+      "sameCallKinds": [
+        "spin-draft-light-normal-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "dimensions": [
+        380,
+        822
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [
+          {
+            "kind": "spin-draft-light-normal-card",
+            "viewportScope": {
+              "topLevelViewport": null,
+              "explicitViewportPairs": [
+                [
+                  390,
+                  844
+                ]
+              ],
+              "containsNon390x844Viewport": false,
+              "classification": "all explicit viewports are390x844; observations still require root review",
+              "qaAcceptance": false
+            }
+          }
+        ],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Verify slower looping and the compact dark card",
+      "callTimestamp": "2026-10-16T09:01:17.484Z",
+      "declaredKinds": [
+        "spin-draft-dark-normal-card",
+        "spin-draft-mobile-slower-loop"
+      ],
+      "callRecordSha256": "0c1c3a9822667dacdda9829d6079819d47c6d5e9bc87947bfcbe81be325eac5e",
+      "callByteStart": 5466954370,
+      "callByteEndExclusive": 5466956277,
+      "callId": "call_6b7c8c8353fe441ab9be38b7ca3664e1",
+      "outputTimestamp": "2026-10-16T09:01:21.110Z",
+      "outputRecordSha256": "bee5d45821f50eac1c12fc0139c25ce9c534f90c0b178d4b8895059e2b024068",
+      "outputByteStart": 5467024686,
+      "outputByteEndExclusive": 5467070331,
+      "file": "review/spin-same-call-multiple-6b7c8c8353fe-b1-tool-text.txt",
+      "sha256": "7953e6afe2fb24e5577fc5bd6515b05ecddc35129f6b324993c54e13b92a26e5",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "spin-draft-dark-normal-card",
+        "spin-draft-mobile-slower-loop"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify slower looping and the compact dark card",
+      "callTimestamp": "2026-10-16T09:01:17.484Z",
+      "declaredKinds": [
+        "spin-draft-dark-normal-card",
+        "spin-draft-mobile-slower-loop"
+      ],
+      "callRecordSha256": "0c1c3a9822667dacdda9829d6079819d47c6d5e9bc87947bfcbe81be325eac5e",
+      "callByteStart": 5466954370,
+      "callByteEndExclusive": 5466956277,
+      "callId": "call_6b7c8c8353fe441ab9be38b7ca3664e1",
+      "outputTimestamp": "2026-10-16T09:01:21.110Z",
+      "outputRecordSha256": "bee5d45821f50eac1c12fc0139c25ce9c534f90c0b178d4b8895059e2b024068",
+      "outputByteStart": 5467024686,
+      "outputByteEndExclusive": 5467070331,
+      "file": "review/spin-draft-mobile-slower-loop-6b7c8c8353fe-b2-tool-text.txt",
+      "sha256": "23f544f5ca98d2b4b19f687af2e0b27f7d6a749c2223783873891cb5e468cb5a",
+      "bytes": 5282,
+      "kind": null,
+      "sameCallKinds": [
+        "spin-draft-dark-normal-card",
+        "spin-draft-mobile-slower-loop"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify slower looping and the compact dark card",
+      "callTimestamp": "2026-10-16T09:01:17.484Z",
+      "declaredKinds": [
+        "spin-draft-dark-normal-card",
+        "spin-draft-mobile-slower-loop"
+      ],
+      "callRecordSha256": "0c1c3a9822667dacdda9829d6079819d47c6d5e9bc87947bfcbe81be325eac5e",
+      "callByteStart": 5466954370,
+      "callByteEndExclusive": 5466956277,
+      "callId": "call_6b7c8c8353fe441ab9be38b7ca3664e1",
+      "outputTimestamp": "2026-10-16T09:01:21.110Z",
+      "outputRecordSha256": "bee5d45821f50eac1c12fc0139c25ce9c534f90c0b178d4b8895059e2b024068",
+      "outputByteStart": 5467024686,
+      "outputByteEndExclusive": 5467070331,
+      "file": "review/spin-same-call-multiple-6b7c8c8353fe-b3.jpg",
+      "sha256": "18b4d116a7c9ac4da9be7a3421d6a40831147b36fe8a0aaa00577fb9002aea27",
+      "bytes": 29365,
+      "kind": null,
+      "sameCallKinds": [
+        "spin-draft-dark-normal-card",
+        "spin-draft-mobile-slower-loop"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "dimensions": [
+        380,
+        822
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Record Spin Bike’s completed draft review evidence",
+      "callTimestamp": "2026-10-16T09:01:45.482Z",
+      "declaredKinds": [
+        "spin-draft-final-mobile-data"
+      ],
+      "callRecordSha256": "424ede079244af3bfc71f403e75ac0c8b6154cf14f1ee3bd2ba777b2cd822419",
+      "callByteStart": 5467082314,
+      "callByteEndExclusive": 5467084150,
+      "callId": "call_31c0876355df49019508b037d703f247",
+      "outputTimestamp": "2026-10-16T09:01:50.941Z",
+      "outputRecordSha256": "bee8d705373f3816327f5f48ae78e119d0da479fc00e6ab4342b82fb65637e8d",
+      "outputByteStart": 5467103962,
+      "outputByteEndExclusive": 5467121236,
+      "file": "review/spin-draft-final-mobile-data-31c0876355df-b1-tool-text.txt",
+      "sha256": "bc097c6d2729fc8478ba8d4a97a92664266fde6550c2c08ea9a81c803214fd46",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "spin-draft-final-mobile-data"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Record Spin Bike’s completed draft review evidence",
+      "callTimestamp": "2026-10-16T09:01:45.482Z",
+      "declaredKinds": [
+        "spin-draft-final-mobile-data"
+      ],
+      "callRecordSha256": "424ede079244af3bfc71f403e75ac0c8b6154cf14f1ee3bd2ba777b2cd822419",
+      "callByteStart": 5467082314,
+      "callByteEndExclusive": 5467084150,
+      "callId": "call_31c0876355df49019508b037d703f247",
+      "outputTimestamp": "2026-10-16T09:01:50.941Z",
+      "outputRecordSha256": "bee8d705373f3816327f5f48ae78e119d0da479fc00e6ab4342b82fb65637e8d",
+      "outputByteStart": 5467103962,
+      "outputByteEndExclusive": 5467121236,
+      "file": "review/spin-draft-final-mobile-data-31c0876355df-b2-tool-text.txt",
+      "sha256": "a904480fec01de213dd8e25ba5b129ef05ba610e82ba8d9fc661b22e6e870354",
+      "bytes": 15088,
+      "kind": "spin-draft-final-mobile-data",
+      "sameCallKinds": [
+        "spin-draft-final-mobile-data"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Record Spin Bike’s completed draft review evidence",
+      "callTimestamp": "2026-10-16T09:01:45.482Z",
+      "declaredKinds": [
+        "spin-draft-final-mobile-data"
+      ],
+      "callRecordSha256": "424ede079244af3bfc71f403e75ac0c8b6154cf14f1ee3bd2ba777b2cd822419",
+      "callByteStart": 5467082314,
+      "callByteEndExclusive": 5467084150,
+      "callId": "call_31c0876355df49019508b037d703f247",
+      "outputTimestamp": "2026-10-16T09:01:50.941Z",
+      "outputRecordSha256": "bee8d705373f3816327f5f48ae78e119d0da479fc00e6ab4342b82fb65637e8d",
+      "outputByteStart": 5467103962,
+      "outputByteEndExclusive": 5467121236,
+      "file": "review/spin-draft-final-mobile-data-31c0876355df-b2-dom.json",
+      "sha256": "dc5d5584d4df4461c18bc99a64fefc2816cf6bb5a8e1fbc9ead8da2db2add54d",
+      "bytes": 25887,
+      "kind": "spin-draft-final-mobile-data",
+      "block": 2,
+      "actualDomObservation": true,
+      "parseMethod": "JSON",
+      "originalTextFile": "review/spin-draft-final-mobile-data-31c0876355df-b2-tool-text.txt",
+      "originalTextSha256": "a904480fec01de213dd8e25ba5b129ef05ba610e82ba8d9fc661b22e6e870354",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      }
+    }
+  ],
+  "unparsedObservations": [
+    {
+      "callId": "call_ca6d159bd9174150a9123924b273cfa6",
+      "file": "review/spin-draft-mobile-start-ca6d159bd917-b2-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    },
+    {
+      "callId": "call_e29789b0e59043d99f73fad7c8bf5287",
+      "file": "review/spin-draft-dark-manual-six-e29789b0e590-b2-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    },
+    {
+      "callId": "call_f7da3c6a5d0347998ef54957b2413127",
+      "file": "review/spin-draft-light-manual-six-f7da3c6a5d03-b2-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    },
+    {
+      "callId": "call_6b7c8c8353fe441ab9be38b7ca3664e1",
+      "file": "review/spin-draft-mobile-slower-loop-6b7c8c8353fe-b2-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    }
+  ],
+  "callsAwaitingOutputWithinSnapshot": [],
+  "qaAcceptance": false
+}

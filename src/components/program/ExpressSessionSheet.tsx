@@ -30,6 +30,7 @@ import {
  * programme never mutated.
  */
 
+import type { LiftUnit } from "@/lib/liftLoad";
 import { ChoiceSheet, type Choice } from "@/components/ui/ChoiceSheet";
 import {
   buildExpressSession,
@@ -51,6 +52,10 @@ interface ExpressSessionSheetProps {
   timeBudgetMinutes?: number | null;
   /** How the session's timer will rest, so each estimate prices it. */
   rest?: RestContext;
+  /** The plan's "I have small plates", for the easier session's weights. */
+  smallPlates?: boolean;
+  /** The plan's kit (`settings.loadUnit`), for the same weights (Lift18). */
+  loadUnit?: LiftUnit;
   open: boolean;
   day: WorkoutDay | null;
   /** Pure recommendation computed by the caller from existing signals
@@ -87,6 +92,8 @@ export default function ExpressSessionSheet({
   blockPrefersShorter = false,
   timeBudgetMinutes,
   rest = {},
+  smallPlates = false,
+  loadUnit = "kg",
 }: ExpressSessionSheetProps) {
   if (!day) return null;
 
@@ -133,7 +140,7 @@ export default function ExpressSessionSheet({
   }
 
   // Always offered (PROGRAM-ADAPT-01) — same exercises, reduced.
-  const easierPlan = buildEasierSession(day, rest);
+  const easierPlan = buildEasierSession(day, rest, { smallPlates, loadUnit });
   choices.push({
     id: "easier_today",
     label: `Easier today · ${summarizeEasier(easierPlan)}`,

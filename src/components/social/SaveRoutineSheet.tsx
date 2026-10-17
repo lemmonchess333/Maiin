@@ -17,13 +17,16 @@ import {
   type ExerciseSummaryInput,
 } from "@/lib/exerciseSummary";
 import InlineNumerals from "@/components/ui/InlineNumerals";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 
-/** Keep the preview and feed on one formatter; only numbers use Archivo. */
+/** Keep the preview and feed on one formatter; only numbers use Archivo.
+ *  In the reader's unit, as the feed card's rows are (Lift18). */
 function ExerciseSummary(props: ExerciseSummaryInput) {
+  const liftUnit = useLiftUnit();
   return (
     <span className="text-muted-foreground [&_.font-mono]:text-foreground/80">
-      <InlineNumerals>{formatExerciseSummary(props)}</InlineNumerals>
+      <InlineNumerals>{formatExerciseSummary(props, liftUnit)}</InlineNumerals>
     </span>
   );
 }
@@ -205,7 +208,7 @@ export default function SaveRoutineSheet({
             type="button"
             onClick={onClose}
             disabled={saving || saved}
-            className="flex-1 py-3 rounded-xl bg-muted text-foreground text-sm font-medium active:scale-[0.98] disabled:opacity-60"
+            className="flex-1 py-3 rounded-xl bg-muted text-foreground text-sm font-medium transition-transform active:scale-[0.98] disabled:opacity-60"
           >
             Cancel
           </button>
@@ -214,7 +217,7 @@ export default function SaveRoutineSheet({
             onClick={handleSave}
             disabled={saving || saved || !name.trim()}
             aria-live="polite"
-            className="flex-1 py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.98] disabled:opacity-90 transition-colors flex items-center justify-center gap-1.5"
+            className="flex-1 py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.98] disabled:opacity-90 transition flex items-center justify-center gap-1.5"
             style={{
               backgroundColor: saved ? THEME.success : THEME.brandStrong,
             }}

@@ -1,0 +1,17 @@
+{
+  "source":"4-standing-side-candidate-v1.png",
+  "output":"4-standing-side-master-colour-v1.png",
+  "palette":{"primary":"#7B72E9","secondary":"#9590E0","contour":"#777777"},
+  "fills":[
+    {"name":"far-triceps","role":"primary","path":[["M",397,298],["C",406,320,425,355,434,388],["C",437,405,441,419,441,425],["C",422,410,411,386,403,357],["C",397,339,396,316,397,298],["Z"]]},
+    {"name":"near-triceps-main","role":"primary","path":[["M",580,255],["C",592,278,605,304,613,329],["C",620,351,619,382,607,408],["C",590,391,576,367,571,343],["C",565,313,569,281,580,255],["Z"]]},
+    {"name":"near-triceps-lower-visible","role":"primary","path":[["M",615,371],["C",628,394,634,412,633,431],["C",632,444,628,457,622,465],["C",621,447,614,428,606,409],["C",612,397,613,382,615,371],["Z"]]},
+    {"name":"far-front-deltoid","role":"secondary","path":[["M",437,404],["C",446,404,453,407,460,407],["C",465,421,466,431,466,435],["C",450,444,438,456,423,471],["C",427,448,430,425,437,404],["Z"]]},
+    {"name":"near-front-deltoid","role":"secondary","path":[["M",546,386],["C",536,397,522,413,519,435],["C",516,463,535,501,566,529],["C",558,510,554,488,556,461],["C",561,433,559,409,546,386],["Z"]]}
+  ],
+  "contours":[
+    {"name":"near-triceps-divider","path":[["M",615,373],["C",614,387,611,400,607,408]]},
+    {"name":"near-deltoid-divider","path":[["M",553,424],["C",555,450,553,478,549,503]]}
+  ],
+  "limitations":"Positive manually traced source-coordinate muscle fields only; no hue-selected paint, geometry transforms, anatomical warp/rescale/graft. Candidate requires full native boundary/identity/grip review."
+}

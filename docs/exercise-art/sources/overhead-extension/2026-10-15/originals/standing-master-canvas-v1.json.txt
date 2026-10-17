@@ -1,0 +1,13 @@
+{
+  "source": "4-standing-side-master-colour-v1.png",
+  "output": "4-standing-master-v1.png",
+  "size": [
+    1024,
+    1856
+  ],
+  "topCanvasExtension": 320,
+  "sourceRowsExact": true,
+  "anatomicalRescaleWarpOrGraft": false,
+  "independentORARecompositionExact": true,
+  "sha256": "41f57a0a2e2532c8601f89116eb7e46c163bd5aa4ac2f752fa976a7999a3f23d"
+}

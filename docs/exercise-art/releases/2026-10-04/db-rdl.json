@@ -1,0 +1,181 @@
+{
+  "exerciseId": "db-rdl",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 748,
+  "height": 1504,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-05T13:38:44.026Z",
+  "reference": {
+    "path": "form-frames/db-rdl/1.webp",
+    "sha256": "4b329271ee315758964a439fd263d4b47fd296e82506619e3b46b581da63d885"
+  },
+  "cueSha256": "d349c61b1a59521763d328071abc127d2af1ca0cdc13cb55f83100d8b10a6afb",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical v3 athlete retained, moving anatomy authored by imagegen."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed side-three-quarter view; both sole measurements establish whole-scene y shifts0/64/32px. Common crop140,0,700,1472 and24pxside/32pxtop padding."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native standing, middle and bottom plus final framed poses reviewed; hip hinge with softly flexed knees, straight arms, neutral spine and controlled neck angle."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two modest hex dumbbells remain gripped, with neutral wrists and continuous handles. Native shape/attachment reviewed; no code transforms of moving anatomy/equipment."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Pixel-derived planted soles and shoe widths pass all6; narrowed stationary sole copies with20px fade avoid earlier ankle seam."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Weights hang beneath straight arms and remain close to legs, lowering with the hip hinge; no squat, bar, cable or invented3D calibration."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Hamstrings purple; glutes, lower back and traps lilac; hierarchy retained across6frames."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues <=7words agree with Set,Hinge,Stretch,Hold,Rise,Stand."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All6 and6to1 reviewed; seq1,2,3,3,2,1. Autoplay observed Set1 to Stand6, pause confirmed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormFrames390x844 light all6 and6to1 reviewed after final changes. Full athlete and both weights visible, cues readable, contacts stable."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual390x844 dark all6 and6to1 reviewed with no clipping and clear cues."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Standing hip hinge with planted soles",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["leftSole", "rightSole"],
+      "dimensionNames": ["leftShoeWidth", "rightShoeWidth"],
+      "evidence": "Pixel-derived sole contacts and widths, plus native hinge and dumbbell/grip review."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/db-rdl/1.webp",
+      "sha256": "4b329271ee315758964a439fd263d4b47fd296e82506619e3b46b581da63d885",
+      "anchors": {
+        "leftSole": {
+          "x": 222,
+          "y": 1411
+        },
+        "rightSole": {
+          "x": 424,
+          "y": 1470
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 217,
+        "rightShoeWidth": 199
+      }
+    },
+    {
+      "path": "form-frames/db-rdl/2.webp",
+      "sha256": "0d4cc9fc1ce9e4f81dd24aee4d1d43f923e38645086f2d439437399752789a74",
+      "anchors": {
+        "leftSole": {
+          "x": 222,
+          "y": 1411
+        },
+        "rightSole": {
+          "x": 424,
+          "y": 1470
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 217,
+        "rightShoeWidth": 199
+      }
+    },
+    {
+      "path": "form-frames/db-rdl/3.webp",
+      "sha256": "e8e18ba176e04f05a05b88bfe59ab07545691e8f0bc4728e0b092e1e43aab544",
+      "anchors": {
+        "leftSole": {
+          "x": 222,
+          "y": 1411
+        },
+        "rightSole": {
+          "x": 424,
+          "y": 1470
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 217,
+        "rightShoeWidth": 199
+      }
+    },
+    {
+      "path": "form-frames/db-rdl/4.webp",
+      "sha256": "e8e18ba176e04f05a05b88bfe59ab07545691e8f0bc4728e0b092e1e43aab544",
+      "anchors": {
+        "leftSole": {
+          "x": 222,
+          "y": 1411
+        },
+        "rightSole": {
+          "x": 424,
+          "y": 1470
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 217,
+        "rightShoeWidth": 199
+      }
+    },
+    {
+      "path": "form-frames/db-rdl/5.webp",
+      "sha256": "0d4cc9fc1ce9e4f81dd24aee4d1d43f923e38645086f2d439437399752789a74",
+      "anchors": {
+        "leftSole": {
+          "x": 222,
+          "y": 1411
+        },
+        "rightSole": {
+          "x": 424,
+          "y": 1470
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 217,
+        "rightShoeWidth": 199
+      }
+    },
+    {
+      "path": "form-frames/db-rdl/6.webp",
+      "sha256": "4b329271ee315758964a439fd263d4b47fd296e82506619e3b46b581da63d885",
+      "anchors": {
+        "leftSole": {
+          "x": 222,
+          "y": 1411
+        },
+        "rightSole": {
+          "x": 424,
+          "y": 1470
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 217,
+        "rightShoeWidth": 199
+      }
+    }
+  ]
+}

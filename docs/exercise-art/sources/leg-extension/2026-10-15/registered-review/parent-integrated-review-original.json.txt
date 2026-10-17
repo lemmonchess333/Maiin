@@ -1,0 +1,48 @@
+{
+  "exerciseId": "leg-extension",
+  "version": "anatomy-v3-2026-10-15-material-endpoint-leg-extension-v1",
+  "reviewedAt": "2026-10-15T20:31:53.100990+00:00",
+  "reviewer": "Root actual native draft plus actual registered guide/card review under existing user completion and merge authorization",
+  "planSha256": "718a1752e1fe1b6bd47ac081aeb89f33eaba2a30253239833dcc7731cac30eed",
+  "cardSha256": "66473827c8e846bf9ee25fbca2f38b237212c3516e1bec10ed9d1f1a38f512d2",
+  "actualRegisteredReviewComplete": true,
+  "observations": {
+    "identity": "Parent viewed FA56 and original/final native endpoints. Original bald faceless grey-white athlete without shorts, full white trainers and anatomical contour detail remain. Small original head/seat/hand differences remain disclosed; no exact canonical pixel identity certification.",
+    "camera": "Original source1/4 intact scenes retain coordinates after the common whole-scene placement(0,+40) on1536x1104. Common crop[114,14,1433,1070] yields1319x1056. Replacement apparatus has one explicit orthographic3D camera; it does not establish the original human camera or unseen joint depth.",
+    "anatomy": "All human shapes remain from intact successful originals. No anatomical warping, limb fitting, head/shoe graft or hidden reconstruction. Parent final native pair and mobile views show readable bent and extended legs without obvious material body distortion.",
+    "equipment": "Both states use the same constructed fixed covered generic selectorized chassis and dual independent rotary working units. Actual world arm lengths, pad radii/lengths and axes remain constant. Short pads have documented positive axial clearance. Original foreground/occlusion masks and all unoccluded replacement gear layers are retained for inspection. Neutral material finish now follows original contour/shading detail; minor facet bands/simpler panels remain. Covered cams/belts/resistance and brand-specific routing are unverified.",
+    "contact": "Preserved hands grip original seat handles and hips/back remain supported. True rotary pad contact targets project onto the original shin positions at both endpoints; feet remain free. Source depth assumptions and joint-centre estimates remain disclosed, rather than a biomechanical calibration. No visible mobile collision or major contact gap observed.",
+    "physics": "Actual bent/extended states show knee extension while hips remain seated and hands retain support. A common rigid apparatus geometry explains both pad positions, without frame-specific shrinking arms or separate fitted SVG paths. Two endpoints are repeated; no drawn intermediate or continuous mechanics certification. Hidden resistance transmission remains unverified.",
+    "muscles": "Existing Quads primary and Hip Flexors secondary colour fields remap to base#7B72E9/#9590E0 using source-local maximum-channel/chroma. Original fibre shading, neutral contours and support alpha are retained. No spatial body shading gradient is authored. Native and mobile final colours/shadows are coherent with retained approved source style.",
+    "cueAgreement": "Parent clicked every registered instruction1..6 then1 in both390x844 themes. Actual selectedInstruction, public source path and alt match each label; bent/extended art agrees with each cue. Exact catalogue setup, Quads primary/Hip Flexors secondary and all six seven-word cues appear. No horizontal overflow.",
+    "sequenceAndLoop": "Actual registered ExerciseFormContent/ExerciseFormFrames observed all6public paths and automatic6-to-1 wraps in both390x844 themes. Normal intervals approximately1.2s and actual slower light intervals2.4s. Pause/play, all6instruction selections, previous1-to-6 and next6-to-1 controls verified. Source order[1,1,4,4,1,1] remains2physical endpoints; no intermediate/continuous movement claim.",
+    "mobileLight": "Parent inspected the real registered390x844 light guide, full source art at324x360, exact setup/legend/all6instruction selections, normal/slower playback and the registered normal480/160px cards. Full athlete, equipment and supported contacts readable with no observed material clipping or horizontal overflow. Registered card matches the earlier reviewed preview exactly.",
+    "mobileDark": "Parent inspected the real registered390x844 dark guide, full source art at324x360, all6instruction selections/normal playback, manual wrap controls and registered normal480/160px cards. No observed material clipping/contact gap; full body/equipment and cues readable. Captured warnings/errors empty. Registered card matches the reviewed preview exactly."
+  },
+  "findings": [
+    "Independent generic covered selectorized apparatus, not an exact branded replica.",
+    "A constructed common apparatus camera is used, not an original human-camera/depth recovery.",
+    "Covered resistance routing and unseen cams/belts/weights are not verified.",
+    "Original source body/seat/head/hand variations remain; human pixels are not fitted.",
+    "The held middle source2 and earlier long-pad diagnostic are not delivered.",
+    "Minor neutral-metal facet bands and simplified covered panels remain.",
+    "Only a constructed apparatus camera is proven; original human depth and covered resistance routing remain uncertain."
+  ],
+  "evidenceHashes": {
+    "review/extension-integrated-cards-dark.json": "675ce0aef9d27b4bc427e3d3088f6589542559cf4c6a0afb35cb09e80d00d6fe",
+    "review/extension-integrated-cards-light.json": "342bb93f9b3c049c6349dec268fa9348472a0631ddd69faf10c0751d83bf9119",
+    "review/extension-integrated-console.json": "7eaa666ff0325f104316b71993c1e83647e8c0a3ee57f365cf9145997b122140",
+    "review/extension-integrated-dark-normal.json": "d6477ae4285c385ded9846479a697c1ea0dca2443f20e9ffc3e6780a62c52d55",
+    "review/extension-integrated-initial.json": "d6c0a244b3af1b5317f2540347e3bc99964af396a2e2268fd2b772f2c73ad5aa",
+    "review/extension-integrated-light-normal.json": "14f75c00336312a817d5dd6bae963fd203ee8f11e40f2ad4a01368efff3188f2",
+    "review/extension-integrated-light-slower.json": "e4d4fced0940e5b9ed3fa8fe81f07d8cc1242005bbf9f0f089ce683703f62dea",
+    "review/extension-integrated-manual-dark.json": "ff816e29ea9471230ca5fe2233339939c2a8d36bdbe4003ffc20d99ce8cb92f3",
+    "review/extension-integrated-manual-light.json": "6d789e76febef2e0da9600b7bf0daa70351d8a53f458362d7b715963abfa630e",
+    "review/extension-integrated-wrap-controls.json": "fb31bb04fffd57a87de5011f444a28b834768a0af06e6aadd2db9f1794913497",
+    "review/integrated-dark.jpg": "8677c189e637904ecd4cac430eda265fc426aa4127d7f0898f2dcc6feeb532e1",
+    "review/integrated-light.jpg": "4dfdbd31b5f40980504a242afaa2b927cb681cdb6154394bf0d97c69fd69a918",
+    "review/tool-return-artifact-index.json": "0d003d06a6adb2e2b90d74dc924f2dea90220fa1b453570e67a4771b404fd92d"
+  },
+  "strictChecksRemainNull": true,
+  "completionCredit": false
+}

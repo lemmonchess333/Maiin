@@ -1,0 +1,181 @@
+{
+  "exerciseId": "treadmill",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 1290,
+  "height": 900,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-04T18:28:17.020Z",
+  "reference": {
+    "path": "form-frames/treadmill/1.webp",
+    "sha256": "1356b4d578933822a3a9751b5fb4acf546f3b9274527d0dddc59725eb582de4f"
+  },
+  "cueSha256": "84e57c29de2719e7cf844d81fa4687b85e859724de1eac6b2443cd4b2aeaa7d9",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical faceless white-grey anatomical athlete, neutral pelvis and white trainers; canonical and exercise master attached to every moving-pose generation."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed right-facing oblique view. Whole master scene reduced uniformly to90percent for headroom; final common1290x900crop removes only empty margins. No anatomy warps or mirrors."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "All6 final native frames inspected. Near leg leads and supports1/2/3, far leg leads and supports4/5/6. Incorrect overlap in initial4/5 corrected through imagegen. Connected hips, knees, ankles, elbows and wrists; proportions remain consistent."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Stationary console, upright and lower base copied from exercise master using the previously authorized equipment method. Regions exclude athlete pixels. Full machine visible in every pose."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Each pose visibly retains at least one supporting foot on the belt. Supporting feet travel backward while the opposite foot swings forward. Fixed rear support and front wheel edges and complete horizontal widths measured identically across all6; moving shoe coordinates are deliberately not treated as fixed anchors."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Steady walking variation supported by catalogue. Alternating heel contact, loading and swing; one foot remains on the belt, arms counter-swing, hands remain free of rails. Frame6 leads to next near heel contact. Illustrative six-pose cycle, not a calibrated gait simulation."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Quads and calves strong purple; glutes and hamstrings pale lilac, matching the existing Treadmill rig."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words describe natural stepping, weight transfer, opposite swing, alternate heel contact, counter-swinging arms and an even stride."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All6 and6to1 inspected manually in actual ExerciseFormFrames. Near/far leg alternation and opposing arm swing remain visible; machine stays fixed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Final common-crop frames1..6 and6to1 inspected in actual ExerciseFormFrames at390x844 light mode4October2026. Full machine and figure remain visible and captions readable."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All6 final cropped frames and6to1 inspected at390x844 dark mode. Purple/lilac hierarchy, foot silhouettes and captions readable."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Fixed equipment through walking cycle",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["rearSupportBottom", "frontWheelBottom"],
+      "dimensionNames": ["rearSupportWidth", "frontWheelWidth"],
+      "evidence": "Pixel-derived stationary equipment edges and full horizontal widths match across six grounded walking poses. Foot contact and alternation reviewed separately because shoes move with the belt."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/treadmill/1.webp",
+      "sha256": "1356b4d578933822a3a9751b5fb4acf546f3b9274527d0dddc59725eb582de4f",
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 114,
+          "y": 865
+        },
+        "frontWheelBottom": {
+          "x": 1197,
+          "y": 871
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 40,
+        "frontWheelWidth": 58
+      }
+    },
+    {
+      "path": "form-frames/treadmill/2.webp",
+      "sha256": "d0a1567ec3adaa03460fba23354f467ab2539a5c73d7843ead71b456fbfb3b90",
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 114,
+          "y": 865
+        },
+        "frontWheelBottom": {
+          "x": 1197,
+          "y": 871
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 40,
+        "frontWheelWidth": 58
+      }
+    },
+    {
+      "path": "form-frames/treadmill/3.webp",
+      "sha256": "03f34932c5251025a0c5fb790d6244bc08647686af3caff91f1cf9c18e748b39",
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 114,
+          "y": 865
+        },
+        "frontWheelBottom": {
+          "x": 1197,
+          "y": 871
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 40,
+        "frontWheelWidth": 58
+      }
+    },
+    {
+      "path": "form-frames/treadmill/4.webp",
+      "sha256": "70a2f84e9f230aa4ef78cf6d01fc865ced5203ef978b55b6a150fd6362c16faf",
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 114,
+          "y": 865
+        },
+        "frontWheelBottom": {
+          "x": 1197,
+          "y": 871
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 40,
+        "frontWheelWidth": 58
+      }
+    },
+    {
+      "path": "form-frames/treadmill/5.webp",
+      "sha256": "164d06c510551245a86962c0115b2b7b34ca7d49da38f22cd022139e5e1f99ab",
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 114,
+          "y": 865
+        },
+        "frontWheelBottom": {
+          "x": 1197,
+          "y": 871
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 40,
+        "frontWheelWidth": 58
+      }
+    },
+    {
+      "path": "form-frames/treadmill/6.webp",
+      "sha256": "5da5e3ad1f57031e47872ec7b52f82e4156127431ddf371b13a03fe57da50bff",
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 114,
+          "y": 865
+        },
+        "frontWheelBottom": {
+          "x": 1197,
+          "y": 871
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 40,
+        "frontWheelWidth": 58
+      }
+    }
+  ]
+}

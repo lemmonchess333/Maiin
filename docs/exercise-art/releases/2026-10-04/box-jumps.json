@@ -1,0 +1,244 @@
+{
+  "exerciseId": "box-jumps",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 850,
+  "height": 920,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-04T18:01:05.311Z",
+  "reference": {
+    "path": "form-frames/box-jumps/1.webp",
+    "sha256": "6e7e7789bb01c3b4ff01ff56aac1fd5f516351972f6298ae0f4bb742066661bd"
+  },
+  "cueSha256": "d85205f67fdbc03738d4cea7745dc4e3987a7a428805d1a921afff6655e2900a",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical faceless white-grey anatomical athlete, neutral pelvis and trainers; canonical and exercise master supplied to imagegen pose edits."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed oblique view. Authorized uniform master resize, whole-scene vertical alignment of frames4/6 and common850x920 crop. No pose warping or mirroring. Crop excludes zero visible pixels above threshold20."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "All six final native frames inspected. Connected limbs, two-foot takeoff and landing, full standing extension and one-foot controlled backward step down. Standing proportion revision replaces the elongated initial candidate."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Same sturdy box throughout. Exact stationary master copy of lower box front and side; top surface retains each imagegen foot contact. Complete box width321px and section width272px remain fixed."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Actual white sole edge pixels match in setup1/2 and landing4/5 after authorized stationary sole/shoe copies. Native and mobile repaired ankle joins inspected. Sole-band widths describe measured bands, not whole-shoe dimensions. Fixed scene anchors also cover the separate one-foot step-down pose."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Frame3 has both feet clear of the box. Frame4 lands both feet softly with flexed knees, frame5 stands fully, frame6 steps backward down with one supporting foot on the box. Reset completes the step down. No reverse jump-down sequence."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Quadriceps and gluteals purple; calves pale lilac, matching the existing Box Jumps rig."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six visible phases agree with cues of at most seven words each: setup, load, jump, land, stand and step down."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All6 and6to1 manually reviewed in the actual player; complete athlete and box retained across the common crop."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All6 and6to1 inspected in ExerciseFormFrames at390x844 light mode on4October2026; repaired frames2/5 rechecked afterward. Cues, figures and box readable without clipping."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All6 and6to1 inspected at390x844 dark mode; repaired2/5 rechecked afterward. Muscle hierarchy, contacts and captions remain clear."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Fixed box through grounded phases",
+      "frames": [1, 2, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["boxBase", "boxSectionLeft"],
+      "dimensionNames": ["boxWidth", "boxSectionWidth"],
+      "evidence": "Stationary box lower silhouette and complete horizontal cross-section at y860 measured from actual pixels; step-down supporting shoe visibly contacts box."
+    },
+    {
+      "name": "Ground setup and loading",
+      "frames": [1, 2],
+      "referenceFrame": 1,
+      "anchorNames": ["nearSole", "farSole"],
+      "dimensionNames": ["nearSoleBandWidth", "farSoleBandWidth"],
+      "evidence": "Sole edge anchors and explicit sole-band widths match after stationary contact copies."
+    },
+    {
+      "name": "Two-foot landing and stand",
+      "frames": [4, 5],
+      "referenceFrame": 4,
+      "anchorNames": ["nearTopSole", "farTopSole"],
+      "dimensionNames": ["nearTopSoleBandWidth", "farTopSoleBandWidth"],
+      "evidence": "Both planted shoes retain matching sole edges and band widths while knees extend."
+    }
+  ],
+  "airborneFrames": [
+    {
+      "frame": 3,
+      "takeoffFrame": 2,
+      "landingFrame": 4,
+      "evidence": "Both feet visibly clear of the box top in flight; full athlete remains in frame. Two-foot loading and soft two-foot landing reviewed against the fixed box."
+    }
+  ],
+  "frames": [
+    {
+      "path": "form-frames/box-jumps/1.webp",
+      "sha256": "6e7e7789bb01c3b4ff01ff56aac1fd5f516351972f6298ae0f4bb742066661bd",
+      "anchors": {
+        "boxBase": {
+          "x": 651,
+          "y": 870
+        },
+        "boxSectionLeft": {
+          "x": 412,
+          "y": 860
+        },
+        "nearSole": {
+          "x": 205,
+          "y": 861
+        },
+        "farSole": {
+          "x": 283,
+          "y": 832
+        }
+      },
+      "invariantDimensions": {
+        "boxWidth": 321,
+        "boxSectionWidth": 272,
+        "nearSoleBandWidth": 80,
+        "farSoleBandWidth": 66
+      }
+    },
+    {
+      "path": "form-frames/box-jumps/2.webp",
+      "sha256": "e97bf7b5bfc407cee944bffefb793289c8a7011d7b87ce7312b11829b45c4a02",
+      "anchors": {
+        "boxBase": {
+          "x": 651,
+          "y": 870
+        },
+        "boxSectionLeft": {
+          "x": 412,
+          "y": 860
+        },
+        "nearSole": {
+          "x": 205,
+          "y": 861
+        },
+        "farSole": {
+          "x": 283,
+          "y": 832
+        }
+      },
+      "invariantDimensions": {
+        "boxWidth": 321,
+        "boxSectionWidth": 272,
+        "nearSoleBandWidth": 80,
+        "farSoleBandWidth": 66
+      }
+    },
+    {
+      "path": "form-frames/box-jumps/3.webp",
+      "sha256": "893367af23348c1f457ffcf4659c27f2c315f719fcd7afbe4f451fed59333311",
+      "anchors": {
+        "boxBase": {
+          "x": 651,
+          "y": 870
+        },
+        "boxSectionLeft": {
+          "x": 412,
+          "y": 860
+        }
+      },
+      "invariantDimensions": {
+        "boxWidth": 321,
+        "boxSectionWidth": 272
+      }
+    },
+    {
+      "path": "form-frames/box-jumps/4.webp",
+      "sha256": "aea77f6d86603f6e408ccc9c4bf065075c3bd7c86c729c37bc838a31b8d69aaf",
+      "anchors": {
+        "boxBase": {
+          "x": 651,
+          "y": 870
+        },
+        "boxSectionLeft": {
+          "x": 412,
+          "y": 860
+        },
+        "nearTopSole": {
+          "x": 541,
+          "y": 689
+        },
+        "farTopSole": {
+          "x": 616,
+          "y": 674
+        }
+      },
+      "invariantDimensions": {
+        "boxWidth": 321,
+        "boxSectionWidth": 272,
+        "nearTopSoleBandWidth": 74,
+        "farTopSoleBandWidth": 60
+      }
+    },
+    {
+      "path": "form-frames/box-jumps/5.webp",
+      "sha256": "7cd27b84f8b0b69ff485275c904042480f7459718b8b9630ac752dd70a813382",
+      "anchors": {
+        "boxBase": {
+          "x": 651,
+          "y": 870
+        },
+        "boxSectionLeft": {
+          "x": 412,
+          "y": 860
+        },
+        "nearTopSole": {
+          "x": 541,
+          "y": 689
+        },
+        "farTopSole": {
+          "x": 616,
+          "y": 674
+        }
+      },
+      "invariantDimensions": {
+        "boxWidth": 321,
+        "boxSectionWidth": 272,
+        "nearTopSoleBandWidth": 74,
+        "farTopSoleBandWidth": 60
+      }
+    },
+    {
+      "path": "form-frames/box-jumps/6.webp",
+      "sha256": "2a93453e13142c1ca7a018b00d26d432cc02deb1371a4669be3a226b5fd87fe8",
+      "anchors": {
+        "boxBase": {
+          "x": 651,
+          "y": 870
+        },
+        "boxSectionLeft": {
+          "x": 412,
+          "y": 860
+        }
+      },
+      "invariantDimensions": {
+        "boxWidth": 321,
+        "boxSectionWidth": 272
+      }
+    }
+  ]
+}

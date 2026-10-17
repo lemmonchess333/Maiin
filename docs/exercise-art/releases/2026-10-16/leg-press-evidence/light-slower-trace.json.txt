@@ -1,0 +1,903 @@
+[
+  {
+    "ms": 195991,
+    "observedAt": "2026-10-16T18:24:07.578Z",
+    "src": "/form-frames/leg-press/3.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/3.webp",
+    "alt": "Leg Press, Press",
+    "playing": false,
+    "slower": "true",
+    "selectedInstruction": "Show frame 3: Press",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push the plate away through both feet.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PRESS 3/6\n\nPlay\nSlower"
+  },
+  {
+    "ms": 196269,
+    "observedAt": "2026-10-16T18:24:07.855Z",
+    "src": "/form-frames/leg-press/3.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/3.webp",
+    "alt": "Leg Press, Press",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 3: Press",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push the plate away through both feet.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PRESS 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 198675,
+    "observedAt": "2026-10-16T18:24:10.261Z",
+    "src": "/form-frames/leg-press/4.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/4.webp",
+    "alt": "Leg Press, Finish",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 3: Press",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push the plate away through both feet.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "FINISH 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 198689,
+    "observedAt": "2026-10-16T18:24:10.275Z",
+    "src": "/form-frames/leg-press/4.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/4.webp",
+    "alt": "Leg Press, Finish",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 4: Finish",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft at the finish.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "FINISH 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 201087,
+    "observedAt": "2026-10-16T18:24:12.673Z",
+    "src": "/form-frames/leg-press/5.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/5.webp",
+    "alt": "Leg Press, Return",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 4: Finish",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft at the finish.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RETURN 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 201103,
+    "observedAt": "2026-10-16T18:24:12.689Z",
+    "src": "/form-frames/leg-press/5.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/5.webp",
+    "alt": "Leg Press, Return",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 5: Return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RETURN 5/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 203493,
+    "observedAt": "2026-10-16T18:24:15.081Z",
+    "src": "/form-frames/leg-press/6.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/6.webp",
+    "alt": "Leg Press, Reset",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 5: Return",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Bend hips and knees under control.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 203508,
+    "observedAt": "2026-10-16T18:24:15.096Z",
+    "src": "/form-frames/leg-press/6.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/6.webp",
+    "alt": "Leg Press, Reset",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your heels down before pressing again.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "RESET 6/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 205905,
+    "observedAt": "2026-10-16T18:24:17.493Z",
+    "src": "/form-frames/leg-press/1.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/1.webp",
+    "alt": "Leg Press, Bend",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 6: Reset",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep your heels down before pressing again.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": "step"
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BEND 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 205922,
+    "observedAt": "2026-10-16T18:24:17.510Z",
+    "src": "/form-frames/leg-press/1.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/1.webp",
+    "alt": "Leg Press, Bend",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 1: Bend",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Set both feet flat on the plate.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BEND 1/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 208312,
+    "observedAt": "2026-10-16T18:24:19.899Z",
+    "src": "/form-frames/leg-press/2.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/2.webp",
+    "alt": "Leg Press, Brace",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 1: Bend",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Set both feet flat on the plate.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 208329,
+    "observedAt": "2026-10-16T18:24:19.917Z",
+    "src": "/form-frames/leg-press/2.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/2.webp",
+    "alt": "Leg Press, Brace",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep your back against the pad.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "BRACE 2/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 210729,
+    "observedAt": "2026-10-16T18:24:22.317Z",
+    "src": "/form-frames/leg-press/3.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/3.webp",
+    "alt": "Leg Press, Press",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 2: Brace",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Brace; keep your back against the pad.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PRESS 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 210748,
+    "observedAt": "2026-10-16T18:24:22.336Z",
+    "src": "/form-frames/leg-press/3.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/3.webp",
+    "alt": "Leg Press, Press",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 3: Press",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push the plate away through both feet.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "PRESS 3/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 213135,
+    "observedAt": "2026-10-16T18:24:24.723Z",
+    "src": "/form-frames/leg-press/4.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/4.webp",
+    "alt": "Leg Press, Finish",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 3: Press",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Push the plate away through both feet.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": null
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "FINISH 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 213154,
+    "observedAt": "2026-10-16T18:24:24.742Z",
+    "src": "/form-frames/leg-press/4.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/4.webp",
+    "alt": "Leg Press, Finish",
+    "playing": true,
+    "slower": "true",
+    "selectedInstruction": "Show frame 4: Finish",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft at the finish.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "FINISH 4/6\n\nPause\nSlower"
+  },
+  {
+    "ms": 214565,
+    "observedAt": "2026-10-16T18:24:26.152Z",
+    "src": "/form-frames/leg-press/4.webp",
+    "currentSrc": "http://127.0.0.1:62332/form-frames/leg-press/4.webp",
+    "alt": "Leg Press, Finish",
+    "playing": false,
+    "slower": "true",
+    "selectedInstruction": "Show frame 4: Finish",
+    "draftSelectedCue": null,
+    "selectedInstructionText": "Keep knees soft at the finish.",
+    "instructionRows": [
+      {
+        "label": "Show frame 1: Bend",
+        "current": null
+      },
+      {
+        "label": "Show frame 2: Brace",
+        "current": null
+      },
+      {
+        "label": "Show frame 3: Press",
+        "current": null
+      },
+      {
+        "label": "Show frame 4: Finish",
+        "current": "step"
+      },
+      {
+        "label": "Show frame 5: Return",
+        "current": null
+      },
+      {
+        "label": "Show frame 6: Reset",
+        "current": null
+      }
+    ],
+    "theme": "light",
+    "documentHidden": false,
+    "naturalWidth": 1264,
+    "naturalHeight": 1056,
+    "display": [
+      324,
+      360
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "devicePixelRatio": 1.0000000298023224,
+    "reviewScope": "actual-registered-lookup",
+    "sectionText": "FINISH 4/6\n\nPlay\nSlower"
+  }
+]

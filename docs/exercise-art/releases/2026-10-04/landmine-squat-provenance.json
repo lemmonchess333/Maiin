@@ -1,0 +1,316 @@
+{
+  "generator": "built-in imagegen",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "selected": [
+    {
+      "file": "1-master.png",
+      "sha256": "a2877dac798fee2822f97f5563e9f96cefc24a216b9352cc1e3c6b0a79933d0f"
+    },
+    {
+      "file": "2-half-candidate.png",
+      "sha256": "79226e9d1728c400e5c343934c08826e4d25d3ebde163d9dccb665cb950431c2"
+    },
+    {
+      "file": "3-depth-clean.png",
+      "sha256": "45c3689501d7ccb6efb432e199d18459b186e31f8528efcf3fa72efc92997020"
+    }
+  ],
+  "generationIds": [
+    "298a7b23-6747-420a-9676-d5885243a4a3",
+    "102da885-3e3d-4bf8-b214-80b0c0f1923d",
+    "34df8d95-f83d-4947-ad2b-ba183e597b45"
+  ],
+  "frameOrder": [
+    "1-master.png",
+    "2-half-candidate.png",
+    "3-depth-clean.png",
+    "2-half-candidate.png",
+    "1-master.png",
+    "1-master.png"
+  ],
+  "depthHistory": "Original depth890c1422. Authorized exact stationary-shoe master copies produced an intermediate with ankle seams; imagegen34df8d95 repaired those joins using master and canonical references. Final depth is that complete imagegen result, with no subsequent code patch. Other corrected depth candidates rejected for camera/contact drift.",
+  "measurements": [
+    {
+      "frame": 1,
+      "near": {
+        "left": 259,
+        "right": 379,
+        "top": 840,
+        "bottom": 944
+      },
+      "far": {
+        "left": 422,
+        "right": 568,
+        "top": 825,
+        "bottom": 903
+      },
+      "boltL": {
+        "left": 1305,
+        "right": 1331,
+        "top": 908,
+        "bottom": 925
+      },
+      "boltR": {
+        "left": 1410,
+        "right": 1434,
+        "top": 909,
+        "bottom": 921
+      },
+      "anchors": {
+        "leftBoltEdge": {
+          "x": 1311,
+          "y": 918
+        },
+        "rightBoltTop": {
+          "x": 1425,
+          "y": 909
+        }
+      },
+      "dimensions": {
+        "nearShoeWidth": 121,
+        "farShoeWidth": 147
+      }
+    },
+    {
+      "frame": 2,
+      "near": {
+        "left": 259,
+        "right": 379,
+        "top": 840,
+        "bottom": 943
+      },
+      "far": {
+        "left": 422,
+        "right": 568,
+        "top": 825,
+        "bottom": 902
+      },
+      "boltL": {
+        "left": 1304,
+        "right": 1331,
+        "top": 908,
+        "bottom": 925
+      },
+      "boltR": {
+        "left": 1410,
+        "right": 1434,
+        "top": 908,
+        "bottom": 921
+      },
+      "anchors": {
+        "leftBoltEdge": {
+          "x": 1310,
+          "y": 918
+        },
+        "rightBoltTop": {
+          "x": 1425,
+          "y": 908
+        }
+      },
+      "dimensions": {
+        "nearShoeWidth": 121,
+        "farShoeWidth": 147
+      }
+    },
+    {
+      "frame": 3,
+      "near": {
+        "left": 259,
+        "right": 379,
+        "top": 840,
+        "bottom": 944
+      },
+      "far": {
+        "left": 422,
+        "right": 568,
+        "top": 825,
+        "bottom": 903
+      },
+      "boltL": {
+        "left": 1304,
+        "right": 1331,
+        "top": 908,
+        "bottom": 925
+      },
+      "boltR": {
+        "left": 1410,
+        "right": 1434,
+        "top": 908,
+        "bottom": 921
+      },
+      "anchors": {
+        "leftBoltEdge": {
+          "x": 1310,
+          "y": 918
+        },
+        "rightBoltTop": {
+          "x": 1425,
+          "y": 908
+        }
+      },
+      "dimensions": {
+        "nearShoeWidth": 121,
+        "farShoeWidth": 147
+      }
+    },
+    {
+      "frame": 4,
+      "near": {
+        "left": 259,
+        "right": 379,
+        "top": 840,
+        "bottom": 943
+      },
+      "far": {
+        "left": 422,
+        "right": 568,
+        "top": 825,
+        "bottom": 902
+      },
+      "boltL": {
+        "left": 1304,
+        "right": 1331,
+        "top": 908,
+        "bottom": 925
+      },
+      "boltR": {
+        "left": 1410,
+        "right": 1434,
+        "top": 908,
+        "bottom": 921
+      },
+      "anchors": {
+        "leftBoltEdge": {
+          "x": 1310,
+          "y": 918
+        },
+        "rightBoltTop": {
+          "x": 1425,
+          "y": 908
+        }
+      },
+      "dimensions": {
+        "nearShoeWidth": 121,
+        "farShoeWidth": 147
+      }
+    },
+    {
+      "frame": 5,
+      "near": {
+        "left": 259,
+        "right": 379,
+        "top": 840,
+        "bottom": 944
+      },
+      "far": {
+        "left": 422,
+        "right": 568,
+        "top": 825,
+        "bottom": 903
+      },
+      "boltL": {
+        "left": 1305,
+        "right": 1331,
+        "top": 908,
+        "bottom": 925
+      },
+      "boltR": {
+        "left": 1410,
+        "right": 1434,
+        "top": 909,
+        "bottom": 921
+      },
+      "anchors": {
+        "leftBoltEdge": {
+          "x": 1311,
+          "y": 918
+        },
+        "rightBoltTop": {
+          "x": 1425,
+          "y": 909
+        }
+      },
+      "dimensions": {
+        "nearShoeWidth": 121,
+        "farShoeWidth": 147
+      }
+    },
+    {
+      "frame": 6,
+      "near": {
+        "left": 259,
+        "right": 379,
+        "top": 840,
+        "bottom": 944
+      },
+      "far": {
+        "left": 422,
+        "right": 568,
+        "top": 825,
+        "bottom": 903
+      },
+      "boltL": {
+        "left": 1305,
+        "right": 1331,
+        "top": 908,
+        "bottom": 925
+      },
+      "boltR": {
+        "left": 1410,
+        "right": 1434,
+        "top": 909,
+        "bottom": 921
+      },
+      "anchors": {
+        "leftBoltEdge": {
+          "x": 1311,
+          "y": 918
+        },
+        "rightBoltTop": {
+          "x": 1425,
+          "y": 909
+        }
+      },
+      "dimensions": {
+        "nearShoeWidth": 121,
+        "farShoeWidth": 147
+      }
+    }
+  ],
+  "projection": {
+    "note": "Approximate native image plate-hub centres, manually inspected; not subpixel metrology. Fixed hinge(1365,885). In an oblique camera a rigid bar endpoint follows an ellipse, not a screen-space circle. Coefficient1.58 inferred from standing/depth endpoints corresponds to horizontal foreshortening0.796; independent half pose agrees within0.2percent. This supports a consistent projected arc but does not establish calibrated camera parameters. Do not treat raw screen radius change as telescoping.",
+    "rows": [
+      {
+        "frame": "standing",
+        "x": 565,
+        "y": 281,
+        "dx": 800,
+        "dy": 604,
+        "screenRadius": 1002.4051077284074,
+        "oblique45Radius": 1282.5038011639576,
+        "ellipseRadius": 1173.037083812784
+      },
+      {
+        "frame": "half",
+        "x": 526,
+        "y": 375,
+        "dx": 839,
+        "dy": 510,
+        "screenRadius": 981.8457108935191,
+        "oblique45Radius": 1291.4882887583613,
+        "ellipseRadius": 1171.450033078663
+      },
+      {
+        "frame": "depth",
+        "x": 497,
+        "y": 454,
+        "dx": 868,
+        "dy": 431,
+        "screenRadius": 969.1155761827379,
+        "oblique45Radius": 1301.0030745543995,
+        "ellipseRadius": 1173.1031156722754
+      }
+    ]
+  },
+  "losslessPixelsVerified": true
+}

@@ -6,6 +6,89 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## The food scan's model (Ship1, 2026-10-13)
+
+Affects: `analyzeFood` (a meal photo) and `analyzeFoodText` (a Pro typed
+meal), which now share `functions/lib/foodModel.js`. Both called
+`gemini-2.0-flash` by name, and Vertex AI retired it on 2026-06-01 (Google's
+model versions page lists it under retired models, replacement
+`gemini-3.1-flash-lite`), so both have likely answered "AI service error"
+since then. They now call `gemini-3.8-flash` in us-central1, with the
+settings a thinking model needs: thinking at LOW, the temperature at its
+default, a JSON answer and a cap with room for the thinking. Nothing here
+could call Vertex, so the first real request is the test.
+
+- [ ] **One photo scan and one typed meal, after the deploy.** On a Pro
+      account, scan a plate and type a meal: each comes back with foods and
+      macros in a few seconds. "AI service error" means Vertex refused the
+      request: the function's log has the status (`Vertex AI error:`); a
+      404 means the model isn't served in us-central1, a 400 names the
+      setting it refused.
+- [ ] **The usage log.** `analyzeFood.usage` in the functions log shows
+      the prompt and output tokens per scan; check one against the price
+      of 3.8 Flash before launch.
+
+## The plan moves on with the day while the app stays open (2026-10-10)
+
+Affects: `useProgram` (`src/features/program/useProgram.ts`) and Home's
+`useHomeProgram`. The lift and run weeks' rollover, the runner's
+recent-running read and the race's rest days now re-run when the day
+changes (`useLocalDateKey`: a check every 30 seconds, and on focus and
+`visibilitychange`), not only on a reload. Home loads that engine only when
+its plan needs it, and now asks again on each new day. On a phone the app
+is resumed far more often than it is started, so before this a plan stayed
+on last week until the app was killed and reopened.
+
+The hook tests (`useProgramResume.test.ts`, `useHomeProgram.test.tsx`) fire
+the resume in jsdom. WKWebView's own resume events need a device.
+
+- [ ] **Monday, from the background.** On Sunday evening open Train, then
+      leave the app in the background (don't close it). Open it again on
+      Monday morning: within a few seconds Train shows the new week, its
+      sessions not done and the week number one on, and Home's week strip
+      and today's card agree with it. No relaunch, no pull to refresh.
+- [ ] **Monday, from the background, on Home.** The same with a
+      running-only race plan, left on Home rather than Train: on Monday's
+      return Home's run card and week strip show the new week's runs
+      without a visit to Train.
+- [ ] **Race week's rest days.** On a race-prep account with the race on a
+      Saturday and a lift session not done that week, leave the app in
+      the background from Wednesday to Thursday. On Thursday's return the
+      session shows as skipped, under the "Race week" banner ("No lifting
+      in the two days before your race…").
+
+## The polish round on a phone (Pol1, 2026-10-11)
+
+Affects: the workout screen's rest timer and set ticks
+(`WorkoutSession.tsx`, `CompactRestTimer.tsx`, `SetCheck.tsx`), the
+finish screen (`SessionCompleteScreen.tsx`, `SessionBadge.tsx`), the Food
+diary's rows (`FoodRow.tsx`, `FoodTimeline.tsx`), the Pro scan demo's
+diary (`ScanDemo.tsx`) and Analytics while it loads (`HistorySkeleton`,
+`PerformanceCardSkeleton`, `PeriodSummarySkeleton`). The unit tests and
+the emulator captures cover order, placement and the fallbacks; these
+need an iPhone.
+
+- [ ] **The rest card by the thumb.** Tick a working set: nothing above
+      the set table moves, the rest card rises above Complete set and the
+      home indicator, and its ring sweeps rather than stepping. A set
+      that is also a new best shows the gold card above the rest card.
+- [ ] **The tick.** A tick pops its box and draws its check once; going
+      back to an earlier exercise does not replay it. With Reduce Motion
+      on, neither moves.
+- [ ] **Done in thumb reach.** Save a workout whose finish screen
+      scrolls (a new best, a badge, the sharing question): Done stays
+      pinned above the home indicator while the page scrolls under it,
+      and comes last at the end. With VoiceOver, saving lands focus on
+      Done.
+- [ ] **Meal photos as thumbnails.** On a day with a scanned meal, its
+      photo is a 52 px thumbnail read from the device, the other rows
+      carry their slot's tile, and swiping a photo row to delete folds it
+      away. A photo past the 90-day sweep falls back to the tile.
+- [ ] **Analytics on a cold open.** Open Analytics first after a fresh
+      launch on a slow connection: the placeholder is the page's shape,
+      and nothing moves as the score and the range card arrive, at the
+      default text size and at a larger one.
+
 ## Race plans the rollover dropped end on the server (2026-10-10)
 
 Affects: `dailyRaceReconciliationSweep`, the orphaned race goal in
@@ -18,8 +101,9 @@ after a 5K, 10K, half or marathon.
 The decision tests and the emulator case cover the rule and its
 profile-only write; these need the deployed function.
 
-- [ ] **The deployed source.** The deploy's read-back prints
-      `Verified deployed source: dailyRaceReconciliationSweep`.
+- [x] **The deployed source.** The deploy's read-back prints
+      `Verified deployed source: dailyRaceReconciliationSweep`. Deploy
+      production run 253 (2026-10-10, #2667) printed it, version 183.
 - [ ] **The first sweep.** The 04:00 UTC log line after the deploy ends
       `orphanedGoalCleared=N`. Every stuck active account goes in that one
       sweep, so N may be more than one; most days after, 0. Open one
@@ -28,6 +112,70 @@ profile-only write; these need the deployed function.
 - [ ] **A race ahead stays.** A race-prep account whose race is still
       ahead, or whose plan is still there, is not counted and keeps its
       race.
+
+## The run screen in the training-engine pass (2026-10-08)
+
+Affects: the Run screen's pace bar and pace alerts on a tempo or an interval
+session, which now judge only the work segments
+(lemmonchess333/Maiin#2633), a planned easy run's time target, countdown and
+finish cue (lemmonchess333/Maiin#2639), a tempo or intervals with no pace
+to give (lemmonchess333/Maiin#2643), and a new runner's run-walk sessions
+(lemmonchess333/Maiin#2655). The unit tests cover which segment is judged
+and what each run is set for; these need a phone's speaker and screen.
+
+- [ ] **A tempo's alerts.** On an iPhone with audio cues on, start a planned
+      tempo: no pace alert in the warm-up; the pace bar appears with the
+      first tempo block and goes in the float and the cool-down; alerts speak
+      only in a block.
+- [ ] **An interval session.** The same for reps and recoveries: the bar and
+      the alerts in the reps only.
+- [ ] **A planned easy run.** Start a planned Easy 40: the screen counts down
+      from 40 minutes, says "Easy running for 40 minutes. Keep it
+      conversational." as it starts, and marks the 40 minutes without saving
+      the run by itself.
+- [ ] **A tempo with no pace yet.** On an account with no benchmark, open a
+      planned tempo: the launch card says "Comfortably hard" where a pace
+      would be, and the run shows no pace bar and speaks no pace alert.
+- [ ] **A run-walk.** On a new runner's account with a race, start the
+      week's planned run-walk and lock the screen: each walk and run is
+      announced as it starts ("Run 1 of 8. 1 minute, easy enough to talk."),
+      on time, for the whole 29 minutes, with no pace bar or pace alert; the
+      summary says nothing about pace.
+
+## After race day, the race's own ending (F6, 2026-10-08)
+
+Affects: the client's rollover after race day, which now leaves the run plan
+and race week's days for the race's own ending, and `weeklyFellBehindCheck`'s
+skip of a week that began after the race (`functions/lib/fellBehindWeek.js`),
+both in lemmonchess333/Maiin#2646. The unit tests cover the rollover and the
+skip; these need the deployed functions and a test account a week past its
+race.
+
+- [ ] **No "fell behind" after the race.** After the deploy, a test account
+      whose race was the week before gets no fell-behind flag from the next
+      Monday's `weeklyFellBehindCheck`, and no recap push saying so.
+- [ ] **A no-show ends race prep.** A test account that skips its race: the
+      Run tab shows the no-show banner from the fourth day, without "All
+      runs done this week", and `dailyRaceReconciliationSweep` returns it to
+      free running after the fourteenth.
+- [ ] **A first week begun on a Thursday** (F16b,
+      lemmonchess333/Maiin#2651). A test account made on a Thursday with
+      runs on Tuesday, Thursday and Saturday, one of them done: no
+      fell-behind flag on its first Monday.
+
+## Setup's recent race (R11, 2026-10-08)
+
+Affects: setup's optional recent 5K or 10K, typed as minutes and seconds,
+and the typed-time reader it shares with Settings → Your running fitness
+(lemmonchess333/Maiin#2653). The unit tests cover the reading and the save;
+these need a phone's keyboard.
+
+- [ ] **The number pad.** On an iPhone, setup's minutes and seconds boxes
+      bring up the number pad, and a time typed there is on the review.
+- [ ] **A colon on the number pad.** On an iPhone, Settings → Your running
+      fitness's finish time and the run plan editor's goal time are one box
+      each that asks for the number pad. Check whether "22:30" can be typed
+      in either; if not, they need setup's minutes-and-seconds boxes.
 
 ## A restriction stops what reaches other people (S4e, 2026-10-06)
 
@@ -249,6 +397,31 @@ need a phone and a deploy.
 - [ ] **Open Food Facts credit** under a barcode result, the search
       results and the portion sheet, which still fits on an SE.
 
+## Photos other people see are screened for nudity (Ship1, 2026-10-13)
+
+Affects: a Space post's photo and a profile photo. Right after the upload
+the app calls `screenPhoto`, which runs Google Cloud Vision's SafeSearch;
+a photo rated LIKELY or VERY_LIKELY "adult" is refused and its file
+deleted, and "racy" passes (the owner's call: shirtless and sports-bra gym
+photos are fine). The `screenUploadedPhoto` Storage trigger checks every
+such upload again, for a client that skips the callable
+(`functions/lib/photoScreen.js`).
+
+- [ ] **Turn on the Cloud Vision API** (Google Cloud console → APIs &
+      Services → Enable APIs → "Cloud Vision API", project
+      `adaptive-fitness-af8bb`). Until it is on, every photo post and
+      profile photo is refused as "couldn't check" — the safe way round,
+      but photo posts stop. About $1.50 per 1,000 photos after the first
+      1,000 each month.
+- [ ] **A gym photo goes through.** Post a Space photo of yourself in gym
+      kit, and set a profile photo: both appear.
+- [ ] **The log shows the checks.** In the functions log,
+      `screenPhoto` runs once per photo with no `screenPhoto.failed`, and
+      `screenUploadedPhoto` runs for the same file.
+- [ ] **The privacy label.** App Store Connect's privacy answers already
+      list photos; confirm Google Cloud Vision needs no change there (it
+      processes them for the app, not for tracking).
+
 ## User content moderation for App Review 1.2 (2026-10-04)
 
 Affects: `src/pages/Login.tsx` (the Terms line), `src/pages/TermsOfService.tsx`,
@@ -452,6 +625,13 @@ cover the rules; these need a phone outside.
       the route quality "good" on the finish screen, not "poor".
 - [ ] **Climb on a known hill.** A run with a known climb should read
       close to it; a flat run should read a few metres, not hundreds.
+- [ ] **Route colours after a run** (2026-10-10). On a steady run the
+      route on the finish screen should be mostly amber, not speckled
+      green and coral. A surge, a hill or a walk should show as one green
+      or coral stretch where it happened. The colours are now measured
+      over 200 m of route (`routePaceRatios` in
+      `src/components/run/routePace.ts`); measured between each pair of
+      fixes, GPS wobble alone changed them.
 
 ## The new logo, icon and launch animation (2026-10-01)
 
@@ -801,6 +981,26 @@ orphan, so the list is genuinely mixed.
       documented pinned orphan, and `baseTarget` / `isRunDay` stay pinned as
       documented fields of an exported interface three components take as a
       prop type.
+
+## The exercise pictures in the build (Ship1, 2026-10-13)
+
+Affects: every production build (`vite.config.ts`'s
+`shrinkFormFramesPlugin`, `scripts/art/shrink-form-frames.ts`). The 756
+reviewed frames in `public/form-frames` are mostly lossless WebP, 335 MB in
+all, and the iPhone app copies the build whole: the measured build was
+336 MB. A build now re-saves each lossless frame in its output as lossy
+WebP at quality 85 on the same canvas (32 MB; the build 51 MB). The
+reviewed files in `public/` are untouched, so their review records still
+match, and new art keeps arriving through the same review. The owner
+compared three frames before and after at 2× zoom on 2026-10-13.
+
+- [ ] **The App Store size.** After the first TestFlight upload, App Store
+      Connect's build size for an iPhone is in the tens of MB, not the
+      hundreds. Hundreds means the pictures went in as they are: check
+      that the iOS build ran `vite build`, whose log says
+      `form frames: N of M re-saved`.
+- [ ] **The pictures on a phone.** Play three exercises' form demos on
+      the phone: no blur, banding or blocky edges against the dark stage.
 
 ## Supplied form-card frames — origin ANSWERED, two things still open
 

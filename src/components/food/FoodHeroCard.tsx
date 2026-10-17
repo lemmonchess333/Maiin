@@ -30,6 +30,7 @@ import MacroColumn from "./MacroColumn";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 import AdaptiveWarmupBar from "./AdaptiveWarmupBar";
 import Card from "@/components/ui/Card";
+import { beforeStart, startDayKey } from "@/lib/startDay";
 
 interface DailyTotals {
   calories: number;
@@ -68,6 +69,7 @@ const LOG_MOMENT_MS = 600;
 const LOG_MOMENT_SEC = LOG_MOMENT_MS / 1000;
 
 export default function FoodHeroCard({
+  selectedDate,
   isToday,
   dailyTargets,
   dailyTotals,
@@ -87,6 +89,12 @@ export default function FoodHeroCard({
   const { profile } = useAuth();
   const celebratedKey = `${useUidForStorageKey()}:${CELEBRATED_KEY_BASE}`;
   const targetsAreDefault = !profile?.targetCalories;
+  /* A day before the account began, with nothing logged on it (Food10
+     (3)): no ring and no tiles, since "2,200 left" would claim a target
+     and an empty day the app knows nothing about. */
+  const beforeJoined =
+    beforeStart(selectedDate, startDayKey(profile?.createdAt)) &&
+    dailyTotals.calories === 0;
 
   // Single shared display mode for the whole hero — the calorie ring AND
   // all three macro tiles read the same left⇄eaten framing. Persisted under
@@ -329,23 +337,34 @@ export default function FoodHeroCard({
               </Link>
             </div>
 
-            <CalorieRing
-              consumed={dailyTotals.calories}
-              target={dailyTargets.finalTarget}
-              mode={mode}
-              onToggleMode={toggleMode}
-              trajectoryLabel={trajectoryLabel}
-              glowing={celebrating}
-              ringDurationMs={LOG_MOMENT_MS}
-              drawIn={drawIn}
-            />
+            {beforeJoined ? (
+              <div className="flex flex-col items-center justify-center gap-1 px-10 py-12 text-center">
+                <p className="text-base font-semibold text-foreground">
+                  Before you joined
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Your days count from the day you joined.
+                </p>
+              </div>
+            ) : (
+              <CalorieRing
+                consumed={dailyTotals.calories}
+                target={dailyTargets.finalTarget}
+                mode={mode}
+                onToggleMode={toggleMode}
+                trajectoryLabel={trajectoryLabel}
+                glowing={celebrating}
+                ringDurationMs={LOG_MOMENT_MS}
+                drawIn={drawIn}
+              />
+            )}
 
             {/* Food6 a2: the drill-down, at the bottom right. "Details" and
             a chevron open the breakdown sheet, in the same register as the
             Home and Analytics disclosures (sentence case, text-xs, muted).
             Its own tap target, clear of the ring's mode toggle and the
             gear. */}
-            {onTapDrillDown && (
+            {onTapDrillDown && !beforeJoined && (
               <button
                 type="button"
                 onClick={() => {
@@ -410,55 +429,59 @@ export default function FoodHeroCard({
         system and the Analytics period summary's figures. Under 10em
         (double text on a 320px phone) they stack: three across, "101g"
         ran into its neighbours. */}
-      <div className="@container mt-4">
-        <div className="grid grid-cols-3 @max-[10em]:grid-cols-1 gap-2">
-          <Card size="compact" className="min-w-0 flex">
-            <MacroColumn
-              macroKey="protein"
-              Icon={Beef}
-              consumed={dailyTotals.protein}
-              target={dailyTargets.targetInfeasible ? 0 : dailyTargets.protein}
-              label="Protein"
-              color={THEME.macros.protein}
-              mode={mode}
-              onTap={toggleMode}
-              numberDurationSec={LOG_MOMENT_SEC}
-              barDurationSec={LOG_MOMENT_SEC}
-              drawIn={drawIn}
-            />
-          </Card>
-          <Card size="compact" className="min-w-0 flex">
-            <MacroColumn
-              macroKey="carbs"
-              Icon={Wheat}
-              consumed={dailyTotals.carbs}
-              target={dailyTargets.targetInfeasible ? 0 : dailyTargets.carbs}
-              label="Carbs"
-              color={THEME.macros.carbs}
-              mode={mode}
-              onTap={toggleMode}
-              numberDurationSec={LOG_MOMENT_SEC}
-              barDurationSec={LOG_MOMENT_SEC}
-              drawIn={drawIn}
-            />
-          </Card>
-          <Card size="compact" className="min-w-0 flex">
-            <MacroColumn
-              macroKey="fat"
-              Icon={Avocado}
-              consumed={dailyTotals.fat}
-              target={dailyTargets.fat}
-              label="Fat"
-              color={THEME.macros.fat}
-              mode={mode}
-              onTap={toggleMode}
-              numberDurationSec={LOG_MOMENT_SEC}
-              barDurationSec={LOG_MOMENT_SEC}
-              drawIn={drawIn}
-            />
-          </Card>
+      {!beforeJoined && (
+        <div className="@container mt-4">
+          <div className="grid grid-cols-3 @max-[10em]:grid-cols-1 gap-2">
+            <Card size="compact" className="min-w-0 flex">
+              <MacroColumn
+                macroKey="protein"
+                Icon={Beef}
+                consumed={dailyTotals.protein}
+                target={
+                  dailyTargets.targetInfeasible ? 0 : dailyTargets.protein
+                }
+                label="Protein"
+                color={THEME.macros.protein}
+                mode={mode}
+                onTap={toggleMode}
+                numberDurationSec={LOG_MOMENT_SEC}
+                barDurationSec={LOG_MOMENT_SEC}
+                drawIn={drawIn}
+              />
+            </Card>
+            <Card size="compact" className="min-w-0 flex">
+              <MacroColumn
+                macroKey="carbs"
+                Icon={Wheat}
+                consumed={dailyTotals.carbs}
+                target={dailyTargets.targetInfeasible ? 0 : dailyTargets.carbs}
+                label="Carbs"
+                color={THEME.macros.carbs}
+                mode={mode}
+                onTap={toggleMode}
+                numberDurationSec={LOG_MOMENT_SEC}
+                barDurationSec={LOG_MOMENT_SEC}
+                drawIn={drawIn}
+              />
+            </Card>
+            <Card size="compact" className="min-w-0 flex">
+              <MacroColumn
+                macroKey="fat"
+                Icon={Avocado}
+                consumed={dailyTotals.fat}
+                target={dailyTargets.fat}
+                label="Fat"
+                color={THEME.macros.fat}
+                mode={mode}
+                onTap={toggleMode}
+                numberDurationSec={LOG_MOMENT_SEC}
+                barDurationSec={LOG_MOMENT_SEC}
+                drawIn={drawIn}
+              />
+            </Card>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Wave3 G — the training-aware day annotation (the free→premium
         conversion hook: "Hard training day" / "Race week — carb load")

@@ -1,0 +1,182 @@
+[
+  {
+    "ms": 117,
+    "frame": 1,
+    "src": "3-lower-pair-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 145,
+    "frame": 1,
+    "src": "3-lower-pair-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 1544,
+    "frame": 2,
+    "src": "6-upper-whole-scene-framing-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 2929,
+    "frame": 1,
+    "src": "3-lower-pair-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 4329,
+    "frame": 2,
+    "src": "6-upper-whole-scene-framing-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 5733,
+    "frame": 1,
+    "src": "3-lower-pair-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 7129,
+    "frame": 2,
+    "src": "6-upper-whole-scene-framing-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 8529,
+    "frame": 1,
+    "src": "3-lower-pair-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 9930,
+    "frame": 2,
+    "src": "6-upper-whole-scene-framing-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 11329,
+    "frame": 1,
+    "src": "3-lower-pair-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 12732,
+    "frame": 2,
+    "src": "6-upper-whole-scene-framing-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 14129,
+    "frame": 1,
+    "src": "3-lower-pair-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 15529,
+    "frame": 2,
+    "src": "6-upper-whole-scene-framing-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 16929,
+    "frame": 1,
+    "src": "3-lower-pair-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 18329,
+    "frame": 2,
+    "src": "6-upper-whole-scene-framing-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 19732,
+    "frame": 1,
+    "src": "3-lower-pair-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 21123,
+    "frame": 2,
+    "src": "6-upper-whole-scene-framing-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 22529,
+    "frame": 1,
+    "src": "3-lower-pair-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 23929,
+    "frame": 2,
+    "src": "6-upper-whole-scene-framing-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  },
+  {
+    "ms": 25329,
+    "frame": 1,
+    "src": "3-lower-pair-draft.png",
+    "playing": true,
+    "hidden": false,
+    "natural": [1024, 1536],
+    "display": [512, 768]
+  }
+]

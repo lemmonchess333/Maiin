@@ -263,6 +263,7 @@ Where to find things
 - Settings: tap the photo or initials at the top right of Home.
 - Account deletion: Settings > Account > Delete account.
 - Reporting and blocking: "More options" on a post (Report activity, Block user), "Post options" on a Space post (Report post, Block user), the "More options" button beside someone else's comment (Report comment, Block user) and "More options" on a profile (Report user, Block user). Blocked people are listed in Settings > Social & privacy.
+- Photo screening: a photo attached to a Space post or set as a profile photo is checked by Google Cloud Vision's SafeSearch before anyone else can see it; a photo with nudity is refused and deleted. Text in posts and comments goes through the objectionable-text filter.
 - Privacy Policy, Terms and support contact: Settings > Help & legal.
 
 Pro and In-App Purchase
@@ -412,7 +413,10 @@ These are yours; none of them can be done from the code.
    planned routes stop being saved. Until then, answer the content-rights
    question with care.
 9. **Other settings.** Keep Google Signals off and Analytics unlinked
-   from Ads. Check that Vertex AI still serves `gemini-2.0-flash`.
+   from Ads. The food scan and typed meals call `gemini-3.8-flash`
+   (`functions/lib/foodModel.js`; Vertex retired `gemini-2.0-flash`, which
+   they called until Ship1): after the deploy, scan one meal and type one
+   on a Pro account and check both come back with foods.
 
 ### On a phone
 

@@ -14,6 +14,8 @@ import {
   LOWERED_SHARE,
   MISSES_BEFORE_LOWERING,
   SMALL_PLATES_STEP_KG,
+  BARBELL_STEP_LB,
+  SMALL_PLATES_STEP_LB,
 } from "@/features/program/loadSteps";
 import {
   LIGHTER_WEEK_EVERY,
@@ -27,6 +29,7 @@ import {
 } from "@/features/program/liftLayoff";
 import { RACE_REST_DAYS } from "@/features/program/raceRest";
 import type { Experience } from "@/features/program/programTypes";
+import { liftUnitLabel, type LiftUnit } from "@/lib/liftLoad";
 import type { LiftPurposeProgramme } from "@/lib/liftSessionPurpose";
 
 export interface LiftRule {
@@ -43,6 +46,9 @@ export interface LiftRulesContext {
   smallPlates: boolean;
   /** Whether a race plan runs. */
   racing: boolean;
+  /** The plan's kit (Lift18): its steps are 5 lb and 2.5 lb. Kg when
+   *  absent. */
+  unit?: LiftUnit;
 }
 
 const WORDS = [
@@ -58,6 +64,25 @@ const WORDS = [
   "nine",
   "ten",
 ];
+
+/** A barbell's step on this kit, and with small plates (Lift18). */
+function plateSteps(unit: LiftUnit): { step: number; small: number } {
+  return unit === "lbs"
+    ? { step: BARBELL_STEP_LB, small: SMALL_PLATES_STEP_LB }
+    : { step: BARBELL_STEP_KG, small: SMALL_PLATES_STEP_KG };
+}
+
+/**
+ * The line under "I have small plates", in setup and in Programme settings:
+ * the step it changes wherever plates go, a barbell's and a belt's on a
+ * bodyweight lift (`loadGridFor`, Pgm8 L6), from the engine's own steps, in
+ * the lifter's kit.
+ */
+export function smallPlatesHint(unit: LiftUnit): string {
+  const { step, small } = plateSteps(unit);
+  const label = liftUnitLabel(unit);
+  return `Barbell lifts and weight on a belt go up ${small} ${label} at a time instead of ${step} ${label}.`;
+}
 
 const word = (n: number) => WORDS[n] ?? String(n);
 const capitalised = (text: string) =>
@@ -76,24 +101,31 @@ export function liftRulesContext(
     liftDays: programme?.workouts?.length ?? 0,
     smallPlates: programme?.settings?.smallPlates === true,
     racing: programme?.runPlan?.mode === "race_prep",
+    ...(programme?.settings?.loadUnit === "lbs"
+      ? { unit: "lbs" as const }
+      : {}),
   };
 }
 
 /** The rules that apply to this person, in the order the sheet shows them. */
 export function liftRules(ctx: LiftRulesContext): LiftRule[] {
-  const step = ctx.smallPlates ? SMALL_PLATES_STEP_KG : BARBELL_STEP_KG;
+  const unit = ctx.unit ?? "kg";
+  const steps = plateSteps(unit);
+  const step = `${ctx.smallPlates ? steps.small : steps.step} ${liftUnitLabel(unit)}`;
   const scheduled = lighterWeeksScheduled(ctx.experience, ctx.liftDays);
   const takeOne = "You can take one any time from the ⋯ menu on Train.";
   const rules: LiftRule[] = [
     {
       id: "climb",
       title: "Adding weight",
-      body: "When every set hits its target, the weight goes up a step next time. Where the target is a range, such as 8–12 reps, the reps climb to the top first, then the weight goes up and the reps start again at the bottom.",
+      // Pgm8 L6: the plan follows the weight added to a bodyweight lift and
+      // steps it a plate on a belt (`loadGridFor`), always taken.
+      body: `When every set hits its target, the weight goes up a step next time. Where the target is a range, such as 8–12 reps, the reps climb to the top first, then the weight goes up and the reps start again at the bottom. A bodyweight lift, such as pull-ups, climbs in reps instead. With weight added, on a belt or a vest, it goes up like any other lift, ${step} at a time.`,
     },
     {
       id: "steps",
       title: "How big a step is",
-      body: `A step is ${step} kg on a barbell, the next pair of dumbbells, or the next weight on a machine. A step of more than ${percent(AUTOMATIC_STEP_SHARE)} of the weight is never taken for you: the range stretches instead, and your plan follows when you lift the heavier weight.`,
+      body: `A step is ${step} on a barbell, the next pair of dumbbells, or the next weight on a machine. A step of more than ${percent(AUTOMATIC_STEP_SHARE)} of the weight is never taken for you: the range stretches instead, and your plan follows when you lift the heavier weight.`,
     },
     {
       id: "follow",

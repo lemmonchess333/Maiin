@@ -1,0 +1,288 @@
+{
+  "exerciseId": "burpees",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 768,
+  "height": 1088,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-04T13:41:33.779Z",
+  "reference": {
+    "path": "form-frames/burpees/6.webp",
+    "sha256": "9d379bf3783ae5ee5fbacba9c6cce563c40a4918f31d018e7bfc977c38baa952"
+  },
+  "cueSha256": "5e609bd9f111969481de709357b887b67b6e10571afdd6ef7cd4b1aa09c29d62",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomical mannequin and white trainers throughout four unique generated poses. Smooth neutral featureless pelvis. Native full-resolution review completed."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Same right-facing oblique camera and scene scale. Original1536x1024 images use one shared768x1088 viewport (x432..1199 with32px top/bottom padding), no per-frame crop or zoom. No bright content excluded. Prior authorized uniform placement corrections are recorded separately."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native review traces two arms and legs. Squat and plank keep straight arms; bottom has deeply bent elbows with chest at floor; jump extends hips/knees and arms overhead. Fixed-contact repair changes only small finger/toe regions, not moving joints or torso."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Bodyweight burpee, no equipment. White trainers remain consistent; fixed toe contact repair uses existing plank pixels."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Final lossless images: four palm scan-edge anchors and two widths identical across frames1-5; four toe scan-edge anchors and two widths identical across2-4. The jump has no planted contacts. Exact regions and zero changes outside them recorded in provenance."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Squat to extended plank, chest-to-floor push-up, press, feet forward, then overhead jump. Both feet airborne at6, followed by soft landing into1. No morphing or interpolated joints."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Chest and quadriceps strongest purple, abs and front deltoids secondary lilac. Other regions remain neutral. Qualitative muscle hierarchy matches the supplied-art legend."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "All six exact cues reviewed with their image in the actual player. Lower explicitly reaches the floor, press restores plank, tuck precedes jump; matches the catalogue burpee with push-up."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six final frames and6-to-1 manually stepped in actual ExerciseFormFrames. Press reuses plank and tuck reuses squat because those joint configurations recur. Jump closes by landing into the next squat."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Final repaired PNGs, byte-identical to delivered lossless WebP pixels, reviewed at390x844 in actual player in light mode on4October. All six and loop visible; full jump fits and floor poses/cues are clear."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Same final sequence reviewed at390x844 in dark mode, all six and loop; full jump and floor poses visible, no clipping or visible fixed-contact seams. Screenshots inspected in task conversation."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Palms on floor",
+      "frames": [1, 2, 3, 4, 5],
+      "referenceFrame": 2,
+      "anchorNames": [
+        "nearPalmLeft",
+        "nearPalmRight",
+        "farPalmLeft",
+        "farPalmRight"
+      ],
+      "dimensionNames": ["nearPalmWidth", "farPalmWidth"],
+      "evidence": "Both palms stay planted through squat, plank, push-up and tuck; near scan y962, far950 in the final canvas."
+    },
+    {
+      "name": "Toes during push-up",
+      "frames": [2, 3, 4],
+      "referenceFrame": 2,
+      "anchorNames": [
+        "nearToeLeft",
+        "nearToeRight",
+        "farToeLeft",
+        "farToeRight"
+      ],
+      "dimensionNames": ["nearToeWidth", "farToeWidth"],
+      "evidence": "Both toe supports stay fixed from plank through lowering and pressing; near scan930, far926."
+    }
+  ],
+  "airborneFrames": [
+    {
+      "frame": 6,
+      "takeoffFrame": 5,
+      "landingFrame": 1,
+      "evidence": "Full body extends above the same floor reference, with both shoes clear of their contact shadow. Head/shoe scale, camera, full overhead reach and landing into squat inspected natively and in both phone themes."
+    }
+  ],
+  "frames": [
+    {
+      "path": "form-frames/burpees/1.webp",
+      "sha256": "c90e1515402edea60101d9ed9aad9cd71733f26d4e4f3c0b643fa5f058a80dc1",
+      "anchors": {
+        "nearPalmLeft": {
+          "x": 459,
+          "y": 962
+        },
+        "nearPalmRight": {
+          "x": 513,
+          "y": 962
+        },
+        "farPalmLeft": {
+          "x": 587,
+          "y": 950
+        },
+        "farPalmRight": {
+          "x": 643,
+          "y": 950
+        }
+      },
+      "invariantDimensions": {
+        "nearPalmWidth": 55,
+        "farPalmWidth": 57
+      }
+    },
+    {
+      "path": "form-frames/burpees/2.webp",
+      "sha256": "4fd64faaed920586ad21b7d263fe8acdb54bebaa62bd68d5785b0161d0a7e893",
+      "anchors": {
+        "nearPalmLeft": {
+          "x": 459,
+          "y": 962
+        },
+        "nearPalmRight": {
+          "x": 513,
+          "y": 962
+        },
+        "farPalmLeft": {
+          "x": 587,
+          "y": 950
+        },
+        "farPalmRight": {
+          "x": 643,
+          "y": 950
+        },
+        "nearToeLeft": {
+          "x": 77,
+          "y": 930
+        },
+        "nearToeRight": {
+          "x": 112,
+          "y": 930
+        },
+        "farToeLeft": {
+          "x": 120,
+          "y": 926
+        },
+        "farToeRight": {
+          "x": 153,
+          "y": 926
+        }
+      },
+      "invariantDimensions": {
+        "nearPalmWidth": 55,
+        "farPalmWidth": 57,
+        "nearToeWidth": 36,
+        "farToeWidth": 34
+      }
+    },
+    {
+      "path": "form-frames/burpees/3.webp",
+      "sha256": "735ab8c4dd8564d2be606c07aec13f53788e6d402cced41569d4f9ca20ce6324",
+      "anchors": {
+        "nearPalmLeft": {
+          "x": 459,
+          "y": 962
+        },
+        "nearPalmRight": {
+          "x": 513,
+          "y": 962
+        },
+        "farPalmLeft": {
+          "x": 587,
+          "y": 950
+        },
+        "farPalmRight": {
+          "x": 643,
+          "y": 950
+        },
+        "nearToeLeft": {
+          "x": 77,
+          "y": 930
+        },
+        "nearToeRight": {
+          "x": 112,
+          "y": 930
+        },
+        "farToeLeft": {
+          "x": 120,
+          "y": 926
+        },
+        "farToeRight": {
+          "x": 153,
+          "y": 926
+        }
+      },
+      "invariantDimensions": {
+        "nearPalmWidth": 55,
+        "farPalmWidth": 57,
+        "nearToeWidth": 36,
+        "farToeWidth": 34
+      }
+    },
+    {
+      "path": "form-frames/burpees/4.webp",
+      "sha256": "4fd64faaed920586ad21b7d263fe8acdb54bebaa62bd68d5785b0161d0a7e893",
+      "anchors": {
+        "nearPalmLeft": {
+          "x": 459,
+          "y": 962
+        },
+        "nearPalmRight": {
+          "x": 513,
+          "y": 962
+        },
+        "farPalmLeft": {
+          "x": 587,
+          "y": 950
+        },
+        "farPalmRight": {
+          "x": 643,
+          "y": 950
+        },
+        "nearToeLeft": {
+          "x": 77,
+          "y": 930
+        },
+        "nearToeRight": {
+          "x": 112,
+          "y": 930
+        },
+        "farToeLeft": {
+          "x": 120,
+          "y": 926
+        },
+        "farToeRight": {
+          "x": 153,
+          "y": 926
+        }
+      },
+      "invariantDimensions": {
+        "nearPalmWidth": 55,
+        "farPalmWidth": 57,
+        "nearToeWidth": 36,
+        "farToeWidth": 34
+      }
+    },
+    {
+      "path": "form-frames/burpees/5.webp",
+      "sha256": "c90e1515402edea60101d9ed9aad9cd71733f26d4e4f3c0b643fa5f058a80dc1",
+      "anchors": {
+        "nearPalmLeft": {
+          "x": 459,
+          "y": 962
+        },
+        "nearPalmRight": {
+          "x": 513,
+          "y": 962
+        },
+        "farPalmLeft": {
+          "x": 587,
+          "y": 950
+        },
+        "farPalmRight": {
+          "x": 643,
+          "y": 950
+        }
+      },
+      "invariantDimensions": {
+        "nearPalmWidth": 55,
+        "farPalmWidth": 57
+      }
+    },
+    {
+      "path": "form-frames/burpees/6.webp",
+      "sha256": "9d379bf3783ae5ee5fbacba9c6cce563c40a4918f31d018e7bfc977c38baa952",
+      "anchors": {},
+      "invariantDimensions": {}
+    }
+  ]
+}

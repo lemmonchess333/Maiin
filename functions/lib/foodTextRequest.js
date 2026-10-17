@@ -1,5 +1,7 @@
 "use strict";
 
+const { foodGenerationConfig } = require("./foodModel");
+
 /**
  * Vertex AI request body for analyzeFoodText.
  *
@@ -44,10 +46,7 @@ function buildFoodTextRequest(text) {
   return {
     systemInstruction: { parts: [{ text: FOOD_TEXT_INSTRUCTION }] },
     contents: [{ role: "user", parts: [{ text }] }],
-    generationConfig: {
-      temperature: 0.2,
-      maxOutputTokens: 1024,
-    },
+    generationConfig: foodGenerationConfig(),
   };
 }
 

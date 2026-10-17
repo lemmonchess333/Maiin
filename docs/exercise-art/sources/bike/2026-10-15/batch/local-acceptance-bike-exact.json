@@ -1,0 +1,76 @@
+{
+  "status": "parent-native-card-accepted-for-local-integration",
+  "exercises": {
+    "bike": {
+      "reviewedAt": "2026-10-15T07:50:35.047229+00:00",
+      "checks": {
+        "nativeManual": {
+          "passed": true,
+          "evidence": "Parent selected all six beats in the saved native929x1432 fixture and inspected both exact final PNGs at native dimensions. Full athlete, original trainers, grips, saddle and entire bike/base retained. Native proof saved."
+        },
+        "nativeTimed": {
+          "passed": true,
+          "evidence": "Parent operated real browser native fixture at1120x1660, observed repeated six-path cycles at1200ms and paused. DOM-backed24event trace retains actual native/display929x1432; console warnings/errors empty. Fixture is a source preview, not final registered component review."
+        },
+        "canonicalNoShorts": {
+          "passed": true,
+          "evidence": "Parent visually inspected both intact finals: same bald faceless lean white anatomical athlete without shorts, original white trainers and source contours/shading. No individual-limb fitting, anatomical warping or graft."
+        },
+        "physicalEndpoints": {
+          "passed": true,
+          "evidence": "Two coherent opposed seated leg positions; pelvis supported on saddle, near trainer on strapped pedal, upper far trainer/platform naturally occluded by housing. No calibrated forward travel/full revolution claim. Six paths repeat1,1,2,2,1,1."
+        },
+        "visibleGrips": {
+          "passed": true,
+          "evidence": "Both source scenes retain original whole upper body and closed hand/bar contacts, neutral shoulders and coherent supported seating. Hidden far upper pedal is explicitly not visually certified."
+        },
+        "colourBoundaries": {
+          "passed": true,
+          "evidence": "Parent inspected latest full PNGs after independent1565pixel far-calf neutralization. Visible Quads primary/Hamstrings secondary follow natural source fields/shading, arms/core/calves neutral; no coarse straight quad block or residual far-calf crescent."
+        },
+        "cardLight": {
+          "passed": true,
+          "evidence": "Parent visually inspected actual311x480 standard prepared-source cutout on light proof: full athlete, trainers, bike base, grips, anatomical colours retained and no floor rectangle."
+        },
+        "cardDark": {
+          "passed": true,
+          "evidence": "Parent visually inspected same exact card on dark proof: coherent complete silhouette, shading and equipment retained, no floor block. Standard generator reproduction remains next."
+        }
+      },
+      "reviewedInputHashes": {
+        "1-framed.png": "7d6f23007ea9ba6a1165ccd4ac6fcda2aeb6b4f2ce3e564e10eff12ab16342db",
+        "card-cutout.webp": "7df835345404a62c9d61d915ad68f7962372a18025933e167c0f3526e80f67d7",
+        "prepared-card-source.png": "05a373df81bf9c884afc3eacb269dc0964e8a04a2ff7372005439b7f32ea6551",
+        "source-provenance.json": "21994ce285435e8923ef98f07d9de2cda7eb366c2f54cb80f8fb67f7bc4eedef",
+        "hardware-measurements.json": "14fa53a3b240d996b5b9db8d505bd9a4231b3932754adec877c77763eb4c268b",
+        "draft-beats.json": "656eff56723411e5d42c8ca345ed5d3845a05991ef316a39c86a824f72f0975d",
+        "catalogue.json": "97d053200a60c113b5a51bd604773e44721a07c3be5283350938f0c9b9dca7c0",
+        "finishing-audit.json": "5bd34db741124f40d064a38c9fc2ebf23892e0d8e829869763d7c26e986c1d0a",
+        "static-proof.json": "9a2b7b68de1960c00123d17dfce871df744fae1f3d77b8d9aa2ae668d5bbb05f",
+        "independent-review/native-static-review.json": "0901debd1f7ced207bb4f1b982b459c2b09951603ae36ff3b0bfaa6e577964a0",
+        "card-static-proof.json": "a1269e87f4fb892321dcd1f0ddb97525aecff3a19cc73c8c553ae9785681f9bd",
+        "staged-card-provenance.json": "1cf6e29276ae9976e4848c6083727a18135b5d19a988e9ae7c004719ec908dbe",
+        "1-framed.ora": "20763d41ebc97f98240d544af06a972a6a5fdbce084327cd73f942a6e48e5d5c",
+        "2-framed.ora": "323efc4bcf586c490de632136597e5ec2bd8e5a8ebd5e695b916a60915007f95",
+        "2-framed.png": "d9b542a35796dd50af076bc28521f38a03521dc9aa3a6781278267f19fb763f4",
+        "3-lower-direct-original.png": "d472dff2a1ecae8c2db250870f37e9611ddf72b3c72fcc1772c55ce0327ec2c8",
+        "6-upper-direct-original.png": "5ab3dda61201910648ef64c9e894e0e4a301aef5efb1c237ecbb746e6f54bfda",
+        "final-frames/1.webp": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+        "final-frames/2.webp": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+        "final-frames/3.webp": "9697697c0b80e03f48915e3e3e676f2737f8eb354c54a2e0be86e7abbf2ef395",
+        "final-frames/4.webp": "9697697c0b80e03f48915e3e3e676f2737f8eb354c54a2e0be86e7abbf2ef395",
+        "final-frames/5.webp": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+        "final-frames/6.webp": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+        "parent-native-trace.json": "216babab50ca86b07cb6a85cb4536d357d9d56858087b480f2cdcb89ef5c5077",
+        "parent-native-upper.jpg": "d4cd53862a5ed7301fe891982e2d2b34557e2b13bac4af461164f4103e720802",
+        "card-light-review.png": "323ae1e8f5af17714d30c1f4cd77b1b4ab8011a760db1075bc595f225b10b070",
+        "card-dark-review.png": "b25b63e69fd2e9eaa3cff6e11d6a714e7ff8d844b8180c6533085a3a7a340d5b",
+        "native-review.html": "d4bbdfc9ccc4835f1015fa32e26bb6bec84c47af9a67f7aee5b01c447a3ccab8"
+      }
+    }
+  },
+  "findings": [
+    "Actual fixed spindle16.656px and rear-foot4.031px drift prevent strict hardware pass. Native fixture shows retained coherent supported anatomy and same equipment; final mobile impact and explicit owner-with-findings disposition remain pending."
+  ],
+  "completionCredit": false
+}

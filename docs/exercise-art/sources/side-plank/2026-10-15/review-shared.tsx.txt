@@ -1,0 +1,55 @@
+import { useEffect, useRef, useState } from 'react';
+import { Button } from '../../Maiin-burpees/src/components/ui/Button';
+
+export function ThemeControl() {
+  const [dark, setDark] = useState(true);
+  useEffect(() => { document.documentElement.classList.toggle('dark', dark); }, [dark]);
+  return <Button variant="outline" onClick={() => setDark(value => !value)}>{dark ? 'Light theme' : 'Dark theme'}</Button>;
+}
+
+export function CardViews({ src }: { src: string }) {
+  return <details><summary>Card at 480px and 160px</summary>
+    <div className="flex flex-wrap items-start gap-4 py-3">
+      {[480, 160].map(height => <figure key={height}>
+        <img src={src} alt={`Side Plank card at ${height}px`} style={{ height, maxWidth: '100%', objectFit: 'contain' }} />
+        <figcaption>{height}px</figcaption>
+      </figure>)}
+    </div>
+  </details>;
+}
+
+// Observation only. Records actual decoded/visible player images and controls;
+// it does not drive playback or assign any QA outcome.
+export function PlaybackEvidence() {
+  const [trace, setTrace] = useState<object[]>([]);
+  const last = useRef('');
+  useEffect(() => {
+    const capture = () => {
+      const section = document.querySelector<HTMLElement>('section[aria-label="Side Plank form guide"]');
+      const image = section?.querySelector<HTMLImageElement>('img[aria-hidden="false"]');
+      if (!section || !image?.complete || !image.naturalWidth || image.style.visibility !== 'visible') return;
+      const playing = Array.from(section.querySelectorAll('button')).some(button => button.textContent?.trim() === 'Pause');
+      const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+      const key = [image.getAttribute('src'), playing, theme, document.hidden].join('|');
+      if (key === last.current) return;
+      last.current = key;
+      setTrace(previous => [...previous, {
+        ms: Math.round(performance.now()), src: image.getAttribute('src'), alt: image.alt,
+        playing, theme, documentHidden: document.hidden,
+        naturalWidth: image.naturalWidth, naturalHeight: image.naturalHeight,
+        display: [image.clientWidth, image.clientHeight], viewport: [innerWidth, innerHeight],
+        sectionText: section.innerText,
+      }].slice(-250));
+    };
+    const observer = new MutationObserver(capture);
+    observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-hidden', 'alt', 'src', 'style', 'class'] });
+    document.addEventListener('load', capture, true);
+    document.addEventListener('visibilitychange', capture);
+    capture();
+    return () => { observer.disconnect(); document.removeEventListener('load', capture, true); document.removeEventListener('visibilitychange', capture); };
+  }, []);
+  return <details><summary>Observed playback evidence</summary>
+    <Button variant="outline" onClick={() => { last.current = ''; setTrace([]); }}>Reset playback evidence</Button>
+    <pre data-testid="review-playback-trace" style={{ maxHeight: 260, overflow: 'auto', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{JSON.stringify(trace, null, 2)}</pre>
+  </details>;
+}

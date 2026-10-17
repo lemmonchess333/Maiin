@@ -1,0 +1,109 @@
+{
+  "reviewLabel": "rowing-integrated-light-manual-card",
+  "steps": [
+    {
+      "alt": "Rowing Machine, Catch",
+      "complete": true,
+      "cue": "Compress with straight arms and vertical shins.",
+      "selected": "Show frame 1: Catch",
+      "src": "/form-frames/rowing-machine/1.webp"
+    },
+    {
+      "alt": "Rowing Machine, Drive",
+      "complete": true,
+      "cue": "Push with your legs; keep arms straight.",
+      "selected": "Show frame 2: Drive",
+      "src": "/form-frames/rowing-machine/2.webp"
+    },
+    {
+      "alt": "Rowing Machine, Finish",
+      "complete": true,
+      "cue": "Lean back slightly; draw handle below ribs.",
+      "selected": "Show frame 3: Finish",
+      "src": "/form-frames/rowing-machine/3.webp"
+    },
+    {
+      "alt": "Rowing Machine, Relax",
+      "complete": true,
+      "cue": "Stay supported; keep wrists and shoulders relaxed.",
+      "selected": "Show frame 4: Relax",
+      "src": "/form-frames/rowing-machine/4.webp"
+    },
+    {
+      "alt": "Rowing Machine, Recover",
+      "complete": true,
+      "cue": "Arms away, then hinge forward before sliding.",
+      "selected": "Show frame 5: Recover",
+      "src": "/form-frames/rowing-machine/5.webp"
+    },
+    {
+      "alt": "Rowing Machine, Reset",
+      "complete": true,
+      "cue": "Recover twice as slowly as you drive.",
+      "selected": "Show frame 6: Reset",
+      "src": "/form-frames/rowing-machine/6.webp"
+    },
+    {
+      "alt": "Rowing Machine, Catch",
+      "complete": true,
+      "cue": "Compress with straight arms and vertical shins.",
+      "selected": "Show frame 1: Catch",
+      "src": "/form-frames/rowing-machine/1.webp"
+    }
+  ],
+  "layout": {
+    "cards": [
+      {
+        "alt": "Rowing Machine registered normal card",
+        "complete": true,
+        "natural": [
+          480,
+          281
+        ],
+        "shown": [
+          348,
+          160
+        ]
+      },
+      {
+        "alt": "Rowing Machine normal card, 480px long-side limit",
+        "complete": true,
+        "natural": [
+          480,
+          281
+        ],
+        "shown": [
+          480,
+          281
+        ]
+      },
+      {
+        "alt": "Rowing Machine normal card, 348px long-side limit",
+        "complete": true,
+        "natural": [
+          480,
+          281
+        ],
+        "shown": [
+          348,
+          203.71875
+        ]
+      },
+      {
+        "alt": "Rowing Machine normal card, 160px long-side limit",
+        "complete": true,
+        "natural": [
+          480,
+          281
+        ],
+        "shown": [
+          160,
+          93.66667175292967
+        ]
+      }
+    ],
+    "h": 844,
+    "scrollWidth": 380,
+    "w": 390
+  }
+}

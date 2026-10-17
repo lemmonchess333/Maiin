@@ -49,3 +49,10 @@ export const HUD_SECONDARY = {
 
 /** The floor these exist to respect, so a test can assert against it. */
 export const HUD_MIN_FONT_PX = 11;
+
+/**
+ * A destructive action's red on the run sheet, fixed rather than a theme
+ * token: the sheet is dark in both themes, and the light theme's
+ * `--destructive` measures 3.7:1 on it.
+ */
+export const HUD_DESTRUCTIVE = "#F37373";

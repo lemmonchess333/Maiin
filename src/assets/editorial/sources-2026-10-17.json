@@ -1,0 +1,396 @@
+{
+  "description": "Licensed Unsplash photographs for the 2026-10-17 Social photo refresh: nine challenge covers, one for each challenge the server defines, and seven race-Space destination covers that replace photographs those races shared with another race in the same city (their reuse records in sources-short-races-ultras-2026-10-04.json are superseded). The destination photos are not official race photography or a guarantee of the course; the challenge photos illustrate a theme, not Tropos members or endorsements.",
+  "sources": [
+    {
+      "challengeId": "weekly",
+      "assets": ["challenge-weekly.webp"],
+      "sourceUrl": "https://unsplash.com/photos/a-man-lifting-weights-9W9BDUG7u9E",
+      "downloadUrl": "https://images.unsplash.com/photo-1656774950529-44a6153521ee?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-17",
+      "sourceSha256": "ec4290328135937d84dfe64c9b3d695ee373e033eb58072793b6dec33c4f136c",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 26058,
+        "sha256": "c304a744e8ff76a93c266e67d54e1aec9fbbcfc06b11ea44b3b38d6978f35f38"
+      },
+      "photographer": "Morrow Solutions",
+      "subject": "Back view of a lifter setting up a barbell back squat in a dark block-walled gym"
+    },
+    {
+      "challengeId": "mileage",
+      "assets": ["challenge-mileage.webp"],
+      "sourceUrl": "https://unsplash.com/photos/silhouette-photo-of-a-person-running-on-road-JnoNcfFwrNA",
+      "downloadUrl": "https://images.unsplash.com/photo-1502224562085-639556652f33?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-17",
+      "sourceSha256": "6c193b78e08b7d4f5e0fe8e4f7bd53e0605b96ffd0f1505adafdbf8bd9cce308",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1683
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 113846,
+        "sha256": "7f39771dd1fb1f35d1b5ffbe3f0fb272f31d52bff63bf5d1c4b3485702fc3931"
+      },
+      "photographer": "lucas Favre",
+      "subject": "Silhouetted runner on a wet road at dusk under a teal and orange sky"
+    },
+    {
+      "challengeId": "hybrid-hero",
+      "assets": ["challenge-hybrid-hero.webp"],
+      "sourceUrl": "https://unsplash.com/photos/two-green-and-purple-kettlebells-hvFrA-iKQd0",
+      "downloadUrl": "https://images.unsplash.com/photo-1562771242-7d077824055a?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-17",
+      "sourceSha256": "97f131209e14cf5ac65af3b550c64013b15e8447e2890cdfc9a292c3b4594cf2",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 95012,
+        "sha256": "67c76c0957a1003befae40efde8e9d19ebd41edd156542275ac4ba28c9586699"
+      },
+      "photographer": "Alora Griffiths",
+      "subject": "Two competition kettlebells, plates and a hex bar on a running track: lifting kit where the running happens. The only marking is the moulded weight, 24KG; no maker's mark at 3x."
+    },
+    {
+      "challengeId": "season-spring",
+      "assets": ["challenge-season-spring.webp"],
+      "sourceUrl": "https://unsplash.com/photos/a-person-standing-in-the-middle-of-a-forest-4gwYMzEol0Q",
+      "downloadUrl": "https://images.unsplash.com/photo-1706205568923-be4c23bcc5b0?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-17",
+      "sourceSha256": "104dd08c04f2bc37d1c578e1a4561d31ad973d404fa27b57174522c18abf507f",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 92664,
+        "sha256": "114edf389a59b60b8f5be48615d45b5796474f7f9adf8feca1519c9dfb407bfe"
+      },
+      "photographer": "Fran Couto",
+      "subject": "Runner from behind on a singletrack through bright spring grass and tall pines, with sun rays"
+    },
+    {
+      "challengeId": "season-summer",
+      "assets": ["challenge-season-summer.webp"],
+      "sourceUrl": "https://unsplash.com/photos/man-running-on-beach-at-sunset-vEARSCkDr9s",
+      "downloadUrl": "https://images.unsplash.com/photo-1778846240371-3ad7557b7ad7?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-17",
+      "sourceSha256": "0c49df6186c7ed844864a30eab1f2d61b22e65b20e46737cbcf532ead281e529",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 37706,
+        "sha256": "69198e0b6c1fbac346519829c8d19fb1889e51e27d9e563293722dbd8505f8bd"
+      },
+      "photographer": "Milos Lopusina",
+      "subject": "Silhouetted man running along a beach against a red sunset"
+    },
+    {
+      "challengeId": "season-autumn",
+      "assets": ["challenge-season-autumn.webp"],
+      "sourceUrl": "https://unsplash.com/photos/woman-in-white-dress-walking-on-pathway-between-trees-during-daytime-MJNbBLx9W5U",
+      "downloadUrl": "https://images.unsplash.com/photo-1590646299329-ac2652afd477?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-17",
+      "sourceSha256": "008e7ef7df8a27c82566be1ecf673388c8ca1a2cdf3d57aae56b79b43b45d5f5",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 50186,
+        "sha256": "244b8407a5dcbb9fc89ffe9c529847ed109ff348c9216112aa41d344042e7ee6"
+      },
+      "photographer": "Greg Rosenke",
+      "subject": "Two runners from behind on a leaf-covered trail in golden autumn fog, beside a wooden fence"
+    },
+    {
+      "challengeId": "season-winter",
+      "assets": ["challenge-season-winter.webp"],
+      "sourceUrl": "https://unsplash.com/photos/woman-in-white-tank-top-and-black-shorts-holding-bar-Po4VrJmK9h8",
+      "downloadUrl": "https://images.unsplash.com/photo-1604335788369-94f349ae5243?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-17",
+      "sourceSha256": "587d18c60686d5a9a320cfdc40cacb6d06e8ae4e0a1d78f1c3cef18f2a036e6f",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1601
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 18012,
+        "sha256": "9bb04f882dec17bdf9f24e1bafe773b27961885009e9ee5ca93dd534d5a72939"
+      },
+      "photographer": "Corey Young",
+      "subject": "Black-and-white close-up of a deadlift set-up in a dark gym: hands on the bar, plain shoes, no faces or marks at 3x. No snow: the bulk season's cue is the heavy lift itself."
+    },
+    {
+      "challengeId": "fastest-5k",
+      "assets": ["challenge-fastest-5k.webp"],
+      "sourceUrl": "https://unsplash.com/photos/three-runners-race-on-a-track-pFYI404z_a4",
+      "downloadUrl": "https://images.unsplash.com/photo-1764093369645-0b04338873f8?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-17",
+      "sourceSha256": "a4229a04569ddeba18633d14cb1d3982b35740241b3750ec615525f42dc4241d",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 24478,
+        "sha256": "6a38b2360207003b35b434b89ac02e61e88fc75c07dfb504cd01671700d9151e"
+      },
+      "photographer": "R_ INVSCIMENTO",
+      "subject": "Black-and-white panned blur of runners racing on a track"
+    },
+    {
+      "challengeId": "together",
+      "assets": ["challenge-together.webp"],
+      "sourceUrl": "https://unsplash.com/photos/a-group-of-people-standing-on-a-hill-with-a-flag-and-a-flag-jaaXarXmFIc",
+      "downloadUrl": "https://images.unsplash.com/photo-1662024479821-7c1f26f1d4b1?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-17",
+      "sourceSha256": "013b5bdeb5853db3e31f19db0d7e6b5459b7a31123331e1ff809488938235ae0",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1579
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 28784,
+        "sha256": "48e774e4adc44931b301c40ddf3af9671a1b7eeff27abdd9216eee1ddec539fc"
+      },
+      "photographer": "Gaëtan Spinhayer",
+      "subject": "A group of runners strung out along a ridge in silhouette at dusk"
+    },
+    {
+      "raceId": "edinburgh-5k",
+      "assets": ["space-edinburgh-5k.webp"],
+      "sourceUrl": "https://unsplash.com/photos/a-monument-overlooks-the-city-at-twilight-nCTSMDND2R0",
+      "downloadUrl": "https://images.unsplash.com/photo-1751923214774-33e1f7c9945f?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-17",
+      "sourceSha256": "9e9c2cb68809459bb97c7b3b738c630caab726e262115a8e1a3f3f91ab6cf736",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 69562,
+        "sha256": "3ea9271beee354492dbecda88f9ac47ee8096ba9970d7cb61761618dc66224b2"
+      },
+      "locationEvidence": "The caption names no place ('A monument overlooks the city at twilight'). Identified from the photograph: the Dugald Stewart Monument on Calton Hill (its carved name is faintly visible on the base), with the Balmoral Hotel clock tower, the Scott Monument and Edinburgh Castle on the skyline. Returned by a search for 'Edinburgh Calton Hill'.",
+      "photographer": "Rob Wingate",
+      "subject": "The Dugald Stewart Monument on Calton Hill at twilight, looking over the city to the castle and the Balmoral clock tower"
+    },
+    {
+      "raceId": "edinburgh-half",
+      "assets": ["space-edinburgh-half.webp"],
+      "sourceUrl": "https://unsplash.com/photos/a-castle-on-top-of-a-hill-surrounded-by-trees---AerxV71O8",
+      "downloadUrl": "https://images.unsplash.com/photo-1702591850143-7b839d480d98?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-17",
+      "sourceSha256": "abd6f7e0b3096b048bc74767bfd4c743ee0dceb5448aa999cce9e36809e74a4d",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1439
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 74,
+        "bytes": 119194,
+        "sha256": "5d39e6abffd2406f7a46ec23a89d91d242e1edb3bdf4638727a8edf73d4883a6"
+      },
+      "locationEvidence": "Photographer's caption: 'a view of Edinburgh Castle from Princes Street gardens'. Edinburgh Castle on Castle Rock is recognisable.",
+      "photographer": "Joan",
+      "subject": "Edinburgh Castle on its rock above autumn trees, seen from Princes Street Gardens"
+    },
+    {
+      "raceId": "bournemouth-5k",
+      "assets": ["space-bournemouth-5k.webp"],
+      "sourceUrl": "https://unsplash.com/photos/concrete-bridge-over-water-mj-ZsSF4le0",
+      "downloadUrl": "https://images.unsplash.com/photo-1544101499-7b710a6e845b?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-17",
+      "sourceSha256": "e80361a61086a4dd17b112d3ac7ab20b98dba61a0716b6b404e2851f61256102",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1800
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 97714,
+        "sha256": "1145f4521a0ffbb88fe0358fbd9deaaf0c33520793244465147b692cc6cbaf2d"
+      },
+      "locationEvidence": "Photographer's caption: 'Taken on a stormy December morning. Boscombe Pier Bournemouth being battered by the stormy and rough seas.'",
+      "photographer": "Belinda Fewings",
+      "subject": "Boscombe Pier on a stormy December morning, waves breaking under its arches"
+    },
+    {
+      "raceId": "bournemouth-half",
+      "assets": ["space-bournemouth-half.webp"],
+      "sourceUrl": "https://unsplash.com/photos/golden-hour-photography-of-several-people-on-seashore-M8pCBvEDjUs",
+      "downloadUrl": "https://images.unsplash.com/photo-1447611636938-80e6ffe13e1e?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-17",
+      "sourceSha256": "9dba5ffa485a69e85d97cf986e0ba773f721752ce6719e72136febc66875ee70",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 22956,
+        "sha256": "ed52f94cdf65642f7b30da6629fb5075b55f4408e5824c612703f2ceb86d426d"
+      },
+      "locationEvidence": "Photographer's caption: 'Yellow rays in Bournemouth beach'. Nothing in the frame identifies the beach independently; the caption is the evidence.",
+      "photographer": "Tomas Kostadinov",
+      "subject": "Golden sunset over Bournemouth beach, with walkers along the shoreline"
+    },
+    {
+      "raceId": "river-ness-5k",
+      "assets": ["space-river-ness-5k.webp"],
+      "sourceUrl": "https://unsplash.com/photos/a-body-of-water-with-buildings-along-it-zvDuilSRIDc",
+      "downloadUrl": "https://images.unsplash.com/photo-1648674136198-86bab411a319?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-17",
+      "sourceSha256": "e66ab3eb18a8d816cc8244d65e7e9851b245eecb8563ed4d9649b78551797260",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1359
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 61964,
+        "sha256": "5c64600a87019e4d5dc155b15e4a0e10d98f8123547c55fc585a46d497599d7a"
+      },
+      "locationEvidence": "Photographer's caption: 'The centre of Inverness viewed from the River Ness under winter skies.' Inverness Castle (centre left) and the Ness Bridge are in view, and the riverside spire at the left of the frame matches the Free North Church.",
+      "photographer": "Ben Wicks",
+      "subject": "Inverness city centre from the River Ness under winter skies, its lights reflected in the water"
+    },
+    {
+      "raceId": "valencia-half",
+      "assets": ["space-valencia-half.webp"],
+      "sourceUrl": "https://unsplash.com/photos/a-stone-tower-with-flags-on-it-vv9scOX003M",
+      "downloadUrl": "https://images.unsplash.com/photo-1666866672597-53aad1795b35?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-17",
+      "sourceSha256": "2e2e7a57a587aa8540f0e9ff204ebbf37d64b4b3548691a9cfaaf700e6590996",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 66,
+        "bytes": 119026,
+        "sha256": "160da42ecb0c849538a7e48e96229787e036154341cc0879a1c3506e7213b24f"
+      },
+      "locationEvidence": "Photographer's caption: 'Torres de Quart in Valencia, Spain.' The gate tower flies the Spanish and Valencian flags.",
+      "photographer": "Northleg Official",
+      "subject": "The Torres de Quart city-gate tower in Valencia, flying the Spanish and Valencian flags"
+    },
+    {
+      "raceId": "york-10k",
+      "assets": ["space-york-10k.webp"],
+      "sourceUrl": "https://unsplash.com/photos/a-view-of-a-city-through-a-window-5ZTZQvcRjxI",
+      "downloadUrl": "https://images.unsplash.com/photo-1707136118979-a160cb966d12?ixlib=rb-4.1.0&q=85&fm=jpg&crop=entropy&cs=srgb&w=2400",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-10-17",
+      "sourceSha256": "4be180562c48988615d617628b14f8cc046a55aa15e7f6631115faa6f2c64566",
+      "sourceSize": {
+        "width": 2400,
+        "height": 1600
+      },
+      "processing": "Centre landscape crop and WebP compression; original colour.",
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "quality": 78,
+        "bytes": 100326,
+        "sha256": "a4e33f1c575fab1afb9af3781c6522204bafa1e410a5a7348ce75af35ca32ed4"
+      },
+      "locationEvidence": "No caption. Identified from the photograph: York Minster's two west towers and central tower, seen through a gap in the stone city walls. The photographer's profile location is York, and the photograph was returned by a search for 'York city walls'.",
+      "photographer": "Scott Precious",
+      "subject": "York Minster framed through a crenel in York's city walls"
+    }
+  ]
+}

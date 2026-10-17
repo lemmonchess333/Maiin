@@ -1,6 +1,15 @@
+import RunAbout from "@/components/run/RunAbout";
+import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
+import { abbreviateK } from "@/utils/formatters";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import RunPurpose from "@/components/run/RunPurpose";
 import LiftPurpose from "@/components/program/LiftPurpose";
-import { runSessionPresentation } from "@/lib/runSessionExplainer";
+import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
+import { racePaceWorkFor } from "@/lib/racePace";
+import {
+  runSessionPresentation,
+  weekHoldsQuality,
+} from "@/lib/runSessionExplainer";
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
@@ -23,7 +32,7 @@ import {
   getCompletionKind,
   type ClaimState,
 } from "@/lib/scheduledRunCompletion";
-import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
+import type { SavedRunDoc } from "@/lib/runClaims";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/IconButton";
@@ -31,6 +40,8 @@ import ExtrasExpandSheet from "@/components/program/ExtrasExpandSheet";
 import { workoutTitle } from "@/hooks/useWorkouts";
 import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { runDoseLine } from "@/lib/runDose";
+import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 /** Q5 P71 cap — DayPeekCard mirrors RunWeekStrip; up to 2 extras
@@ -205,6 +216,8 @@ export default function DayPeekCard({
   onManage?: (dateKey: string) => void;
 }) {
   const navigate = useNavigate();
+  const unit = useDistanceUnit();
+  const liftUnit = useLiftUnit();
   // Q5 P71 — overflow expand-sheet state. Mirrors RunWeekStrip's
   // local handling (the parent doesn't need to know about overflow).
   const [extrasSheetOpen, setExtrasSheetOpen] = useState(false);
@@ -308,7 +321,17 @@ export default function DayPeekCard({
   const runTemplateId =
     resolved.run.runDay?.userOverride || resolved.run.runDay?.templateId;
   const runTemplate = RUN_TEMPLATES.find((t) => t.id === runTemplateId);
-  const runName = runTemplate?.name ?? "Run";
+  // Run21 (2): a long run that finishes at race pace says so, by the
+  // launch's own gate.
+  const runRacePace = racePaceWorkFor(
+    runTemplate,
+    profile,
+    programState?.runPlan
+  );
+  const runName = runSessionName(runTemplate, runRacePace, unit);
+  const runAbout = runTemplate
+    ? runSessionAbout(runTemplate, { racePace: runRacePace })
+    : null;
   const runPurpose =
     runTemplate && profile?.runMode !== "freeform"
       ? runSessionPresentation({
@@ -319,6 +342,11 @@ export default function DayPeekCard({
           distance:
             programState?.runPlan?.raceGoal?.distance ??
             profile?.raceGoal?.distance,
+          weekHasQuality: weekHoldsQuality(
+            programState?.runDays,
+            resolved.run.runDay?.weekKey
+          ),
+          racePace: runRacePace?.kind,
         }).purpose
       : null;
   // Q5 P69 — extras on the Home peek surface. Cap-at-2 (P71)
@@ -449,9 +477,7 @@ export default function DayPeekCard({
                         {totalMinutes > 0 ? `${totalMinutes} min` : ""}
                         {totalMinutes > 0 && tonnage > 0 ? " · " : ""}
                         {tonnage > 0
-                          ? tonnage >= 1000
-                            ? (tonnage / 1000).toFixed(1) + "k kg"
-                            : Math.round(tonnage) + " kg"
+                          ? `${abbreviateK(liftVolumeIn(tonnage, liftUnit))} ${liftUnitLabel(liftUnit)}`
                           : ""}
                       </span>
                     )}
@@ -543,13 +569,19 @@ export default function DayPeekCard({
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     <span className="font-mono tabular-nums">
                       {runTemplate.config.targetDistanceKm
-                        ? `${runTemplate.config.targetDistanceKm} km`
+                        ? runDoseLine(
+                            runTemplate,
+                            planningEasyPaceSPerKm(profile?.runFitness)
+                          )
                         : `${runTemplate.estimatedDuration} min total`}
                     </span>
+                    {/* Run21 (2): the session's one feel line. */}
                     {" · "}
-                    {runTemplate.description}
+                    {runAbout?.feel}
                   </p>
-                  <RunPurpose>{runPurpose}</RunPurpose>
+                  <RunPurpose>
+                    <RunAbout about={runAbout} why={runPurpose} />
+                  </RunPurpose>
                 </div>
               )}
               {/* Q5 P69/P70/P71 — extras rows. Mirrored from
@@ -568,7 +600,7 @@ export default function DayPeekCard({
                   type="button"
                   onClick={() => setExtrasSheetOpen(true)}
                   aria-label={`${overflowCount} more extra ${overflowCount === 1 ? "run" : "runs"} logged for this date — open all`}
-                  className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground -ml-1 px-1 py-0.5 rounded-md active:scale-[0.97]"
+                  className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground -ml-1 px-1 py-0.5 rounded-md transition active:scale-[0.97]"
                 >
                   <Footprints className="size-3.5 shrink-0 opacity-50 text-running" />
                   <span>
@@ -603,7 +635,7 @@ export default function DayPeekCard({
                 <button
                   type="button"
                   onClick={() => onManage(dateKey)}
-                  className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-lifting-strong px-2 min-h-[44px] rounded-lg active:scale-[0.97]"
+                  className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-lifting-strong px-2 min-h-[44px] rounded-lg transition-transform active:scale-[0.97]"
                 >
                   <Settings2 className="size-3.5" />
                   Manage day
@@ -659,7 +691,7 @@ function ExtraRunRow({
       type="button"
       onClick={onTap}
       aria-label={`Extra run: ${distanceText} ${bucketText}, tap to open`}
-      className="flex min-h-11 w-full items-center gap-2 -ml-1 px-1 py-2 rounded-md text-sm text-left text-foreground active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      className="flex min-h-11 w-full items-center gap-2 -ml-1 px-1 py-2 rounded-md text-sm text-left text-foreground transition-transform active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
     >
       <Footprints className="size-3.5 shrink-0 opacity-50 text-running" />
       <span className="text-muted-foreground">

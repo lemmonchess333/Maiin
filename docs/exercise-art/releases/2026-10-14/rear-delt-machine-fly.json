@@ -1,0 +1,386 @@
+{
+  "exerciseId": "rear-delt-machine-fly",
+  "version": "anatomy-v3-2026-10-14-reviewed-equivalent-rear-delt-fly-v1",
+  "width": 856,
+  "height": 1008,
+  "decision": "approved",
+  "reviewer": "Codex exact catalogue equivalence, native and actual target mobile review",
+  "reviewedAt": "2026-10-14T13:58:29.422613+00:00",
+  "reference": {
+    "path": "form-frames/rear-delt-machine-fly/1.webp",
+    "sha256": "5aec6129f389a44f030df8e0a98bf85ff2ecbe29c1f919b586fdf7a65af3769c"
+  },
+  "cueSha256": "c35f987a8e2d74696d8b75f3fbfb03d4662133e9b3064b6abad1cbeaae282694",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 attached to master and every adjacent built-in image edit. Same bald faceless lean white anatomy athlete, smooth pelvis, white trainers and inherited fine neutral shading. Generated upper-body poses retained at original coordinates. Source IDs and prompts saved in provenance.json. Exact existing approved source pixels are reused for the equivalent catalogue movement; no new target image authoring or finishing. Original source review remains linked."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed elevated rear-oblique camera. Three 1536x1024 sources, same-coordinate moving-upper-body inserts into a fixed master scene. One shared crop [344,0,1200,1008] to856x1008; no resampling, anatomical warping or limb fitting. Head remains part of the fixed scene, with no independent graft. Exact existing approved source pixels are reused for the equivalent catalogue movement; no new target image authoring or finishing. Original source review remains linked."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Forward reach, intermediate outward sweep and wide controlled endpoint. Elbows remain softly bent, chest supported and shoulders down. Foreshortened arms lengthen in screen projection as they spread. Minor source contour variation accepted under revised standard; native poses and actual loop reviewed. Exact existing approved source pixels are reused for the equivalent catalogue movement; no new target image authoring or finishing. Original source review remains linked."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Generic dual articulated rear-delt machine, grounded in Life Fitness Axiom OP-FLY articulating-arm description, not claimed as an exact Insignia model. Common roots [712,110]/[899,140] in source pixels; upper180/lower80 horizontal model-unit lengths and270px projected vertical drop. Equipment-only inverse kinematics, no anatomy fitting. Neutral face colours and inherited source tube illumination. Fixed opaque stack cover; no visible moving stack/cable assertion. Exact existing approved source pixels are reused for the equivalent catalogue movement; no new target image authoring or finishing. Original source review remains linked."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Hand centres fixed to each saved generated wrist/grip position, equipment reaches them with numerical residual below1e-6px. Native visible closed grips reviewed. Seat, lower body, shoes and floor contacts belowy600/x654 are pixel-identical to master in all three poses. Fixed chest-pad support retained behind athlete. Exact existing approved source pixels are reused for the equivalent catalogue movement; no new target image authoring or finishing. Original source review remains linked."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Equal-length two-joint planar mechanism driven by paired outward shoulder sweeps; all physical link dimensions remain constant and return reverses saved states. Manufacturer Life Fitness Training video4s3rkgBX5So viewed at19s/24s for supported reach and soft-elbow sweep. Vertical neutral grips are generic apparatus interpretation, not the Insignia manual horizontal-handle prescription. Exact existing approved source pixels are reused for the equivalent catalogue movement; no new target image authoring or finishing. Original source review remains linked."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Catalogue primary Rear Delts #7B72E9; secondary Traps/Rhomboids #9590E0. Flat muscle fields and fine source-derived #777777 contour layer. Neutral source anatomy shading preserved outside fields. Same muscle hierarchy throughout. Exact existing approved source pixels are reused for the equivalent catalogue movement; no new target image authoring or finishing. Original source review remains linked."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Target Reach/Open/Squeeze/Hold/Return/Reset captions reviewed against the target catalogue and actual staged guide; all at most7words. Three existing physical poses across six distinct target paths1,2,3,3,2,1; reuse explicitly disclosed."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Actual six target paths decoded and manually reviewed at natural/rendered856x1008, plus timed loop6to1. Byte-identical to source approved paths. Three copied OpenRaster editables independently reopened to identical delivered pixels."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual target ExerciseFormContent at verified390x844 light, all6 target frames and6to1 observed. Correct target captions/key, full athlete/apparatus, closed grips and planted trainers. Pause/select6/next6to1/previous1to6/slower passed;console errors0;normal1209ms/slower2410ms. Registered-path review follows before completion credit. Actual registered target public paths and standard350x480 card have also passed all6/6to1,wrap,pause/slower review in this theme under current-main styles."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual target ExerciseFormContent at verified390x844 dark, all6 target frames and6to1 observed. Correct target captions/key, full athlete/apparatus, closed grips and planted trainers. Pause/select6/next6to1/previous1to6/slower passed;console errors0;normal1209ms/slower2410ms. Registered-path review follows before completion credit. Actual registered target public paths and standard350x480 card have also passed all6/6to1,wrap,pause/slower review in this theme under current-main styles."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/rear-delt-machine-fly/1.webp",
+      "sha256": "5aec6129f389a44f030df8e0a98bf85ff2ecbe29c1f919b586fdf7a65af3769c",
+      "anchors": {
+        "leftFixedAxis": {
+          "x": 368,
+          "y": 110
+        },
+        "rightFixedAxis": {
+          "x": 555,
+          "y": 140
+        }
+      },
+      "invariantDimensions": {
+        "fixedAxesDistance": 189.39112967612817,
+        "sourceHeadRegionWidth": 107
+      },
+      "observedContacts": {
+        "pose": 1,
+        "source": "1-elevated-master.png",
+        "sourceSha256": "c7414b1ca3be66871664e90c86ed9dd262412f8d88543c155807f120213df286",
+        "anatomyTransformed": false,
+        "preservedBodyPixels": 50583,
+        "mechanism": [
+          {
+            "side": 1,
+            "pivot": [899.0, 140.0],
+            "elbow": [987.4138814497611, 77.28415119989194],
+            "hanger": [930.0, 55.0],
+            "grip": [930.0, 325.0],
+            "upperAngle": -60.58128953894744,
+            "lowerRelativeAngle": -75.28144478423248,
+            "upperLength": 180.0,
+            "lowerLength": 80.0,
+            "gripResidual": 0.0
+          },
+          {
+            "side": 0,
+            "pivot": [712.0, 110.0],
+            "elbow": [624.6947939832096, 47.03613607489985],
+            "hanger": [689.0, 28.0],
+            "grip": [689.0, 298.0],
+            "upperAngle": -119.01436733742251,
+            "lowerRelativeAngle": 82.51034258600403,
+            "upperLength": 180.0,
+            "lowerLength": 80.0,
+            "gripResidual": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "path": "form-frames/rear-delt-machine-fly/2.webp",
+      "sha256": "4b3e1d675ac2e68e6883ffaff5d4f74b6cc9bf7eb7cee2efccfcaefe5a3d04a5",
+      "anchors": {
+        "leftFixedAxis": {
+          "x": 368,
+          "y": 110
+        },
+        "rightFixedAxis": {
+          "x": 555,
+          "y": 140
+        }
+      },
+      "invariantDimensions": {
+        "fixedAxesDistance": 189.39112967612817,
+        "sourceHeadRegionWidth": 107
+      },
+      "observedContacts": {
+        "pose": 2,
+        "source": "2-photo-grounded-middle.png",
+        "sourceSha256": "46771f688e95f26382bacedd51c64f13eb274860aa9e06ec5dd81b2e80d673de",
+        "anatomyTransformed": false,
+        "preservedBodyPixels": 56866,
+        "mechanism": [
+          {
+            "side": 1,
+            "pivot": [899.0, 140.0],
+            "elbow": [1067.7896065416448, 114.98778306981404],
+            "hanger": [1070.0, 83.0],
+            "grip": [1070.0, 353.0],
+            "upperAngle": -20.32787490649685,
+            "lowerRelativeAngle": -68.08884589791718,
+            "upperLength": 180.0,
+            "lowerLength": 80.00000000000001,
+            "gripResidual": 0.0
+          },
+          {
+            "side": 0,
+            "pivot": [712.0, 110.0],
+            "elbow": [570.9381380877801, 65.27586581925539],
+            "hanger": [620.0, 40.0],
+            "grip": [620.0, 310.0],
+            "upperAngle": -141.59848295216585,
+            "lowerRelativeAngle": 89.42504311852906,
+            "upperLength": 180.0,
+            "lowerLength": 80.0,
+            "gripResidual": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "path": "form-frames/rear-delt-machine-fly/3.webp",
+      "sha256": "5da28a7773d3bb6f05b25e5ea78cccb160388c83000f0f238a2496dfa5e7b35d",
+      "anchors": {
+        "leftFixedAxis": {
+          "x": 368,
+          "y": 110
+        },
+        "rightFixedAxis": {
+          "x": 555,
+          "y": 140
+        }
+      },
+      "invariantDimensions": {
+        "fixedAxesDistance": 189.39112967612817,
+        "sourceHeadRegionWidth": 107
+      },
+      "observedContacts": {
+        "pose": 3,
+        "source": "3-elevated-open.png",
+        "sourceSha256": "3a309d670ccc7274910126f49aae24738486d55ea219ef21320e8ed6fab2af54",
+        "anatomyTransformed": false,
+        "preservedBodyPixels": 62647,
+        "mechanism": [
+          {
+            "side": 1,
+            "pivot": [899.0, 140.0],
+            "elbow": [1078.852159940115, 142.91754869368975],
+            "hanger": [1132.0, 119.0],
+            "grip": [1132.0, 389.0],
+            "upperAngle": 2.3223473237279997,
+            "lowerRelativeAngle": -50.69002210992611,
+            "upperLength": 180.0,
+            "lowerLength": 80.00000000000001,
+            "gripResidual": 0.0
+          },
+          {
+            "side": 0,
+            "pivot": [712.0, 110.0],
+            "elbow": [544.3722183006705, 83.7674193337767],
+            "hanger": [554.0, 52.0],
+            "grip": [554.0, 322.0],
+            "upperAngle": -158.63294315440882,
+            "lowerRelativeAngle": 75.54508816005345,
+            "upperLength": 180.0,
+            "lowerLength": 80.00000000000003,
+            "gripResidual": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "path": "form-frames/rear-delt-machine-fly/4.webp",
+      "sha256": "5da28a7773d3bb6f05b25e5ea78cccb160388c83000f0f238a2496dfa5e7b35d",
+      "anchors": {
+        "leftFixedAxis": {
+          "x": 368,
+          "y": 110
+        },
+        "rightFixedAxis": {
+          "x": 555,
+          "y": 140
+        }
+      },
+      "invariantDimensions": {
+        "fixedAxesDistance": 189.39112967612817,
+        "sourceHeadRegionWidth": 107
+      },
+      "observedContacts": {
+        "pose": 3,
+        "source": "3-elevated-open.png",
+        "sourceSha256": "3a309d670ccc7274910126f49aae24738486d55ea219ef21320e8ed6fab2af54",
+        "anatomyTransformed": false,
+        "preservedBodyPixels": 62647,
+        "mechanism": [
+          {
+            "side": 1,
+            "pivot": [899.0, 140.0],
+            "elbow": [1078.852159940115, 142.91754869368975],
+            "hanger": [1132.0, 119.0],
+            "grip": [1132.0, 389.0],
+            "upperAngle": 2.3223473237279997,
+            "lowerRelativeAngle": -50.69002210992611,
+            "upperLength": 180.0,
+            "lowerLength": 80.00000000000001,
+            "gripResidual": 0.0
+          },
+          {
+            "side": 0,
+            "pivot": [712.0, 110.0],
+            "elbow": [544.3722183006705, 83.7674193337767],
+            "hanger": [554.0, 52.0],
+            "grip": [554.0, 322.0],
+            "upperAngle": -158.63294315440882,
+            "lowerRelativeAngle": 75.54508816005345,
+            "upperLength": 180.0,
+            "lowerLength": 80.00000000000003,
+            "gripResidual": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "path": "form-frames/rear-delt-machine-fly/5.webp",
+      "sha256": "4b3e1d675ac2e68e6883ffaff5d4f74b6cc9bf7eb7cee2efccfcaefe5a3d04a5",
+      "anchors": {
+        "leftFixedAxis": {
+          "x": 368,
+          "y": 110
+        },
+        "rightFixedAxis": {
+          "x": 555,
+          "y": 140
+        }
+      },
+      "invariantDimensions": {
+        "fixedAxesDistance": 189.39112967612817,
+        "sourceHeadRegionWidth": 107
+      },
+      "observedContacts": {
+        "pose": 2,
+        "source": "2-photo-grounded-middle.png",
+        "sourceSha256": "46771f688e95f26382bacedd51c64f13eb274860aa9e06ec5dd81b2e80d673de",
+        "anatomyTransformed": false,
+        "preservedBodyPixels": 56866,
+        "mechanism": [
+          {
+            "side": 1,
+            "pivot": [899.0, 140.0],
+            "elbow": [1067.7896065416448, 114.98778306981404],
+            "hanger": [1070.0, 83.0],
+            "grip": [1070.0, 353.0],
+            "upperAngle": -20.32787490649685,
+            "lowerRelativeAngle": -68.08884589791718,
+            "upperLength": 180.0,
+            "lowerLength": 80.00000000000001,
+            "gripResidual": 0.0
+          },
+          {
+            "side": 0,
+            "pivot": [712.0, 110.0],
+            "elbow": [570.9381380877801, 65.27586581925539],
+            "hanger": [620.0, 40.0],
+            "grip": [620.0, 310.0],
+            "upperAngle": -141.59848295216585,
+            "lowerRelativeAngle": 89.42504311852906,
+            "upperLength": 180.0,
+            "lowerLength": 80.0,
+            "gripResidual": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "path": "form-frames/rear-delt-machine-fly/6.webp",
+      "sha256": "5aec6129f389a44f030df8e0a98bf85ff2ecbe29c1f919b586fdf7a65af3769c",
+      "anchors": {
+        "leftFixedAxis": {
+          "x": 368,
+          "y": 110
+        },
+        "rightFixedAxis": {
+          "x": 555,
+          "y": 140
+        }
+      },
+      "invariantDimensions": {
+        "fixedAxesDistance": 189.39112967612817,
+        "sourceHeadRegionWidth": 107
+      },
+      "observedContacts": {
+        "pose": 1,
+        "source": "1-elevated-master.png",
+        "sourceSha256": "c7414b1ca3be66871664e90c86ed9dd262412f8d88543c155807f120213df286",
+        "anatomyTransformed": false,
+        "preservedBodyPixels": 50583,
+        "mechanism": [
+          {
+            "side": 1,
+            "pivot": [899.0, 140.0],
+            "elbow": [987.4138814497611, 77.28415119989194],
+            "hanger": [930.0, 55.0],
+            "grip": [930.0, 325.0],
+            "upperAngle": -60.58128953894744,
+            "lowerRelativeAngle": -75.28144478423248,
+            "upperLength": 180.0,
+            "lowerLength": 80.0,
+            "gripResidual": 0.0
+          },
+          {
+            "side": 0,
+            "pivot": [712.0, 110.0],
+            "elbow": [624.6947939832096, 47.03613607489985],
+            "hanger": [689.0, 28.0],
+            "grip": [689.0, 298.0],
+            "upperAngle": -119.01436733742251,
+            "lowerRelativeAngle": 82.51034258600403,
+            "upperLength": 180.0,
+            "lowerLength": 80.0,
+            "gripResidual": 0.0
+          }
+        ]
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Registered target native byte correspondence/mobile390x844 light-dark/card/controls passed. All889 previous artwork preserved. Lint/art/drafts/cycles/build/size and354 focused tests passed. Full Windows73failed/13125passed/409skip versus fresh clean26326 74failed/13122passed/409skip;72 persistent failures match, one extra full-run timeout passed focused. Local full suite remains non-green. Required Linux CI and actual merge remain before completion credit.",
+  "separatelyAuthoredTargetPoses": 0,
+  "imagePixelsChanged": 0,
+  "sourceReuse": {
+    "exerciseId": "reverse-pec-deck",
+    "release": "docs\\exercise-art\\releases\\2026-10-12\\reverse-pec-deck.json",
+    "releaseSha256": "04e1cdedb6d9d4a1c5d78c30a54b9687d713da4054c96bc2b421b77487540171",
+    "rationale": "Both catalogue entries specify the same seated chest-supported pec-deck rear-deltoid shoulder sweep, fixed soft elbow bend, shoulder-height closed grips and controlled return under tension. bodyRig explicitly documents the same machine/picture. Distinct IDs remain; this is reviewed exact source reuse, not an approximate alias.",
+    "newImageRequests": 0
+  },
+  "minorFindings": [
+    "Exact source reuse is appropriate because both catalogue IDs define the same chest-supported machine rear-deltoid movement. No claim of independently authored target imagery.",
+    "Three physical poses across six separate paths; endpoint hold and reversed return reuse disclosed.",
+    "The apparatus is the approved generic articulated machine interpretation, not a new Insignia-specific rendering or calibrated3D certificate."
+  ]
+}

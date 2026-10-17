@@ -1,0 +1,35 @@
+{
+  "states": [
+    {
+      "pose": "A",
+      "rawSourceSha256": "643f0b7c42ee48259caa42aa86124d2c2789cf6f401a3fc98508003b34eb5562",
+      "primaryPixels": 13698,
+      "secondaryPixels": 43546,
+      "changedOutsideSourceViolet": 0,
+      "sourceNeutralRgbaExact": true,
+      "spatialShadingAdded": false,
+      "anatomicalTransforms": 0
+    },
+    {
+      "pose": "B",
+      "rawSourceSha256": "2e3921b4752b6430511b3c6f8e8c50b9d307872f52337c9a5b036bb24bc6268e",
+      "primaryPixels": 11186,
+      "secondaryPixels": 42821,
+      "changedOutsideSourceViolet": 0,
+      "sourceNeutralRgbaExact": true,
+      "spatialShadingAdded": false,
+      "anatomicalTransforms": 0
+    }
+  ],
+  "commonCrop": [240, 0, 864, 1440],
+  "integerPadding": [32, 32],
+  "sourceScale": 1,
+  "dimensions": [688, 1504],
+  "palette": {
+    "primary": "#7B72E9",
+    "secondary": "#9590E0"
+  },
+  "newImageRequestsInRecipe": 0,
+  "strictCertified": false,
+  "completionCredit": false
+}

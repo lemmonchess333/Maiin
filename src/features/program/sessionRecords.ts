@@ -23,6 +23,8 @@ export function sessionRecords(
     reps: number;
     completed: boolean;
     type: string;
+    /** A weight the person said yes to past the jump check (Lift16). */
+    confirmedWeight?: number;
   }[])[],
   date: string
 ) {
@@ -41,7 +43,13 @@ export function sessionRecords(
         isBodyweight: set.weight === 0 && !best,
         currentBestForBucket: best?.weight,
       });
-      if (!validation.ok || validation.warn) continue;
+      // A jump the person said yes to counts; one from before the
+      // question existed, never asked about, still doesn't.
+      if (
+        !validation.ok ||
+        (validation.warn && set.confirmedWeight !== set.weight)
+      )
+        continue;
       sets.push({ weightKg: set.weight, reps: set.reps });
       const result = checkSetPR(ex.name, set.weight, set.reps, map, counts, 3);
       if (result)

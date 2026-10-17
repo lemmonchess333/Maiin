@@ -1,7 +1,7 @@
 /**
  * Data-integrity guards on the built-in food table.
  *
- * `nlFoodParser`'s `FOOD_DB` is 219 hand-authored rows of calories, protein,
+ * `nlFoodParser`'s `FOOD_DB` is 232 hand-authored rows of calories, protein,
  * carbs, fat and a serving string. `nlFoodParser.test.ts` covers the PARSER
  * thoroughly — quantities, units, compound "X with Y", fuzzy matching — and
  * nothing at all checks the TABLE. A mistyped macro there is silent: the parse
@@ -98,9 +98,9 @@ const ALCOHOL = new Set(["wine", "beer", "lager"]);
 /**
  * Rows served as a composite item, where a gram weight would be a fiction —
  * "1 sandwich", "1 slice" of pizza, "1 bowl" of ramen. `parseFoodText`
- * deliberately falls back to one-serving macros for a mass-prefixed input on
- * these (documented at the `multiplier` branch), which is right: "200 g
- * sandwich" has no defensible answer. Every OTHER row must be scalable.
+ * reports an unresolved quantity for a mass-prefixed input on these:
+ * "200 g sandwich" has no defensible answer without a reference weight.
+ * Every OTHER row must be scalable.
  */
 const COMPOSITE_SERVINGS = new Set([
   "omelette",
@@ -129,7 +129,7 @@ describe("FOOD_DB — the fixture reads the real table", () => {
     /* Guards the regex, not the data. A silently-empty scan would make every
        assertion below vacuously true — the exact shape of tautology this
        codebase keeps finding in its own tests. */
-    expect(ROWS.length).toBe(219);
+    expect(ROWS.length).toBe(232);
     expect(ROWS.map((r) => r.name)).toContain("chicken breast");
     expect(ROWS.find((r) => r.name === "chicken breast")).toMatchObject({
       calories: 248,
@@ -188,9 +188,9 @@ describe("FOOD_DB — portions are scalable where a portion means anything", () 
    *
    * Rather than re-implement the rule more accurately, this now drives
    * `parseFoodText` and asks the question behaviourally: does DOUBLING the
-   * typed amount double the calories? An unscalable row falls back to
-   * one-serving macros for both probes, so the two come out equal and it is
-   * caught. Both a mass and a volume probe are tried, so the check needs no
+   * typed amount double the calories? An unscalable row returns an unresolved
+   * quantity for both probes, so the two come out equal and it is caught.
+   * Both a mass and a volume probe are tried, so the check needs no
    * knowledge of which unit a row uses — and a wrong guess would fail
    * loudly rather than certify silently.
    */
@@ -199,7 +199,7 @@ describe("FOOD_DB — portions are scalable where a portion means anything", () 
      400 ml -> 3, which is real scaling that a "did it double?" check reads
      as failure. Against 100 vs 2000 the same row goes 1 -> 17. A strict
      increase is then the honest assertion — an unscalable row returns the
-     identical one-serving macros for both probes. */
+     same unresolved result for both probes. */
   const scalesWithAmount = (name: string): boolean =>
     (["g", "ml"] as const).some((unit) => {
       const small = parseFoodText(`100${unit} ${name}`)[0];
@@ -208,22 +208,25 @@ describe("FOOD_DB — portions are scalable where a portion means anything", () 
       return large.calories > small.calories;
     });
 
-  /* Exempt ONLY rows that are zero-calorie per serving, and only because the
-     fallback is provably harmless there rather than merely small: the
-     one-serving macros are 0, so scaling them by any amount is still 0. The
-     check cannot measure such a row and there is nothing to measure.
+  /* Exempt ONLY recognized rows that are zero-calorie per serving. Probe
+     the ordinary serving: an unresolved measured amount also has zero
+     calories and must never qualify as a zero-calorie food. The check
+     cannot measure scaling for a genuinely zero-calorie row.
      `creatine` (0 kcal, "1 scoop (5g)") is the whole list today. */
-  const isZeroCalorie = (name: string): boolean =>
-    (parseFoodText(`100g ${name}`)[0]?.calories ?? 0) === 0;
+  const isZeroCalorie = (name: string): boolean => {
+    const row = parseFoodText(name)[0];
+    return (
+      !!row && !row.unrecognized && !row.quantityIssue && row.calories === 0
+    );
+  };
 
   const hasMassOrVolume = (_serving: string, name: string) =>
     scalesWithAmount(name) || isZeroCalorie(name);
 
   it("every non-composite row carries a gram or millilitre count", () => {
     /* This is what `parseServingGrams` scales "200g chicken" against. A row
-       without it silently returns ONE SERVING's macros for any mass the user
-       types — the parser documents that fallback, and this keeps it confined
-       to the rows where it is the right answer. */
+       without it cannot calculate a measured amount, so it must be listed
+       explicitly as a composite rather than silently lose that capability. */
     const unscalable = ROWS.filter(
       (r) =>
         !COMPOSITE_SERVINGS.has(r.name) && !hasMassOrVolume(r.serving, r.name)
@@ -240,8 +243,8 @@ describe("FOOD_DB — portions are scalable where a portion means anything", () 
         COMPOSITE_SERVINGS.has(r.name) && !hasMassOrVolume(r.serving, r.name)
     );
     expect(stillComposite).toHaveLength(COMPOSITE_SERVINGS.size);
-    // 91% of the table is mass- or volume-scalable.
-    expect(ROWS.length - COMPOSITE_SERVINGS.size).toBe(200);
+    // 92% of the table is mass- or volume-scalable.
+    expect(ROWS.length - COMPOSITE_SERVINGS.size).toBe(213);
   });
 });
 
@@ -284,7 +287,9 @@ describe("FOOD_DB — a row's numbers are for the serving it names", () => {
     pasta: 158, // cooked
     oats: 379, // rolled, dry
     bread: 266, // white
+    sourdough: 272, // French or vienna, incl. sourdough
     potato: 93, // baked, with skin
+    "jacket potato": 93, // baked, with skin
     "sweet potato": 86, // raw
     fries: 312, // fast food
     chips: 312, // UK chips: the fries row
@@ -294,6 +299,7 @@ describe("FOOD_DB — a row's numbers are for the serving it names", () => {
     "mashed potato": 113,
     "spring onion": 32, // scallions, raw
     jam: 278, // jams and preserves
+    honey: 304,
     sugar: 387, // granulated
     banana: 89,
     apple: 52,

@@ -1,0 +1,29 @@
+{
+  "exerciseId": "elliptical",
+  "name": "Elliptical",
+  "category": "Cardio",
+  "muscleGroup": "Cardio",
+  "secondaryMuscles": [
+    "Quads",
+    "Glutes"
+  ],
+  "equipment": "Machine",
+  "caloriesPerMinute": 8,
+  "instructions": [
+    "Step on the pedals with feet evenly placed, grip the moving handles.",
+    "Start with a smooth easy pace to find the stride rhythm.",
+    "Push and pull with arms and legs together for full-body drive.",
+    "Stand tall — no leaning on the console."
+  ],
+  "sourceFile": "src/lib/exercises.ts",
+  "sourceFileSha256": "f285d6cf0e76b9354aa0f2e954363ea292d8ea07e2383d1265d22944546d779f",
+  "existingRigTint": {
+    "quadriceps": "primary",
+    "gluteal": "primary",
+    "front-deltoids": "secondary",
+    "upper-back": "secondary"
+  },
+  "existingRigSource": "src/lib/bodyRig.ts",
+  "existingRigSourceSha256": "69242cb9e00e961cd075ef0e1c068b1463ea96168de29ee72a4be54e1eae257f",
+  "sourceSpecificAdditionalVisibleActivation": "Hamstrings in pose4; retained as secondary. This art legend does not rewrite catalogue metadata."
+}

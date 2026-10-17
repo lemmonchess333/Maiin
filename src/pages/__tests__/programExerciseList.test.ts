@@ -103,7 +103,7 @@ describe("the page reads top to bottom", () => {
   });
 });
 
-describe("a bodyweight lift's last set is not a load", () => {
+describe("a bodyweight lift's load reads as weight added to it", () => {
   /* Both row renderings, the tappable rows and the drag-to-reorder rows,
      used to carry their own copy of the `Last:` chain, and the copies
      drifted. The prescription line already read `!isBW && ex.weight > 0`,
@@ -113,7 +113,10 @@ describe("a bodyweight lift's last set is not a load", () => {
      also said "BW x 12" where the other said "12 reps".
 
      DS3 draws both renderings through one `ExerciseRowSummary`, so the
-     chain exists once and the two cannot disagree. */
+     chain exists once and the two cannot disagree. It then left a
+     bodyweight lift's load out altogether, as no load. Pgm8 L6 made it
+     one: the plan follows the weight on the belt, so the row says it,
+     marked as added ("+10 kg"), never as the lift's own ("10 kg"). */
   const summary = strip(
     readFileSync(
       resolve(repoRoot, "src/components/program/ExerciseRowSummary.tsx"),
@@ -131,14 +134,17 @@ describe("a bodyweight lift's last set is not a load", () => {
     expect(code).not.toMatch(/Last:\{" "\}/);
   });
 
-  it("asks isBW before it asks about weight", () => {
+  it("marks a bodyweight lift's load as added, in the last sets and the prescription alike", () => {
     expect(summary).toMatch(/bodyweight=\{isBW\}/);
     const line = summary.slice(summary.indexOf("function LastSetsLine"));
-    const bw = line.indexOf("if (bodyweight)");
-    const weight = line.indexOf("group.weightKg > 0");
-    expect(bw).toBeGreaterThan(-1);
-    expect(weight).toBeGreaterThan(-1);
-    expect(bw).toBeLessThan(weight);
+    // The plus, then the load in the lifter's unit on the lift's own kit
+    // (Lift18: a kettlebell reads in whole lb).
+    expect(line).toMatch(
+      /bodyweight \? "\+" : ""\}\s*\{kitLoadIn\(group\.weightKg, liftUnit, exerciseId\)\}/
+    );
+    expect(summary).toMatch(
+      /isBW \? "\+" : ""\}\s*\{kitLoadIn\(\s*exercise\.weight,\s*liftUnit,\s*exercise\.exerciseId\s*\)\}/
+    );
   });
 
   it("is what both renderings draw, so drag mode is not its own dialect", () => {
@@ -147,6 +153,31 @@ describe("a bodyweight lift's last set is not a load", () => {
     // Anchored: the reorder rendering is in the body, and so is the other.
     expect(body).toContain("<DndContext");
     expect(body).toContain("More options for ");
+  });
+});
+
+describe("a row's drawing opens the exercise's form guide", () => {
+  /* Owner, 2026-10-16: "click on these on the left hand side to see form
+     pics". The drawing is a button before the row's own (a button cannot
+     hold another), and opens the guide over Train; the row still opens
+     the exercise's page. */
+  it("draws the picture as its own button that opens the guide", () => {
+    const body = dayBody();
+    const thumb = body.indexOf("aria-label={`How to do ${ex.name}`}");
+    expect(thumb).toBeGreaterThan(-1);
+    const rowButton = body.indexOf("/history/exercise/", thumb);
+    expect(rowButton).toBeGreaterThan(thumb);
+    const between = body.slice(thumb, rowButton);
+    expect(between).toContain("<ExerciseThumb");
+    expect(between).toMatch(/setFormGuide\(\{\s*name: ex\.name,\s*open: true/);
+    expect(code).toMatch(/<ExerciseFormSheet\b/);
+  });
+
+  it("is the tappable rows' only picture; the reorder rows keep theirs", () => {
+    const body = dayBody();
+    // One summary leaves its drawing to the button; the other draws its own.
+    expect(body.match(/showThumb=\{false\}/g)).toHaveLength(1);
+    expect(body.match(/<ExerciseRowSummary\b/g)).toHaveLength(2);
   });
 });
 

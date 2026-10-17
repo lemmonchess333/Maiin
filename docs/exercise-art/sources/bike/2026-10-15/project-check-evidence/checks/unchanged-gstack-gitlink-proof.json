@@ -1,0 +1,15 @@
+{
+  "path": ".claude/skills/gstack",
+  "mode": "160000",
+  "objectType": "commit",
+  "oid": "4a77cc2c34506d9ce57193b3378e48e22b7b9842",
+  "baselineHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+  "currentHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+  "baselineManifestDigest": null,
+  "testedManifestDigest": null,
+  "filesystemState": "empty-directory",
+  "baselineTree": "160000 commit 4a77cc2c34506d9ce57193b3378e48e22b7b9842\t.claude/skills/gstack",
+  "headTree": "160000 commit 4a77cc2c34506d9ce57193b3378e48e22b7b9842\t.claude/skills/gstack",
+  "index": "160000 4a77cc2c34506d9ce57193b3378e48e22b7b9842 0\t.claude/skills/gstack",
+  "meaning": "An unchanged uninitialized Git submodule entry is not a regular file and has no file SHA. Only this exact path/mode/OID/null mapping is admitted; other missing inputs still fail."
+}

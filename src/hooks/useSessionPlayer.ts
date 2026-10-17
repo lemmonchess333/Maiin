@@ -1,5 +1,11 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import type { SessionSegment } from "@/lib/runSegments";
+import { useState, useCallback, useMemo } from "react";
+import { isWorkSegment, type SessionSegment } from "@/lib/runSegments";
+import {
+  sessionPlayerSignature,
+  validateSessionPlayerCheckpoint,
+  type SessionDistanceMode,
+  type SessionPlayerCheckpoint,
+} from "@/lib/sessionPlayerCheckpoint";
 
 /**
  * useSessionPlayer — the ONE in-run structure walker (STRUCT-SESS-02).
@@ -47,14 +53,56 @@ export interface SessionPlayer {
   next: SessionSegment | null;
   isComplete: boolean;
   start: () => void;
+  checkpoint: SessionPlayerCheckpoint | null;
+  /** Explicit segments allow restore before Run's config update has rendered. */
+  restore: (
+    checkpoint: unknown,
+    segments: SessionSegment[],
+    elapsed: number,
+    distance: number,
+    distanceMode?: SessionDistanceMode
+  ) => boolean;
   tick: (totalElapsed: number, totalDistance: number) => void;
   skip: (totalElapsed: number, totalDistance: number) => void;
+  /**
+   * The time and distance run in the session's work segments so far, the
+   * one in progress included, given the run's totals now; null for a
+   * session with none, or before any has started. The session is judged
+   * by these, not by the whole run, whose warm-up and cool-down read slow.
+   */
+  workPortion: (
+    totalElapsed: number,
+    totalDistance: number
+  ) => WorkPortion | null;
 }
 
-const IDLE: SessionPlayerState = {
-  index: -1,
-  phaseElapsed: 0,
-  phaseDistanceCovered: 0,
+/** Seconds and metres in a session's work segments. */
+export interface WorkPortion {
+  seconds: number;
+  meters: number;
+}
+
+interface SegmentStart {
+  readonly elapsed: number;
+  readonly distance: number;
+}
+
+/** Progress and its anchors commit together. React may replay an updater,
+ * so transitions never mutate refs outside the state they receive. */
+interface PlayerSnapshot {
+  readonly progress: SessionPlayerState;
+  readonly phaseStart: SegmentStart;
+  readonly segmentStarts: readonly SegmentStart[];
+}
+
+const IDLE: PlayerSnapshot = {
+  progress: {
+    index: -1,
+    phaseElapsed: 0,
+    phaseDistanceCovered: 0,
+  },
+  phaseStart: { elapsed: 0, distance: 0 },
+  segmentStarts: [],
 };
 
 function targetMet(
@@ -69,47 +117,99 @@ function targetMet(
 }
 
 export function useSessionPlayer(
-  segments: SessionSegment[] | null | undefined
+  segments: SessionSegment[] | null | undefined,
+  distanceMode: SessionDistanceMode = "gps"
 ): SessionPlayer {
   // Stable identity for the empty fallback — `?? []` would mint a new
   // array every render and churn every callback below on the hot in-run
   // path.
   const segs = useMemo(() => segments ?? [], [segments]);
-  const [state, setState] = useState<SessionPlayerState>(IDLE);
-
-  const phaseStartElapsed = useRef(0);
-  const phaseStartDistance = useRef(0);
-  // Live-index mirror so start() stays idempotent without joining the
-  // state into its deps (same pattern the old hook documented).
-  const indexRef = useRef(-1);
-  useEffect(() => {
-    indexRef.current = state.index;
-  }, [state.index]);
+  const [snapshot, setSnapshot] = useState<PlayerSnapshot>(IDLE);
+  const { progress: state, segmentStarts } = snapshot;
+  const checkpoint = useMemo<SessionPlayerCheckpoint | null>(
+    () =>
+      state.index < 0 || !segs.length
+        ? null
+        : {
+            version: 1,
+            signature: sessionPlayerSignature(segs, distanceMode),
+            index: state.index,
+            segmentStarts,
+          },
+    [state.index, segs, distanceMode, segmentStarts]
+  );
+  const restore = useCallback(
+    (
+      value: unknown,
+      restoredSegments: SessionSegment[],
+      elapsed: number,
+      distance: number,
+      restoredMode: SessionDistanceMode = "gps"
+    ): boolean => {
+      const restored = validateSessionPlayerCheckpoint(
+        value,
+        restoredSegments,
+        elapsed,
+        distance,
+        restoredMode
+      );
+      if (!restored) return false;
+      const phaseStart = restored.segmentStarts[restored.index];
+      setSnapshot({
+        progress: {
+          index: restored.index,
+          phaseElapsed: elapsed - phaseStart.elapsed,
+          phaseDistanceCovered: distance - phaseStart.distance,
+        },
+        phaseStart,
+        segmentStarts: restored.segmentStarts,
+      });
+      return true;
+    },
+    []
+  );
 
   const start = useCallback(() => {
     if (segs.length === 0) return;
-    if (indexRef.current !== -1) return;
-    // The page starts the session at timer zero; the first tick's elapsed
-    // re-anchors implicitly through advance() on every later segment.
-    phaseStartElapsed.current = 0;
-    phaseStartDistance.current = 0;
-    setState({ index: 0, phaseElapsed: 0, phaseDistanceCovered: 0 });
+    setSnapshot((prev) => {
+      if (prev.progress.index !== -1) return prev;
+      // The page starts at timer zero. Guard against the queued state so
+      // a second start cannot reset a tick that has not committed yet.
+      const phaseStart = { elapsed: 0, distance: 0 };
+      return {
+        progress: { index: 0, phaseElapsed: 0, phaseDistanceCovered: 0 },
+        phaseStart,
+        segmentStarts: [phaseStart],
+      };
+    });
   }, [segs.length]);
 
   const advance = useCallback(
     (
-      prev: SessionPlayerState,
+      prev: PlayerSnapshot,
       totalElapsed: number,
       totalDistance: number
-    ): SessionPlayerState => {
-      let index = prev.index + 1;
-      phaseStartElapsed.current = totalElapsed;
-      phaseStartDistance.current = totalDistance;
+    ): PlayerSnapshot => {
+      let index = prev.progress.index + 1;
       // Bounded walk past degenerate zero-target segments.
       while (index < segs.length && targetMet(segs[index], 0, 0)) {
         index += 1;
       }
-      return { index, phaseElapsed: 0, phaseDistanceCovered: 0 };
+      // Every segment passed over starts, and ends, here.
+      const starts = [...prev.segmentStarts];
+      const phaseStart = { elapsed: totalElapsed, distance: totalDistance };
+      for (
+        let i = prev.progress.index + 1;
+        i <= index && i <= segs.length;
+        i++
+      ) {
+        starts[i] = phaseStart;
+      }
+      return {
+        progress: { index, phaseElapsed: 0, phaseDistanceCovered: 0 },
+        phaseStart,
+        segmentStarts: starts,
+      };
     },
     [segs]
   );
@@ -117,15 +217,25 @@ export function useSessionPlayer(
   const tick = useCallback(
     (totalElapsed: number, totalDistance: number) => {
       if (segs.length === 0) return;
-      setState((prev) => {
-        if (prev.index < 0 || prev.index >= segs.length) return prev;
-        const phaseElapsed = totalElapsed - phaseStartElapsed.current;
-        const phaseDistanceCovered = totalDistance - phaseStartDistance.current;
-        const seg = segs[prev.index];
+      setSnapshot((prev) => {
+        const { progress, phaseStart } = prev;
+        if (progress.index < 0 || progress.index >= segs.length) return prev;
+        const phaseElapsed = totalElapsed - phaseStart.elapsed;
+        const phaseDistanceCovered = totalDistance - phaseStart.distance;
+        const seg = segs[progress.index];
         if (targetMet(seg, phaseElapsed, phaseDistanceCovered)) {
           return advance(prev, totalElapsed, totalDistance);
         }
-        return { ...prev, phaseElapsed, phaseDistanceCovered };
+        if (
+          progress.phaseElapsed === phaseElapsed &&
+          progress.phaseDistanceCovered === phaseDistanceCovered
+        ) {
+          return prev;
+        }
+        return {
+          ...prev,
+          progress: { ...progress, phaseElapsed, phaseDistanceCovered },
+        };
       });
     },
     [segs, advance]
@@ -134,12 +244,35 @@ export function useSessionPlayer(
   const skip = useCallback(
     (totalElapsed: number, totalDistance: number) => {
       if (segs.length === 0) return;
-      setState((prev) => {
-        if (prev.index < 0 || prev.index >= segs.length) return prev;
+      setSnapshot((prev) => {
+        if (prev.progress.index < 0 || prev.progress.index >= segs.length)
+          return prev;
         return advance(prev, totalElapsed, totalDistance);
       });
     },
     [segs, advance]
+  );
+
+  const workPortion = useCallback(
+    (totalElapsed: number, totalDistance: number): WorkPortion | null => {
+      let seconds = 0;
+      let meters = 0;
+      let started = false;
+      segs.forEach((seg, i) => {
+        if (!isWorkSegment(seg)) return;
+        const from = segmentStarts[i];
+        if (!from) return;
+        started = true;
+        const to = segmentStarts[i + 1] ?? {
+          elapsed: totalElapsed,
+          distance: totalDistance,
+        };
+        seconds += Math.max(0, to.elapsed - from.elapsed);
+        meters += Math.max(0, to.distance - from.distance);
+      });
+      return started ? { seconds, meters } : null;
+    },
+    [segs, segmentStarts]
   );
 
   const current =
@@ -156,7 +289,10 @@ export function useSessionPlayer(
     next,
     isComplete: segs.length > 0 && state.index >= segs.length,
     start,
+    checkpoint,
+    restore,
     tick,
     skip,
+    workPortion,
   };
 }

@@ -1,5 +1,9 @@
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import {
+  isRateLimitedRejection,
+  PLAN_SAVES_TOO_OFTEN,
+} from "@/lib/callableErrors";
+import {
   isRunningBaseline,
   type RunningBaseline,
 } from "@/features/program/runningBaseline";
@@ -41,7 +45,7 @@ import RunAvailabilitySettings from "@/components/run/RunAvailabilitySettings";
  * explicit commit (you're picking a date), and the RaceGoalPlanner CTA
  * carries the honest runway label (Save race plan / compressed /
  * mostly-easy). Preview ≡ commit: the planner preview and buildPlan derive
- * the week from the same `generateSchedule(liftDays, weeklyRunDays)`
+ * the week from the same `planWeekSchedule(liftDays, weeklyRunDays, …)`
  * derivation, so what the runway preview shows is what the save writes.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -67,12 +71,15 @@ import { Toggle } from "@/components/ui/Toggle";
 import RaceGoalPlanner from "@/components/program/RaceGoalPlanner";
 import {
   getRaceGoalPlannerState,
+  MIN_RACE_RUN_DAYS,
+  raceRunDaysNote,
   raceTargetVerdict,
 } from "@/lib/raceGoalPlanner";
 import { parseRaceTimeToSeconds } from "@/lib/runPaces";
 import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { buildPlan } from "@/features/program/planBuilder";
+import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
@@ -106,6 +113,22 @@ import {
 type RunMode = "freeform" | "race_prep";
 
 const RACE_DISTANCES: RaceDistance[] = ["5k", "10k", "half", "marathon"];
+
+/** A goal time a recreational runner might set at each distance, for the
+ *  goal-time field's example. A 10K showed a 5K time ("24:30") and a half
+ *  a marathon one ("3:59:00"). */
+const GOAL_TIME_EXAMPLE: Record<RaceDistance, string> = {
+  "5k": "24:30",
+  "10k": "50:00",
+  half: "1:50:00",
+  marathon: "3:59:00",
+};
+
+/** The example for a distance, or the 10K's for one stored before the four
+ *  distances were the only ones. */
+function goalTimeExample(distance: RaceDistance): string {
+  return GOAL_TIME_EXAMPLE[distance] ?? GOAL_TIME_EXAMPLE["10k"];
+}
 
 interface RaceDeepLink {
   distance: RaceDistance;
@@ -234,8 +257,15 @@ export default function RunPlanSettings({
   const [runMode, setRunMode] = useState<RunMode>(
     deepLink ? "race_prep" : (storedDraft?.runMode ?? saved.runMode)
   );
-  const [weeklyRunDays, setWeeklyRunDays] = useState<number>(
-    storedDraft?.weeklyRunDays ?? saved.weeklyRunDays
+  /* A race plan needs at least two run days a week (Pgm7 A7). A race plan
+     already on fewer keeps them (Pgm5: no silent rebuild), so its own count
+     is its floor; anything new starts at two. */
+  const minRunDays =
+    saved.runMode === "race_prep"
+      ? Math.min(MIN_RACE_RUN_DAYS, saved.weeklyRunDays)
+      : MIN_RACE_RUN_DAYS;
+  const [weeklyRunDays, setWeeklyRunDays] = useState<number>(() =>
+    Math.max(minRunDays, storedDraft?.weeklyRunDays ?? saved.weeklyRunDays)
   );
   const [raceDistance, setRaceDistance] = useState<RaceDistance>(
     deepLink?.distance ?? storedDraft?.raceDistance ?? saved.raceDistance
@@ -307,6 +337,8 @@ export default function RunPlanSettings({
 
   const today = useLocalDateKey();
   const liftDays = profile.weeklyWorkoutsTarget ?? 4;
+  // Run20 (5): a new runner's first weeks, for the preview and the save.
+  const newRunnerUntil = profileNewRunnerUntil(profile);
 
   // Runway preview — same engine the save commits (raceGoalPlanner.ts).
   const plannerState = useMemo(
@@ -324,6 +356,7 @@ export default function RunPlanSettings({
         easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
         existingState: programState,
         recentLayoff,
+        newRunnerUntil,
         weekSchedule: profile.weekSchedule,
       }),
     [
@@ -339,6 +372,7 @@ export default function RunPlanSettings({
       profile.runFitness,
       programState,
       recentLayoff,
+      newRunnerUntil,
       profile.weekSchedule,
     ]
   );
@@ -453,8 +487,8 @@ export default function RunPlanSettings({
     setSaving(true);
     try {
       // Everything derives from the CURRENT DRAFT in one buildPlan call:
-      // effective weekSchedule (the same generateSchedule(liftDays,
-      // weeklyRunDays) derivation the planner preview uses), run targets,
+      // effective weekSchedule (the same planWeekSchedule(liftDays,
+      // weeklyRunDays, …) derivation the planner preview uses), run targets,
       // goal, mode, tuning, runDays and plan — so none of them can
       // disagree. The lift slice threads unchanged from the saved profile
       // with preserveHistory: true (run edits never rebuild lifting).
@@ -474,6 +508,7 @@ export default function RunPlanSettings({
         weeklyRunDays,
         runTuning: { volume: runVolume, difficulty: runDifficulty },
         recentLayoff,
+        newRunnerUntil,
         weekSchedule: profile.weekSchedule,
         // Run17: the long-run ceiling is measured at the confirmed easy pace.
         runFitness: profile.runFitness ?? null,
@@ -565,7 +600,9 @@ export default function RunPlanSettings({
       toast.error(
         conflict
           ? "Your programme changed. Reopen settings to review the latest plan before saving."
-          : "Couldn't save your run plan. Try again.",
+          : isRateLimitedRejection(e)
+            ? PLAN_SAVES_TOO_OFTEN
+            : "Couldn't save your run plan. Try again.",
         {
           id: "run-plan",
         }
@@ -656,6 +693,8 @@ export default function RunPlanSettings({
                 onClick={() => {
                   haptic();
                   setRunMode(opt.id);
+                  if (opt.id === "race_prep")
+                    setWeeklyRunDays((n) => Math.max(minRunDays, n));
                 }}
                 className={cn(
                   "min-h-[68px] rounded-2xl border px-3.5 py-3 text-left bg-card shadow-sm transition-all",
@@ -722,16 +761,12 @@ export default function RunPlanSettings({
             inputMode="numeric"
             value={raceTimeStr}
             onChange={(e) => setRaceTimeStr(e.target.value)}
-            placeholder={
-              raceDistance === "marathon" || raceDistance === "half"
-                ? "e.g. 3:59:00"
-                : "e.g. 24:30"
-            }
+            placeholder={`e.g. ${goalTimeExample(raceDistance)}`}
             className="w-full min-h-[44px] rounded-xl border border-border bg-background px-3 text-sm font-mono tabular-nums"
           />
           {raceTimeInvalid && (
             <p className="text-xs text-destructive-strong">
-              Enter a time like 24:30, or 3:59:00 for longer races.
+              Enter a time like {goalTimeExample(raceDistance)}.
             </p>
           )}
           {(() => {
@@ -777,6 +812,11 @@ export default function RunPlanSettings({
                 run — some days combine both.
               </p>
             )}
+            {raceRunDaysNote(raceDistance, weeklyRunDays) && (
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {raceRunDaysNote(raceDistance, weeklyRunDays)}
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
@@ -784,10 +824,10 @@ export default function RunPlanSettings({
               aria-label="Decrease run days"
               onClick={() => {
                 haptic();
-                setWeeklyRunDays((n) => Math.max(1, n - 1));
+                setWeeklyRunDays((n) => Math.max(minRunDays, n - 1));
               }}
-              disabled={weeklyRunDays <= 1}
-              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
+              disabled={weeklyRunDays <= minRunDays}
+              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
             >
               <Minus className="size-4" />
             </button>
@@ -802,7 +842,7 @@ export default function RunPlanSettings({
                 setWeeklyRunDays((n) => Math.min(7, n + 1));
               }}
               disabled={weeklyRunDays >= 7}
-              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
+              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center transition-transform motion-safe:active:scale-95 disabled:opacity-40"
             >
               <Plus className="size-4" />
             </button>
@@ -846,7 +886,8 @@ export default function RunPlanSettings({
               Long-run volume
             </p>
             <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
-              How big your long runs build — Lighter caps them at 10K.
+              How big your long runs build — Lighter peaks about a quarter
+              lower, Bigger about a quarter higher.
             </p>
             <SegmentedControl
               options={[

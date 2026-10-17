@@ -1,7 +1,11 @@
-import { collection, Timestamp } from "firebase/firestore";
+import { collection, doc, Timestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
-import { addDocGuarded } from "@/lib/firestoreWrite";
-import { flushQueue, queueDurableWrite } from "@/lib/offlineQueue";
+import { addDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
+import {
+  flushQueue,
+  pendingDocumentWrites,
+  queueDurableWrite,
+} from "@/lib/offlineQueue";
 import { toast } from "@/lib/toast";
 import { track as trackFoodEvent, type FoodLogPath } from "@/lib/foodAnalytics";
 
@@ -56,19 +60,60 @@ export async function createMealEntry(
   });
 }
 
-export async function undoMealEntries(uid: string, ids: readonly string[]) {
+function queueMealDeletionState(
+  uid: string,
+  ids: readonly string[],
+  deletedAt: Timestamp | null
+) {
   if (auth.currentUser?.uid !== uid)
-    throw new Error("Sign in again before undoing.");
+    throw new Error("Sign in again before changing this meal.");
   for (const id of new Set(ids)) {
-    queueDurableWrite(
-      uid,
-      `users/${uid}/meals`,
-      id,
-      { deletedAt: Timestamp.now() },
-      true
-    );
+    queueDurableWrite(uid, `users/${uid}/meals`, id, { deletedAt }, true);
   }
   void flushQueue(db, uid).catch(() => {});
+}
+
+/** Deletion must follow any queued create, including a diary-row delete.
+ * A direct SDK merge can otherwise create a tombstone before the custom
+ * queue replays its create, whose idempotency check then skips the meal. */
+export async function undoMealEntries(uid: string, ids: readonly string[]) {
+  queueMealDeletionState(uid, ids, Timestamp.now());
+}
+
+/** Restoration follows the deletion in the same queue, even offline. */
+export async function restoreMealEntries(uid: string, ids: readonly string[]) {
+  queueMealDeletionState(uid, ids, null);
+}
+
+/** Older accepted creates/restores must land before the final server delete. */
+export async function hardDeleteMealEntry(
+  uid: string,
+  id: string
+): Promise<void> {
+  const assertOwner = () => {
+    if (!uid || auth.currentUser?.uid !== uid)
+      throw new Error("Sign in again before deleting this meal.");
+  };
+  const assertOnline = () => {
+    if (navigator.onLine === false)
+      throw new Error("Connect to permanently delete this meal.");
+  };
+  assertOwner();
+  assertOnline();
+  await flushQueue(db, uid);
+  assertOwner();
+  assertOnline();
+  if (
+    pendingDocumentWrites(uid, `users/${uid}/meals`).some(
+      (entry) => entry.id === id
+    )
+  ) {
+    throw new Error(
+      "This meal has changes waiting to sync. Retry before deleting it permanently."
+    );
+  }
+  await deleteDocGuarded(doc(db, "users", uid, "meals", id));
+  assertOwner();
 }
 
 export function notifyMealsLogged(

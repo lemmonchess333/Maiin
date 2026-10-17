@@ -73,6 +73,26 @@ describe("onboarding preview and commit plan", () => {
       expect(plan.profileUpdates.weeklyRunsTarget).toBe(0);
     }
   );
+  it("plans a race on at least two run days, whatever an older draft held (A7)", () => {
+    const plan = buildOnboardingPlan(
+      {
+        ...draft,
+        runFrequency: "new",
+        runMode: "race_prep",
+        weeklyRunDays: 1,
+        raceTargetDate: "2026-12-06",
+      },
+      "recomp",
+      today
+    );
+    expect(plan.profileUpdates.runMode).toBe("race_prep");
+    expect(plan.profileUpdates.weeklyRunDaysTarget).toBe(2);
+    expect(
+      plan.weekSchedule.filter(
+        (day) => day.type === "run" || day.type === "both"
+      )
+    ).toHaveLength(2);
+  });
   it.each([
     "hypertrophy",
     "fat_loss",
@@ -162,6 +182,25 @@ describe("supported running-only plans", () => {
       );
     }
   );
+  /* Run20 (2): setup's week gives the runs a weekend day and the long run
+     takes it. Mon, Wed, Fri put a runner-only plan's long run on Monday. */
+  it("puts a runner-only race plan's long run on Sunday", () => {
+    const plan = buildOnboardingPlan(
+      {
+        ...draft,
+        primaryGoal: "running",
+        daysPerWeek: 0,
+        runMode: "race_prep",
+        raceTargetDate: "2026-12-13",
+      },
+      "recomp",
+      today
+    );
+    expect(plan.weekSchedule[0].type).toBe("run");
+    const long = plan.programState.runDays?.find((rd) => rd.type === "long");
+    expect(long?.dayIndex).toBe(0);
+  });
+
   it("derives activity from older drafts without changing their week", () => {
     expect(onboardingActivity(draft)).toBe("both");
     expect(onboardingActivity({ ...draft, runFrequency: "none" })).toBe(
@@ -171,5 +210,45 @@ describe("supported running-only plans", () => {
     expect(onboardingFlow("running")).toEqual([0, 1, 3, 5, 7]);
     expect(onboardingFlow("lifting")).toEqual([0, 1, 2, 4, 5, 7]);
     expect(onboardingFlow("both")).toEqual([0, 1, 3, 2, 4, 5, 7]);
+  });
+});
+
+/* Lift18: setup's lifting unit follows the body-weight unit picked there,
+   except stone, which lifts in kg. The plan's kit and the profile's unit
+   are written together, and both reach the server as sent. */
+describe("the lifting unit a new plan starts on", () => {
+  it.each([
+    ["lbs", "lbs"],
+    ["kg", "kg"],
+    ["st", "kg"],
+  ] as const)("weighed in %s, lifts in %s", (weightDisplayUnit, unit) => {
+    const plan = buildOnboardingPlan(
+      { ...draft, weightDisplayUnit },
+      "recomp",
+      today
+    );
+    expect(plan.programState.settings?.loadUnit).toBe(unit);
+    const programState = sanitizeProgramState(plan.programState).value;
+    expect(programState.settings.loadUnit).toBe(unit);
+    expect(
+      sanitizeProfileData({ liftingWeightUnit: unit }).liftingWeightUnit
+    ).toBe(unit);
+  });
+
+  it("starts an lb lifter's loads on the lb kit", () => {
+    const plan = buildOnboardingPlan(
+      { ...draft, weightDisplayUnit: "lbs" },
+      "recomp",
+      today
+    );
+    const loaded = plan.programState.workouts
+      .flatMap((day) => day.exercises)
+      .filter((exercise) => exercise.weight > 0);
+    expect(loaded.length).toBeGreaterThan(0);
+    for (const exercise of loaded) {
+      const lb = Math.round(exercise.weight * 2.20462 * 1000) / 1000;
+      // On a 5 lb step, or the lb dumbbell rack's 3, 8 or 12.
+      expect(lb % 5 === 0 || [3, 8, 12].includes(lb)).toBe(true);
+    }
   });
 });

@@ -64,9 +64,17 @@ def verify():
         # Moderation (App Review 1.2): the report alert and the Space post filter.
         "createReport": ["index.js", "lib/reportAlert.js", "lib/reportTargets.js"],
         "onSpacePostWritten": ["index.js", "lib/spacePostModeration.js"],
+        # Ship1: the photos other people see, screened for nudity.
+        "screenPhoto": ["index.js", "lib/photoScreen.js"],
+        "screenUploadedPhoto": ["index.js", "lib/photoScreen.js"],
         # S4e: a restriction refuses props and comments; the moderation page lifts one.
         "toggleKudosCallable": ["index.js", "lib/restriction.js", "lib/socialCounters.js"],
         "liftRestriction": ["index.js"],
+        # Race day: the daily no-show and recovery checks, and the recovery
+        # entry a saved race run makes.
+        "dailyRaceReconciliationSweep": ["index.js", "lib/raceReconciliation.js",
+                                         "lib/raceDayCompletion.js"],
+        "onRunCreated": ["index.js", "lib/raceReconciliation.js", "lib/raceDayCompletion.js"],
         "configurePlan": training_paths,
         "applyProgramCommand": training_paths,
         "onWorkoutCreated": training_paths,
@@ -79,7 +87,8 @@ def verify():
         "syncRevenueCatEntitlement": ["index.js", "revenueCat.js", "lib/revenueCatEntitlement.js",
                                       "lib/trialReminder.js"],
         # The daily race sweep: a no-show, the end of recovery, a finished race with no plan.
-        "dailyRaceReconciliationSweep": ["index.js", "lib/runModeResolution.js", "lib/dateUtils.js"],
+        "dailyRaceReconciliationSweep": ["index.js", "lib/raceReconciliation.js",
+                                         "lib/runModeResolution.js", "lib/dateUtils.js"],
     }
     for name, paths in targets.items():
         endpoint = (

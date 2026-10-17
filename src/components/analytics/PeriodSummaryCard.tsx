@@ -1,4 +1,6 @@
 import { useRef, useState, type KeyboardEvent } from "react";
+import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "@/lib/liftLoad";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import Card from "@/components/ui/Card";
 import {
   distanceIn,
@@ -14,6 +16,7 @@ import {
 } from "@/lib/periodSummary";
 import { abbreviateK } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
+import { binAxis } from "@/components/analytics/binAxis";
 
 /** What the bars can show: the three figures above them. */
 export type SummaryMetric = "sessions" | "volume" | "distance";
@@ -40,9 +43,10 @@ function sessionsPhrase(lifts: number, runs: number): string {
   return parts.join(" and ");
 }
 
-/** A bin's kilograms as the figure writes them: "12.3k kg", "850 kg". */
-function kgPhrase(kg: number): string {
-  return `${abbreviateK(kg)} kg`;
+/** A bin's weight lifted as the figure writes it, in the lifter's unit:
+ *  "12.3k kg", "850 kg", "1.9k lb". */
+function volumePhrase(kg: number, unit: LiftUnit): string {
+  return `${abbreviateK(liftVolumeIn(kg, unit))} ${liftUnitLabel(unit)}`;
 }
 
 function distancePhrase(metres: number, unit: DistanceUnit): string {
@@ -97,6 +101,7 @@ export default function PeriodSummaryCard({
   /** The reader's distance unit, for the distance bars' description. */
   distanceUnit: DistanceUnit;
 }) {
+  const liftUnit = useLiftUnit();
   const [metric, setMetric] = useState<SummaryMetric>("sessions");
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -117,16 +122,18 @@ export default function PeriodSummaryCard({
   const slot = CHART_W / Math.max(bins.length, 1);
   const barW = Math.min(24, slot * 0.6);
   const scale = (CHART_H - GAP) / peak;
-  /* Label every bar while they fit; past seven, every few, counted back
-     from the current bar so it is always named. */
-  const every = bins.length <= 7 ? 1 : Math.ceil(bins.length / 4);
+  /* Which bars are named under the chart, and the card it takes to name
+     them (`binAxis`). */
+  const axis = binAxis(bins.length, granularity);
+  const { every } = axis;
   /* The first label under the chart; a month from another year names
      its year there. */
   const firstLabelled = (bins.length - 1) % every;
 
   const describeBin = (b: SummaryBin) => {
     const label = summaryBinLabel(b, granularity);
-    if (metric === "volume") return `${label}: ${kgPhrase(b.volumeKg)}`;
+    if (metric === "volume")
+      return `${label}: ${volumePhrase(b.volumeKg, liftUnit)}`;
     if (metric === "distance")
       return `${label}: ${distancePhrase(b.distanceM, distanceUnit)}`;
     return (
@@ -212,7 +219,7 @@ export default function PeriodSummaryCard({
                 onKeyDown={(event) => onKeyDown(event, i)}
                 className={cn(
                   "min-w-0 rounded-xl px-2 py-2 text-left",
-                  "active:scale-[0.97] motion-safe:transition-[background-color,transform]",
+                  "active:scale-[0.97] motion-safe:transition-[background-color,scale]",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
                   selected && "bg-muted"
                 )}
@@ -328,42 +335,46 @@ export default function PeriodSummaryCard({
             })}
           </svg>
           <div
-            className="mt-1 grid @max-[11em]:hidden text-xs text-muted-foreground"
+            className={`mt-1 grid ${axis.labels} text-xs text-muted-foreground`}
             data-testid="axis-labels"
             style={{
               gridTemplateColumns: `repeat(${bins.length}, minmax(0, 1fr))`,
             }}
             aria-hidden="true"
           >
-            {bins.map((b, i) => {
-              const fromEnd = bins.length - 1 - i;
-              const shown = fromEnd % every === 0;
+            {axis.spans.map((span) => {
+              const b = bins[span.index];
               return (
                 <span
                   key={b.key}
-                  /* Wraps within its bar's slot ("14 / Sept") rather
-                     than running into the next label, as the dates did
-                     at larger text. Under 11em of card the row below
-                     takes over. */
+                  /* Wraps within its columns ("14 / Sept") rather than
+                     running into the next label, as the dates did at
+                     larger text. Where they are narrower than the longest
+                     word, the row below takes over. */
                   className={cn(
-                    "min-w-0 text-center leading-tight",
-                    b.current && "font-semibold text-foreground",
-                    // The last label may be wider than its bar's slot.
-                    i === bins.length - 1 && every > 1 && "text-right"
+                    "min-w-0 leading-tight",
+                    span.align === "left" && "text-left",
+                    span.align === "center" && "text-center",
+                    span.align === "right" && "text-right",
+                    b.current && "font-semibold text-foreground"
                   )}
+                  style={{ gridColumn: `${span.start + 1} / ${span.end + 2}` }}
                 >
-                  {shown
-                    ? summaryAxisLabel(b, granularity, i === firstLabelled)
-                    : ""}
+                  {summaryAxisLabel(
+                    b,
+                    granularity,
+                    span.index === firstLabelled
+                  )}
                 </span>
               );
             })}
           </div>
-          {/* Under 11em of card only the two ends are named, at the
-              chart's edges: even wrapped, "Sept" was wider than a bar's
-              slot at double size. Wide-first. */}
+          {/* Where a bar's slot cannot hold its label's longest word,
+              only the two ends are named, at the chart's edges. More bars
+              need more card before each is named (`binAxis`): six weeks,
+              on a Monday, need more than five. Wide-first. */}
           <div
-            className="mt-1 hidden @max-[11em]:flex justify-between gap-2 text-xs leading-tight text-muted-foreground"
+            className={`mt-1 hidden ${axis.ends} justify-between gap-2 text-xs leading-tight text-muted-foreground`}
             data-testid="axis-ends"
             aria-hidden="true"
           >
@@ -388,7 +399,9 @@ export default function PeriodSummaryCard({
             {metric !== "distance" && (
               <span className="inline-flex items-center gap-1.5">
                 <span className="size-2 rounded-full bg-lifting" />
-                {metric === "volume" ? "kg lifted" : "Lifts"}
+                {metric === "volume"
+                  ? `${liftUnitLabel(liftUnit)} lifted`
+                  : "Lifts"}
               </span>
             )}
             {metric !== "volume" && (

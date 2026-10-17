@@ -391,7 +391,13 @@ export default function PeopleView({
                 icon={Users}
                 accent={THEME.brand}
                 headline="No suggestions yet"
-                sub="Follow people or join a space to start seeing suggestions."
+                sub={
+                  /* Someone already in a space has done what the first
+                     line asks; tell them where suggestions come from. */
+                  joinedSpaceIds.length > 0
+                    ? "Suggestions come from your spaces and the people you follow. Joining another space brings more."
+                    : "Follow people or join a space to start seeing suggestions."
+                }
                 action={{
                   label: "Browse spaces",
                   onClick: openTogether,

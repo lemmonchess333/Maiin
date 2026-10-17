@@ -275,11 +275,11 @@ describe("the words match the engine", () => {
       );
   });
 
-  it("gives building muscle higher reps and the most weekly sets", () => {
+  it("gives building muscle the most weekly sets, and claims no reps", () => {
     const muscle = volumeLandmark("hypertrophy");
-    expect(goalProfileFor("hypertrophy").mainReps).toBeGreaterThan(
-      goalProfileFor("strength").mainReps
-    );
+    /* A heavier day's main lifts are at 4–8 (Lift8 (3)): the sentence
+       speaks for every day of the week, so it says nothing of reps. */
+    expect(FOCUS_PURPOSE.hypertrophy).not.toMatch(/reps/);
     for (const goal of ["strength", "general", "running"]) {
       expect(muscle.low, goal).toBeGreaterThan(volumeLandmark(goal).low);
       expect(muscle.high, goal).toBeGreaterThan(volumeLandmark(goal).high);

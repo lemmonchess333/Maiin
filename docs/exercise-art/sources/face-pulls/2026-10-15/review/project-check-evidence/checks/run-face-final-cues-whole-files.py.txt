@@ -1,0 +1,86 @@
+"""One ordinary npm test invocation, ten complete files, frozen input proof.
+
+No test-name/project filter, retry, timeout, concurrency, or runner override.
+"""
+from pathlib import Path
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+import subprocess
+import time
+
+CHECKS = Path(__file__).resolve().parent
+WORK = CHECKS.parents[1]
+REPO = WORK/'Maiin-burpees'
+F = WORK/'face-pulls/ergonomic-rope-production-20261015'
+OUT = CHECKS/'face-pulls-final-cues-whole-files'
+OUT.mkdir(exist_ok=False)
+NODE = Path('C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe')
+NPM = WORK/'merge-reviewed-20261012/runtime/node_modules/npm/bin/npm-cli.js'
+HEAD = '2efdec417e43a868bb2ece7a63baff8de6271db3'
+FILES = ['src/components/__tests__/WorkoutSessionCompletion.test.tsx', 'src/pages/__tests__/Home.firstVisitGuide.test.tsx', 'src/features/program/__tests__/useProgramWriters.test.ts', 'src/lib/__tests__/performanceEngineConsumers.test.ts', 'src/lib/__tests__/weekAnchorProse.test.ts', 'src/lib/__tests__/bodyRig.test.ts', 'src/lib/__tests__/formArtOwnerRelease.test.ts', 'src/lib/__tests__/formArtwork.test.ts', 'src/lib/__tests__/formArtCutouts.test.ts', 'scripts/art/form-art-releases.test.ts']
+COMMAND = [str(NODE), str(NPM), 'test', '--', *FILES]
+def h(data): return hashlib.sha256(data).hexdigest()
+def git(*args): return subprocess.check_output(['C:/Program Files/Git/bin/git.exe',*args],cwd=REPO).decode('utf-8')
+def save(name, value): (OUT/name).write_text(json.dumps(value,indent=2)+'\n',encoding='utf-8')
+head, status = git('rev-parse','HEAD').strip(), git('status','--porcelain=v1')
+assert head == HEAD
+tracked = [name for name in git('ls-files','-z').split('\0') if name]
+inputs = [name for name in tracked if (name.startswith(('src/','scripts/','functions/')) or '/' not in name) and (REPO/name).is_file()]
+before = {name:h((REPO/name).read_bytes()) for name in inputs}
+assert before == json.loads((CHECKS/'face-pulls-final-cues-2efdec417/inputs-before.json').read_bytes()), 'Current source inputs differ from final full run'
+save('inputs-before.json',before)
+extras = {'repo/docs/exercise-art/releases/2026-10-15/face-pulls.json':REPO/'docs/exercise-art/releases/2026-10-15/face-pulls.json',
+          'candidate/sequence-plan.json':F/'sequence-plan.json',
+          'repo/masters/face-pulls/1.png':REPO/'masters/face-pulls/1.png',
+          'repo/public/form-art/face-pulls.webp':REPO/'public/form-art/face-pulls.webp',
+          'repo/docs/exercise-art/identity/athlete-anatomy-v3.png':REPO/'docs/exercise-art/identity/athlete-anatomy-v3.png'}
+extras.update({f'repo/public/form-frames/face-pulls/{n}.webp':REPO/f'public/form-frames/face-pulls/{n}.webp' for n in range(1,7)})
+extras.update({f'repo/docs/exercise-art/sources/face-pulls/2026-10-15/draft/{n}-framed.png':REPO/f'docs/exercise-art/sources/face-pulls/2026-10-15/draft/{n}-framed.png' for n in [1,4]})
+extra_before = {name:h(path.read_bytes()) for name,path in extras.items()}
+save('art-inputs-before.json',extra_before)
+snapshots = [name for name in tracked if 'planSweep' in name and name.endswith('.snap')]
+original = {name:(REPO/name).read_bytes() for name in snapshots}
+for index,(name,data) in enumerate(original.items()): (OUT/f'snapshot-before-{index}.snap').write_bytes(data)
+started = datetime.now(timezone.utc).isoformat()
+save('start.json',{'startedAt':started,'head':head,'status':status,'command':COMMAND,
+                   'normalCommand':'npm test -- '+' '.join(FILES),'completeFiles':FILES,
+                   'nodeSha256':h(NODE.read_bytes()),'npmCliSha256':h(NPM.read_bytes()),
+                   'helperSha256':h(Path(__file__).read_bytes()),'snapshotPaths':snapshots,
+                   'testNameFilter':None,'timeoutOverride':None,'concurrencyOverride':None,'retries':0})
+env = os.environ.copy()
+env['PATH'] = str(NPM.parent.parent.parent/'.bin')+';'+str(NODE.parent)+r';C:\Program Files\Git\bin;'+env.get('PATH','')
+t = time.monotonic()
+with (OUT/'test.log').open('wb') as log:
+    result = subprocess.run(COMMAND,cwd=REPO,env=env,stdout=log,stderr=subprocess.STDOUT)
+duration = time.monotonic()-t
+raw_status = git('status','--porcelain=v1')
+restores = []
+for index,(name,data) in enumerate(original.items()):
+    actual = (REPO/name).read_bytes()
+    if actual != data:
+        (OUT/f'snapshot-test-output-{index}.snap').write_bytes(actual)
+        (REPO/name).write_bytes(data)
+        restores.append({'path':name,'originalSha256':h(data),'testOutputSha256':h(actual),'restoredExact':(REPO/name).read_bytes()==data})
+after = {name:h((REPO/name).read_bytes()) if (REPO/name).is_file() else None for name in inputs}
+extra_after = {name:h(path.read_bytes()) if path.is_file() else None for name,path in extras.items()}
+save('inputs-after.json',after)
+save('art-inputs-after.json',extra_after)
+changed = [name for name in before if before[name]!=after[name]]
+changed_art = [name for name in extra_before if extra_before[name]!=extra_after[name]]
+final_head, final_status = git('rev-parse','HEAD').strip(),git('status','--porcelain=v1')
+report = {'startedAt':started,'finishedAt':datetime.now(timezone.utc).isoformat(),
+          'normalCommand':'npm test -- '+' '.join(FILES),'command':COMMAND,'completeFiles':FILES,
+          'exitCode':result.returncode,'durationSeconds':duration,'headBefore':head,'headAfter':final_head,
+          'headUnchanged':head==final_head,'statusBefore':status,'statusAfterTestBeforeSnapshotRestore':raw_status,
+          'statusAfter':final_status,'statusRestored':status==final_status,'snapshotRestores':restores,
+          'inputCount':len(before),'changedInputsAfterRestoration':changed,'allInputsUnchanged':not changed,
+          'artInputCount':len(extra_before),'changedArtInputs':changed_art,'allArtInputsUnchanged':not changed_art,
+          'log':'test.log','logSha256':h((OUT/'test.log').read_bytes()),
+          'ordinaryCompleteFileCohortExitZero':result.returncode==0,
+          'fullNormalVerificationGreenClaim':False}
+save('result.json',report)
+print(json.dumps(report,indent=2))
+if changed or changed_art or head!=final_head or status!=final_status:
+    raise RuntimeError('Frozen whole-file cohort input/art/status/head preservation failed')

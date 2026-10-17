@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Stationary Bike original-source native draft review</title>
+    <style>
+      body {
+        margin: 0;
+        background: #101010;
+        color: #ddd;
+        font: 16px system-ui;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        background: #202020;
+        padding: 12px;
+        z-index: 2;
+      }
+      button {
+        min-height: 44px;
+        margin: 4px;
+        padding: 8px 16px;
+        font: inherit;
+      }
+      img {
+        display: block;
+        width: 929px;
+        height: 1432px;
+      }
+      p {
+        margin: 8px;
+      }
+      output {
+        display: inline-block;
+        min-width: 260px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong
+        >UNREGISTERED DRAFT â€” two opposed physical positions / six
+        paths</strong
+      >
+      <p>
+        Two retained intact whole scenes; source-colour-only finishing.
+        Intermediate crank travel is not shown; no forward-trajectory or
+        smooth-revolution claim. Native929Ã—1432.
+      </p>
+      <button id="play">Play</button><button id="next">Next beat</button
+      ><button id="slow">Slow (1200ms)</button
+      ><button data-beat="0">Beat 1</button><button data-beat="1">Beat 2</button
+      ><button data-beat="2">Beat 3</button><button data-beat="3">Beat 4</button
+      ><button data-beat="4">Beat 5</button><button data-beat="5">Beat 6</button
+      ><output></output>
+    </header>
+    <img
+      alt="Stationary Bike original-source draft"
+      width="929"
+      height="1432"
+    />
+    <details>
+      <summary>Playback evidence</summary>
+      <pre id="native-trace">[]</pre>
+    </details>
+    <script>
+      const paths = [1, 1, 2, 2, 1, 1],
+        cues = [
+          "Keep a slight bend at the bottom.",
+          "Sit tall; keep hips supported and level.",
+          "Let the other leg take its turn.",
+          "Keep your grip relaxed and shoulders down.",
+          "Pedal steadily without yanking on the upstroke.",
+          "Adjust resistance to match your target effort.",
+        ];
+      let beat = 0,
+        timer = null,
+        delay = 600;
+      const pic = document.querySelector("img"),
+        out = document.querySelector("output");
+      const loaded = paths.map((p, n) => {
+        const i = new Image();
+        i.src = "final-frames/" + (n + 1) + ".webp";
+        return i;
+      });
+      window.nativeTrace = [];
+      pic.onload = () => {
+        window.nativeTrace.push({
+          ms: Math.round(performance.now()),
+          src: pic.getAttribute("src"),
+          beat: beat + 1,
+          natural: [pic.naturalWidth, pic.naturalHeight],
+          display: [pic.clientWidth, pic.clientHeight],
+          complete: pic.complete,
+          viewport: [innerWidth, innerHeight],
+        });
+        document.querySelector("#native-trace").textContent = JSON.stringify(
+          window.nativeTrace
+        );
+      };
+      function draw() {
+        pic.src = loaded[beat].src;
+        out.textContent =
+          "Beat " +
+          (beat + 1) +
+          " / pose " +
+          paths[beat] +
+          " â€” " +
+          cues[beat];
+      }
+      function stop() {
+        clearInterval(timer);
+        timer = null;
+        document.querySelector("#play").textContent = "Play";
+      }
+      function play() {
+        timer = setInterval(() => {
+          beat = (beat + 1) % 6;
+          draw();
+        }, delay);
+        document.querySelector("#play").textContent = "Pause";
+      }
+      document.querySelector("#play").onclick = () => (timer ? stop() : play());
+      document.querySelector("#next").onclick = () => {
+        stop();
+        beat = (beat + 1) % 6;
+        draw();
+      };
+      document.querySelector("#slow").onclick = () => {
+        delay = 1200;
+        if (timer) {
+          stop();
+          play();
+        }
+      };
+      document.querySelectorAll("[data-beat]").forEach(
+        (b) =>
+          (b.onclick = () => {
+            stop();
+            beat = Number(b.dataset.beat);
+            draw();
+          })
+      );
+      draw();
+    </script>
+  </body>
+</html>

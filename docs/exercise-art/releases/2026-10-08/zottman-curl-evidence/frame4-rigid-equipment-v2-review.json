@@ -1,0 +1,49 @@
+{
+  "status": "Native-reviewed working equipment candidate; set-wide review pending",
+  "accepted": false,
+  "source": "1-editable-layers-zottman-frame4-v2-draft.png",
+  "output": "frame4-rigid-equipment-v2-draft.png",
+  "sha256": "343697038b09d34114e82ec17e268670bc90596f9757f31b18b2d53fbb891d81",
+  "method": "Complete old-gear component coverage, with a one-pixel background join and excluding actual editable arm-layer alpha; observed clean working-master upper-body/background replaces only that coverage; complete source hands restored. No anatomy warp.",
+  "limitations": [
+    "Hand boundary and central-body patch require actual review.",
+    "No release or acceptance inherited from prior mobile reviews."
+  ],
+  "nativeReview": {
+    "fullFrame": "frame4-rigid-equipment-v2-draft.png",
+    "enlargedGrips": "frame4-rigid-v2-grip-review.png",
+    "observedBackground": "1-editable-layers-zottman-v2-draft.png",
+    "findings": [
+      "All fingers remain in front of shafts; no obvious plate remnants or hanging-hand ghosts in enlarged review.",
+      "Enlarged review retains the distinct palm pads and opposing thumbs of the rotated grip; continuous plates remain behind the hands.",
+      "Equipment occludes forearm edges; full native and set-wide lighting/contact review remains necessary.",
+      "Full final native frame actually reviewed, then all six compared together; authoritative whole-set visual decision is release-candidate/zottman-curl.visual-review.json."
+    ],
+    "limits": [
+      "Background derives from the accepted working master, not an invented hidden shoulder surface.",
+      "Fixed 2D equipment construction is not calibrated physical millimetres.",
+      "No new six-frame/mobile/release approval."
+    ],
+    "fullFrameActuallyViewed": true,
+    "enlargedGripsActuallyViewed": true
+  },
+  "verification": {
+    "changedPixels": 39401,
+    "outsideComposedCoverageChanges": 0,
+    "alphaChanges": 0,
+    "sourceExactPrimaryPixelsChanged": 72,
+    "namedSourceCropsExact": {
+      "head": true,
+      "abdomen": true,
+      "feet": true
+    },
+    "oraRecompositionExact": true,
+    "primarySourceChangesOutsideNewGear": 0,
+    "primarySourceChangesUnderNewGear": 72,
+    "purplePixelsOnOpaqueEquipment": 0
+  },
+  "backgroundSourceSha256": "923e8e8401287dbb3ee75498da93b4adc9c12ba764ba4b642e5bf4b43a23543b",
+  "frame": 4,
+  "nativeWorkingCandidateAccepted": true,
+  "releaseAccepted": false
+}

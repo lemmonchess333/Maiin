@@ -721,15 +721,31 @@ describe("migrateProgramState — deload decay repair", () => {
     }
   );
 
-  it("still lifts a current document's main off the 2-set floor", () => {
+  /* The set half is one-shot too: a plan fitted to a short session keeps
+     its mains at two sets (Lift4 (5)), so a current document's two-set
+     main is one the time fit put there. */
+  it("leaves a current document's two-set main where the time fit put it", () => {
+    const current = {
+      ...stateWith(decayedExercise({ baseSets: 2 })),
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+    };
+    const ex = migrateProgramState(current, "2026-08-04").workouts[0]
+      .exercises[0];
+    expect(ex.sets).toBe(2);
+    expect(ex.baseSets).toBe(2);
+    expect(ex.weight).toBe(42.5);
+  });
+
+  it("stamps a current document's missing anchor without moving a number", () => {
     const current = {
       ...stateWith(decayedExercise()),
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
     };
     const ex = migrateProgramState(current, "2026-08-04").workouts[0]
       .exercises[0];
-    expect(ex.baseSets).toBe(3);
-    expect(ex.weight).toBe(42.5); // the load half is the one-shot half
+    expect(ex.baseSets).toBe(2);
+    expect(ex.sets).toBe(2);
+    expect(ex.weight).toBe(42.5);
   });
 
   it("does not invent a load for a bodyweight/uncalibrated slot", () => {
@@ -1171,5 +1187,89 @@ describe("migrateProgramState — v5 rounding onto the equipment's grid", () => 
       CURRENT_PROGRAM_SCHEMA_VERSION
     );
     expect(weights(current)).toEqual([101]);
+  });
+});
+
+describe("migrateProgramState — v6 the named lift leads its Full Body day", () => {
+  const lift = (exerciseId: string, movementCategory: string) => ({
+    name: exerciseId,
+    exerciseId,
+    instanceId: `i-${exerciseId}`,
+    movementCategory,
+    sets: 3,
+    reps: 8,
+    baseReps: 8,
+    weight: 60,
+    progressionType: "double",
+    lastSuccessfulWeight: 60,
+    lastAttemptedWeight: 60,
+    consecutiveFailures: 0,
+    plateauCount: 0,
+    performanceHistory: [],
+    lastPerformance: null,
+  });
+  const stored = (
+    days: { dayName: string; exercises: ReturnType<typeof lift>[] }[],
+    programSchemaVersion = 5
+  ) =>
+    makeLegacyProgramState({
+      programSchemaVersion,
+      liftWeekKey: "2026-09-28",
+      workouts: days.map((d) => ({
+        ...d,
+        dayType: "full_body",
+        completed: false,
+      })),
+    } as unknown as Partial<ProgramState>);
+  const order = (state: ProgramState) =>
+    state.workouts.map((d) => d.exercises.map((e) => e.instanceId));
+
+  const squatDay = {
+    dayName: "Full Body — Squat Focus",
+    exercises: [
+      lift("bench-press", "horizontal_push"),
+      lift("squat", "knee_dominant"),
+      lift("lat-pulldown", "vertical_pull"),
+    ],
+  };
+  const deadliftDay = {
+    dayName: "Full Body — Deadlift Focus",
+    exercises: [
+      lift("overhead-press", "vertical_push"),
+      lift("deadlift", "hip_dominant"),
+      lift("barbell-row", "horizontal_pull"),
+    ],
+  };
+
+  it("puts the squat and the deadlift first, each keeping its own record", () => {
+    const next = migrateProgramState(
+      stored([squatDay, deadliftDay]),
+      "2026-10-05"
+    );
+    expect(order(next)).toEqual([
+      ["i-squat", "i-bench-press", "i-lat-pulldown"],
+      ["i-deadlift", "i-overhead-press", "i-barbell-row"],
+    ]);
+    expect(next.programSchemaVersion).toBe(CURRENT_PROGRAM_SCHEMA_VERSION);
+  });
+
+  it("leaves a day the person has reordered, and any other day", () => {
+    const reordered = {
+      ...squatDay,
+      exercises: [squatDay.exercises[2], ...squatDay.exercises.slice(0, 2)],
+    };
+    const push = { ...squatDay, dayName: "Push — Chest Focus" };
+    const next = migrateProgramState(stored([reordered, push]), "2026-10-05");
+    expect(order(next)).toEqual([
+      ["i-lat-pulldown", "i-bench-press", "i-squat"],
+      ["i-bench-press", "i-squat", "i-lat-pulldown"],
+    ]);
+  });
+
+  it("runs once: a plan already on v6 keeps the press first", () => {
+    const current = stored([squatDay], CURRENT_PROGRAM_SCHEMA_VERSION);
+    expect(order(migrateProgramState(current, "2026-10-05"))).toEqual([
+      ["i-bench-press", "i-squat", "i-lat-pulldown"],
+    ]);
   });
 });

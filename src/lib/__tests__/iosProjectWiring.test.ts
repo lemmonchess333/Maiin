@@ -33,7 +33,8 @@ import { dirname, resolve } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
-const read = (p: string) => readFileSync(resolve(repoRoot, p), "utf8");
+const read = (p: string) =>
+  readFileSync(resolve(repoRoot, p), "utf8").replace(/\r\n/g, "\n");
 
 const pbxproj = read("ios/App/App.xcodeproj/project.pbxproj");
 const workflow = read(".github/workflows/deploy-ios.yml");

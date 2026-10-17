@@ -1,0 +1,40 @@
+{
+  "status": "bounded-native-peer-review-complete-not-release-eligible",
+  "reviewer": "new_authoring_route independent read-only peer",
+  "actualNativeImagesViewed": ["standing-native.png", "bottom-native.png"],
+  "files": {
+    "work\\remaining11-new-authoring-20261016\\scope-review\\custom-compact-harness-one-correction\\standing-native.png": "2fde311f88488c6d297b9016d6978451c38fc1a88485a4b7c04f2f77647c4691",
+    "work\\remaining11-new-authoring-20261016\\scope-review\\custom-compact-harness-one-correction\\bottom-native.png": "c4e483f2c4b9cf0469383fcc807db240ffa3ef6ff36abdbafe5a08adbc4beeb9",
+    "work\\remaining11-new-authoring-20261016\\scope-review\\custom-compact-harness-one-correction\\native-eligibility-draft.json": "f36fc3c1589db4f6a639546dec17c9b195c4a6e2af00b7401081865962e3a8dd",
+    "work\\remaining11-new-authoring-20261016\\scope-review\\build-one-custom-harness-proof.py": "b1d7b73998c16770e28d561bb9c2b55d44988e3d29641d794ce4081bf3104776"
+  },
+  "positiveObservations": [
+    "Both native states retain source hands and continuous forearms at unchanged coordinates; no moved or independently fitted anatomy was observed.",
+    "The two states depict the same compact connected cradles, risers and rectangular frame rather than detached visible supports.",
+    "The single shorter common frame clears the bottom-state thighs in the actual reviewed native image.",
+    "Near-side pad placement is visually compatible with the near anterior shoulder region."
+  ],
+  "unresolvedFindings": [
+    {
+      "area": "far shoulder load support",
+      "observation": "The far padded arch appears medial over the upper chest/clavicle close to the neck rather than clearly on the far shoulder cap. The actual two-dimensional artwork does not establish the required bilateral shoulder support.",
+      "releaseConsequence": "The common apparatus cannot yet be accepted as a demonstrated shoulder-supported front-squat mechanism."
+    },
+    {
+      "area": "neck and shaft depth clearance",
+      "observation": "The reported 51 mm nominal shaft clearance follows an assumed 100 mm neck-front envelope. Camera/body depth is explicitly uncalibrated; a nominal equipment depth value does not resolve the observed shaft/neck projection.",
+      "releaseConsequence": "Safe-looking neck clearance and correct support depth are not independently established from the reviewed images."
+    }
+  ],
+  "scope": "A custom shoulder-harness assisted front squat variant would need to be declared explicitly; the current proof is not a direct-delt rack or a stock equipment replica.",
+  "paletteStatus": "Original source chroma remains; exact-palette finishing and mobile review were not performed on this rejected eligibility draft.",
+  "rootConcurrence": "Root independently concurred that far support and neck depth remain unresolved and directed closure of this hypothesis without further corrections.",
+  "productionEligible": false,
+  "strictChecks": null,
+  "completionCredit": false,
+  "newArtworkOrGeometryEdits": 0,
+  "newImageGenerationRequests": 0,
+  "sourceMutations": 0,
+  "repositoryMutations": 0,
+  "nextAction": "Close this specific custom compact harness hypothesis. Do not iterate gear or claim Front Squat completion from this draft."
+}

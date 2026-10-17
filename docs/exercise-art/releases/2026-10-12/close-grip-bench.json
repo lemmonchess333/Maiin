@@ -1,0 +1,180 @@
+{
+  "exerciseId": "close-grip-bench",
+  "version": "anatomy-v3-2026-10-12-reviewed-close-grip-bench-v1",
+  "width": 808,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-12T21:38:16.376770+00:00",
+  "reference": {
+    "path": "form-frames/close-grip-bench/1.webp",
+    "sha256": "397eb2e0f8ca59b32245e83c46cde33931baf25b13bcda73868817b08085d17d"
+  },
+  "cueSha256": "4fe9f55c23502a7af045b9f01f102f25d80c58f2b734eb6408912e99d78ce2d2",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical athlete-anatomy-v3 and accepted lower-contact exercise master accompany adjacent generation. Approved DB Bench supported body provided the initial scene reference. Bald faceless lean white anatomy, featureless neutral pelvis and white trainers retained. Original source IDs, prompts and hashes preserved in provenance.json."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed three-quarter view,1536x1024 authoring. Identical whole-scene crop(280,0,1088,1024) yields808x1024 without resampling. Empty side margins only; no independent limb fitting, anatomical warping, head/shoe grafts or scene composites were needed."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native and actual390x844 motion reviewed: continuous shoulders/elbows/wrists, both arms bend and extend, head remains supported. Near arm naturally occludes part of face at lockout. Minor contour differences accepted under revised standard; no claim of calibrated3D length invariance."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Rigid neutral barbell with one modest plate per side and both closed grips, consistent narrow grip and bench. Fixed bench silhouette anchors vary at most1px and independent vertical chords0%. These are2D scene checks, not proof of all3D equipment geometry."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Corrected lower pose places bar at lower pectoral area with neck clearance; both grips remain attached, elbows tucked, head/back supported, feet planted. Contact reviewed at native resolution and in actual motion; visual judgement rather than calibrated depth measurement."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Bar lowers with bending elbows and presses to extension; supported body and bench remain visually steady. Middle pose is closer to bottom than exact half travel; unequal spacing disclosed, no invented interpolation or fitted limbs."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Visible posterior upper-arm fields primary#7B72E9; chest/anterior deltoids secondary#9590E0. Biceps/forearm source hue neutralized. Cubic contour masks preserve inherited grey contours and neutral highlights. Colour ownership is anatomical pose inference, not pixel-certified segmentation or activation measurement. Three editable ORAs reopen exactly."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Set/Lower/Bottom/Hold/Press/Finish uses physical poses1,2,3,3,2,1. All cues at most seven words. Three distinct physical poses across six separate file paths disclosed; middle t0.5 is a playback beat, not measured half travel."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "native-final-trace.json proves all six808x1024 decoded frames and6to1 in actual playback. Native full-page image plus original1536x1024 manual pose inspection retained. Six lossless exports match corresponding cropped PNGs. No collage or enlarged crops."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Real ExerciseFormContent390x844 light reviewed: whole figure/bar/shoes visible, stable palette, readable cues/key; all six and6to1 in staged-trace.json. staged-light.png and staged-controls.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Real ExerciseFormContent390x844 dark reviewed: all six and6to1, full body/equipment and readable cues. staged-dark.png. Pause stable over200seconds and manual6to1 passed; no console errors."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/close-grip-bench/1.webp",
+      "sha256": "397eb2e0f8ca59b32245e83c46cde33931baf25b13bcda73868817b08085d17d",
+      "anchors": {
+        "rearFootLeftEdgeAt590": {
+          "x": 160,
+          "y": 590
+        },
+        "frontFootRightEdgeAt850": {
+          "x": 632,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "rearFootVerticalChordAt170": 35,
+        "frontFootVerticalChordAt625": 35
+      }
+    },
+    {
+      "path": "form-frames/close-grip-bench/2.webp",
+      "sha256": "3ec8a0189a758f51db699858961d18e4b82d7c75e0366e614fec14e78634d5b7",
+      "anchors": {
+        "rearFootLeftEdgeAt590": {
+          "x": 160,
+          "y": 590
+        },
+        "frontFootRightEdgeAt850": {
+          "x": 632,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "rearFootVerticalChordAt170": 35,
+        "frontFootVerticalChordAt625": 35
+      }
+    },
+    {
+      "path": "form-frames/close-grip-bench/3.webp",
+      "sha256": "fd8126a92f6e271578801583fd7fe46ef586a4450996f5064e2bb34848bf4227",
+      "anchors": {
+        "rearFootLeftEdgeAt590": {
+          "x": 161,
+          "y": 590
+        },
+        "frontFootRightEdgeAt850": {
+          "x": 633,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "rearFootVerticalChordAt170": 35,
+        "frontFootVerticalChordAt625": 35
+      }
+    },
+    {
+      "path": "form-frames/close-grip-bench/4.webp",
+      "sha256": "fd8126a92f6e271578801583fd7fe46ef586a4450996f5064e2bb34848bf4227",
+      "anchors": {
+        "rearFootLeftEdgeAt590": {
+          "x": 161,
+          "y": 590
+        },
+        "frontFootRightEdgeAt850": {
+          "x": 633,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "rearFootVerticalChordAt170": 35,
+        "frontFootVerticalChordAt625": 35
+      }
+    },
+    {
+      "path": "form-frames/close-grip-bench/5.webp",
+      "sha256": "3ec8a0189a758f51db699858961d18e4b82d7c75e0366e614fec14e78634d5b7",
+      "anchors": {
+        "rearFootLeftEdgeAt590": {
+          "x": 160,
+          "y": 590
+        },
+        "frontFootRightEdgeAt850": {
+          "x": 632,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "rearFootVerticalChordAt170": 35,
+        "frontFootVerticalChordAt625": 35
+      }
+    },
+    {
+      "path": "form-frames/close-grip-bench/6.webp",
+      "sha256": "397eb2e0f8ca59b32245e83c46cde33931baf25b13bcda73868817b08085d17d",
+      "anchors": {
+        "rearFootLeftEdgeAt590": {
+          "x": 160,
+          "y": 590
+        },
+        "frontFootRightEdgeAt850": {
+          "x": 632,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "rearFootVerticalChordAt170": 35,
+        "frontFootVerticalChordAt625": 35
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "minorFindings": [
+    "Uneven middle phase spacing.",
+    "Natural near-arm face occlusion at lockout.",
+    "Inherited neutral highlights and grey contours retained.",
+    "Minor cosmetic contours; no calibrated3D invariance claim."
+  ],
+  "integrationValidation": "Complete: native and registered390x844 light/dark/card/pause/manual6to1. Three reopened ORAs and six lossless exports verified. Lint/art/drafts/typecheck/build/stamp passed; full suite compared to fresh verified same-HEAD baseline, no unresolved additional failures. See work/close-grip-bench/fixed-body-composite/final-verification.json."
+}

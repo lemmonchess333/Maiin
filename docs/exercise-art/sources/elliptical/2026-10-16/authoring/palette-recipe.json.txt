@@ -1,0 +1,95 @@
+{
+  "primary": [
+    123,
+    114,
+    233
+  ],
+  "secondary": [
+    149,
+    144,
+    224
+  ],
+  "primaryHex": "#7B72E9",
+  "secondaryHex": "#9590E0",
+  "sourceSupportRules": {
+    "bMinusRMin": 4,
+    "bMinusGMin": 6,
+    "rMinusGMin": 3
+  },
+  "upperFieldSecondaryMaxY": 290,
+  "posteriorThighSecondaryTraces": {
+    "1": [],
+    "4": [
+      [
+        [
+          640,
+          402
+        ],
+        [
+          672,
+          411
+        ],
+        [
+          662,
+          443
+        ],
+        [
+          638,
+          480
+        ],
+        [
+          613,
+          512
+        ],
+        [
+          577,
+          541
+        ],
+        [
+          550,
+          540
+        ],
+        [
+          557,
+          506
+        ],
+        [
+          575,
+          482
+        ],
+        [
+          598,
+          455
+        ],
+        [
+          622,
+          427
+        ],
+        [
+          631,
+          407
+        ]
+      ]
+    ]
+  },
+  "roleScope": "Existing quads/glutes primary. Existing front-deltoid/upper-back fields secondary. The existing pose4near posterior-thigh field is secondaryHamstrings, explicitly retained despite older prompts calling all thigh tint quads. No neutral area is painted.",
+  "method": "Source maximum-channel tonal intensity and existing chroma whitening drive a closed two-colour remap. Semantic traces select roles, never muscle geometry. No new spatial gradient, anatomical redraw, neutral painting or uncoloured-source recovery claim.",
+  "sourceTintStrengthDenominators": {
+    "primary": 0.9333333333333333,
+    "upperSecondary": 0.5879684095860567,
+    "hamstringSecondary": 1.0
+  },
+  "sourceRolePixelCounts": {
+    "1": {
+      "primary": 11977,
+      "secondary": 5176,
+      "uncolouredBandBetweenUpperAndLowerFields": 0
+    },
+    "4": {
+      "primary": 9486,
+      "secondary": 10055,
+      "uncolouredBandBetweenUpperAndLowerFields": 0
+    }
+  },
+  "sourceTintCalibrationScope": "Separate denominators for already-pale upper source fields and previously-vivid hamstring source field; common across both images. Both map to the same exact secondary palette. Calibrated before the only palette build."
+}

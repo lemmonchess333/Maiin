@@ -1,0 +1,13 @@
+{
+  "exerciseId": "bike",
+  "requestedPose": "front",
+  "requestId": "b825fa1f-de34-4b51-9632-1686a4a00b49",
+  "code": "moderation_blocked",
+  "stage": "output",
+  "categories": ["sexual"],
+  "imageProduced": false,
+  "retryAttempted": false,
+  "mode": "built-in imagegen",
+  "prompt": "front-photo-prompt.txt",
+  "productionRegistered": false
+}

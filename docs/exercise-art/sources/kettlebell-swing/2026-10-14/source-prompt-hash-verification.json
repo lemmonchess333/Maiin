@@ -1,0 +1,49 @@
+{
+  "verifiedAt": "2026-10-14T19:54:05.362703+00:00",
+  "passed": true,
+  "sourcesVerified": 3,
+  "originalPromptsVerified": 3,
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "rows": [
+    {
+      "source": "1-master.png",
+      "originalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-09-29\\ok-continue-on-with-the-doing\\work\\kettlebell-swing-production-review\\1-master.png",
+      "sha256": "c48e17588b1c937dc54a49bb28713bfdeb3783cdf20713977a684c719b52c00e",
+      "dimensions": [1536, 1024],
+      "sourceBytesExact": true,
+      "prompt": "master-prompt.txt",
+      "originalPromptPath": "C:\\Users\\myles\\Documents\\Codex\\2026-09-29\\ok-continue-on-with-the-doing\\work\\kettlebell-swing-production-review\\master-prompt.txt",
+      "promptSha256": "c6b8d6d000e909697d0c70333bffbb8760b0eb0e6a3e9a450ac6910a8bde16ae",
+      "promptBytesExact": true,
+      "promptLineEndingsUnchanged": true,
+      "newGeneration": false
+    },
+    {
+      "source": "2-hike-candidate.png",
+      "originalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-09-29\\ok-continue-on-with-the-doing\\work\\kettlebell-swing-production-review\\2-hike-candidate.png",
+      "sha256": "5552c7d32578de3a5417e1940ac679580654f78d38df0658ead7ecb04889d2c4",
+      "dimensions": [1536, 1024],
+      "sourceBytesExact": true,
+      "prompt": "2-hike-prompt.txt",
+      "originalPromptPath": "C:\\Users\\myles\\Documents\\Codex\\2026-09-29\\ok-continue-on-with-the-doing\\work\\kettlebell-swing-production-review\\2-hike-prompt.txt",
+      "promptSha256": "c2ebc7ed616d3ae37804e6a883bac3cd7197beb6b68056d2a3ae58d27cdce8ef",
+      "promptBytesExact": true,
+      "promptLineEndingsUnchanged": true,
+      "newGeneration": false
+    },
+    {
+      "source": "3-mid-candidate.png",
+      "originalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-09-29\\ok-continue-on-with-the-doing\\work\\kettlebell-swing-production-review\\3-mid-candidate.png",
+      "sha256": "6a0ff5550d20ff24088f1558b0acec3f07a27d6946eb20bf2cf052dda1c9d248",
+      "dimensions": [1536, 1024],
+      "sourceBytesExact": true,
+      "prompt": "3-mid-prompt.txt",
+      "originalPromptPath": "C:\\Users\\myles\\Documents\\Codex\\2026-09-29\\ok-continue-on-with-the-doing\\work\\kettlebell-swing-production-review\\3-mid-prompt.txt",
+      "promptSha256": "11725f4245e64e6a671c7123d1705a4b02d43648daa8bcc80d9f5df87713b980",
+      "promptBytesExact": true,
+      "promptLineEndingsUnchanged": true,
+      "newGeneration": false
+    }
+  ],
+  "generationIds": "Do not invent full IDs from historical STATUS shorthand; only existing recorded IDs may be carried forward."
+}

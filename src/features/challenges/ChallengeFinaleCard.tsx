@@ -10,6 +10,8 @@ import {
   type ChallengeTier,
 } from "./useChallenges";
 import { formatChallengeValue as formatValue } from "./challengeFormat";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
 const TIER_LABELS: Record<ChallengeTier, string> = {
   bronze: "Bronze",
@@ -37,6 +39,8 @@ export function ChallengeFinaleCard({
   leaderboard?: ChallengeParticipant[];
   selfUid?: string;
 }) {
+  const liftUnit = useLiftUnit();
+  const distanceUnit = useDistanceUnit();
   const { dismissed, dismiss } = useDismissOnce(
     `challenge-finale-${challenge.id}`
   );
@@ -79,18 +83,30 @@ export function ChallengeFinaleCard({
                 </span>{" "}
                 —{" "}
                 <span className="font-mono tabular-nums">
-                  {formatValue(challenge.metric, myProgress.currentValue)}
+                  {formatValue(
+                    challenge.metric,
+                    myProgress.currentValue,
+                    liftUnit,
+                    distanceUnit
+                  )}
                 </span>
               </>
             ) : (
               <>
                 You logged{" "}
                 <span className="font-mono tabular-nums">
-                  {formatValue(challenge.metric, myProgress.currentValue)}
+                  {formatValue(
+                    challenge.metric,
+                    myProgress.currentValue,
+                    liftUnit,
+                    distanceUnit
+                  )}
                 </span>
               </>
             )}
-            {rankIdx >= 0 && (
+            {/* A place among three or more, as the live card's count waits
+                for three: "#1 of 1" ranks nobody. */}
+            {rankIdx >= 0 && challenge.participantCount >= 3 && (
               <>
                 {" · "}
                 <span className="font-mono tabular-nums">

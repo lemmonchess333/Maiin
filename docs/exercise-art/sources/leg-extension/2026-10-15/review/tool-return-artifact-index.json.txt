@@ -1,0 +1,266 @@
+{
+  "archivedAt": "2026-10-15T19:50:30.925048+00:00",
+  "logSnapshotBytes": 5392123179,
+  "boundedTailBytes": 120000000,
+  "scope": "Exact official CUA returned screenshot bytes and explicit observed DOM JSON from this chat. No new capture, backend, image-generation output recovery, resizing or visual editing. Playback observations are not calibrated mechanics or strict approval.",
+  "artifacts": [
+    {
+      "title": "Review final Leg Extension native bent endpoint",
+      "callRecordSha256": "68013a2d1a69ddc585bf369c9280c589a0c6c4c67f035ec82428d2bf17dbe937",
+      "callByteStart": 5386425053,
+      "callByteEndExclusive": 5386426484,
+      "callId": "call_b7ca745a4bea4908a29eaa7992c8c7a0",
+      "outputRecordSha256": "73f924dad796ef72d657146b40f2c80d02678c371adca993deb4cf6500781432",
+      "outputByteStart": 5386494411,
+      "outputByteEndExclusive": 5386672514,
+      "file": "extension-draft-native-bent.json",
+      "sha256": "a88ae1b224e666164c512e886835767bc14b188794b1c64fdda6984ff370c83f",
+      "copiedActualDomObservation": true
+    },
+    {
+      "title": "Review final Leg Extension native bent endpoint",
+      "callRecordSha256": "68013a2d1a69ddc585bf369c9280c589a0c6c4c67f035ec82428d2bf17dbe937",
+      "callByteStart": 5386425053,
+      "callByteEndExclusive": 5386426484,
+      "callId": "call_b7ca745a4bea4908a29eaa7992c8c7a0",
+      "outputRecordSha256": "73f924dad796ef72d657146b40f2c80d02678c371adca993deb4cf6500781432",
+      "outputByteStart": 5386494411,
+      "outputByteEndExclusive": 5386672514,
+      "file": "native-bent.jpg",
+      "sha256": "78847c78aa4a424e18df8401b65ef8fbe974e5a547ffd66950da5123303e5145",
+      "dimensions": [
+        1440,
+        1500
+      ],
+      "copiedReturnedImageBytesExactly": true
+    },
+    {
+      "title": "Review final Leg Extension native extended endpoint",
+      "callRecordSha256": "43e2479dd326215d3595fffb61855cb9a6be3002c1f0fdd457394b7267571cef",
+      "callByteStart": 5386676489,
+      "callByteEndExclusive": 5386677847,
+      "callId": "call_ca155b95a5b64bc08e368fae6bd11541",
+      "outputRecordSha256": "dd9f69814f3e9fb08ec0005e4c86693a2007cb48393e04f1ef660ed4f86c58d5",
+      "outputByteStart": 5386745705,
+      "outputByteEndExclusive": 5386921510,
+      "file": "extension-draft-native-extended.json",
+      "sha256": "ab98d9af9532234ccf255ad8c2511e78f822b5e2bb790b3f51ea7da810db5836",
+      "copiedActualDomObservation": true
+    },
+    {
+      "title": "Review final Leg Extension native extended endpoint",
+      "callRecordSha256": "43e2479dd326215d3595fffb61855cb9a6be3002c1f0fdd457394b7267571cef",
+      "callByteStart": 5386676489,
+      "callByteEndExclusive": 5386677847,
+      "callId": "call_ca155b95a5b64bc08e368fae6bd11541",
+      "outputRecordSha256": "dd9f69814f3e9fb08ec0005e4c86693a2007cb48393e04f1ef660ed4f86c58d5",
+      "outputByteStart": 5386745705,
+      "outputByteEndExclusive": 5386921510,
+      "file": "native-extended.jpg",
+      "sha256": "d61a180b3e1140e8224a30f9f4ff652a468f194bc5638f64347d5b5581f1b219",
+      "dimensions": [
+        1440,
+        1500
+      ],
+      "copiedReturnedImageBytesExactly": true
+    },
+    {
+      "title": "Start verified mobile Leg Extension draft review",
+      "callRecordSha256": "42edaee444e4239c1f46ebcfc71a875abee25cc7e916527f0edc5ae547eb58de",
+      "callByteStart": 5386964069,
+      "callByteEndExclusive": 5386965213,
+      "callId": "call_19cf9c64db944adf96e4b146583552ef",
+      "outputRecordSha256": "8d75b4662f249953115ef86367471679009748893663ce1bce99a02bc3941dc8",
+      "outputByteStart": 5387032864,
+      "outputByteEndExclusive": 5387037907,
+      "file": "extension-draft-native-playback.json",
+      "sha256": "4d1827f8a3992dcb6783e5d57e63b3edfeddfac4954e17c3bc399ecbaaf89297",
+      "copiedActualDomObservation": true
+    },
+    {
+      "title": "Check Leg Extension mobile normal playback",
+      "callRecordSha256": "4d7da18ed78b6b2a2c352a823113a01df8ac1b1049b593702bae594650580b97",
+      "callByteStart": 5391124674,
+      "callByteEndExclusive": 5391125618,
+      "callId": "call_639fccb570d4427c902a9652baf9a50c",
+      "outputRecordSha256": "7ae0070f5d94af6a8440a38f9c431d755b349f235f3ef9966933d670032e1067",
+      "outputByteStart": 5391193063,
+      "outputByteEndExclusive": 5391196957,
+      "file": "extension-draft-mobile-dark-normal.json",
+      "sha256": "6ae9d3c33f97301e93e16d0a7208214c1a372af53c4c106638dbcae3d7245f99",
+      "copiedActualDomObservation": true
+    },
+    {
+      "title": "Review Leg Extension mobile dark cues",
+      "callRecordSha256": "b5afab462a0cd300eb60e18ffc8696692d9da66923354ba37770e8c9c9132d01",
+      "callByteStart": 5391197780,
+      "callByteEndExclusive": 5391199185,
+      "callId": "call_e3da97f82bc341678bd1dae11aa4efb8",
+      "outputRecordSha256": "40513fb976de7c0e03ac68360a4624fad7d960e059fbfaaeed07026713db4dd2",
+      "outputByteStart": 5391267088,
+      "outputByteEndExclusive": 5391309819,
+      "file": "extension-draft-manual-dark.json",
+      "sha256": "65c75e5c11fcb5acf0d66024e00198ae2f51f04eacd9f76bcc1d4cb98abcb410",
+      "copiedActualDomObservation": true
+    },
+    {
+      "title": "Review Leg Extension mobile dark cues",
+      "callRecordSha256": "b5afab462a0cd300eb60e18ffc8696692d9da66923354ba37770e8c9c9132d01",
+      "callByteStart": 5391197780,
+      "callByteEndExclusive": 5391199185,
+      "callId": "call_e3da97f82bc341678bd1dae11aa4efb8",
+      "outputRecordSha256": "40513fb976de7c0e03ac68360a4624fad7d960e059fbfaaeed07026713db4dd2",
+      "outputByteStart": 5391267088,
+      "outputByteEndExclusive": 5391309819,
+      "file": "mobile-dark.jpg",
+      "sha256": "3efa1659936430c5bbbe6087b7200fd78072592d6a1bf55d823f7fa6656626b5",
+      "dimensions": [
+        390,
+        844
+      ],
+      "copiedReturnedImageBytesExactly": true
+    },
+    {
+      "title": "Review Leg Extension mobile light cues",
+      "callRecordSha256": "401e701285b357d11dd3066f108a2fdcf8af6dba756d8f5ecd2f1e0642c9fc11",
+      "callByteStart": 5391420966,
+      "callByteEndExclusive": 5391422740,
+      "callId": "call_a7e723f6ea694b4e89a86d5ed0203f19",
+      "outputRecordSha256": "47fdf802e2150c4ff2284d14aacdafe571b5e31f9c2c3c39383ab81386821e2f",
+      "outputByteStart": 5391491011,
+      "outputByteEndExclusive": 5391538233,
+      "file": "extension-draft-mobile-light-normal.json",
+      "sha256": "fe70f140cff10cd360f67f18b1ff6a2c6a44f67a46ee9f965615f9073b69caeb",
+      "copiedActualDomObservation": true
+    },
+    {
+      "title": "Review Leg Extension mobile light cues",
+      "callRecordSha256": "401e701285b357d11dd3066f108a2fdcf8af6dba756d8f5ecd2f1e0642c9fc11",
+      "callByteStart": 5391420966,
+      "callByteEndExclusive": 5391422740,
+      "callId": "call_a7e723f6ea694b4e89a86d5ed0203f19",
+      "outputRecordSha256": "47fdf802e2150c4ff2284d14aacdafe571b5e31f9c2c3c39383ab81386821e2f",
+      "outputByteStart": 5391491011,
+      "outputByteEndExclusive": 5391538233,
+      "file": "extension-draft-manual-light.json",
+      "sha256": "fb45a05eeb1f380061d6f12682f5ed4c2141449e15f7d974b4cb8008a4b6c2a7",
+      "copiedActualDomObservation": true
+    },
+    {
+      "title": "Review Leg Extension mobile light cues",
+      "callRecordSha256": "401e701285b357d11dd3066f108a2fdcf8af6dba756d8f5ecd2f1e0642c9fc11",
+      "callByteStart": 5391420966,
+      "callByteEndExclusive": 5391422740,
+      "callId": "call_a7e723f6ea694b4e89a86d5ed0203f19",
+      "outputRecordSha256": "47fdf802e2150c4ff2284d14aacdafe571b5e31f9c2c3c39383ab81386821e2f",
+      "outputByteStart": 5391491011,
+      "outputByteEndExclusive": 5391538233,
+      "file": "mobile-light.jpg",
+      "sha256": "b5447bcc9fa7b5274e79beb9c652d67398f94665d6fde036283812ff2846ca6e",
+      "dimensions": [
+        390,
+        844
+      ],
+      "copiedReturnedImageBytesExactly": true
+    },
+    {
+      "title": "Review Leg Extension light cards",
+      "callRecordSha256": "804787b256a6e773ffffffe5457d94550f8007e5431bb0d9d364c53496c424e5",
+      "callByteStart": 5391668459,
+      "callByteEndExclusive": 5391670055,
+      "callId": "call_3bdcfe4d7c34455f97618e4205ba94de",
+      "outputRecordSha256": "05f40eeac95ba83d1046858238c50d7570f318e963a4a6239f14813c1de90893",
+      "outputByteStart": 5391738150,
+      "outputByteEndExclusive": 5391741416,
+      "file": "extension-draft-mobile-light-slower.json",
+      "sha256": "77d6360e796f608c13ba651710907d7113fa5d98362d2fe408ccafb35836f1c6",
+      "copiedActualDomObservation": true
+    },
+    {
+      "title": "Review Leg Extension light cards",
+      "callRecordSha256": "6555f2027eefcc8c430d151f2743b6918623bf6846eb03b8a3983e2a6027d04c",
+      "callByteStart": 5391755713,
+      "callByteEndExclusive": 5391756896,
+      "callId": "call_5658ddf20b2b403aa7f18b6c148cde7f",
+      "outputRecordSha256": "19dff112c255e0e9ae90c6601e399d2cf1335696f7e4ab47f9e7f35f28610d6c",
+      "outputByteStart": 5391824581,
+      "outputByteEndExclusive": 5391898171,
+      "file": "extension-draft-cards-light.json",
+      "sha256": "9dd16168ee744f3f9a2460c55b021b4a6237b6c653b7cec95b617c2c5675791c",
+      "copiedActualDomObservation": true
+    },
+    {
+      "title": "Review Leg Extension light cards",
+      "callRecordSha256": "6555f2027eefcc8c430d151f2743b6918623bf6846eb03b8a3983e2a6027d04c",
+      "callByteStart": 5391755713,
+      "callByteEndExclusive": 5391756896,
+      "callId": "call_5658ddf20b2b403aa7f18b6c148cde7f",
+      "outputRecordSha256": "19dff112c255e0e9ae90c6601e399d2cf1335696f7e4ab47f9e7f35f28610d6c",
+      "outputByteStart": 5391824581,
+      "outputByteEndExclusive": 5391898171,
+      "file": "cards-light.jpg",
+      "sha256": "77fd7ef0415b6c9e1e71fa5edf26a191ab5cebd078ff18c900f2f5d358d322f4",
+      "dimensions": [
+        380,
+        1504
+      ],
+      "copiedReturnedImageBytesExactly": true
+    },
+    {
+      "title": "Review Leg Extension dark cards",
+      "callRecordSha256": "a5ec925089af19248e7bd4a1a3110c4abcdf72d944e7f3e3f4223d12c55de122",
+      "callByteStart": 5391901397,
+      "callByteEndExclusive": 5391902736,
+      "callId": "call_886bbc8630d741daab1f625940eac6e6",
+      "outputRecordSha256": "f8e1da582f99b8d0b06f11ddb6815d1bf6501c38b0ef92fa365c33f0b39551a4",
+      "outputByteStart": 5391970576,
+      "outputByteEndExclusive": 5392040579,
+      "file": "extension-draft-cards-dark.json",
+      "sha256": "739ad89846027a3f4ba10906de168521cbee2b0f30d42fbef6cc642714df250e",
+      "copiedActualDomObservation": true
+    },
+    {
+      "title": "Review Leg Extension dark cards",
+      "callRecordSha256": "a5ec925089af19248e7bd4a1a3110c4abcdf72d944e7f3e3f4223d12c55de122",
+      "callByteStart": 5391901397,
+      "callByteEndExclusive": 5391902736,
+      "callId": "call_886bbc8630d741daab1f625940eac6e6",
+      "outputRecordSha256": "f8e1da582f99b8d0b06f11ddb6815d1bf6501c38b0ef92fa365c33f0b39551a4",
+      "outputByteStart": 5391970576,
+      "outputByteEndExclusive": 5392040579,
+      "file": "extension-draft-console.json",
+      "sha256": "eedfa988939a9b2ecbdb81942377b61a24f2ef5820149cd835693c7c99d44600",
+      "copiedActualDomObservation": true
+    },
+    {
+      "title": "Review Leg Extension dark cards",
+      "callRecordSha256": "a5ec925089af19248e7bd4a1a3110c4abcdf72d944e7f3e3f4223d12c55de122",
+      "callByteStart": 5391901397,
+      "callByteEndExclusive": 5391902736,
+      "callId": "call_886bbc8630d741daab1f625940eac6e6",
+      "outputRecordSha256": "f8e1da582f99b8d0b06f11ddb6815d1bf6501c38b0ef92fa365c33f0b39551a4",
+      "outputByteStart": 5391970576,
+      "outputByteEndExclusive": 5392040579,
+      "file": "cards-dark.jpg",
+      "sha256": "231c3bfd31d9a74e9c042f7482e62143221616d15fab0fc250db4854c6ab852f",
+      "dimensions": [
+        380,
+        1504
+      ],
+      "copiedReturnedImageBytesExactly": true
+    },
+    {
+      "title": "Verify both Leg Extension manual wrap controls",
+      "callRecordSha256": "4b800fed2ffca5dc7fbc2e7c16dfbb02ceca7b78f4b43b7d990e4483f3066588",
+      "callByteStart": 5392043933,
+      "callByteEndExclusive": 5392045664,
+      "callId": "call_4b1c17d45b1f48d98b983bfef126096f",
+      "outputRecordSha256": "df0112dde5921e24290cd9debc7994b5741bcdabfcb0bdd3d0fd9e6ae97481bd",
+      "outputByteStart": 5392113884,
+      "outputByteEndExclusive": 5392115885,
+      "file": "extension-draft-manual-wrap.json",
+      "sha256": "6677ce7e05b364b649b201f3c22dd8782e51a5ff357f173b2698deaf839fcbe3",
+      "copiedActualDomObservation": true
+    }
+  ]
+}

@@ -32,7 +32,10 @@ import type { IExerciseData } from "react-body-highlighter";
 /** Translate technical movementCategory keys to user-friendly group names. */
 export const CATEGORY_DISPLAY: Record<string, string> = {
   knee_dominant: "Quads & Glutes",
-  hip_dominant: "Hamstrings & Back",
+  // Not "& Back": beside horizontal_pull's "Back" on the finish screen,
+  // the two read as one group counted twice. A hinge or a hip thrust
+  // works the hamstrings and glutes; the lower back holds.
+  hip_dominant: "Hamstrings & Glutes",
   horizontal_push: "Chest",
   vertical_push: "Shoulders",
   horizontal_pull: "Back",
@@ -65,7 +68,7 @@ export const MUSCLE_MAP: Record<string, IExerciseData["muscles"]> = {
   // CATEGORY_DISPLAY outputs — the movement-key route, for exercises the
   // catalogue lookup misses. NOT legacy: this is what the saved field says.
   "Quads & Glutes": ["quadriceps", "gluteal"],
-  "Hamstrings & Back": ["hamstring", "upper-back", "lower-back"],
+  "Hamstrings & Glutes": ["hamstring", "gluteal", "lower-back"],
   Lats: ["upper-back"],
   Calves: ["calves"],
   Traps: ["trapezius"],

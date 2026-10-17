@@ -1,0 +1,36 @@
+{
+  "artifactName": "calf-draft-card-dom.json",
+  "observation": {
+    "images": [
+      {
+        "complete": true,
+        "display": [
+          249,
+          480
+        ],
+        "natural": [
+          249,
+          480
+        ],
+        "src": "/draft/card.webp"
+      },
+      {
+        "complete": true,
+        "display": [
+          83,
+          160
+        ],
+        "natural": [
+          249,
+          480
+        ],
+        "src": "/draft/card.webp"
+      }
+    ],
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ]
+  }
+}

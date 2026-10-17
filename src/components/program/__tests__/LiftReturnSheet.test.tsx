@@ -14,6 +14,7 @@
  *      applies most exactly to the person who has just come back.
  */
 import { describe, it, expect, vi } from "vitest";
+import { WELCOME_BACK } from "@/test/journeyScreens";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import LiftReturnSheet from "../LiftReturnSheet";
 
@@ -46,16 +47,21 @@ const buttons = () =>
 describe("LiftReturnSheet — what it offers", () => {
   it("eases the plan back on the person's yes, then closes", async () => {
     const { onClose, onEaseBack } = setup();
-    fireEvent.click(screen.getByRole("button", { name: /ease back in/i }));
+    // The E2E journeys find the sheet and its choices by these
+    // (src/test/journeyScreens.ts).
+    expect(
+      screen.getByRole("dialog", { name: WELCOME_BACK.sheet })
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: WELCOME_BACK.easeBack })
+    );
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(onEaseBack).toHaveBeenCalledTimes(1);
   });
 
   it("keeps the old weights without touching the plan", async () => {
     const { onClose, onEaseBack } = setup();
-    fireEvent.click(
-      screen.getByRole("button", { name: /keep my old weights/i })
-    );
+    fireEvent.click(screen.getByRole("button", { name: WELCOME_BACK.keep }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(onEaseBack).not.toHaveBeenCalled();
   });

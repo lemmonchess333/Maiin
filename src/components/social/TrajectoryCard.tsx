@@ -4,6 +4,8 @@ import { type PersonalTrajectory } from "@/lib/personalTrajectory";
 import { THEME } from "@/lib/theme";
 import Tooltip from "@/components/ui/Tooltip";
 import { Spinner } from "@/components/ui/Spinner";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 
 /**
  * Solo-user alternative to LeaderboardCard. Surfaces this week's
@@ -30,6 +32,7 @@ export default function TrajectoryCard({
   const thisWeek = data?.thisWeek;
   const lastWeek = data?.lastWeek;
   const deltaPct = data?.deltaPct ?? null;
+  const liftUnit = useLiftUnit();
 
   // Colour the delta: green = improvement, coral = regression,
   // muted grey = flat / no baseline.
@@ -149,9 +152,11 @@ export default function TrajectoryCard({
             <div className="flex-1">
               <SectionLabel>Lifting</SectionLabel>
               <p className="text-sm font-mono tabular-nums font-bold mt-0.5">
-                {thisWeek.kg.toLocaleString()}{" "}
+                {Math.round(
+                  liftVolumeIn(thisWeek.kg, liftUnit)
+                ).toLocaleString()}{" "}
                 <span className="text-xs text-muted-foreground font-normal">
-                  kg
+                  {liftUnitLabel(liftUnit)}
                 </span>
               </p>
             </div>

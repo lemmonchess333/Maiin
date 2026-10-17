@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   daysPerMuscle,
   extraPastCeiling,
+  keepsWeeklyFrequency,
   twiceWeeklyAdditions,
 } from "../weeklyFrequency";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
@@ -72,6 +73,38 @@ describe("daysPerMuscle — the days a week each muscle is worked on", () => {
     expect(days.get("Biceps")).toBe(1);
     expect(days.get("Quads")).toBe(1);
     expect(days.has("Calves")).toBe(false);
+  });
+});
+
+describe("keepsWeeklyFrequency — a change that costs no muscle its two days", () => {
+  const week = (aExtra: ProgramExercise[], bExtra: ProgramExercise[]) => [
+    lower("Lower A", aExtra),
+    lower("Lower B", bExtra),
+    upper("Upper", [seatedCalf()]),
+  ];
+
+  it("holds while every muscle keeps its days, up to two", () => {
+    // Calves on three days, then two: still twice a week.
+    expect(
+      keepsWeeklyFrequency(
+        week([seatedCalf()], [seatedCalf()]),
+        week([seatedCalf()], [])
+      )
+    ).toBe(true);
+    // A muscle the week only works once may stay once.
+    expect(
+      keepsWeeklyFrequency(week([], [crunch()]), week([], [crunch()]))
+    ).toBe(true);
+  });
+
+  it("fails when a muscle loses a day it needs for its two", () => {
+    expect(keepsWeeklyFrequency(week([seatedCalf()], []), week([], []))).toBe(
+      false
+    );
+    // …or its only day.
+    expect(keepsWeeklyFrequency(week([], [crunch()]), week([], []))).toBe(
+      false
+    );
   });
 });
 
@@ -148,5 +181,29 @@ describe("extraPastCeiling — the table is a ceiling", () => {
     // is to blame for them.
     const ceiling = (m: string) => (m === "Chest" ? 1 : 100);
     expect(extraPastCeiling(week(), extras, ceiling)).toBeUndefined();
+  });
+
+  /** Two upper days whose raises were both added: the rows give the upper
+   *  back 6 sets, each raise 3 more. */
+  const bothAdded = () => [
+    upper("Upper A", [{ ...lateral(), instanceId: "first" }]),
+    upper("Upper B", [{ ...lateral(), instanceId: "second" }]),
+  ];
+  const added = new Set(["first", "second"]);
+
+  it("never names a muscle's last direct lift", () => {
+    // The rows fill the upper back's ceiling and the raises take it past:
+    // the latest raise goes, and the side delts keep the other.
+    const ceiling = (m: string) => (m === "UpperBack" ? 6 : 100);
+    expect(extraPastCeiling(bothAdded(), added, ceiling)).toBe("second");
+    const left = [bothAdded()[0], upper("Upper B", [])];
+    expect(extraPastCeiling(left, added, ceiling)).toBeUndefined();
+  });
+
+  it("names nothing for a ceiling the plan's own lifts are past already (Lift10)", () => {
+    // The rows alone are over the upper back's ceiling: taking a raise out
+    // would not bring it inside, and would leave the side delts one day.
+    const ceiling = (m: string) => (m === "UpperBack" ? 5 : 100);
+    expect(extraPastCeiling(bothAdded(), added, ceiling)).toBeUndefined();
   });
 });

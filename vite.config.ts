@@ -2,6 +2,7 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+import { shrinkFormFrames } from "./scripts/art/shrink-form-frames";
 
 const isCapacitor = process.env.CAPACITOR_BUILD === "true";
 // Firebase Hosting serves from the domain root, AND from the same origin as the
@@ -45,6 +46,36 @@ function e2eMarkerPlugin(): Plugin {
   };
 }
 
+/** Re-saves the exercise pictures in the build's output as lossy WebP
+ * (`scripts/art/shrink-form-frames.ts`, Ship1): 335 MB of reviewed
+ * lossless frames become about 32 MB in what ships, the iPhone app
+ * included. `public/form-frames` keeps the reviewed files untouched. */
+function shrinkFormFramesPlugin(): Plugin {
+  let outDir = "";
+  return {
+    name: "tropos-shrink-form-frames",
+    apply: "build",
+    configResolved(config) {
+      outDir = path.resolve(config.root, config.build.outDir);
+    },
+    async closeBundle() {
+      const { files, shrunk, bytesBefore, bytesAfter } = await shrinkFormFrames(
+        path.join(outDir, "form-frames"),
+        {
+          cacheDir: path.resolve(
+            __dirname,
+            "node_modules/.cache/tropos-form-frames"
+          ),
+        }
+      );
+      const mb = (bytes: number) => (bytes / 1e6).toFixed(1);
+      console.log(
+        `form frames: ${shrunk} of ${files} re-saved, ${mb(bytesBefore)} MB → ${mb(bytesAfter)} MB`
+      );
+    },
+  };
+}
+
 /** Debug tokens bypass device attestation. Read Vite's resolved env so this
  * also catches .env.local / mode files and native or custom-mode builds.
  * Never include the token value in an error or a build artifact. */
@@ -77,6 +108,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     releaseDebugTokenGuard(),
+    shrinkFormFramesPlugin(),
     react(),
     tailwindcss(),
     ...(mode === "test" ? [e2eMarkerPlugin()] : []),
@@ -93,8 +125,12 @@ export default defineConfig(({ mode }) => ({
     // maplibre (~1MB) and barcode (~416KB) are already lazy-loaded in their own chunks
     chunkSizeWarningLimit: 1100,
 
-    // Inline assets smaller than 4KB, keep larger ones as separate files
-    assetsInlineLimit: 4096,
+    // Inline assets smaller than Vite's 4KB default, keep larger ones as
+    // separate files, and never inline a font: index.html's CSP takes fonts
+    // from 'self' only, so a font inlined as a data: URL is refused (Plus
+    // Jakarta Sans's extended-Cyrillic subset, 2.3KB, was). cspFonts.test.ts.
+    assetsInlineLimit: (file) =>
+      /\.(woff2?|ttf|otf|eot)$/i.test(file) ? false : undefined,
 
     rollupOptions: {
       output: {

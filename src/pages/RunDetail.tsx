@@ -20,7 +20,7 @@ import {
 } from "../lib/routeQuality";
 import { useAuth } from "../lib/auth";
 import { THEME } from "../lib/theme";
-import { isOutdoorGpsRun } from "../lib/runGuards";
+import { isOutdoorGpsRun, type RunSource } from "../lib/runGuards";
 import { gradeAdjustedPace } from "../lib/gradeAdjustedPace";
 import RunMap from "../components/run/RunMapLazy";
 import PaceLegend from "../components/run/PaceLegend";
@@ -50,7 +50,7 @@ import {
 import RunStatGrid from "@/components/run/RunStatGrid";
 import { detectBestEfforts, splitsForDisplay, type GPSPoint } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
-import { elevationLabel, runTypeTitle } from "@/lib/runLabels";
+import { elevationLabel, runTitle } from "@/lib/runLabels";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 
 /**
@@ -192,6 +192,13 @@ export default function RunDetail() {
     run.duration > 0 && run.distance > 0
       ? (run.duration / run.distance) * 1000
       : 0;
+  /* What the run was and where it was run: a treadmill run is one by its
+     place, or by its type when saved before Pgm8. The GPS guard and the
+     title read both. */
+  const kind: RunSource = {
+    activityType: run.activityType,
+    place: run.place,
+  };
 
   // Splits are per-lap segments derived from the GPS trace
   // (`calculateSplits` in lib/gps.ts — needs ≥2 points and at least one full
@@ -213,10 +220,11 @@ export default function RunDetail() {
   /* Run13 item 4 — grade-adjusted pace, DISPLAY-ONLY. Outdoor GPS runs
      with material climb (≥8 m/km, gated in the module) get one calm
      flat-equivalent line under the stat tiles; treadmill / manual runs
-     have no real elevation signal. Legacy runs without an activityType
+     have no real elevation signal (a treadmill run by its place since
+     Pgm8, or by its type before). Legacy runs without an activityType
      pass the outdoor guard (existing convention) but gate out on a
      missing elevationGain. Feeds nothing — trends / PRs stay raw. */
-  const gap = isOutdoorGpsRun(run.activityType)
+  const gap = isOutdoorGpsRun(kind)
     ? gradeAdjustedPace({
         distanceMeters: run.distance ?? 0,
         durationSeconds: run.duration ?? 0,
@@ -250,7 +258,7 @@ export default function RunDetail() {
   };
 
   const shareThisRoute = () => {
-    const label = runTypeTitle(run.activityType);
+    const label = runTitle(kind);
     shareRouteWithPrivacy(
       `${label} · ${distanceLabel(run.distance, unit)}`,
       run.points
@@ -261,7 +269,7 @@ export default function RunDetail() {
   // "save/reuse" half of route planning v1. Same store the planner and GPX
   // import write to; it then appears under Saved routes in run setup.
   const saveThisRoute = async () => {
-    const label = runTypeTitle(run.activityType);
+    const label = runTitle(kind);
     const ok = await saveRoute({
       name: `${label} · ${distanceLabel(run.distance, unit)}`,
       points: run.points,
@@ -425,14 +433,15 @@ export default function RunDetail() {
         )}
 
         {/* Header (DS3): the run's type, then the distance as the page's
-            one big number, then when. At larger text Share drops under the
+            one big number, then when. A treadmill run says so (`runTitle`,
+            Pgm8). At larger text Share drops under the
             distance rather than squeezing it: the column keeps its own
             width, so the row wraps exactly when the two no longer fit. */}
         <div>
           <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
             <div className="min-w-0">
               <p className="text-sm font-bold text-running-strong">
-                {runTypeTitle(run.activityType)}
+                {runTitle(kind)}
               </p>
               <h1 className="mt-1 text-display font-extrabold font-mono tabular-nums leading-none text-foreground">
                 {distanceValue(run.distance, unit, 2)}{" "}

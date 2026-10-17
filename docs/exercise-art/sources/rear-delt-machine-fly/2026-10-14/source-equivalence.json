@@ -1,0 +1,145 @@
+{
+  "exerciseId": "rear-delt-machine-fly",
+  "existingApprovedSource": "reverse-pec-deck",
+  "catalogueDefinitions": {
+    "rear-delt-machine-fly": {
+      "id": "rear-delt-machine-fly",
+      "instructions": [
+        "Sit facing the pec deck pad with chest pinned, grips at shoulder height.",
+        "Start with arms extended forward in a soft-bent position.",
+        "Push the handles apart by squeezing your rear delts, opening wide.",
+        "Return under control without letting the stack touch down."
+      ],
+      "name": "Rear Delt Machine Fly",
+      "category": "Shoulders",
+      "muscleGroup": "Rear Delts",
+      "mechanic": "isolation",
+      "equipment": "Machine",
+      "secondaryMuscles": ["Rhomboids", "Traps"]
+    },
+    "reverse-pec-deck": {
+      "id": "reverse-pec-deck",
+      "instructions": [
+        "Sit facing the pad with chest pinned, grips at shoulder height.",
+        "Start with arms extended forward, soft bend in the elbows locked.",
+        "Pull the handles back and out in a wide arc, squeezing your rear delts.",
+        "Return slowly to a full stretch without letting the stack touch down."
+      ],
+      "name": "Reverse Pec Deck",
+      "category": "Shoulders",
+      "muscleGroup": "Rear Delts",
+      "mechanic": "isolation",
+      "equipment": "Machine",
+      "secondaryMuscles": ["Rhomboids", "Traps"]
+    }
+  },
+  "equivalenceFinding": "Both catalogue entries specify the same seated chest-supported pec-deck rear-deltoid shoulder sweep, fixed soft elbow bend, shoulder-height closed grips and controlled return under tension. bodyRig explicitly documents the same machine/picture. Distinct IDs remain; this is reviewed exact source reuse, not an approximate alias.",
+  "catalogueSha256": "f285d6cf0e76b9354aa0f2e954363ea292d8ea07e2383d1265d22944546d779f",
+  "rigSha256": "69242cb9e00e961cd075ef0e1c068b1463ea96168de29ee72a4be54e1eae257f",
+  "sourceReleasePath": "docs\\exercise-art\\releases\\2026-10-12\\reverse-pec-deck.json",
+  "sourceReleaseSha256": "04e1cdedb6d9d4a1c5d78c30a54b9687d713da4054c96bc2b421b77487540171",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "imageRequestsThisRoute": 0,
+  "imagePixelsChanged": 0,
+  "originalHeldStudiesUsed": false,
+  "blockedRenderOrRepairRequested": false,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "physicalPoses": 3,
+  "separatelyAuthoredTargetPoses": 0,
+  "sourceGenerations": [
+    {
+      "pose": 1,
+      "path": "1-elevated-master.png",
+      "generationId": "23eb16bc-b123-4668-9ba3-2fd1cc3243ce",
+      "prompt": "elevated-master-correction-prompt.txt"
+    },
+    {
+      "pose": 2,
+      "path": "2-photo-grounded-middle.png",
+      "generationId": "4986d8ce-fc6b-499b-a41c-aeb9572ffac6",
+      "prompt": "2-photo-grounded-middle-prompt.txt"
+    },
+    {
+      "pose": 3,
+      "path": "3-elevated-open.png",
+      "generationId": "a6bdea6b-64f1-4038-952f-18b91202bf0e",
+      "prompt": "3-elevated-open-prompt.txt"
+    }
+  ],
+  "frames": [
+    {
+      "beat": 1,
+      "sourcePath": "form-frames/reverse-pec-deck/1.webp",
+      "targetPath": "form-frames/rear-delt-machine-fly/1.webp",
+      "sha256": "5aec6129f389a44f030df8e0a98bf85ff2ecbe29c1f919b586fdf7a65af3769c",
+      "sourcePose": 1,
+      "byteExact": true
+    },
+    {
+      "beat": 2,
+      "sourcePath": "form-frames/reverse-pec-deck/2.webp",
+      "targetPath": "form-frames/rear-delt-machine-fly/2.webp",
+      "sha256": "4b3e1d675ac2e68e6883ffaff5d4f74b6cc9bf7eb7cee2efccfcaefe5a3d04a5",
+      "sourcePose": 2,
+      "byteExact": true
+    },
+    {
+      "beat": 3,
+      "sourcePath": "form-frames/reverse-pec-deck/3.webp",
+      "targetPath": "form-frames/rear-delt-machine-fly/3.webp",
+      "sha256": "5da28a7773d3bb6f05b25e5ea78cccb160388c83000f0f238a2496dfa5e7b35d",
+      "sourcePose": 3,
+      "byteExact": true
+    },
+    {
+      "beat": 4,
+      "sourcePath": "form-frames/reverse-pec-deck/4.webp",
+      "targetPath": "form-frames/rear-delt-machine-fly/4.webp",
+      "sha256": "5da28a7773d3bb6f05b25e5ea78cccb160388c83000f0f238a2496dfa5e7b35d",
+      "sourcePose": 3,
+      "byteExact": true
+    },
+    {
+      "beat": 5,
+      "sourcePath": "form-frames/reverse-pec-deck/5.webp",
+      "targetPath": "form-frames/rear-delt-machine-fly/5.webp",
+      "sha256": "4b3e1d675ac2e68e6883ffaff5d4f74b6cc9bf7eb7cee2efccfcaefe5a3d04a5",
+      "sourcePose": 2,
+      "byteExact": true
+    },
+    {
+      "beat": 6,
+      "sourcePath": "form-frames/reverse-pec-deck/6.webp",
+      "targetPath": "form-frames/rear-delt-machine-fly/6.webp",
+      "sha256": "5aec6129f389a44f030df8e0a98bf85ff2ecbe29c1f919b586fdf7a65af3769c",
+      "sourcePose": 1,
+      "byteExact": true
+    }
+  ],
+  "editables": [
+    {
+      "pose": 1,
+      "file": "1-framed.ora",
+      "sha256": "91a12ad3b6c7d11879eaad40ce5d7fcb2dc35518e9a1006c55c83ab110db092c",
+      "reopenedExact": true,
+      "deliveredPixelsExact": true
+    },
+    {
+      "pose": 2,
+      "file": "2-framed.ora",
+      "sha256": "7bcc52ee12d422aef7d6e48ea7775563620869ffbec2ec3ba98118dec4e5f9d2",
+      "reopenedExact": true,
+      "deliveredPixelsExact": true
+    },
+    {
+      "pose": 3,
+      "file": "3-framed.ora",
+      "sha256": "764c8fda9770df6a68d6b975c3b9f24d226f34ff16abed0c861a8ec74ca5f789",
+      "reopenedExact": true,
+      "deliveredPixelsExact": true
+    }
+  ],
+  "cardSha256": "0d95f217fc02eb026bce9a970e475f4f4e48f74a8c8116c06e67d4e416a7581d",
+  "cardDimensions": [350, 480],
+  "status": "Staged exact reuse; native/actual target mobile review and release checks required. No completion credit."
+}

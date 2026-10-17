@@ -1,0 +1,90 @@
+{
+  "reviewedAt": "2026-10-14T22:33:49.683147+00:00",
+  "status": "passed-prepared-card-static-review-only",
+  "allStaticChecksPassed": true,
+  "reviewerPerformedAlphaCleanup": true,
+  "scope": "Static native prepared source, final card and160px light/dark composites reviewed after one authorised alpha-only cleanup. This is source/visual QA, not a substitute for parent actual integrated mobile review.",
+  "reviewedInputs": {
+    "1-framed.png": "e844927f544c14339e475a91c07f2cb7e9eaf58f0d91a9272ad2a97a5dc653ed",
+    "final-frames/1.webp": "1c6adbc52050d867b542229cdd46a2aeb2062197ca354cbf2555c38456a7b9be",
+    "prepared-card-source.png": "3c8abd9b518cd9ab7464080cf0d0f060d74b703a0535774e98e0aa1be7540ad5",
+    "card-cutout.webp": "f0b3ed7b9052c8f413dfecf6ee972b51ea66b86035038c61abadbb055ea5f0db",
+    "normal-keyed-card-source.png": "add3792f669afc9289d756a2ae9162ab4a06cb32107ab807ec997ac4627dd6e5",
+    "prepared-card-alpha-proof.json": "ed6c051c5d680f6187c2b13fcd7398e6be73c4fae614e7ffcbbd187f26e40ebe",
+    "staged-card-provenance.json": "c51e22f312c0a11cf7820ed6fa2706f541bf0b485739e4845b3ddd16861adbd3",
+    "prepare-card-floor-matte.py": "213e67718fba36454f9b7b29314feb02bafb29e55dbd6ce701d7892332c5729f",
+    "stage-prepared-card.mts": "d9943adf617bd7d730775b5d628863be1b1a0f127a95f14cff9b4e8d1687aa88"
+  },
+  "dimensions": [480, 479],
+  "preservationChecks": {
+    "originalRgbExact": true,
+    "allBrightNativePixelsOpaque": true,
+    "darkGearPadKeyedAlphaPreserved": true,
+    "bottomFloorBandTransparent": true,
+    "standardGeneratorCoreExact": true,
+    "finalCardReproducesFromPreparedSource": true,
+    "provenanceHashesMatch": true
+  },
+  "brightNativePixels": 283905,
+  "generatorReproductionEvidence": "Independent read-only Sharp trim/padding/480px/Lanczos3/WebP82-alpha90 recomputation produced exact final card bytes; no file mutation. ContentBox[0,0,909,908],scale480/909,output480x479.",
+  "algorithmCoreSha256": "f95042479cc61ffb5b292b7da463d4479963f1f76d7b3b98e3175f4d2b12487c",
+  "algorithmCoreHashDefinition": "Authoritative code section constDARK_MAX through immediately before async main, LF-normalized, including original trailing newlines. Stage core text matches after boundary trim.",
+  "visualChecks": {
+    "preparedNative": {
+      "passed": true,
+      "evidence": "Native white composite retains all original athlete/trainers, neutral fine contours, actual pad and complete original wheel/axle/grips; no retained floor rectangle or body alteration."
+    },
+    "light": {
+      "passed": true,
+      "evidence": "480x479white composite shows whole bald head/body, both complete trainers, grip/wheel and full knee pad. Connected floor block is removed; pad is retained as equipment, without a floor base."
+    },
+    "dark": {
+      "passed": true,
+      "evidence": "480x479dark-card composite shows full body/trainers and readable pad/wheel/grips, without opaque floor block or severed trainer edge."
+    },
+    "card160Light": {
+      "passed": true,
+      "evidence": "160pxlight preview retains readable canonical silhouette/core-shoulder key, both trainers, actual pad and whole wheel; no floor rectangle."
+    },
+    "card160Dark": {
+      "passed": true,
+      "evidence": "160pxdark preview retains full figure/equipment and trainer edges, no floor rectangle or background strip."
+    }
+  },
+  "proofFiles": [
+    {
+      "path": "independent-prepared-source-white.png",
+      "sha256": "d22bd90a04085a8c3f7787563174c8976b024f157f9e4eb910f6b7b8f77b3940"
+    },
+    {
+      "path": "independent-prepared-card-light.png",
+      "sha256": "ca665b447719d1b157bf16480b86e1de6e165bc34b23b9f69769e3b798c0d214"
+    },
+    {
+      "path": "independent-prepared-card-dark.png",
+      "sha256": "8f74fd768b1c21fabf5950efb84cb46fcc372e3af9497a1524d9d4d085134fda"
+    },
+    {
+      "path": "independent-prepared-card-160px-light.png",
+      "sha256": "9a17e248076dd892ef18d6449b701085fd7d8b11637cca21f8d8289c187dbe4a"
+    },
+    {
+      "path": "independent-prepared-card-160px-dark.png",
+      "sha256": "7142c7a59ac24a85453e23baf41d347625fbe26fa15a80acd6d969758f41e257"
+    }
+  ],
+  "alphaCleanup": {
+    "passes": 1,
+    "fromNativeFramedY": 600,
+    "brightSeed": 110,
+    "closeRadius": 1,
+    "growRadius": 2,
+    "existingEquipmentShapeMasksOnly": true,
+    "rgbOrPoseChange": false,
+    "initialCardRetained": "card-cutout-before-floor-cleanup.webp"
+  },
+  "pending": [
+    "Actual final-card integrated mobile light/dark review and project/release gates"
+  ],
+  "completionCredit": 0
+}

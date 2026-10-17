@@ -75,12 +75,158 @@ const approved = (
 /**
  * The sets listed by hand: those released without a strict review. Six
  * shipped before the review existed and are kept while replacements are
- * reviewed; they do not claim to pass the new consistency standard. Three
+ * reviewed; they do not claim to pass the new consistency standard. Twenty
  * the owner released with their findings. An approved set never belongs
  * here: it comes from its record, and formArtwork.test.ts fails if an ID
  * is listed in both places.
  */
 export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
+  "incline-db-curl": {
+    ...existing("incline-db-curl", 992, 784),
+    reference: "form-frames/incline-db-curl/1.webp",
+    version: "anatomy-v3-2026-10-16-native-moving-source-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-16/incline-db-curl.json",
+  },
+  "leg-press": {
+    ...existing("leg-press", 1264, 1056),
+    reference: "form-frames/leg-press/1.webp",
+    version: "anatomy-v3-2026-10-16-native-moving-source-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-16/leg-press.json",
+  },
+  "handstand-push-ups": {
+    ...existing("handstand-push-ups", 688, 1504),
+    reference: "form-frames/handstand-push-ups/1.webp",
+    version: "anatomy-v3-2026-10-16-native-head-profile-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-16/handstand-push-ups.json",
+  },
+  "straight-arm-pulldown": {
+    ...existing("straight-arm-pulldown", 1152, 1728),
+    reference: "form-frames/straight-arm-pulldown/1.webp",
+    version: "anatomy-v3-2026-10-16-native-local-repair-v1",
+    status: "owner-released-with-findings",
+    reviewFile:
+      "docs/exercise-art/releases/2026-10-16/straight-arm-pulldown.json",
+  },
+  "front-squat": {
+    ...existing("front-squat", 736, 800),
+    reference: "form-frames/front-squat/3.webp",
+    version: "anatomy-v3-2026-10-16-worn-reference-harness-source-tone-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-16/front-squat.json",
+  },
+  "seated-row": {
+    ...existing("seated-row", 1335, 942),
+    reference: "form-frames/seated-row/3.webp",
+    version: "anatomy-v3-2026-10-16-controlled-hinge-cable-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-16/seated-row.json",
+  },
+  swimming: {
+    ...existing("swimming", 1264, 848),
+    reference: "form-frames/swimming/2.webp",
+    version: "anatomy-v3-2026-10-17-gemini-front-crawl-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-17/swimming.json",
+  },
+  stairmaster: {
+    ...existing("stairmaster", 1264, 848),
+    reference: "form-frames/stairmaster/1.webp",
+    version: "anatomy-v3-2026-10-17-gemini-stepmill-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-17/stairmaster.json",
+  },
+  "turkish-get-up": {
+    ...existing("turkish-get-up", 1024, 1024),
+    reference: "form-frames/turkish-get-up/1.webp",
+    version: "anatomy-v3-2026-10-17-gemini-get-up-v2",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-17/turkish-get-up.json",
+  },
+  "assault-bike": {
+    ...existing("assault-bike", 1024, 1024),
+    reference: "form-frames/assault-bike/1.webp",
+    version: "anatomy-v3-2026-10-17-gemini-front-air-bike-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-17/assault-bike.json",
+  },
+  "spin-bike": {
+    ...existing("spin-bike", 432, 707),
+    reference: "form-frames/spin-bike/1.webp",
+    version: "anatomy-v3-2026-10-16-custom-perspective-spin-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-16/spin-bike.json",
+  },
+  elliptical: {
+    ...existing("elliptical", 1047, 1072),
+    reference: "form-frames/elliptical/1.webp",
+    version: "anatomy-v3-2026-10-15-custom-rear-drive-elliptical-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-16/elliptical.json",
+  },
+  "rowing-machine": {
+    ...existing("rowing-machine", 1416, 830),
+    reference: "form-frames/rowing-machine/3.webp",
+    version: "anatomy-v3-2026-10-15-retained-whole-trio-rowing-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-15/rowing-machine.json",
+  },
+  "pendlay-row": {
+    ...existing("pendlay-row", 1180, 892),
+    reference: "form-frames/pendlay-row/3.webp",
+    version: "anatomy-v3-2026-10-15-retained-whole-pair-pendlay-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-15/pendlay-row.json",
+  },
+  "leg-extension": {
+    ...existing("leg-extension", 1319, 1056),
+    reference: "form-frames/leg-extension/3.webp",
+    version: "anatomy-v3-2026-10-15-material-endpoint-leg-extension-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-15/leg-extension.json",
+  },
+  "single-leg-calf-raise": {
+    ...existing("single-leg-calf-raise", 626, 1209),
+    reference: "form-frames/single-leg-calf-raise/3.webp",
+    version: "anatomy-v3-2026-10-15-retained-single-leg-calf-two-endpoint-v1",
+    status: "owner-released-with-findings",
+    reviewFile:
+      "docs/exercise-art/releases/2026-10-15/single-leg-calf-raise.json",
+  },
+  "side-plank": {
+    ...existing("side-plank", 1480, 696),
+    reference: "form-frames/side-plank/3.webp",
+    version: "anatomy-v3-2026-10-15-retained-side-plank-timed-hold-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-15/side-plank.json",
+  },
+  "overhead-extension": {
+    ...existing("overhead-extension", 461, 1547),
+    reference: "form-frames/overhead-extension/3.webp",
+    version: "anatomy-v3-2026-10-15-retained-overhead-two-endpoint-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-15/overhead-extension.json",
+  },
+  "face-pulls": {
+    ...existing("face-pulls", 982, 1258),
+    version: "anatomy-v3-2026-10-15-ergonomic-rope-two-endpoint-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-15/face-pulls.json",
+  },
+  "t-bar-row": {
+    ...existing("t-bar-row", 918, 1036),
+    version: "anatomy-v3-2026-10-15-retained-two-endpoint-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-15/t-bar-row.json",
+  },
+  bike: {
+    ...existing("bike", 929, 1432),
+    version: "anatomy-v3-2026-10-15-retained-two-endpoint-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-15/bike.json",
+  },
   "goblet-squat": ownerReleased("goblet-squat", 1024, 1536),
   squat: ownerReleased("squat", 1024, 1536),
   "barbell-curl": ownerReleased("barbell-curl", 1024, 1536),

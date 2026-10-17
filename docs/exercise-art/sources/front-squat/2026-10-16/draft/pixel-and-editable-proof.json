@@ -1,0 +1,80 @@
+{
+  "sourceRecords": [
+    {
+      "label": "A",
+      "changedByEquipmentPixels": 8616,
+      "changedOutsideEquipmentAlpha": 0,
+      "sourceHeadAndTrainersRgbaExactToExistingColourFinish": true,
+      "wholeBodyScale": 1,
+      "localBodyTransforms": 0,
+      "headHandOrShoeGrafts": 0
+    },
+    {
+      "label": "B",
+      "changedByEquipmentPixels": 8446,
+      "changedOutsideEquipmentAlpha": 0,
+      "sourceHeadAndTrainersRgbaExactToExistingColourFinish": true,
+      "wholeBodyScale": 1,
+      "localBodyTransforms": 0,
+      "headHandOrShoeGrafts": 0
+    }
+  ],
+  "oraReadbacks": [
+    {
+      "path": "A-native.ora",
+      "sha256": "b848ff0949553ce0d3149c25d197dc3b115de13d1645625863632c5f0c41930f",
+      "layers": 5,
+      "mergedAndStackRgbaExact": true
+    },
+    {
+      "path": "B-native.ora",
+      "sha256": "6847d572e737e7229f823a6dba3921e9717d1677dbb54d43540a1fe685117007",
+      "layers": 5,
+      "mergedAndStackRgbaExact": true
+    },
+    {
+      "path": "1.ora",
+      "sha256": "58b89c26b68ae2951783fcea88aeb3c65b689961db71fc2fb1c57bc9c5c3668f",
+      "layers": 5,
+      "mergedAndStackRgbaExact": true
+    },
+    {
+      "path": "2.ora",
+      "sha256": "58b89c26b68ae2951783fcea88aeb3c65b689961db71fc2fb1c57bc9c5c3668f",
+      "layers": 5,
+      "mergedAndStackRgbaExact": true
+    },
+    {
+      "path": "3.ora",
+      "sha256": "c703e5a4e87835e9f61997a6c9305fc95709146ccf3027de67bd61094ced340b",
+      "layers": 5,
+      "mergedAndStackRgbaExact": true
+    },
+    {
+      "path": "4.ora",
+      "sha256": "c703e5a4e87835e9f61997a6c9305fc95709146ccf3027de67bd61094ced340b",
+      "layers": 5,
+      "mergedAndStackRgbaExact": true
+    },
+    {
+      "path": "5.ora",
+      "sha256": "58b89c26b68ae2951783fcea88aeb3c65b689961db71fc2fb1c57bc9c5c3668f",
+      "layers": 5,
+      "mergedAndStackRgbaExact": true
+    },
+    {
+      "path": "6.ora",
+      "sha256": "58b89c26b68ae2951783fcea88aeb3c65b689961db71fc2fb1c57bc9c5c3668f",
+      "layers": 5,
+      "mergedAndStackRgbaExact": true
+    }
+  ],
+  "sixLosslessFramesExact": true,
+  "wholeSceneScale": 1,
+  "commonCrop": [432, 208, 1104, 944],
+  "padding": [32, 32],
+  "newImageRequests": 0,
+  "strictCertification": false,
+  "acceptancePending": true,
+  "completionCredit": false
+}

@@ -1,0 +1,316 @@
+{
+  "exerciseId": "ab-wheel",
+  "version": "anatomy-v3-2026-10-14-intact-ab-wheel-cycle-v1",
+  "width": 1448,
+  "height": 924,
+  "decision": "approved",
+  "reviewer": "Codex native, independent static/card and actual staged mobile review",
+  "reviewedAt": "2026-10-14T22:36:37.575496+00:00",
+  "reference": {
+    "path": "form-frames/ab-wheel/1.webp",
+    "sha256": "1c6adbc52050d867b542229cdd46a2aeb2062197ca354cbf2555c38456a7b9be"
+  },
+  "cueSha256": "8a20afdb5f64d37621738f6769da6b122784481666f8b8174e72365778c305db",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Native FA56 and all three originals/finished poses were actually reviewed: same bald faceless lean pale anatomy athlete, white trainers, smooth neutral featureless pelvis, no shorts/waistband, inherited fine neutral shading. Three original sources and exact prompts/tool-output provenance are preserved; no unavailable raw request ID is invented."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "All originals1536x1024 use the same oblique kneeling scene. One whole-scene scale1 crop[48,8,1496,932] gives1448x924; no resampling, body translation, warping, limb fitting or grafting. Measured exposed pad anchors are actual native features converted by subtracting48,8."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Three genuine intact Brace/Roll/Reach sources and all six native paths were reviewed. Adult proportions and no-shorts identity remain coherent during articulation. Small knee/trainer contours redraw; these are disclosed, not fitted. Reach retains residual hip flexion and is not represented as fully horizontal or perfectly straight."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One dark ordinary broad tyre, transverse axle and two closed grips persist. Projected bright-neutral tyre contour span193px in all3 at common threshold30 with10-pixel contiguous runs; threshold35 gives192/193/193px. Exposed axle-tip span289/277/260px changes10.035% in projection, judged minor tip/contour variation without gross hub or grip failure; no calibrated3D radius, shaft-length, grip-width or invented yaw justification."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both knees remain supported by the fixed pad and both rear trainers rest behind. Both hands remain connected around one wheel axle/hub. Actual cropped pad anchors: upper-right(540,802) all3 and lower-front(335,855)/(335.5,855)/(335.5,855), max0.5px. Pad x span352/351/352px, max0.284%. Failed shoe brightness-span/toe metrics and small knee redraws are separately archived, not claimed to pass strict1px/1%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Complete controlled-range kneeling rollout: braced wheel-under-shoulders start, genuine outward shoulder/hip travel, longer neutral-braced reach/hold, then controlled reverse return to brace without sitting back onto heels. Reach is visibly clear of floor without lumbar sag or chest collapse; it retains some hip flexion. Wheel ground-path y travel follows the oblique scene."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Catalogue Core primary#7B72E9 and Lats/Shoulders secondary#9590E0, solid inherited source colour fields and source-derived fine contours. Independent native finishing review binds all3 source/finished/framed/ORA hashes and preservation checks; no new gradient, anatomy reconstruction or gear change."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Brace/Roll/Reach/Hold/Return/Reset match the illustrated controlled-range kneeling rollout. No fully horizontal/perfectly straight endpoint claim; tips tell users to shorten range if neutral spine fails. Exact catalogue initial kneeling setup remains written Preparation. Six short cues describe actual Brace/Roll/Reach/Hold/Return/Reset states; three physical sources reused honestly in order[1,2,3,3,2,1]."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Parent individually selected all6 distinct paths at natural/display1448x924 in native1536x1120 viewport. Coherent complete model, supports/grips and palette; no clipping. Parent observed timed sequence and6to1, including held Reach and reversed Return/Reset; native DOM load trace and screenshot saved. Six distinct1448x924 decoded paths match three self-contained reopened ORA/framed poses exactly. Actual sequential6-to-1 observed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent at390x844 light with final card: all6 decoded paths and6to1 recorded. Figure/trainers/grips remain whole; exact keys/cues/preparation visible in full-page proof. Final alpha-only card reviewed on actual light/dark UI and independent160px composites. Body/RGB unchanged, both trainers complete, pad/wheel retained, no black floor block. Exact first catalogue setup sentence displayed."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent at390x844 dark with final card: all6 decoded paths and6to1 recorded. Dark stage/card have no floor block; model and equipment remain whole. Actual Pause/select6/Next6to1/Previous1to6/Slower controls operated. Isolated slower trace contains complete visible cycle; no console errors. Measured normal1206.0ms/slower2407.5ms."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/ab-wheel/1.webp",
+      "sha256": "1c6adbc52050d867b542229cdd46a2aeb2062197ca354cbf2555c38456a7b9be",
+      "sourcePose": 1,
+      "anchors": {
+        "padUpperRightOuterEdge": {
+          "x": 540,
+          "y": 802
+        },
+        "padFrontLowerPlateauMidpoint": {
+          "x": 335.0,
+          "y": 855
+        }
+      },
+      "invariantDimensions": {
+        "padProjectedHorizontalSpan": 352,
+        "tyreBrightNeutralVerticalContourSpan": 193
+      }
+    },
+    {
+      "path": "form-frames/ab-wheel/2.webp",
+      "sha256": "4f8d53ee4e94dea1eb6cb1c44c0f965357310c7af85c0379cfa16695dfe4459e",
+      "sourcePose": 2,
+      "anchors": {
+        "padUpperRightOuterEdge": {
+          "x": 540,
+          "y": 802
+        },
+        "padFrontLowerPlateauMidpoint": {
+          "x": 335.5,
+          "y": 855
+        }
+      },
+      "invariantDimensions": {
+        "padProjectedHorizontalSpan": 351,
+        "tyreBrightNeutralVerticalContourSpan": 193
+      }
+    },
+    {
+      "path": "form-frames/ab-wheel/3.webp",
+      "sha256": "e927bb1ee10e138e68568f95f477a7f2763790f47a25ef57df49618e154b657f",
+      "sourcePose": 3,
+      "anchors": {
+        "padUpperRightOuterEdge": {
+          "x": 540,
+          "y": 802
+        },
+        "padFrontLowerPlateauMidpoint": {
+          "x": 335.5,
+          "y": 855
+        }
+      },
+      "invariantDimensions": {
+        "padProjectedHorizontalSpan": 352,
+        "tyreBrightNeutralVerticalContourSpan": 193
+      }
+    },
+    {
+      "path": "form-frames/ab-wheel/4.webp",
+      "sha256": "e927bb1ee10e138e68568f95f477a7f2763790f47a25ef57df49618e154b657f",
+      "sourcePose": 3,
+      "anchors": {
+        "padUpperRightOuterEdge": {
+          "x": 540,
+          "y": 802
+        },
+        "padFrontLowerPlateauMidpoint": {
+          "x": 335.5,
+          "y": 855
+        }
+      },
+      "invariantDimensions": {
+        "padProjectedHorizontalSpan": 352,
+        "tyreBrightNeutralVerticalContourSpan": 193
+      }
+    },
+    {
+      "path": "form-frames/ab-wheel/5.webp",
+      "sha256": "4f8d53ee4e94dea1eb6cb1c44c0f965357310c7af85c0379cfa16695dfe4459e",
+      "sourcePose": 2,
+      "anchors": {
+        "padUpperRightOuterEdge": {
+          "x": 540,
+          "y": 802
+        },
+        "padFrontLowerPlateauMidpoint": {
+          "x": 335.5,
+          "y": 855
+        }
+      },
+      "invariantDimensions": {
+        "padProjectedHorizontalSpan": 351,
+        "tyreBrightNeutralVerticalContourSpan": 193
+      }
+    },
+    {
+      "path": "form-frames/ab-wheel/6.webp",
+      "sha256": "1c6adbc52050d867b542229cdd46a2aeb2062197ca354cbf2555c38456a7b9be",
+      "sourcePose": 1,
+      "anchors": {
+        "padUpperRightOuterEdge": {
+          "x": 540,
+          "y": 802
+        },
+        "padFrontLowerPlateauMidpoint": {
+          "x": 335.0,
+          "y": 855
+        }
+      },
+      "invariantDimensions": {
+        "padProjectedHorizontalSpan": 352,
+        "tyreBrightNeutralVerticalContourSpan": 193
+      }
+    }
+  ],
+  "physicalPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "newImageRequests": 3,
+  "authoredSetupInstructions": [
+    "Kneel on a pad holding the ab wheel with both hands under your shoulders."
+  ],
+  "sourceRoute": "Three fresh intact whole-athlete FA56 sources; colour/inherited-contour finishing, one common scale1 crop and reviewed alpha-only card floor cleanup. No old clothing inputs, anatomical transforms or reconstructed body parts.",
+  "measurementMethods": {
+    "fixedAnchors": [
+      {
+        "name": "Exposed upper-right outer knee-pad edge",
+        "nativePoints": [
+          [588, 810],
+          [588, 810],
+          [588, 810]
+        ],
+        "expectedCropPoints": [
+          [540, 802],
+          [540, 802],
+          [540, 802]
+        ],
+        "maxPairwiseEuclideanDriftPx": 0.0,
+        "limitPx": 1,
+        "pass": true,
+        "method": "Rightmost qualifying pixel in the exposed right pad ROI, then first qualifying y at that x. Actual pad boundary, not a canvas coordinate.",
+        "roiXYXY": [575, 802, 600, 846],
+        "pixelRule": {
+          "minRGB": 40,
+          "maxRGB": 140,
+          "maxChannelSpread": 12
+        }
+      },
+      {
+        "name": "Midpoint of exposed frontmost lower rounded knee-pad edge plateau",
+        "nativePoints": [
+          [383.0, 863],
+          [383.5, 863],
+          [383.5, 863]
+        ],
+        "expectedCropPoints": [
+          [335.0, 855],
+          [335.5, 855],
+          [335.5, 855]
+        ],
+        "maxPairwiseEuclideanDriftPx": 0.5,
+        "limitPx": 1,
+        "pass": true,
+        "method": "Lowest qualifying pad row in exposed front pad ROI; midpoint of its qualifying x range. The rounded front corner has a real visible plateau, so a half-pixel midpoint is retained without rounding.",
+        "roiXYXY": [350, 845, 460, 880],
+        "pixelRule": {
+          "minRGB": 40,
+          "maxRGB": 140,
+          "maxChannelSpread": 12
+        },
+        "sensitivity": {
+          "threshold45Points": [
+            [383.0, 863],
+            [383.5, 863],
+            [383.0, 863]
+          ],
+          "threshold50Points": [
+            [382.5, 863],
+            [383.5, 863],
+            [383.0, 863]
+          ],
+          "interpretation": "Threshold40/45/50 gives the same y863 and front midpoint within1px across all sources and sampled thresholds. Thresholds20-35 can capture floor/shadow; those points are rejected as pad features."
+        }
+      }
+    ],
+    "invariantDimensions": [
+      {
+        "name": "Projected full visible pad horizontal extent",
+        "valuesPx": [352, 351, 352],
+        "maxDeviationFromBracePercent": 0.2840909090909091,
+        "limitPercent": 1,
+        "pass": true,
+        "method": "Rightmost exposed pad x minus leftmost exposed pad x, common neutral threshold40. Measures actual pad footprint extent.",
+        "roisXYXY": [
+          [230, 808, 258, 849],
+          [575, 802, 600, 846]
+        ],
+        "pixelRule": {
+          "minRGB": 40,
+          "maxRGB": 140,
+          "maxChannelSpread": 12
+        },
+        "caveat": "Leftmost y is unstable on a rounded antialiased edge and is not selected as a fixed anchor."
+      },
+      {
+        "name": "Projected exposed bright-neutral tyre vertical contour span",
+        "valuesPx": [193, 193, 193],
+        "topYs": [686, 700, 717],
+        "bottomYs": [879, 893, 910],
+        "maxDeviationFromBracePercent": 0.0,
+        "limitPercent": 1,
+        "pass": true,
+        "method": "At least10 consecutive neutral tyre pixels in each qualifying row, common brightness threshold30, outer top/bottom exposed tyre ROIs. Run filter excludes isolated human-outline anti-alias pixels.",
+        "roisBySource": [
+          [
+            [735, 675, 799, 712],
+            [730, 865, 826, 899]
+          ],
+          [
+            [1130, 689, 1197, 733],
+            [1130, 880, 1226, 915]
+          ],
+          [
+            [1330, 705, 1397, 754],
+            [1310, 900, 1411, 936]
+          ]
+        ],
+        "pixelRule": {
+          "minRGB": 30,
+          "maxRGB": 140,
+          "maxChannelSpread": 12,
+          "minimumContiguousHorizontalRun": 10
+        },
+        "sensitivity": {
+          "threshold35SpansPx": [192, 193, 193],
+          "maxDeviationFromBracePercent": 0.5208333333333333,
+          "interpretation": "193px at threshold30 across all3; threshold35 yields192/193/193px, within1%. Threshold40 erodes the dark lower tyre rim and is unsuitable for this contour."
+        },
+        "caveat": "This is a consistently defined visible raster tyre contour. It is not a true3D radius, unoccluded geometric diameter, axle length or calibrated grip-width claim."
+      }
+    ],
+    "scope": "Visible projected raster features, not calibrated3D dimensions."
+  },
+  "minorFindings": [
+    "Controlled Reach retains residual hip flexion; no fully horizontal/perfectly straight claim.",
+    "Small knee/trainer contour redraws are disclosed; failed shoe brightness metrics are not represented as passing.",
+    "Projected exposed axle-tip span289/277/260px varies10.035%; no calibrated3D shaft, radius, grip-width or invented yaw claim.",
+    "Three real poses reused honestly across six separate paths."
+  ],
+  "baseline": {
+    "head": "82d6d829ad20ad3c8924933f736ad615b83054f6",
+    "exitCode": 1,
+    "fullWindowsNonGreen": true,
+    "evidence": "Fresh normal verify completed with exact snapshot/input preservation; result/log/failures archived. Non-green baseline is not a green branch claim."
+  },
+  "integrationValidation": "Actual registered1448x924 six paths and480x479 standard card passed390x844 light/dark with all6 and sequential6-to-1, exact setup/keys/cues, pause/select/next/previous/slower and console errors0. Registered frames/master/prepared source/card exactly match accepted staged bytes; all903 prior artwork files and FA56 preserved. Measured normal1207.0ms/slower2407.0ms. Exact raw review inputs and public byte bindings archived. Normal full branch verification/fresh failure comparison, formatting/source seal, required current-head CI and actual merge remain pending before completion credit."
+}

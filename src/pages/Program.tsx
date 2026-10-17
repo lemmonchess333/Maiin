@@ -6,7 +6,8 @@ import { workoutCompletionDayIdentity } from "@/lib/workoutCompletion";
 import { liftCompletionContext } from "@/lib/completionPlanContext";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { usePageSearchParams } from "@/hooks/usePageSearchParams";
 import { focusLabel } from "@/features/program/trainingBlock";
 import {
   LIFT_DAY_STATUS_LABEL,
@@ -28,13 +29,15 @@ import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
-import { dayFocusLabel, liftDayTitle } from "@/lib/liftDayLabel";
+import { dayFocusLabel, liftDayLine, liftDayTitle } from "@/lib/liftDayLabel";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import LiftPurpose from "@/components/program/LiftPurpose";
 import LiftRulesInfo from "@/components/program/LiftRulesInfo";
 import { deloadDismissKey, pickLiftAdvice } from "@/lib/programNotices";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
+import ExerciseThumb from "@/components/program/ExerciseThumb";
+import ExerciseFormSheet from "@/components/program/ExerciseFormSheet";
 import MiniMuscleFigure, {
   hasMuscleFigure,
 } from "@/components/social/MiniMuscleFigure";
@@ -129,7 +132,7 @@ import { resolveDeloadRecommended } from "@/lib/performanceDocFields";
 import { deloadRunSwapCount } from "@/lib/deloadChangeSummary";
 import GuideHint from "@/components/guide/GuideHint";
 import { openLiftSession } from "@/features/program/openLiftSession";
-import { lastSetsByExercise } from "@/features/program/lastSets";
+import { lastSetsBySlot } from "@/features/program/lastSets";
 
 /**
  * IMPORTANT:
@@ -145,7 +148,7 @@ export default function Program() {
 
 function ProgramInner() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = usePageSearchParams();
   const {
     programState,
     prescription,
@@ -176,6 +179,7 @@ function ProgramInner() {
     skipRecoveryEarly,
     realignRacePlan,
     dismissFellBehindPrompt,
+    recentLayoff,
     applyDeloadWeek,
     revertDeloadWeek,
     startTrainingBlock,
@@ -191,8 +195,9 @@ function ProgramInner() {
   useEffect(() => {
     programStateRef.current = programState;
   }, [programState]);
-  // Adaptive Paces: silently derive a fitness benchmark from recent runs when
-  // the user hasn't set one (the "derive" half of the capture decision).
+  // Adaptive Paces: silently derive a fitness benchmark from a recent race,
+  // time trial or tempo when the user hasn't set one (the "derive" half of
+  // the capture decision, narrowed to efforts by Pgm8 R1).
   useRunFitnessAutoDerive();
   // Pgm3: deload banner data source. usePerformanceWeeks reads the
   // server-side performance rollup; the `deloadRecommended` flag on
@@ -272,11 +277,16 @@ function ProgramInner() {
 
   const { workouts: recentWorkouts, loading: workoutsLoading } = useWorkouts();
 
-  // Every counted set from the last session with each exercise, for the
-  // rows' "Last:" line (`lastSetsByExercise`).
-  const lastSetsMap = useMemo(
-    () => lastSetsByExercise(recentWorkouts),
-    [recentWorkouts]
+  // Every lift of the plan in its slot, and every counted set from the last
+  // session each one ran in it, for the rows' "Last:" line
+  // (`lastSetsBySlot`). The workout screen reads the same.
+  const planLifts = useMemo(
+    () => programState?.workouts.flatMap((day) => day.exercises) ?? [],
+    [programState?.workouts]
+  );
+  const lastSetsOf = useMemo(
+    () => lastSetsBySlot(recentWorkouts, planLifts),
+    [recentWorkouts, planLifts]
   );
 
   // Core navigation state. The selected training day is mirrored into the URL
@@ -367,6 +377,12 @@ function ProgramInner() {
     x: number;
     y: number;
   } | null>(null);
+  /* The exercise whose form guide a row's drawing opened. The name stays
+     while the sheet closes, so its title does not blank on the way out. */
+  const [formGuide, setFormGuide] = useState<{
+    name: string;
+    open: boolean;
+  }>({ name: "", open: false });
   const [replaceTarget, setReplaceTarget] = useState<{
     dayIndex: number;
     exIndex: number;
@@ -868,6 +884,7 @@ function ProgramInner() {
   const showDeloadSuggest = shouldSuggestDeload({
     deloadRecommended: resolveDeloadRecommended(perfWeek),
     loadFromRunning: loadFromRunning(perfWeek),
+    lighterWeekAllowed: !!programState && lighterWeekAllowed(programState),
     currentWeek: programState?.runPlan?.currentWeek,
     totalWeeks: programState?.runPlan?.totalWeeks,
     distance: resolvedRunPlan.raceGoal?.distance as
@@ -1190,6 +1207,7 @@ function ProgramInner() {
             skipRecoveryEarly={skipRecoveryEarly}
             realignRacePlan={realignRacePlan}
             dismissFellBehindPrompt={dismissFellBehindPrompt}
+            recentLayoff={recentLayoff}
           />
         </div>
       )}
@@ -1364,7 +1382,16 @@ function ProgramInner() {
                             <p className="text-sm font-semibold text-foreground">
                               Go easier today ·{" "}
                               {summarizeEasier(
-                                buildEasierSession(selectedWorkout, restContext)
+                                buildEasierSession(
+                                  selectedWorkout,
+                                  restContext,
+                                  {
+                                    smallPlates:
+                                      programState.settings?.smallPlates ===
+                                      true,
+                                    loadUnit: programState.settings?.loadUnit,
+                                  }
+                                )
                               )}
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -1411,9 +1438,7 @@ function ProgramInner() {
                                     >
                                       <ExerciseRowSummary
                                         exercise={ex}
-                                        lastSets={lastSetsMap.get(
-                                          ex.exerciseId
-                                        )}
+                                        lastSets={lastSetsOf(ex)}
                                         thumbSize="sm"
                                       />
                                     </div>
@@ -1424,10 +1449,14 @@ function ProgramInner() {
                           </DndContext>
                         ) : (
                           /* One card, one row per exercise, each with its
-                             drawing (DS3). A row still opens the exercise's
-                             Form tab, still swipes and long-presses to its
-                             manage menu, and still has the "…" that opens
-                             that menu visibly. */
+                             drawing (DS3). The drawing opens the exercise's
+                             form guide over the list (owner, 2026-10-16:
+                             "click on these on the left hand side to see
+                             form pics"). The rest of the row still opens
+                             the exercise's page on its Form tab, still
+                             swipes and long-presses to its manage menu,
+                             and still has the "…" that opens that menu
+                             visibly. */
                           <div className="rounded-2xl bg-card card-shadow overflow-hidden divide-y divide-border">
                             {selectedWorkout.exercises.map((ex, i) => (
                               <div
@@ -1445,7 +1474,29 @@ function ProgramInner() {
                                     long-press. The "…" opens the same
                                     manage menu (Replace / Remove / Move)
                                     visibly; swipe and long-press stay. */}
-                                  <div className="flex items-center">
+                                  <div className="@container/exrow flex items-center">
+                                    {/* Its own button, before the row's: a
+                                      button cannot hold another. It gives
+                                      way to the name where the summary's
+                                      own drawing did, at 10em of summary
+                                      (14.5em of row at the designed text
+                                      size). */}
+                                    <button
+                                      type="button"
+                                      aria-label={`How to do ${ex.name}`}
+                                      onClick={() => {
+                                        haptic("light");
+                                        setFormGuide({
+                                          name: ex.name,
+                                          open: true,
+                                        });
+                                      }}
+                                      className="flex shrink-0 items-center self-stretch pl-3 transition-opacity active:opacity-60 @max-[14.5em]/exrow:hidden"
+                                    >
+                                      <ExerciseThumb
+                                        exerciseId={ex.exerciseId}
+                                      />
+                                    </button>
                                     <button
                                       type="button"
                                       onClick={() =>
@@ -1475,10 +1526,9 @@ function ProgramInner() {
                                     >
                                       <ExerciseRowSummary
                                         exercise={ex}
-                                        lastSets={lastSetsMap.get(
-                                          ex.exerciseId
-                                        )}
+                                        lastSets={lastSetsOf(ex)}
                                         showNotes
+                                        showThumb={false}
                                       />
                                     </button>
                                     <IconButton
@@ -1719,7 +1769,7 @@ function ProgramInner() {
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30"
               >
                 <Repeat className="size-4 text-muted-foreground" /> Replace
-                Exercise
+                exercise
               </button>
               <button
                 type="button"
@@ -1761,12 +1811,23 @@ function ProgramInner() {
         )}
       </AnimatePresence>
 
+      {formGuide.name && (
+        <ExerciseFormSheet
+          exerciseName={formGuide.name}
+          open={formGuide.open}
+          onOpenChange={(open) => setFormGuide((g) => ({ ...g, open }))}
+        />
+      )}
+
       {/* Skip Confirmation Sheet */}
       <SkipConfirmSheet
         open={showSkipConfirm}
+        /* The day as the workout and finish screens name it ("Full Body ·
+           Squat focus"), not its stored name ("Full Body — Squat Focus"),
+           which the card above never shows. */
         sessionName={
           skipTargetDay !== null
-            ? (displayWorkouts[skipTargetDay]?.dayName ?? "")
+            ? liftDayLine(displayWorkouts[skipTargetDay]?.dayName ?? "")
             : ""
         }
         onConfirm={async () => {
@@ -1796,6 +1857,8 @@ function ProgramInner() {
       <ExpressSessionSheet
         timeBudgetMinutes={usualBudget}
         rest={restContext}
+        smallPlates={programState.settings?.smallPlates === true}
+        loadUnit={programState.settings?.loadUnit}
         open={expressChooserDay !== null}
         day={
           expressChooserDay !== null
@@ -1852,7 +1915,10 @@ function ProgramInner() {
             sessionVariant === "full"
               ? null
               : sessionVariant === "easier_today"
-                ? buildEasierSession(storedDay, restContext)
+                ? buildEasierSession(storedDay, restContext, {
+                    smallPlates: programState.settings?.smallPlates === true,
+                    loadUnit: programState.settings?.loadUnit,
+                  })
                 : sessionVariant === "time_budget"
                   ? buildTimeBudgetSession(
                       storedDay,
@@ -1892,6 +1958,7 @@ function ProgramInner() {
                   : undefined
               }
               progressionBaseline={storedDay.exercises}
+              planLifts={planLifts}
               firstWorkout={!workoutsLoading && recentWorkouts.length === 0}
               programmeContext={{
                 weekNumber: programState.weekNumber,
@@ -1936,6 +2003,11 @@ function ProgramInner() {
           open={true}
           headerTitle={`Replace ${programState.workouts[replaceTarget.dayIndex]?.exercises[replaceTarget.exIndex]?.name || "Exercise"}`}
           pickAction="Replace"
+          currentExerciseId={
+            programState.workouts[replaceTarget.dayIndex]?.exercises[
+              replaceTarget.exIndex
+            ]?.exerciseId
+          }
           onSelect={(ex) =>
             replaceExercise(replaceTarget.dayIndex, replaceTarget.exIndex, ex)
           }

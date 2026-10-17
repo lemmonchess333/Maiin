@@ -65,9 +65,9 @@ const MIRROR_READ =
  * SURFACE reading a field nothing writes, and surfaces are not tests.
  */
 function sourceFiles(): string[] {
-  return globSync("src/**/*.{ts,tsx}", { cwd: ROOT }).filter(
-    (f) => !ALLOWED.includes(f) && !f.includes("__tests__")
-  );
+  return globSync("src/**/*.{ts,tsx}", { cwd: ROOT })
+    .map((file) => file.replaceAll("\\", "/"))
+    .filter((f) => !ALLOWED.includes(f) && !f.includes("__tests__"));
 }
 
 /**

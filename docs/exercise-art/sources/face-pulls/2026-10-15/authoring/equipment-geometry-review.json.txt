@@ -1,0 +1,122 @@
+{
+  "status": "equipment-only-two-endpoint-proposal-awaiting-root-native-review",
+  "manufacturerReference": {
+    "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\face-pulls\\lifemaxx-lmx2315-manufacturer-reference.png",
+    "sha256": "0a31e100e140203a2231ce325c5e1ef6de2fbc5d735252cdeef1c9c980f9bb68",
+    "page": "https://www.lifemaxx.com/en/lmx2315-lmxr-ergo-tricep-rope.html",
+    "observedTopology": "Broad curved terminal palm support, narrower intervening grip with finger scallops, cable-side inner flange, rope continuing toward central connector.",
+    "claimLimit": "This neutral-rubber illustrative redraw follows that actual construction topology; it is NOT an exact manufacturer replica, dimension match, brand endorsement or claimed identified source accessory."
+  },
+  "method": "One equipment-only contour model: curved palm support, narrow grip and oval inner flange; projected onto existing stop/hand positions. Solid existing-style neutral grays; no added gradient. Composite is clipped behind the original connected human bright field plus4px contour guard. Original connector, exposed rope branches, pulley, cable and selected/unselected stack coordinates are not moved.",
+  "remainingFindings": [
+    "Far start outer free-end/palm support is omitted as potentially occluded behind the unchanged fist. Hidden rope ordering is plausible but unproven; root must reject any visibly impossible hand/load contact.",
+    "New supports extend into black background and cover original equipment footprints, preserving human pixels. Original dark rubber directly beside fingers within the contour guard remains untouched; inspect for small sphere-outline remnants.",
+    "Projected handle lengths/foreshortening vary with the retained source projections; no calibrated3D/strict invariant-hardware claim.",
+    "Equipment contour/material rendering is a native review draft. No colour normalization, mobile pass, strict approval, owner acceptance, registration, publication or completion claim."
+  ],
+  "poses": [
+    {
+      "pose": "1-start",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\face-pulls\\1-master.png",
+      "sourceSha256": "30c17a6d7c4416cb908d6f87ac5fb754bb45cb86116844a953893b761f48f8aa",
+      "humanConnectedBrightPixels": 177023,
+      "humanBrightPlus4pxGuardChangedPixels": 0,
+      "outsideEquipmentSupportRGBAExact": true,
+      "originalAlphaExact": true,
+      "changedPixels": 3885,
+      "changedBoundsExclusive": [
+        451,
+        270,
+        628,
+        376
+      ],
+      "equipmentGeometry": [
+        {
+          "terminalApprox": [
+            584,
+            344
+          ],
+          "innerFlangeApprox": [
+            606,
+            289
+          ],
+          "projectedBetweenEndCentersPx": 59.23681287847955,
+          "farTerminalOmittedAsOccluded": false
+        },
+        {
+          "terminalApprox": [
+            439,
+            318
+          ],
+          "innerFlangeApprox": [
+            469,
+            311
+          ],
+          "projectedBetweenEndCentersPx": 30.805843601498726,
+          "farTerminalOmittedAsOccluded": true
+        }
+      ],
+      "oraReopenedMergedRGBAExact": true,
+      "sourceStillExact": true
+    },
+    {
+      "pose": "4-finish",
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\face-pulls\\4-rope-rejected.png",
+      "sourceSha256": "eb07393aa9a70788874b70bfc48cdab5de143798082cc300d627fd3aeea7c628",
+      "humanConnectedBrightPixels": 189901,
+      "humanBrightPlus4pxGuardChangedPixels": 0,
+      "outsideEquipmentSupportRGBAExact": true,
+      "originalAlphaExact": true,
+      "changedPixels": 4869,
+      "changedBoundsExclusive": [
+        54,
+        240,
+        437,
+        301
+      ],
+      "equipmentGeometry": [
+        {
+          "terminalApprox": [
+            88,
+            275
+          ],
+          "innerFlangeApprox": [
+            158,
+            262
+          ],
+          "projectedBetweenEndCentersPx": 71.19691004531025,
+          "farTerminalOmittedAsOccluded": false
+        },
+        {
+          "terminalApprox": [
+            339,
+            267
+          ],
+          "innerFlangeApprox": [
+            419,
+            265
+          ],
+          "projectedBetweenEndCentersPx": 80.02499609497022,
+          "farTerminalOmittedAsOccluded": false
+        }
+      ],
+      "oraReopenedMergedRGBAExact": true,
+      "sourceStillExact": true
+    }
+  ],
+  "files": {
+    "1-start-equipment-editable.ora": "8d18b4310f54e15c24feb31084d44fa496889709ca3ea6c3c8f2368fa5ecda26",
+    "1-start-equipment-layer.png": "1886e84a17328e5be69f09fe55922bd1756f98877a0463211cb94a880b09bb67",
+    "1-start-equipment-mask.png": "7d70c6712afdc3c4ad169058fd480d09f955c435fbaa90fa377f436479a3a711",
+    "1-start-ergonomic-proposal.png": "8c067f5cbec22c1f1c01ba47927f11e3d0478e935b12b673af603ab2c90fced1",
+    "1-start-hands-original-top-proposal-bottom-2x.png": "218d6cdd3134df665a798c6ffc8c72c38c70ab5ead5dcf1883f0cd339711948b",
+    "1-start-human-contour-guard.png": "24e527ae43d0fc2ac5cac6a19cd9f635269961348643a4cea292c5083b2a7969",
+    "4-finish-equipment-editable.ora": "c6afc9f521dc2dbc4667906930c8bedd5d59174905aeba7e9b54db751e95c2aa",
+    "4-finish-equipment-layer.png": "76d4384141a07077634d7128bfe3a01dd32cfaab33db77acde7c05c58fde1687",
+    "4-finish-equipment-mask.png": "20b4bf3661c9f41fd452625e9798bf96850d57574aedb31bb5c8141c138b4ef3",
+    "4-finish-ergonomic-proposal.png": "628f0a3aab70f8a2d07b3cd7acc72240f79a825712eb1f3609fd23d03359c0e6",
+    "4-finish-hands-original-top-proposal-bottom-2x.png": "031860ef603262bcbaec97862e4a9c6b5aa364d0dbfec9aca909077a34a86304",
+    "4-finish-human-contour-guard.png": "b9f0ce01a09e400ea4c9b0c45d23e2056287e73e790514207bf7e1a82b4337e6",
+    "prepare-ergonomic-proposal.py": "a142ec3ec029003b7f1271247ed44c56bd01a178c1472df12bccc679b8356514"
+  }
+}

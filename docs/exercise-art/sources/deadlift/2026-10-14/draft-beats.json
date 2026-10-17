@@ -1,0 +1,38 @@
+[
+  {
+    "t": 1,
+    "label": "Set",
+    "cue": "Bar over midfoot; grip outside your shins.",
+    "image": "/form-frames/deadlift/1.webp"
+  },
+  {
+    "t": 1,
+    "label": "Brace",
+    "cue": "Brace your trunk; keep both arms straight.",
+    "image": "/form-frames/deadlift/2.webp"
+  },
+  {
+    "t": 0.3,
+    "label": "Clear knees",
+    "cue": "Drive up; keep the bar close.",
+    "image": "/form-frames/deadlift/3.webp"
+  },
+  {
+    "t": 0,
+    "label": "Stand",
+    "cue": "Stand tall; avoid leaning back or shrugging.",
+    "image": "/form-frames/deadlift/4.webp"
+  },
+  {
+    "t": 0,
+    "label": "Control",
+    "cue": "Hold your grip; control the return.",
+    "image": "/form-frames/deadlift/5.webp"
+  },
+  {
+    "t": 0.3,
+    "label": "Lower",
+    "cue": "Hinge back; guide the bar along legs.",
+    "image": "/form-frames/deadlift/6.webp"
+  }
+]

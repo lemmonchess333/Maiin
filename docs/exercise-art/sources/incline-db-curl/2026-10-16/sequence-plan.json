@@ -1,0 +1,73 @@
+{
+  "name": "Incline Dumbbell Curl",
+  "variation": "Alternating incline curl, near arm demonstrated",
+  "sourcePoseOrder": ["A", "A", "B", "B", "A", "A"],
+  "positions": [0, 0, 1, 1, 0, 0],
+  "commonCrop": [320, 224, 1248, 944],
+  "padding": [32, 32],
+  "dimensions": [992, 784],
+  "primary": ["Biceps"],
+  "secondary": ["Forearms"],
+  "beats": [
+    {
+      "pose": "A",
+      "label": "Set",
+      "cue": "Let the near arm hang beside you.",
+      "t": 0
+    },
+    {
+      "pose": "A",
+      "label": "Brace",
+      "cue": "Keep your upper arm beside the bench.",
+      "t": 0
+    },
+    {
+      "pose": "B",
+      "label": "Curl",
+      "cue": "Curl toward your shoulder; keep wrist straight.",
+      "t": 1
+    },
+    {
+      "pose": "B",
+      "label": "Squeeze",
+      "cue": "Pause without swinging your upper arm.",
+      "t": 1
+    },
+    {
+      "pose": "A",
+      "label": "Lower",
+      "cue": "Lower the weight under control.",
+      "t": 0
+    },
+    {
+      "pose": "A",
+      "label": "Alternate",
+      "cue": "Repeat with the opposite arm.",
+      "t": 0
+    }
+  ],
+  "setup": [
+    "Lie back on a low incline bench with both feet planted.",
+    "Hold one dumbbell in each hand and curl one arm at a time.",
+    "The near arm is demonstrated; repeat the same controlled curl on the other side."
+  ],
+  "advice": {
+    "tip": "Keep the working upper arm beside the bench and lower the dumbbell slowly before changing sides.",
+    "commonMistakes": [
+      "Swinging the upper arm to lift the weight.",
+      "Bending the wrist back.",
+      "Lifting the shoulder away from the bench."
+    ]
+  },
+  "findings": [
+    "This is an alternating variation: one complete near-arm curl is demonstrated and the setup/cues explicitly say to repeat the opposite side. The far arm holds its weight stationary beside the body; a simultaneous bilateral curl is not claimed.",
+    "The older bilateral hang request remains closed. The retained complete near-arm endpoint is reused for a new actual elbow-flexed source, authored with the canonical identity reference. The earlier rough projected-arm-shortening concern was not a measured3D result; intact native chains are reviewed directly.",
+    "One connected near-arm/weight region is inserted from the new native B at unchanged coordinates. All source pixels outside this documented moving region are taken from A, including the head, lower body, trainers, far grip and bench. No anatomy warp, fitted limb or head/shoe graft.",
+    "The same restrained-grey near hex dumbbell and closed grip are visible at both endpoints. Minor local contour/shading joins at the moving-region edge remain qualitative; exact3D joint positions are unverified.",
+    "Biceps primary#7B72E9 and forearms secondary#9590E0 use the original source tone and saturation. No additional spatial body shading.",
+    "Two genuine near-arm elbow endpoints occupy six cue slots; no six-unique-pose or continuous-animation claim. Strict certification remains unverified."
+  ],
+  "exerciseId": "incline-db-curl",
+  "version": "anatomy-v3-2026-10-16-native-moving-source-v1",
+  "physicalPoses": 2
+}

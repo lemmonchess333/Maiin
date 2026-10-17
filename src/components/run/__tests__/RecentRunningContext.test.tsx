@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import RecentRunningContext from "../RecentRunningContext";
+import PurposeDisclosure from "@/components/ui/PurposeDisclosure";
 import type { RunSummaryItem } from "@/hooks/useRunningStats";
 
 const state = vi.hoisted(() => ({
@@ -75,5 +76,27 @@ describe("recent running evidence states", () => {
         longestMinutes: 30,
       })
     );
+  });
+});
+
+describe("recent running's disclosure", () => {
+  /* Its summary is a flex row, which loses the browser's own triangle, so
+     closed it read as a heading with nothing under it. It carries the
+     marker "Why this run" and "The weeks ahead" carry. */
+  const marker = (summary: Element | null) =>
+    (summary?.className ?? "")
+      .split(/\s+/)
+      .filter((name) => /(^|:)before:content-/.test(name))
+      .sort();
+
+  it("shows the house +/− marker", () => {
+    render(<RecentRunningContext />);
+    const own = marker(screen.getByText("Recent running").closest("summary"));
+    render(
+      <PurposeDisclosure label="Why this run">Easy day.</PurposeDisclosure>
+    );
+    const house = marker(screen.getByText("Why this run").closest("summary"));
+    expect(own.length).toBeGreaterThan(0);
+    expect(own).toEqual(house);
   });
 });

@@ -1,0 +1,51 @@
+{
+  "exerciseId": "seated-calf-raise",
+  "mobile": [
+    {
+      "theme": "dark",
+      "actualViewport": [390, 844],
+      "decodedFrames": [1, 2, 3, 4, 5, 6],
+      "loop6to1": true,
+      "qualifyingObservations": 25
+    },
+    {
+      "theme": "light",
+      "actualViewport": [390, 844],
+      "decodedFrames": [1, 2, 3, 4, 5, 6],
+      "loop6to1": true,
+      "qualifyingObservations": 22
+    }
+  ],
+  "controls": {
+    "six": "/form-frames/seated-calf-raise/6.webp",
+    "nextWrap": "/form-frames/seated-calf-raise/1.webp",
+    "previousWrap": "/form-frames/seated-calf-raise/6.webp",
+    "slowerPressed": "true",
+    "pausePassed": true,
+    "consoleErrorsObserved": 0
+  },
+  "timing": {
+    "normalMedianMs": 1207,
+    "slowerMedianMs": 2410.5,
+    "ratio": 1.9971002485501244
+  },
+  "stagedOverridesDisabled": true,
+  "cardGenerator": "npm run art:cutouts -- --only=seated-calf-raise",
+  "registeredCardSha256": "4c6fb5a9ec6c6342fb1d37183a35b0b174c438b18edcc0387f00056d60252546",
+  "registeredFrameSha256": {
+    "1": "9b5c6fc7e48d0d1d6ddacf1e2c76178dabe97048d5c409721ee57c1b24537b3c",
+    "2": "ffaacfd445a4c28a1e45e2c0c8cee1d750abfd0f3abb7fbef8c08b02d0c2ffe8",
+    "3": "90cfa3269fba0395b92b5339989d5167fe0cccbdc5a92ee703e1ad426fe2cc36",
+    "4": "90cfa3269fba0395b92b5339989d5167fe0cccbdc5a92ee703e1ad426fe2cc36",
+    "5": "ffaacfd445a4c28a1e45e2c0c8cee1d750abfd0f3abb7fbef8c08b02d0c2ffe8",
+    "6": "9b5c6fc7e48d0d1d6ddacf1e2c76178dabe97048d5c409721ee57c1b24537b3c"
+  },
+  "priorArtworkPreservation": {
+    "previousArtworkFiles": 875,
+    "previousArtworkHashesExact": true,
+    "currentArtworkFiles": 882,
+    "newArtworkFiles": 7,
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "projectChecks": "Required full verify in progress; normal Linux CI required before merge."
+}

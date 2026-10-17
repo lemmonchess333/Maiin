@@ -1,0 +1,21 @@
+{
+  "id": "pendlay-row",
+  "name": "Pendlay Row",
+  "category": "Back",
+  "muscleGroup": "Lats",
+  "secondaryMuscles": [
+    "Rhomboids",
+    "Rear Delts",
+    "Biceps",
+    "Core"
+  ],
+  "equipment": "Barbell",
+  "caloriesPerMinute": 7.5,
+  "instructions": [
+    "Set up with torso parallel to the floor, bar on the ground over midfoot.",
+    "Grip just outside your knees, back flat, core braced hard.",
+    "Explosively row the bar to your lower chest without lifting your torso.",
+    "Lower it back to a dead stop on the floor and reset every rep."
+  ],
+  "tip": "The dead stop only works if the torso stays parallel. If your back rounds at the bottom, the weight's too heavy — this movement punishes sloppy form fast."
+}

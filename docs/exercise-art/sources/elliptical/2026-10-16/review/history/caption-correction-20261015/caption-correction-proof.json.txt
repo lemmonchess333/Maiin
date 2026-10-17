@@ -1,0 +1,59 @@
+{
+  "scope": "Root-requested honest captions only. No image operation executed. Original58manifest/plan/recipe/provenance/inputmap and actual image-build proof preserved verbatim here.",
+  "beforeHashes": {
+    "sequence-plan.json": "f0498f3b439140764726bafdc10bed195a67e33a127e5778550209800a9d4317",
+    "candidate-payload-manifest.json": "2345f47b93addec8ae8f69a9e8d10b7208c82f67a27c9d37854e4524ccd74cfc",
+    "reproduce.py": "d672a76e01fd659b9c52e1ca5164d9c4ad629762220f2a6c49824dc427661235",
+    "source-provenance.json": "95a476435657edb6eb62f3d05d9f9a97c91c7d6f9c910d5f9f1edfd3af7173d7",
+    "input-file-hashes.json": "23c46395c052651f581599f33bce7ee96c854899e5039c97cb8cd4708c27945e",
+    "draft/pixel-and-editable-proof.json": "4c9ba4a81dd89e0a863abce05ccc9c2113fc725e05f75b96a3550c16d95a75e9"
+  },
+  "afterHashes": {
+    "sequence-plan.json": "7dbf525a4f8929f252842d6f860ff4da178de7e0ce83b646a874dbf4b9a591f6",
+    "candidate-payload-manifest.json": "3f9a0ff88c424774a3e8dd5077b98336c7f6ff0666fc147e9f9e363076538a30",
+    "reproduce.py": "3d5196148368e0b514c3f339013c3ce1e48cf7c22d497b1f4748b3207917a5a9",
+    "source-provenance.json": "8f0539c44d3ca137a5c5b8d9117165d5a99af712bbd61f9f72894d7b8ffcc96b",
+    "input-file-hashes.json": "45df6e35a3e53c7e51b776bdf98c54590015d408a06e592be26c22f626f6315c",
+    "draft/pixel-and-editable-proof.json": "4c9ba4a81dd89e0a863abce05ccc9c2113fc725e05f75b96a3550c16d95a75e9"
+  },
+  "changedCandidatePayloads": [
+    "input-file-hashes.json",
+    "reproduce.py",
+    "sequence-plan.json",
+    "source-provenance.json"
+  ],
+  "unchangedCandidatePayloads": 54,
+  "allArtworkLayersFramesOrasMasksOriginalsFixedRendererAndPaletteRecipeByteExact": true,
+  "imageOperationFunctionAstExact": true,
+  "actualOriginalPaletteBuildRecipeSha256": "d672a76e01fd659b9c52e1ca5164d9c4ad629762220f2a6c49824dc427661235",
+  "actualImageBuildProofKeptUnchanged": true,
+  "currentPortableRecipeOnlyCaptionStringsDiffer": true,
+  "sourceMechanismNearCrankPhasesDegrees": [
+    7.097770892719382,
+    195.21620599920197
+  ],
+  "sourceMechanismNearSoleScreens": [
+    [
+      754.8354247095668,
+      734.9828701277805
+    ],
+    [
+      426.8960697829137,
+      708.0642572468898
+    ]
+  ],
+  "sourceMechanismFarSoleScreens": [
+    [
+      467.21622387848447,
+      697.781501910916
+    ],
+    [
+      783.3320130929922,
+      718.8975795401133
+    ]
+  ],
+  "mechanismScope": "These are the assigned fixed equipment branches, not calibrated proof of anatomical near/far source-leg identity. Current captions make no opposite-leading-foot claim.",
+  "approval": false,
+  "imageRebuilds": 0,
+  "projectTestsOrRepoWrites": 0
+}

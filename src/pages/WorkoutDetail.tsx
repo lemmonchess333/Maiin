@@ -55,6 +55,9 @@ import CircleShareSheet from "@/components/social/CircleShareSheet";
 import WorkoutFeedShareSheet from "@/components/workout/WorkoutFeedShareSheet";
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
 import CorrectWorkoutSheet from "@/components/workout/CorrectWorkoutSheet";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
+import type { LiftUnit } from "@/lib/liftLoad";
+import { formatKitLoad } from "@/features/program/loadSteps";
 import {
   workoutTonnageKg,
   workoutTitle,
@@ -76,7 +79,9 @@ function workingSets(ex: Workout["exercises"][number]) {
  *  seconds, or a bodyweight set's reps. */
 function setResult(
   set: { reps: number; weightKg: number },
-  timed: boolean
+  timed: boolean,
+  unit: LiftUnit,
+  exerciseId: string | undefined
 ): { shown: string; spoken: string } {
   const reps = set.reps || 0;
   if (timed) return { shown: `${reps} s`, spoken: `${reps} seconds` };
@@ -84,9 +89,10 @@ function setResult(
   if (!(set.weightKg > 0)) {
     return { shown: `${reps} ${repWord}`, spoken: `${reps} ${repWord}` };
   }
+  const load = formatKitLoad(set.weightKg, unit, exerciseId);
   return {
-    shown: `${set.weightKg} kg × ${reps}`,
-    spoken: `${set.weightKg} kg, ${reps} ${repWord}`,
+    shown: `${load} × ${reps}`,
+    spoken: `${load}, ${reps} ${repWord}`,
   };
 }
 
@@ -100,6 +106,7 @@ function ExerciseRecord({
 }) {
   const sets = workingSets(exercise);
   const timed = exercise.repUnit === "seconds";
+  const liftUnit = useLiftUnit();
   return (
     <Card padded={false} className="@container">
       {/* The drawing gives way under 10em of card (double size): beside it
@@ -124,7 +131,7 @@ function ExerciseRecord({
         <ol className="border-t border-border/40">
           {sets.map((set, i) => {
             const type = asSetType(set.type);
-            const result = setResult(set, timed);
+            const result = setResult(set, timed, liftUnit, exercise.exerciseId);
             const kind =
               type === "dropset" || type === "failure"
                 ? `, ${SET_TYPE_COPY[type].name.toLowerCase()}`
@@ -179,6 +186,7 @@ function WorkoutDetailContent() {
   const { workoutId } = useParams<{ workoutId: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const liftUnit = useLiftUnit();
 
   const {
     status,
@@ -240,7 +248,7 @@ function WorkoutDetailContent() {
      (`liftFigures`), so the page you come back to says what it said. */
   const figures = [
     durationFigure(workout.durationMinutes ?? 0),
-    workFigure(tonnage, totalReps),
+    workFigure(tonnage, totalReps, liftUnit),
     setsFigure(totalSets),
   ];
 
@@ -390,6 +398,7 @@ function WorkoutDetailContent() {
         <CorrectWorkoutSheet
           uid={user.uid}
           workout={workout}
+          unit={liftUnit}
           onClose={() => setEditOpen(false)}
           onSaved={() => {
             setEditOpen(false);

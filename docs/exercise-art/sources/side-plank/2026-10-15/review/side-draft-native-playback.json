@@ -1,0 +1,271 @@
+{
+  "artifactName": "side-draft-native-playback.json",
+  "observations": [
+    {
+      "ms": 73723,
+      "src": "/draft/frames/4.webp",
+      "alt": "Side Plank, Brace",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        1480,
+        696
+      ],
+      "viewport": [
+        1580,
+        1200
+      ],
+      "sectionText": "BRACE 4/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 74929,
+      "src": "/draft/frames/5.webp",
+      "alt": "Side Plank, Breathe",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        1480,
+        696
+      ],
+      "viewport": [
+        1580,
+        1200
+      ],
+      "sectionText": "BREATHE 5/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 76135,
+      "src": "/draft/frames/6.webp",
+      "alt": "Side Plank, Time",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        1480,
+        696
+      ],
+      "viewport": [
+        1580,
+        1200
+      ],
+      "sectionText": "TIME 6/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 77348,
+      "src": "/draft/frames/1.webp",
+      "alt": "Side Plank, Support",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        1480,
+        696
+      ],
+      "viewport": [
+        1580,
+        1200
+      ],
+      "sectionText": "SUPPORT 1/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 78560,
+      "src": "/draft/frames/2.webp",
+      "alt": "Side Plank, Stack",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        1480,
+        696
+      ],
+      "viewport": [
+        1580,
+        1200
+      ],
+      "sectionText": "STACK 2/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 79765,
+      "src": "/draft/frames/3.webp",
+      "alt": "Side Plank, Align",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        1480,
+        696
+      ],
+      "viewport": [
+        1580,
+        1200
+      ],
+      "sectionText": "ALIGN 3/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 80972,
+      "src": "/draft/frames/4.webp",
+      "alt": "Side Plank, Brace",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        1480,
+        696
+      ],
+      "viewport": [
+        1580,
+        1200
+      ],
+      "sectionText": "BRACE 4/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 82178,
+      "src": "/draft/frames/5.webp",
+      "alt": "Side Plank, Breathe",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        1480,
+        696
+      ],
+      "viewport": [
+        1580,
+        1200
+      ],
+      "sectionText": "BREATHE 5/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 83390,
+      "src": "/draft/frames/6.webp",
+      "alt": "Side Plank, Time",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        1480,
+        696
+      ],
+      "viewport": [
+        1580,
+        1200
+      ],
+      "sectionText": "TIME 6/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 84596,
+      "src": "/draft/frames/1.webp",
+      "alt": "Side Plank, Support",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        1480,
+        696
+      ],
+      "viewport": [
+        1580,
+        1200
+      ],
+      "sectionText": "SUPPORT 1/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 85802,
+      "src": "/draft/frames/2.webp",
+      "alt": "Side Plank, Stack",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        1480,
+        696
+      ],
+      "viewport": [
+        1580,
+        1200
+      ],
+      "sectionText": "STACK 2/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 87008,
+      "src": "/draft/frames/3.webp",
+      "alt": "Side Plank, Align",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        1480,
+        696
+      ],
+      "viewport": [
+        1580,
+        1200
+      ],
+      "sectionText": "ALIGN 3/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 88213,
+      "src": "/draft/frames/4.webp",
+      "alt": "Side Plank, Brace",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        1480,
+        696
+      ],
+      "viewport": [
+        1580,
+        1200
+      ],
+      "sectionText": "BRACE 4/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 89420,
+      "src": "/draft/frames/5.webp",
+      "alt": "Side Plank, Breathe",
+      "playing": true,
+      "theme": "dark",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        1480,
+        696
+      ],
+      "viewport": [
+        1580,
+        1200
+      ],
+      "sectionText": "BREATHE 5/6\n\nPause\nNormal"
+    }
+  ]
+}

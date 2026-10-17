@@ -1,0 +1,390 @@
+{
+  "generator": "Built-in imagegen master and poses with black-background cleanups; authorized rigid equipment translations, master rail profiles and stationary sole contact copies",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "generationIds": {
+    "master": "ee666af0-8d75-46c1-a663-c429b8a334ee",
+    "middle": "cd5aad31-edff-4f16-a610-d8370d0be521",
+    "middleCleanup": "2a2c25b5-fea6-4297-90dc-d8e7cef1ff01",
+    "bottom": "013dcd0d-cf29-4396-897f-814634a4cbcf",
+    "bottomCleanup": "62acf6f7-cd68-473b-a12b-41e68af61f43"
+  },
+  "sequence": [1, 2, 3, 3, 2, 1],
+  "originals": [
+    {
+      "file": "originals/1-candidate.png",
+      "sha256": "57b28bd5157096c7f59492c301503e01844e1aeb67395053b64a5d8122f0a9cb"
+    },
+    {
+      "file": "originals/1-master.png",
+      "sha256": "7fb0044bd2d7a927717462cd5e8c0c5191db6104436ca51d22e8adc1a25052bc"
+    },
+    {
+      "file": "originals/2-middle.png",
+      "sha256": "473bfcf57dbf052611d233fdf843dc6760e9c634476120897c1affeef63c4bcf"
+    },
+    {
+      "file": "originals/2-clean.png",
+      "sha256": "456d28e925090e97b499a71ebe01a9d393556e1a680858952c030a7e960d5a96"
+    },
+    {
+      "file": "originals/3-bottom.png",
+      "sha256": "fc0ad4cf49baa5f16cb97097fd85814561d442f453441436aff5cda54deaf535"
+    },
+    {
+      "file": "originals/3-clean.png",
+      "sha256": "81dd0499a890b8566f254fd83391f2144f5edd39c848d7a367df487805cc5d5c"
+    }
+  ],
+  "sources": [
+    {
+      "file": "sources/1.png",
+      "sha256": "24549a3d8c1c3f618e6232e9f1e0b31cb012db1fa2dde20c803ca40486a849ce"
+    },
+    {
+      "file": "sources/2.png",
+      "sha256": "6f22a2ecee10c0e858cdb5c23d1c62c7a669a77bb88d1cbd3a39166200327a98"
+    },
+    {
+      "file": "sources/3.png",
+      "sha256": "ab8f02a46f8c66f6a3097b1254bcfdc5e81e191999f2451c1fd5251992c46e77"
+    },
+    {
+      "file": "sources/4.png",
+      "sha256": "ab8f02a46f8c66f6a3097b1254bcfdc5e81e191999f2451c1fd5251992c46e77"
+    },
+    {
+      "file": "sources/5.png",
+      "sha256": "6f22a2ecee10c0e858cdb5c23d1c62c7a669a77bb88d1cbd3a39166200327a98"
+    },
+    {
+      "file": "sources/6.png",
+      "sha256": "24549a3d8c1c3f618e6232e9f1e0b31cb012db1fa2dde20c803ca40486a849ce"
+    }
+  ],
+  "framing": {
+    "files": [
+      "equipment-pilot-1.png",
+      "equipment-pilot-2.png",
+      "equipment-pilot-3.png"
+    ],
+    "sequence": [1, 2, 3, 3, 2, 1],
+    "contacts": [
+      {
+        "left": 305,
+        "top": 1280,
+        "width": 180,
+        "height": 60
+      },
+      {
+        "left": 490,
+        "top": 1320,
+        "width": 165,
+        "height": 60
+      }
+    ],
+    "contactTopFadePixels": 10,
+    "crop": {
+      "left": 0,
+      "top": 0,
+      "width": 1024,
+      "height": 1472
+    },
+    "padding": {
+      "left": 24,
+      "right": 24,
+      "top": 24,
+      "bottom": 0,
+      "background": "#000"
+    },
+    "scope": "Common crop/padding and planted shoe contact copies. Moving anatomy never transformed."
+  },
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "leftSole": {
+          "x": 379,
+          "y": 1355
+        },
+        "rightSole": {
+          "x": 573,
+          "y": 1395
+        },
+        "towerBase": {
+          "x": 731,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 169,
+        "rightShoeWidth": 142,
+        "towerBaseWidth": 145
+      },
+      "sha256": "24549a3d8c1c3f618e6232e9f1e0b31cb012db1fa2dde20c803ca40486a849ce"
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "leftSole": {
+          "x": 379,
+          "y": 1355
+        },
+        "rightSole": {
+          "x": 573,
+          "y": 1395
+        },
+        "towerBase": {
+          "x": 731,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 169,
+        "rightShoeWidth": 142,
+        "towerBaseWidth": 146
+      },
+      "sha256": "6f22a2ecee10c0e858cdb5c23d1c62c7a669a77bb88d1cbd3a39166200327a98"
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "leftSole": {
+          "x": 379,
+          "y": 1355
+        },
+        "rightSole": {
+          "x": 573,
+          "y": 1395
+        },
+        "towerBase": {
+          "x": 731,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 169,
+        "rightShoeWidth": 142,
+        "towerBaseWidth": 146
+      },
+      "sha256": "ab8f02a46f8c66f6a3097b1254bcfdc5e81e191999f2451c1fd5251992c46e77"
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "leftSole": {
+          "x": 379,
+          "y": 1355
+        },
+        "rightSole": {
+          "x": 573,
+          "y": 1395
+        },
+        "towerBase": {
+          "x": 731,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 169,
+        "rightShoeWidth": 142,
+        "towerBaseWidth": 146
+      },
+      "sha256": "ab8f02a46f8c66f6a3097b1254bcfdc5e81e191999f2451c1fd5251992c46e77"
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "leftSole": {
+          "x": 379,
+          "y": 1355
+        },
+        "rightSole": {
+          "x": 573,
+          "y": 1395
+        },
+        "towerBase": {
+          "x": 731,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 169,
+        "rightShoeWidth": 142,
+        "towerBaseWidth": 146
+      },
+      "sha256": "6f22a2ecee10c0e858cdb5c23d1c62c7a669a77bb88d1cbd3a39166200327a98"
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "leftSole": {
+          "x": 379,
+          "y": 1355
+        },
+        "rightSole": {
+          "x": 573,
+          "y": 1395
+        },
+        "towerBase": {
+          "x": 731,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 169,
+        "rightShoeWidth": 142,
+        "towerBaseWidth": 145
+      },
+      "sha256": "24549a3d8c1c3f618e6232e9f1e0b31cb012db1fa2dde20c803ca40486a849ce"
+    }
+  ],
+  "equipment": {
+    "files": ["1-master.png", "2-clean.png", "3-clean.png"],
+    "drops": [0, 150, 350],
+    "pieces": [
+      {
+        "left": 49,
+        "top": 331,
+        "width": 227,
+        "height": 216
+      },
+      {
+        "left": 765,
+        "top": 311,
+        "width": 213,
+        "height": 238
+      },
+      {
+        "left": 276,
+        "top": 430,
+        "width": 27,
+        "height": 20
+      },
+      {
+        "left": 726,
+        "top": 430,
+        "width": 39,
+        "height": 20
+      }
+    ],
+    "scope": "Exact source plates/carriages/sleeves translated together; fixed unobstructed frame strips and rail profile restored. Central shaft remains native behind hands/neck to preserve anatomy occlusion. Native grip and shaft alignment review required; no anatomy transformed."
+  },
+  "equipmentChecks": {
+    "pieces": [
+      {
+        "left": 49,
+        "top": 331,
+        "width": 131,
+        "height": 216
+      },
+      {
+        "left": 849,
+        "top": 331,
+        "width": 129,
+        "height": 216
+      },
+      {
+        "left": 237,
+        "top": 334,
+        "width": 39,
+        "height": 176
+      },
+      {
+        "left": 765,
+        "top": 313,
+        "width": 54,
+        "height": 207
+      }
+    ],
+    "rows": [
+      {
+        "pose": 1,
+        "piece": 0,
+        "drop": 0,
+        "exactPixels": true
+      },
+      {
+        "pose": 1,
+        "piece": 1,
+        "drop": 0,
+        "exactPixels": true
+      },
+      {
+        "pose": 1,
+        "piece": 2,
+        "drop": 0,
+        "exactPixels": true
+      },
+      {
+        "pose": 1,
+        "piece": 3,
+        "drop": 0,
+        "exactPixels": true
+      },
+      {
+        "pose": 2,
+        "piece": 0,
+        "drop": 150,
+        "exactPixels": true
+      },
+      {
+        "pose": 2,
+        "piece": 1,
+        "drop": 150,
+        "exactPixels": true
+      },
+      {
+        "pose": 2,
+        "piece": 2,
+        "drop": 150,
+        "exactPixels": true
+      },
+      {
+        "pose": 2,
+        "piece": 3,
+        "drop": 150,
+        "exactPixels": true
+      },
+      {
+        "pose": 3,
+        "piece": 0,
+        "drop": 350,
+        "exactPixels": true
+      },
+      {
+        "pose": 3,
+        "piece": 1,
+        "drop": 350,
+        "exactPixels": true
+      },
+      {
+        "pose": 3,
+        "piece": 2,
+        "drop": 350,
+        "exactPixels": true
+      },
+      {
+        "pose": 3,
+        "piece": 3,
+        "drop": 350,
+        "exactPixels": true
+      }
+    ],
+    "scope": "Source-visible plate and carriage rectangles excluding fixed upright occlusion, exact RGB; one common vertical translation per pose."
+  },
+  "stationaryCopies": [
+    {
+      "left": 305,
+      "top": 1280,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "left": 490,
+      "top": 1320,
+      "width": 165,
+      "height": 60
+    }
+  ],
+  "losslessPixelsVerified": true
+}

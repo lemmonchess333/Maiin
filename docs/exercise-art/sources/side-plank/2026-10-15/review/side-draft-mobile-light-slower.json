@@ -1,0 +1,157 @@
+{
+  "artifactName": "side-draft-mobile-light-slower.json",
+  "observations": [
+    {
+      "ms": 239748,
+      "src": "/draft/frames/6.webp",
+      "alt": "Side Plank, Time",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        334,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "TIME 6/6\n\nPause\nSlower"
+    },
+    {
+      "ms": 242150,
+      "src": "/draft/frames/1.webp",
+      "alt": "Side Plank, Support",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        334,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "SUPPORT 1/6\n\nPause\nSlower"
+    },
+    {
+      "ms": 244556,
+      "src": "/draft/frames/2.webp",
+      "alt": "Side Plank, Stack",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        334,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "STACK 2/6\n\nPause\nSlower"
+    },
+    {
+      "ms": 246958,
+      "src": "/draft/frames/3.webp",
+      "alt": "Side Plank, Align",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        334,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "ALIGN 3/6\n\nPause\nSlower"
+    },
+    {
+      "ms": 249362,
+      "src": "/draft/frames/4.webp",
+      "alt": "Side Plank, Brace",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        334,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "BRACE 4/6\n\nPause\nSlower"
+    },
+    {
+      "ms": 251768,
+      "src": "/draft/frames/5.webp",
+      "alt": "Side Plank, Breathe",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        334,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "BREATHE 5/6\n\nPause\nSlower"
+    },
+    {
+      "ms": 254174,
+      "src": "/draft/frames/6.webp",
+      "alt": "Side Plank, Time",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        334,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "TIME 6/6\n\nPause\nSlower"
+    },
+    {
+      "ms": 256577,
+      "src": "/draft/frames/1.webp",
+      "alt": "Side Plank, Support",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1480,
+      "naturalHeight": 696,
+      "display": [
+        334,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "SUPPORT 1/6\n\nPause\nSlower"
+    }
+  ]
+}

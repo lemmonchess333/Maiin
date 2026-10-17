@@ -15,6 +15,8 @@ vi.mock("@/lib/exerciseDemo", () => ({
 vi.mock("@/lib/bodyRig", () => ({ getBodyDemo: () => null }));
 vi.mock("@/lib/formGuides", () => ({
   getFormBeats: () => null,
+  getFormSetup: () => null,
+  getFormAdvice: () => null,
   getDemoMuscleKey: () => null,
 }));
 vi.mock("@/lib/exercises", () => ({ EXERCISES: [] }));

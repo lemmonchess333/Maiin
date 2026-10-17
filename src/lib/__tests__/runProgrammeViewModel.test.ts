@@ -6,10 +6,12 @@
 import { describe, it, expect } from "vitest";
 import {
   raceDistanceLabel,
-  compactRunLabel,
+  runStripLabel,
+  runStripLines,
   buildRaceCockpitViewModel,
   resolveRunPlanSurface,
   hasHybridInterference,
+  runCardStatus,
 } from "@/lib/runProgrammeViewModel";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ProgramState } from "@/features/program/programTypes";
@@ -28,18 +30,69 @@ describe("raceDistanceLabel", () => {
   });
 });
 
-describe("compactRunLabel", () => {
-  it("collapses templates to short tile tokens (not full truncated names)", () => {
-    expect(compactRunLabel(tmpl("easy_30"))).toBe("30m");
-    expect(compactRunLabel(tmpl("tempo_20"))).toBe("Tempo");
-    expect(compactRunLabel(tmpl("5x1k"))).toBe("5×1K");
-    expect(compactRunLabel(tmpl("8x400"))).toBe("8×400");
-    expect(compactRunLabel(tmpl("long_15k"))).toBe("15K");
-    expect(compactRunLabel(tmpl("long_10k"))).toBe("10K");
-    expect(compactRunLabel(tmpl("marathon_race"))).toBe("Race");
+describe("runStripLabel", () => {
+  // Run21 (2): the week strip names the session. "30m" said neither that a
+  // run was easy nor that it ended with strides.
+  it("names the session, so an easy run and one with strides read apart", () => {
+    expect(runStripLabel(tmpl("easy_30"), "km")).toBe("Easy 30");
+    expect(runStripLabel(tmpl("easy_30_strides"), "km")).toBe(
+      "Easy 30 + strides"
+    );
+    expect(runStripLabel(tmpl("tempo_20"), "km")).toBe("20 Min Tempo");
+    expect(runStripLabel(tmpl("5x1k"), "km")).toBe("5×1K Intervals");
+    expect(runStripLabel(tmpl("long_15k"), "km")).toBe("Long 15K");
+    expect(runStripLabel(tmpl("marathon_race"), "km")).toBe("Marathon Race");
   });
   it("falls back to 'Run' when no template", () => {
-    expect(compactRunLabel(null)).toBe("Run");
+    expect(runStripLabel(null, "km")).toBe("Run");
+  });
+
+  it("names a long run in miles for a reader in miles, and nothing else", () => {
+    expect(runStripLabel(tmpl("long_15k"), "mi")).toBe("Long 9.3 mi");
+    expect(runStripLabel(tmpl("easy_30"), "mi")).toBe("Easy 30");
+    expect(runStripLabel(tmpl("5x1k"), "mi")).toBe("5×1K Intervals");
+  });
+});
+
+describe("runStripLines", () => {
+  // The strip sets a run's name on two lines, each ending in "…" on its own
+  // when it doesn't fit, so where the break goes decides what a narrow cell
+  // keeps.
+  it("breaks where the two lines come out most even", () => {
+    expect(runStripLines("Easy 30")).toEqual(["Easy", "30"]);
+    expect(runStripLines("20 Min Tempo")).toEqual(["20 Min", "Tempo"]);
+    expect(runStripLines("4×1K Intervals")).toEqual(["4×1K", "Intervals"]);
+    expect(runStripLines("Long 15K")).toEqual(["Long", "15K"]);
+  });
+  it("keeps '+ strides' together", () => {
+    expect(runStripLines("Easy 30 + strides")).toEqual([
+      "Easy 30",
+      "+ strides",
+    ]);
+  });
+  it("breaks a hyphenated word after its hyphen", () => {
+    expect(runStripLines("Medium-long 60")).toEqual(["Medium-", "long 60"]);
+  });
+  it("takes the later break on a tie, so a race keeps its own line", () => {
+    expect(runStripLines("Half Marathon Race")).toEqual([
+      "Half Marathon",
+      "Race",
+    ]);
+  });
+  it("keeps a one-word name on one line, and an empty one on none", () => {
+    expect(runStripLines("Run")).toEqual(["Run"]);
+    expect(runStripLines("")).toEqual([]);
+  });
+  it("loses nothing of any run's name", () => {
+    for (const t of RUN_TEMPLATES) {
+      const lines = runStripLines(t.name);
+      expect(lines.length, t.name).toBeGreaterThan(0);
+      expect(lines.length, t.name).toBeLessThanOrEqual(2);
+      const [a, b] = lines;
+      const rejoined =
+        b === undefined ? a : a.endsWith("-") ? a + b : `${a} ${b}`;
+      expect(rejoined).toBe(t.name);
+    }
   });
 });
 
@@ -164,5 +217,76 @@ describe("hasHybridInterference (scheduler's 'UI can flag it' note, wired)", () 
       false
     );
     expect(hasHybridInterference({ hasLift: true, runType: null })).toBe(false);
+  });
+});
+
+describe("runCardStatus", () => {
+  // A week from Monday 19 October: runs on Tuesday, Wednesday and Saturday.
+  const keys = { today: "2026-10-19", tomorrow: "2026-10-20" };
+  const day = (
+    dateKey: string,
+    run: "none" | "to do" | "done" | "skipped" = "none"
+  ) => ({
+    dateKey,
+    run: {
+      runDay: run === "none" ? null : { id: dateKey },
+      isCompleted: run === "done",
+      isTerminal: run === "done" || run === "skipped",
+    },
+  });
+  const week = [
+    day("2026-10-19"),
+    day("2026-10-20", "to do"),
+    day("2026-10-21", "to do"),
+    day("2026-10-22"),
+    day("2026-10-23"),
+    day("2026-10-24", "to do"),
+    day("2026-10-25"),
+  ];
+
+  it("says Up next for one run only: the first still to do", () => {
+    expect(runCardStatus("2026-10-20", keys, week)).toBe("Tomorrow");
+    expect(runCardStatus("2026-10-21", keys, week)).toBe("Upcoming");
+    expect(runCardStatus("2026-10-24", keys, week)).toBe("Upcoming");
+  });
+
+  it("gives Up next to a later run when nothing comes before it", () => {
+    const later = [
+      day("2026-10-19"),
+      day("2026-10-20"),
+      day("2026-10-21"),
+      day("2026-10-22", "to do"),
+      day("2026-10-23"),
+      day("2026-10-24", "to do"),
+    ];
+    expect(runCardStatus("2026-10-22", keys, later)).toBe("Up next");
+    expect(runCardStatus("2026-10-24", keys, later)).toBe("Upcoming");
+  });
+
+  it("passes over runs already done or skipped", () => {
+    const cleared = [
+      day("2026-10-19", "done"),
+      day("2026-10-20"),
+      day("2026-10-21", "skipped"),
+      day("2026-10-22", "to do"),
+    ];
+    expect(runCardStatus("2026-10-22", keys, cleared)).toBe("Up next");
+  });
+
+  it("counts today's run still to do as the one up next", () => {
+    const today = [day("2026-10-19", "to do"), ...week.slice(1)];
+    expect(runCardStatus("2026-10-19", keys, today)).toBe("Due today");
+    expect(runCardStatus("2026-10-21", keys, today)).toBe("Upcoming");
+  });
+
+  it("leaves a missed run from earlier in the week out of it", () => {
+    const missed = [
+      day("2026-10-17", "to do"),
+      day("2026-10-19"),
+      day("2026-10-20"),
+      day("2026-10-21", "to do"),
+    ];
+    expect(runCardStatus("2026-10-17", keys, missed)).toBe("Pending");
+    expect(runCardStatus("2026-10-21", keys, missed)).toBe("Up next");
   });
 });

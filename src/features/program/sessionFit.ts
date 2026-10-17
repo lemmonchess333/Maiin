@@ -14,20 +14,23 @@
  *   1. isolations' sets, down to two each, the largest first and then from
  *      the end of the day;
  *   2. other compounds' sets, down to two, the same way;
- *   3. isolations dropped, one at a time: first those whose muscles are
- *      still worked on two days a week (`weeklyFrequency.ts`), then the
- *      lifts added for the two days, then those whose muscles still get
- *      some direct work (their primary muscle's) in the week;
+ *   3. isolations dropped, one at a time, whose muscles are still worked on
+ *      two days a week (`weeklyFrequency.ts`), then any lift added for the
+ *      two days that costs no muscle a day;
  *   4. main lifts' sets, down to two, the day's first main lift last;
- *   5. other compounds dropped, on 3's first and last conditions;
- *   6. isolations, then other compounds, dropped, a muscle's last included.
+ *   5. isolations dropped: the lifts added for the two days, then those
+ *      whose muscles still get some direct work (their primary muscle's) in
+ *      the week;
+ *   6. other compounds dropped, on 3's condition and then on 5's last;
+ *   7. isolations, then other compounds, dropped, a muscle's last included.
  *
  * Time wins in the end, as the plan promised; a muscle's last direct lift is
  * only kept while something else can give way, so a plan keeps its one calf
- * slot while it can. A small muscle's second day gives way before a main
- * lift's sets do, so a short session never trades its main lifts for a
- * second day of lateral raises; a lift whose muscles are worked on two other
- * days goes before one that is a muscle's second. Credit from other lifts
+ * slot while it can. A main lift's third set gives way before a muscle's
+ * second day (Lift11): every muscle on two days a week is Lift4 (5)'s first
+ * rule and two sets its floor for a main lift, so a 45-minute session keeps
+ * the calves' and abs' second day while a main lift can go to two sets; a
+ * lift whose muscles are worked on two other days goes before either. Credit from other lifts
  * counts toward the two days, as the volume model counts it, but not as
  * direct work, or a leg curl's credit to the calves would let every calf
  * raise go. A drop takes the latest lift in the day whose going makes the
@@ -92,38 +95,83 @@ export function sessionLengthOption(
  * has no warm-up on day one and three or four sets of one a few weeks later,
  * and the plan has to fit those weeks too, so each loaded lift is priced at
  * the heavier of its load and that estimate (`warmupRamp` saturates: a
- * barbell squat's ramp is four sets at 60 kg and at 160).
+ * barbell squat's ramp is four sets at 60 kg and at 160). A lift loaded past
+ * the estimate gains warm-up sets the fit never priced; a day they take over
+ * its length is re-fitted when the week moves on (Lift7,
+ * `warmupsOutgrewFit`).
  */
 const ESTABLISHED: StartingLoadContext = {
   bodyweightKg: 80,
   experience: "intermediate",
 };
 
-/** A session's seconds as the plan prices it. */
+/** The established lifter's load for a lift (`ESTABLISHED`). */
+function establishedLoad(ex: ProgramExercise): number {
+  return startingWeightForExercise(
+    ex.exerciseId,
+    ex.movementCategory,
+    ESTABLISHED,
+    ex.isAccessory === true,
+    undefined,
+    ex.repUnit
+  );
+}
+
+/** Given a loaded lift and the weight the fit prices its warm-up at, the
+ *  weight to price it at instead. */
+export type WarmupPricing = (ex: ProgramExercise, priced: number) => number;
+
+let warmupPricing: WarmupPricing | null = null;
+
+/**
+ * A measurement seam, which the app never sets: the training simulator
+ * prices warm-ups another way to compare it with this one (decisions.md
+ * L5, F8). Returns the function that puts the fit's own pricing back.
+ *
+ * @oracle — test-only by design, permanently: the simulator's measuring
+ * suite is its one caller. The app always prices with the fit's own.
+ */
+export function setWarmupPricing(pricing: WarmupPricing | null): () => void {
+  const previous = warmupPricing;
+  warmupPricing = pricing;
+  return () => {
+    warmupPricing = previous;
+  };
+}
+
+/** The weight the fit prices a loaded lift's warm-up at: the heavier of its
+ *  load and the established lifter's, or what a measurement's pricing makes
+ *  of that (`setWarmupPricing`). */
+function pricedWarmupLoad(ex: ProgramExercise): number {
+  const priced = Math.max(ex.weight, establishedLoad(ex));
+  return warmupPricing ? warmupPricing(ex, priced) : priced;
+}
+
+/** A session's seconds as the plan prices it: each loaded lift's warm-up at
+ *  `pricedWarmupLoad`, or at the load `warmupLoad` gives. */
 function plannedSeconds(
   exercises: readonly ProgramExercise[],
-  minutes: number
+  minutes: number,
+  warmupLoad: (ex: ProgramExercise) => number = pricedWarmupLoad
 ): number {
   return estimateSessionSeconds(
     exercises.map((ex) =>
-      ex.weight > 0
-        ? {
-            ...ex,
-            weight: Math.max(
-              ex.weight,
-              startingWeightForExercise(
-                ex.exerciseId,
-                ex.movementCategory,
-                ESTABLISHED,
-                ex.isAccessory === true,
-                undefined,
-                ex.repUnit
-              )
-            ),
-          }
-        : ex
+      ex.weight > 0 ? { ...ex, weight: warmupLoad(ex) } : ex
     ),
     { sessionMinutes: minutes }
+  );
+}
+
+/** Whether a session fits its time so priced, and the 18-set ceiling. */
+function fitsPriced(
+  exercises: readonly ProgramExercise[],
+  minutes: number,
+  warmupLoad?: (ex: ProgramExercise) => number
+): boolean {
+  const sets = exercises.reduce((n, e) => n + (e.sets ?? 0), 0);
+  return (
+    sets <= MAX_SETS_PER_SESSION &&
+    plannedSeconds(exercises, minutes, warmupLoad) <= minutes * 60
   );
 }
 
@@ -133,10 +181,24 @@ export function sessionFits(
   exercises: readonly ProgramExercise[],
   minutes: number
 ): boolean {
-  const sets = exercises.reduce((n, e) => n + (e.sets ?? 0), 0);
+  return fitsPriced(exercises, minutes);
+}
+
+/**
+ * Whether a session has come to run over its length because its lifts'
+ * warm-ups grew with their weights (Lift7): it no longer fits, and it would
+ * with each loaded lift's warm-up priced as the plan prices a new lift's, at
+ * the established lifter's load. A session over for any other reason, lifts
+ * the person added or a short one the fit could not bring inside its length,
+ * is over at that price too.
+ */
+export function warmupsOutgrewFit(
+  exercises: readonly ProgramExercise[],
+  minutes: number
+): boolean {
   return (
-    sets <= MAX_SETS_PER_SESSION &&
-    plannedSeconds(exercises, minutes) <= minutes * 60
+    !sessionFits(exercises, minutes) &&
+    fitsPriced(exercises, minutes, establishedLoad)
   );
 }
 
@@ -151,8 +213,8 @@ function kindOf(ex: ProgramExercise): Kind {
 
 /** What a drop must leave the week: each muscle's days (`weeklyFrequency`),
  *  its direct work, or nothing; or, for "extra", the lift must be one added
- *  for the two days. */
-type Keeps = "frequency" | "extra" | "coverage" | "nothing";
+ *  for the two days, and for "spare", one added that costs no muscle a day. */
+type Keeps = "frequency" | "spare" | "extra" | "coverage" | "nothing";
 
 /** Whether a drop leaves the week what `rule` asks: `dropped` is the lift,
  *  `without` the day after it. */
@@ -197,7 +259,9 @@ function fitDay(
       .map((_, i) => i)
       .filter(
         (i) =>
-          (keeps === "extra" || kindOf(exercises[i]) === kind) &&
+          (keeps === "extra" ||
+            keeps === "spare" ||
+            kindOf(exercises[i]) === kind) &&
           guard!(exercises[i], without(i), keeps)
       );
     if (candidates.length === 0) return false;
@@ -218,13 +282,14 @@ function fitDay(
     ...(guard
       ? [
           () => dropOne("isolation", "frequency"),
-          () => dropOne("isolation", "extra"),
-          () => dropOne("isolation", "coverage"),
+          () => dropOne("isolation", "spare"),
         ]
       : []),
     () => cutSet("main"),
     ...(guard
       ? [
+          () => dropOne("isolation", "extra"),
+          () => dropOne("isolation", "coverage"),
           () => dropOne("compound", "frequency"),
           () => dropOne("compound", "coverage"),
           () => dropOne("isolation", "nothing"),
@@ -272,18 +337,34 @@ export function fitSessionsToTime(
   const days = [...workouts];
   const isExtra = (ex: ProgramExercise) =>
     ex.instanceId !== undefined && extras.has(ex.instanceId);
+  /* A muscle whose only direct work is added lifts (side delts in a full
+     body week: its lateral raises are both added for the two days) is
+     worked by them, so its last one is kept while something else can give
+     way, as any muscle's last direct lift is. Counted as added only, each
+     would go before a main lift lost a set, and the muscle would have none. */
+  const addedOnly = new Set(
+    [...trainedMuscles(days, new Set())].filter(
+      (m) => !trainedMuscles(days, extras).has(m)
+    )
+  );
+  const worked = (week: readonly WorkoutDay[]) => {
+    const all = trainedMuscles(week, new Set());
+    const base = trainedMuscles(week, extras);
+    return new Set([...all].filter((m) => base.has(m) || addedOnly.has(m)));
+  };
   const fitOne = (i: number): WorkoutDay => {
-    const trained = trainedMuscles(days, extras);
+    const trained = worked(days);
     const frequency = daysPerMuscle(days);
     return fitDay(days[i], minutes, (dropped, without, keeps) => {
       if (keeps === "nothing") return true;
-      if (keeps === "extra") return isExtra(dropped);
       const week = days.map((d, j) =>
         j === i ? { ...d, exercises: without } : d
       );
-      const after = trainedMuscles(week, extras);
+      const after = worked(week);
       if (![...trained].every((m) => after.has(m))) return false;
+      if (keeps === "extra") return isExtra(dropped);
       if (keeps === "coverage") return true;
+      if (keeps === "spare" && !isExtra(dropped)) return false;
       const afterDays = daysPerMuscle(week);
       return [...frequency].every(
         ([m, n]) => (afterDays.get(m) ?? 0) >= Math.min(n, WEEKLY_FREQUENCY)

@@ -284,6 +284,30 @@ describe("the legs while the runs build (Lift4 (10))", () => {
   });
 });
 
+describe("a recent race (adaptive paces §10.2)", () => {
+  it("round-trips the distance and the time as typed, and rejects others", () => {
+    const answered = makeDraft({
+      recentRaceDistance: "10k",
+      recentRaceMinutes: "48",
+      recentRaceSeconds: "",
+    });
+    saveOnboardingDraft(UID_A, answered);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(answered);
+    for (const bad of [
+      { recentRaceDistance: "half" },
+      { recentRaceMinutes: 48 },
+      { recentRaceSeconds: null },
+    ]) {
+      expect(
+        isValidDraft(
+          { ...makeDraft(), ...bad } as unknown as OnboardingDraft,
+          MAX_STEP
+        )
+      ).toBe(false);
+    }
+  });
+});
+
 describe("activity choices", () => {
   it("round-trips running-only and remembers lifting choices for switching back", () => {
     const draft = makeDraft({
@@ -301,5 +325,35 @@ describe("activity choices", () => {
     expect(
       isValidDraft({ ...makeDraft(), liftDaysPreference: 0 }, MAX_STEP)
     ).toBe(false);
+  });
+});
+
+describe("optional nutrition answers", () => {
+  it.each([0.25, 0.5, 0.75] as const)(
+    "round-trips the goal and %s kg weekly pace",
+    (paceKgPerWeek) => {
+      const draft = makeDraft({ goalWeightText: "70.5", paceKgPerWeek });
+      saveOnboardingDraft(UID_A, draft);
+      expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(draft);
+    }
+  );
+
+  it("keeps a partial or invalid goal answer so it can be corrected after reload", () => {
+    const draft = makeDraft({ goalWeightText: "70abc", paceKgPerWeek: 0.25 });
+    saveOnboardingDraft(UID_A, draft);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(draft);
+  });
+
+  it("keeps older drafts without the optional goal or pace", () => {
+    expect(isValidDraft(makeDraft(), MAX_STEP)).toBe(true);
+  });
+
+  it.each([
+    { goalWeightText: 70 },
+    { paceKgPerWeek: "0.5" },
+    { paceKgPerWeek: 1 },
+    { paceKgPerWeek: NaN },
+  ])("rejects malformed optional nutrition metadata: %j", (updates) => {
+    expect(isValidDraft({ ...makeDraft(), ...updates }, MAX_STEP)).toBe(false);
   });
 });

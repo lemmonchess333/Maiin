@@ -1,0 +1,99 @@
+{
+  "passed": true,
+  "reviewedAt": "2026-10-14T22:43:37.482148+00:00",
+  "exerciseId": "ab-wheel",
+  "source": "Actual registered registry/placards/public paths; only react/tailwind plugins attached, no staged overlay",
+  "physicalPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "newImageRequests": 3,
+  "nativeDimensions": [1448, 924],
+  "reference": 1,
+  "cueSha256": "8a20afdb5f64d37621738f6769da6b122784481666f8b8174e72365778c305db",
+  "mobile": {
+    "light": {
+      "viewport": [390, 844],
+      "frames": [1, 2, 3, 4, 5, 6],
+      "loop6to1": true,
+      "decodedDimensions": [1448, 924],
+      "observations": 18
+    },
+    "dark": {
+      "viewport": [390, 844],
+      "frames": [1, 2, 3, 4, 5, 6],
+      "loop6to1": true,
+      "decodedDimensions": [1448, 924],
+      "observations": 59
+    }
+  },
+  "controls": {
+    "selectSix": "/form-frames/ab-wheel/6.webp",
+    "nextWrap": "/form-frames/ab-wheel/1.webp",
+    "previousWrap": "/form-frames/ab-wheel/6.webp",
+    "slowerPressed": "true",
+    "consoleErrors": [],
+    "preparation": "Preparation: Kneel on a pad holding the ab wheel with both hands under your shoulders.",
+    "pauseObserved": true,
+    "viewport": [390, 844],
+    "card": {
+      "complete": true,
+      "natural": [480, 479],
+      "src": "/form-art/ab-wheel.webp"
+    }
+  },
+  "timing": {
+    "normalMedianMs": 1207.0,
+    "slowerMedianMs": 2407.0,
+    "ratio": 1.9942004971002485
+  },
+  "publicCardByteExactToReviewed": true,
+  "cardDimensions": [480, 479],
+  "publicFramesByteExactToReviewed": 6,
+  "registeredMasterAndPreparedSourceByteExact": true,
+  "previousArtworkPreserved": 903,
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "observedRepositoryCounts": {
+    "approvedExerciseSets": 121,
+    "formArtCards": 130,
+    "publicArtworkFiles": 910
+  },
+  "baselineHead": "82d6d829ad20ad3c8924933f736ad615b83054f6",
+  "baselineExitCode": 1,
+  "fullWindowsBaselineNonGreen": true,
+  "reviewedAssetHashes": {
+    "integrated-vite.config.mjs": "b6a88fd00a3460f0bcb9fa5eb7f75e464eb5422fefde4a78bebb938548178d48",
+    "integrated-review.tsx": "87871fe4cf5f7b80768ae579162d86e5ca0fc2d8f92f547e04beb9e26da15625",
+    "integrated-review.html": "997968fd5499f66b84050ee9bd864df4531913bd1c14142e566daa5157a375f1",
+    "integrated-dark-trace.json": "74873e6b7aa77256a701fc55b8db23a30567b2cfb25eeba3291c3a88e70ebbb1",
+    "integrated-light-trace.json": "98153204480779f3523fe29840eb182e5f17ab2266dbd2f43e120b5204690da8",
+    "integrated-slower-trace.json": "5241f585dce060300632d7e8e65ddf8158f52fb5e7f8a6df99aff0bfcd1276ee",
+    "integrated-controls.json": "64de2c3241222d39a7c3cf549e9b312a772e92e397d220e23597c9a5dcf34e2b",
+    "staged-visual-validation.json": "84eb9bfec1b23cad97ce1fd5ba722d4ecd36eba81d4ae828554924e25e7457eb",
+    "draft-beats.json": "ec1111329d7c32454f95c22c8bbaecc491dd733f92adccd0dcb8ea8ce75750b3",
+    "integrated-light-full-page.png": "21a6b01c1f36d6febe3f807d4eeb385d7f86f767a18190ffbeb6660b7d180ea9",
+    "integrated-dark-full-page.png": "92df876ddd3b4bab11a467067a14093090e0bd9a9193fe6dd00e5ff6328f9ff9",
+    "registered-mobile-proof.png": "a8bb3a356645416b2b2980b8cab6f0218f72cc3da01ce669588b05098bbfc2f7",
+    "integrated-parent-visual-signoff.json": "c78df7477cd55e79c6f2c317cd0e84bf9cef5b7dc0f697db8069c229f2564b97"
+  },
+  "reviewedPublicAssetHashes": {
+    "public/form-frames/ab-wheel/1.webp": "1c6adbc52050d867b542229cdd46a2aeb2062197ca354cbf2555c38456a7b9be",
+    "public/form-frames/ab-wheel/2.webp": "4f8d53ee4e94dea1eb6cb1c44c0f965357310c7af85c0379cfa16695dfe4459e",
+    "public/form-frames/ab-wheel/3.webp": "e927bb1ee10e138e68568f95f477a7f2763790f47a25ef57df49618e154b657f",
+    "public/form-frames/ab-wheel/4.webp": "e927bb1ee10e138e68568f95f477a7f2763790f47a25ef57df49618e154b657f",
+    "public/form-frames/ab-wheel/5.webp": "4f8d53ee4e94dea1eb6cb1c44c0f965357310c7af85c0379cfa16695dfe4459e",
+    "public/form-frames/ab-wheel/6.webp": "1c6adbc52050d867b542229cdd46a2aeb2062197ca354cbf2555c38456a7b9be",
+    "public/form-art/ab-wheel.webp": "f0b3ed7b9052c8f413dfecf6ee972b51ea66b86035038c61abadbb055ea5f0db",
+    "masters/ab-wheel/1.png": "e844927f544c14339e475a91c07f2cb7e9eaf58f0d91a9272ad2a97a5dc653ed",
+    "docs/exercise-art/cutout-sources/ab-wheel.png": "3c8abd9b518cd9ab7464080cf0d0f060d74b703a0535774e98e0aa1be7540ad5",
+    "src/lib/releasedFormPlacards.ts": "af092871b6dda8fe0117f970f5e4633355b1c07dfe37155cf68e95781cc06939",
+    "src/lib/formArtReleases.data.ts": "c1511403593d94ccd511a4f8e657f782bbb7f4773dd0acbd7cbb788f33e75f52",
+    "src/lib/formArtCutouts.data.ts": "cf4879f8f184b3c9bdab1ae28b15d7730ce7f815604e8eca3199cbfe5ad5704e"
+  },
+  "minorFindings": [
+    "Controlled Reach retains residual hip flexion; no fully horizontal/perfectly straight claim.",
+    "Small knee/trainer contour redraws are disclosed; failed shoe brightness metrics are not represented as passing.",
+    "Projected exposed axle-tip span289/277/260px varies10.035%; no calibrated3D shaft, radius, grip-width or invented yaw claim.",
+    "Three real poses reused honestly across six separate paths."
+  ],
+  "completionCredit": false,
+  "remaining": "Normal full branch verification/fresh comparison, formatting/source seal, required current-head CI and actual merge"
+}

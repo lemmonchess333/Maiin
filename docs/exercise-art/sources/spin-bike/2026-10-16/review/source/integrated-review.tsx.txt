@@ -1,0 +1,40 @@
+import { createRoot } from 'react-dom/client';
+import '../../Maiin-burpees/src/index.css';
+import ExerciseFormContent from '../../Maiin-burpees/src/components/ExerciseFormContent';
+import { EXERCISES } from '../../Maiin-burpees/src/lib/exercises';
+import { getReleasedFormArtwork } from '../../Maiin-burpees/src/lib/formArtwork';
+import { getFormBeats } from '../../Maiin-burpees/src/lib/formGuides';
+import { CardViews, PlaybackEvidence, ThemeControl } from './review-shared';
+
+// Actual catalogue/owner registry/cues only. No draft imports, mock, plugin,
+// public path rewrites, generated observations or missing-art substitution.
+const exercise = EXERCISES.find(value => value.id === 'spin-bike');
+const art = getReleasedFormArtwork('spin-bike');
+const beats = getFormBeats('spin-bike');
+const PUBLIC_FRAMES = Array.from({ length: 6 }, (_, i) => `/form-frames/spin-bike/${i + 1}.webp`);
+const PUBLIC_CARD = '/form-art/spin-bike.webp';
+const actualPaths = art?.frames.length === 6 && art.frames.every((value, i) => value === PUBLIC_FRAMES[i].slice(1));
+
+function Review() {
+  return <main data-review-scope="actual-registered-lookup" data-expected-public-frames={JSON.stringify(PUBLIC_FRAMES)} className="min-h-screen bg-background text-foreground p-4">
+    <div style={{ maxWidth: 390, margin: '0 auto' }} className="space-y-3">
+      <h1 className="text-h2 font-bold">Spin Bike</h1>
+      <ThemeControl />
+      {exercise && art && art.status === 'owner-released-with-findings' && actualPaths && art.reference === art.frames[0] && art.width === 432 && art.height === 707 && beats?.length === 6 ? <>
+        <p data-testid="actual-registration">Registered {art.status}: {art.version}, {art.width}×{art.height}.</p>
+        <img src={PUBLIC_CARD} alt={`${exercise.name} registered normal card`} className="h-40 w-full object-contain" />
+        <ExerciseFormContent exerciseName={exercise.name} />
+        <CardViews src={PUBLIC_CARD} />
+        <details><summary>Actual registered asset paths</summary>
+          <p>Reference: /{art.reference}</p>
+          <ul>{PUBLIC_FRAMES.map(src => <li key={src}><a href={src}>{src}</a></li>)}</ul>
+          <a href={PUBLIC_CARD}>{PUBLIC_CARD}</a>
+        </details>
+      </> : <p role="alert">Spin Bike has no matching registered owner guide, reference and six public frame/cue paths. No draft substitution is shown.</p>}
+      <PlaybackEvidence />
+    </div>
+  </main>;
+}
+const root = createRoot(document.getElementById('root')!);
+root.render(<Review />);
+if (import.meta.hot) import.meta.hot.dispose(() => root.unmount());

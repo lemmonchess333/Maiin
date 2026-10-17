@@ -1,0 +1,49 @@
+{
+  "currentCueRevision": 2,
+  "revisions": [
+    {
+      "path": "review/final-parent-review.json.txt",
+      "sha256": "73d325fb950bfa2b4429e3e5ac1d85013df5b157403b3b0047181c567090451a",
+      "reason": "Actual normal verification found the original cue strings exceed the seven-word gate. That observed review is preserved as historical evidence for its original text, not reused as acceptance of corrected cues."
+    },
+    {
+      "path": "review/cue-revision-2/final-parent-review.json.txt",
+      "sha256": "6593c302c5503d48e6034d0a2b4e771be97e79de92cab0e0fad1c17cc1cfc930",
+      "cueSha256": "56e28e9d01418ebeeafd0b3540677531fb85812d30932287ff520b56653bf68b"
+    }
+  ],
+  "priorRevisionFileHashes": {
+    "review/final-parent-review-original.json.txt": "1e2774c5d23f0205d8860293017507a444a93b1a8aa51f45a7f90b056a2ed04c",
+    "review/final-parent-review.json.txt": "73d325fb950bfa2b4429e3e5ac1d85013df5b157403b3b0047181c567090451a",
+    "review/finalize-observed-review.py": "73a3e3d18e3c28a6cf7df24318cabbae1dcd76959b9da835d03ddee9eafe75e6",
+    "review/harness-preparation.json.txt": "1df33ae3cb8574a716ce14b20ecea728175d3724f744102da3097f62defa4c47",
+    "review/integrated-console-after-recovery.json.txt": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "review/integrated-dark-after-recovery.png": "97dbe5f094b1f312051149a6001d009c385b827e6718a6586ce7d1d914936aed",
+    "review/integrated-light-after-recovery.png": "6940dfa8d6fd6a74657d77599ac92536564e51c1a444416844900ce88117528e",
+    "review/integrated-manual-selection-after-recovery.txt": "5305f41c8112bed0b5ba3d53a1d2c3e57fe728250507e29d076702fc0ecbbc28",
+    "review/integrated-playback-after-recovery.json.txt": "a2afe10d3611eb21d944752195404106da2fbebe1efab2fd39de03e4b6f5481a",
+    "review/integrated-review.html.txt": "24d72e860e3de231b25788bdfcca815408c61058074932a13a936f32fedbd95d",
+    "review/integrated-review.tsx.txt": "65d616251d7a3a346d383733a502f19e32e900b5e09cddee56f3dfe68635a515",
+    "review/native-cards-dark.png": "73e99038d2545c9234b96db84a08e99c2d8cfc32e77273caa1526cdec329ac4b",
+    "review/native-cards-light.png": "31a446465fe3e5bab61f76a863ce9eaa6aa3ca7d829d281b8137e963e648db66",
+    "review/native-dark.png": "1dc077a106d298549cbf7e851f955571049a5eda4019b1374686acfb61dd6a3e",
+    "review/native-light.png": "bc22990949f3868ebb3c5de34a341aed446b8e8ebf9699b23979495a99edbcec",
+    "review/native-manual-controls.txt": "15e50115d0c95e1459a9f716890dc95a54e16afd95811a31f6fb4d3dac25c814",
+    "review/native-playback-observed.json.txt": "c0361eb3546c32d6d7fd6834eb630d21738bc9cf1f6412ed70a5590b589c787c",
+    "review/native-review.html.txt": "addc1d503372ea87d2a35a7f31d30a1de9c3c552e85a830c3bc0e558564878ad",
+    "review/native-review.tsx.txt": "441b78427994f53de4f2e63814cf13efaeccef2133613bc72a2824170bc35e37",
+    "review/review-evidence-index.json.txt": "a36f766534faba611e536dc02f918b3d6d7c0449436743da0e8cdb8e86461c2e",
+    "review/review-shared.tsx.txt": "3f326e3a43c245d4017d3d2c9cce8695e5b90fdfb688bce87ddd6f0230bf0bd5",
+    "review/review-vite.config.mjs.txt": "9b4e856e69d8ffa7976233b8bfd0d9163595666daaf15f9fc45214bd48e2c3ad",
+    "review/root-native-candidate-review.json.txt": "c1cbfe5184d172fd50681e2e86545b8449cdfd5d9d81d4eaaad72246b0422adf",
+    "review/sequence-plan-scope.json.txt": "d156e6cc719ac3ccf8b027a4838072aa25416f36973249ba86c6cb72dadbb0df",
+    "review/sequence-plan.json.txt": "8f1196d2e3f6c001f07057977e33468d7bf66bf17f6c6d1e0f9fd99e1c194a44",
+    "review/watcher-recovery-scope.json.txt": "dbaeeec6c786a0bc2b9dd5244f3ae02c280f5eb179a8bef80449b175d4ac73d5",
+    "review/history-before-recovery/integrated-before-server-recovery-trace.json.txt": "759984b7181d7e97136f8fb1f1b860eac325cc93624a5b9fbfbb063435219590",
+    "review/history-before-recovery/integrated-dark.png": "b8331b958b6493470aedee95d63d250a0123e0456794df6e893128138c9e725a",
+    "review/history-before-recovery/integrated-desktop-before-viewport.png": "483531d1d18b56be26fd360eeb2daa02cf763c639fd04c66051f79839804e0c2",
+    "review/history-before-recovery/integrated-light.png": "c5b206c3a00a3720e33c531e96bdbdf7084caebe0d48d3b5e70f135304b82b60",
+    "review/history-before-recovery/integrated-manual-selection.txt": "1365c7bd45630ec7b47ced3677964e697e7cae388fe4ff95beda0d260b272656"
+  },
+  "note": "Revision1 bytes remain at their original paths. Only revision2 supports current corrected cue text; no past bytes are deleted or retroactively described as a different review."
+}

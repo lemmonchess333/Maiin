@@ -1,0 +1,10 @@
+{
+  "status": "prepared-only-no-card-rendered",
+  "productionScript": "scripts/art/cut-out-form-art.ts",
+  "productionSha256": "a465f712bcb21078a171e6ddfd24f74112a5d379192c7159f133a0fb869f0f2f",
+  "pureBlockLfSha256": "f95042479cc61ffb5b292b7da463d4479963f1f76d7b3b98e3175f4d2b12487c",
+  "encodePipelineLfSha256": "0daf2861ff7798732e64466079dff3201c84bc27b607c15730f48022249c8025",
+  "extraction": "Verbatim constants + squareFilter/bigRegions/cutOut/contentBox through before async main; verbatim cutOut/extract/resize/WebP encode from production main. EOL canonicalization only.",
+  "portable": "All helper/input/output paths are relative. Supply a repo path only to resolve the same Sharp dependency and verify frozen generator bytes. No production module import/main invocation.",
+  "cardExecutionPendingActualReadySignal": true
+}

@@ -1,0 +1,12 @@
+{
+  "approved": false,
+  "frames": [
+    {"frame": 1, "file": "1-master.png", "generation": "8d75a89c-b003-4c20-97b6-1ba29af61fd9", "framing": "Uniform90percent whole scene"},
+    {"frame": 2, "file": "2-handle-repaired.png", "generation": "edc138ad-90f6-4303-a078-e8009fea778a", "parent": "2133625f-7179-4bda-bcd1-836bd990ec43"},
+    {"frame": 3, "file": "3-legs-candidate.png", "generation": "c64924a9-2121-40c7-8454-ea136a8df2df"},
+    {"frame": 4, "file": "4-opposite-selected.png", "generation": "ac9f0fc8-2918-4371-bc68-2664d10591af", "ancestry": ["c02f31e1-fef2-425a-9df0-07ef25a49d3f", "c6e0a11b-9afc-4f0c-8fa6-f520303b8e59", "bf9b942c-aa61-43a5-ad58-c56782731366"]},
+    {"frame": 5, "file": "5-height-repaired.png", "generation": "698e1839-e02a-45e0-871f-7bc749ee07a9"},
+    {"frame": 6, "file": "6-return-candidate.png", "generation": "7a518908-5f34-43a8-9075-ccd1c884ad2f"}
+  ],
+  "review": "All generated candidates viewed; composite sequence-review.png reviewed. Anatomy now alternates, feet and hands remain in visible contact. Not released: stationary handle pivot drift around30px, lower linkage geometry varies and visible crank arm remains at same angle despite stride. Need mechanical consistency repair and measurements before native final and mobile review."
+}

@@ -24,7 +24,8 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const read = (rel: string) => readFileSync(resolve(here, rel), "utf8");
+const read = (rel: string) =>
+  readFileSync(resolve(here, rel), "utf8").replace(/\r\n/g, "\n");
 
 const LISTING = read("../../../docs/app-store/listing.md");
 

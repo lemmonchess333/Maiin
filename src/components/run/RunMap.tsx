@@ -4,10 +4,10 @@ import "@/lib/maplibreWorker";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Plus, Minus, LocateFixed, Compass } from "lucide-react";
 import { splitRouteSegments } from "@/lib/routeSegments";
-import { movingSecondsBetween, pausedMsOf, type GPSPoint } from "../../lib/gps";
+import type { GPSPoint } from "../../lib/gps";
 import { THEME } from "../../lib/theme";
 import { IconButton } from "@/components/ui/IconButton";
-import { routePaceColor } from "./routePace";
+import { routePaceColor, routePaceRatios } from "./routePace";
 import { lapMetresFor, type DistanceUnit } from "@/lib/distanceUnits";
 import { addBasemapCredit, basemapStyle } from "@/lib/basemap";
 
@@ -182,7 +182,7 @@ export default function RunMap({
         source: "route",
         layout: { "line-join": "round", "line-cap": "round" },
         paint: {
-          "line-color": THEME.teal,
+          "line-color": THEME.running,
           "line-width": 5,
           "line-opacity": 0.95,
         },
@@ -284,33 +284,18 @@ export default function RunMap({
           geometry: { type: "LineString"; coordinates: number[][] };
           properties: { color: string };
         }[] = [];
+        /* Each stretch's pace over the 200 m of route around it, not over
+           the few metres between two fixes, where GPS wobble alone moved
+           the colour (`routePaceRatios`). Null for a stretch with no pace
+           of its own: the line across a pause, which was not run, and the
+           jump after a gap. Those get no pace colour, and only the
+           route's dark casing shows there. The steps live with the key
+           under the map (`routePace.ts`), so the two cannot disagree. */
+        const ratios = routePaceRatios(visiblePoints, avgPaceSecPerKm);
         for (let i = 1; i < visiblePoints.length; i++) {
-          if (visiblePoints[i].breakBefore) continue;
-          /* The line across a pause was not run: nothing is recorded while
-             the clock is held, so it joins where the runner stopped to
-             where they set off. Timed on the wall clock it read as the
-             slowest stretch of the run. It has no pace, so it gets no
-             pace colour, and only the route's dark casing shows there. */
-          if (pausedMsOf(visiblePoints[i]) > pausedMsOf(visiblePoints[i - 1])) {
-            continue;
-          }
-          const dist = haversineQuick(
-            visiblePoints[i - 1].lat,
-            visiblePoints[i - 1].lon,
-            visiblePoints[i].lat,
-            visiblePoints[i].lon
-          );
-          const timeDiff = movingSecondsBetween(
-            visiblePoints[i - 1],
-            visiblePoints[i]
-          );
-          const segPace =
-            timeDiff > 0 && dist > 0
-              ? (timeDiff / dist) * 1000
-              : avgPaceSecPerKm;
-          // The steps live with the key under the map (`routePace.ts`),
-          // so the two cannot disagree.
-          const color = routePaceColor(segPace / avgPaceSecPerKm);
+          const ratio = ratios[i];
+          if (ratio === null) continue;
+          const color = routePaceColor(ratio);
 
           features.push({
             type: "Feature" as const,
@@ -344,12 +329,12 @@ export default function RunMap({
           // Heading cone — hidden until we actually have a bearing so it
           // doesn't point a misleading direction while stationary.
           const cone = document.createElement("div");
-          cone.style.cssText = `position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid ${THEME.teal};opacity:0;transition:opacity .2s;`;
+          cone.style.cssText = `position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid ${THEME.running};opacity:0;transition:opacity .2s;`;
           coneRef.current = cone;
           const halo = document.createElement("div");
-          halo.style.cssText = `width:22px;height:22px;border-radius:50%;background:${THEME.teal}33;display:flex;align-items:center;justify-content:center;`;
+          halo.style.cssText = `width:22px;height:22px;border-radius:50%;background:${THEME.running}33;display:flex;align-items:center;justify-content:center;`;
           const inner = document.createElement("div");
-          inner.style.cssText = `width:13px;height:13px;border-radius:50%;background:${THEME.teal};border:2.5px solid white;box-shadow:0 0 0 1px ${THEME.teal}55;`;
+          inner.style.cssText = `width:13px;height:13px;border-radius:50%;background:${THEME.running};border:2.5px solid white;box-shadow:0 0 0 1px ${THEME.running}55;`;
           halo.appendChild(inner);
           outer.appendChild(cone);
           outer.appendChild(halo);

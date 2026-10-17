@@ -1,0 +1,59 @@
+{
+  "exerciseId": "t-bar-row",
+  "canonicalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\identity\\athlete-anatomy-v3.png",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "originals": [
+    {
+      "pose": 1,
+      "originalName": "1-master.png",
+      "originalSha256": "423cc79ad773472b9ca0f6b3b7a4ba9a761c5a5f0627467c87082eaf77eafbf7",
+      "nativeSize": [1024, 1536],
+      "commonCrop": [41, 226, 959, 1262],
+      "size": [918, 1036],
+      "neutralRGBOutsideSourceColourExact": true,
+      "neutralPixelCount": 1545617,
+      "sourceAlphaExact": true,
+      "nativeAndFramedOraReopenedExact": true,
+      "anatomyOrEquipmentGeometryEdits": 0,
+      "wholeSceneNewScale": 1,
+      "frameSha256": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438"
+    },
+    {
+      "pose": 2,
+      "originalName": "4-peak-candidate.png",
+      "originalSha256": "9ebd9f1b3562672dddc6927a1156910354108eb1b71510556d662b285276a9c3",
+      "nativeSize": [1024, 1536],
+      "commonCrop": [41, 226, 959, 1262],
+      "size": [918, 1036],
+      "neutralRGBOutsideSourceColourExact": true,
+      "neutralPixelCount": 1552787,
+      "sourceAlphaExact": true,
+      "nativeAndFramedOraReopenedExact": true,
+      "anatomyOrEquipmentGeometryEdits": 0,
+      "wholeSceneNewScale": 1,
+      "frameSha256": "04776e18e6ea03f6772056901fd78840a801572ff940cc74c53eaf59628966e4"
+    }
+  ],
+  "originalMasterGenerationId": "31e3e68c-6d8f-43c3-b8ec-b560e62061e2",
+  "peakGenerationId": "12c2876c-1b3e-42da-b9f8-a6bc77e03556",
+  "exactPeakPrompt": {
+    "path": "originals/4-peak-prompt.txt",
+    "sha256": "38f46e98edda6ce6cc464ca7ab1e43148a46669895620d62253f705a326e89cb"
+  },
+  "masterPromptAvailability": "No standalone exact original master prompt in retained source folder; not reconstructed. Raw original master, framing metadata/script and PLAN are retained as distinct provenance, not falsely named an exact generation prompt.",
+  "masterFraming": "Historical uniform whole scene922px wide with centred padding; already embodied in1-master.png. No new rescale or body normalization.",
+  "ownerFinding": "Root explicitly authorized retaining BOTH consistent ordinary two-plate endpoints instead of later one-plate default; no removal, one/two-plate mixture or equipment correction.",
+  "historicalRefusal": {
+    "path": "originals/DEFERRED.md",
+    "blockedPrompt": "originals/4-rigid-guide-prompt.txt",
+    "usedForArtwork": false,
+    "retried": false
+  },
+  "nativeFeasibilityEvidence": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\t-bar-row\\retained-start-peak-native-review-20261015\\native-feasibility-review.json",
+  "newGenerationRequests": 0,
+  "anatomyWarpsOrGrafts": 0,
+  "repoChanges": 0,
+  "completed": false,
+  "editableMetadataFinding": "The reused ORA writer retained legacy internal document name Pull-Ups two-intact-endpoint REVIEW ONLY. Outer filenames, actual original/correction layers, merged images and current T-Bar provenance are correct. No document-name claim establishes approval.",
+  "minimalReproduction": "reproduce-reviewed-frames.py independently rebuilds original-source palette math, reopens all four actual ORAs, verifies crop/six frame RGB/reference and original hashes without external helper dependency."
+}

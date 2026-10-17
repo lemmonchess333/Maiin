@@ -10,8 +10,11 @@ export default function RecentRunningContext({
   const { runs, loading, failed, refresh } = useRunningStats(28);
   const context = recentRunningContext(runs, new Date());
   return (
-    <details className="text-xs text-muted-foreground">
-      <summary className="min-h-11 cursor-pointer flex items-center text-sm text-foreground">
+    /* The house disclosure's +/− (PurposeDisclosure). A flex summary loses
+       the browser's own triangle, so with no marker of its own "Recent
+       running" read as a heading with nothing under it. */
+    <details className="group text-xs text-muted-foreground">
+      <summary className="min-h-11 cursor-pointer flex items-center gap-2 rounded-lg text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 list-none before:content-['+'] group-open:before:content-['−']">
         Recent running
       </summary>
       <div className="space-y-2 leading-relaxed pb-2">

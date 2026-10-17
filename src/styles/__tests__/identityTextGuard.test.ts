@@ -95,7 +95,11 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-09-27: 44 → 43. DS3's weekly recap: its week-in-numbers card
   // marks each number with a coloured rule, not an icon, so the old
   // page's footprints icon went.
-  running: 43, // Calendar status icons now use the strong colour step.
+  // 43 → 42. The feed's run card draws its distance once, where it had
+  // one line for a run and another for a run with a workout.
+  // 42 → 41. Home's run card lost its run-type tile: a runner drawing is
+  // the card's picture now, as the lift card's is its lead lift.
+  running: 41, // Calendar status icons now use the strong colour step.
   // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
   // the exercise drawing is the card's picture now.
   // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell
@@ -117,7 +121,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // same solid hexagon as Home's header mark, an ICON (3:1 non-text).
   // 2026-10-05: 19 → 18. The workout screen's "try X kg" chip went, and
   // its trend icon with it (Lift4).
-  lifting: 18, // Redesign consolidates onboarding option icons.
+  // 2026-10-08: 18 → 17. The Performance tab's "Lifting suggestions" card
+  // went, and its dumbbell icon with it (Lift4 (3)).
+  lifting: 17, // Redesign consolidates onboarding option icons.
   // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
   // ICON; its words are foreground.
   // 2026-09-27: 5 → 4. The weekly recap's food icon, retired with its
@@ -167,7 +173,11 @@ const EXPECTED_INLINE_USES = {
   // brand-coloured Double beside them.
   // 2026-10-01: 17 → 15. The Social pass retired the feed's recap card
   // (its run figure) and the solo feed's share card.
-  "THEME.running": 15,
+  // 2026-10-12: 15 → 17. The live run screen took the run's coral for
+  // water's teal (DESIGN_GUIDE §14): its 68px timer and the compact bar's
+  // 22px bold distance, both large text, on a sheet that is dark in both
+  // themes, where the coral measures about 5:1.
+  "THEME.running": 17,
   // 2026-09-27: 6 → 5. The Sessions ring's stroke, retired with the
   // summary's rings (PeriodOverview).
   // 2026-10-01: 5 → 4. The same recap card's volume figure.

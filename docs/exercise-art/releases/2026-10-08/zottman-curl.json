@@ -1,0 +1,231 @@
+{
+  "exerciseId": "zottman-curl",
+  "version": "anatomy-v3-2026-10-08-zottman-rigid-v1",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex canonical, native and actual mobile artwork review",
+  "reviewedAt": "2026-10-08T11:44:52.245623Z",
+  "reference": {
+    "path": "form-frames/zottman-curl/1.webp",
+    "sha256": "5588051491e3a4e00a37e2e084a559c449b80a5aed7109962c812e8c6b44891e"
+  },
+  "cueSha256": "097ea7222dfe59e3d33d6210e56979b3e6d39766baf3b6b37d9f95464155ff35",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Full canonical v3 and all six full native candidates directly viewed, plus full six-frame comparison. Bald faceless head, lean build, neutral featureless pelvis, anatomical contour style and broad-band white trainers retain the canonical identity. Code repair does not warp anatomy; named head/body/feet source crops are exact. This is qualitative canonical identity review, not a claim of decoded canonical pixel identity."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Same1024x1536 canvas and three-quarter standing view. Measured crown and two toe-outline anchors differ by at most1px per axis from frame1. Full figure and all plates remain in view. rigid-equipment-six-frame-audit-v1.json contains actual final-image measurements."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "All six full native images and enlarged original/grip regions reviewed. Curl follows distinct bottom, intermediate ascent, shoulder-height top, top rotation, pronated descent and bottom poses. Shoulders/torso stay upright; upper arms remain near the sides and elbows do not swing upward to finish. Pose-dependent projected forearm shortening is visible; no anatomy warp or fabricated physical limb measurements."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Every actual near/far equipment layer exactly equals a rebuilt translation/rotation of its immutable source asset. Two round end plates and a straight shaft per dumbbell; no per-frame scale or plate deformation. Intrinsic alpha-bound plate dimensions and handle-layer length are source-image geometry, not manufacturer millimetres or calibrated3D dimensions. All12 decoded layer comparisons pass."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Original complete hand surfaces and finger/crease contours restored in front of shafts using source-traced positive outlines. Enlarged all-six contact review shows closed grips without shafts crossing finger pads or floating hands. Plate edges are continuous behind hands. Both original planted shoe silhouettes remain; white toe/sole bounds vary at most1px."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Two rigid dumbbells follow the curling hands through the ascent, top rotation and descent. Forearm rotation changes the visible hand surfaces between3and4 and resets between6and1; rigid plates/shafts retain their geometry. Standing torso and feet remain planted, wrists align with the gripping forearms without obvious extreme bends. No cable/machine attachments or invented mechanical measurements."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Biceps and forearms remain primary #7B72E9 in all six, with neutral hands/shoulders/torso/legs. Prior independently traced exact-palette arm layers retained; all final changes to exact primary source pixels are solely beneath new equipment, and no purple pixels remain on opaque gear. No secondary tint introduced. Source contours and antialias joins are excluded from opaque-interior palette claims."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Production placard uses exact six plan labels, cues and progress0,.5,1,1,.5,0. Primary key is Biceps+Forearms, secondary empty. Actual production-URL mobile screenshots verify the displayed cues and key."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Six unique decoded frames; all individual native images and both native comparison sheets actually viewed. Actual native player rendered1024x1536, loaded every frame and logged complete1,2,3,4,5,6,1 playback cycles at1200ms/frame. Real Form player also logs complete cycles in both mobile themes. Direct Play/Pause verified;6to1 deliberately rotates the bottom grip."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual real ExerciseFormContent/ExerciseFormFrames and project styles, local draft-only Vite seam,390x844. All six corrected frames and cues actually viewed,12 total theme screenshots. Full body/equipment fit, no horizontal overflow, readable key/cues, no browser errors. Light trace captures1,2,3,4,5,6,1 with all images loaded. This is not authenticated navigation or a production-delivery URL test."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Same actual390x844 real component review of all six dark frames, with saved screenshots and complete1,2,3,4,5,6,1 loaded-image trace. Figure, plates and captions remain legible on the dark stage; no clipping or overflow. Final production WebP URLs still require integration verification."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/zottman-curl/1.webp",
+      "sha256": "5588051491e3a4e00a37e2e084a559c449b80a5aed7109962c812e8c6b44891e",
+      "anchors": {
+        "crown": {
+          "x": 491.0,
+          "y": 12
+        },
+        "farToe": {
+          "x": 269,
+          "y": 1397.5
+        },
+        "nearToe": {
+          "x": 506,
+          "y": 1460.0
+        }
+      },
+      "invariantDimensions": {
+        "farShoeWidth": 224,
+        "nearShoeWidth": 184,
+        "nearOuterPlateIntrinsicAlpha50Width": 90,
+        "nearOuterPlateIntrinsicAlpha50Height": 129,
+        "nearHandleIntrinsicLayerLength": 138
+      }
+    },
+    {
+      "path": "form-frames/zottman-curl/2.webp",
+      "sha256": "ef30e0d16044d3a81bd3a2d2c29e7b5c38599dfb4c10332ddff73551247ca89b",
+      "anchors": {
+        "crown": {
+          "x": 491.0,
+          "y": 12
+        },
+        "farToe": {
+          "x": 270,
+          "y": 1397.0
+        },
+        "nearToe": {
+          "x": 506,
+          "y": 1460.5
+        }
+      },
+      "invariantDimensions": {
+        "farShoeWidth": 223,
+        "nearShoeWidth": 184,
+        "nearOuterPlateIntrinsicAlpha50Width": 90,
+        "nearOuterPlateIntrinsicAlpha50Height": 129,
+        "nearHandleIntrinsicLayerLength": 138
+      }
+    },
+    {
+      "path": "form-frames/zottman-curl/3.webp",
+      "sha256": "b2915cc313d8e8a95ff6cef1bc1e77a60809370b8c84b3d703902591fafd697b",
+      "anchors": {
+        "crown": {
+          "x": 492.0,
+          "y": 11
+        },
+        "farToe": {
+          "x": 269,
+          "y": 1398.0
+        },
+        "nearToe": {
+          "x": 506,
+          "y": 1461.0
+        }
+      },
+      "invariantDimensions": {
+        "farShoeWidth": 224,
+        "nearShoeWidth": 184,
+        "nearOuterPlateIntrinsicAlpha50Width": 90,
+        "nearOuterPlateIntrinsicAlpha50Height": 129,
+        "nearHandleIntrinsicLayerLength": 138
+      }
+    },
+    {
+      "path": "form-frames/zottman-curl/4.webp",
+      "sha256": "9b704d4f8bbc1dae30656371b75b4e212705bd26402a22f2a82292b7b58abcdc",
+      "anchors": {
+        "crown": {
+          "x": 491.0,
+          "y": 12
+        },
+        "farToe": {
+          "x": 269,
+          "y": 1398.0
+        },
+        "nearToe": {
+          "x": 506,
+          "y": 1460.5
+        }
+      },
+      "invariantDimensions": {
+        "farShoeWidth": 224,
+        "nearShoeWidth": 184,
+        "nearOuterPlateIntrinsicAlpha50Width": 90,
+        "nearOuterPlateIntrinsicAlpha50Height": 129,
+        "nearHandleIntrinsicLayerLength": 138
+      }
+    },
+    {
+      "path": "form-frames/zottman-curl/5.webp",
+      "sha256": "5ea61ab9e18c501cc2abb210de120ef06c6ae562a37a60d84d48a46040bdaeec",
+      "anchors": {
+        "crown": {
+          "x": 491.0,
+          "y": 12
+        },
+        "farToe": {
+          "x": 269,
+          "y": 1397.5
+        },
+        "nearToe": {
+          "x": 506,
+          "y": 1460.5
+        }
+      },
+      "invariantDimensions": {
+        "farShoeWidth": 224,
+        "nearShoeWidth": 184,
+        "nearOuterPlateIntrinsicAlpha50Width": 90,
+        "nearOuterPlateIntrinsicAlpha50Height": 129,
+        "nearHandleIntrinsicLayerLength": 138
+      }
+    },
+    {
+      "path": "form-frames/zottman-curl/6.webp",
+      "sha256": "72cbbc28adfbb226f3f9265596162bdc0395be4d1759344e3e7882b16885cbda",
+      "anchors": {
+        "crown": {
+          "x": 491.0,
+          "y": 12
+        },
+        "farToe": {
+          "x": 269,
+          "y": 1397.5
+        },
+        "nearToe": {
+          "x": 506,
+          "y": 1460.5
+        }
+      },
+      "invariantDimensions": {
+        "farShoeWidth": 224,
+        "nearShoeWidth": 184,
+        "nearOuterPlateIntrinsicAlpha50Width": 90,
+        "nearOuterPlateIntrinsicAlpha50Height": 129,
+        "nearHandleIntrinsicLayerLength": 138
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "techniqueSources": [
+    "https://www.muscleandstrength.com/exercises/zottman-curl.html",
+    "https://www.muscleandfitness.com/exercise/workouts/arm-exercises/standing-zottman-biceps-curl/"
+  ],
+  "evidence": [
+    "docs/exercise-art/releases/2026-10-08/zottman-curl-evidence/rigid-equipment-six-frame-audit-v1.json",
+    "docs/exercise-art/releases/2026-10-08/zottman-curl-evidence/rigid-mobile-native-review-2026-10-08.json",
+    "docs/exercise-art/releases/2026-10-08/zottman-curl-evidence/delivery-codec-verification.json",
+    "docs/exercise-art/releases/2026-10-08/zottman-curl-evidence/integrated-mobile-review-2026-10-08.json",
+    "docs/exercise-art/releases/2026-10-08/zottman-curl-evidence/integrated-verification-results-2026-10-08.json"
+  ],
+  "integrationState": "Integrated and current requirements review complete: native six-frame/loop, production-URL mobile light/dark/loops, card cutout and focused artwork tests passed. Full verification chain ran; full unit suite retains exactly the measured baseline failures, with no new failure headings.",
+  "baselineResults": "docs/exercise-art/releases/2026-10-08/zottman-curl-evidence/current-clean-baseline-results-2026-10-08.json",
+  "productionMobileReview": "docs/exercise-art/releases/2026-10-08/zottman-curl-evidence/integrated-mobile-review-2026-10-08.json",
+  "verificationResults": "docs/exercise-art/releases/2026-10-08/zottman-curl-evidence/integrated-verification-results-2026-10-08.json"
+}

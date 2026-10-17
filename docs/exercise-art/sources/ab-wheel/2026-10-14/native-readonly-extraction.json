@@ -1,0 +1,131 @@
+[
+  {
+    "file": "master-brace-original.png",
+    "size": [1536, 1024],
+    "sha256": "92cbc7bf52bf72258c762e52ddffec70dbaed32406e8c32850da5888f6399c0f",
+    "nearToe": {
+      "box": [70, 798, 137, 832],
+      "threshold": 160,
+      "lastBrightRow": 825,
+      "lastRowXRange": [105, 112],
+      "lastRowMidpoint": [108.5, 825],
+      "firstBrightRow": 798,
+      "firstRowXRange": [72, 136]
+    },
+    "farToe": {
+      "box": [166, 792, 218, 825],
+      "threshold": 160,
+      "lastBrightRow": 814,
+      "lastRowXRange": [180, 194],
+      "lastRowMidpoint": [187.0, 814],
+      "firstBrightRow": 792,
+      "firstRowXRange": [167, 213]
+    },
+    "nearHeel": {
+      "box": [130, 629, 170, 681],
+      "threshold": 160,
+      "lastBrightRow": 680,
+      "lastRowXRange": [130, 169],
+      "lastRowMidpoint": [149.5, 680],
+      "firstBrightRow": 640,
+      "firstRowXRange": [152, 159]
+    },
+    "farHeel": {
+      "box": [212, 615, 259, 666],
+      "threshold": 160,
+      "lastBrightRow": 665,
+      "lastRowXRange": [212, 258],
+      "lastRowMidpoint": [235.0, 665],
+      "firstBrightRow": 630,
+      "firstRowXRange": [232, 245]
+    },
+    "nearTrainerProjectedBrightVerticalSpan": 185,
+    "farTrainerProjectedBrightVerticalSpan": 184
+  },
+  {
+    "file": "roll-original.png",
+    "size": [1536, 1024],
+    "sha256": "959af45a9d7614cb06bae131d7feaad9e036f6106e2b6ab93b729c7086dfaaa6",
+    "nearToe": {
+      "box": [70, 798, 137, 832],
+      "threshold": 160,
+      "lastBrightRow": 826,
+      "lastRowXRange": [106, 112],
+      "lastRowMidpoint": [109.0, 826],
+      "firstBrightRow": 798,
+      "firstRowXRange": [72, 136]
+    },
+    "farToe": {
+      "box": [166, 792, 218, 825],
+      "threshold": 160,
+      "lastBrightRow": 815,
+      "lastRowXRange": [181, 193],
+      "lastRowMidpoint": [187.0, 815],
+      "firstBrightRow": 792,
+      "firstRowXRange": [166, 213]
+    },
+    "nearHeel": {
+      "box": [130, 629, 170, 681],
+      "threshold": 160,
+      "lastBrightRow": 680,
+      "lastRowXRange": [130, 169],
+      "lastRowMidpoint": [149.5, 680],
+      "firstBrightRow": 639,
+      "firstRowXRange": [151, 160]
+    },
+    "farHeel": {
+      "box": [212, 615, 259, 666],
+      "threshold": 160,
+      "lastBrightRow": 665,
+      "lastRowXRange": [212, 258],
+      "lastRowMidpoint": [235.0, 665],
+      "firstBrightRow": 629,
+      "firstRowXRange": [234, 242]
+    },
+    "nearTrainerProjectedBrightVerticalSpan": 187,
+    "farTrainerProjectedBrightVerticalSpan": 186
+  },
+  {
+    "file": "reach-original.png",
+    "size": [1536, 1024],
+    "sha256": "3362d9e5842d07eaee62bf3f92c444908e3aa3778db59d3a30585969f626087b",
+    "nearToe": {
+      "box": [70, 798, 137, 832],
+      "threshold": 160,
+      "lastBrightRow": 825,
+      "lastRowXRange": [103, 114],
+      "lastRowMidpoint": [108.5, 825],
+      "firstBrightRow": 798,
+      "firstRowXRange": [71, 136]
+    },
+    "farToe": {
+      "box": [166, 792, 218, 825],
+      "threshold": 160,
+      "lastBrightRow": 815,
+      "lastRowXRange": [183, 190],
+      "lastRowMidpoint": [186.5, 815],
+      "firstBrightRow": 792,
+      "firstRowXRange": [166, 212]
+    },
+    "nearHeel": {
+      "box": [130, 629, 170, 681],
+      "threshold": 160,
+      "lastBrightRow": 680,
+      "lastRowXRange": [130, 169],
+      "lastRowMidpoint": [149.5, 680],
+      "firstBrightRow": 637,
+      "firstRowXRange": [150, 159]
+    },
+    "farHeel": {
+      "box": [212, 615, 259, 666],
+      "threshold": 160,
+      "lastBrightRow": 665,
+      "lastRowXRange": [212, 258],
+      "lastRowMidpoint": [235.0, 665],
+      "firstBrightRow": 627,
+      "firstRowXRange": [232, 243]
+    },
+    "nearTrainerProjectedBrightVerticalSpan": 188,
+    "farTrainerProjectedBrightVerticalSpan": 188
+  }
+]

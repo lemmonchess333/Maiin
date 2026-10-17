@@ -28,6 +28,7 @@ import {
   weightSyncFailed,
 } from "@/lib/weightQueue";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
+import { Collapse } from "@/components/ui/Collapse";
 
 // A scale readout shares the input primitive's editing behavior. Its
 // resting surface is unboxed; the surrounding group owns the focus ring.
@@ -410,7 +411,7 @@ export default function WeightLogSheet({
                   : "Choose date"}
             </Button>
           </div>
-          {showDate && (
+          <Collapse open={showDate}>
             <input
               aria-label="Date measured"
               type="date"
@@ -427,7 +428,7 @@ export default function WeightLogSheet({
                 setError("");
               }}
             />
-          )}
+          </Collapse>
           {error && (
             <p
               id="weight-error"

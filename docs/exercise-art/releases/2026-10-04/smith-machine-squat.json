@@ -1,0 +1,211 @@
+{
+  "exerciseId": "smith-machine-squat",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 1072,
+  "height": 1496,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-05T13:06:08.702Z",
+  "reference": {
+    "path": "form-frames/smith-machine-squat/1.webp",
+    "sha256": "15677b926110ad665191c20234dfefc3c90da5d43f692056af9e93a7e35f592e"
+  },
+  "cueSha256": "97e6dd24eda38ef6a34926438537d77e9e74ebf95c95dd639e0d0f4d5f5a4100",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical v3 athlete identity retained; all moving anatomy authored by imagegen."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed front three-quarter view, common crop0,0,1024,1472 with24px left/right/top padding."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Final native standing, middle and bottom reviewed; knees bend to parallel thighs, heels planted, braced torso and upper-trap bar contact retained."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Exact master plate and carriage pixels translated by common0/150/350px per pose. Fixed machine and rail profiles rebuilt from master. Central shaft preserves native hand/neck occlusion."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Pixel-derived planted soles and tower-base contacts and widths; narrow sole copies use10px upper fade with native joins reviewed."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Smith carriages follow the vertical rails. Twelve source-visible plate/carriage RGB comparisons pass at common vertical translations; no inferred3D calibration claim."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Quads purple; glutes and hamstrings lilac, consistently through all frames."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues <=7words agree with Set,Lower,Bottom,Hold,Rise,Stand."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All6 and6to1 reviewed; seq1,2,3,3,2,1. Autoplay observed Set1 to Rise5 and pause on Bottom3."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormFrames390x844 light all6 and6to1 reviewed after final changes. Full machine and athlete, readable cues and stable contacts."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual390x844 dark all6 and6to1 reviewed; full machine/body visible with no clipping."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Smith squat with planted soles and fixed machine",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["leftSole", "rightSole", "towerBase"],
+      "dimensionNames": ["leftShoeWidth", "rightShoeWidth", "towerBaseWidth"],
+      "evidence": "Pixel-derived sole/machine contacts and widths; independent rigid plate/carriage pixel checks, plus native bar/grip review."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/smith-machine-squat/1.webp",
+      "sha256": "15677b926110ad665191c20234dfefc3c90da5d43f692056af9e93a7e35f592e",
+      "anchors": {
+        "leftSole": {
+          "x": 379,
+          "y": 1355
+        },
+        "rightSole": {
+          "x": 573,
+          "y": 1395
+        },
+        "towerBase": {
+          "x": 731,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 169,
+        "rightShoeWidth": 142,
+        "towerBaseWidth": 145
+      }
+    },
+    {
+      "path": "form-frames/smith-machine-squat/2.webp",
+      "sha256": "5dd15bf8b361a330bcd38de354e1a272393a4018956a13930c0c72ee9cf8d0f8",
+      "anchors": {
+        "leftSole": {
+          "x": 379,
+          "y": 1355
+        },
+        "rightSole": {
+          "x": 573,
+          "y": 1395
+        },
+        "towerBase": {
+          "x": 731,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 169,
+        "rightShoeWidth": 142,
+        "towerBaseWidth": 146
+      }
+    },
+    {
+      "path": "form-frames/smith-machine-squat/3.webp",
+      "sha256": "01440e68c4418c6315d388950c268f33062df34a7661b9e157d7be6bcdf91fd4",
+      "anchors": {
+        "leftSole": {
+          "x": 379,
+          "y": 1355
+        },
+        "rightSole": {
+          "x": 573,
+          "y": 1395
+        },
+        "towerBase": {
+          "x": 731,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 169,
+        "rightShoeWidth": 142,
+        "towerBaseWidth": 146
+      }
+    },
+    {
+      "path": "form-frames/smith-machine-squat/4.webp",
+      "sha256": "01440e68c4418c6315d388950c268f33062df34a7661b9e157d7be6bcdf91fd4",
+      "anchors": {
+        "leftSole": {
+          "x": 379,
+          "y": 1355
+        },
+        "rightSole": {
+          "x": 573,
+          "y": 1395
+        },
+        "towerBase": {
+          "x": 731,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 169,
+        "rightShoeWidth": 142,
+        "towerBaseWidth": 146
+      }
+    },
+    {
+      "path": "form-frames/smith-machine-squat/5.webp",
+      "sha256": "5dd15bf8b361a330bcd38de354e1a272393a4018956a13930c0c72ee9cf8d0f8",
+      "anchors": {
+        "leftSole": {
+          "x": 379,
+          "y": 1355
+        },
+        "rightSole": {
+          "x": 573,
+          "y": 1395
+        },
+        "towerBase": {
+          "x": 731,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 169,
+        "rightShoeWidth": 142,
+        "towerBaseWidth": 146
+      }
+    },
+    {
+      "path": "form-frames/smith-machine-squat/6.webp",
+      "sha256": "15677b926110ad665191c20234dfefc3c90da5d43f692056af9e93a7e35f592e",
+      "anchors": {
+        "leftSole": {
+          "x": 379,
+          "y": 1355
+        },
+        "rightSole": {
+          "x": 573,
+          "y": 1395
+        },
+        "towerBase": {
+          "x": 731,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 169,
+        "rightShoeWidth": 142,
+        "towerBaseWidth": 145
+      }
+    }
+  ]
+}

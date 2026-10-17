@@ -1,0 +1,31 @@
+{
+  "status": "draft-integrity-bindings-not-acceptance",
+  "files": {
+    "draft/1-framed.ora": "91dbe1ef239c11961e9e74954f61fcebc00a40f8e0ebcaa67be87f7863e12f09",
+    "draft/1-framed.png": "6469a48d2725737ba7d6c71eaad8dea50682d459b3b85eb85cb9e5da176f5b98",
+    "draft/1-inherited-contours-and-shading-layer.png": "2b5a4278161b8a4b9e70b4cc2261550a100c655806e845363c6f2a2544a65fc0",
+    "draft/1-native-finished.png": "269517853df41de92d91225696530c778ca9d4f469aac15958994940cf5978cc",
+    "draft/1-native.ora": "c960c1bde71d3dd0737866b967d5c4c35d07f22d27be8919f42815669fee34cb",
+    "draft/1-palette-layer.png": "e061dadc3b121b0bb4afda68536f3a91ec5ebcb54146922524333498dc280150",
+    "draft/frames/1.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/frames/2.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/frames/3.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/frames/4.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/frames/5.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/frames/6.webp": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+    "draft/masks/actual-changed-pixels.png": "c9721083a81e932be7150885afe2b5044fcd6d05f51b6fa0200287bbadde4e11",
+    "draft/masks/opaque-source-field-interior.png": "b2679e4f1b99f09c7a94ce7934049a4936fab873d6f83d578947aea2c4464ab9",
+    "draft/masks/primary-role-within-existing-fields.png": "141c8db09f11ae09840dea04765d16fb3c02c9df3e35fbf4cc7f3bdd314d58fc",
+    "draft/masks/secondary-role-within-existing-fields.png": "9a4e970c0c1e9537e54309cf4c45c066af8760319291cbbd0783153e52a77554",
+    "draft/masks/source-colour-alpha.png": "bbac0ec86c50b5e84982ffe03c68665fe998f166f55c0740186c44cc02e307a0",
+    "draft/masks/source-existing-colour-support.png": "2577fea77842241d557bbdf7e12a7fcfc9789fb390afaebd798cd62ec268be6c",
+    "draft/originals/historical-generation.md": "4bc3f088e32fab21e2b8044ed243efac8a4ea8f1c5d8b83116335f85e2eac167",
+    "draft/originals/historical-side-plank-plan.json": "53bbf17aeaf0bbf36e293814e610620550d6fe76b3bfe6e0b359882ab742346e",
+    "draft/originals/historical-side-plank-provenance.json": "2a527f8e4d19f783de1273f3247429b9a4a17e6ac3a95d662b1eb4a15e12ffa8",
+    "draft/originals/historical-side-plank-registration.json": "404acf1c2892a11d7745335399956a2dae8255bfab1560e0787aea7ee04bf7fd",
+    "draft/originals/raised-contact-drift.png": "89d0866e0f165831b539839a8c0d7e45b9dc8a77533d916cc4d23a38465d1bc3",
+    "draft/pixel-and-editable-proof.json": "d30c9de9f0caf2f09cd7f778946279f90093152be3b4905e3e94930b3bc32bc2",
+    "draft/reference.png": "c287fda2095940e6023aaabac153432da29591a626ee15ba18c2f5294e1448da"
+  },
+  "sequencePlanSha256": "1b709e4216adc80a963417f65d16f29e0375de3c228ba3412757f51b0fe50bbd"
+}

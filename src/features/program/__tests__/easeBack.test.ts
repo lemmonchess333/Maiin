@@ -109,7 +109,7 @@ describe("easeBackIn — what the plan comes down to", () => {
     expect(lifts(easeBackIn(light, 0.1)).bench.weight).toBe(17.5);
   });
 
-  it("shortens a bodyweight lift's reps and a hold's seconds instead", () => {
+  it("shortens a bodyweight lift's reps and a hold's seconds instead, with no load added", () => {
     const out = lifts(easeBackIn(state(), 0.2));
     expect(out.pull.reps).toBe(8);
     expect(out.pull.weight).toBe(0);
@@ -118,10 +118,105 @@ describe("easeBackIn — what the plan comes down to", () => {
     expect(out.plank.reps).toBe(30);
   });
 
+  /* Pgm8 L6: the plan follows a bodyweight lift's load added, and lowers
+     it after two misses, as it does any weight. Easing back lowers it the
+     same way: it took a rep off and kept the belt's load before. */
+  const pullUps = (weight: number) =>
+    ex({
+      name: "Pull-ups",
+      exerciseId: "pull-ups",
+      instanceId: "pull",
+      weight,
+      reps: 8,
+    });
+  const easedPullUps = (weight: number, share: number, smallPlates = false) =>
+    lifts(
+      easeBackIn(
+        state({
+          workouts: [day([pullUps(weight)])],
+          settings: { autoProgression: true, smallPlates },
+        }),
+        share
+      )
+    ).pull;
+
+  it("takes the share off a bodyweight lift's load added, a plate at least (Pgm8 L6)", () => {
+    const out = easedPullUps(10, 0.1);
+    expect(out.weight).toBe(7.5); // 10% off is 9 kg, nearest 10: one plate off
+    expect(out.reps).toBe(8);
+    expect(out.lowered).toEqual({
+      exerciseId: "pull-ups",
+      from: 10,
+      unit: "kg",
+      target: 8,
+      shown: true,
+    });
+    expect(easedPullUps(25, 0.2).weight).toBe(20);
+    expect(easedPullUps(10, 0.1, true).weight).toBe(8.75); // small plates
+  });
+
+  it("takes the lightest plate to none, and climbs back from there", () => {
+    let lift = easedPullUps(2.5, 0.1);
+    expect(lift.weight).toBe(0);
+    expect(lift.reps).toBe(8);
+    expect(lift.lowered).toEqual({
+      exerciseId: "pull-ups",
+      from: 2.5,
+      unit: "kg",
+      target: 8,
+      shown: true,
+    });
+    const atNone = readSessionSets(
+      Array.from({ length: lift.sets }, () => ({
+        weight: 0,
+        reps: 8,
+        completed: true,
+      })),
+      lift.sets
+    )!;
+    lift = applySessionSets(lift, atNone, false);
+    expect(lift.weight).toBe(2.5);
+    expect(lift.lowered).toBeUndefined();
+  });
+
+  it("takes a weighted hold's load down, its seconds kept", () => {
+    const plank = ex({
+      name: "Weighted Plank",
+      exerciseId: "weighted-plank",
+      instanceId: "plank",
+      weight: 10,
+      reps: 40,
+      repUnit: "seconds",
+    });
+    const out = lifts(easeBackIn(state({ workouts: [day([plank])] }), 0.1));
+    expect(out.plank.weight).toBe(7.5); // 10 kg for 35 s before
+    expect(out.plank.reps).toBe(40);
+  });
+
   it("leaves a lift with no weight yet at none", () => {
     const out = lifts(easeBackIn(state(), 0.1));
     expect(out.rdl.weight).toBe(0);
     expect(out.rdl.lowered).toBeUndefined();
+  });
+
+  it("drops a stretched target's line: the person chose the lighter weight (Pgm7 A3)", () => {
+    const raise = ex({
+      name: "Lateral Raise",
+      exerciseId: "lateral-raise",
+      instanceId: "raise",
+      weight: 10,
+      reps: 16,
+      stretched: {
+        exerciseId: "lateral-raise",
+        weight: 10,
+        next: 12.5,
+        ceiling: 19,
+      },
+    });
+    const out = lifts(easeBackIn(state({ workouts: [day([raise])] }), 0.1));
+    expect(out.raise.weight).toBe(9);
+    expect(out.raise.reps).toBe(16);
+    expect(out.raise.stretched).toBeUndefined();
   });
 
   it("takes a set off this week and starts the miss counts again", () => {

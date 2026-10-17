@@ -26,7 +26,8 @@ import capacitorConfig from "../../../capacitor.config";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
-const read = (p: string) => readFileSync(resolve(repoRoot, p), "utf8");
+const read = (p: string) =>
+  readFileSync(resolve(repoRoot, p), "utf8").replace(/\r\n/g, "\n");
 
 const pkg = JSON.parse(read("package.json")) as {
   dependencies: Record<string, string>;

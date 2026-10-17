@@ -1,0 +1,80 @@
+{
+  "label": "overhead-extension-final-96fea6f1",
+  "exitCode": 1,
+  "normalCommand": "npm run verify",
+  "head": "96fea6f1e887fe7be6c760ba427f14069e85c42b",
+  "logSha256": "3f77b9b28f8c521de77273fb6975ebe82a0384555cab71da594f18e1850aaa6a",
+  "inputCount": 2663,
+  "inputsUnchanged": true,
+  "counts": {
+    "Test Files": {
+      "failed": 6,
+      "passed": 1168,
+      "skipped": 10,
+      "total": 1184,
+      "verbatim": "Test Files  6 failed | 1168 passed | 10 skipped (1184)"
+    },
+    "Tests": {
+      "failed": 4,
+      "passed": 13435,
+      "skipped": 409,
+      "total": 13848,
+      "verbatim": "Tests  4 failed | 13435 passed | 409 skipped (13848)"
+    }
+  },
+  "stages": [
+    "lint",
+    "check:form-art",
+    "check:form-drafts",
+    "check:cycles",
+    "build",
+    "check:dist-size",
+    "test"
+  ],
+  "failures": {
+    "root-node|scripts/write-functions-env.test.ts|[suite]": {
+      "diagnosticSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+      "byteStart": 52924,
+      "byteEndExclusive": 52965,
+      "headerLine": 568
+    },
+    "root-node|scripts/ios/asc-signing.test.ts|[suite]": {
+      "diagnosticSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+      "byteStart": 53134,
+      "byteEndExclusive": 53175,
+      "headerLine": 572
+    },
+    "node|src/lib/__tests__/bodyRig.test.ts|supplied placard frames > all of a sequence's frames share one canvas": {
+      "diagnosticSha256": "8be605a31a3f6cae770e97df9d90ed12d89e94082217c8380f7d21c04b59ce19",
+      "byteStart": 53438,
+      "byteEndExclusive": 53909,
+      "headerLine": 579
+    },
+    "node|src/lib/__tests__/noDisabledTests.test.ts|no test is switched off outright > finds no unconditional skip in src/ or functions/": {
+      "diagnosticSha256": "661366c2c55a6f5d11ec18de3ca7ada9f2db570e7d3131479bfd87951fbfad3e",
+      "byteStart": 54135,
+      "byteEndExclusive": 54598,
+      "headerLine": 592
+    },
+    "node|src/features/program/__tests__/generatorAudit.test.ts|generator audit \u2014 every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline": {
+      "diagnosticSha256": "b23bfc7d5409dfeef7a855c216093984474602f74a0222dfe237771e08735b4f",
+      "byteStart": 54873,
+      "byteEndExclusive": 55420,
+      "headerLine": 605
+    },
+    "node|src/features/program/__tests__/useProgramWriters.test.ts|RUN-RESCHEDULE-01 \u2014 moveRunDay > refuses to move a race slot (immovable identity)": {
+      "diagnosticSha256": "63ef6b308cff2ebc724df224077c89898af25dcf3be3c3cb031063af155a087a",
+      "byteStart": 55660,
+      "byteEndExclusive": 56571,
+      "headerLine": 618
+    }
+  },
+  "snapshotRestores": [
+    {
+      "path": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+      "originalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "testOutputSha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "restoredExact": true
+    }
+  ]
+}

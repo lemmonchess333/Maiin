@@ -180,6 +180,23 @@ describe("createGoalSpace", () => {
       })
     ).rejects.toThrow("title required");
   });
+
+  it("refuses a name the word filter refuses, with a display name's sentence", async () => {
+    const { REFUSALS } = require("../lib/objectionableText");
+    for (const title of ["Hitler", "Team H1tler", "nazi gym", "sucks"]) {
+      const { firestore, docs } = makeStore();
+      await expect(
+        createGoalSpace({
+          firestore,
+          uid: "u",
+          input: { type: "strength_block", title },
+          now: NOW,
+          makeId,
+        })
+      ).rejects.toThrow(REFUSALS.displayName);
+      expect(docs.size).toBe(0);
+    }
+  });
 });
 
 describe("joinGoalSpace", () => {

@@ -54,6 +54,10 @@ import {
 import { workoutTonnageKg, type Workout } from "./savedWorkouts";
 import { daysSinceStart, startDayKey } from "./startDay";
 import { formatDayMonth } from "@/utils/formatters";
+import type {
+  JudgementMuscle,
+  VolumeLandmark,
+} from "@/features/program/volumeModel";
 
 /** The PRs tab's "Recent bests" window, in days. */
 export const RECENT_BEST_DAYS = 30;
@@ -217,7 +221,17 @@ export interface LiftingPageFigures {
 export function liftingPageFigures(
   workouts: readonly RangeWorkout[],
   range: HistoryRange,
-  { primaryGoal, bins }: { primaryGoal?: string; bins: readonly SummaryBin[] }
+  {
+    primaryGoal,
+    targets,
+    bins,
+  }: {
+    primaryGoal?: string;
+    /** What the person's plan judges each muscle against
+     *  (`volumeTargetsFor`). */
+    targets?: ReadonlyMap<JudgementMuscle, VolumeLandmark>;
+    bins: readonly SummaryBin[];
+  }
 ): LiftingPageFigures {
   const { now: today, since, sinceKey } = range;
   let firstSessionKey: string | null = null;
@@ -232,7 +246,11 @@ export function liftingPageFigures(
     progress: liftProgress(workouts, { sinceKey, today }),
     sets,
     muscleWeeks: weekKeys.length,
-    muscles: performedWeeklyVolume(workouts, { weekKeys, primaryGoal }),
+    muscles: performedWeeklyVolume(workouts, {
+      weekKeys,
+      primaryGoal,
+      targets,
+    }),
     averageKg: usualBinAmount(bins, (b) => b.volumeKg, {
       sinceKey,
       firstSessionKey,

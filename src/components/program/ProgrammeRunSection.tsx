@@ -78,7 +78,8 @@ import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import StatFigure from "@/components/ui/StatFigure";
 import { Card } from "@/components/ui/Card";
-import { runTemplateIcon } from "@/components/run/runTemplateIcons";
+import { runPoseFor, runPoseUrl } from "@/lib/runPoses";
+import RunFormSheet from "@/components/run/RunFormSheet";
 import { readString, writeString } from "@/lib/localStore";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -90,7 +91,11 @@ import {
   Trophy,
   X,
 } from "lucide-react";
-import { formatDistanceToNowStrict, format } from "date-fns";
+import {
+  differenceInCalendarDays,
+  formatDistanceToNowStrict,
+  format,
+} from "date-fns";
 import { toast } from "sonner";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
@@ -123,11 +128,13 @@ import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
 import { haptic } from "@/lib/haptic";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
 import {
+  planningEasyPaceSPerKm,
   prescriptivePaceTableFromFitness,
   resolveSessionPaces,
   raceDistanceKeyFromKm,
 } from "@/lib/runPaces";
-import { targetZoneForRun, maxHrFromAge } from "@/lib/hrZones";
+import { runDoseLine } from "@/lib/runDose";
+import { targetZoneForRun, maxHrFromAge, zoneMetaItems } from "@/lib/hrZones";
 import DayActionSheet from "./DayActionSheet";
 import AdjustWeekSheet from "./AdjustWeekSheet";
 import EaseWeekNudgeCard from "./EaseWeekNudgeCard";
@@ -143,17 +150,27 @@ import {
   getEasedWeekKey,
 } from "@/lib/easeWeekNudgeMarkers";
 import { planEasierWeek } from "@/lib/adjustWeek";
+import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import { track as trackProgram } from "@/lib/programAnalytics";
 import RaceCockpitCard from "./RaceCockpitCard";
 import RaceDayPlanCard from "./RaceDayPlanCard";
+import RaceWeeksAhead from "./RaceWeeksAhead";
+import type { LayoffClass } from "@/features/program/layoffDetection";
 import type { RaceDistance } from "@/lib/raceDayPlan";
-import { runSessionPresentation } from "@/lib/runSessionExplainer";
+import {
+  runSessionPresentation,
+  weekHoldsQuality,
+} from "@/lib/runSessionExplainer";
+import { runSessionAbout, runSessionName } from "@/lib/runSessionAbout";
+import { racePaceWorkFor } from "@/lib/racePace";
+import { isRunWalkTemplateId } from "@/lib/workoutTemplates";
 import SessionCommandCard from "./SessionCommandCard";
 import ProgrammeWeekSelector from "./ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "./ProgrammeWeekSelector";
 import {
   buildRaceCockpitViewModel,
-  compactRunLabel,
+  runCardStatus,
+  runStripLabel,
 } from "@/lib/runProgrammeViewModel";
 import { resolveTrainingWindow } from "@/lib/trainingResolver";
 import { Banner } from "@/components/ui/Banner";
@@ -219,6 +236,11 @@ interface ProgrammeRunSectionProps {
   /** Clears `pendingFellBehindPrompt` without a plan change — used by the
    *  in-tab "My race moved →" path before routing to the date editor. */
   dismissFellBehindPrompt: () => Promise<ProgramOutcome>;
+  /** Today's layoff reading (`useProgram`'s): the race plan's weeks ahead
+   *  are built with it, as the rollover builds next week (R23). Required,
+   *  as on every regen site: left out, a returning runner's outline would
+   *  show the quality sessions their plan holds back. */
+  recentLayoff: LayoffClass;
 }
 
 export default function ProgrammeRunSection({
@@ -237,6 +259,7 @@ export default function ProgrammeRunSection({
   skipRecoveryEarly,
   realignRacePlan,
   dismissFellBehindPrompt,
+  recentLayoff,
 }: ProgrammeRunSectionProps) {
   const navigate = useNavigate();
   const todayKeyDerivation = useLocalDateKey();
@@ -317,6 +340,12 @@ export default function ProgrammeRunSection({
   const raceElapsedDismissKey = `${storageUid}:tropos.dismiss.raceElapsed.${thisWeekKeyForDismissal}`;
   // Run13 (RUN-02): the proactive Adjust-this-week sheet.
   const [adjustOpen, setAdjustOpen] = useState(false);
+  // The running form guide, opened from the runner on the run cards.
+  const [runFormOpen, setRunFormOpen] = useState(false);
+  const openRunForm = () => {
+    haptic();
+    setRunFormOpen(true);
+  };
   // Run14: when the sheet is opened from the ease-week nudge it lands
   // straight on the easier preview; the normal "Adjust this week" entry
   // clears this so it still opens on the intent chooser.
@@ -473,10 +502,16 @@ export default function ProgrammeRunSection({
       : null;
   const recoveryDaysLeft = useMemo(() => {
     if (!inRecovery || !recoveryEndDate) return 0;
-    const end = parseLocalDate(recoveryEndDate);
-    const ms = end.getTime() - new Date().getTime();
-    return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
-  }, [inRecovery, recoveryEndDate]);
+    // Recovery ends on a local date; DST days need not last 24 hours.
+    // The date key also refreshes this count when the app crosses midnight.
+    return Math.max(
+      0,
+      differenceInCalendarDays(
+        parseLocalDate(recoveryEndDate),
+        parseLocalDate(todayKeyDerivation)
+      )
+    );
+  }, [inRecovery, recoveryEndDate, todayKeyDerivation]);
 
   // PR-4: surface the first non-terminal runDay as a promoted
   // "Next planned run" Start card on non-freeform modes. The
@@ -568,6 +603,8 @@ export default function ProgrammeRunSection({
   );
   const coachingReady =
     !runsLoading && !runsFailed && runsEvidenceReady !== false;
+  // Run20 (5): the day a new runner's first weeks end, for easing a week.
+  const newRunnerUntil = profileNewRunnerUntil(profile);
   const easeNudge = useMemo(
     () =>
       evaluateEaseWeekNudge({
@@ -583,7 +620,8 @@ export default function ProgrammeRunSection({
         // Nothing left to ease this week ⇒ already eased (or no quality
         // runs remain) — no persisted flag needed.
         weekAlreadyEased:
-          planEasierWeek(runDays, todayKeyDerivation).length === 0,
+          planEasierWeek(runDays, todayKeyDerivation, newRunnerUntil).length ===
+          0,
         fellBehindPending: contextualPrompt === "fell-behind",
         dismissedWeekKey: getDismissedWeekKey(profile.uid),
         lastShownAt: getLastShownAt(profile.uid),
@@ -599,6 +637,7 @@ export default function ProgrammeRunSection({
       recoveryEnded,
       raceCockpitVM?.phaseLabel,
       runDays,
+      newRunnerUntil,
       contextualPrompt,
       profile.uid,
     ]
@@ -715,12 +754,12 @@ export default function ProgrammeRunSection({
           // a fixed frame on both, so position disambiguates S/S and T/T.
           topLabel: format(date, "EEEEE"),
           center: String(date.getDate()),
-          bottomLabel: hasRun ? compactRunLabel(run.template) : "",
+          bottomLabel: hasRun ? runStripLabel(run.template, unit) : "",
           status,
           isToday: d.dateKey === todayKeyDerivation,
         };
       }),
-    [runWindow, todayKeyDerivation]
+    [runWindow, todayKeyDerivation, unit]
   );
 
   /* The SELECTED day for the command card — taken straight from the
@@ -778,6 +817,14 @@ export default function ProgrammeRunSection({
   };
   const selectedTemplate = selectedRun.template;
   const selectedIsRace = selectedTemplate?.type === "race";
+  // Run21 (2): a long run that finishes at race pace says so, by the
+  // launch's own gate.
+  const selectedRacePace = racePaceWorkFor(
+    selectedTemplate,
+    profile,
+    programState?.runPlan
+  );
+  const selectedName = runSessionName(selectedTemplate, selectedRacePace, unit);
   const selectedPurpose =
     selectedTemplate && selectedRun.runDay
       ? runSessionPresentation({
@@ -788,6 +835,8 @@ export default function ProgrammeRunSection({
           distance:
             programState?.runPlan?.raceGoal?.distance ??
             profile.raceGoal?.distance,
+          weekHasQuality: weekHoldsQuality(runDays, selectedRun.runDay.weekKey),
+          racePace: selectedRacePace?.kind,
         })
       : { purpose: null, weekLabel: null };
   const selectedDateLabel = format(
@@ -798,9 +847,19 @@ export default function ProgrammeRunSection({
   // surfaced on the command card so the "made for you" pace is visible where
   // the run is started — not just in Settings. Band-first via the shared
   // sessionPaceDisplay rule (mirrors DayActionSheet). Null when there's no
-  // benchmark (the run then shows distance/type only, as before).
+  // benchmark (the run then shows distance/type only, as before), and for
+  // run-walk, which is run by feel (Run20 (5)).
   const selectedPaceLabel: string | null = (() => {
-    if (!selectedTemplate) return null;
+    if (!selectedTemplate || isRunWalkTemplateId(selectedTemplate.id))
+      return null;
+    // A2: a tempo at the goal pace shows that pace, the one the run will
+    // set, with or without a benchmark.
+    if (selectedRacePace?.kind === "tempo") {
+      return sessionPaceDisplay(
+        { targetPace: Math.round(selectedRacePace.goalPaceS) },
+        unit
+      );
+    }
     const table = prescriptivePaceTableFromFitness(profile.runFitness ?? null);
     if (!table) return null;
     return sessionPaceDisplay(
@@ -815,28 +874,32 @@ export default function ProgrammeRunSection({
   // Target HR zone for the selected session — the HR companion to the pace
   // (mirrors DayActionSheet). Measured max, else the age estimate; null when
   // neither, so the card just shows pace/type as before.
-  const selectedHrLabel: string | null = (() => {
-    if (!selectedTemplate) return null;
+  const selectedHrItems: string[] = (() => {
+    if (!selectedTemplate) return [];
     const maxHr = profile.maxHeartRate ?? maxHrFromAge(profile.age ?? 0);
-    const band = targetZoneForRun(selectedTemplate.type, maxHr);
-    return band ? `Z${band.zone} · ${band.minBpm}–${band.maxBpm} bpm` : null;
+    const band = targetZoneForRun(
+      selectedTemplate.type,
+      maxHr,
+      selectedTemplate.config.targetDistanceKm
+    );
+    return band ? zoneMetaItems(band) : [];
   })();
 
   // Meta line for the selected run (distance/duration · pace · HR zone · type).
   const selectedRunMeta: string[] = (() => {
     if (!selectedTemplate) return [];
     const meta: string[] = [];
-    if (selectedTemplate.config.targetDistanceKm) {
-      meta.push(`${selectedTemplate.config.targetDistanceKm} km`);
-    } else if (selectedTemplate.estimatedDuration) {
-      meta.push(`${selectedTemplate.estimatedDuration} min`);
-    }
-    if (selectedPaceLabel) meta.push(selectedPaceLabel);
-    if (selectedHrLabel) meta.push(selectedHrLabel);
+    // Run21 (5): a long run's minutes at the runner's own pace.
     meta.push(
-      selectedTemplate.type.charAt(0).toUpperCase() +
-        selectedTemplate.type.slice(1)
+      runDoseLine(selectedTemplate, planningEasyPaceSPerKm(profile.runFitness))
     );
+    if (selectedPaceLabel) meta.push(selectedPaceLabel);
+    meta.push(...selectedHrItems);
+    // The zone's name says "Easy" already for an easy run (Run21 (1)).
+    const typeWord =
+      selectedTemplate.type.charAt(0).toUpperCase() +
+      selectedTemplate.type.slice(1);
+    if (!meta.includes(typeWord)) meta.push(typeWord);
     return meta;
   })();
   // Free-run fallback URL (Run.tsx parses ?type=freerun on mount).
@@ -848,16 +911,15 @@ export default function ProgrammeRunSection({
     (heroState === "race-today" || heroState === "race-recent");
 
   // Selected-day card eyebrow — temporal status relative to the SELECTED
-  // date (Today / Tomorrow / Pending for a past-but-startable slot / weekday).
-  // The card always leads with the calendar date too (selectedDateLabel), so
-  // the user never loses their place after tapping around the selector.
-  const selectedEyebrow = (() => {
-    const tomorrowKey = localDateString(addLocalDays(new Date(), 1));
-    if (selectedDateKey === todayKeyDerivation) return "Due today";
-    if (selectedDateKey === tomorrowKey) return "Tomorrow";
-    if (selectedDateKey < todayKeyDerivation) return "Pending";
-    return "Up next";
-  })();
+  // date (Due today / Tomorrow / Pending for a past-but-startable slot / Up
+  // next for the first run still to do / Upcoming after it). The card
+  // always leads with the calendar date too (selectedDateLabel), so the
+  // user never loses their place after tapping around the selector.
+  const selectedEyebrow = runCardStatus(
+    selectedDateKey,
+    { today: todayKeyDerivation, tomorrow: tomorrowKeyDerivation },
+    runWindow
+  );
 
   // Freeform hero data — last run from the recent-30-day window
   // + this week's bucket.
@@ -1135,12 +1197,12 @@ export default function ProgrammeRunSection({
         <Banner
           variant="info"
           title={`Recovering · ${recoveryDaysLeft} day${recoveryDaysLeft === 1 ? "" : "s"} left`}
-          description="Easy runs this week. Templates auto-set to easy_30 until recovery ends."
+          description="Easy runs only until then, while your legs recover from the race."
           action={
             <button
               type="button"
               onClick={handleSkipRecoveryEarly}
-              className="inline-flex items-center gap-0.5 text-xs font-semibold motion-safe:active:scale-95 text-running-strong"
+              className="inline-flex items-center gap-0.5 text-xs font-semibold transition-transform motion-safe:active:scale-95 text-running-strong"
             >
               Skip recovery early &rsaquo;
             </button>
@@ -1531,10 +1593,28 @@ export default function ProgrammeRunSection({
               <div className="space-y-2">
                 <SessionCommandCard
                   sport="run"
-                  icon={runTemplateIcon(selectedTemplate?.icon)}
+                  figure={
+                    <img
+                      src={runPoseUrl(runPoseFor(selectedTemplate?.type))}
+                      alt=""
+                      draggable={false}
+                      decoding="async"
+                      className="h-24 w-auto"
+                    />
+                  }
+                  onFigurePress={openRunForm}
+                  figureLabel="Running form"
                   eyebrow={`${selectedEyebrow} · ${selectedDateLabel}`}
-                  title={selectedTemplate?.name ?? "Run"}
-                  description={selectedTemplate?.description}
+                  title={selectedName}
+                  /* Run21 (2): the session's one feel line. Its shape
+                     is "What it is", in "Why this run" below. */
+                  description={
+                    selectedTemplate
+                      ? runSessionAbout(selectedTemplate, {
+                          racePace: selectedRacePace,
+                        }).feel
+                      : undefined
+                  }
                   meta={[
                     ...(selectedPurpose.weekLabel
                       ? [selectedPurpose.weekLabel]
@@ -1555,6 +1635,8 @@ export default function ProgrammeRunSection({
                 />
                 <RunPlanPurpose
                   purpose={selectedPurpose.purpose}
+                  template={selectedTemplate}
+                  racePace={selectedRacePace}
                   run={selectedRun.runDay}
                   runDays={runDays}
                 />
@@ -1565,7 +1647,7 @@ export default function ProgrammeRunSection({
                     haptic();
                     navigate(FREE_RUN_URL);
                   }}
-                  className="w-full min-h-[44px] text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.99]"
+                  className="w-full min-h-[44px] text-xs font-medium text-muted-foreground hover:text-foreground transition motion-safe:active:scale-[0.99]"
                 >
                   Start free run instead
                 </button>
@@ -1573,27 +1655,57 @@ export default function ProgrammeRunSection({
             ) : (
               // No startable run on the selected day: completed, skipped, or
               // nothing scheduled. Calm, date-led, always offers a free run.
-              <div className="rounded-2xl border p-4 card-shadow bg-running/4 border-running/14">
-                <SectionLabel>{selectedDateLabel}</SectionLabel>
-                <p className="text-sm font-bold text-foreground mt-0.5">
-                  {selectedRun.isCompleted
-                    ? `${selectedTemplate?.name ?? "Run"} · done`
-                    : selectedRun.status === "skipped"
-                      ? `${selectedTemplate?.name ?? "Run"} · skipped`
-                      : "No run scheduled"}
-                </p>
-                <p className="text-micro text-muted-foreground mt-0.5">
-                  {selectedRun.isCompleted
-                    ? "Add another whenever you like."
-                    : selectedRun.status === "skipped"
-                      ? "Marked as skipped. You can still head out."
-                      : selectedDay.scheduleType === "lift"
-                        ? // Run-scope card, but the day is not a rest day:
-                          // Home names it a lift day and this said "Rest
-                          // day" beside it.
-                          "Lift day. Head out for a free run if you like."
-                        : "Rest day. Head out whenever you like."}
-                </p>
+              <div className="@container rounded-2xl border p-4 card-shadow bg-running/4 border-running/14">
+                {/* The runner beside the words, as on the run card, gives
+                    way under 14em of card. */}
+                <div className="flex items-start gap-3">
+                  <div className="min-w-0 flex-1">
+                    <SectionLabel>{selectedDateLabel}</SectionLabel>
+                    <p className="text-sm font-bold text-foreground mt-0.5">
+                      {selectedRun.isCompleted
+                        ? `${selectedName} · done`
+                        : selectedRun.status === "skipped"
+                          ? `${selectedName} · skipped`
+                          : "No run scheduled"}
+                    </p>
+                    <p className="text-micro text-muted-foreground mt-0.5">
+                      {selectedRun.isCompleted
+                        ? "Add another whenever you like."
+                        : selectedRun.status === "skipped"
+                          ? "Marked as skipped. You can still head out."
+                          : selectedDay.scheduleType === "lift"
+                            ? // Run-scope card, but the day is not a rest day:
+                              // Home names it a lift day and this said "Rest
+                              // day" beside it.
+                              "Lift day. Head out for a free run if you like."
+                            : "Rest day. Head out whenever you like."}
+                    </p>
+                    {/* Where the runner gives way, its guide is named in
+                        words, as on the run card. */}
+                    <Button
+                      variant="ghost"
+                      className="-ml-4 mt-1 hidden text-running-strong @max-[14em]:inline-flex"
+                      onClick={openRunForm}
+                    >
+                      Running form
+                    </Button>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    className="-my-1 h-auto shrink-0 p-0 @max-[14em]:hidden"
+                    aria-label="Running form"
+                    onClick={openRunForm}
+                  >
+                    <img
+                      src={runPoseUrl("run-easy")}
+                      alt=""
+                      aria-hidden="true"
+                      draggable={false}
+                      decoding="async"
+                      className="h-20 w-auto"
+                    />
+                  </Button>
+                </div>
                 {selectedRun.isCompleted && selectedSavedRunId && (
                   <Button
                     variant="sport"
@@ -1655,6 +1767,15 @@ export default function ProgrammeRunSection({
                    catalogue binding (runPlan.raceGoal is the schedule's
                    snapshot and doesn't carry it). */
                 raceSpaceId={profile.raceGoal?.eventSpaceId}
+                /* R23: the plan's coming weeks, a week a row. */
+                weeksAhead={
+                  <RaceWeeksAhead
+                    profile={profile}
+                    programState={programState}
+                    recentLayoff={recentLayoff}
+                    today={todayKeyDerivation}
+                  />
+                }
                 onEdit={() => {
                   haptic();
                   navigate("/settings/run-plan");
@@ -1814,7 +1935,9 @@ export default function ProgrammeRunSection({
       {raceGoal && (
         <AdjustWeekSheet
           open={adjustOpen}
+          unit={unit}
           onClose={() => setAdjustOpen(false)}
+          newRunnerUntil={newRunnerUntil}
           initialIntent={adjustInitialIntent}
           runDays={runDays}
           raceGoal={{
@@ -1839,6 +1962,7 @@ export default function ProgrammeRunSection({
           uid={profile.uid}
         />
       )}
+      <RunFormSheet open={runFormOpen} onOpenChange={setRunFormOpen} />
     </section>
   );
 }

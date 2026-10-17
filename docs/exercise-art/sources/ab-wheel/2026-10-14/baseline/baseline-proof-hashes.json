@@ -1,0 +1,12 @@
+{
+  "baseline/baseline-failure-identities.json": "1d645e87095129e908e33067abfe3cc17ed8e548a630aa7569a0b9cc54fbb71a",
+  "baseline/baseline-final-input-manifest.json": "4f70b79784884cd2d981cbb8ec0b6148c5eef1381ed08c61a1b7fa824d3f4e4b",
+  "baseline/baseline-input-manifest.json": "4f70b79784884cd2d981cbb8ec0b6148c5eef1381ed08c61a1b7fa824d3f4e4b",
+  "baseline/baseline-inputs.json": "735568077050d6ae3da9cd391130db1f20f9a1518d6be1775d0d3feecb2a44ce",
+  "baseline/baseline-planSweep-after-run.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+  "baseline/baseline-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+  "baseline/baseline-summary.json": "643b243fab78501ed4d96e494f432f07cf73ab723ef4fbcd3c544b411571c45a",
+  "baseline/baseline-verify-result.json": "e2210363223a7ae38e585670c3a1d7fb93e9d59f46858d6171afeb6b6ea58bf0",
+  "baseline/baseline-verify.log": "9bed359f766e07164ac82a46a1d1719ff54b1b88bfa659152258e1ba0b01ba41",
+  "baseline/run-current-main-baseline.py": "aa1761dddc2fe7820db06539c2841427f997e3989de0b83c488f7f76a54c1db3"
+}

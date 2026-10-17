@@ -40,6 +40,7 @@ import {
 } from "@/lib/trainingWeeks";
 import LiftProgressCard from "@/components/analytics/LiftProgressCard";
 import MuscleVolumeCard from "@/components/analytics/MuscleVolumeCard";
+import { volumeTargetsFor } from "@/features/program/volumeTargets";
 import RunPaceCard from "@/components/analytics/RunPaceCard";
 import FastestKilometresCard from "@/components/analytics/FastestKilometresCard";
 import WeightRateCard from "@/components/analytics/WeightRateCard";
@@ -83,9 +84,17 @@ import { useTrainingLoadSeries } from "@/hooks/useTrainingLoadSeries";
 import { distanceLabel } from "@/lib/runLabels";
 import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 import { Footprints, Trophy, UtensilsCrossed, LineChart } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
-import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
+import {
+  Skeleton,
+  ChartSkeleton,
+  PeriodSummarySkeleton,
+} from "@/components/LoadingSkeleton";
+import ArrivalFade from "@/components/ui/ArrivalFade";
+import { useArrivedAfterLoading } from "@/hooks/useArrivedAfterLoading";
 import {
   formatVolume,
   formatDistance,
@@ -570,6 +579,7 @@ export default function History() {
   );
   const { startKey, joinedInRange } = range;
   const unit = useDistanceUnit();
+  const liftUnit = useLiftUnit();
   /**
    * The cross-cutting gate. Only the surfaces that genuinely SPAN all
    * three disciplines may use it — the period summary counts runs and
@@ -590,6 +600,8 @@ export default function History() {
    */
   const dataLoading =
     runsLoading || workoutsLoading || mealsLoading || rangeMealsLoading;
+  // The overview fades in where its placeholder was (Pol1).
+  const overviewArrival = useArrivedAfterLoading(dataLoading);
 
   /* Names whichever reads are still outstanding after 15s. Purely
      diagnostic — it never cancels or fakes a result, because a slow read
@@ -769,13 +781,21 @@ export default function History() {
      focus, the range's sets, and the weekly average the volume bars stand
      against. */
   const liftGoal = profile?.primaryGoal as PrimaryGoal | undefined;
+  // What Train's volume card judges each muscle against, so the two never
+  // disagree: the band at the person's level, its floor lowered to what
+  // their days and time fit.
+  const muscleTargets = useMemo(
+    () => (profile ? volumeTargetsFor(profile) : undefined),
+    [profile]
+  );
   const liftingInsight = useMemo(
     () =>
       liftingPageFigures(workouts, range, {
         primaryGoal: liftGoal,
+        targets: muscleTargets,
         bins: periodSummary.bins,
       }),
-    [workouts, range, liftGoal, periodSummary.bins]
+    [workouts, range, liftGoal, muscleTargets, periodSummary.bins]
   );
 
   /* The Running page's reading of the range (`runningPageInsight`): pace
@@ -815,10 +835,14 @@ export default function History() {
       metric: "volume",
       value:
         liftingData.liftVolume > 0
-          ? formatVolume(liftingData.liftVolume).value
+          ? formatVolume(liftingData.liftVolume, liftUnit).value
           : "0",
-      unit: "kg lifted",
-      change: volumeChange(liftingData.liftVolume, liftingData.prevLiftVolume),
+      unit: `${liftUnitLabel(liftUnit)} lifted`,
+      change: volumeChange(
+        liftingData.liftVolume,
+        liftingData.prevLiftVolume,
+        liftUnit
+      ),
     },
     {
       metric: "distance",
@@ -964,6 +988,7 @@ export default function History() {
   const runningHasLifetime = lifetimeTotals.runCount > 0;
   const runningHasWindow = runs.length > 0;
   const liftingHasLifetime = lifetimeTotals.liftCount > 0;
+  const lifetimeVolume = formatVolume(lifetimeTotals.liftVolume, liftUnit);
   const liftingHasWindow = liftingData.liftCount > 0;
   const nutritionHasLifetime = lifetimeTotals.daysLogged > 0;
   const nutritionHasWindow = nutrition.avgCalories > 0;
@@ -1149,15 +1174,10 @@ export default function History() {
                 Splitting the three states keeps them mutually exclusive and
                 exhaustive: loading → skeleton, then cold-start → card, else
                 → overview. */}
+            {/* The range card's own shape (Pol1), so the chart arriving
+                moves nothing under it. */}
             {filter === "analytics" && view === "overview" && dataLoading && (
-              <div className="p-4 rounded-2xl bg-card space-y-3">
-                <Skeleton className="h-3 w-20" />
-                <div className="grid grid-cols-3 gap-2">
-                  <Skeleton className="h-20 w-full rounded-xl" />
-                  <Skeleton className="h-20 w-full rounded-xl" />
-                  <Skeleton className="h-20 w-full rounded-xl" />
-                </div>
-              </div>
+              <PeriodSummarySkeleton />
             )}
 
             {/*
@@ -1203,20 +1223,22 @@ export default function History() {
               view === "overview" &&
               !dataLoading &&
               isAnalyticsColdStart && (
-                <EmptyState
-                  icon={LineChart}
-                  accent={THEME.brand}
-                  headline="No analytics yet"
-                  sub="Log a workout, run or meal and your trends will show up here."
-                  action={{ label: "Start a workout", href: "/program" }}
-                />
+                <ArrivalFade {...overviewArrival}>
+                  <EmptyState
+                    icon={LineChart}
+                    accent={THEME.brand}
+                    headline="No analytics yet"
+                    sub="Log a workout, run or meal and your trends will show up here."
+                    action={{ label: "Start a workout", href: "/program" }}
+                  />
+                </ArrivalFade>
               )}
 
             {filter === "analytics" &&
               view === "overview" &&
               !dataLoading &&
               !isAnalyticsColdStart && (
-                <>
+                <ArrivalFade {...overviewArrival} className="space-y-4">
                   <SectionErrorBoundary sectionName="period-summary">
                     <PeriodSummaryCard
                       title={rollingRangeLabel(timeRange)}
@@ -1253,13 +1275,15 @@ export default function History() {
                       onOpen={() => setView("lifting")}
                     />
                   </SectionErrorBoundary>
-                </>
+                </ArrivalFade>
               )}
 
             {/* The way into the four pages. Shown in cold start too: the
                 Body page holds a weight chart that needs no session. */}
             {filter === "analytics" && view === "overview" && !dataLoading && (
-              <AnalyticsGoDeeper onOpen={setView} lines={goDeeper} />
+              <ArrivalFade {...overviewArrival}>
+                <AnalyticsGoDeeper onOpen={setView} lines={goDeeper} />
+              </ArrivalFade>
             )}
 
             {/* On its own page a section renders whatever its data: each
@@ -1443,11 +1467,12 @@ export default function History() {
                           volumeKg: liftingData.liftVolume,
                           sessions: liftingData.liftCount,
                           sets: liftingInsight.sets,
+                          unit: liftUnit,
                         })}
                         bins={periodSummary.bins}
                         granularity={periodSummary.granularity}
                         sport="lifting"
-                        reading={liftingBins}
+                        reading={liftingBins(liftUnit)}
                         onPick={(b) =>
                           trackHistoryEvent("history_chart_tap_attempted", {
                             chart: "volume",
@@ -1455,11 +1480,15 @@ export default function History() {
                             value: b.volumeKg,
                           })
                         }
-                        average={liftingInsight.averageKg}
+                        average={
+                          liftingInsight.averageKg === null
+                            ? null
+                            : liftVolumeIn(liftingInsight.averageKg, liftUnit)
+                        }
                         averageText={
                           liftingInsight.averageKg === null
                             ? ""
-                            : `${abbreviateK(liftingInsight.averageKg)} kg`
+                            : `${abbreviateK(liftVolumeIn(liftingInsight.averageKg, liftUnit))} ${liftUnitLabel(liftUnit)}`
                         }
                       />
                     </SectionErrorBoundary>
@@ -1792,19 +1821,19 @@ export default function History() {
                       <Card size="compact" className="text-center">
                         <Trophy className="size-4 mx-auto mb-1.5 text-lifting" />
                         <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                          {formatVolume(lifetimeTotals.liftVolume).value}
-                          {formatVolume(lifetimeTotals.liftVolume).unit && " "}
-                          {formatVolume(lifetimeTotals.liftVolume).unit && (
+                          {lifetimeVolume.value}
+                          {lifetimeVolume.unit && " "}
+                          {lifetimeVolume.unit && (
                             <span className="text-xs font-medium">
-                              {formatVolume(lifetimeTotals.liftVolume).unit}
+                              {lifetimeVolume.unit}
                             </span>
                           )}
                         </p>
                         <p className="text-caption text-muted-foreground mt-0.5">
                           {lifetimeTotals.liftCount}{" "}
-                          {lifetimeTotals.liftCount === 1
-                            ? "session"
-                            : "sessions"}
+                          {/* "lifts", as the tile beside it says "runs":
+                              the range card's "sessions" counts both. */}
+                          {lifetimeTotals.liftCount === 1 ? "lift" : "lifts"}
                         </p>
                       </Card>
                       <Card size="compact" className="text-center">

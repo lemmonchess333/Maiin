@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import EmptyState from "@/components/ui/EmptyState";
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import RaceFilters from "@/features/spaces/RaceFilters";
 import {
   ALL_RACE_FILTERS,
@@ -40,6 +41,7 @@ import {
 import { raceEventDates } from "@/features/spaces/raceDates";
 import type { RaceDistance, RaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import PhaseRail from "./PhaseRail";
+import { Collapse } from "@/components/ui/Collapse";
 
 const DISTANCE_OPTIONS: { value: RaceDistance; label: string }[] = [
   { value: "5k", label: "5K" },
@@ -129,7 +131,7 @@ function UpcomingRacePicker({
         />
       </button>
 
-      {open && (
+      <Collapse open={open}>
         <div className="mt-3 space-y-2">
           <RaceFilters value={filters} onChange={setFilters} trainingOnly />
           {raceDays.length === 0 ? (
@@ -226,7 +228,7 @@ function UpcomingRacePicker({
             </div>
           )}
         </div>
-      )}
+      </Collapse>
     </div>
   );
 }
@@ -349,6 +351,14 @@ export default function RaceGoalPlanner({
           <p className="text-xs text-muted-foreground leading-relaxed">
             {state.statusDescription}
           </p>
+
+          {/* Pgm8 (R14c): a race too soon for a new runner's plan to build
+              to, as setup says it. */}
+          {state.newRunnerNote && (
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              <InlineNumerals>{state.newRunnerNote}</InlineNumerals>
+            </p>
+          )}
 
           {/* Phase rail — pre-save preview of the cockpit's rail, week 0 active */}
           <PhaseRail activePhase={state.firstWeekPhase} />

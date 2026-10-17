@@ -11,12 +11,14 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+  dumbbellVersion,
   exerciseBank,
   pickExercise,
   pickAccessory,
   rescaleForSwap,
   exerciseDisplayName,
 } from "../variationBank";
+import { applyEquipmentFilterToWorkouts } from "../matchTemplate";
 import { getExerciseById } from "@/lib/exercises";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { readFileSync } from "node:fs";
@@ -215,6 +217,106 @@ describe("pickAccessory", () => {
     /* Since we can only exclude one id, exclusion still leaves
        2 valid candidates. Just verify result is one of them. */
     expect(["overhead-extension", "tricep-dips"]).toContain(result.id);
+  });
+});
+
+/* ─── A barbell lift's dumbbell version (Pgm8 L15) ───────────────────────
+   A new plan builds a barbell lift whose first weight would be under the
+   bar as its dumbbell version. The bank has no pairs of its own: its
+   answer is the one the equipment swap already gives someone without a
+   barbell, the first dumbbell lift in the same category, in the bank's
+   order, that the person's level is offered. ── */
+describe("dumbbellVersion", () => {
+  const barbellLifts = (
+    Object.keys(exerciseBank) as (keyof typeof exerciseBank)[]
+  ).flatMap((cat) =>
+    exerciseBank[cat]
+      .filter((o) => getExerciseById(o.id)?.equipment === "Barbell")
+      .map((o) => ({ cat, id: o.id }))
+  );
+  const LEVELS = ["beginner", "intermediate", "advanced"] as const;
+
+  it("names the dumbbell version of each lift a new plan started under the bar", () => {
+    // The five the simulator's scan of new plans found under the bar (F10).
+    expect(dumbbellVersion("barbell-curl", "beginner")).toBe("db-curl");
+    expect(dumbbellVersion("skull-crushers", "intermediate")).toBe(
+      "overhead-extension"
+    );
+    expect(dumbbellVersion("overhead-press", "beginner")).toBe(
+      "db-shoulder-press"
+    );
+    expect(dumbbellVersion("bench-press", "beginner")).toBe("db-bench");
+    expect(dumbbellVersion("barbell-row", "beginner")).toBe("db-row");
+  });
+
+  it("is the lift the equipment swap gives someone with no barbell", () => {
+    expect(barbellLifts.length).toBeGreaterThan(10);
+    const differ: string[] = [];
+    for (const { cat, id } of barbellLifts)
+      for (const level of LEVELS) {
+        const [swapped] = applyEquipmentFilterToWorkouts(
+          [
+            {
+              dayName: "D",
+              dayType: "full_body",
+              completed: false,
+              exercises: [
+                {
+                  name: exerciseDisplayName(id),
+                  exerciseId: id,
+                  movementCategory: cat,
+                  sets: 3,
+                  reps: 8,
+                  weight: 20,
+                  progressionType: "linear",
+                  lastSuccessfulWeight: 20,
+                  lastAttemptedWeight: 20,
+                  consecutiveFailures: 0,
+                  plateauCount: 0,
+                  performanceHistory: [],
+                  lastPerformance: null,
+                },
+              ],
+            },
+          ],
+          "minimal",
+          [],
+          level
+        )[0].exercises;
+        if (dumbbellVersion(id, level) !== swapped.exerciseId)
+          differ.push(
+            `${level} ${id}: ${String(dumbbellVersion(id, level))} against ${swapped.exerciseId}`
+          );
+      }
+    expect(differ).toEqual([]);
+  });
+
+  it("keeps the slot's role: a dumbbell lift of the same movement and mechanic", () => {
+    const off: string[] = [];
+    for (const { cat, id } of barbellLifts)
+      for (const level of LEVELS) {
+        const version = dumbbellVersion(id, level);
+        const lift = version ? getExerciseById(version) : undefined;
+        if (
+          !lift ||
+          lift.equipment !== "Dumbbells" ||
+          !exerciseBank[cat].some((o) => o.id === version) ||
+          lift.mechanic !== getExerciseById(id)?.mechanic
+        )
+          off.push(`${level} ${id}: ${String(version)}`);
+      }
+    expect(off).toEqual([]);
+  });
+
+  it("passes over what the caller rules out, and has none outside the bank", () => {
+    expect(
+      dumbbellVersion("barbell-curl", "beginner", (id) => id !== "db-curl")
+    ).toBe("hammer-curl");
+    expect(
+      dumbbellVersion("barbell-curl", "beginner", (id) => !id.includes("curl"))
+    ).toBeUndefined();
+    // The EZ-bar curl is a barbell lift the bank doesn't hold.
+    expect(dumbbellVersion("ez-bar-curl", "beginner")).toBeUndefined();
   });
 });
 

@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { formatClock } from "@/utils/formatters";
 import type { SessionPlayer } from "@/hooks/useSessionPlayer";
-import type { SessionSegment } from "@/lib/runSegments";
+import { stepEyebrow, type SessionSegment } from "@/lib/runSegments";
 import { paceBandLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { THEME } from "@/lib/theme";
+import { Button } from "@/components/ui/Button";
+import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 
 /**
  * The in-run step shell (Runna teardown #3), STRUCT-SESS-02 edition:
@@ -20,28 +22,27 @@ import { THEME } from "@/lib/theme";
  *  - big countdown / metres-left, "Up next", a step-complete flash,
  *    a manual "Skip step" override, and a terminal all-steps-done state
  *
- * Colour: the active-run cockpit's own language (see the original header
- * note) — TEAL family, work full-strength, easier segments half voltage,
- * recovery neutral. Pinned always-dark like GuidedRunOverlay; animation is
+ * Colour: the run's coral (DESIGN_GUIDE §14, the live run screen), work
+ * full-strength, easier segments half voltage, recovery neutral. Pinned always-dark like GuidedRunOverlay; animation is
  * opacity/width only (WKWebView-safe); reduced motion gets settled states.
  */
 
-const TEAL = THEME.teal;
+const RUN = THEME.running;
 const TYPE_COLOR: Record<string, string> = {
-  warmup: `${TEAL}73`,
-  easy: `${TEAL}73`,
-  moderate: TEAL,
-  hard: TEAL,
+  warmup: `${RUN}73`,
+  easy: `${RUN}73`,
+  moderate: RUN,
+  hard: RUN,
   recovery: "rgba(255,255,255,0.35)",
-  cooldown: `${TEAL}73`,
+  cooldown: `${RUN}73`,
 };
 const TYPE_EYEBROW: Record<string, string> = {
-  warmup: `${TEAL}CC`,
-  easy: `${TEAL}CC`,
-  moderate: TEAL,
-  hard: TEAL,
+  warmup: `${RUN}CC`,
+  easy: `${RUN}CC`,
+  moderate: RUN,
+  hard: RUN,
   recovery: "rgba(255,255,255,0.6)",
-  cooldown: `${TEAL}CC`,
+  cooldown: `${RUN}CC`,
 };
 
 /** A countdown shows 0:01 until it reaches zero — ceil before formatting. */
@@ -70,28 +71,19 @@ function headlineFor(
   return seg.label;
 }
 
-function eyebrowFor(seg: SessionSegment): string {
-  if (seg.eyebrow) return seg.eyebrow;
-  if (seg.type === "hard" && seg.rep && seg.totalReps) {
-    return `REP ${seg.rep}/${seg.totalReps}`;
-  }
-  if (seg.type === "recovery" && seg.rep && seg.totalReps) {
-    return `AFTER REP ${seg.rep}/${seg.totalReps}`;
-  }
-  if (seg.type === "moderate" && seg.rep && seg.totalReps) {
-    return `BLOCK ${seg.rep}/${seg.totalReps}`;
-  }
-  return seg.type.toUpperCase();
-}
-
 export default function IntervalStepShell({
   player,
   band,
   onSkip,
+  manualDistance = false,
+  paused = false,
 }: {
   player: SessionPlayer;
   band?: [number, number];
   onSkip: () => void;
+  /** Typed whole-run distance supplies no live segment odometer. */
+  manualDistance?: boolean;
+  paused?: boolean;
 }) {
   const unit = useDistanceUnit();
   const reduce = useReducedMotion();
@@ -130,7 +122,9 @@ export default function IntervalStepShell({
           All steps complete
         </p>
         <p className="text-xs mt-1" style={{ color: `${THEME.success}B3` }}>
-          Cruise home at whatever feels good — then finish the run to save it.
+          {manualDistance
+            ? "Finish the run and enter the distance covered to save it."
+            : "Cruise home at whatever feels good — then finish the run to save it."}
         </p>
       </div>
     );
@@ -143,7 +137,9 @@ export default function IntervalStepShell({
       ? current.target.meters
       : current.target.seconds;
   const liveProgress = isDistanceBased
-    ? Math.min(1, state.phaseDistanceCovered / Math.max(1, targetValue))
+    ? manualDistance
+      ? 0
+      : Math.min(1, state.phaseDistanceCovered / Math.max(1, targetValue))
     : Math.min(1, state.phaseElapsed / Math.max(1, targetValue));
 
   return (
@@ -181,7 +177,7 @@ export default function IntervalStepShell({
       </div>
 
       <div className="p-4 pt-3 space-y-1">
-        <div className="flex items-baseline justify-between gap-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
           {flash ? (
             <p className="text-caption font-bold tracking-wider text-success-strong min-w-0 truncate">
               ✓ {flash.toUpperCase()} DONE
@@ -191,12 +187,16 @@ export default function IntervalStepShell({
               className="text-caption font-bold tracking-wider"
               style={{ color: TYPE_EYEBROW[current.type] }}
             >
-              {eyebrowFor(current)}
+              {stepEyebrow(current)}
             </p>
           )}
-          <p className="text-2xl font-extrabold font-mono tabular-nums text-white shrink-0 leading-none">
+          <p
+            className={`${manualDistance && isDistanceBased ? "text-lg" : "text-2xl"} font-extrabold font-mono tabular-nums text-white shrink-0 leading-none`}
+          >
             {isDistanceBased
-              ? `${Math.max(0, Math.round(targetValue - state.phaseDistanceCovered))} m`
+              ? manualDistance
+                ? `${distanceIn(targetValue, unit).toFixed(2)} ${distanceUnitLabel(unit)} target`
+                : `${Math.max(0, Math.round(targetValue - state.phaseDistanceCovered))} m`
               : countdownLabel(targetValue - state.phaseElapsed)}
           </p>
         </div>
@@ -206,28 +206,53 @@ export default function IntervalStepShell({
           {headlineFor(current, unit, band)}
         </p>
 
-        <div className="flex items-center justify-between gap-3 pt-0.5">
-          <p className="text-xs text-white/50 min-w-0 truncate">
-            {next ? (
-              <>
-                Up next:{" "}
-                <span className="text-white/70 font-medium">
-                  {headlineFor(next, unit, band)}
-                </span>
-              </>
-            ) : (
-              "Last step — bring it home."
-            )}
-          </p>
-          <button
-            type="button"
-            onClick={onSkip}
-            className="shrink-0 min-h-[44px] px-3 -my-2 text-xs font-semibold text-white/70 active:scale-[0.97]"
-            aria-label="Skip to the next step"
-          >
-            Skip step
-          </button>
-        </div>
+        {manualDistance && isDistanceBased && (
+          <div className="space-y-3 pt-2">
+            <p className="text-xs text-white/70">
+              Distance isn't tracked live. Mark this step complete when you've
+              covered its target; enter the full run distance below when
+              finished.
+            </p>
+            <Button
+              variant="sport"
+              fullWidth
+              onClick={onSkip}
+              disabled={paused}
+              aria-label="Mark distance step complete"
+            >
+              Complete step
+            </Button>
+          </div>
+        )}
+
+        {/* A one-step session (an easy 30) has no next step to name or
+            skip to, and its only step is not a closing stretch: "Last
+            step — bring it home." read from the first second. */}
+        {segments.length > 1 && (
+          <div className="flex items-center justify-between gap-3 pt-0.5">
+            <p className="text-xs text-white/50 min-w-0 truncate">
+              {next ? (
+                <>
+                  Up next:{" "}
+                  <span className="text-white/70 font-medium">
+                    {headlineFor(next, unit, band)}
+                  </span>
+                </>
+              ) : (
+                "Last step — bring it home."
+              )}
+            </p>
+            <button
+              type="button"
+              onClick={onSkip}
+              disabled={manualDistance && paused}
+              className="shrink-0 min-h-[44px] px-3 -my-2 text-xs font-semibold text-white/70 transition-transform active:scale-[0.97]"
+              aria-label="Skip to the next step"
+            >
+              Skip step
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

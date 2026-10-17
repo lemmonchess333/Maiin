@@ -1,0 +1,54 @@
+{
+  "status": "read-only-existing-focus-contract-check",
+  "reviewedAt": "2026-10-15T09:33:24.431244+00:00",
+  "existingValidatorAdmitsActualNormalHostPass": true,
+  "validatorPolicyChanged": false,
+  "hostContext": "Actual parent ran same normal unchanged whole file through host require_escalated after direct sandbox/host Bash startup diagnosis. Runtime/test/filter/retry/timeout/concurrency code unchanged.",
+  "fullRunRemainsNonGreen": true,
+  "originalAddedFailuresRetained": [
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are Chromium when a job names none",
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are the ones a job names",
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"0\"]",
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install-deps\"]",
+    "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"nope\",\"60\"]"
+  ],
+  "firstSandboxFocusedExitCode": 1,
+  "actualHostFocusedExitCode": 0,
+  "actualHostTestFiles": {
+    "failed": 0,
+    "passed": 1,
+    "skipped": 0,
+    "total": 1
+  },
+  "actualHostTests": {
+    "failed": 0,
+    "passed": 8,
+    "skipped": 5,
+    "total": 13
+  },
+  "inputMapsPreserved": true,
+  "existingValidatorSummary": {
+    "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are Chromium when a job names none",
+    "parentRationale": "Actual original full and first sandbox whole-file run failed; standalone Bash startup is denied by sandbox MSYS namespace but succeeds on host. One unchanged normal complete-file host run passed. This is environment-context non-reproduction, not a fix, pre-existing classification or green full run.",
+    "file": "scripts/ci/install-playwright-chromium.test.ts",
+    "result": "checks/focus-branch4-installer-host-result.json",
+    "log": "checks/focus-branch4-installer-host.log",
+    "exitCode": 0,
+    "wholeFilePassed": true,
+    "meaning": "The added full-run failure is retained. An unchanged normal whole-file check did not reproduce it; no fix, pre-existing classification or green full run is claimed."
+  },
+  "reviewedEvidenceHashes": {
+    "checks/branch4-failure-comparison.json": "378756d39d0c5f8e5b3c8b4fb5021747cc7932f7387e90f25d04c42f0795a555",
+    "checks/focus-branch4-installer-result.json": "fc37c25d9d64c804deda31f452f12252b65e3c39919990aa15b498e52c5124d1",
+    "checks/focus-branch4-installer.log": "c065d6387eebc5e002e7ed83fa8c0a3d147855954953f59869289890b4c295cc",
+    "checks/focus-branch4-installer-host-result.json": "ca5ec586463e17c6f847cf019e7573af8bae56e6b8e6bdb9747b698f3059c52c",
+    "checks/focus-branch4-installer-host.log": "b7379c6b59bd4cf8c1c54e4dd5a8d997b677473880b26753e8b8a7d01dc68cc6",
+    "checks/focus-branch4-installer-host-proof-hashes.json": "729994a3741beedc44ccccc5d13b94fbac66839945f68b4fa52af49086a5a5cb",
+    "checks/branch4-bash-startup-environment-diagnosis.json": "5305aafd33946e542f4ac6d27e1120d4b5cb6fa833c11b9ff61bad23f4475698"
+  },
+  "actualParentDispositionsStillRequired": true,
+  "testsExecutedByThisReview": false,
+  "repositoryMutation": false,
+  "completionCredit": false
+}

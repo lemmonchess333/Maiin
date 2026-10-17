@@ -1,0 +1,95 @@
+{
+  "scope": "User-authorized equipment finishing. Original plate crops contain no anatomy. Original source-body pixels outside isolated equipment regions are exact; masks and source provenance retained. Native rigidity/contact review still required.",
+  "poses": [
+    {
+      "pose": "bottom",
+      "axis": [-0.16863047267562614, 436.99633038874975],
+      "sourceAxis": [-0.16863047267562614, 436.99633038874975],
+      "placements": [
+        {
+          "side": "near",
+          "sourceCrop": [352, 270, 486, 481],
+          "sourceAxle": [400, 369.5441413184993],
+          "targetAxle": [400, 369.5441413184993],
+          "equipmentRotationRadians": 0.0,
+          "equipmentRescale": false,
+          "clearGearOnlyROI": [352, 262, 481, 479]
+        },
+        {
+          "side": "far",
+          "sourceCrop": [860, 195, 1000, 381],
+          "sourceAxle": [917, 282.3621869452006],
+          "targetAxle": [917, 282.3621869452006],
+          "equipmentRotationRadians": 0.0,
+          "equipmentRescale": false,
+          "clearGearOnlyROI": [868, 183, 993, 384]
+        }
+      ],
+      "outsideEquipmentRegionPixelsChanged": 0,
+      "fixedLowerScenePixelsChanged": 0,
+      "anatomyTransforms": false,
+      "sourcePlatePixelsReused": "Both original folded-master plates, unchanged size; only equipment rigid rotation/translation and neutral shaft joins.",
+      "sha256": "3e6e0bef68497441b650b7637f91c22a722e638bee9d0b1650ea91a0f8b00a93"
+    },
+    {
+      "pose": "middle",
+      "axis": [-0.12708704320396533, 259.62889480376026],
+      "sourceAxis": [-0.16863047267562614, 436.99633038874975],
+      "placements": [
+        {
+          "side": "near",
+          "sourceCrop": [352, 270, 486, 481],
+          "sourceAxle": [400, 369.5441413184993],
+          "targetAxle": [400, 208.79407752217412],
+          "equipmentRotationRadians": 0.04064939818014582,
+          "equipmentRescale": false,
+          "clearGearOnlyROI": [352, 101, 481, 318]
+        },
+        {
+          "side": "far",
+          "sourceCrop": [860, 195, 1000, 381],
+          "sourceAxle": [917, 282.3621869452006],
+          "targetAxle": [917, 143.09007618572406],
+          "equipmentRotationRadians": 0.04064939818014582,
+          "equipmentRescale": false,
+          "clearGearOnlyROI": [868, 44, 993, 245]
+        }
+      ],
+      "outsideEquipmentRegionPixelsChanged": 0,
+      "fixedLowerScenePixelsChanged": 0,
+      "anatomyTransforms": false,
+      "sourcePlatePixelsReused": "Both original folded-master plates, unchanged size; only equipment rigid rotation/translation and neutral shaft joins.",
+      "sha256": "36f46763a7cf5ad5dbda790b2c4ef8c345715eefefdfd4ba1be45dfea1651445"
+    },
+    {
+      "pose": "top",
+      "axis": [-0.1094373572092089, 191.62914173992266],
+      "sourceAxis": [-0.16863047267562614, 436.99633038874975],
+      "placements": [
+        {
+          "side": "near",
+          "sourceCrop": [352, 270, 486, 481],
+          "sourceAxle": [400, 369.5441413184993],
+          "targetAxle": [400, 147.8541988562391],
+          "equipmentRotationRadians": 0.058055220344806216,
+          "equipmentRescale": false,
+          "clearGearOnlyROI": [352, 40, 481, 257]
+        },
+        {
+          "side": "far",
+          "sourceCrop": [860, 195, 1000, 381],
+          "sourceAxle": [917, 282.3621869452006],
+          "targetAxle": [917, 91.2750851790781],
+          "equipmentRotationRadians": 0.058055220344806216,
+          "equipmentRescale": false,
+          "clearGearOnlyROI": [868, -8, 993, 193]
+        }
+      ],
+      "outsideEquipmentRegionPixelsChanged": 0,
+      "fixedLowerScenePixelsChanged": 0,
+      "anatomyTransforms": false,
+      "sourcePlatePixelsReused": "Both original folded-master plates, unchanged size; only equipment rigid rotation/translation and neutral shaft joins.",
+      "sha256": "9057190d7ec6b5547390bc1edd4b1f38c51a1e22ab4c17373c319c9cd2cd3c54"
+    }
+  ]
+}

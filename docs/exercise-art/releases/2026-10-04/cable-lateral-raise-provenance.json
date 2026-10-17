@@ -1,0 +1,235 @@
+{
+  "generator": "Built-in imagegen; authorized uniform scene framing, stationary contact copies and common crop",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "generationIds": {
+    "master": "99a6da68-bb24-4486-94d5-990b7148801d",
+    "early": "b91517e7-e484-4326-b2af-803e76c8b0b4",
+    "middle": "946117aa-8eed-44bb-9b4e-ed8d91b91c02",
+    "top": "10c90a93-247e-4b6a-8114-81db7f4571fa"
+  },
+  "sequence": [1, 2, 3, 4, 3, 2],
+  "originals": [
+    {
+      "file": "originals/1-generated-master.png",
+      "sha256": "866f3e5a7dd4e3f7a79ca9c86e4e907f75952099899420161bcfcb0ad43d5268"
+    },
+    {
+      "file": "originals/1-master.png",
+      "sha256": "6c1bfc40b71fd914b1be4601fe43b1b14d9169908217e8715fc631518febe33d"
+    },
+    {
+      "file": "originals/2-early-candidate.png",
+      "sha256": "13863a285de197b642e4f626d8f9db8810c1d90943f353bdf9f26d0832a671e2"
+    },
+    {
+      "file": "originals/3-mid-candidate.png",
+      "sha256": "f45d402254e1c6ea516c86bf8fa3a3efd57f7afa5d3644631b17df1d0158f54c"
+    },
+    {
+      "file": "originals/4-top-candidate.png",
+      "sha256": "7088ae02b114ccf92e70a1826bba8c340d1ee102d2600188aff0a502156041a9"
+    }
+  ],
+  "sources": [
+    {
+      "file": "sources/1.png",
+      "sha256": "2629ee3034fcb6b66c0046dab41f21f52830ababb5b4a34de3b739014010c82b"
+    },
+    {
+      "file": "sources/2.png",
+      "sha256": "e4bb26bd99358a60ec14834dfb3bba12f8cf4122df9fe397e3d0f4d8f19d1f2f"
+    },
+    {
+      "file": "sources/3.png",
+      "sha256": "394b842d59eaf9900cf49ea9c49dce858d9523891dc98190669caba81a621702"
+    },
+    {
+      "file": "sources/4.png",
+      "sha256": "5f133172e83f52233b49d55072be05af3ac21aee2ba8e143c7ffb733de6dc0ba"
+    },
+    {
+      "file": "sources/5.png",
+      "sha256": "394b842d59eaf9900cf49ea9c49dce858d9523891dc98190669caba81a621702"
+    },
+    {
+      "file": "sources/6.png",
+      "sha256": "e4bb26bd99358a60ec14834dfb3bba12f8cf4122df9fe397e3d0f4d8f19d1f2f"
+    }
+  ],
+  "framing": {
+    "left": 40,
+    "top": 170,
+    "width": 900,
+    "height": 1060,
+    "method": "Identical whole-scene removal of empty outer black margins; no resizing or local transforms."
+  },
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "leftSole": {
+          "x": 347,
+          "y": 1020
+        },
+        "rightSole": {
+          "x": 528,
+          "y": 1038
+        },
+        "towerBase": {
+          "x": 197,
+          "y": 1025
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 121,
+        "rightShoeWidth": 88,
+        "towerBaseWidth": 221
+      },
+      "sha256": "2629ee3034fcb6b66c0046dab41f21f52830ababb5b4a34de3b739014010c82b"
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "leftSole": {
+          "x": 347,
+          "y": 1020
+        },
+        "rightSole": {
+          "x": 528,
+          "y": 1038
+        },
+        "towerBase": {
+          "x": 197,
+          "y": 1025
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 121,
+        "rightShoeWidth": 88,
+        "towerBaseWidth": 221
+      },
+      "sha256": "e4bb26bd99358a60ec14834dfb3bba12f8cf4122df9fe397e3d0f4d8f19d1f2f"
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "leftSole": {
+          "x": 347,
+          "y": 1020
+        },
+        "rightSole": {
+          "x": 528,
+          "y": 1038
+        },
+        "towerBase": {
+          "x": 197,
+          "y": 1025
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 121,
+        "rightShoeWidth": 88,
+        "towerBaseWidth": 221
+      },
+      "sha256": "394b842d59eaf9900cf49ea9c49dce858d9523891dc98190669caba81a621702"
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "leftSole": {
+          "x": 347,
+          "y": 1020
+        },
+        "rightSole": {
+          "x": 528,
+          "y": 1038
+        },
+        "towerBase": {
+          "x": 197,
+          "y": 1025
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 121,
+        "rightShoeWidth": 88,
+        "towerBaseWidth": 221
+      },
+      "sha256": "5f133172e83f52233b49d55072be05af3ac21aee2ba8e143c7ffb733de6dc0ba"
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "leftSole": {
+          "x": 347,
+          "y": 1020
+        },
+        "rightSole": {
+          "x": 528,
+          "y": 1038
+        },
+        "towerBase": {
+          "x": 197,
+          "y": 1025
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 121,
+        "rightShoeWidth": 88,
+        "towerBaseWidth": 221
+      },
+      "sha256": "394b842d59eaf9900cf49ea9c49dce858d9523891dc98190669caba81a621702"
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "leftSole": {
+          "x": 347,
+          "y": 1020
+        },
+        "rightSole": {
+          "x": 528,
+          "y": 1038
+        },
+        "towerBase": {
+          "x": 197,
+          "y": 1025
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 121,
+        "rightShoeWidth": 88,
+        "towerBaseWidth": 221
+      },
+      "sha256": "e4bb26bd99358a60ec14834dfb3bba12f8cf4122df9fe397e3d0f4d8f19d1f2f"
+    }
+  ],
+  "masterFraming": {
+    "method": "Uniform whole-scene resize width798 with black padding left50,right176,top169,bottom170. No local anatomy edit.",
+    "generation": "99a6da68-bb24-4486-94d5-990b7148801d"
+  },
+  "stationaryCopies": {
+    "regions": [
+      {
+        "left": 340,
+        "top": 1100,
+        "width": 140,
+        "height": 125
+      },
+      {
+        "left": 525,
+        "top": 1100,
+        "width": 110,
+        "height": 125
+      },
+      {
+        "left": 48,
+        "top": 1115,
+        "width": 232,
+        "height": 90
+      }
+    ],
+    "method": "Exact stationary shoe/floor contacts and machine-base pixels from master. No moving anatomy transformed.",
+    "sequence": [1, 2, 3, 4, 3, 2]
+  },
+  "losslessPixelsVerified": true
+}

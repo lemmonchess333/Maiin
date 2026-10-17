@@ -64,6 +64,7 @@ function walk(dir: string, out: string[] = []): string[] {
  *  safe for a ban: it can only under-match lines that contain //. */
 function stripComments(text: string): string {
   return text
+    .replace(/\r\n/g, "\n")
     .replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ""))
     .split("\n")
     .map((l) => l.replace(/\/\/.*$/, ""))
@@ -74,7 +75,7 @@ describe("one unit treatment (spaced: '60 kg', '5.2 km')", () => {
   it("no unspaced kg/km value+unit adjacency in rendered code", () => {
     const hits: string[] = [];
     for (const file of walk(SRC_ROOT)) {
-      const rel = file.slice(SRC_ROOT.length + 1);
+      const rel = file.slice(SRC_ROOT.length + 1).replaceAll("\\", "/");
       if (EXEMPT.has(rel)) continue;
       const lines = stripComments(readFileSync(file, "utf8")).split("\n");
       lines.forEach((line, i) => {
@@ -104,7 +105,7 @@ describe("one unit treatment (spaced: '60 kg', '5.2 km')", () => {
     const jsxGlue =
       /(?:(?<![ ]["'`])\}|<\/span>)(?:[ \t]*\n\s*)?(?:<span(?:\s[^>]*)?>\s*)*\{paceUnitLabel\(/g;
     for (const file of walk(SRC_ROOT)) {
-      const rel = file.slice(SRC_ROOT.length + 1);
+      const rel = file.slice(SRC_ROOT.length + 1).replaceAll("\\", "/");
       if (EXEMPT.has(rel)) continue;
       const code = stripComments(readFileSync(file, "utf8"));
       code.split("\n").forEach((line, i) => {

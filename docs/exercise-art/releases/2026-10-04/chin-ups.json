@@ -1,0 +1,191 @@
+{
+  "exerciseId": "chin-ups",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 1070,
+  "height": 1180,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-04T23:48:48.098Z",
+  "reference": {
+    "path": "form-frames/chin-ups/1.webp",
+    "sha256": "d3c763a25808cf0c13f4512ba828c143f01c1745c15cae4c367b2404ecf153b7"
+  },
+  "cueSha256": "0d78a3215959a317e39a2aae160268caf24ce2c87460f81447804e7079c11a3c",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Historical canonical v3 athlete, faceless white-grey anatomy, white trainers and neutral featureless pelvis. Original pilot canonical hash matches current reference. No code transformation of moving anatomy."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed frontal slight three-quarter view,1070x1180 common crop of1254-square sources. Modest torso rotation toward front reviewed through full sequence. No scaling; zero excluded visible pixels."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Four native poses inspected: extended-elbow hang, early rise, bent-elbow middle, chin above bar. Whole body rises while elbows flex. Joined legs stay nearly straight without kick."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Fixed straight charcoal bar and wall supports. Exact master-copy end support rectangles lie outside athlete and grips; native joins inspected. No code hand or forearm manipulation."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both measured support anchors and three equipment dimensions are identical. Underhand wrapped grips remain attached visually. Exploratory broad hand ROIs were excluded because raised torso pixels contaminated them; no false invariant hand-size claim."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Exact shoulder-width underhand chin-up. Straight-arm bottom, chin above bar, controlled descent and return to full hang without leg kick. Body remains suspended by hands throughout; this is not a free-flight phase."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Purple lateral lats, lilac biceps and subtle core, neutral legs and forearms. Same hierarchy across all four generated poses."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues at most seven words match Hang,Initiate,Pull,Clear,Lower,Extend. Early-pull cue revised to acknowledge that rise has begun; sequence0,1/3,2/3,1,2/3,1/3."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six and6to1 manually inspected in actual ExerciseFormFrames. Matching mid and early poses on descent; loop returns to full hang. Manual stepping used without autoplay."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six1070x1180 frames and6to1 inspected at390x844 in actual ExerciseFormFrames light mode on2026-10-05. Full athlete/bar visible; final early cue rechecked."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and6to1 inspected at390x844 in actual ExerciseFormFrames dark mode on2026-10-05. Headroom, grip, muscle colours and captions readable; final early cue rechecked."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Suspended chin-up with fixed bar supports",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["leftBarSupport", "rightBarSupport"],
+      "dimensionNames": [
+        "outerSupportSpan",
+        "leftSupportHeight",
+        "rightSupportHeight"
+      ],
+      "evidence": "Pixel-derived fixed bar support edges and heights; exact master-copy end supports. Grip contacts and suspended body reviewed visually."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/chin-ups/1.webp",
+      "sha256": "d3c763a25808cf0c13f4512ba828c143f01c1745c15cae4c367b2404ecf153b7",
+      "anchors": {
+        "leftBarSupport": {
+          "x": 42,
+          "y": 261
+        },
+        "rightBarSupport": {
+          "x": 1005,
+          "y": 261
+        }
+      },
+      "invariantDimensions": {
+        "outerSupportSpan": 1025,
+        "leftSupportHeight": 121,
+        "rightSupportHeight": 121
+      }
+    },
+    {
+      "path": "form-frames/chin-ups/2.webp",
+      "sha256": "bd1d498ea03f81eb1bba7bb7b19803445b445339d6beb1e58550d5b06b8b11b6",
+      "anchors": {
+        "leftBarSupport": {
+          "x": 42,
+          "y": 261
+        },
+        "rightBarSupport": {
+          "x": 1005,
+          "y": 261
+        }
+      },
+      "invariantDimensions": {
+        "outerSupportSpan": 1025,
+        "leftSupportHeight": 121,
+        "rightSupportHeight": 121
+      }
+    },
+    {
+      "path": "form-frames/chin-ups/3.webp",
+      "sha256": "7b5914ff2eef2f85bdbc78833c1d8a91da665a0534e9d8c576977d67d22cb804",
+      "anchors": {
+        "leftBarSupport": {
+          "x": 42,
+          "y": 261
+        },
+        "rightBarSupport": {
+          "x": 1005,
+          "y": 261
+        }
+      },
+      "invariantDimensions": {
+        "outerSupportSpan": 1025,
+        "leftSupportHeight": 121,
+        "rightSupportHeight": 121
+      }
+    },
+    {
+      "path": "form-frames/chin-ups/4.webp",
+      "sha256": "c7acda680fcc8a7721ef1bca1f293e0e1e567396a0ef7f7d56f6ac5bb68354ff",
+      "anchors": {
+        "leftBarSupport": {
+          "x": 42,
+          "y": 261
+        },
+        "rightBarSupport": {
+          "x": 1005,
+          "y": 261
+        }
+      },
+      "invariantDimensions": {
+        "outerSupportSpan": 1025,
+        "leftSupportHeight": 121,
+        "rightSupportHeight": 121
+      }
+    },
+    {
+      "path": "form-frames/chin-ups/5.webp",
+      "sha256": "7b5914ff2eef2f85bdbc78833c1d8a91da665a0534e9d8c576977d67d22cb804",
+      "anchors": {
+        "leftBarSupport": {
+          "x": 42,
+          "y": 261
+        },
+        "rightBarSupport": {
+          "x": 1005,
+          "y": 261
+        }
+      },
+      "invariantDimensions": {
+        "outerSupportSpan": 1025,
+        "leftSupportHeight": 121,
+        "rightSupportHeight": 121
+      }
+    },
+    {
+      "path": "form-frames/chin-ups/6.webp",
+      "sha256": "bd1d498ea03f81eb1bba7bb7b19803445b445339d6beb1e58550d5b06b8b11b6",
+      "anchors": {
+        "leftBarSupport": {
+          "x": 42,
+          "y": 261
+        },
+        "rightBarSupport": {
+          "x": 1005,
+          "y": 261
+        }
+      },
+      "invariantDimensions": {
+        "outerSupportSpan": 1025,
+        "leftSupportHeight": 121,
+        "rightSupportHeight": 121
+      }
+    }
+  ]
+}

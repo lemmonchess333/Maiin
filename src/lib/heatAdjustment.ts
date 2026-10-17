@@ -1,31 +1,31 @@
 /**
- * Heat pace adjustment (roadmap B2, heat half) — DISPLAY + explanation,
- * never a silent rewrite of the prescription.
+ * The heat line before a run (Pgm8 (E8), which replaced roadmap B2's
+ * heat half): on a hot day, one line saying to run by feel; on any other
+ * day, nothing.
  *
- * Model: the widely-published temperature + dew point heuristic (the
- * "T+DP" table used across distance-running coaching): sum air
- * temperature and dew point in °F, read a %-slower-at-equal-effort band.
- * Dew point comes from temperature + relative humidity via the Magnus
- * approximation. This is a published rule-of-thumb, labelled as such in
- * the copy — not a physiology claim and not a Tropos invention.
+ * The line carries no number: no %, no equivalent pace. Nothing gives
+ * pace slopes for training runs, and the race-pace evidence is weak
+ * (docs/training-engine-2026-10/running-evidence.md §4.12; Pgm8's E8).
+ * The plan's paces never change: the line takes no pace and gives none,
+ * and it claims nothing beyond running by feel.
  *
- * Register rules:
- *  - The plan's paces are NEVER changed by weather. The adjustment is a
- *    displayed equivalent ("in this heat, X effort ≈ Y pace") with the
- *    why in the same line.
- *  - Below the first band the module is silent (null) — cool weather
- *    needs no caveat.
- *  - In the extreme band the honest advice is effort, not pace — the
- *    line says so instead of pretending precision.
+ * Hot comes from the temperature + dew point ("T+DP") rule of thumb used
+ * across distance-running coaching: add the air temperature and the dew
+ * point, both in °F, and read the slowdown at equal effort from its
+ * table. Hot is the table's bands of 3% and over, a sum over 130°F. It
+ * is a published rule of thumb, labelled as one here: not physiology,
+ * and not a Tropos invention. The table as this module quoted it before
+ * Pgm8 (sum in °F up to → % slower): 110 → 0.5, 120 → 1, 130 → 2,
+ * 140 → 3, 150 → 4.5, 160 → 6, 170 → 8, 180 → 10; past 180, effort only.
  *
- * Altitude (the other half of B2) is deliberately NOT here — it needs a
- * user-declared elevation input to be honest (GPS elevation is noisy),
- * which is its own slice.
+ * `getRunningTip` (weather.ts) leaves heat to this line, so a hot day has
+ * one heat line, not two.
  *
- * Pure: no fetches, no clock — callers pass the WeatherData they have.
+ * Altitude, B2's other half, is not here: it needs an elevation the
+ * person declares to be honest (GPS elevation is noisy).
+ *
+ * Pure: no fetches, no clock. Callers pass the WeatherData they have.
  */
-import { paceMinSec } from "./runLabels";
-import { paceUnitLabel, type DistanceUnit } from "./distanceUnits";
 
 /** Magnus-formula dew point, °C, from temp (°C) + relative humidity (%). */
 export function dewPointC(tempC: number, humidityPct: number): number {
@@ -36,72 +36,20 @@ export function dewPointC(tempC: number, humidityPct: number): number {
   return (b * gamma) / (a - gamma);
 }
 
-/** The published T+DP bands: [threshold on tempF + dewPointF, % slower]. */
-const TDP_BANDS: Array<[number, number]> = [
-  [110, 0.005],
-  [120, 0.01],
-  [130, 0.02],
-  [140, 0.03],
-  [150, 0.045],
-  [160, 0.06],
-  [170, 0.08],
-  [180, 0.1],
-];
-/** At/below this T+DP sum, heat costs nothing measurable. */
-const TDP_QUIET = 100;
+/** Hot: a T+DP sum over this, °F, the table's bands of 3% and over. A
+ *  published rule of thumb, not physiology. */
+const HOT_OVER_F = 130;
 
-export interface HeatAdjustment {
-  /** Fractional pace slowdown at equal effort (0.03 = ~3% slower). */
-  pct: number;
-  /** Dew point, °C (rounded for display). */
-  dewPointC: number;
-  /** True in the top band, where pacing precision is dishonest — run by
-   *  effort. */
-  effortOnly: boolean;
-}
+const HEAT_LINE = "Hot today: run by feel, not by pace";
 
-export function heatPaceAdjustment(weather: {
+/** The heat line for this weather, or null when it isn't hot. */
+export function heatLine(weather: {
   temperature: number;
   humidity: number;
-}): HeatAdjustment | null {
-  const dp = dewPointC(weather.temperature, weather.humidity);
-  const sumF = weather.temperature * 1.8 + 32 + (dp * 1.8 + 32);
-  if (sumF <= TDP_QUIET) return null;
-  let pct = TDP_BANDS[TDP_BANDS.length - 1][1];
-  for (const [limit, bandPct] of TDP_BANDS) {
-    if (sumF <= limit) {
-      pct = bandPct;
-      break;
-    }
-  }
-  return {
-    pct,
-    dewPointC: Math.round(dp),
-    effortOnly: sumF > 180,
-  };
-}
-
-/** A prescribed pace's equal-effort equivalent in this heat, s/km. */
-export function heatAdjustedPaceS(paceS: number, adj: HeatAdjustment): number {
-  return Math.round(paceS * (1 + adj.pct));
-}
-
-/**
- * The one display line. With a prescribed pace it shows the concrete
- * equal-effort equivalent; without one it stays generic. Either way the
- * prescription itself is stated as unchanged.
- */
-export function heatAdjustmentLine(
-  adj: HeatAdjustment,
-  unit: DistanceUnit,
-  prescribedPaceS?: number
-): string {
-  if (adj.effortOnly) {
-    return `Serious heat (dew point ${adj.dewPointC}°C) — pace targets stop meaning much today; run by effort (published heat curves).`;
-  }
-  const pctLabel = `~${adj.pct * 100 >= 1 ? Math.round(adj.pct * 100) : adj.pct * 100}%`;
-  if (prescribedPaceS && prescribedPaceS > 0) {
-    return `In this heat, ${paceMinSec(prescribedPaceS, unit)} ${paceUnitLabel(unit)} effort runs ≈ ${paceMinSec(heatAdjustedPaceS(prescribedPaceS, adj), unit)} ${paceUnitLabel(unit)} (dew point ${adj.dewPointC}°C, published heat curves). Your plan's paces are unchanged.`;
-  }
-  return `Heat check: expect ${pctLabel} slower at the same effort today (dew point ${adj.dewPointC}°C, published heat curves). Your plan's paces are unchanged.`;
+}): string | null {
+  const fahrenheit = (c: number) => c * 1.8 + 32;
+  const sumF =
+    fahrenheit(weather.temperature) +
+    fahrenheit(dewPointC(weather.temperature, weather.humidity));
+  return sumF > HOT_OVER_F ? HEAT_LINE : null;
 }

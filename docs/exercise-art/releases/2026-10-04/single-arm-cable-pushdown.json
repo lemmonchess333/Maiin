@@ -1,0 +1,211 @@
+{
+  "exerciseId": "single-arm-cable-pushdown",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 950,
+  "height": 1056,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-05T12:16:30.121Z",
+  "reference": {
+    "path": "form-frames/single-arm-cable-pushdown/1.webp",
+    "sha256": "30521899255dc3eba56d47a8e96e2acdc802c17beea2758c932bf604d4971425"
+  },
+  "cueSha256": "fb8c9468c810071aa50b22f81ee80e89164beb16bcf5a62433dde5f8d2ec77f0",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical v3 athlete identity retained, moving anatomy authored by imagegen."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed side three-quarter view shows working elbow and neutral grip. Common crop270,0,950,1024 plus32top padding."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native Set,Press,Lockout and final sequence reviewed. Elbow remains beside ribs, forearm extends to controlled lockout, torso and stance steady. Forward-elbow candidate rejected."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Single Dhandle continuously gripped with straight wrist; constant36px connector. Exact selected plate block reused, bottom stack stationary. No calibrated3D handle span claim."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Pixel-derived planted soles and tower-base contacts and widths. Stationary shoe copies with20px upper fade, native joins reviewed."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Authored coplanar two-fixed-pulley1:1 routing; tangent+wrap+stack length conserved within0.447px. Stack rises0,70,197px. Exact selected-block RGB and tangency checks pass."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Working triceps purple, forearm lilac; resting arm and other anatomy neutral."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues <=7words agree with Set,Press,Lockout,Hold,Return,Reset."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All6 and6to1 reviewed; seq1,2,3,3,2,1. Autoplay observed Set1 to Press2."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormFrames390x844 light all6 and6to1 reviewed after final changes. Full equipment/athlete and readable cues, stable contacts."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual390x844 dark all6 and6to1 reviewed. No clipping, visible route and stable contacts."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Standing single-arm pushdown with planted soles and tower",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["leftSole", "rightSole", "towerBase"],
+      "dimensionNames": ["leftShoeWidth", "rightShoeWidth", "towerBaseWidth"],
+      "evidence": "Pixel-derived sole/tower contacts and widths; independent tangent-path and selected-block pixel checks, plus native grips/arms review."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/single-arm-cable-pushdown/1.webp",
+      "sha256": "30521899255dc3eba56d47a8e96e2acdc802c17beea2758c932bf604d4971425",
+      "anchors": {
+        "leftSole": {
+          "x": 605,
+          "y": 947
+        },
+        "rightSole": {
+          "x": 822,
+          "y": 981
+        },
+        "towerBase": {
+          "x": 452,
+          "y": 948
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 146,
+        "rightShoeWidth": 136,
+        "towerBaseWidth": 455
+      }
+    },
+    {
+      "path": "form-frames/single-arm-cable-pushdown/2.webp",
+      "sha256": "c8b9746e57e321aca7e62abe8104137131c642609e7ca61798e3e25b9f4940b9",
+      "anchors": {
+        "leftSole": {
+          "x": 605,
+          "y": 947
+        },
+        "rightSole": {
+          "x": 822,
+          "y": 981
+        },
+        "towerBase": {
+          "x": 452,
+          "y": 948
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 146,
+        "rightShoeWidth": 136,
+        "towerBaseWidth": 455
+      }
+    },
+    {
+      "path": "form-frames/single-arm-cable-pushdown/3.webp",
+      "sha256": "7792e432a4ae44b9c0bd94c19966a249c22ace1858a7574e7532245abc1483b0",
+      "anchors": {
+        "leftSole": {
+          "x": 605,
+          "y": 947
+        },
+        "rightSole": {
+          "x": 822,
+          "y": 981
+        },
+        "towerBase": {
+          "x": 452,
+          "y": 948
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 146,
+        "rightShoeWidth": 136,
+        "towerBaseWidth": 455
+      }
+    },
+    {
+      "path": "form-frames/single-arm-cable-pushdown/4.webp",
+      "sha256": "7792e432a4ae44b9c0bd94c19966a249c22ace1858a7574e7532245abc1483b0",
+      "anchors": {
+        "leftSole": {
+          "x": 605,
+          "y": 947
+        },
+        "rightSole": {
+          "x": 822,
+          "y": 981
+        },
+        "towerBase": {
+          "x": 452,
+          "y": 948
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 146,
+        "rightShoeWidth": 136,
+        "towerBaseWidth": 455
+      }
+    },
+    {
+      "path": "form-frames/single-arm-cable-pushdown/5.webp",
+      "sha256": "c8b9746e57e321aca7e62abe8104137131c642609e7ca61798e3e25b9f4940b9",
+      "anchors": {
+        "leftSole": {
+          "x": 605,
+          "y": 947
+        },
+        "rightSole": {
+          "x": 822,
+          "y": 981
+        },
+        "towerBase": {
+          "x": 452,
+          "y": 948
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 146,
+        "rightShoeWidth": 136,
+        "towerBaseWidth": 455
+      }
+    },
+    {
+      "path": "form-frames/single-arm-cable-pushdown/6.webp",
+      "sha256": "30521899255dc3eba56d47a8e96e2acdc802c17beea2758c932bf604d4971425",
+      "anchors": {
+        "leftSole": {
+          "x": 605,
+          "y": 947
+        },
+        "rightSole": {
+          "x": 822,
+          "y": 981
+        },
+        "towerBase": {
+          "x": 452,
+          "y": 948
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 146,
+        "rightShoeWidth": 136,
+        "towerBaseWidth": 455
+      }
+    }
+  ]
+}

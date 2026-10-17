@@ -1,0 +1,55 @@
+{
+  "passed": true,
+  "reviewedAt": "2026-10-14T20:34:02.163286+00:00",
+  "exerciseId": "kettlebell-swing",
+  "source": "Actual registered registry/placards/public paths; Vite staged overlay excluded from plugins",
+  "physicalPoses": 3,
+  "newImageRequests": 0,
+  "mobile": {
+    "dark": {
+      "viewport": [390, 844],
+      "frames": [1, 2, 3, 4, 5, 6],
+      "loop6to1": true,
+      "observations": 17
+    },
+    "light": {
+      "viewport": [390, 844],
+      "frames": [1, 2, 3, 4, 5, 6],
+      "loop6to1": true,
+      "observations": 20
+    }
+  },
+  "controls": {
+    "selectSix": "/form-frames/kettlebell-swing/6.webp",
+    "nextWrap": "/form-frames/kettlebell-swing/1.webp",
+    "previousWrap": "/form-frames/kettlebell-swing/6.webp",
+    "slowerPressed": "true",
+    "consoleErrors": [],
+    "pauseObserved": true,
+    "preparation": "Preparation: Stand with feet shoulder-width, bell on the floor a foot in front of you. Hinge at the hips and grip the handle with both hands, back flat.",
+    "card": {
+      "complete": true,
+      "natural": [307, 480],
+      "src": "/form-art/kettlebell-swing.webp"
+    }
+  },
+  "timing": {
+    "normalMedianMs": 1206.0,
+    "slowerMedianMs": 2406.5,
+    "ratio": 1.9954394693200663
+  },
+  "publicCardByteExactToReviewed": true,
+  "previousArtworkPreserved": 896,
+  "completionCredit": false,
+  "remaining": "Full project check, source seal, required current-head CI and actual merge",
+  "reviewedAssetHashes": {
+    "integrated-vite.config.mjs": "8a033315877231216a295d9d22ce71a66d3ca4ee167b25569c40cf2a394c63a6",
+    "integrated-review.tsx": "eb378b9fc37a7cabefe70a0b6be6a2ad485e9609446109a8d5b8d2450ac0f46f",
+    "integrated-dark-trace.json": "be349716b31c39998905bd4539594185563dc3342b91501e53f86786ad2731eb",
+    "integrated-light-trace.json": "71096c3dda85f5537b16717a814c7403093cb3dd59c9c3c9c3a3e833cde5972f",
+    "integrated-slower-trace.json": "1b4434b12e6263211a9594e1672d5e0ee9549cc12bc679f6be2e80504d2e7f47",
+    "integrated-controls.json": "b13c0970a058b22f49c46c37201da52e3433c2091e8625f3f5050d2f37f0b15a",
+    "integrated-dark-full-page.png": "a4fdb984bb9d45c4194f1beb336ad61366b7d2a63917c767ead491194d828684",
+    "integrated-light-full-page.png": "f05d61b816c094b9fccd9fc2fb810093ce6562ace63941e9dcbaf1b1c9e9b7eb"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "method": "Whole connected generated source plus shared equipment layers",
+  "equipmentSource": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\seated-calf-raise\\direct-raised-photo-production\\3-raised-direct-original.png",
+  "safetySourceRegions": "Explicit semantic polygon/ellipses in assemble-pair.py",
+  "equipmentRotationDegrees": 24.0,
+  "equipmentPivot": [550.0, 1120.0],
+  "anatomicalTransforms": false,
+  "anatomicalGrafts": false,
+  "limits": "Safety swing is screen-plane illustrative equipment construction, not calibrated 3D. Source-layer and native overlap review required.",
+  "rows": [
+    {
+      "pose": "1-lower",
+      "source": "1-lower-without-safety.png",
+      "changedPixels": 374199,
+      "bodyTransform": false,
+      "sourceCoordinatesUnchanged": true,
+      "status": "Provisional native review required"
+    },
+    {
+      "pose": "2-near-top",
+      "source": "2-near-top-without-safety.png",
+      "changedPixels": 83162,
+      "bodyTransform": false,
+      "sourceCoordinatesUnchanged": true,
+      "status": "Provisional native review required"
+    },
+    {
+      "pose": "3-raised",
+      "source": "3-raised-without-safety.png",
+      "changedPixels": 21432,
+      "bodyTransform": false,
+      "sourceCoordinatesUnchanged": true,
+      "status": "Provisional native review required"
+    }
+  ],
+  "sourceSha256": {
+    "3-raised-direct-original.png": "a795b396c4be3c221b7aba527f53ac8499bfd5001599d7ddae9008cf28b2c14c",
+    "1-lower-without-safety.png": "010691fa36dbe22dc367bd8ae078b6d445757c867f0d78a1fb0c6c90b990ab3f",
+    "3-raised-without-safety.png": "3cde442f1d9adb1f4a1f36ab83451c42e7384bb50fdd4064c78656b5c52b4f2e"
+  }
+}

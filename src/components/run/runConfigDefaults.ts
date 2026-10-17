@@ -14,7 +14,7 @@
  * config through the SAME functions, so they can't drift.
  */
 
-import type { ActivityType } from "@/types/run";
+import type { ActivityType, RunPlace } from "@/types/run";
 import type { GuidedRunWorkout } from "@/lib/guidedRun";
 import type { SessionSegment } from "@/lib/runSegments";
 import {
@@ -25,12 +25,13 @@ import { resolveSessionPaces, type PaceTable } from "@/lib/runPaces";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import { isTreadmillRun } from "@/lib/runGuards";
 
 /** The four one-tap direct-launch types, in tile display order. Everything
- *  else (intervals / treadmill / guided / race / route) needs config and
- *  lives behind "More options" → the full modal. Owned here (not in
- *  RunTilePicker) so the repeat-last resolver below and the tile grid can't
- *  drift on what counts as directly launchable. */
+ *  else (intervals / guided / race / route, and any run on the treadmill)
+ *  needs config and lives behind "More options" → the full modal. Owned
+ *  here (not in RunTilePicker) so the repeat-last resolver below and the
+ *  tile grid can't drift on what counts as directly launchable. */
 export const DIRECT_LAUNCH_TYPES: ActivityType[] = [
   "easy",
   "tempo",
@@ -43,13 +44,17 @@ export const DIRECT_LAUNCH_TYPES: ActivityType[] = [
  * chip's decision rule. Returns the type to offer as "Repeat <type>" when the
  * TWO most recent volume-eligible runs share the same DIRECT-launch type —
  * a recurring habit signal, not a one-off. Anything else (mixed types, fewer
- * than two eligible runs, or a structured type like intervals/treadmill/
- * guided/race that needs the modal) returns null and the picker renders
- * exactly as before. Pure — callers pass runs newest-first.
+ * than two eligible runs, or a structured type like intervals/guided/race
+ * that needs the modal) returns null and the picker renders exactly as
+ * before. So does a run on the treadmill: a tile starts an outdoor run, and
+ * a treadmill habit repeated by one would set off with the GPS (Pgm8 keeps
+ * a treadmill run's own type, an easy run's "easy"). Pure — callers pass
+ * runs newest-first.
  */
 export function resolveRepeatType(
   runs: Array<{
     activityType?: string;
+    place?: RunPlace | string | null;
     distance?: number;
     duration?: number;
     isInvalid?: boolean;
@@ -58,6 +63,7 @@ export function resolveRepeatType(
 ): ActivityType | null {
   const eligible = runs.filter((r) => isVolumeEligible(r));
   if (eligible.length < 2) return null;
+  if (isTreadmillRun(eligible[0]) || isTreadmillRun(eligible[1])) return null;
   const type = eligible[0].activityType;
   if (!type || eligible[1].activityType !== type) return null;
   return (DIRECT_LAUNCH_TYPES as string[]).includes(type)
@@ -66,7 +72,16 @@ export function resolveRepeatType(
 }
 
 export interface RunConfig {
+  /** The session: the plan's type for a planned run, or the one picked. */
   activityType: ActivityType;
+  /**
+   * Where the run is done, when not outdoors on the GPS: "treadmill", set
+   * by the setup's "On a treadmill" switch (Pgm8). Absent outdoors. It
+   * never changes `activityType`, so a planned run on the treadmill is
+   * still the planned run; it runs as TreadmillMode, with no GPS and the
+   * distance typed in at the end.
+   */
+  place?: RunPlace;
   autoPause: boolean;
   audioCues: boolean;
   audioCueFrequency: "every_km" | "every_500m" | "every_5min" | "off";
@@ -147,9 +162,12 @@ export const DEFAULT_INTERVAL_CONFIG: NonNullable<RunConfig["intervals"]> = {
 
 /* Run-type registry. `name` is the long-form label used by the selected-run
    card, the chooser, and the Start CTA. `cardChip` / `chooserChip` carry the
-   measurement source; `group` drives the chooser's Outdoor / Other split.
+   measurement source outdoors (on the treadmill the setup shows its own);
+   `group` drives the chooser's Outdoor / Other split.
    `'manual'` is deliberately absent — that activityType is set
-   programmatically by the GPS-fallback "Track without GPS" path. */
+   programmatically by the GPS-fallback "Track without GPS" path. So is the
+   treadmill: it is where a run is done, the setup's "On a treadmill"
+   switch, not a type (Pgm8). */
 export type ActivityTypeOption = {
   type: ActivityType;
   label: string;
@@ -179,9 +197,9 @@ export const ACTIVITY_TYPES: ActivityTypeOption[] = [
     label: "Easy",
     name: "Easy Run",
     icon: "PersonStanding",
-    cardDescription: "Recovery pace",
+    cardDescription: "Conversational pace",
     cardChip: "Outdoor GPS",
-    chooserDescription: "Recovery pace",
+    chooserDescription: "Conversational pace",
     chooserChip: "GPS",
     group: "outdoor",
   },
@@ -223,22 +241,11 @@ export const ACTIVITY_TYPES: ActivityTypeOption[] = [
     label: "Race",
     name: "Race",
     icon: "Flag",
-    cardDescription: "All-out effort",
+    cardDescription: "Race effort",
     cardChip: "Outdoor GPS",
-    chooserDescription: "All-out effort",
+    chooserDescription: "Race effort",
     chooserChip: "GPS",
     group: "outdoor",
-  },
-  {
-    type: "treadmill",
-    label: "Treadmill",
-    name: "Treadmill",
-    icon: "Dumbbell",
-    cardDescription: "Indoor",
-    cardChip: "Manual distance",
-    chooserDescription: "Indoor, manual distance",
-    chooserChip: "Manual",
-    group: "other",
   },
   {
     type: "guided",
@@ -287,7 +294,7 @@ export function pacePatchForType(
 /**
  * Adaptive Paces — the personalized pace BAND string for a chooser/tile row
  * (Runna's "range up front"). Null for types with no personal pace
- * (freerun / race / treadmill / guided) or when there's no benchmark.
+ * (freerun / race / guided) or when there's no benchmark.
  */
 export function chooserPaceFor(
   type: ActivityType,

@@ -28,6 +28,8 @@ import {
 import { MemoryRouter, useLocation } from "react-router-dom";
 import ProgrammeSettings from "../ProgrammeSettings";
 import type { UserProfile } from "@/lib/auth";
+import { toast } from "@/lib/toast";
+import { PLAN_SAVES_TOO_OFTEN } from "@/lib/callableErrors";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
 
@@ -177,6 +179,24 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
     });
   });
 
+  it("a save refused for coming too often says to wait, and keeps the change", async () => {
+    configureSpy.mockRejectedValueOnce(
+      Object.assign(new Error("Too many attempts. Please wait."), {
+        code: "functions/resource-exhausted",
+      })
+    );
+    setup({}, "lift");
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(PLAN_SAVES_TOO_OFTEN)
+    );
+    expect(
+      screen.getByRole("button", { name: /save changes/i })
+    ).toBeInTheDocument();
+  });
+
   it("a lift edit still saves via configurePlan (rebuild path intact)", async () => {
     const { refreshProfile } = setup({}, "lift");
     fireEvent.click(screen.getByText("Get stronger"));
@@ -316,6 +336,12 @@ describe("ProgrammeSettings — toggles live-save without rebuild", () => {
     expect(plates).toHaveAttribute("aria-checked", "false");
     fireEvent.click(plates);
     expect(updateSettings).toHaveBeenCalledWith({ smallPlates: true });
+    // It steps a belt too (Pgm8 L6), and says so.
+    expect(
+      screen.getByText(
+        "Barbell lifts and weight on a belt go up 1.25 kg at a time instead of 2.5 kg."
+      )
+    ).toBeInTheDocument();
   });
 
   it("toggling auto-progression calls updateSettings, not configurePlan", () => {
@@ -380,6 +406,31 @@ describe("ProgrammeSettings — overview (the Programme page)", () => {
     expect(screen.getByTestId("location")).toHaveTextContent(
       "/settings/nutrition"
     );
+  });
+
+  it("counts the same lift days in Current setup and the weekly layout when they change while it is open", () => {
+    const page = (weeklyWorkoutsTarget: number) => (
+      <MemoryRouter>
+        <ProgrammeSettings
+          variant="overview"
+          profile={makeProfile({ weeklyWorkoutsTarget })}
+          programState={programState}
+          readiness="ready"
+          updateSettings={vi.fn()}
+          regenerateProgram={vi.fn()}
+          refreshProfile={vi.fn().mockResolvedValue(undefined)}
+          onOpenWeeklyLayout={vi.fn()}
+        />
+      </MemoryRouter>
+    );
+    const { rerender } = render(page(3));
+    const layout = () => screen.getByRole("button", { name: /weekly layout/i });
+    expect(screen.getByText(/3 lift days/)).toBeInTheDocument();
+    expect(layout()).toHaveTextContent("3 lift");
+
+    rerender(page(5));
+    expect(screen.getByText(/5 lift days/)).toBeInTheDocument();
+    expect(layout()).toHaveTextContent("5 lift");
   });
 
   it("opens the weekly layout editor", () => {

@@ -1,0 +1,21 @@
+{
+  "scope": "Final source-role clarification before the first Spin palette build; no artwork edits.",
+  "roleReviewV2Sha256": "c65b8dd494e13b45cbdd1cdab06a3d14ad2ab09df287da2f52e4ec45174dffe3",
+  "sourceSha256": "83ad4e7d901d2f73832b7c5ef51766ccd3105bdbcb73138df9ea98fef6462c3b",
+  "actualViewedDiagnostic": "spin-A-tiny-upper-field-original-pixels-6x.png",
+  "diagnosticLiteralSourceRectangle": [250,175,370,270],
+  "diagnosticMethod": "Literal source crop at6xnearest for inspection only; original remains unchanged.",
+  "sourceComponent": {
+    "pose": "A",
+    "pixelsReportedBySourceAudit": 184,
+    "nativePanelBoundingBox": [286,207,330,216],
+    "canvasBoundingBox": [306,247,350,256]
+  },
+  "anatomicalFinding": "This tiny tinted component lies above the broad anterior far-thigh oval along its upper surface. It is anterior quadriceps, not the posterior underside strip.",
+  "role": "Primary Quads #7B72E9",
+  "distinctLowerStrip": "The existing tinted underside strip below the broad far-thigh oval is posterior Hamstrings #9590E0.",
+  "paletteGeneratedByReviewer": false,
+  "sourceEdits": 0,
+  "strictCertified": false,
+  "productionAccepted": false
+}

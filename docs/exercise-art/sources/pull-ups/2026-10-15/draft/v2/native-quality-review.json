@@ -1,0 +1,30 @@
+{
+  "status": "bounded-v2-ready-for-root-native-review-not-accepted",
+  "reviewMethod": "view_image at original size for both source-scale finished field crops and both complete 800x1075 framed poses; compared with previously inspected original source fields and v1 failures",
+  "findings": {
+    "grossColourCuts": "The glaring angular white gap in the top right upper arm and white torso wedges from the first draft are resolved. Existing upper-arm and core colour coverage is retained by a secondary default.",
+    "primaryLats": "Primary follows the existing lateral wing fields down past the earlier mask ends. The source-visible rib/serratus and core remain secondary. Exact field ownership and small edge fringes still require root native judgment.",
+    "neutralPectorals": "Pectoral fields are neutralized using inherited maximum-channel shading. Natural chest contours remain; this is not exact recovery of an independently retained uncoloured source. Small inherited colour/contour fringes remain at parts of the pectoral boundary and are disclosed for review.",
+    "sourceNeutralPixels": "All pixels outside original source-chroma coverage and original alpha remain byte-exact at source scale. No anatomical contour, body segment, grip, shoe or neutral equipment pixel was deliberately reshaped.",
+    "mechanics": "Full elbow-extension suspended hang and chin-clearly-above-bar suspended top remain intact. Both overhand grips visibly contact the bar. Only two static endpoints exist; no intermediate pull, scapular initiation or controlled descent is visually proved.",
+    "framing": "The common crop is reduced only at its empty top. Both complete figures, trainers, stationary rack uprights/bar and bases remain visible; no extra source scaling was used. Top endpoint has24px padding.",
+    "equipmentProvenance": "Full rack comes from the original Muscle-Up full-rig master. Generated source files are central bar/whole-athlete outputs. Existing approved whole-output normalization/translation and fixed outer-rig preservation are reproduced, not newly invented equipment."
+  },
+  "physicalPoses": 2,
+  "sixCueOrder": [1, 1, 2, 2, 1, 1],
+  "excursionPositions": [0, 0, 1, 1, 0, 0],
+  "requiredRemainingGates": [
+    "Root native acceptance of colour roles, contours, identity/proportions, grips and equipment joins",
+    "Actual six-cue endpoint playback review with no intermediate/continuous movement claim",
+    "Actual mobile light/dark/card/controls review",
+    "Project/release checks and required current-head CI before publication"
+  ],
+  "v1Preserved": true,
+  "sourceOriginalsPreserved": true,
+  "newGenerationRequests": 0,
+  "anatomyEditsWarpsOrGrafts": 0,
+  "repoChanges": 0,
+  "publicRegistration": false,
+  "completed": false,
+  "noFurtherColourIterationPerformed": true
+}

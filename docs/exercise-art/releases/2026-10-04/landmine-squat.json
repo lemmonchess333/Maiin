@@ -1,0 +1,170 @@
+{
+  "exerciseId": "landmine-squat",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-04T15:41:57.185Z",
+  "reference": {
+    "path": "form-frames/landmine-squat/1.webp",
+    "sha256": "fd3b55039e292bbc6d8bf5baf436e56199c6a88962245f63271c782bf47b33da"
+  },
+  "cueSha256": "bf4e01648a52fc44959711a183db098c26880105b17bced2b362d858d69d3dad",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Same canonical bald faceless white-grey anatomical athlete and white trainers, smooth neutral pelvis. Frozen standing master and two derived squat poses; no mirrored or warped anatomy."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed oblique camera and1536x1024 canvas, no crop/rescale. Floor hinge and both base bolt features remain fixed within1px. Common head and limb scale through standing, halfway and depth."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native review traced both hips, knees and ankles through controlled descent to approximately parallel and return. Heels grounded, torso tall, elbows tucked; final depth ankle joins repaired by imagegen and inspected cleanly."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One modest plate on a rigid straight bar, free sleeve held close to sternum with both hands, opposite end in a hinged receiver bolted to floor. Socket rotates with shaft while base stays fixed. Plate placement and equipment count maintained."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Measured actual bright base-bolt edge/top anchors vary by at most1px. Near/far shoe widths121/147px in every frame; sole bottoms vary by at most1px. No canvas-edge or clipped ROI dimensions used. Both hands remain on sleeve and heels remain grounded."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Bar rotates about fixed floor hinge in an oblique view, so its screen-space path is elliptical rather than a circle. Approximate standing/depth hub positions imply a plausible projected ellipse; independently checked halfway hub agrees within0.2percent. This is supporting visual geometry, not calibrated camera metrology. Straight shaft, consistent plate and connected receiver inspected throughout."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Quadriceps strongest purple; glutes and abs pale lilac, matching existing Landmine Squat rig hierarchy. Other regions white-grey; qualitative contribution only."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six exact cues reviewed in actual player: braced setup, controlled lowering, parallel depth, drive, stand and reset. Each at most seven words, no press or different exercise introduced."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Standing, half descent, depth, half ascent, standing and reset. The same halfway pose correctly serves the opposite travel direction; standing endpoints reused. All6 and6-to1 inspected; no anatomy interpolation or mirroring."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six final source PNGs and6to1 loop inspected at390x844 in actual ExerciseFormFrames in light mode on4October2026. Full athlete, bar, pivot and shoes visible; captions and cues legible. WebP output pixels verified equal to reviewed PNGs."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six final source PNGs and6to1 loop inspected at390x844 in actual player dark mode on4October2026. Bar connection, foot contacts, depth and return readable."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/landmine-squat/1.webp",
+      "sha256": "fd3b55039e292bbc6d8bf5baf436e56199c6a88962245f63271c782bf47b33da",
+      "anchors": {
+        "leftBoltEdge": {
+          "x": 1311,
+          "y": 918
+        },
+        "rightBoltTop": {
+          "x": 1425,
+          "y": 909
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 121,
+        "farShoeWidth": 147
+      }
+    },
+    {
+      "path": "form-frames/landmine-squat/2.webp",
+      "sha256": "cbddc0ba8acdcb6d98ed0c812756d012eac9c9b94484a5c926dee1e15751233c",
+      "anchors": {
+        "leftBoltEdge": {
+          "x": 1310,
+          "y": 918
+        },
+        "rightBoltTop": {
+          "x": 1425,
+          "y": 908
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 121,
+        "farShoeWidth": 147
+      }
+    },
+    {
+      "path": "form-frames/landmine-squat/3.webp",
+      "sha256": "fa0a64f97b386d103b6a359d843a0252c6c2b36288fa423f5bada1a2e0ca4cfe",
+      "anchors": {
+        "leftBoltEdge": {
+          "x": 1310,
+          "y": 918
+        },
+        "rightBoltTop": {
+          "x": 1425,
+          "y": 908
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 121,
+        "farShoeWidth": 147
+      }
+    },
+    {
+      "path": "form-frames/landmine-squat/4.webp",
+      "sha256": "cbddc0ba8acdcb6d98ed0c812756d012eac9c9b94484a5c926dee1e15751233c",
+      "anchors": {
+        "leftBoltEdge": {
+          "x": 1310,
+          "y": 918
+        },
+        "rightBoltTop": {
+          "x": 1425,
+          "y": 908
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 121,
+        "farShoeWidth": 147
+      }
+    },
+    {
+      "path": "form-frames/landmine-squat/5.webp",
+      "sha256": "fd3b55039e292bbc6d8bf5baf436e56199c6a88962245f63271c782bf47b33da",
+      "anchors": {
+        "leftBoltEdge": {
+          "x": 1311,
+          "y": 918
+        },
+        "rightBoltTop": {
+          "x": 1425,
+          "y": 909
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 121,
+        "farShoeWidth": 147
+      }
+    },
+    {
+      "path": "form-frames/landmine-squat/6.webp",
+      "sha256": "fd3b55039e292bbc6d8bf5baf436e56199c6a88962245f63271c782bf47b33da",
+      "anchors": {
+        "leftBoltEdge": {
+          "x": 1311,
+          "y": 918
+        },
+        "rightBoltTop": {
+          "x": 1425,
+          "y": 909
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 121,
+        "farShoeWidth": 147
+      }
+    }
+  ]
+}

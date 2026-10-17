@@ -66,6 +66,12 @@ export interface UndoWindowDeps {
  * again, and does nothing once the delete has started, so a late tap
  * cannot show a meal that is on its way out.
  *
+ * Leaving the app closes the window early. The timer dies with the page,
+ * so a meal deleted just before the app was closed or reloaded was never
+ * written and was back in the diary on the next open, though the person
+ * had watched it go. The write goes out as the page hides instead; the
+ * Firestore cache keeps it until it syncs.
+ *
  * The diary has two ways to remove entries, deleting a row and stepping its
  * servings down, and both come here, so they share one window.
  */
@@ -76,13 +82,30 @@ export function deleteAfterUndoWindow(
 ): () => void {
   deps.hide(mealIds);
   let committed = false;
-  const timer = setTimeout(() => {
+  const onHidden = () => {
+    if (document.visibilityState === "hidden") commit();
+  };
+  const stopListening = () => {
+    if (typeof document === "undefined") return;
+    document.removeEventListener("visibilitychange", onHidden);
+    window.removeEventListener("pagehide", commit);
+  };
+  function commit() {
+    if (committed) return;
     committed = true;
+    clearTimeout(timer);
+    stopListening();
     deps.commit(mealIds);
-  }, windowMs);
+  }
+  const timer = setTimeout(commit, windowMs);
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", onHidden);
+    window.addEventListener("pagehide", commit);
+  }
   return () => {
     if (committed) return;
     clearTimeout(timer);
+    stopListening();
     deps.show(mealIds);
   };
 }

@@ -27,6 +27,7 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { DAY_LABELS, type ScheduleDay } from "@/lib/scheduleUtils";
+import { weekPosition } from "@/lib/dateHelpers";
 import { useProgrammeScheduleEditor } from "@/features/program/useProgrammeScheduleEditor";
 import { chooseSplit, splitLabel } from "@/features/program/programEngine";
 import { Dialog } from "@/components/ui/Dialog";
@@ -97,7 +98,11 @@ function ScheduleLayoutSheetBody({
 
   // Restructure confirm uses the Dialog primitive (focus trap, Escape,
   // scroll-lock); overlay/panel z lifted above the BottomSheet via props.
-  const sortedSchedule = schedule.slice().sort((a, b) => a.day - b.day);
+  /* Monday first, as setup's week preview and Train's run week are. Sorted
+     on getDay() the grid began on Sunday, the only week in the app that did. */
+  const sortedSchedule = schedule
+    .slice()
+    .sort((a, b) => weekPosition(a.day) - weekPosition(b.day));
   const liftSessions = sortedSchedule.filter(
     (s) => s.type === "lift" || s.type === "both"
   ).length;
@@ -144,7 +149,9 @@ function ScheduleLayoutSheetBody({
               color: "hsl(var(--running-strong))",
             },
             {
-              label: "Double",
+              /* The days' own word ("Both"), and the menu's and the
+                 description's. "Double" was a second name for them. */
+              label: "Both",
               value: doubleDays,
               color: "hsl(var(--lifting-strong))",
             },

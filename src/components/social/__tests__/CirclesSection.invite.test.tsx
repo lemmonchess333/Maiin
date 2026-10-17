@@ -31,6 +31,10 @@ vi.mock("react-router-dom", async () => {
 });
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+const trackSocial = vi.fn();
+vi.mock("@/lib/socialAnalytics", () => ({
+  track: (...args: unknown[]) => trackSocial(...args),
+}));
 
 const mockUseGoalSpaces = vi.fn();
 vi.mock("@/features/goalSpace/useGoalSpaces", () => ({
@@ -42,6 +46,8 @@ vi.mock("@/components/social/CircleWeeklyFocusSheet", () => ({
 }));
 
 import CirclesSection from "../CirclesSection";
+import { toast } from "@/lib/toast";
+import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/profanityFilter";
 
 function summary(
   id: string,
@@ -173,6 +179,29 @@ describe("post-create invite hand-off", () => {
     });
   });
 
+  it("a name the word filter refuses is never sent, and says why", () => {
+    const hook = hookValue();
+    mockUseGoalSpaces.mockReturnValue(hook);
+    const toastError = vi.spyOn(toast, "error");
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Start a circle" }));
+    fireEvent.click(screen.getByRole("button", { name: /strength block/i }));
+    fireEvent.change(screen.getByLabelText(/circle name/i), {
+      target: { value: "Hitler" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /start circle/i }));
+
+    expect(hook.createCircle).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith(OBJECTIONABLE_NAME_MESSAGE);
+    expect(screen.getByLabelText(/circle name/i)).toHaveValue("Hitler");
+    toastError.mockRestore();
+  });
+
   it("shares a short code bare + grouped (K7P49M2H → K7P4-9M2H), no spaceId", async () => {
     mockUseGoalSpaces.mockReturnValue(
       hookValue({
@@ -204,6 +233,16 @@ describe("post-create invite hand-off", () => {
     fireEvent.click(screen.getByRole("button", { name: /copy code/i }));
     await waitFor(() =>
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith("K7P4-9M2H")
+    );
+    // Together pass: the start and the invite are what the page is
+    // judged by, so both are counted.
+    expect(trackSocial).toHaveBeenCalledWith("circle_created", {
+      circleType: "strength_block",
+    });
+    await waitFor(() =>
+      expect(trackSocial).toHaveBeenCalledWith("circle_invite_sent", {
+        inviteMethod: "copy",
+      })
     );
   });
 });

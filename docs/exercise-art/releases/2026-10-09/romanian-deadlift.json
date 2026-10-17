@@ -1,0 +1,174 @@
+{
+  "exerciseId": "romanian-deadlift",
+  "version": "anatomy-v3-2026-10-09-three-pose-v1",
+  "width": 1374,
+  "height": 1145,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standards",
+  "reviewedAt": "2026-10-09T12:32:10.740675+00:00",
+  "reference": {
+    "path": "form-frames/romanian-deadlift/3.webp",
+    "sha256": "12bb355c8198b02185c742a7c07a605d978b07122187ec383d2aa983cd9cc126"
+  },
+  "cueSha256": "bb43f98a5892cf942c9989598da5e3376812a3f358289b9cab162bf7d6d467ff",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 model used for original master/poses. Native selected poses1,3,4 reviewed: lean physique, faceless bald head, neutral pelvis, white trainers retained."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Common1374x1145 canvas. Pose3 uses previously documented whole-frame translation; master4 normalized globally from1536x1280 of identical aspect ratio. No independent anatomy fitting. preparation.json."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Three selected positions show hip hinge with softly bent knees, long arms, neutral head and connected grips. Failed early-ascent and extra early-hinge sources excluded."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Continuous grey bar and intact plate pair across selected poses. Small projected tilt/grip-span differences accepted visually under revised rule; no calibrated rigid3D measurement claimed. Native/mobile review shows attached hands."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Measured sole samples match and shoe silhouette widths vary less than1percent across selected poses. fixed-measurements.json. No mobile-visible stance sliding."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Sequence1,3,4,4,3,1 uses three physical poses with bottom and top holds, controlled hinge and reversed ascent. User expressly authorized3-4 distinct poses in six playback beats."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Hamstrings primary#7B72E9; glute/posterior back tint secondary#9590E0. Fine neutral contours and inherited neutral shading preserved. Exact editable recomposition/lossless WebP verified."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues reviewed in the actual form component; Hold and Stand match endpoint repetition, each cue at most7words."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Native1374x1145 six-beat trace and mobile loops recorded. Three unique poses explicitly disclosed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Six decoded beats and6-to1 closure at390x844, mobile-trace.json; light screenshot reviewed."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Six decoded beats and6-to1 closure at390x844; dark screenshot reviewed. Pause and manual Next5to6 verified, console errors empty."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/romanian-deadlift/1.webp",
+      "sha256": "22cb21056a1c9c62c466e4c4da605ff426c85c5903eb55db17ad178495dc5f17",
+      "anchors": {
+        "nearSoleAt630": {
+          "x": 630,
+          "y": 1070
+        },
+        "farSoleAt770": {
+          "x": 770,
+          "y": 1037
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 146,
+        "farShoeWidth": 150
+      }
+    },
+    {
+      "path": "form-frames/romanian-deadlift/2.webp",
+      "sha256": "8faefde4ae3d0a1bb07a170016c52de4c6916cb11246638b44b8a2094a14b05d",
+      "anchors": {
+        "nearSoleAt630": {
+          "x": 630,
+          "y": 1070
+        },
+        "farSoleAt770": {
+          "x": 770,
+          "y": 1037
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 146,
+        "farShoeWidth": 150
+      }
+    },
+    {
+      "path": "form-frames/romanian-deadlift/3.webp",
+      "sha256": "12bb355c8198b02185c742a7c07a605d978b07122187ec383d2aa983cd9cc126",
+      "anchors": {
+        "nearSoleAt630": {
+          "x": 630,
+          "y": 1070
+        },
+        "farSoleAt770": {
+          "x": 770,
+          "y": 1037
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 147,
+        "farShoeWidth": 150
+      }
+    },
+    {
+      "path": "form-frames/romanian-deadlift/4.webp",
+      "sha256": "12bb355c8198b02185c742a7c07a605d978b07122187ec383d2aa983cd9cc126",
+      "anchors": {
+        "nearSoleAt630": {
+          "x": 630,
+          "y": 1070
+        },
+        "farSoleAt770": {
+          "x": 770,
+          "y": 1037
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 147,
+        "farShoeWidth": 150
+      }
+    },
+    {
+      "path": "form-frames/romanian-deadlift/5.webp",
+      "sha256": "8faefde4ae3d0a1bb07a170016c52de4c6916cb11246638b44b8a2094a14b05d",
+      "anchors": {
+        "nearSoleAt630": {
+          "x": 630,
+          "y": 1070
+        },
+        "farSoleAt770": {
+          "x": 770,
+          "y": 1037
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 146,
+        "farShoeWidth": 150
+      }
+    },
+    {
+      "path": "form-frames/romanian-deadlift/6.webp",
+      "sha256": "22cb21056a1c9c62c466e4c4da605ff426c85c5903eb55db17ad178495dc5f17",
+      "anchors": {
+        "nearSoleAt630": {
+          "x": 630,
+          "y": 1070
+        },
+        "farSoleAt770": {
+          "x": 770,
+          "y": 1037
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 146,
+        "farShoeWidth": 150
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 3, 4, 4, 3, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Complete: registered mobile light/dark six-beat loops, card, pause/manual advance. Lint/art/drafts/typecheck/build/stamp passed. Full suite48failed11236passed367skipped; no new FAIL headings versus measured same-HEAD baseline. See revised-production/final-verification.json."
+}

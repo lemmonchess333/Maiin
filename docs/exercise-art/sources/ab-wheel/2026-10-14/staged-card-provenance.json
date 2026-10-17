@@ -1,0 +1,32 @@
+{
+  "algorithmSource": "scripts/art/cut-out-form-art.ts",
+  "algorithmCoreSha256": "f95042479cc61ffb5b292b7da463d4479963f1f76d7b3b98e3175f4d2b12487c",
+  "reference": "form-frames/ab-wheel/1.webp",
+  "sourceSha256": "1c6adbc52050d867b542229cdd46a2aeb2062197ca354cbf2555c38456a7b9be",
+  "preparedCardSource": "prepared-card-source.png",
+  "preparedSourceSha256": "3c8abd9b518cd9ab7464080cf0d0f060d74b703a0535774e98e0aa1be7540ad5",
+  "alphaProof": "prepared-card-alpha-proof.json",
+  "alphaProofSha256": "ed6c051c5d680f6187c2b13fcd7398e6be73c4fae614e7ffcbbd187f26e40ebe",
+  "prepareScript": "prepare-card-floor-matte.py",
+  "prepareScriptSha256": "213e67718fba36454f9b7b29314feb02bafb29e55dbd6ce701d7892332c5729f",
+  "backgroundOnlyCorrection": {
+    "originalRGBUnchanged": true,
+    "humanPoseEdited": false,
+    "fromNativeFramedY": 600,
+    "brightSeed": 110,
+    "closeRadius": 1,
+    "growRadius": 2,
+    "reviewedExistingWheelAxlePadMasks": true
+  },
+  "width": 480,
+  "height": 479,
+  "keyed": false,
+  "contentBox": {
+    "left": 0,
+    "top": 0,
+    "width": 909,
+    "height": 908
+  },
+  "scale": 0.528052805280528,
+  "sha256": "f0b3ed7b9052c8f413dfecf6ee972b51ea66b86035038c61abadbb055ea5f0db"
+}

@@ -1,0 +1,29 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
+import ts from '../../Maiin-burpees/node_modules/typescript/lib/typescript.js';
+
+const root=path.dirname(fileURLToPath(import.meta.url));
+const repo=path.resolve(root,'../../Maiin-burpees');
+const generatorPath=path.join(repo,'scripts/art/cut-out-form-art.ts');
+const source=fs.readFileSync(generatorPath,'utf8');
+const definitions=source.slice(source.indexOf('const DARK_MAX = 14;'),source.indexOf('async function main()'));
+if(!definitions.includes('async function cutOut(')||!definitions.includes('function contentBox('))throw Error('Normal generator definitions not found');
+const sharpUrl=pathToFileURL(createRequire(path.join(repo,'package.json')).resolve('sharp')).href;
+const code=`import sharp from ${JSON.stringify(sharpUrl)};\n`+ts.transpileModule(definitions,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText+'\nexport {cutOut,contentBox};';
+const {cutOut,contentBox}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+const {default:sharp}=await import(sharpUrl);
+const input=path.join(root,'draft/frames/3.webp');
+const {rgba,width,height,keyed}=await cutOut(input);
+const box=contentBox(rgba,width,height);
+const scale=Math.min(1,480/Math.max(box.width,box.height));
+const outW=Math.round(box.width*scale),outH=Math.round(box.height*scale);
+const webp=await sharp(rgba,{raw:{width,height,channels:4}}).extract(box)
+  .resize(outW,outH,{kernel:'lanczos3'}).webp({quality:82,alphaQuality:90,effort:6}).toBuffer();
+fs.writeFileSync(path.join(root,'draft/card.webp'),webp);
+const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
+const report={scope:'Preview from verbatim current normal cutOut/contentBox definitions; final normal registered export must match',generator:'scripts/art/cut-out-form-art.ts',generatorSha256:sha(fs.readFileSync(generatorPath)),verbatimDefinitionSha256:sha(Buffer.from(definitions)),reference:'draft/frames/3.webp',referenceSha256:sha(fs.readFileSync(input)),width:outW,height:outH,keyed,sha256:sha(webp),bytes:webp.length,noThresholdOrAlphaOverride:true,noRegistryOrPublicMutation:true};
+fs.writeFileSync(path.join(root,'card-preview-proof.json'),JSON.stringify(report,null,2)+'\n');
+console.log(JSON.stringify(report,null,2));

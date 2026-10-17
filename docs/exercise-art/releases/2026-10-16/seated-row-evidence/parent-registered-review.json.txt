@@ -1,0 +1,124 @@
+{
+  "reviewer": "Codex /root",
+  "reviewedAt": "2026-10-16T11:35:20.931829+00:00",
+  "actualRegisteredReviewComplete": true,
+  "strictCertified": false,
+  "nativeSourceImagesViewed": [
+    "equipment-draft-v3/A-native.png",
+    "equipment-draft-v3/B-native.png"
+  ],
+  "mobile": {
+    "dark": {
+      "sixFramesCuesExact": true,
+      "actualViewport": [
+        390,
+        844
+      ]
+    },
+    "light": {
+      "sixFramesCuesExact": true,
+      "actualViewport": [
+        390,
+        844
+      ]
+    }
+  },
+  "playback": {
+    "normal-playback-trace.json": {
+      "allSixVisibleDecodedFrames": true,
+      "wrapSixToOneObserved": true,
+      "settledCueAgreementForAllSix": true,
+      "transientImageCueObserverEntries": 14,
+      "rawRecords": 30,
+      "eligibleRecords": 29
+    },
+    "slower-playback-trace.json": {
+      "allSixVisibleDecodedFrames": true,
+      "wrapSixToOneObserved": true,
+      "settledCueAgreementForAllSix": true,
+      "transientImageCueObserverEntries": 19,
+      "rawRecords": 72,
+      "eligibleRecords": 41
+    }
+  },
+  "normalCard": {
+    "advice": true,
+    "cards": [
+      {
+        "decoded": true,
+        "display": [
+          480,
+          339
+        ],
+        "limit": "480",
+        "natural": [
+          480,
+          339
+        ],
+        "src": "/form-art/seated-row.webp"
+      },
+      {
+        "decoded": true,
+        "display": [
+          347.9895935058594,
+          245.77084350585935
+        ],
+        "limit": "348",
+        "natural": [
+          480,
+          339
+        ],
+        "src": "/form-art/seated-row.webp"
+      },
+      {
+        "decoded": true,
+        "display": [
+          160,
+          113
+        ],
+        "limit": "160",
+        "natural": [
+          480,
+          339
+        ],
+        "src": "/form-art/seated-row.webp"
+      }
+    ],
+    "preparation": true,
+    "scrollWidth": 380,
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  "browserWarningsOrErrors": 0,
+  "all994PriorPublicArtFilesExact": true,
+  "all124HistoricalApprovedRecordsExact": true,
+  "evidenceHashes": {
+    "review/browser-warnings-errors.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "review/dark-cards.png": "4dad9262930e6ce57534c351de0dc88172c80db09e658ff75e0f932f4881a1ed",
+    "review/dark-first.png": "ae35f6ed48d2a2f70389c262ac865be55acba0594f2b49d10a7aecc64de270cc",
+    "review/dark-frame-1.png": "71929b8311eadad74d15d201590d2dce0c274b3a806d259002af9058bf37e328",
+    "review/dark-frame-2.png": "cbbc240456e1015b3de9f4610067e74747eb500370c4f927869a3878f7cfb004",
+    "review/dark-frame-3.png": "0f8a1bde7a5f8b221e5cf9c958a169fcb7338a81e51f7f9a5c723bcf7f329273",
+    "review/dark-frame-4.png": "52a134a99d26802fc198281dffe84958f4214dbb3d25b3acda863146aa81c2ab",
+    "review/dark-frame-5.png": "1638b6d48d28de1984147fd355b8772dc5d6f2dc172537007d6de610c6e5143b",
+    "review/dark-frame-6.png": "9406904319ee127d7b2a6e82f9cc6e113289c32f999d5db442e765f9e85cd269",
+    "review/final-accessibility.txt": "6217cd5859d84955201b0d28a42128610ffad398f5732091b35daafe71bf3f7e",
+    "review/light-card-viewport.png": "b234317d3628f61846e170ba9e11488b71d3b320b6e200b0679006981b119e02",
+    "review/light-cards.png": "20397fdf8fa04408c857521cd0e78b5e3300bb345570990b037d1713a1fae044",
+    "review/light-frame-1.png": "5b6666175476d615bdbc27e3399b3708294a3a412357535c54a9f03899230e7c",
+    "review/light-frame-2.png": "8cd29c7515568d1db0fcce9fb604a18ed774f7c58c481382c77476d5a933546b",
+    "review/light-frame-3.png": "d46c33bb86b1b189a78fff6d23e606efbca3e5039aed30c5a43a077af0b98b37",
+    "review/light-frame-4.png": "d45cea4e7b106b39b35610ca7f9ff634fb7cbf450f9925fb0371e326b79fba2b",
+    "review/light-frame-5.png": "f66c49807f1befb9b2a902fcdb9e40a7b3ae2e90b43e76f7fd2ecf655d04e16e",
+    "review/light-frame-6.png": "0debbc133beb3bca95c97137420d1058d529e3a65388bbfc39e32656cf5f8691",
+    "review/manual-dark.json": "e9e64008eb425635b0d4356d9fafb610f2e3763ac1d65bf4ee2bcc03fb654d1a",
+    "review/manual-light.json": "5b9d24b4cc63c29f62c246e780f069b1eba599dc6b659f577a506a3c48e3cf6c",
+    "review/normal-playback-trace.json": "4bf6bfbadb891a4b82da0f772d704c71c9d8186b30e101942936d46a66d2f16b",
+    "review/registered-card-metrics.json": "d77bd1537571c6b8ebe7baf67d039f8ceff9635e81488c72892c09ded2d43cd3",
+    "review/slower-playback-trace.json": "01af636b5701395e4fd56dce1b2a574976b75bb148babd7a1c33905454dece0d"
+  },
+  "portableProofSha256": "5ae24eb11ee80bfde786f4b81f9ccc9eb90490142b6663f9aa9e1b29d0477b7d",
+  "completionCredit": false
+}

@@ -1,0 +1,175 @@
+{
+  "exerciseId": "hip-thrust",
+  "version": "anatomy-v3-2026-10-12-reviewed-hip-thrust-v1",
+  "width": 768,
+  "height": 608,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-12T13:31:31.692868+00:00",
+  "reference": {
+    "path": "form-frames/hip-thrust/1.webp",
+    "sha256": "dcbcf30c416f422dd7cb1baa61924037fcac8efa69559ab50eb55d57f971b070"
+  },
+  "cueSha256": "c7ea8383481410b2dc1453f0ffaefcaa939c8b966524e311c66904f3e96150d1",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical athlete-anatomy-v3 used in the original photo-transfer generations. Same bald faceless lean white anatomical figure, featureless pelvis and white trainers. No anatomy warping, independent fitting or grafts. Original source geometry retained."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed oblique view of the flat bench and athlete. One uniform full-image normalization per source; top master padded without resampling. See master-review.json, low-normalization.json and bottom-normalization.json."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Three coherent poses from low hips to supported extension. Upper back remains at bench edge; knees/shins retain plausible relation to planted feet. Native768x608 and actual390x844 review. Minor shoe contour differences are disclosed in revised-native-review.md; no calibrated3D bone-length claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One straight bar with central hip pad, two closed grips and one modest round grey plate per side. Near/far plate projection differs with depth. Bench and load remain recognisable and coherent throughout. Small generated contour/shading differences retained under the revised standard; no rigid3D reconstruction is claimed."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Stationary bench-base columns650/655 measured within1px across the final poses. Cushion width and isolated far-plate vertical chord within1percent of reference. These measurements do not certify pixel-identical shoe contours. Near shoe edge differs6.5native pixels (about3mobile pixels); reviewed as minor outline/position variation without distracting foot sliding. See measurement-method.json."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Hips rise from below the knees into supported extension while upper back pivots at the bench edge. Bar pad follows the hips and stays held by both hands. Feet stay on the floor. Return reverses the same coherent positions; no spinal overextension depicted."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Visible Glutes primary#7B72E9; Hamstrings/Core secondary#9590E0. Traced posterior-pelvis compartments; unrelated calf highlights removed. Inherited neutral contours/shading and all uncoloured pixels preserved. Equipment remains neutral grey."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Set/Rise/Extend/Hold/Lower/Return matches low/middle/top/top/middle/low. Three physical poses reused across six separate paths, explicitly disclosed. Cues remain seven words or fewer."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Final native768x608 sequential playback including6to1 reviewed; native-trace.json. Three reopened editable1536x1216 ORAs reproduce merged source exactly; all six lossless WebP exports reproduce native PNGs."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent at390x844 light: all six decoded, full figure/equipment, captions, colour key, cues and6to1 inspected. staged-light.png and staged-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent at390x844 dark: all six decoded and6to1 inspected; pause and manual6to1 confirmed. staged-dark.png, staged-controls.json; no console errors."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/hip-thrust/1.webp",
+      "sha256": "dcbcf30c416f422dd7cb1baa61924037fcac8efa69559ab50eb55d57f971b070",
+      "anchors": {
+        "benchBaseInner": {
+          "x": 650,
+          "y": 453
+        },
+        "benchBaseOuter": {
+          "x": 655,
+          "y": 454
+        }
+      },
+      "invariantDimensions": {
+        "benchCushionWidth": 460,
+        "farPlateVerticalChord": 127
+      }
+    },
+    {
+      "path": "form-frames/hip-thrust/2.webp",
+      "sha256": "b4a91d1a4906b0af637c31550522385a6d1e541d3087b665f4c8c44702908edc",
+      "anchors": {
+        "benchBaseInner": {
+          "x": 650,
+          "y": 454
+        },
+        "benchBaseOuter": {
+          "x": 655,
+          "y": 455
+        }
+      },
+      "invariantDimensions": {
+        "benchCushionWidth": 458,
+        "farPlateVerticalChord": 127
+      }
+    },
+    {
+      "path": "form-frames/hip-thrust/3.webp",
+      "sha256": "122fa40a7e3a76c9d02d96b4039d78d8c48cfa400f963fe52904fd5a17c4e620",
+      "anchors": {
+        "benchBaseInner": {
+          "x": 650,
+          "y": 453
+        },
+        "benchBaseOuter": {
+          "x": 655,
+          "y": 454
+        }
+      },
+      "invariantDimensions": {
+        "benchCushionWidth": 457,
+        "farPlateVerticalChord": 126
+      }
+    },
+    {
+      "path": "form-frames/hip-thrust/4.webp",
+      "sha256": "122fa40a7e3a76c9d02d96b4039d78d8c48cfa400f963fe52904fd5a17c4e620",
+      "anchors": {
+        "benchBaseInner": {
+          "x": 650,
+          "y": 453
+        },
+        "benchBaseOuter": {
+          "x": 655,
+          "y": 454
+        }
+      },
+      "invariantDimensions": {
+        "benchCushionWidth": 457,
+        "farPlateVerticalChord": 126
+      }
+    },
+    {
+      "path": "form-frames/hip-thrust/5.webp",
+      "sha256": "b4a91d1a4906b0af637c31550522385a6d1e541d3087b665f4c8c44702908edc",
+      "anchors": {
+        "benchBaseInner": {
+          "x": 650,
+          "y": 454
+        },
+        "benchBaseOuter": {
+          "x": 655,
+          "y": 455
+        }
+      },
+      "invariantDimensions": {
+        "benchCushionWidth": 458,
+        "farPlateVerticalChord": 127
+      }
+    },
+    {
+      "path": "form-frames/hip-thrust/6.webp",
+      "sha256": "dcbcf30c416f422dd7cb1baa61924037fcac8efa69559ab50eb55d57f971b070",
+      "anchors": {
+        "benchBaseInner": {
+          "x": 650,
+          "y": 453
+        },
+        "benchBaseOuter": {
+          "x": 655,
+          "y": 454
+        }
+      },
+      "invariantDimensions": {
+        "benchCushionWidth": 460,
+        "farPlateVerticalChord": 127
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "minorFindings": "Near-shoe right outline differs6.5native pixels, farsole differs1.5; small contour/position variation accepted in actual native/mobile playback under revised owner standard. See bottom-normalization.json and revised-native-review.md. Bench surface and plate contour shading also vary slightly. No claim of exact3D rigid-body reconstruction.",
+  "integrationValidation": "Complete: final registered native and390x844 light/dark/card/controls/loop reviewed; three editable ORAs and six lossless exports verified. Lint/art/drafts/typecheck/build/stamp passed. Full tests compared against fresh same-HEAD baseline with no unresolved additional failures. See pose-transfer-production/final-verification.json."
+}

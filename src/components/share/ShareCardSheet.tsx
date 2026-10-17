@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Eye, EyeOff, Share2 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -22,6 +22,7 @@ import ShareCardRenderer, {
 } from "@/components/share/ShareCardRenderer";
 import type { GPSPoint } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 
 /**
  * ShareCardSheet (SOCIAL S1, PR3) — the customization + export surface.
@@ -110,12 +111,17 @@ export function ShareCardSheet({
   open,
   onOpenChange,
   data,
+  extras,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   data: ShareCardSheetData;
+  /** Other ways to share the same thing, under the card's own Share: a
+   *  run's GPX file, say, or its Circle. */
+  extras?: ReactNode;
 }) {
   const unit = useDistanceUnit();
+  const liftUnit = useLiftUnit();
   const [format, setFormat] = useState<ShareFormat>("story");
   const [background, setBackground] = useState<ShareBackground>("brand");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
@@ -169,6 +175,7 @@ export function ShareCardSheet({
     /* The SHARER's unit — the card is a fixed image, so it cannot depend
        on who opens it. */
     unit,
+    liftUnit,
     template: data.template,
     format,
     background,
@@ -365,6 +372,12 @@ export function ShareCardSheet({
         >
           {exporting ? "Preparing…" : "Share"}
         </Button>
+
+        {extras && (
+          <div className="space-y-2 border-t border-border/50 pt-4">
+            {extras}
+          </div>
+        )}
       </div>
 
       {/* Offscreen full-size rasterisation source */}

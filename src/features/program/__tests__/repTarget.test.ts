@@ -47,6 +47,19 @@ describe("formatRepTarget — the range a lift climbs, or its fixed target (Lift
     ).toBe("6–8");
   });
 
+  it("shows a range-less bodyweight lift's range by whether it carries load (Pgm8 L6)", () => {
+    // With none it climbs in reps to 20; with load added it climbs and
+    // steps as a loaded lift does, so its top is the loaded lift's.
+    const pullUps = {
+      exerciseId: "pull-ups",
+      reps: 6,
+      baseReps: 6,
+      progressionType: "double" as const,
+    };
+    expect(formatRepTarget(ex({ ...pullUps, weight: 0 }))).toBe("6–20");
+    expect(formatRepTarget(ex({ ...pullUps, weight: 10 }))).toBe("6–8");
+  });
+
   it("shows seconds and the authored range for a hold", () => {
     expect(
       formatRepTarget(

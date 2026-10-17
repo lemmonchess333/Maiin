@@ -1,0 +1,84 @@
+{
+  "exerciseId": "handstand-push-ups",
+  "status": "rejected-existing-two-endpoint-pair-for-material-head-profile-inconsistency",
+  "scope": "Bounded native read-only review of exactly the historical accepted top and guided bottom, following saved reports and the new two-endpoint allowance. No source search, artwork edit, human transform, generation, repository change, registration or completion credit.",
+  "sources": [
+    {
+      "role": "locked-arm top",
+      "path": "C:/Users/myles/Documents/Codex/2026-10-04/lg/work/handstand-push-ups/1-master.png",
+      "sha256": "643f0b7c42ee48259caa42aa86124d2c2789cf6f401a3fc98508003b34eb5562",
+      "nativeSize": [1024, 1536]
+    },
+    {
+      "role": "guided crown-contact bottom",
+      "path": "C:/Users/myles/Documents/Codex/2026-10-04/lg/work/handstand-push-ups/3-guided-candidate.png",
+      "sha256": "02820c0ccba7875d3e54f6ea3144a6cfd95b7b94e20ddd9abf1c525d0a6981f0",
+      "nativeSize": [1024, 1536]
+    }
+  ],
+  "twoEndpointScope": {
+    "judgment": "These genuinely depict the essential strict press endpoints: straight-arm wall-supported handstand and bent-elbow crown-floor bottom. The current two-state allowance removes a missing-midpoint objection; no invented three-pose minimum is applied.",
+    "notAcceptedReason": "Endpoint count does not waive coherent identity/head geometry or contacts. This pair fails that quality assessment independently of any missing middle.",
+    "setup": "Kick-up is written initial setup, not claimed to be illustrated by either endpoint. No six unique physical-pose claim is made."
+  },
+  "headDirection": {
+    "observedCorrectInBoth": true,
+    "evidence": "At native size, rounded crown points down toward the floor and chin/neck junction faces up toward the chest in both sources. The bottom crown touches the floor; top crown is clear. The user's wrong-way-round issue is respected; this rejection is not an unsubstantiated repeat of that concern.",
+    "completeReleasedHeadRepair": false
+  },
+  "identityAndAppearance": {
+    "noShorts": true,
+    "neutralFeaturelessPelvis": true,
+    "whiteTrainers": true,
+    "wallSupportedStraightLegVariant": true,
+    "materialFinding": "The bottom head is visibly broader and rounder relative to the otherwise comparable torso and trainers. This is a projected profile/identity inconsistency, not established true3D skull growth. There is no observed large head rotation or camera-scale change that establishes a benign explanation. It cannot be certified under a slight cosmetic contour allowance.",
+    "palette": "Inherited primary/secondary fields are present but this held pair has not received final exact-palette release finishing. Palette work cannot repair the head consistency defect."
+  },
+  "nativeMeasurements": {
+    "methodFile": "measure-readonly.py",
+    "rawResults": "head-profile-native-diagnostics.json",
+    "head": {
+      "method": "Corresponding exposed head/profile patches, bright neutral pixels with max channel spread12; threshold200 excludes adjacent darker neutral pixels. PCA projects the measured pixel cloud onto its principal axes without transforming image pixels, removing in-plane orientation from this diagnostic. The neck junction/ear make this a profile comparison, not calibrated skull segmentation.",
+      "topROI": [455, 1023, 565, 1149],
+      "bottomROI": [435, 1212, 565, 1338],
+      "threshold200": {
+        "principal99PercentMinorSpansPx": [87.00857123774477, 105.11035804005937],
+        "minorSpanIncreasePercent": 20.80460182808053,
+        "principal99PercentMajorSpansPx": [117.00037725033764, 117.7627968400993],
+        "majorSpanIncreasePercent": 0.651638573891411,
+        "brightProfilePixelCounts": [8693, 10775],
+        "pixelAreaIncreasePercent": 23.95030484297711
+      },
+      "sensitivity": {
+        "threshold210MinorSpanIncreasePercent": 20.340507151542763,
+        "threshold220MinorSpanIncreasePercent": 20.19005773532616,
+        "majorSpanIncreaseAcrossThresholdsPercent": [0.5433000100444785, 0.651638573891411]
+      },
+      "notClaimed": "No exact3D scale or yaw is recovered. No full-body bounding-box height is used as a constant anatomical length. Lower brightness thresholds and a truncated lower-head PCA alternative were not adopted because adjacent pixels/near-circular axis ambiguity make them less specific."
+    },
+    "torsoControl": {
+      "method": "Central visible abdominal colour-field extent in corresponding x500..534 patches, independent of elbow height; blue-minus-red threshold20, source RGB only.",
+      "topROI": [500, 670, 535, 925],
+      "bottomROI": [500, 845, 535, 1100],
+      "projectedSpansPx": [197, 197],
+      "sensitivity": "Threshold10 gives197/198px; threshold30 gives196/197px. This is an observed local surface-field span, not a3D torso bone length or release invariant certificate."
+    },
+    "trainerControl": {
+      "method": "Paired bright trainer forefoot silhouette in the first60rows below its actual first bright toe row, minRGB200. The two shoes overlap, so no invented independent shoe segmentation is used.",
+      "topBand": [530, 8, 685, 68],
+      "bottomBand": [530, 158, 685, 218],
+      "projectedPairWidthsPx": [113, 113],
+      "nativeXRanges": [[554, 667], [554, 667]],
+      "limitation": "This local paired forefoot projection is comparable; it is not a whole individual shoe length or3D shoe-size measurement. Rejected narrow shoe-ROI attempts are retained in the raw diagnostics rather than represented as passing metrics."
+    },
+    "interpretation": "Head/profile width changes about20% while local torso and trainer controls remain comparable. Arm bending and vertical descent cannot by themselves explain that specific local profile broadening. The earlier overall shoe-to-crown spans are not used as the rejection proof."
+  },
+  "supportAndArmMechanics": {
+    "observed": "Top has visibly straight locked arms. Bottom has genuine elbow flexion, crown-floor contact and both palms on the same floor. Legs remain straight and heels plausibly slide on the wall; neither image depicts a kneeling or freestanding substitute.",
+    "forearmStacking": "Bottom near forearm visibly slopes between its lateral elbow and wrist; a rough projected reading is about20-25degrees from vertical, far forearm about10-15degrees. These are visual projection estimates, not calibrated3D joint angles. Vertical forearm loading is not certified, and the wide-elbow drawing warrants care; it is not used as sole rejection proof.",
+    "palmEvidence": "Existing contact-comparison.json measures right bright-mask centroid+10.49px in x, distal contour+8px in x/-3px in y, width+5.88%; left distal contour approximately-1px/-1px. These remain actual contour diagnostics, not fixed joint centres or strict1px/1% passes. They are materially smaller than the distinct later photo-route50px palm step; those routes are not conflated.",
+    "notPerformed": "No new animation/mobile acceptance was attempted after the native head inconsistency was established."
+  },
+  "decision": "Reject and stop this exact retained pair for release. The two-endpoint allowance makes its movement scope plausible but does not resolve the visible model/head inconsistency. Do not graft a head, fit anatomy, re-run an exhausted correction or claim the handstand conversion complete.",
+  "sourceIntegrity": {"artworkEdits": false, "imageRequests": 0, "repositoryEdits": false, "completionCredit": false}
+}

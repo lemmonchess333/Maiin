@@ -1,0 +1,433 @@
+{
+  "files": {
+    "authoring/1-equipment-removal.png": {
+      "readablePath": "authoring/1-equipment-removal.png",
+      "sha256": "6a7afc191446a6dcbfcfc82eef3ac3debb009e0a499a392b3209abf0e6ff98e4"
+    },
+    "authoring/1-fixed-equipment.png": {
+      "readablePath": "authoring/1-fixed-equipment.png",
+      "sha256": "9522c6383a0d4bddb26fd2494dd7f83bb0695e4d074f31a18588b06d039eb319"
+    },
+    "authoring/1-human-and-grip-guard.png": {
+      "readablePath": "authoring/1-human-and-grip-guard.png",
+      "sha256": "147fa8d841e6a0403966115cf57995c740fb66999eca553d106346e9bbd3d134"
+    },
+    "authoring/1-wrapped-grip-mask.png": {
+      "readablePath": "authoring/1-wrapped-grip-mask.png",
+      "sha256": "0d24a3e68968c8b9a2d7647947771f53f6ce723c085844bb328604b1d3e910a2"
+    },
+    "authoring/4-equipment-removal.png": {
+      "readablePath": "authoring/4-equipment-removal.png",
+      "sha256": "cc98a1486f8d61fbac4860c4bde16955166f48a7da7cdcc0e0e53e8430f86af6"
+    },
+    "authoring/4-fixed-equipment.png": {
+      "readablePath": "authoring/4-fixed-equipment.png",
+      "sha256": "dd0e227a019599822c2c14fa805e5c67b42cfb2fc0f62c34db51f76894004bdc"
+    },
+    "authoring/4-human-and-grip-guard.png": {
+      "readablePath": "authoring/4-human-and-grip-guard.png",
+      "sha256": "3f6b6491406200da8ac1f52dfdb162013e0b0766a45e68c3c5ab0da1c1d78b5f"
+    },
+    "authoring/4-wrapped-grip-mask.png": {
+      "readablePath": "authoring/4-wrapped-grip-mask.png",
+      "sha256": "c87ef1ef69624f7c42a9ed5e0e59cf9d4f53659310189a8f1ff5b29cb18e1c68"
+    },
+    "authoring/catalogue-snapshot.json": {
+      "readablePath": "authoring/catalogue-snapshot.json.txt",
+      "sha256": "69f0dd554ee449440ef3f644f11ec6ef2006e5544788e8deed2b4d0c069ae921"
+    },
+    "authoring/fixed-geometry.json": {
+      "readablePath": "authoring/fixed-geometry.json.txt",
+      "sha256": "f2fe3b4c558b0fdd92e64635155c6c0bc41febdac1e5b42654f2bbe035c37b37"
+    },
+    "authoring/palette-recipe.json": {
+      "readablePath": "authoring/palette-recipe.json.txt",
+      "sha256": "d8539d003af24cd02de9f61a18c7120923388cceb3bee5bb2cfeaa8881190fbd"
+    },
+    "authoring/render-fixed-equipment.py": {
+      "readablePath": "authoring/render-fixed-equipment.py.txt",
+      "sha256": "27d11d4f805e2f1b32304415ce9a599b69bb8348501b399993631871c185885d"
+    },
+    "candidate-payload-manifest.json": {
+      "readablePath": "candidate-payload-manifest.json.txt",
+      "sha256": "8d94b0c211a4a69a475893e223fe2cfc6bef917adda0851071f5a876de725ab1"
+    },
+    "card-preview-proof.json": {
+      "readablePath": "card-preview-proof.json.txt",
+      "sha256": "3257f8d1cf4901516dbbf410ac684a14cdaf1a5d058be97d0957a575ad8c4294"
+    },
+    "draft/1-framed.ora": {
+      "readablePath": "draft/1-framed.ora",
+      "sha256": "9455f2cae2c4f0742682fe3fb2db2d089befd6b2f96b0d4527bfc9189eb049c3"
+    },
+    "draft/1-framed.png": {
+      "readablePath": "draft/1-framed.png",
+      "sha256": "a3e16b655b56c3b3456dc86c56c8c54a7313189df3995d4f17116870283a2ed1"
+    },
+    "draft/1-native.ora": {
+      "readablePath": "draft/1-native.ora",
+      "sha256": "662010cce21faac6c91cc6c83efb30a2f419dbcca8bcb38b12b2b096e8cce868"
+    },
+    "draft/1-native.png": {
+      "readablePath": "draft/1-native.png",
+      "sha256": "a03dfe8821f4c3aea9735c0ff0014041f57910abf59eef1c3ac4a5c466d38099"
+    },
+    "draft/4-framed.ora": {
+      "readablePath": "draft/4-framed.ora",
+      "sha256": "ace2c7822351443d4f57970f821e4af3d02c1d9b437cf30e28b6dcd5e10349b5"
+    },
+    "draft/4-framed.png": {
+      "readablePath": "draft/4-framed.png",
+      "sha256": "68966e2533c26baa2b785bd545cca4c6d85acd783f9b84a38e70bf7f8923c887"
+    },
+    "draft/4-native.ora": {
+      "readablePath": "draft/4-native.ora",
+      "sha256": "d8d436f38988299eb90f036c19d5aa49209fa4ba205d6c54aaf6817315c91047"
+    },
+    "draft/4-native.png": {
+      "readablePath": "draft/4-native.png",
+      "sha256": "cd1c29631eeb54bda8301dbd5af8ddbcf46ea43fe0b98f625addb0bb9fbd68ba"
+    },
+    "draft/card.webp": {
+      "readablePath": "draft/card.webp",
+      "sha256": "43021735200a89e72a718b3d5351790528109796abc709fe46175f892e081e5c"
+    },
+    "draft/frames/1.webp": {
+      "readablePath": "draft/frames/1.webp",
+      "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d"
+    },
+    "draft/frames/2.webp": {
+      "readablePath": "draft/frames/2.webp",
+      "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d"
+    },
+    "draft/frames/3.webp": {
+      "readablePath": "draft/frames/3.webp",
+      "sha256": "1b9862601b8c27b6ee101779b325cf9591a1a1175da9b35e18f8d29077864c1f"
+    },
+    "draft/frames/4.webp": {
+      "readablePath": "draft/frames/4.webp",
+      "sha256": "1b9862601b8c27b6ee101779b325cf9591a1a1175da9b35e18f8d29077864c1f"
+    },
+    "draft/frames/5.webp": {
+      "readablePath": "draft/frames/5.webp",
+      "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d"
+    },
+    "draft/frames/6.webp": {
+      "readablePath": "draft/frames/6.webp",
+      "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d"
+    },
+    "draft/layers/1-colour.png": {
+      "readablePath": "draft/layers/1-colour.png",
+      "sha256": "0c6871d8fa29c7d6bb208dccb42634fe8582d43053871b90fdc4d26e9316c4fd"
+    },
+    "draft/layers/4-colour.png": {
+      "readablePath": "draft/layers/4-colour.png",
+      "sha256": "fef887a17428165a5079d5d8026be79e09fd3763edab6eb7401feb110d53df18"
+    },
+    "draft/masks/1-hamstring-secondary-trace.png": {
+      "readablePath": "draft/masks/1-hamstring-secondary-trace.png",
+      "sha256": "05728ed483e7fe569472b301524344bcd51acebc4906dcf1a617b8cc6383a8af"
+    },
+    "draft/masks/1-primary-role.png": {
+      "readablePath": "draft/masks/1-primary-role.png",
+      "sha256": "4beb7c135f9f1061fe2560ac81f772be9954362ca24e1f0943278f62abda83ac"
+    },
+    "draft/masks/1-secondary-role.png": {
+      "readablePath": "draft/masks/1-secondary-role.png",
+      "sha256": "f5b0d47cf2654f2beb77192f30d2e54d4e9dba32a9c142dc44d5eeb63d63b913"
+    },
+    "draft/masks/1-source-colour-support.png": {
+      "readablePath": "draft/masks/1-source-colour-support.png",
+      "sha256": "f2a4249164c5960e94fa34e7bdb8d89219dd06247e59382e340c9567389614dc"
+    },
+    "draft/masks/4-hamstring-secondary-trace.png": {
+      "readablePath": "draft/masks/4-hamstring-secondary-trace.png",
+      "sha256": "3c0a2562743bfbd5d86ed65c4ca40d7bf81a85d5cfdab28ba057c2de8329f46f"
+    },
+    "draft/masks/4-primary-role.png": {
+      "readablePath": "draft/masks/4-primary-role.png",
+      "sha256": "b90246770cd6c3e12a151c0271785484bd3328953eec569aaaa4e1ce2bb96783"
+    },
+    "draft/masks/4-secondary-role.png": {
+      "readablePath": "draft/masks/4-secondary-role.png",
+      "sha256": "2f4fc19e21d0b3ac8599fd992351c4deb46af4033edf625bf7c94e78ce075a76"
+    },
+    "draft/masks/4-source-colour-support.png": {
+      "readablePath": "draft/masks/4-source-colour-support.png",
+      "sha256": "4114878a9ab0bd607b4ccde74629ca86db910405442a1d9605077fcda47709af"
+    },
+    "draft/pixel-and-editable-proof.json": {
+      "readablePath": "draft/pixel-and-editable-proof.json.txt",
+      "sha256": "4c9ba4a81dd89e0a863abce05ccc9c2113fc725e05f75b96a3550c16d95a75e9"
+    },
+    "evidence/4-far-hand-native8x-comparison.png": {
+      "readablePath": "evidence/4-far-hand-native8x-comparison.png",
+      "sha256": "3aa97b1d514851582260179209d1e58c84360b8b485acc941935c18a11aff7d9"
+    },
+    "evidence/clean-construction-proof.json": {
+      "readablePath": "evidence/clean-construction-proof.json.txt",
+      "sha256": "75b98a96092c33506b0f1ef23cc4b16358a3e4ab04ec5bf5583386057afb0900"
+    },
+    "evidence/five-pixel-contact-diagnosis.json": {
+      "readablePath": "evidence/five-pixel-contact-diagnosis.json.txt",
+      "sha256": "ec9be5428a7de55a4aa0e5135e17b5be981dfeb861fe92a20304f0b0dd7f8d36"
+    },
+    "evidence/fourbar-static-placement-construction.json": {
+      "readablePath": "evidence/fourbar-static-placement-construction.json.txt",
+      "sha256": "f459ceec17664b37c8f740a92d4e4811f6ebae52c74b433e2d8eb61d154c2ac2"
+    },
+    "evidence/offset-grip-rigid-shape-readback.json": {
+      "readablePath": "evidence/offset-grip-rigid-shape-readback.json.txt",
+      "sha256": "1b8ad41aca3023d9a0fa69c298aecf693ef6a5536097cf24e71147aeb7c7e915"
+    },
+    "evidence/root-source-construction-eligibility.json": {
+      "readablePath": "evidence/root-source-construction-eligibility.json.txt",
+      "sha256": "f3b8a72fc74c7c466d308cceb2fe9ce1a4f7ff60e8abddad1c3372617a893d3e"
+    },
+    "input-file-hashes.json": {
+      "readablePath": "input-file-hashes.json.txt",
+      "sha256": "45df6e35a3e53c7e51b776bdf98c54590015d408a06e592be26c22f626f6315c"
+    },
+    "originals/1-colour-repair-prompt.txt": {
+      "readablePath": "originals/1-colour-repair-prompt.txt",
+      "sha256": "d243280ea1bcacd4676b4d1434ca3534c70da5c0011261fa320e3aa8db7a9c96"
+    },
+    "originals/1-master-prompt.txt": {
+      "readablePath": "originals/1-master-prompt.txt",
+      "sha256": "86e357a33ba620b17aff60db702213fd4fd01f8a62efc83fb621f55a369bb352"
+    },
+    "originals/1-original.png": {
+      "readablePath": "originals/1-original.png",
+      "sha256": "e40913b14089d9ac1f9032e3d1afb636ee0b6dd3c1777bf9462b5315ca5c6433"
+    },
+    "originals/1-prompt.json": {
+      "readablePath": "originals/1-prompt.json.txt",
+      "sha256": "f1e2eb23ed740d8007f7cde927c0f5b5d9b9158bdaa8f62d593d7ca2c49c65b9"
+    },
+    "originals/4-original.png": {
+      "readablePath": "originals/4-original.png",
+      "sha256": "649036cf174307e0d7b091774880d5210196a5707368fde858e6df31aa01e3be"
+    },
+    "originals/4-prompt.json": {
+      "readablePath": "originals/4-prompt.json.txt",
+      "sha256": "8d4a42a9a466c15c824213132e34f687500f58d03855c75d509f71a4ce3d7b37"
+    },
+    "originals/4-restore-pivot-prompt.txt": {
+      "readablePath": "originals/4-restore-pivot-prompt.txt",
+      "sha256": "cd0f4f6f29a29541cbbd9276c60a6edf5af23b6fb3276df244521cc6096c71be"
+    },
+    "originals/STATUS.md": {
+      "readablePath": "originals/STATUS.md.txt",
+      "sha256": "d3954a63ed8385555e8326da4f4c5117582096af1e255214ba80530899c9fd45"
+    },
+    "originals/canonical-review-reference.png": {
+      "readablePath": "originals/canonical-review-reference.png",
+      "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+    },
+    "originals/framing.json": {
+      "readablePath": "originals/framing.json.txt",
+      "sha256": "3693220d828a598a733e4d73ab13fabd14bb9c9e81333a2e24fd5f89d5d4114c"
+    },
+    "originals/sequence-candidates.json": {
+      "readablePath": "originals/sequence-candidates.json.txt",
+      "sha256": "ad8841c091121004091d2146addf199b3192653c2caca4023dd974fab651aa52"
+    },
+    "reproduce.py": {
+      "readablePath": "reproduce.py.txt",
+      "sha256": "3d5196148368e0b514c3f339013c3ce1e48cf7c22d497b1f4748b3207917a5a9"
+    },
+    "review/history/caption-correction-20261015/candidate-payload-manifest.json": {
+      "readablePath": "review/history/caption-correction-20261015/candidate-payload-manifest.json.txt",
+      "sha256": "2345f47b93addec8ae8f69a9e8d10b7208c82f67a27c9d37854e4524ccd74cfc"
+    },
+    "review/history/caption-correction-20261015/caption-correction-proof.json": {
+      "readablePath": "review/history/caption-correction-20261015/caption-correction-proof.json.txt",
+      "sha256": "5c066f52e4aa1a21b9b189819229a5f2168ee7fe0acd35c81684349d36fe6f5c"
+    },
+    "review/history/caption-correction-20261015/draft/pixel-and-editable-proof.json": {
+      "readablePath": "review/history/caption-correction-20261015/draft/pixel-and-editable-proof.json.txt",
+      "sha256": "4c9ba4a81dd89e0a863abce05ccc9c2113fc725e05f75b96a3550c16d95a75e9"
+    },
+    "review/history/caption-correction-20261015/input-file-hashes.json": {
+      "readablePath": "review/history/caption-correction-20261015/input-file-hashes.json.txt",
+      "sha256": "23c46395c052651f581599f33bce7ee96c854899e5039c97cb8cd4708c27945e"
+    },
+    "review/history/caption-correction-20261015/reproduce.py": {
+      "readablePath": "review/history/caption-correction-20261015/reproduce.py.txt",
+      "sha256": "d672a76e01fd659b9c52e1ca5164d9c4ad629762220f2a6c49824dc427661235"
+    },
+    "review/history/caption-correction-20261015/sequence-plan.json": {
+      "readablePath": "review/history/caption-correction-20261015/sequence-plan.json.txt",
+      "sha256": "f0498f3b439140764726bafdc10bed195a67e33a127e5778550209800a9d4317"
+    },
+    "review/history/caption-correction-20261015/source-provenance.json": {
+      "readablePath": "review/history/caption-correction-20261015/source-provenance.json.txt",
+      "sha256": "95a476435657edb6eb62f3d05d9f9a97c91c7d6f9c910d5f9f1edfd3af7173d7"
+    },
+    "review/history/card-preview-generator-pin.json": {
+      "readablePath": "review/history/card-preview-generator-pin.json.txt",
+      "sha256": "3d379f14a67374975c19444c7e9830bd14a3a8e5adfc767b6bbe5dc3b38f3693"
+    },
+    "review/history/current-main-4bda-baseline-equivalence.json": {
+      "readablePath": "review/history/current-main-4bda-baseline-equivalence.json.txt",
+      "sha256": "865ca86e6e8150586ded07285cf755203b3240c3442290ea5b6946ea39741efd"
+    },
+    "review/history/draft-ui/elliptical-draft-card-dark-light-complete-7af0c8925c1a-b2-dom.json": {
+      "readablePath": "review/history/draft-ui/elliptical-draft-card-dark-light-complete-7af0c8925c1a-b2-dom.json.txt",
+      "sha256": "554d32a61f8b64b9745477baf129507bfe934757bb8a00e95759aed56c2638d9"
+    },
+    "review/history/draft-ui/elliptical-draft-card-dark-light-complete-7af0c8925c1a-b3.jpg": {
+      "readablePath": "review/history/draft-ui/elliptical-draft-card-dark-light-complete-7af0c8925c1a-b3.jpg",
+      "sha256": "9c8fa51ac4bd12254f3ac6476b4c170a125e4d71aba94363d3d47457bbcd321e"
+    },
+    "review/history/draft-ui/elliptical-draft-card-dark-light-complete-7af0c8925c1a-b4.jpg": {
+      "readablePath": "review/history/draft-ui/elliptical-draft-card-dark-light-complete-7af0c8925c1a-b4.jpg",
+      "sha256": "4f66e092a3458593e682e61dd8852f9fe213daf2c0d72cd43754553b57885492"
+    },
+    "review/history/draft-ui/elliptical-draft-dark-manual-717d13c683b0-b2-tool-text.txt": {
+      "readablePath": "review/history/draft-ui/elliptical-draft-dark-manual-717d13c683b0-b2-tool-text.txt",
+      "sha256": "633055fbefa1aaa2da53b0b02d27ccc532529fde40c14bff0571b16ed2825d44"
+    },
+    "review/history/draft-ui/elliptical-draft-dark-manual-717d13c683b0-b3.jpg": {
+      "readablePath": "review/history/draft-ui/elliptical-draft-dark-manual-717d13c683b0-b3.jpg",
+      "sha256": "19433ef833906f1849db1fa65fd10a6ace2ba512d6df0cc1ffc648cfa618a0b5"
+    },
+    "review/history/draft-ui/elliptical-draft-dark-normal-final-observer-d08b08b988a8-b3-dom.json": {
+      "readablePath": "review/history/draft-ui/elliptical-draft-dark-normal-final-observer-d08b08b988a8-b3-dom.json.txt",
+      "sha256": "09938ab79734fec3d8dee55a976af7e9b558459c70584fdaef9a253193e2f3d8"
+    },
+    "review/history/draft-ui/elliptical-draft-light-manual-card-46992a2ac40f-b3-object2-dom.json": {
+      "readablePath": "review/history/draft-ui/elliptical-draft-light-manual-card-46992a2ac40f-b3-object2-dom.json.txt",
+      "sha256": "fbcaf7f5d968cfe8268461096af951d53bffc87ddf478130c4a775cbeec8a99c"
+    },
+    "review/history/draft-ui/elliptical-draft-light-manual-card-46992a2ac40f-b3-tool-text.txt": {
+      "readablePath": "review/history/draft-ui/elliptical-draft-light-manual-card-46992a2ac40f-b3-tool-text.txt",
+      "sha256": "1f037929d75b0c5f432d34fdfb01275ef6969a22aedef445473af2838eb63cb8"
+    },
+    "review/history/draft-ui/elliptical-draft-light-slower-final-observer-e501517eed8d-b2-object1-dom.json": {
+      "readablePath": "review/history/draft-ui/elliptical-draft-light-slower-final-observer-e501517eed8d-b2-object1-dom.json.txt",
+      "sha256": "ccce07feffd836b8f2f8e2a6f089e4fc1831f2d07a751d3b6a14d5dd14af6ece"
+    },
+    "review/history/draft-ui/elliptical-draft-light-slower-final-observer-e501517eed8d-b2-object2-dom.json": {
+      "readablePath": "review/history/draft-ui/elliptical-draft-light-slower-final-observer-e501517eed8d-b2-object2-dom.json.txt",
+      "sha256": "415bb058cd779a4c5406375fa67d66451d50682a82b511487671d2294101d90b"
+    },
+    "review/history/draft-ui/elliptical-draft-light-slower-final-observer-e501517eed8d-b2-tool-text.txt": {
+      "readablePath": "review/history/draft-ui/elliptical-draft-light-slower-final-observer-e501517eed8d-b2-tool-text.txt",
+      "sha256": "658ab3a1ba84e6a8ebbbba0713881d73b3a500749ecf53984154435c1d867623"
+    },
+    "review/history/draft-ui/elliptical-draft-previous-and-next-wrap-f001b21405cc-b2-dom.json": {
+      "readablePath": "review/history/draft-ui/elliptical-draft-previous-and-next-wrap-f001b21405cc-b2-dom.json.txt",
+      "sha256": "2c19760d2b6dd49be3a072ecf3bebefd9b59aa6e4055bae6cdeaee0fb8569494"
+    },
+    "review/history/draft-ui/elliptical-draft-previous-and-next-wrap-f001b21405cc-b3.jpg": {
+      "readablePath": "review/history/draft-ui/elliptical-draft-previous-and-next-wrap-f001b21405cc-b3.jpg",
+      "sha256": "6b5cd08dd7838c5d4077944c9fca37f8f6570dae6e77e9dc3566a37295ac96d3"
+    },
+    "review/history/draft-ui/elliptical-same-call-multiple-46992a2ac40f-b4.jpg": {
+      "readablePath": "review/history/draft-ui/elliptical-same-call-multiple-46992a2ac40f-b4.jpg",
+      "sha256": "70340090170b93425fd2a91756dc1e69650e48e7fefe53111a334bc06514e775"
+    },
+    "review/history/draft-ui/elliptical-same-call-multiple-e501517eed8d-b3.jpg": {
+      "readablePath": "review/history/draft-ui/elliptical-same-call-multiple-e501517eed8d-b3.jpg",
+      "sha256": "ea703a2f59035c8d16edcf19250d8546066168df2311ad9e167dcf8301581765"
+    },
+    "review/history/draft-ui/elliptical-tool-return-artifact-index-draft-final.json": {
+      "readablePath": "review/history/draft-ui/elliptical-tool-return-artifact-index-draft-final.json.txt",
+      "sha256": "ee551048a8fa6165d849806d3363fe6830988d63d0ab027ab32d1643fad285b7"
+    },
+    "review/history/draft-ui/elliptical-tool-return-object-split-draft-final.json": {
+      "readablePath": "review/history/draft-ui/elliptical-tool-return-object-split-draft-final.json.txt",
+      "sha256": "324d011632f0db24c50e7268e21d5009997e6cd5827e33efa6a6377b675ce693"
+    },
+    "review/history/instrumentation-character-data-correction-20261016/instrumentation-correction-proof.json": {
+      "readablePath": "review/history/instrumentation-character-data-correction-20261016/instrumentation-correction-proof.json.txt",
+      "sha256": "2adfba8155bed65fd27a7a37bf0346ab863280c6feccac77f81a3c912230ae8d"
+    },
+    "review/history/instrumentation-character-data-correction-20261016/review-shared-before.tsx.txt": {
+      "readablePath": "review/history/instrumentation-character-data-correction-20261016/review-shared-before.tsx.txt",
+      "sha256": "fca699f8d68404d8abb912a92feaf74b627a814f6431b5d05f8b7487f1af0d77"
+    },
+    "review/history/instrumentation-correction-20261016/instrumentation-correction-proof.json": {
+      "readablePath": "review/history/instrumentation-correction-20261016/instrumentation-correction-proof.json.txt",
+      "sha256": "bdd38a0de1f0e3c354d54d83098b6bf1561e75ee42f072e3f57c9ee6fce04eac"
+    },
+    "review/history/instrumentation-correction-20261016/review-shared-before.tsx.txt": {
+      "readablePath": "review/history/instrumentation-correction-20261016/review-shared-before.tsx.txt",
+      "sha256": "129df240e6f3cf7f9fd036be04d97aa80c68610eadbd042fd4a0e61c7e3ce17c"
+    },
+    "review/history/mobile-review.html": {
+      "readablePath": "review/history/mobile-review.html.txt",
+      "sha256": "5fe995c0a06df9a07b1a9ffa644e0d262f49516394ab642cb6fdc7fe6ec5ad2f"
+    },
+    "review/history/mobile-review.tsx": {
+      "readablePath": "review/history/mobile-review.tsx.txt",
+      "sha256": "5c531b6f52e97885bb32b8e5780c0ea6802bbdb4a4d081b2694d5928c1df266d"
+    },
+    "review/history/native-review.html": {
+      "readablePath": "review/history/native-review.html.txt",
+      "sha256": "7d4e33aee5f142222f686267b48153179e7ec35bf25b73cda889d3bc9d41a30b"
+    },
+    "review/history/native-review.tsx": {
+      "readablePath": "review/history/native-review.tsx.txt",
+      "sha256": "ae3767ca03ab6cd3feaf867ad28694244b2aa770cc01aea2aadc37efe52b48b7"
+    },
+    "review/history/portable-reproduction-verification-20261015/portable-reproduction-proof.json": {
+      "readablePath": "review/history/portable-reproduction-verification-20261015/portable-reproduction-proof.json.txt",
+      "sha256": "8ece18352594fe73d16af9daa6024adb576b33ab792f25daa006a402b33e3645"
+    },
+    "review/history/portable-reproduction-verification-20261015/reproduction.stderr.txt": {
+      "readablePath": "review/history/portable-reproduction-verification-20261015/reproduction.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "review/history/portable-reproduction-verification-20261015/reproduction.stdout.json": {
+      "readablePath": "review/history/portable-reproduction-verification-20261015/reproduction.stdout.json.txt",
+      "sha256": "a54baa958127eeee6457920269fa1d95c083112f3c96cacd9bf67af58956a31f"
+    },
+    "review/history/portable-reproduction-verification-20261015/result.json": {
+      "readablePath": "review/history/portable-reproduction-verification-20261015/result.json.txt",
+      "sha256": "316018908d9b673ad7d10b6efa734bcb5baacb068302672f6c3fde0fe547fc95"
+    },
+    "review/history/portable-reproduction-verification-20261015/start.json": {
+      "readablePath": "review/history/portable-reproduction-verification-20261015/start.json.txt",
+      "sha256": "d7fd3d926d10a1d830a02bfdafd4235469e30d6616dceef59d2f83e10cd33b79"
+    },
+    "review/history/post-card-extension-20261016/candidate-payload-manifest-before-58.json": {
+      "readablePath": "review/history/post-card-extension-20261016/candidate-payload-manifest-before-58.json.txt",
+      "sha256": "3f9a0ff88c424774a3e8dd5077b98336c7f6ff0666fc147e9f9e363076538a30"
+    },
+    "review/history/post-card-extension-20261016/post-card-extension-proof.json": {
+      "readablePath": "review/history/post-card-extension-20261016/post-card-extension-proof.json.txt",
+      "sha256": "3a4b6b881e2c6e3d64e3f080049becc0a3a2148a3ee3199140ad92ef2bfb3378"
+    },
+    "review/history/preview-normal-cutout.mjs": {
+      "readablePath": "review/history/preview-normal-cutout.mjs.txt",
+      "sha256": "b223289461e5df424d2f0c8aac8ad715604a626da689e747392aeaf90a2ef56b"
+    },
+    "review/history/review-shared.tsx": {
+      "readablePath": "review/history/review-shared.tsx.txt",
+      "sha256": "7b6843e52b1000b4270d42ae5f46331b0016e7ddcb4ec73d956894b46b2aa9e2"
+    },
+    "review/history/review-vite.config.mjs": {
+      "readablePath": "review/history/review-vite.config.mjs.txt",
+      "sha256": "765f02749498a72c0e8a239943ebb34b19cbfcb95563384e3879a9285bb5eb0b"
+    },
+    "review/parent-draft-review.json": {
+      "readablePath": "review/parent-draft-review.json.txt",
+      "sha256": "846b15c915964bc1decde3bb6cd64b11c8ad56e2ba263b9ab6aebafcb6da794f"
+    },
+    "sequence-plan.json": {
+      "readablePath": "sequence-plan.json.txt",
+      "sha256": "7dbf525a4f8929f252842d6f860ff4da178de7e0ce83b646a874dbf4b9a591f6"
+    },
+    "source-provenance.json": {
+      "readablePath": "source-provenance.json.txt",
+      "sha256": "8f0539c44d3ca137a5c5b8d9117165d5a99af712bbd61f9f72894d7b8ffcc96b"
+    }
+  },
+  "exactOriginalNamesZip": {
+    "path": "candidate-inputs-exact.zip",
+    "sha256": "8088f6fee5b74f44dedbba3f5993b6cd5ec14d2b8e18b84f19c299fd4bd4fec5"
+  },
+  "stage": "Local source copy; final review, project evidence and source seal pending"
+}

@@ -1,0 +1,284 @@
+{
+  "exerciseId": "kettlebell-swing",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "sourceGenerations": [
+    {
+      "name": "1-master.png",
+      "originalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-09-29\\ok-continue-on-with-the-doing\\work\\kettlebell-swing-production-review\\1-master.png",
+      "sha256": "c48e17588b1c937dc54a49bb28713bfdeb3783cdf20713977a684c719b52c00e",
+      "dimensions": [1536, 1024],
+      "prompt": "master-prompt.txt",
+      "promptSha256": "c6b8d6d000e909697d0c70333bffbb8760b0eb0e6a3e9a450ac6910a8bde16ae",
+      "newGeneration": false,
+      "components": [
+        {
+          "label": 5,
+          "pixels": 179,
+          "bbox": [874, 278, 893, 293]
+        },
+        {
+          "label": 24,
+          "pixels": 9627,
+          "bbox": [438, 294, 560, 467]
+        },
+        {
+          "label": 33,
+          "pixels": 316,
+          "bbox": [430, 325, 450, 381]
+        },
+        {
+          "label": 39,
+          "pixels": 712,
+          "bbox": [436, 388, 471, 425]
+        },
+        {
+          "label": 49,
+          "pixels": 3122,
+          "bbox": [407, 396, 464, 479]
+        },
+        {
+          "label": 64,
+          "pixels": 5729,
+          "bbox": [432, 424, 497, 678]
+        },
+        {
+          "label": 77,
+          "pixels": 4316,
+          "bbox": [523, 466, 572, 690]
+        },
+        {
+          "label": 81,
+          "pixels": 4777,
+          "bbox": [460, 471, 512, 625]
+        },
+        {
+          "label": 99,
+          "pixels": 1577,
+          "bbox": [414, 507, 438, 627]
+        },
+        {
+          "label": 109,
+          "pixels": 453,
+          "bbox": [502, 574, 527, 628]
+        }
+      ]
+    },
+    {
+      "name": "2-hike-candidate.png",
+      "originalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-09-29\\ok-continue-on-with-the-doing\\work\\kettlebell-swing-production-review\\2-hike-candidate.png",
+      "sha256": "5552c7d32578de3a5417e1940ac679580654f78d38df0658ead7ecb04889d2c4",
+      "dimensions": [1536, 1024],
+      "prompt": "2-hike-prompt.txt",
+      "promptSha256": "c2ebc7ed616d3ae37804e6a883bac3cd7197beb6b68056d2a3ae58d27cdce8ef",
+      "newGeneration": false,
+      "components": [
+        {
+          "label": 1,
+          "pixels": 5830,
+          "bbox": [430, 297, 549, 408]
+        },
+        {
+          "label": 17,
+          "pixels": 4834,
+          "bbox": [343, 340, 429, 433]
+        },
+        {
+          "label": 20,
+          "pixels": 1622,
+          "bbox": [470, 379, 547, 439]
+        },
+        {
+          "label": 22,
+          "pixels": 7056,
+          "bbox": [374, 386, 473, 651]
+        },
+        {
+          "label": 35,
+          "pixels": 5573,
+          "bbox": [429, 427, 490, 594]
+        },
+        {
+          "label": 39,
+          "pixels": 209,
+          "bbox": [500, 429, 515, 455]
+        },
+        {
+          "label": 61,
+          "pixels": 1930,
+          "bbox": [374, 461, 441, 596]
+        },
+        {
+          "label": 67,
+          "pixels": 1256,
+          "bbox": [544, 518, 578, 596]
+        },
+        {
+          "label": 74,
+          "pixels": 1885,
+          "bbox": [528, 542, 582, 658]
+        },
+        {
+          "label": 91,
+          "pixels": 254,
+          "bbox": [306, 583, 335, 611]
+        },
+        {
+          "label": 144,
+          "pixels": 158,
+          "bbox": [345, 604, 362, 619]
+        }
+      ]
+    },
+    {
+      "name": "3-mid-candidate.png",
+      "originalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-09-29\\ok-continue-on-with-the-doing\\work\\kettlebell-swing-production-review\\3-mid-candidate.png",
+      "sha256": "6a0ff5550d20ff24088f1558b0acec3f07a27d6946eb20bf2cf052dda1c9d248",
+      "dimensions": [1536, 1024],
+      "prompt": "3-mid-prompt.txt",
+      "promptSha256": "11725f4245e64e6a671c7123d1705a4b02d43648daa8bcc80d9f5df87713b980",
+      "newGeneration": false,
+      "components": [
+        {
+          "label": 1,
+          "pixels": 8174,
+          "bbox": [425, 307, 579, 449]
+        },
+        {
+          "label": 14,
+          "pixels": 4255,
+          "bbox": [369, 364, 439, 457]
+        },
+        {
+          "label": 19,
+          "pixels": 6792,
+          "bbox": [403, 407, 473, 667]
+        },
+        {
+          "label": 23,
+          "pixels": 6234,
+          "bbox": [514, 434, 573, 678]
+        },
+        {
+          "label": 30,
+          "pixels": 5441,
+          "bbox": [455, 450, 504, 613]
+        },
+        {
+          "label": 64,
+          "pixels": 1780,
+          "bbox": [399, 486, 447, 619]
+        },
+        {
+          "label": 77,
+          "pixels": 161,
+          "bbox": [814, 543, 832, 559]
+        },
+        {
+          "label": 86,
+          "pixels": 467,
+          "bbox": [513, 559, 526, 620]
+        }
+      ]
+    }
+  ],
+  "sourcePoseOrder": [2, 3, 1, 1, 3, 2],
+  "newImageRequests": 0,
+  "physicalPoses": 3,
+  "method": "Three intact retained September29 no-shorts sources, colour/inherited-contour finishing only; no failed floor candidate or clothed source used.",
+  "fullGenerationIDsAvailable": false,
+  "originalPromptBytesArchive": "original-prompts-exact.zip",
+  "sourceHashes": {
+    ".gitattributes": "a0ed509042f8c04dd241cfe3c9c235b7379f4345ab7d01158b753ff55b264d92",
+    "1-framed.ora": "7bc00c115eeaf0ca965c969ccda44f0da6d120b4458753ebbeaa8ad1c7ddfacb",
+    "1-framed.png": "ba27273937d489ffec03ba0357a9f14227cf4d106b67eb26966b5c5458e3b46b",
+    "1-master.png": "c48e17588b1c937dc54a49bb28713bfdeb3783cdf20713977a684c719b52c00e",
+    "1-native-finished.png": "d51441f6cff5889a84c4a682a5be4b0ba654ce31a2f1e9c4113a692982aa8597",
+    "1-primary-glutes-hamstrings.png": "f969e421dcfcf612a7a53374812f1d60de6badde1fe71040b86a615de21bb481",
+    "1-secondary-abs-lower-back.png": "421ed9845a3ba53db8b7e56a4ae88741244fb87a5fdcffe81ea2604f52a74c4f",
+    "2-framed.ora": "a85109fde3bfe1f4fb0f67e16ed18aa2063b53c4a421813267d5c8aaba0f1729",
+    "2-framed.png": "ff8af8b6e6bde9d560945e423e7f61e421d9ba24e5e0a31cdb5a676561f952c6",
+    "2-hike-candidate.png": "5552c7d32578de3a5417e1940ac679580654f78d38df0658ead7ecb04889d2c4",
+    "2-hike-prompt.txt": "2f3ad7b800d4b15b6085803f6e224b0abab8b6c144dca0fc23f1c406c2c654cb",
+    "2-native-finished.png": "3c2a8cc6802fc29b598730dab0696f77b05e3ebed8c68f168d61cc6b822ff201",
+    "2-primary-glutes-hamstrings.png": "4437142722536e19686d937a1ae451a34237222682c391dcbf2116d17839666f",
+    "2-secondary-abs-lower-back.png": "252f02289db7b8f81f2e5450b782f2a1c58dc8dffe37417afecfbd9944ce82ab",
+    "3-framed.ora": "3bdb6be39d4395bf2bf46e897ea084586ce0b94bb8deeeb5cae94ac78833c484",
+    "3-framed.png": "6eabe75af926eaae4497deca36f0be8a3dbb966839b2a71337167a0fc56b75fe",
+    "3-mid-candidate.png": "6a0ff5550d20ff24088f1558b0acec3f07a27d6946eb20bf2cf052dda1c9d248",
+    "3-mid-prompt.txt": "ce8b8ac282b5d18fb9b5119d2eec31010cb8910aa1bd8a86bc4f9a1db334c81e",
+    "3-native-finished.png": "fb195aed7d5ec941dbd3e5b0c871a546a5d5fd5817f45d276b5beb4209b39a61",
+    "3-primary-glutes-hamstrings.png": "86a51f24790937fcdb0b71d1de99c83d6e393f55a869a9809f8494046a76af83",
+    "3-secondary-abs-lower-back.png": "ff9e96ea039aab01f44ed4fdd0d62561a3fe5309135429a6d622e45c661b98f2",
+    "audit-registered-source-archive.py": "833c083e596f2190008240045be89bd2f75005ca7a17d662065e6ac8a7869830",
+    "baseline-failure-identities.json": "5b64ef856250398e9b0b5ae3574e46a108bbdd43ad5116b6e60410254c2fd65c",
+    "baseline-summary.md": "d07e018f62979d433c147f87d5b2ec30320fde16507779d0c1ee984a4871e392",
+    "baseline-verify-result.json": "43bbbab9d9f4aea2889ea3481525e8b7fb4dd7f47b63716d0c75ac2ecb9aeb4d",
+    "branch-early-gate-failure.json": "c5f0eb028cce58a1a5cf0ccc4b5d809c1e1f06d8a82fb19b7ce1c66bd4e18a34",
+    "branch-final-comparison-summary.md": "b527978b182b28267d66d9282fcba1c4027760910ceaad0b56646d06884406f3",
+    "branch-final-failure-comparison.json": "9dfecda1979ee7ad4247e1f71adf57a88e08182e4b3dbe41787b8696e1ae9c0f",
+    "branch-final-runner-path-diagnostic.json": "fe66396caa6c49189f69f73e7005328fa72b4c312da0b1a45e5aa35e9fa8f34f",
+    "branch-final-verify-result.json": "6f279adfc61bbc2790b78f1f11b3ac0d7f2b7ef5624d03ac00daa9753ed213af",
+    "branch-verify-result.json": "3dd3be566a406fe45c34eda56048afd4d4b20a79e2c8140e5f55003cc0bd0817",
+    "card-cutout.webp": "1e8b1d6b4f0140fe2eed49b9c90718affa3283e772829ebc916583262a72b9be",
+    "draft-beats.json": "eb12ba0001c56274f4fc31871f76790442f6aad40b12ce3f6131941056a31d8e",
+    "finish.py": "19c973d76b197f9f257bc7ce0026fffc2db52cfbd0bf0b71c2cd0ffd1dcaf075",
+    "finishing-audit.json": "3f2462f432c4ec92717d31f9a7b577e1eba9cead60b2d5c33cae7d9018754fc1",
+    "focused-new-failures-result.json": "bd529db9716a924fab3959f727203201b08d0eac047b2ea772ff23ec5d797c6d",
+    "framing.json": "dfd5e58e7df7c6f70ec5ee608c63ae13582c9f65eee33f6c3e76d89c209746f0",
+    "full-verification-logs-exact.zip": "1bf7bb03b8ec73caa77e08b466d32ca4c579607390f80581ce623c8f411371d3",
+    "integrated-controls.json": "4633b80ddf3cbcb606dc4f0a0b362f62037c9806fc5a6449ab873ee9fc4b1a13",
+    "integrated-dark-full-page.png": "a4fdb984bb9d45c4194f1beb336ad61366b7d2a63917c767ead491194d828684",
+    "integrated-dark-trace.json": "45a97703fe605bfea0fbd5cfb31fe1aa2a5c9273d3a8644ad6e9af000c4503ea",
+    "integrated-light-full-page.png": "f05d61b816c094b9fccd9fc2fb810093ce6562ace63941e9dcbaf1b1c9e9b7eb",
+    "integrated-light-trace.json": "7a37065bb879f9c3405c656cc11af349daa84c52a6a7db0fae8452776bd88201",
+    "integrated-review.html": "80d43625ed7a5c0ae0de4c54be5aeb06bf81ae2515299db87ab8010ce92e148c",
+    "integrated-review.tsx.txt": "0ebf45b6ad5aaee2feb2f9de4f06fdbd2c7ba6818a51fc45c9d34e7e7db3ffa3",
+    "integrated-slower-trace.json": "5ff53eb7f5b064289505c7db704cc68cb1c04d70880b3f1ed6c6e0a8dc7309fb",
+    "integrated-visual-validation.json": "eb01e03ffce2ca1bdf1b67875958e58747e0b9ee21f62fa24fb2cbcb0bc174f0",
+    "integrated-vite.config.mjs": "5456c31ea18e38c3ca2c2d3340b0d85354c2961162be55e0a598aa27b1677fe6",
+    "master-prompt.txt": "c36b5d5a3ff5ed6e289414a2c468fcc61d1e4007a3e140fa446f5303605759a9",
+    "mobile-review.html": "49311f7c05c621d31fe823ac85a8d05a79fb3a8a0e1b25417e2bfe2737d82a0e",
+    "mobile-review.tsx.txt": "42e75eec51410d685934c17950f45f3802bd633786e70d551ad8c2a75cfe0f10",
+    "native-beat-1.png": "b555db7b29b522e04bd8baff597d4b8ecb52ef0b33f75dc9a71276a537db5f85",
+    "native-beat-2.png": "399d53ee4f68492f1c22e4b2d61c4a96a1aea4fbdf17db2d96a142556501b7e7",
+    "native-beat-3.png": "46fdf6398e7e52d430b2c37a1cb4f5b3fff9a1e656da520d23c7e947630a29a7",
+    "native-manual-trace.json": "39a520d995ff913053df7f78671c294c7b4e3869e741a7686bd302d9396cb40b",
+    "native-review.html": "19640da0a4373520cc1455f2c3c2a48d2774cfe25cebc685c03d17099bcfe28e",
+    "native-timed-trace.json": "a814c88cec2966ceefe5e78d2823c2cce3744f118aebd70880feeba7b529f576",
+    "original-prompts-exact.zip": "7cd9fee1df4fb14fef8cf65954660d13773da56b0b98d3f4669f1932b27f158c",
+    "PLAN.md": "b8b91a61a28c2a34440885a3ef3ece8f8ab4cefc8e794c0d8dc1720235793c48",
+    "prepare-card-floor-matte.py": "cc602cf618fcd4af71a64c0923d8d42dcb81323927edcdb257d795f0548ad41a",
+    "prepare-originals.py": "2c46322bf4c03f2e3e32561b6f4ac6aaeea5ed041f3b0d997c44d1450142dd41",
+    "prepare-publication.py": "84f1209cdbd6ab9bbbcc50a61faa54c788dc967541c4ff653c8c6fd25f3c96c8",
+    "prepare-review.py": "c7461036b2391b7dd6bf2e29056aefb35d4eeeffe3c05995ec9885f01ef88ec5",
+    "prepared-card-review-proof-hashes.json": "6638d2df12462b5021d68bf1480f4c9ab7e76eb617ea84a7050c5caa80d466cf",
+    "prepared-card-review.json": "8153d9de405a5b7f9df3f10553fabaf53c3375563cf16d792ce6773e980e3773",
+    "prepared-card-source.png": "08e4e912eb1303ac565f6057208449fce224062e07ef9cf408cbe6d259add1a0",
+    "project-checks.json": "2b134b07485ea0d26ffedac5dd91379914edfebfa40dc8afda894f548aa8ae85",
+    "README.md": "2f3140d660e9f0f2150cf54359f2f23cd8012637aa3d5d534b9a5ba4fc53b127",
+    "register-reviewed.py": "d271363874d64bbca1c62451e3291c65484ca907c26b639cd1594caf469e7ad9",
+    "registered-source-archive-audit.json": "be2846efe9229a0443ae74cd57889d9720901a7e47ee2a9ec58e7962d9fe7a20",
+    "release-schema-measurement-preparation.json": "a89db0953b16cd04ae4a62dbd0a2528730838e6dc36b3fbc65352933ca203d12",
+    "retained-original-provenance.json": "3cc0adca1889b2527820c134028218a8fb76c3c40269e79a570131d0eee16a56",
+    "review-inputs-exact.zip": "56904c83229dd1c895e4ceae0c8e3f63c06bfa7b95eb66c7a21d7dd592d89567",
+    "review-prepared-card.py": "8c0a30bd819ee906225d749e2512190ad29fd5999c1d1b67f6cf8f00b3cbb601",
+    "review-vite.config.mjs": "1b179edad0041ea41aa962e61115327cfc955a52b62f281783aa90362688c1c3",
+    "source-prompt-hash-verification.json": "4dc6464c4f46ae5f59e688526e1e28d42ea980f392c9d051a811c82fab372891",
+    "stage-prepared-card.mts": "72c41a9d7331c811e0485722b03e1e91b6945dab7e423976a4fcd948df13b935",
+    "staged-card-provenance.json": "fbf5dd0264d5d7bb7de33dc3e3cc9400057277df8a59b4be60db5d7c2b1eb36c",
+    "staged-controls.json": "be2735d3ef189dc9f7c232398ae257d65e3a105f3883303917bf57bde4a92fcb",
+    "staged-dark-full-page.png": "3677988ef57cda325c0e2df571f979debbeb27aa6ed475e93d078417d6d27b0a",
+    "staged-dark-trace.json": "315c65ed9c24ed1aa481405b093ec1b219bec5622fbd91a1ea01c204fc07266b",
+    "staged-light-full-page.png": "44e00a10c75d756a40991d403c4aca835a9a7385d1c9f760ddf016d2b34d6b4a",
+    "staged-light-trace.json": "d9a7ac57f33f00178bc887de9e40aa30a0ebe82b993866f71cefb5cb07e275a4",
+    "staged-slower-trace.json": "428475c05f3178f4ad35ea462dac82e44d1a827cf8a3931162250a61a5e1f5ba",
+    "staged-visual-validation.json": "560b5a561967365088717a2fd1c2d108c97008febf2cfe0108cdb324b067d260",
+    "static-finishing-review.json": "d05ad1849e4b0ed0b42ec58c2212d2e22eab2daf025eac810296b1ab9b66e7b6",
+    "validate-integrated.py": "d396fe7ba6d0d10ddfaeab853a54cd83ca6d8fda08308e915ee891d9a6d34ec0",
+    "validate-staged.py": "d377c05ee0e3122df278e5d1ead30ad5b8df630b72496a786707cb1eac0bacca"
+  },
+  "archiveStatus": "Actual registered mobile/native/card acceptance and normal project verification completed with Windows failure limitation recorded. Required current-head CI and actualmerge pending.",
+  "exactReviewInputBytesArchive": "review-inputs-exact.zip",
+  "reviewInputBindingNote": "Historical input SHA fields bind exact original reviewed bytes in review-inputs-exact.zip; published readable copies may be formatted. sourceHashes will bind all published archive bytes.",
+  "projectChecks": "project-checks.json"
+}

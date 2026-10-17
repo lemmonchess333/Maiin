@@ -1,0 +1,36 @@
+{
+  "artifactName": "side-draft-card-dom.json",
+  "observation": {
+    "images": [
+      {
+        "complete": true,
+        "display": [
+          358,
+          480
+        ],
+        "natural": [
+          480,
+          226
+        ],
+        "src": "/draft/card.webp"
+      },
+      {
+        "complete": true,
+        "display": [
+          340,
+          160
+        ],
+        "natural": [
+          480,
+          226
+        ],
+        "src": "/draft/card.webp"
+      }
+    ],
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ]
+  }
+}

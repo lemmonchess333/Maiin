@@ -1,0 +1,41 @@
+{
+  "mobile": [
+    {
+      "theme": "light",
+      "actualViewport": [390, 844],
+      "decodedFrames": [1, 2, 3, 4, 5, 6],
+      "loop6to1": true,
+      "qualifyingObservations": 109
+    },
+    {
+      "theme": "dark",
+      "actualViewport": [390, 844],
+      "decodedFrames": [1, 2, 3, 4, 5, 6],
+      "loop6to1": true,
+      "qualifyingObservations": 200
+    }
+  ],
+  "controls": {
+    "pause": {
+      "playVisible": true,
+      "src": "/form-frames/seated-calf-raise/3.webp"
+    },
+    "selectSix": "/form-frames/seated-calf-raise/6.webp",
+    "nextWrap": "/form-frames/seated-calf-raise/1.webp",
+    "previousWrap": "/form-frames/seated-calf-raise/6.webp",
+    "slower": {
+      "pressed": "true",
+      "text": "Slower"
+    },
+    "slowerButton": {
+      "pressed": "true",
+      "text": "Slower"
+    },
+    "normalMedianMs": 1207,
+    "slowerMedianMs": 2408.5,
+    "slowerMeasuredRatio": 1.995443247721624,
+    "slowerTimingPassed": true,
+    "consoleErrorsObserved": 0
+  },
+  "status": "Staged visual checks passed; registration, standard generated card and project gates remain"
+}

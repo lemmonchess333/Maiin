@@ -1,0 +1,9 @@
+{
+  "reviewStatus": "reviewed",
+  "image": "kettlebell-swing.png",
+  "imageSha256": "08e4e912eb1303ac565f6057208449fce224062e07ef9cf408cbe6d259add1a0",
+  "reference": "form-frames/kettlebell-swing/3.webp",
+  "referenceSha256": "b3c25c2b09318c3951294e6d2767f73ffb94a6bc565b45c2d18329b03c5a590b",
+  "method": "Native frame3 exact RGB; one reviewed alpha-only floor/background cleanup, then normal standard card generator.",
+  "reviewEvidence": "Independent native/light/dark card review plus actual staged390x844 light/dark review; whole trainers and contours retained. Registered card review follows."
+}

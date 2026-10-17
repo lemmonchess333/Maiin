@@ -1,0 +1,300 @@
+{
+  "exerciseId": "bike",
+  "version": "anatomy-v3-2026-10-15-retained-two-endpoint-v1",
+  "width": 929,
+  "height": 1432,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Actual parent native/card and integrated component review, with independent static evidence",
+  "reviewedAt": "2026-10-15T07:59:31.115960+00:00",
+  "reference": {
+    "path": "form-frames/bike/1.webp",
+    "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6"
+  },
+  "cueSha256": "61d4591ab6c2c80331b79736d8970091bc08a318d05ac405f8dc72a709b279c5",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Owner-with-findings is not strict certification. Actual separate observed QA: Parent inspected both intact native929x1432 poses and actual390x844 light/dark content. Same bald faceless lean white anatomical FA56 model without shorts, original trainers, natural contours and shading. No anatomy fitting, part graft or rescaling individual limbs."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Owner-with-findings is not strict certification. Actual separate observed QA: Two whole original scenes share929x1432 framing after documented whole-output translation(-1,+16). Full athlete and complete bike/base retained; no per-limb/camera fitting."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Owner-with-findings is not strict certification. Actual separate observed QA: Opposed leg endpoints are intact coherent seated riding positions with supported pelvis and original foot/strap geometry. Raised far trainer/platform is naturally hidden by the opaque casing and is not visually certified."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Owner-with-findings is not strict certification. Actual separate observed QA: Parent reviewed native and actual mobile playback. Same coherent bike, full base, saddle and grips. Actual spindle16.656px and rear-foot4.031px drift FAIL strict1px; all3anchors retained. At actual mobile object-contain content scale360/1432, spindle displacement is4.19px. Parent judges this a minor render discontinuity under earlier user relaxation, not exact hardware/3D certification. Housing-relative18.769px finding is also retained."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Owner-with-findings is not strict certification. Actual separate observed QA: Original hand/bar contacts remain closed, pelvis rests on saddle, visible trainer/platform is strapped in each endpoint. Upper far pedal/trainer naturally occluded; no fabricated contact visibility claim."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Owner-with-findings is not strict certification. Actual separate observed QA: Two opposed seated pedal positions illustrate alternating legs. No calibrated crank centre, forward trajectory, smooth full revolution or six unique poses is claimed. Written cadence instructions remain guidance only."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Owner-with-findings is not strict certification. Actual separate observed QA: Actual key matches catalogue Quads primary/Hamstrings secondary. Natural source colour fields preserve source shading; arms/core/calves neutral after bounded1565pixel far-calf residual correction. No new gradient or anatomical outline."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Owner-with-findings is not strict certification. Actual separate observed QA: Parent selected all six actual instruction buttons, verified exact public frame URLs and labels, plus both authored preparation sentences. Positions0,0,.5,.5,0,0 match1,1,2,2,1,1; no illustrated intermediate."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Owner-with-findings is not strict certification. Actual separate observed QA: Actual foreground component traces show all six decoded public URLs and6-to-1 in both themes and slower mode. Pause,selectall,next6-to-1,previous1-to-6 checked; actual slower cadence about2.4s versus1.2s. Two physical endpoints disclosed."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Owner-with-findings is not strict certification. Actual separate observed QA: Parent inspected actual unchanged ExerciseFormContent at390x844 light: full athlete/bike, exact prepared standard card, keys/setup/cues/control readability; screenshot/rawtrace retained. Console warnings/errors empty."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Owner-with-findings is not strict certification. Actual separate observed QA: Parent inspected actual unchanged ExerciseFormContent at390x844 dark: complete silhouette, original trainers/bike base, exact card and keys/setup/cues; screenshot/rawtrace retained. Measured small bearing hop accepted as disclosed minor finding only."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/bike/1.webp",
+      "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "sourcePose": 1,
+      "anchors": {
+        "frontStabilizerLeftmostNeutralOuterEdgeMidpoint": {
+          "x": 34.0,
+          "y": 1362.0
+        },
+        "rearStabilizerRightmostNeutralOuterEdgeMidpoint": {
+          "x": 895.0,
+          "y": 1362.5
+        },
+        "fixedCrankSpindleDarkBearingApertureCentroid": {
+          "x": 496.43181818181813,
+          "y": 1103.7045454545455
+        }
+      },
+      "invariantDimensions": {
+        "frontStabilizerVisibleNeutralEndcapWidthAtNormalizedY1400": 124,
+        "rearStabilizerVisibleNeutralEndcapWidthAtNormalizedY1400": 111
+      },
+      "source": {
+        "path": "docs/exercise-art/sources/bike/2026-10-15/draft/1-framed.png",
+        "sha256": "7d6f23007ea9ba6a1165ccd4ac6fcda2aeb6b4f2ce3e564e10eff12ab16342db"
+      }
+    },
+    {
+      "path": "form-frames/bike/2.webp",
+      "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "sourcePose": 1,
+      "anchors": {
+        "frontStabilizerLeftmostNeutralOuterEdgeMidpoint": {
+          "x": 34.0,
+          "y": 1362.0
+        },
+        "rearStabilizerRightmostNeutralOuterEdgeMidpoint": {
+          "x": 895.0,
+          "y": 1362.5
+        },
+        "fixedCrankSpindleDarkBearingApertureCentroid": {
+          "x": 496.43181818181813,
+          "y": 1103.7045454545455
+        }
+      },
+      "invariantDimensions": {
+        "frontStabilizerVisibleNeutralEndcapWidthAtNormalizedY1400": 124,
+        "rearStabilizerVisibleNeutralEndcapWidthAtNormalizedY1400": 111
+      },
+      "source": {
+        "path": "docs/exercise-art/sources/bike/2026-10-15/draft/1-framed.png",
+        "sha256": "7d6f23007ea9ba6a1165ccd4ac6fcda2aeb6b4f2ce3e564e10eff12ab16342db"
+      }
+    },
+    {
+      "path": "form-frames/bike/3.webp",
+      "sha256": "9697697c0b80e03f48915e3e3e676f2737f8eb354c54a2e0be86e7abbf2ef395",
+      "sourcePose": 2,
+      "anchors": {
+        "frontStabilizerLeftmostNeutralOuterEdgeMidpoint": {
+          "x": 34.0,
+          "y": 1362.5
+        },
+        "rearStabilizerRightmostNeutralOuterEdgeMidpoint": {
+          "x": 893.0,
+          "y": 1366.0
+        },
+        "fixedCrankSpindleDarkBearingApertureCentroid": {
+          "x": 505.8715596330276,
+          "y": 1089.9816513761468
+        }
+      },
+      "invariantDimensions": {
+        "frontStabilizerVisibleNeutralEndcapWidthAtNormalizedY1400": 125,
+        "rearStabilizerVisibleNeutralEndcapWidthAtNormalizedY1400": 111
+      },
+      "source": {
+        "path": "docs/exercise-art/sources/bike/2026-10-15/draft/2-framed.png",
+        "sha256": "d9b542a35796dd50af076bc28521f38a03521dc9aa3a6781278267f19fb763f4"
+      }
+    },
+    {
+      "path": "form-frames/bike/4.webp",
+      "sha256": "9697697c0b80e03f48915e3e3e676f2737f8eb354c54a2e0be86e7abbf2ef395",
+      "sourcePose": 2,
+      "anchors": {
+        "frontStabilizerLeftmostNeutralOuterEdgeMidpoint": {
+          "x": 34.0,
+          "y": 1362.5
+        },
+        "rearStabilizerRightmostNeutralOuterEdgeMidpoint": {
+          "x": 893.0,
+          "y": 1366.0
+        },
+        "fixedCrankSpindleDarkBearingApertureCentroid": {
+          "x": 505.8715596330276,
+          "y": 1089.9816513761468
+        }
+      },
+      "invariantDimensions": {
+        "frontStabilizerVisibleNeutralEndcapWidthAtNormalizedY1400": 125,
+        "rearStabilizerVisibleNeutralEndcapWidthAtNormalizedY1400": 111
+      },
+      "source": {
+        "path": "docs/exercise-art/sources/bike/2026-10-15/draft/2-framed.png",
+        "sha256": "d9b542a35796dd50af076bc28521f38a03521dc9aa3a6781278267f19fb763f4"
+      }
+    },
+    {
+      "path": "form-frames/bike/5.webp",
+      "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "sourcePose": 1,
+      "anchors": {
+        "frontStabilizerLeftmostNeutralOuterEdgeMidpoint": {
+          "x": 34.0,
+          "y": 1362.0
+        },
+        "rearStabilizerRightmostNeutralOuterEdgeMidpoint": {
+          "x": 895.0,
+          "y": 1362.5
+        },
+        "fixedCrankSpindleDarkBearingApertureCentroid": {
+          "x": 496.43181818181813,
+          "y": 1103.7045454545455
+        }
+      },
+      "invariantDimensions": {
+        "frontStabilizerVisibleNeutralEndcapWidthAtNormalizedY1400": 124,
+        "rearStabilizerVisibleNeutralEndcapWidthAtNormalizedY1400": 111
+      },
+      "source": {
+        "path": "docs/exercise-art/sources/bike/2026-10-15/draft/1-framed.png",
+        "sha256": "7d6f23007ea9ba6a1165ccd4ac6fcda2aeb6b4f2ce3e564e10eff12ab16342db"
+      }
+    },
+    {
+      "path": "form-frames/bike/6.webp",
+      "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "sourcePose": 1,
+      "anchors": {
+        "frontStabilizerLeftmostNeutralOuterEdgeMidpoint": {
+          "x": 34.0,
+          "y": 1362.0
+        },
+        "rearStabilizerRightmostNeutralOuterEdgeMidpoint": {
+          "x": 895.0,
+          "y": 1362.5
+        },
+        "fixedCrankSpindleDarkBearingApertureCentroid": {
+          "x": 496.43181818181813,
+          "y": 1103.7045454545455
+        }
+      },
+      "invariantDimensions": {
+        "frontStabilizerVisibleNeutralEndcapWidthAtNormalizedY1400": 124,
+        "rearStabilizerVisibleNeutralEndcapWidthAtNormalizedY1400": 111
+      },
+      "source": {
+        "path": "docs/exercise-art/sources/bike/2026-10-15/draft/1-framed.png",
+        "sha256": "7d6f23007ea9ba6a1165ccd4ac6fcda2aeb6b4f2ce3e564e10eff12ab16342db"
+      }
+    }
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": [1, 1, 2, 2, 1, 1],
+  "authoredSetupInstructions": [
+    "Adjust the seat so your leg has a slight bend at the bottom of the pedal.",
+    "Sit with a neutral spine, grip the bars loosely."
+  ],
+  "scope": "Two actual opposed seated positions repeat across six paths. No calibrated forward trajectory, smooth full revolution or six unique drawings is claimed. Far trainer/platform is naturally occluded in the raised state. Measured shaft drift requires explicit parent disposition before any release.",
+  "newImageRequests": 0,
+  "strictMeasurementFailures": [
+    "Frame3: rearStabilizerRightmostNeutralOuterEdgeMidpoint.x actual delta -2.0px exceeds1px",
+    "Frame3: rearStabilizerRightmostNeutralOuterEdgeMidpoint.y actual delta 3.5px exceeds1px",
+    "Frame3: fixedCrankSpindleDarkBearingApertureCentroid.x actual delta 9.439741451209443px exceeds1px",
+    "Frame3: fixedCrankSpindleDarkBearingApertureCentroid.y actual delta -13.722894078398667px exceeds1px",
+    "Frame4: rearStabilizerRightmostNeutralOuterEdgeMidpoint.x actual delta -2.0px exceeds1px",
+    "Frame4: rearStabilizerRightmostNeutralOuterEdgeMidpoint.y actual delta 3.5px exceeds1px",
+    "Frame4: fixedCrankSpindleDarkBearingApertureCentroid.x actual delta 9.439741451209443px exceeds1px",
+    "Frame4: fixedCrankSpindleDarkBearingApertureCentroid.y actual delta -13.722894078398667px exceeds1px"
+  ],
+  "observedQaChecks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Parent inspected both intact native929x1432 poses and actual390x844 light/dark content. Same bald faceless lean white anatomical FA56 model without shorts, original trainers, natural contours and shading. No anatomy fitting, part graft or rescaling individual limbs."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Two whole original scenes share929x1432 framing after documented whole-output translation(-1,+16). Full athlete and complete bike/base retained; no per-limb/camera fitting."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Opposed leg endpoints are intact coherent seated riding positions with supported pelvis and original foot/strap geometry. Raised far trainer/platform is naturally hidden by the opaque casing and is not visually certified."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Parent reviewed native and actual mobile playback. Same coherent bike, full base, saddle and grips. Actual spindle16.656px and rear-foot4.031px drift FAIL strict1px; all3anchors retained. At actual mobile object-contain content scale360/1432, spindle displacement is4.19px. Parent judges this a minor render discontinuity under earlier user relaxation, not exact hardware/3D certification. Housing-relative18.769px finding is also retained."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Original hand/bar contacts remain closed, pelvis rests on saddle, visible trainer/platform is strapped in each endpoint. Upper far pedal/trainer naturally occluded; no fabricated contact visibility claim."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Two opposed seated pedal positions illustrate alternating legs. No calibrated crank centre, forward trajectory, smooth full revolution or six unique poses is claimed. Written cadence instructions remain guidance only."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Actual key matches catalogue Quads primary/Hamstrings secondary. Natural source colour fields preserve source shading; arms/core/calves neutral after bounded1565pixel far-calf residual correction. No new gradient or anatomical outline."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Parent selected all six actual instruction buttons, verified exact public frame URLs and labels, plus both authored preparation sentences. Positions0,0,.5,.5,0,0 match1,1,2,2,1,1; no illustrated intermediate."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Actual foreground component traces show all six decoded public URLs and6-to-1 in both themes and slower mode. Pause,selectall,next6-to-1,previous1-to-6 checked; actual slower cadence about2.4s versus1.2s. Two physical endpoints disclosed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Parent inspected actual unchanged ExerciseFormContent at390x844 light: full athlete/bike, exact prepared standard card, keys/setup/cues/control readability; screenshot/rawtrace retained. Console warnings/errors empty."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Parent inspected actual unchanged ExerciseFormContent at390x844 dark: complete silhouette, original trainers/bike base, exact card and keys/setup/cues; screenshot/rawtrace retained. Measured small bearing hop accepted as disclosed minor finding only."
+    }
+  },
+  "integrationValidation": "Actual provisional existing-needs-review registry/public/card/placard paths were viewed through unchanged ExerciseFormContent at390x844 in both themes, including all six paths,6-to-1 and controls. Final release registry generation, formatting, normal branch/project checks, source seal, current-head required CI and actual merge remain separate and pending. No completion claim.",
+  "approval": {
+    "actor": "User, through explicit earlier exercise-specific requirements relaxation and instruction to continue the rest; parent applies that existing authorization after actual native/mobile review.",
+    "instruction": "User asked to lower strict requirements slightly for exercises that cannot pass, approved trial then said \"ok do it then and continue wiht the rest\", and repeatedly authorized continuing and merging without further approval; current model without shorts must remain.",
+    "context": "Parent accepts this coherent intact two-endpoint guide with the specifically measured minor bearing/base rendering drift. This is an owner-with-findings release under the existing contract, not strict approval. Identity/contact failures such as HSPU head-width drift remain held."
+  },
+  "findings": [
+    "Strict hardware consistency fails: fixed spindle centre shifts(+9.4397,-13.7229)px, magnitude16.6561px; rear foot4.031px, front foot0.5px. All3 measured anchors remain in every record frame; no favourable-only selection/contact-phase workaround.",
+    "Bearing shift relative to local recessed casing outline is18.769px; bearing-rim chord65/73px means global shift22.8–25.6% of this local feature. At actual mobile360px content height the global shift is4.19px; accepted as a minor rendered hardware discontinuity after native/mobile playback.",
+    "Two physical positions repeat across six paths. Intermediate crank travel, calibrated forward direction, smooth revolution and six unique drawings are not supplied.",
+    "Upper far trainer/platform is naturally fully occluded by the opaque original bike housing; its visible presence/contact is not certified."
+  ]
+}

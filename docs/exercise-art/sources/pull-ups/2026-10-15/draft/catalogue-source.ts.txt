@@ -1,0 +1,21 @@
+{
+    id: "pull-ups",
+    name: "Pull-Ups",
+    category: "Back",
+    muscleGroup: "Lats",
+    secondaryMuscles: ["Biceps", "Rear Delts", "Core"],
+    equipment: "Bodyweight",
+    caloriesPerMinute: 8,
+    instructions: [
+      "Hang from the bar with an overhand grip slightly wider than shoulders.",
+      "Pull your shoulder blades down and back before your arms start to move.",
+      "Pull your chest toward the bar until your chin clears it.",
+      "Lower under control to a full dead hang — no kipping, no swing.",
+    ],
+    tip: "Kipping and half-reps train nothing but your ego. If you can't hit a dead-hang chin-over-bar, use a band or lat pulldown until you can.",
+    commonMistakes: [
+      "Kipping or swinging to get the chin over the bar.",
+      "Cutting the range at the bottom instead of reaching a full hang.",
+      "Shrugging the shoulders up at the top rather than pulling the blades down.",
+    ],
+  },

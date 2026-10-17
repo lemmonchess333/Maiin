@@ -42,14 +42,14 @@ describe("SplitsList — the middle detent's content", () => {
     expect(laps).toEqual(["km 7", "km 6", "km 5", "km 4", "km 3"]);
   });
 
-  it("marks the best lap with the teal the expanded strip already uses", () => {
+  it("marks the best lap with the coral the expanded strip already uses", () => {
     render(<SplitsList splits={SEVEN} distance={7400} unit="km" />);
     // Lap 3 (5:22) is the best pace in the fixture.
     const best = screen.getByText("5:22");
-    expect(best.style.color).toBe(rgb(THEME.teal));
+    expect(best.style.color).toBe(rgb(THEME.running));
     // A non-best lap does not carry it.
     const ordinary = screen.getByText("5:38");
-    expect(ordinary.style.color).not.toBe(rgb(THEME.teal));
+    expect(ordinary.style.color).not.toBe(rgb(THEME.running));
   });
 
   it("shows a signed pace delta vs the previous lap, green when faster", () => {

@@ -1,0 +1,230 @@
+{
+  "preparedAt": "2026-10-14T19:54:05.714383+00:00",
+  "exerciseId": "kettlebell-swing",
+  "status": "truthful measurement/schema preparation only; not an approved release",
+  "schemaPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\src\\lib\\formArtReview.ts",
+  "schemaSha256": "a4195437687c9201eaeda7c7ddc25f2dc4400c3b407de04ac5a3801c9ce1d231",
+  "contract": {
+    "reviewFacts": "Exact exerciseId/version/width/height; approved decision, named reviewer/date only after real acceptance; reference/frame/cue hashes match delivered paths.",
+    "requiredChecks": [
+      "identity",
+      "camera",
+      "anatomy",
+      "equipment",
+      "contact",
+      "physics",
+      "muscles",
+      "cueAgreement",
+      "sequenceAndLoop",
+      "mobileLight",
+      "mobileDark"
+    ],
+    "fixedAnchors": "At least2 named genuinely fixed scene anchors, finite in-canvas coordinates and at most1pixel difference on each axis against reference.",
+    "invariantDimensions": "At least2 named positive finite dimensions, actual measured per-frame values and at most1% relative difference against reference.",
+    "phases": "No phase exception needed: both feet are planted throughout. Do not declare bell Float airborne. If phases are used instead, every ground phase requires at least2 frames, its own included reference,2anchors/2dimensions and an explicit airborneFrames list."
+  },
+  "width": 690,
+  "height": 1008,
+  "sourcePoseOrder": [2, 3, 1, 1, 3, 2],
+  "sourceMeasurements": {
+    "1": {
+      "near": {
+        "heelROI": [360, 943, 390, 963],
+        "soleBandROI": [360, 942, 524, 973],
+        "sourceHeelEdgePixel": [366, 949],
+        "framedHeelEdgePixel": [86, 949],
+        "lowerSoleBrightSpan": 154,
+        "sourceSoleBandBounds": [366, 942, 519, 968]
+      },
+      "far": {
+        "heelROI": [504, 908, 540, 925],
+        "soleBandROI": [505, 912, 674, 925],
+        "sourceHeelEdgePixel": [506, 912],
+        "framedHeelEdgePixel": [226, 912],
+        "lowerSoleBrightSpan": 160,
+        "sourceSoleBandBounds": [506, 912, 665, 922]
+      }
+    },
+    "2": {
+      "near": {
+        "heelROI": [360, 943, 390, 963],
+        "soleBandROI": [360, 942, 524, 973],
+        "sourceHeelEdgePixel": [366, 949],
+        "framedHeelEdgePixel": [86, 949],
+        "lowerSoleBrightSpan": 153,
+        "sourceSoleBandBounds": [366, 942, 518, 968]
+      },
+      "far": {
+        "heelROI": [504, 908, 540, 925],
+        "soleBandROI": [505, 912, 674, 925],
+        "sourceHeelEdgePixel": [506, 912],
+        "framedHeelEdgePixel": [226, 912],
+        "lowerSoleBrightSpan": 159,
+        "sourceSoleBandBounds": [506, 912, 664, 921]
+      }
+    },
+    "3": {
+      "near": {
+        "heelROI": [360, 943, 390, 963],
+        "soleBandROI": [360, 942, 524, 973],
+        "sourceHeelEdgePixel": [366, 949],
+        "framedHeelEdgePixel": [86, 949],
+        "lowerSoleBrightSpan": 153,
+        "sourceSoleBandBounds": [366, 942, 518, 968]
+      },
+      "far": {
+        "heelROI": [504, 908, 540, 925],
+        "soleBandROI": [505, 912, 674, 925],
+        "sourceHeelEdgePixel": [506, 912],
+        "framedHeelEdgePixel": [226, 912],
+        "lowerSoleBrightSpan": 159,
+        "sourceSoleBandBounds": [506, 912, 664, 921]
+      }
+    }
+  },
+  "measurementMethod": "Native neutral-white pixels: minimum RGB>130 and maxRGB-minRGB<30. Genuine white heel-edge pixel: leftmost pixel in an inspected heel ROI, then its lowest white y. Sole dimension: inclusive horizontal white span in an inspected lower-sole band. ROIs isolate near and far shoes; a broader initial probe contaminated near width with far shoe and was excluded. Neither arbitrary all-frame constants nor projected3D measurements are used.",
+  "diagnosticLimits": "These are stable visible raster heel edges and projected outsole spans, not calibrated3D contact centres, force transmission or physical shoe dimensions. Source floor/shoe support and anatomy still require native visual review. Lowest-white-row midpoints drift3\u20135px under shading and are not used as claimed fixed anchors.",
+  "allSixMeasuredAnchorsWithin1Pixel": true,
+  "allSixMeasuredSoleDimensionsWithin1Percent": true,
+  "framesMeasurementProposal": [
+    {
+      "path": "form-frames/kettlebell-swing/1.webp",
+      "sha256": "7350f03abe14eeee78e95ddabecd12bd886aa7f0c9709bc04081ad398426dc2c",
+      "sourcePose": 2,
+      "anchors": {
+        "nearSoleHeelEdge": {
+          "x": 86,
+          "y": 949
+        },
+        "farSoleHeelEdge": {
+          "x": 226,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearLowerSoleBrightSpan": 153,
+        "farLowerSoleBrightSpan": 159
+      }
+    },
+    {
+      "path": "form-frames/kettlebell-swing/2.webp",
+      "sha256": "809cf18e049248f85df9302fae91c90b2e254a5ec945f644c2beda102cd61c27",
+      "sourcePose": 3,
+      "anchors": {
+        "nearSoleHeelEdge": {
+          "x": 86,
+          "y": 949
+        },
+        "farSoleHeelEdge": {
+          "x": 226,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearLowerSoleBrightSpan": 153,
+        "farLowerSoleBrightSpan": 159
+      }
+    },
+    {
+      "path": "form-frames/kettlebell-swing/3.webp",
+      "sha256": "b3c25c2b09318c3951294e6d2767f73ffb94a6bc565b45c2d18329b03c5a590b",
+      "sourcePose": 1,
+      "anchors": {
+        "nearSoleHeelEdge": {
+          "x": 86,
+          "y": 949
+        },
+        "farSoleHeelEdge": {
+          "x": 226,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearLowerSoleBrightSpan": 154,
+        "farLowerSoleBrightSpan": 160
+      }
+    },
+    {
+      "path": "form-frames/kettlebell-swing/4.webp",
+      "sha256": "b3c25c2b09318c3951294e6d2767f73ffb94a6bc565b45c2d18329b03c5a590b",
+      "sourcePose": 1,
+      "anchors": {
+        "nearSoleHeelEdge": {
+          "x": 86,
+          "y": 949
+        },
+        "farSoleHeelEdge": {
+          "x": 226,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearLowerSoleBrightSpan": 154,
+        "farLowerSoleBrightSpan": 160
+      }
+    },
+    {
+      "path": "form-frames/kettlebell-swing/5.webp",
+      "sha256": "809cf18e049248f85df9302fae91c90b2e254a5ec945f644c2beda102cd61c27",
+      "sourcePose": 3,
+      "anchors": {
+        "nearSoleHeelEdge": {
+          "x": 86,
+          "y": 949
+        },
+        "farSoleHeelEdge": {
+          "x": 226,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearLowerSoleBrightSpan": 153,
+        "farLowerSoleBrightSpan": 159
+      }
+    },
+    {
+      "path": "form-frames/kettlebell-swing/6.webp",
+      "sha256": "7350f03abe14eeee78e95ddabecd12bd886aa7f0c9709bc04081ad398426dc2c",
+      "sourcePose": 2,
+      "anchors": {
+        "nearSoleHeelEdge": {
+          "x": 86,
+          "y": 949
+        },
+        "farSoleHeelEdge": {
+          "x": 226,
+          "y": 912
+        }
+      },
+      "invariantDimensions": {
+        "nearLowerSoleBrightSpan": 153,
+        "farLowerSoleBrightSpan": 159
+      }
+    }
+  ],
+  "cueSha256ForCurrentDraft": "17fc3f85add5676fee4fbebd328b34bcaacb239c38615c9f8da678790bb8411b",
+  "movingBell": {
+    "doNotPutInInvariantDimensions": [
+      "axis-aligned body bounding-box width",
+      "axis-aligned body bounding-box height",
+      "handle screen x/y"
+    ],
+    "observedDiagnosticsFromRoot": "Root native inspection reported about104\u2013108\u00d796\u201398 or101\u2013107\u00d796\u2013102px bell-body bounds depending on isolation method; the bell rotates and handle/head occlusion changes. These are observations, not a passed constant-diameter measurement.",
+    "truthfulEvidence": "Review the same modest bell body/handle topology, two-hand contact (far grip occluded in hike), rotation and slight source-contour variation at native size. Preserve raw pixels; do not force a constant bounding box or infer3D scale/weight from it."
+  },
+  "movingHead": {
+    "doNotDeclareFixed": [
+      "head screen y",
+      "head axis-aligned bbox width/height",
+      "head position"
+    ],
+    "nativeFinding": "Native full originals show the same bald faceless canonical head at Float/Hike/Mid. It travels and pitches with the hinge; y and axis-aligned bbox change. Scale should be reviewed through comparable cranial/face proportions or an explicitly rotation-aware cranial caliper, with measured uncertainty. No source head rescaling or graft is justified.",
+    "schemaRecommendation": "Do not invent a headScale invariant that passes1%. The two actual planted-shoe spans satisfy the required dimension contract; identity/anatomy checks need candid native review of cranial shape, ear/neck relation and limb proportions."
+  },
+  "registrationPending": true,
+  "mobileAndNativeLoopApprovalPending": true,
+  "newGenerationRequests": 0,
+  "repoEdits": 0,
+  "publicChanges": 0,
+  "counterChanges": 0
+}

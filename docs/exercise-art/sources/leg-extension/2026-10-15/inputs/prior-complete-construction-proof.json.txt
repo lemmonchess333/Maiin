@@ -1,0 +1,265 @@
+{
+  "status": "unregistered-static-equipment-and-editable-package",
+  "exerciseId": "leg-extension",
+  "scope": "Two source endpoints only; apparatus geometry and pixel integrity, no parent visual or release acceptance inferred.",
+  "camera": {
+    "type": "orthographic",
+    "projection": "(750*X,750*Y+40)",
+    "pixelsPerMetre": 750.0,
+    "cameraDepthAxis": [
+      0,
+      0,
+      1
+    ],
+    "nearerDepth": "smaller Z",
+    "rotaryAxisWorld": [
+      0.5921134298440842,
+      0.09696229266201666,
+      -0.8
+    ],
+    "rotaryPlaneBasis": [
+      [
+        0.16160382110336113,
+        -0.9868557164068072,
+        0.0
+      ],
+      [
+        0.7894845731254458,
+        0.1292830568826889,
+        0.5999999999999999
+      ]
+    ],
+    "worldUp": [
+      0.0,
+      -0.9927348795805476,
+      -0.12032231241210115
+    ],
+    "worldForward": [
+      -0.8058546309343111,
+      0.07124445708910065,
+      -0.5878116544742921
+    ],
+    "sourceCameraRecoveredFromMetadata": false
+  },
+  "workingUnitProof": "working-unit/construction-proof.json",
+  "workingUnitProofSha256": "fc38eb2d33962a5a37724c9964738b3bdef73b9c5ee537287b8e6e03ea4e0b86",
+  "staticGeometry": {
+    "axesWorld": [
+      [
+        0.5921134298440842,
+        0.09696229266201666,
+        -0.8
+      ],
+      [
+        0.0,
+        -0.9927348795805476,
+        -0.12032231241210115
+      ],
+      [
+        -0.8058546309343111,
+        0.07124445708910065,
+        -0.5878116544742921
+      ]
+    ],
+    "closedBoxEquation": "C + a*N + b*UP + c*FORWARD, fixed dimensions; true common-camera visible faces.",
+    "floorBeamEquation": "Rigid cuboid between constant common-height endpoints; worldUp dot beamAxis=0.",
+    "housings": {
+      "far": {
+        "housingBottomWorld": [
+          0.3606699156646458,
+          1.0870242707948168,
+          0.9003317728862721
+        ],
+        "housingCentreWorld": [
+          0.3606699156646458,
+          0.550947435821321,
+          0.8353577241837374
+        ],
+        "housingBodyDimensionsMetresAlongNUpForward": [
+          0.18,
+          1.08,
+          0.18
+        ],
+        "housingBottomProjection": [
+          270.50243674848434,
+          855.2682030961126
+        ],
+        "housingTopProjection": [
+          270.50243674848434,
+          51.152950635868905
+        ],
+        "groundSupportWorld": [
+          0.5866614254710962,
+          1.12809596404729,
+          0.5614644286856753
+        ],
+        "coveredRoutingVerified": false
+      },
+      "near": {
+        "housingBottomWorld": [
+          1.7023933155322664,
+          1.3146915240382477,
+          -0.9780664950838586
+        ],
+        "housingCentreWorld": [
+          1.7023933155322664,
+          0.778614689064752,
+          -1.0430405437863932
+        ],
+        "housingBodyDimensionsMetresAlongNUpForward": [
+          0.18,
+          1.08,
+          0.18
+        ],
+        "housingBottomProjection": [
+          1276.7949866491997,
+          1026.0186430286858
+        ],
+        "housingTopProjection": [
+          1276.7949866491997,
+          221.90339056844212
+        ],
+        "groundSupportWorld": [
+          0.9441607241756612,
+          1.1945903397103024,
+          0.012843938493322285
+        ],
+        "coveredRoutingVerified": false
+      }
+    },
+    "seatFrameJoinWorld": [
+      1.3533365750974349,
+      1.1559271838129364,
+      0.33183933215328754
+    ],
+    "staticRawRgbaSha256": "fe25ed180076231ca1f62c35dc9bcbb59d9dabb361a323ed667cb26060be27a8",
+    "sameStaticMeshBothStates": true,
+    "coveredRoutingVerified": false
+  },
+  "poses": {
+    "1": {
+      "sourceBaseRebuiltPixelExact": true,
+      "nativeOriginalPlacement": [
+        0,
+        40
+      ],
+      "newColumnFootprintsOverlapExistingForegroundPixels": 8683,
+      "newStaticEquipmentNeverOverwritesRetainedForeground": true,
+      "backHousingDepthInterpretation": "Retained source floor frame and, in pose4, far trainer occlude back housing. Raw common-camera equipment is preserved for visual depth review; original human depth is not calibrated.",
+      "allPixelsOutsideExistingColourAndEquipmentExact": true,
+      "reviewedColourLayerByteIdentity": "d56aee5620e74a04f51d17669031b7813aa9025cb52169d1f1ad89ff3a401482",
+      "reviewedContourLayerByteIdentity": "3f709fe24e3d33af0f7379e629d14e6b9feaa4dce42099de11615242d6308060",
+      "workingUnitFrontRgbaSha256": "a9a08d6337c7926785559efc8652840949bccef532f0c9922efee3e22ee2f1d5",
+      "nativeSha256": "6400df1f1f5a2e0705693693b812132859628a583833691fa6bf43a1439dbcb5"
+    },
+    "4": {
+      "sourceBaseRebuiltPixelExact": true,
+      "nativeOriginalPlacement": [
+        0,
+        40
+      ],
+      "newColumnFootprintsOverlapExistingForegroundPixels": 27445,
+      "newStaticEquipmentNeverOverwritesRetainedForeground": true,
+      "backHousingDepthInterpretation": "Retained source floor frame and, in pose4, far trainer occlude back housing. Raw common-camera equipment is preserved for visual depth review; original human depth is not calibrated.",
+      "allPixelsOutsideExistingColourAndEquipmentExact": true,
+      "reviewedColourLayerByteIdentity": "fc9486952e7a5ea5193d6a5657cebe68382b29eab1b64e554476b499b9ac7495",
+      "reviewedContourLayerByteIdentity": "8da6364d1e75ff892fd0c93bb4aba8c923e5674b1748811e6dc3c29c2ca3d032",
+      "workingUnitFrontRgbaSha256": "b1c5bfd056eaf9016161da4c941fafcd44da6cfaececa30b42b2fd153c8db6a5",
+      "nativeSha256": "11c01826fd966ad88c90d745dda6bca4766f43ae15c368cd0ec37fb7233d83f2"
+    }
+  },
+  "crop": [
+    114,
+    14,
+    1433,
+    1070
+  ],
+  "dimensions": [
+    1319,
+    1056
+  ],
+  "editables": {
+    "1-full.ora": {
+      "sha256": "07a8a7f49a888a5a6caf8b061c59ed4d0428556eb5cd20a2e8d211e8f4365b5c",
+      "size": [
+        1536,
+        1104
+      ],
+      "reopenedPixelExact": true,
+      "layerNames": [
+        "Intact native original at integer (0,+40); no body extraction",
+        "Positive old-moving-equipment ownership only",
+        "Existing chromatic fields: exact approved primary and secondary",
+        "Existing coloured contours retained as neutral linework",
+        "Fixed covered resistance columns and chassis, behind retained foreground",
+        "Rigid 3D far work arm and supports, reviewed depth",
+        "Rigid 3D short pads and near work arm, reviewed trainer depth"
+      ]
+    },
+    "1-framed.ora": {
+      "sha256": "adedfe430f6021d4709ad59ba6fd5a30a843c23affbf5d4f1c88abbde906507f",
+      "size": [
+        1319,
+        1056
+      ],
+      "reopenedPixelExact": true,
+      "layerNames": [
+        "Intact native original at integer (0,+40); no body extraction",
+        "Positive old-moving-equipment ownership only",
+        "Existing chromatic fields: exact approved primary and secondary",
+        "Existing coloured contours retained as neutral linework",
+        "Fixed covered resistance columns and chassis, behind retained foreground",
+        "Rigid 3D far work arm and supports, reviewed depth",
+        "Rigid 3D short pads and near work arm, reviewed trainer depth"
+      ]
+    },
+    "4-full.ora": {
+      "sha256": "b66cf2b4e0400c8b0f98d75a46ea8037249d9b0bfacf9888cfc126aaf3e75dfa",
+      "size": [
+        1536,
+        1104
+      ],
+      "reopenedPixelExact": true,
+      "layerNames": [
+        "Intact native original at integer (0,+40); no body extraction",
+        "Positive old-moving-equipment ownership only",
+        "Existing chromatic fields: exact approved primary and secondary",
+        "Existing coloured contours retained as neutral linework",
+        "Fixed covered resistance columns and chassis, behind retained foreground",
+        "Rigid 3D far work arm and supports, reviewed depth",
+        "Rigid 3D short pads and near work arm, reviewed trainer depth"
+      ]
+    },
+    "4-framed.ora": {
+      "sha256": "927ebcc13755c334b434fbf293ad5e7e018f7f7922062ed360256af6eeae36bd",
+      "size": [
+        1319,
+        1056
+      ],
+      "reopenedPixelExact": true,
+      "layerNames": [
+        "Intact native original at integer (0,+40); no body extraction",
+        "Positive old-moving-equipment ownership only",
+        "Existing chromatic fields: exact approved primary and secondary",
+        "Existing coloured contours retained as neutral linework",
+        "Fixed covered resistance columns and chassis, behind retained foreground",
+        "Rigid 3D far work arm and supports, reviewed depth",
+        "Rigid 3D short pads and near work arm, reviewed trainer depth"
+      ]
+    }
+  },
+  "frameHashes": {
+    "draft/frames/1.webp": "f119ad4d2efda3462535fd1fd0830bf7f439a12d87ab551ea07f4b4c36574b26",
+    "draft/frames/2.webp": "f119ad4d2efda3462535fd1fd0830bf7f439a12d87ab551ea07f4b4c36574b26",
+    "draft/frames/3.webp": "8ec13579ceb4d098bcdab0017e44ffd1bc30333b4e90a8c3338a8214c6147789",
+    "draft/frames/4.webp": "8ec13579ceb4d098bcdab0017e44ffd1bc30333b4e90a8c3338a8214c6147789",
+    "draft/frames/5.webp": "f119ad4d2efda3462535fd1fd0830bf7f439a12d87ab551ea07f4b4c36574b26",
+    "draft/frames/6.webp": "f119ad4d2efda3462535fd1fd0830bf7f439a12d87ab551ea07f4b4c36574b26"
+  },
+  "allSixLosslessPathsDecodeExactly": true,
+  "anatomicalTransforms": 0,
+  "newImageRequests": 0,
+  "productionChanges": false,
+  "releaseApproved": false,
+  "completionCredit": false
+}

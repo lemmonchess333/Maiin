@@ -1,0 +1,211 @@
+{
+  "exerciseId": "cable-lateral-raise",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 900,
+  "height": 1060,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-05T08:24:07.529Z",
+  "reference": {
+    "path": "form-frames/cable-lateral-raise/1.webp",
+    "sha256": "0f05f5b9eec002dad72ba96e0f53df638d73021facbeb3d51d97f4b0479898c9"
+  },
+  "cueSha256": "fb19315667c566399a0787a90e7cffa503d2bfbc5ec4c3f20cb5e0df06434d66",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical v3 bald faceless white-grey athlete, white trainers and neutral smooth pelvis. Canonical and exercise master attached to every pose edit. No code moving-anatomy transforms."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed front slight three-quarter view. Master uniformly resized and padded before poses; identical final900x1060 crop removes empty margins only."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native lowered,early,middle and shoulder-height positions inspected. Same soft elbow bend, upright torso, neutral head and planted feet. Shoulder raises working arm laterally without shrug."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Enclosed cable tower, fixed low outlet and one rigid D-handle. Closed grip and taut connected working cable in every pose. Handle changes projected orientation naturally; no calibrated3D dimensions inferred."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both planted sole anchors and tower-base anchor with three widths measured and invariant after exact stationary contact copies. Patch seams inspected natively."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Far hand raises laterally from hip to shoulder height and returns under tension. No torso swing. Internal stack and cable routing enclosed, so no visible stack-lift claim or invented payout ratio."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Strongest purple on working lateral deltoid; subtle lilac upper trapezius, other anatomy neutral. Stable hierarchy across sequence."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues at most seven words agree with Tension,Initiate,Raise,Shoulder height,Lower,Control."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Six frames and6to1 manually inspected in actual ExerciseFormFrames. Identical middle/early configurations reused on return. Autoplay advancement observed from start to endpoint."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six and6to1 inspected at390x844 in actual ExerciseFormFrames light mode after final crop. Full athlete,working hand and machine visible; cues readable."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and6to1 inspected at390x844 in actual ExerciseFormFrames dark mode after final crop. No clipping or contact jump; cues readable."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Standing lateral raise with planted soles",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["leftSole", "rightSole", "towerBase"],
+      "dimensionNames": ["leftShoeWidth", "rightShoeWidth", "towerBaseWidth"],
+      "evidence": "Pixel-derived sole and tower-base contacts, exact stationary master copies. Moving grip and arm reviewed visually."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/cable-lateral-raise/1.webp",
+      "sha256": "0f05f5b9eec002dad72ba96e0f53df638d73021facbeb3d51d97f4b0479898c9",
+      "anchors": {
+        "leftSole": {
+          "x": 347,
+          "y": 1020
+        },
+        "rightSole": {
+          "x": 528,
+          "y": 1038
+        },
+        "towerBase": {
+          "x": 197,
+          "y": 1025
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 121,
+        "rightShoeWidth": 88,
+        "towerBaseWidth": 221
+      }
+    },
+    {
+      "path": "form-frames/cable-lateral-raise/2.webp",
+      "sha256": "d3de0b71d03634f9c75ba2e0cd55c5f344e69306777741d145e686be26af1288",
+      "anchors": {
+        "leftSole": {
+          "x": 347,
+          "y": 1020
+        },
+        "rightSole": {
+          "x": 528,
+          "y": 1038
+        },
+        "towerBase": {
+          "x": 197,
+          "y": 1025
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 121,
+        "rightShoeWidth": 88,
+        "towerBaseWidth": 221
+      }
+    },
+    {
+      "path": "form-frames/cable-lateral-raise/3.webp",
+      "sha256": "9fbcfc1a413f4b6e1cbaee5cd8aa0b0de5282c04fb1638a1cc4df283bee21718",
+      "anchors": {
+        "leftSole": {
+          "x": 347,
+          "y": 1020
+        },
+        "rightSole": {
+          "x": 528,
+          "y": 1038
+        },
+        "towerBase": {
+          "x": 197,
+          "y": 1025
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 121,
+        "rightShoeWidth": 88,
+        "towerBaseWidth": 221
+      }
+    },
+    {
+      "path": "form-frames/cable-lateral-raise/4.webp",
+      "sha256": "92cdc8f752a37a1cebac05669d8738191fd551f4382cfb0658b9a6135e329325",
+      "anchors": {
+        "leftSole": {
+          "x": 347,
+          "y": 1020
+        },
+        "rightSole": {
+          "x": 528,
+          "y": 1038
+        },
+        "towerBase": {
+          "x": 197,
+          "y": 1025
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 121,
+        "rightShoeWidth": 88,
+        "towerBaseWidth": 221
+      }
+    },
+    {
+      "path": "form-frames/cable-lateral-raise/5.webp",
+      "sha256": "9fbcfc1a413f4b6e1cbaee5cd8aa0b0de5282c04fb1638a1cc4df283bee21718",
+      "anchors": {
+        "leftSole": {
+          "x": 347,
+          "y": 1020
+        },
+        "rightSole": {
+          "x": 528,
+          "y": 1038
+        },
+        "towerBase": {
+          "x": 197,
+          "y": 1025
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 121,
+        "rightShoeWidth": 88,
+        "towerBaseWidth": 221
+      }
+    },
+    {
+      "path": "form-frames/cable-lateral-raise/6.webp",
+      "sha256": "d3de0b71d03634f9c75ba2e0cd55c5f344e69306777741d145e686be26af1288",
+      "anchors": {
+        "leftSole": {
+          "x": 347,
+          "y": 1020
+        },
+        "rightSole": {
+          "x": 528,
+          "y": 1038
+        },
+        "towerBase": {
+          "x": 197,
+          "y": 1025
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 121,
+        "rightShoeWidth": 88,
+        "towerBaseWidth": 221
+      }
+    }
+  ]
+}

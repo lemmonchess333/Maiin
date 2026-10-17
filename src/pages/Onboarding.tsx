@@ -24,7 +24,11 @@ import {
 } from "@/features/program/programLabels";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
-import { getRaceGoalPlannerState } from "@/lib/raceGoalPlanner";
+import {
+  getRaceGoalPlannerState,
+  MIN_RACE_RUN_DAYS,
+  raceRunDaysNote,
+} from "@/lib/raceGoalPlanner";
 import {
   loadOnboardingDraft,
   saveOnboardingDraft,
@@ -43,6 +47,8 @@ import {
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { benchmarkFromRaceTime, manualRunFitness } from "@/lib/runPaces";
+import { finishTimeLabel } from "@/lib/runLabels";
 import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
 import { Check, ChevronRight, ArrowLeft, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -53,7 +59,17 @@ import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
 import { describeRejection } from "@/lib/callableErrors";
-import { formatWeightInUnit, formatStonePounds } from "@/lib/weightUnits";
+import {
+  formatWeightInUnit,
+  formatStonePounds,
+  kgToLb,
+  lbToKg,
+} from "@/lib/weightUnits";
+import { newRunnerUntil } from "@/features/program/newRunner";
+import { runDoseLine } from "@/lib/runDose";
+import { smallPlatesHint } from "@/lib/liftRules";
+import { liftUnitForBodyWeight } from "@/lib/liftLoad";
+import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
@@ -147,6 +163,10 @@ export default function Onboarding() {
           : (draft?.step ?? 0);
     return flow.includes(storedStep) ? storedStep : 1;
   });
+  /* Which way the last step change went: forward on Continue, back on Back
+     and on an edit from the review. A step shown when setup opens (a fresh
+     account, a resumed draft) has none, and just shows (Pol1). */
+  const [stepMove, setStepMove] = useState<-1 | 0 | 1>(0);
   const [saving, setSaving] = useState(false);
   const pending = useRef(false);
   const onboardingCompletedRef = useRef(false);
@@ -227,12 +247,25 @@ export default function Onboarding() {
   const [runMode, setRunMode] = useState<"freeform" | "race_prep">(
     draft?.runMode === "race_prep" ? "race_prep" : "freeform"
   );
-  const [weeklyRunDays, setWeeklyRunDays] = useState(draft?.weeklyRunDays ?? 2);
+  // At least two, a race plan's least (A7), for a draft saved before that.
+  const [weeklyRunDays, setWeeklyRunDays] = useState(
+    Math.max(MIN_RACE_RUN_DAYS, draft?.weeklyRunDays ?? MIN_RACE_RUN_DAYS)
+  );
   const [raceDistance, setRaceDistance] = useState<
     OnboardingDraft["raceDistance"]
   >(draft?.raceDistance ?? "10k");
   const [raceTargetDate, setRaceTargetDate] = useState(
     draft?.raceTargetDate ?? ""
+  );
+  // Adaptive paces §10.2: an optional recent race, which sets the paces.
+  const [recentRaceDistance, setRecentRaceDistance] = useState<
+    NonNullable<OnboardingDraft["recentRaceDistance"]>
+  >(draft?.recentRaceDistance ?? "5k");
+  const [recentRaceMinutes, setRecentRaceMinutes] = useState(
+    draft?.recentRaceMinutes ?? ""
+  );
+  const [recentRaceSeconds, setRecentRaceSeconds] = useState(
+    draft?.recentRaceSeconds ?? ""
   );
   const [injuries, setInjuries] = useState<string[]>(draft?.injuries ?? []);
   const [gender, setGender] = useState<OnboardingDraft["gender"]>(
@@ -250,6 +283,13 @@ export default function Onboarding() {
     "kg" | "lbs" | "st"
   >(draft?.weightDisplayUnit ?? draft?.weightUnit ?? "kg");
   const weightUnit = weightDisplayUnit === "st" ? "lbs" : weightDisplayUnit;
+  const [goalWeightText, setGoalWeightText] = useState(
+    draft?.goalWeightText ?? ""
+  );
+  const [paceKgPerWeek, setPaceKgPerWeek] = useState<0.25 | 0.5 | 0.75>(
+    draft?.paceKgPerWeek ?? 0.5
+  );
+  const liftUnit = liftUnitForBodyWeight(weightDisplayUnit);
   const [metricsValid, setMetricsValid] = useState(true);
   // Existing optional motivation is retained in resumed drafts; no extra setup prompt.
   const trainingWhy = draft?.trainingWhy ?? "";
@@ -289,6 +329,11 @@ export default function Onboarding() {
       barbellAtHome,
       smallPlates,
       raceLegTrim,
+      recentRaceDistance,
+      recentRaceMinutes,
+      recentRaceSeconds,
+      goalWeightText,
+      paceKgPerWeek,
     }),
     [
       step,
@@ -324,6 +369,11 @@ export default function Onboarding() {
       barbellAtHome,
       smallPlates,
       raceLegTrim,
+      recentRaceDistance,
+      recentRaceMinutes,
+      recentRaceSeconds,
+      goalWeightText,
+      paceKgPerWeek,
     ]
   );
   useEffect(() => {
@@ -345,14 +395,33 @@ export default function Onboarding() {
   /* Goal weight (optional): the target weight owns the nutrition direction
      (goalWeightPlan's locked MacroFactor model), so an empty box holds the
      current weight, as before. Typed in the person's weight unit. */
-  const [goalWeightText, setGoalWeightText] = useState("");
-  const [paceKgPerWeek, setPaceKgPerWeek] = useState<0.25 | 0.5 | 0.75>(0.5);
+  const goalWeightNumber = /^(?:\d+(?:[.,]\d*)?|[.,]\d+)$/.test(
+    goalWeightText.trim()
+  )
+    ? Number(goalWeightText.trim().replace(",", "."))
+    : NaN;
   const goalWeightKgInput = useMemo(() => {
-    const n = Number.parseFloat(goalWeightText.replace(",", "."));
-    if (!Number.isFinite(n)) return null;
-    const kg = weightUnit === "lbs" ? n / 2.20462 : n;
-    return kg >= 30 && kg <= 300 ? kg : null;
-  }, [goalWeightText, weightUnit]);
+    if (!Number.isFinite(goalWeightNumber)) return null;
+    const kg =
+      weightUnit === "lbs" ? lbToKg(goalWeightNumber) : goalWeightNumber;
+    return kg >= WEIGHT_KG.min && kg <= WEIGHT_KG.max ? kg : null;
+  }, [goalWeightNumber, weightUnit]);
+  const goalWeightInvalid =
+    goalWeightText.trim() !== "" && goalWeightKgInput === null;
+  const changeWeightDisplayUnit = (next: "kg" | "lbs" | "st") => {
+    const nextGoalUnit = next === "st" ? "lbs" : next;
+    if (nextGoalUnit !== weightUnit && Number.isFinite(goalWeightNumber)) {
+      // Convert even an out-of-range number: changing units cannot turn an
+      // invalid 500 kg target into a valid 500 lb target.
+      const kg =
+        weightUnit === "lbs" ? lbToKg(goalWeightNumber) : goalWeightNumber;
+      // Keep conversion precision: a one-decimal display would move 30 kg
+      // below the accepted minimum (66.1 lb) and 300 kg above its maximum.
+      const displayed = nextGoalUnit === "lbs" ? kgToLb(kg) : kg;
+      setGoalWeightText(String(Number(displayed.toFixed(6))));
+    }
+    setWeightDisplayUnit(next);
+  };
   const goalPlan = useMemo(
     () =>
       resolveGoalWeightPlan({
@@ -379,6 +448,25 @@ export default function Onboarding() {
       ),
     [weightKg, heightCm, ageRange, activityLevel, goalPlan, gender]
   );
+  /* Asked of someone who runs already: a new runner has no recent race to
+     give. Typed as minutes and seconds, because a phone's number pad has no
+     colon. Blank is no answer, and an answer the plan can't read holds the
+     step until it's corrected or cleared. */
+  const askRecentRace =
+    runConfirmed &&
+    (runFrequency === "occasional" || runFrequency === "regular");
+  const recentRace = useMemo(
+    () =>
+      askRecentRace && (recentRaceMinutes !== "" || recentRaceSeconds !== "")
+        ? benchmarkFromRaceTime(
+            recentRaceDistance,
+            `${recentRaceMinutes || "0"}:${recentRaceSeconds.padStart(2, "0")}`
+          )
+        : null,
+    [askRecentRace, recentRaceDistance, recentRaceMinutes, recentRaceSeconds]
+  );
+  const recentRaceBenchmark =
+    recentRace && !("error" in recentRace) ? recentRace : null;
   const plan = useMemo(
     () =>
       buildOnboardingPlan(
@@ -399,13 +487,14 @@ export default function Onboarding() {
           barbellAtHome: equipment !== "full_gym" && barbellAtHome,
           smallPlates,
           raceLegTrim,
+          weightDisplayUnit,
         },
         goalPlan.fitnessGoal,
         currentDate,
         {
           runningBaseline: profile?.runningBaseline ?? null,
           runTimeLimits: profile?.runTimeLimits,
-          runFitness: profile?.runFitness,
+          runFitness: recentRaceBenchmark ?? profile?.runFitness,
         }
       ),
     [
@@ -425,15 +514,20 @@ export default function Onboarding() {
       barbellAtHome,
       smallPlates,
       raceLegTrim,
+      weightDisplayUnit,
       goalPlan.fitnessGoal,
       currentDate,
       profile?.runningBaseline,
       profile?.runTimeLimits,
+      recentRaceBenchmark,
       profile?.runFitness,
     ]
   );
   const effectiveRunMode = plan.profileUpdates.runMode;
   const effectiveRunDays = plan.profileUpdates.weeklyRunDaysTarget;
+  // Run21 (5): a long run's minutes at a confirmed easy pace, the one the
+  // plan itself uses.
+  const easyPaceSPerKm = planningEasyPaceSPerKm(profile?.runFitness);
   const racePreview = useMemo(
     () =>
       getRaceGoalPlannerState({
@@ -442,8 +536,16 @@ export default function Onboarding() {
         currentDate,
         liftDays: daysPerWeek,
         weeklyRunDays,
+        newRunnerUntil: newRunnerUntil(runFrequency, currentDate),
       }),
-    [raceDistance, raceTargetDate, currentDate, daysPerWeek, weeklyRunDays]
+    [
+      raceDistance,
+      raceTargetDate,
+      currentDate,
+      daysPerWeek,
+      weeklyRunDays,
+      runFrequency,
+    ]
   );
   const displayNameValidation = validateDisplayName(displayName);
   /* A race with no date is not a race plan. Run9a lands a persisted
@@ -461,12 +563,14 @@ export default function Onboarding() {
       runFrequency !== "none" &&
       runMode === "race_prep" &&
       (racePreview.status === "invalid" || racePreview.status === "empty")
-    );
+    ) &&
+    !(recentRace && "error" in recentRace);
   const validBody =
     ageConfirmed &&
     bodyAnswered &&
     ageRange !== "under-16" &&
     metricsValid &&
+    !goalWeightInvalid &&
     weightKg >= WEIGHT_KG.min &&
     weightKg <= WEIGHT_KG.max &&
     heightCm >= HEIGHT_CM.min &&
@@ -489,9 +593,21 @@ export default function Onboarding() {
     ? CHAPTERS
     : CHAPTERS.filter((name) => name !== "Your setup");
   const chapter = chapters.indexOf(CHAPTERS[CHAPTER_FOR_STEP[step]]);
+  /* A step's heading and questions are new elements on each step (keyed
+     below), so a step reached by Continue comes in from the right and one
+     reached by Back from the left: CSS @starting-style, the browser
+     animating a new element from its starting style. Only the new step
+     moves; the old one goes at once, so Continue never waits. */
+  const stepEnters = cn(
+    stepMove !== 0 &&
+      "transition-[opacity,transform] duration-[220ms] ease-[cubic-bezier(0.23,1,0.32,1)] starting:opacity-0",
+    stepMove > 0 && "starting:[transform:translateX(16px)]",
+    stepMove < 0 && "starting:[transform:translateX(-16px)]"
+  );
   const edit = (next: number) => {
     setReturnToReview(true);
     setSaveError("");
+    setStepMove(-1);
     setStep(next);
   };
   const advance = () => {
@@ -504,6 +620,7 @@ export default function Onboarding() {
       void handleFinish();
       return;
     }
+    setStepMove(1);
     setStep(returnToReview ? 7 : flow[flow.indexOf(step) + 1]);
     setReturnToReview(false);
   };
@@ -544,6 +661,7 @@ export default function Onboarding() {
         weeklyRateKg: goalPlan.effectiveRateKgPerWeek,
         preferredHeightUnit: heightUnit,
         preferredWeightUnit: weightUnit,
+        liftingWeightUnit: liftUnit,
         primaryGoal,
         experience,
         daysPerWeek,
@@ -551,6 +669,9 @@ export default function Onboarding() {
         ...(equipment !== "full_gym" ? { barbellAtHome } : {}),
         preferredSplit: "auto",
         runFrequency,
+        ...(recentRaceBenchmark
+          ? { runFitness: manualRunFitness(recentRaceBenchmark, new Date()) }
+          : {}),
         // #975: race_prep without a date → freeform substrate (Run9a),
         // never a dangling race_prep with no raceGoal. Single source of
         // truth for the branch is resolveOnboardingRunMode.
@@ -776,9 +897,12 @@ export default function Onboarding() {
     ? "Choose your running setup"
     : runFrequency === "none"
       ? "No running selected"
-      : effectiveRunMode === "freeform"
-        ? "Free running · no scheduled runs"
-        : `${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`;
+      : (effectiveRunMode === "freeform"
+          ? "Free running · no scheduled runs"
+          : `${racePreview.distanceLabel} · ${effectiveRunDays} runs per week${raceTargetDate ? ` · ${formatDayMonthYear(parseLocalDate(raceTargetDate))}` : ""}`) +
+        (recentRaceBenchmark
+          ? ` · recent ${recentRaceDistance === "5k" ? "5K" : "10K"} in ${finishTimeLabel(recentRaceBenchmark.benchmark.timeS)}`
+          : "");
   return (
     <div
       className="h-dvh flex flex-col bg-background text-foreground px-[16px] max-w-lg mx-auto"
@@ -807,11 +931,19 @@ export default function Onboarding() {
               key={name}
               aria-current={chapter === index ? "step" : undefined}
               aria-label={`${name}${index < chapter ? ", completed" : ""}`}
-              className={cn(
-                "h-1 flex-1 rounded-full",
-                index <= chapter ? "bg-primary" : "bg-muted"
-              )}
-            />
+              className="h-1 flex-1 overflow-hidden rounded-full bg-muted"
+            >
+              {/* A chapter reached fills from the left, the way setup
+                  reads; going back empties it the same way. */}
+              <span
+                className={cn(
+                  "block h-full origin-left bg-primary transition-transform duration-[250ms] ease-[cubic-bezier(0.23,1,0.32,1)]",
+                  index <= chapter
+                    ? "[transform:scaleX(1)]"
+                    : "[transform:scaleX(0)]"
+                )}
+              />
+            </li>
           ))}
         </ol>
       </header>
@@ -819,7 +951,7 @@ export default function Onboarding() {
         ref={scrollRef}
         className="flex-1 overflow-y-auto min-h-0 pt-5 pb-6 space-y-6"
       >
-        <div className="space-y-3">
+        <div key={`heading-${step}`} className={cn("space-y-3", stepEnters)}>
           {((step === 1 && trainingActivity !== "lifting") ||
             step === 3 ||
             step === 2 ||
@@ -841,7 +973,11 @@ export default function Onboarding() {
               : STEP_META[step][1]}
           </p>
         </div>
-        <fieldset disabled={saving} className="min-w-0 space-y-5">
+        <fieldset
+          key={`questions-${step}`}
+          disabled={saving}
+          className={cn("min-w-0 space-y-5", stepEnters)}
+        >
           <legend className="sr-only">{chapters[chapter]}</legend>
           {step === 0 && (
             <div className="space-y-3">
@@ -944,6 +1080,7 @@ export default function Onboarding() {
                   runDays={plan.programState.runDays}
                   draft
                   freeRunning={freeRunning}
+                  easyPaceSPerKm={easyPaceSPerKm}
                 />
               )}
             </div>
@@ -998,15 +1135,10 @@ export default function Onboarding() {
                          themselves under "occasional runner"; it does not
                          change a freeform plan, and reading it as a
                          freeform scheduling lever is reading it wrong.
-                         One a week when a race IS set, for the same
-                         volume-preserving reason ADR-0002 gives for not
-                         punishing a light trainer. */
+                         Two a week when a race IS set: a race plan needs
+                         at least two run days (Pgm7 A7). */
                       setWeeklyRunDays(
-                        option.id === "regular"
-                          ? 3
-                          : option.id === "new"
-                            ? 1
-                            : 2
+                        option.id === "regular" ? 3 : MIN_RACE_RUN_DAYS
                       );
                     }}
                   />
@@ -1034,7 +1166,7 @@ export default function Onboarding() {
                         <RangeInput
                           className="min-h-11"
                           aria-label="Runs per week"
-                          min={1}
+                          min={MIN_RACE_RUN_DAYS}
                           max={7}
                           step={1}
                           value={weeklyRunDays}
@@ -1055,6 +1187,11 @@ export default function Onboarding() {
                           { value: "marathon", label: "Full" },
                         ]}
                       />
+                      {raceRunDaysNote(raceDistance, weeklyRunDays) && (
+                        <p className="text-sm text-muted-foreground">
+                          {raceRunDaysNote(raceDistance, weeklyRunDays)}
+                        </p>
+                      )}
                       <label className="block text-sm space-y-2">
                         <span>Race target date</span>
                         <input
@@ -1090,6 +1227,16 @@ export default function Onboarding() {
                           </p>
                         </div>
                       )}
+                      {/* Pgm8 (R14c): a race too soon for a new runner's
+                          plan to build to. It never holds the step:
+                          Continue stays as it is. */}
+                      {racePreview.newRunnerNote && (
+                        <p className="text-sm text-muted-foreground">
+                          <InlineNumerals>
+                            {racePreview.newRunnerNote}
+                          </InlineNumerals>
+                        </p>
+                      )}
                       {racePreview.doubleDays > 0 && (
                         <p className="text-sm text-muted-foreground">
                           Some days include a lift and a run.
@@ -1121,6 +1268,90 @@ export default function Onboarding() {
                       )}
                     </div>
                   )}
+                  {askRecentRace && (
+                    <section
+                      className="rounded-2xl bg-card card-shadow p-4 space-y-3"
+                      aria-label="Recent race"
+                    >
+                      {/* The distance drops under the heading at larger
+                          text, and never grows past the card. */}
+                      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                        <h2 className="text-base font-semibold">Recent race</h2>
+                        <SegmentedControl<
+                          NonNullable<OnboardingDraft["recentRaceDistance"]>
+                        >
+                          ariaLabel="Recent race distance"
+                          tone="running"
+                          className="w-36 max-w-full shrink-0"
+                          value={recentRaceDistance}
+                          onChange={setRecentRaceDistance}
+                          options={[
+                            { value: "5k", label: "5K" },
+                            { value: "10k", label: "10K" },
+                          ]}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Optional. A recent race or hard solo run sets your
+                        training paces. You can add one later in Settings.
+                      </p>
+                      <div className="flex gap-3">
+                        {(
+                          [
+                            {
+                              label: "Minutes",
+                              unit: "min",
+                              value: recentRaceMinutes,
+                              set: setRecentRaceMinutes,
+                              digits: 3,
+                            },
+                            {
+                              label: "Seconds",
+                              unit: "sec",
+                              value: recentRaceSeconds,
+                              set: setRecentRaceSeconds,
+                              digits: 2,
+                            },
+                          ] as const
+                        ).map((field) => (
+                          <label key={field.unit} className="flex-1 min-w-0">
+                            <span className="sr-only">{field.label}</span>
+                            <input
+                              inputMode="numeric"
+                              className="ds-input w-full min-w-0 text-center text-h2 font-mono tabular-nums"
+                              value={field.value}
+                              aria-invalid={Boolean(
+                                recentRace && "error" in recentRace
+                              )}
+                              onChange={(event) =>
+                                field.set(
+                                  event.target.value
+                                    .replace(/\D/g, "")
+                                    .slice(0, field.digits)
+                                )
+                              }
+                            />
+                            <span
+                              aria-hidden="true"
+                              className="block text-center text-sm text-muted-foreground"
+                            >
+                              {field.unit}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      {recentRace && "error" in recentRace && (
+                        <p
+                          role="alert"
+                          className="text-sm text-destructive-strong"
+                        >
+                          {Number(recentRaceSeconds) > 59
+                            ? "Seconds go up to 59."
+                            : "That time doesn't look right. Check it and try again."}
+                        </p>
+                      )}
+                    </section>
+                  )}
                 </div>
               )}
               {runConfirmed && (
@@ -1130,6 +1361,7 @@ export default function Onboarding() {
                   runDays={plan.programState.runDays}
                   draft
                   freeRunning={freeRunning}
+                  easyPaceSPerKm={easyPaceSPerKm}
                 />
               )}
             </div>
@@ -1207,7 +1439,7 @@ export default function Onboarding() {
                     <div>
                       <p className="text-sm text-foreground">Small plates</p>
                       <p className="text-xs text-muted-foreground">
-                        Barbell lifts go up 1.25 kg at a time instead of 2.5 kg.
+                        {smallPlatesHint(liftUnit)}
                       </p>
                     </div>
                     <Toggle
@@ -1281,6 +1513,7 @@ export default function Onboarding() {
                   runDays={plan.programState.runDays}
                   draft
                   freeRunning={freeRunning}
+                  easyPaceSPerKm={easyPaceSPerKm}
                 />
               </details>
             </div>
@@ -1336,7 +1569,7 @@ export default function Onboarding() {
                 heightUnit={heightUnit}
                 onWeight={setWeightKg}
                 onHeight={setHeightCm}
-                onWeightUnit={setWeightDisplayUnit}
+                onWeightUnit={changeWeightDisplayUnit}
                 onHeightUnit={setHeightUnit}
                 onValidityChange={setMetricsValid}
               />
@@ -1408,6 +1641,12 @@ export default function Onboarding() {
                     inputMode="decimal"
                     className="ds-input w-32 min-h-11 font-mono tabular-nums"
                     value={goalWeightText}
+                    aria-invalid={goalWeightInvalid}
+                    aria-describedby={
+                      goalWeightInvalid
+                        ? "onboarding-goal-weight-error"
+                        : undefined
+                    }
                     placeholder={formatWeightInUnit(weightKg, weightUnit)}
                     onChange={(event) => setGoalWeightText(event.target.value)}
                   />
@@ -1415,6 +1654,17 @@ export default function Onboarding() {
                     {weightUnit === "lbs" ? "lb" : "kg"}
                   </span>
                 </div>
+                {goalWeightInvalid && (
+                  <p
+                    id="onboarding-goal-weight-error"
+                    role="alert"
+                    className="text-sm text-destructive-strong"
+                  >
+                    <InlineNumerals>
+                      {`Enter a goal weight between ${weightUnit === "lbs" ? kgToLb(WEIGHT_KG.min) : WEIGHT_KG.min} and ${weightUnit === "lbs" ? kgToLb(WEIGHT_KG.max) : WEIGHT_KG.max} ${weightUnit === "lbs" ? "lb" : "kg"}.`}
+                    </InlineNumerals>
+                  </p>
+                )}
                 {goalPlan.direction === "maintain" ? (
                   <p className="text-sm text-muted-foreground">
                     {primaryGoal === "fat_loss"
@@ -1482,7 +1732,7 @@ export default function Onboarding() {
                   <InlineNumerals>
                     {runningFirst
                       ? firstRunTemplate
-                        ? `${firstRunTemplate.estimatedDuration} min · ${firstRun?.date ? formatDayMonth(parseLocalDate(firstRun.date)) : ""}`
+                        ? `${runDoseLine(firstRunTemplate, easyPaceSPerKm)} · ${firstRun?.date ? formatDayMonth(parseLocalDate(firstRun.date)) : ""}`
                         : effectiveRunMode === "race_prep"
                           ? `${effectiveRunDays} runs per week · see your upcoming week in Train.`
                           : "Choose your route and pace. No scheduled runs or weekly quota."
@@ -1525,6 +1775,7 @@ export default function Onboarding() {
                 workouts={plan.programState.workouts}
                 runDays={plan.programState.runDays}
                 freeRunning={freeRunning}
+                easyPaceSPerKm={easyPaceSPerKm}
               />
               {effectiveRunMode === "race_prep" &&
                 (profile?.runTimeLimits?.sessionMinutes ||
@@ -1700,6 +1951,7 @@ export default function Onboarding() {
               leftIcon={<ArrowLeft className="size-4" />}
               onClick={() => {
                 setSaveError("");
+                setStepMove(-1);
                 setStep(
                   returnToReview ? 7 : flow[Math.max(0, flow.indexOf(step) - 1)]
                 );

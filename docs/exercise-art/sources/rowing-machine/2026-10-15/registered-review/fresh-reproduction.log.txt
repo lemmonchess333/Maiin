@@ -1,0 +1,13 @@
+{
+  "mode": "build",
+  "candidate": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\row-rp-20261015",
+  "physicalPoses": 3,
+  "paths": 6,
+  "ORAs": 6,
+  "dimensions": [
+    1416,
+    830
+  ],
+  "manifestSha256": "9a9dab451c7f7508e7371e79e4c21e6c09ed1ffc722c39a2d97eaf15e83f731a",
+  "finalAcceptance": false
+}

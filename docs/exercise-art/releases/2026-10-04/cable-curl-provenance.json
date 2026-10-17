@@ -1,0 +1,376 @@
+{
+  "generator": "Built-in imagegen master/poses and targeted cable removal; authorized coplanar equipment routing and stationary contact copies",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "generationIds": {
+    "master": "19440607-5177-474b-96c0-e3798fba2e06",
+    "middle": "cbb52466-a3d3-4a6a-b0ce-bc668ab75ebc",
+    "gripRepair": "c29c5b1c-c510-4a9b-a8e5-71004b21d78d",
+    "top": "28862329-5f5e-4816-ae96-c41ce8954c10",
+    "middleCableRemoval": "9f8cda54-39c1-479a-912a-cd3e0b0759bb",
+    "topCableRemoval": "41c6aa81-b6d4-410b-b81a-0403198f5fc1"
+  },
+  "sequence": [1, 2, 3, 3, 2, 1],
+  "originals": [
+    {
+      "file": "originals/1-master.png",
+      "sha256": "f05b7fae5a46d78d6637a320027c5f97dd0fe9257e271637b8aa207c25e66b11"
+    },
+    {
+      "file": "originals/2-mid-candidate.png",
+      "sha256": "c65ba07a99668bda773a9c05bd8fc6513dbf936a73b1f7f4ccc9385a11e49d32"
+    },
+    {
+      "file": "originals/2-grip-guide.png",
+      "sha256": "bf082d972df15ef080f0b7e2a631524111379b553655e47c3c64e50cfaf5c47a"
+    },
+    {
+      "file": "originals/2-grip-candidate.png",
+      "sha256": "e54b3bf0d0608f300bf5e2233e5bb2e6ae5346eb9d41210d9b4a3f813e213896"
+    },
+    {
+      "file": "originals/3-top-candidate.png",
+      "sha256": "d5dba15ab1ba9eca3d163e3acf152ab795b5bbf6ce743d42496a0d4c16d92be3"
+    },
+    {
+      "file": "originals/2-removal-guide.png",
+      "sha256": "c56021ffc80dd23b6fddc851a94117c33db18057adfb15f51bf5bdb51a5821c8"
+    },
+    {
+      "file": "originals/2-without-outgoing.png",
+      "sha256": "1ca19e26bf506b47890e9ddec5863124473af82d7211e1042ca126f8f7b344bf"
+    },
+    {
+      "file": "originals/3-without-outgoing.png",
+      "sha256": "23ea034751e48d6d6837a7572efbc79aba65bfcf56749c571a9d353042835c04"
+    }
+  ],
+  "sources": [
+    {
+      "file": "sources/1.png",
+      "sha256": "6a8a73b2863f64c7d7bc8a5a87414466be4ee589ac3f1fe11a49c330f0acbfcc"
+    },
+    {
+      "file": "sources/2.png",
+      "sha256": "2d10e1ad275fd1b56a6f1071f44e7cef5d2ac3c26c64c97df466cc5c7ab83207"
+    },
+    {
+      "file": "sources/3.png",
+      "sha256": "213d4cb9b35af31c8f7ef267ee3f7be6dfe348ea707bd12140758614462cadaf"
+    },
+    {
+      "file": "sources/4.png",
+      "sha256": "213d4cb9b35af31c8f7ef267ee3f7be6dfe348ea707bd12140758614462cadaf"
+    },
+    {
+      "file": "sources/5.png",
+      "sha256": "2d10e1ad275fd1b56a6f1071f44e7cef5d2ac3c26c64c97df466cc5c7ab83207"
+    },
+    {
+      "file": "sources/6.png",
+      "sha256": "6a8a73b2863f64c7d7bc8a5a87414466be4ee589ac3f1fe11a49c330f0acbfcc"
+    }
+  ],
+  "framing": {
+    "files": [
+      "routing-pilot-1.png",
+      "routing-pilot-2.png",
+      "routing-pilot-3.png"
+    ],
+    "sequence": [1, 2, 3, 3, 2, 1],
+    "contacts": [
+      {
+        "left": 830,
+        "top": 840,
+        "width": 155,
+        "height": 105
+      },
+      {
+        "left": 985,
+        "top": 865,
+        "width": 140,
+        "height": 115
+      }
+    ],
+    "contactTopFadePixels": 20,
+    "crop": {
+      "left": 280,
+      "top": 0,
+      "width": 880,
+      "height": 1024
+    },
+    "padding": {
+      "left": 0,
+      "right": 0,
+      "top": 32,
+      "bottom": 0,
+      "background": "#000"
+    },
+    "scope": "Common crop/padding and exact planted-shoe copies; no moving anatomy transformations."
+  },
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "leftSole": {
+          "x": 601,
+          "y": 960
+        },
+        "rightSole": {
+          "x": 748,
+          "y": 998
+        },
+        "towerBase": {
+          "x": 137,
+          "y": 969
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 137,
+        "rightShoeWidth": 123,
+        "towerBaseWidth": 326
+      },
+      "sha256": "6a8a73b2863f64c7d7bc8a5a87414466be4ee589ac3f1fe11a49c330f0acbfcc"
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "leftSole": {
+          "x": 601,
+          "y": 960
+        },
+        "rightSole": {
+          "x": 748,
+          "y": 998
+        },
+        "towerBase": {
+          "x": 137,
+          "y": 969
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 137,
+        "rightShoeWidth": 123,
+        "towerBaseWidth": 326
+      },
+      "sha256": "2d10e1ad275fd1b56a6f1071f44e7cef5d2ac3c26c64c97df466cc5c7ab83207"
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "leftSole": {
+          "x": 601,
+          "y": 960
+        },
+        "rightSole": {
+          "x": 748,
+          "y": 998
+        },
+        "towerBase": {
+          "x": 137,
+          "y": 969
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 137,
+        "rightShoeWidth": 123,
+        "towerBaseWidth": 326
+      },
+      "sha256": "213d4cb9b35af31c8f7ef267ee3f7be6dfe348ea707bd12140758614462cadaf"
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "leftSole": {
+          "x": 601,
+          "y": 960
+        },
+        "rightSole": {
+          "x": 748,
+          "y": 998
+        },
+        "towerBase": {
+          "x": 137,
+          "y": 969
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 137,
+        "rightShoeWidth": 123,
+        "towerBaseWidth": 326
+      },
+      "sha256": "213d4cb9b35af31c8f7ef267ee3f7be6dfe348ea707bd12140758614462cadaf"
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "leftSole": {
+          "x": 601,
+          "y": 960
+        },
+        "rightSole": {
+          "x": 748,
+          "y": 998
+        },
+        "towerBase": {
+          "x": 137,
+          "y": 969
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 137,
+        "rightShoeWidth": 123,
+        "towerBaseWidth": 326
+      },
+      "sha256": "2d10e1ad275fd1b56a6f1071f44e7cef5d2ac3c26c64c97df466cc5c7ab83207"
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "leftSole": {
+          "x": 601,
+          "y": 960
+        },
+        "rightSole": {
+          "x": 748,
+          "y": 998
+        },
+        "towerBase": {
+          "x": 137,
+          "y": 969
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 137,
+        "rightShoeWidth": 123,
+        "towerBaseWidth": 326
+      },
+      "sha256": "6a8a73b2863f64c7d7bc8a5a87414466be4ee589ac3f1fe11a49c330f0acbfcc"
+    }
+  ],
+  "routing": {
+    "files": [
+      "1-master.png",
+      "2-without-outgoing.png",
+      "3-without-outgoing.png"
+    ],
+    "top": {
+      "x": 486,
+      "y": 89,
+      "r": 26
+    },
+    "low": {
+      "x": 538,
+      "y": 810,
+      "r": 26
+    },
+    "selectedCount": 4,
+    "unselectedCount": 10,
+    "selectedSource": {
+      "left": 405,
+      "top": 559,
+      "width": 100,
+      "height": 76
+    },
+    "rows": [
+      {
+        "pose": 1,
+        "attachment": [895, 535],
+        "lowTangent": [555.0283815978362, 829.647753565191],
+        "lowWrapRadians": 2.2848965734806024,
+        "freeCable": 449.88665239146627,
+        "lowArc": 59.40731091049566,
+        "selectedRise": 0,
+        "selectedTop": 559,
+        "totalVariableLength": 951.2939633019619,
+        "conservationError": 0
+      },
+      {
+        "pose": 2,
+        "attachment": [879, 369],
+        "lowTangent": [559.2876737805882, 824.9276570502961],
+        "lowWrapRadians": 2.5300384644172125,
+        "freeCable": 556.853661207323,
+        "lowArc": 65.78100007484753,
+        "selectedRise": 113,
+        "selectedTop": 446,
+        "totalVariableLength": 951.6346612821704,
+        "conservationError": 0.3406979802085175
+      },
+      {
+        "pose": 3,
+        "attachment": [889, 292],
+        "lowTangent": [560.1114593441152, 823.677842142441],
+        "lowWrapRadians": 2.587618857627498,
+        "freeCable": 625.1791743172513,
+        "lowArc": 67.27809029831495,
+        "selectedRise": 183,
+        "selectedTop": 376,
+        "totalVariableLength": 951.4572646155663,
+        "conservationError": 0.16330131360433597
+      }
+    ],
+    "scope": "New explicitly constructed coplanar circular-pulley illustration, not a calibrated3D interpretation of original generated pulleys. Tangent+wrap+stack path conserved within0.5px. Native pilot review required; no anatomy transformed."
+  },
+  "routingChecks": {
+    "model": "Constructed coplanar1:1 routing; exact circular tangent and arc path",
+    "rows": [
+      {
+        "frame": 1,
+        "selectedSourcePixelsExact": true,
+        "pathError": 0,
+        "tangentDot": -1.0913936421275139e-11,
+        "selectedRise": 0
+      },
+      {
+        "frame": 2,
+        "selectedSourcePixelsExact": true,
+        "pathError": 0.3406979802085175,
+        "tangentDot": -2.546585164964199e-11,
+        "selectedRise": 113
+      },
+      {
+        "frame": 3,
+        "selectedSourcePixelsExact": true,
+        "pathError": 0.16330131360433597,
+        "tangentDot": 4.547473508864641e-12,
+        "selectedRise": 183
+      },
+      {
+        "frame": 4,
+        "selectedSourcePixelsExact": true,
+        "pathError": 0.16330131360433597,
+        "tangentDot": 4.547473508864641e-12,
+        "selectedRise": 183
+      },
+      {
+        "frame": 5,
+        "selectedSourcePixelsExact": true,
+        "pathError": 0.3406979802085175,
+        "tangentDot": -2.546585164964199e-11,
+        "selectedRise": 113
+      },
+      {
+        "frame": 6,
+        "selectedSourcePixelsExact": true,
+        "pathError": 0,
+        "tangentDot": -1.0913936421275139e-11,
+        "selectedRise": 0
+      }
+    ]
+  },
+  "stationaryCopies": [
+    {
+      "left": 830,
+      "top": 840,
+      "width": 155,
+      "height": 105
+    },
+    {
+      "left": 985,
+      "top": 865,
+      "width": 140,
+      "height": 115
+    }
+  ],
+  "losslessPixelsVerified": true
+}

@@ -1,0 +1,3 @@
+Error: Playwright selector deadline exceeded
+locator.press failed for selector body
+Locator diagnostics: {"kind":"action_failed","action":"press","locator":"body","matchCount":1,"matches":[{"ariaLabel":null,"disabled":false,"role":null,"tag":"body","text":"Spin BikeLight themeUnregistered three-state owner draft with custom equipment. Review at a real 390×844 browser viewpor","type":null,"visible":true}],"visibleCount":1,"truncated":false}

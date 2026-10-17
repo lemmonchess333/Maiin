@@ -7,38 +7,58 @@ import {
   formatDayMonth,
   formatDayMonthYear,
   formatClock,
-  formatLoadKg,
   formatTimeOfDay,
   keepTogether,
 } from "../formatters";
 
 describe("formatVolume", () => {
   it("returns dash for zero", () => {
-    expect(formatVolume(0)).toEqual({ value: "\u2014", unit: "" });
+    expect(formatVolume(0, "kg")).toEqual({ value: "\u2014", unit: "" });
   });
 
   it("returns dash for negative", () => {
-    expect(formatVolume(-100)).toEqual({ value: "\u2014", unit: "" });
+    expect(formatVolume(-100, "kg")).toEqual({ value: "\u2014", unit: "" });
   });
 
   it("formats sub-1000 with kg unit", () => {
-    expect(formatVolume(500)).toEqual({ value: "500", unit: "kg" });
+    expect(formatVolume(500, "kg")).toEqual({ value: "500", unit: "kg" });
   });
 
   it("rounds sub-1000 values", () => {
-    expect(formatVolume(892.7)).toEqual({ value: "893", unit: "kg" });
+    expect(formatVolume(892.7, "kg")).toEqual({ value: "893", unit: "kg" });
   });
 
   it("formats 1000+ with k suffix and kg unit", () => {
-    expect(formatVolume(1000)).toEqual({ value: "1.0k", unit: "kg" });
+    expect(formatVolume(1000, "kg")).toEqual({ value: "1.0k", unit: "kg" });
   });
 
   it("formats 1500 as 1.5k", () => {
-    expect(formatVolume(1500)).toEqual({ value: "1.5k", unit: "kg" });
+    expect(formatVolume(1500, "kg")).toEqual({ value: "1.5k", unit: "kg" });
   });
 
   it("formats large volumes", () => {
-    expect(formatVolume(14020)).toEqual({ value: "14.0k", unit: "kg" });
+    expect(formatVolume(14020, "kg")).toEqual({ value: "14.0k", unit: "kg" });
+  });
+
+  it("formats a lifetime's volume in millions, never as thousands of k", () => {
+    expect(formatVolume(999_900, "kg")).toEqual({
+      value: "999.9k",
+      unit: "kg",
+    });
+    expect(formatVolume(999_960, "kg")).toEqual({ value: "1.0M", unit: "kg" });
+    expect(formatVolume(1_500_000, "kg")).toEqual({
+      value: "1.5M",
+      unit: "kg",
+    });
+    expect(formatVolume(12_345_600, "kg")).toEqual({
+      value: "12.3M",
+      unit: "kg",
+    });
+  });
+
+  it("reads in lb for a lifter who lifts in lb (Lift18)", () => {
+    expect(formatVolume(100, "lbs")).toEqual({ value: "220", unit: "lb" });
+    expect(formatVolume(1000, "lbs")).toEqual({ value: "2.2k", unit: "lb" });
   });
 });
 
@@ -169,13 +189,5 @@ describe("formatClock (the one m:ss / h:mm:ss formatter — twelve local copies 
     expect(formatClock(59.6)).toBe("1:00");
     expect(formatClock(59.4)).toBe("0:59");
     expect(formatClock(-3)).toBe("0:00");
-  });
-});
-
-describe("formatLoadKg (moved out of the pages, 2026-09)", () => {
-  it("load: BW for bodyweight, whole or one-decimal kg otherwise", () => {
-    expect(formatLoadKg(0)).toBe("BW");
-    expect(formatLoadKg(60)).toBe("60 kg");
-    expect(formatLoadKg(62.5)).toBe("62.5 kg");
   });
 });

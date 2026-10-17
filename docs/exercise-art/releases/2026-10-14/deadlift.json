@@ -1,0 +1,180 @@
+{
+  "exerciseId": "deadlift",
+  "version": "anatomy-v3-2026-10-14-reviewed-original-deadlift-v1",
+  "width": 940,
+  "height": 940,
+  "decision": "approved",
+  "reviewer": "Codex native and actual mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-14T11:11:14.007184+00:00",
+  "reference": {
+    "path": "form-frames/deadlift/1.webp",
+    "sha256": "36d4e9098a3e46b3257e17e063d15e37c591a145c2e043d4604f13cb27407d2d"
+  },
+  "cueSha256": "2113e076124722e3a9f3d1bc084ced102f9430ce6d8af0246ac02dff610c6d6a",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Original built-in imagegen sources de334d0b,b83f1b44,a936d163 used the same athlete-anatomy-v3 canonical. Bald faceless lean white-grey anatomy, neutral featureless pelvis, white trainers. Native originals and final940x940/mobile reviewed. Canonical hash pinned; complete original figures retained."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Three complete1536x1024 scenes receive whole-scene translations[0,11],[4,25],[5,0], aligning both planted posterior sole envelopes. One common empty-margin crop(370,25,1270,905) and pad(20,50) produces940x940 without resizing the anatomy. Same rear-oblique camera; minor source contour/toe-shape variation retained."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Fresh original-source review excludes the early-lift source with uncertain arm proportions and all later shoe-grafted versions. Selected floor,knee,standing show connected straight arms, closed grips, neutral spine and natural hip/knee extension. Native original-size images and final/mobile playback reviewed. No body warp, independent fitting, head/hand/shoe graft or new pose in code; qualitative illustration, not calibrated3D joint measurements."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One modest grey plate per end. Identical floor-source outer plate/sleeve pixels reused outside body/hand regions at observed shaft JOIN heights; initial outer-cap measurement step was corrected before export. Original middle shaft/grips retained. Native joins inspected and two actual grey plate-column spans remain exact across six images. Slight projected shaft-angle variation disclosed; not a calibrated3D bar certificate."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both original shoes remain intact and visually planted. One common whole-image shift per pose yields near posterior envelope443/444/444,y893 and far333/332/332,y880/879/880,within1px. These are source-threshold sole envelope bounds in hand-excluding ROIs, not exact heel joint centres. Small toe/sole contour variation retained. Hands remain closed on original shaft through rising and lowering; no doubled ankle seams because grafted versions are unused."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Conventional floor setup with hips above knees, straight arms and neutral spine; bar rises close past knees to tall neutral lockout, returns with hip hinge and controlled lowering. Three genuine physical states, no invented human interpolation. Original already-generated sources used; no retry of service-blocked graft-seam cleanup and no alternate route to obtain that cleanup."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Glutes/hamstrings primary#7B72E9, erectors/traps secondary#9590E0; rest neutral. Existing source chroma plus native-traced lumbar/glute ownership boundary only. Recolour retains inherited source luminance, neutral highlights and grey contours; no new gradient treatment. Exact base colour pixels measured in all3 states, no colour change outside scope. Ownership is visual anatomical inference, not certified segmentation."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Set/Brace/Clear knees/Stand/Control/Lower. Source order1,1,2,3,3,2; actual floor and lockout pauses, middle reused on controlled return. Qualitative t1,1,.3,0,0,.3; middle is not claimed halfway. Separate file paths and duplicate groups honestly disclosed. Final captions each fit the app seven-word hold budget."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All6 distinct WebP paths losslessly decode exactly to940x940 reviewed crops. Native natural/rendered940x940 manual beats and6to1 plus timed playback reviewed. Three layered OpenRaster files reopen pixel-exact. Source hash/export/native trace evidence retained."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Staged actual ExerciseFormContent at verified390x844 light, all6 decoded940x940 paths and6to1 observed. Complete figure/plates, original closed grips and planted shoes, readable cues/key and standard-algorithm card. Pause/manual selection/previous-next wrap/slower controls and observed console errors0. Registered-path review follows before completion/merge. Final registered current application modules and standard public/form-art/deadlift.webp card reviewed in this theme at390x844;all6 and6to1,controls passed. Captions now each meet7-word read budget."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Staged actual ExerciseFormContent at verified390x844 dark, all6 decoded paths and6to1 observed. Full figure/gear and same colour hierarchy/camera. Real controls passed; normal/slower timing recorded. Registered standard card/project checks remain before completion/merge. Final registered current application modules and standard public/form-art/deadlift.webp card reviewed in this theme at390x844;all6 and6to1,controls passed. Captions now each meet7-word read budget."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/deadlift/1.webp",
+      "sha256": "36d4e9098a3e46b3257e17e063d15e37c591a145c2e043d4604f13cb27407d2d",
+      "anchors": {
+        "farPosteriorSoleEnvelope": {
+          "x": 333,
+          "y": 880
+        },
+        "nearPosteriorSoleEnvelope": {
+          "x": 443,
+          "y": 893
+        }
+      },
+      "invariantDimensions": {
+        "leftPlateGreyVerticalSpanAt160": 187,
+        "rightPlateGreyVerticalSpanAt760": 208
+      }
+    },
+    {
+      "path": "form-frames/deadlift/2.webp",
+      "sha256": "36d4e9098a3e46b3257e17e063d15e37c591a145c2e043d4604f13cb27407d2d",
+      "anchors": {
+        "farPosteriorSoleEnvelope": {
+          "x": 333,
+          "y": 880
+        },
+        "nearPosteriorSoleEnvelope": {
+          "x": 443,
+          "y": 893
+        }
+      },
+      "invariantDimensions": {
+        "leftPlateGreyVerticalSpanAt160": 187,
+        "rightPlateGreyVerticalSpanAt760": 208
+      }
+    },
+    {
+      "path": "form-frames/deadlift/3.webp",
+      "sha256": "e52bf124cc279ed6c91e3be8085b7aa625f394db15b170a5b84cbf04340a0610",
+      "anchors": {
+        "farPosteriorSoleEnvelope": {
+          "x": 332,
+          "y": 879
+        },
+        "nearPosteriorSoleEnvelope": {
+          "x": 444,
+          "y": 893
+        }
+      },
+      "invariantDimensions": {
+        "leftPlateGreyVerticalSpanAt160": 187,
+        "rightPlateGreyVerticalSpanAt760": 208
+      }
+    },
+    {
+      "path": "form-frames/deadlift/4.webp",
+      "sha256": "e3fe48a2b611e800e41360589e10dbfd5cf85f2ca12ea894c197a6db32b12946",
+      "anchors": {
+        "farPosteriorSoleEnvelope": {
+          "x": 332,
+          "y": 880
+        },
+        "nearPosteriorSoleEnvelope": {
+          "x": 444,
+          "y": 893
+        }
+      },
+      "invariantDimensions": {
+        "leftPlateGreyVerticalSpanAt160": 187,
+        "rightPlateGreyVerticalSpanAt760": 208
+      }
+    },
+    {
+      "path": "form-frames/deadlift/5.webp",
+      "sha256": "e3fe48a2b611e800e41360589e10dbfd5cf85f2ca12ea894c197a6db32b12946",
+      "anchors": {
+        "farPosteriorSoleEnvelope": {
+          "x": 332,
+          "y": 880
+        },
+        "nearPosteriorSoleEnvelope": {
+          "x": 444,
+          "y": 893
+        }
+      },
+      "invariantDimensions": {
+        "leftPlateGreyVerticalSpanAt160": 187,
+        "rightPlateGreyVerticalSpanAt760": 208
+      }
+    },
+    {
+      "path": "form-frames/deadlift/6.webp",
+      "sha256": "e52bf124cc279ed6c91e3be8085b7aa625f394db15b170a5b84cbf04340a0610",
+      "anchors": {
+        "farPosteriorSoleEnvelope": {
+          "x": 332,
+          "y": 879
+        },
+        "nearPosteriorSoleEnvelope": {
+          "x": 444,
+          "y": 893
+        }
+      },
+      "invariantDimensions": {
+        "leftPlateGreyVerticalSpanAt160": 187,
+        "rightPlateGreyVerticalSpanAt760": 208
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 1, 2, 3, 3, 2],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "minorFindings": [
+    "Three physical poses through six separate files; floor/lockout pauses and qualitative uneven spacing disclosed.",
+    "Original shoe/toe contours and neutral body contours vary slightly; both sole envelopes within1px after whole-scene registration. No shoe patches.",
+    "Projected bar angle varies slightly; identical plate/end-sleeve pixels and measured grey spans retained; no calibrated3D claim.",
+    "Palette ownership is native anatomical inference, with inherited source luminance and contours."
+  ],
+  "integrationValidation": "Actual registered native/mobile/card controls and exact editable/preservation checks passed. Required project verification and CI/merge remain before completion credit."
+}

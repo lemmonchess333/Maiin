@@ -1,0 +1,31 @@
+{
+  "reviewedAt": "2026-10-15T19:18:21.562865+00:00",
+  "exerciseId": "single-leg-calf-raise",
+  "version": "anatomy-v3-2026-10-15-retained-single-leg-calf-two-endpoint-v1",
+  "planSha256": "833e9578c981a611722cb601f6de9e3afe1cd6d4cd565af0466b92ee21d185d0",
+  "cardSha256": "bf19def08b9fcbcd4e97243c22fb8fbc2c7d4ac7b98d25c2fb86bd17dfab1298",
+  "allowLocalIntegration": true,
+  "completionCredit": false,
+  "strictChecksRemainNull": true,
+  "findings": [
+    "Modest pictured below-step heel range, not a deep or maximum stretch claim.",
+    "Small inherited posture/contour differences; no established material proportion failure, no claim of exact anatomical identity.",
+    "Several-pixel residual original step/rail and hand/forefoot contact differences; not strict1px hardware certification.",
+    "Two physical endpoints repeated honestly across six paths; no authored intermediate or continuous trajectory.",
+    "Only the source-visible near calf/soleus is coloured; no invented hidden-side muscle geometry."
+  ],
+  "observations": {
+    "identity": "Parent viewed canonical FA56 and the intact original/final native art. Bald faceless white-grey athlete without shorts, anatomical contours and full white trainers retained. Source trainer/shading detail differences remain disclosed; this is not pixel-identical canonical identity certification.",
+    "anatomy": "All original human geometry remains intact. Colour layers stay within the documented original muscle fields; no body warping, limb fitting, head/shoe grafting or hidden anatomy reconstruction. Parent native and mobile observation found no obvious material body distortion.",
+    "muscles": "Catalogue primary ['Calves'], secondary ['Soleus']. Palette bases primary#7B72E9 and secondary#9590E0; inherited shading/fade and contours retained in documented independent layers. No unrelated new highlight field or spatial gradient is authored.",
+    "cueAgreement": "Parent manually selected all six draft paths plus wrap in both390x844 themes. Each decoded visible source matched its displayed label/cue, every cue is at most seven words. Written setup is based on the existing exact catalogue; final registered component review remains pending.",
+    "sequenceAndLoop": "Actual unchanged ExerciseFormFrames native and390x844 draft observations include all six paths and6-to-1 automatic wraps, pause/manual selection and slower playback. Normal intervals are approximately1.2s, slower2.4s. Source order[1, 1, 3, 3, 1, 1], physicalPoses2; no six-unique-state or continuous trajectory claim.",
+    "mobileLight": "Parent inspected actual390x844 light draft player and normal-generator transparent cards at480/160px. Full athlete/support visible, no horizontal overflow, cues legible and no observed material clipping or contact defect. Registered guide review remains pending.",
+    "mobileDark": "Parent inspected actual390x844 dark draft player and normal-generator transparent cards at480/160px. Full athlete/support visible, no horizontal overflow, cues legible and no observed material clipping or contact defect. Browser draft warning/error observations are empty; registered review remains pending.",
+    "camera": "Source1 remains in place; source3 receives only whole-scene integer translation(0,+32). Common empty-margin crop[217,158,843,1367], final626x1209, native actual player626x1209. No scaling or body-part alignment.",
+    "equipment": "Original step and balance rail remain unredrawn. Whole-scene registration leaves several-pixel native contour/base differences, disclosed as findings rather than pixel-fixed hardware certification.",
+    "contact": "Native forefoot remains supported by the step at both endpoints, heel hangs free, unloaded far foot remains off support, and near hand retains its original rail contact. Small inherited hand/foot/gear differences remain; no major mobile foot slide was observed.",
+    "physics": "Intact unilateral low and clearly plantarflexed raised endpoints show the stance knee extended and other leg unloaded. Lower heel is modestly below the step, not a claimed deep/maximum stretch. Only two endpoints are repeated; no drawn intermediate."
+  },
+  "draftActualUiOnly": "Final integrated component, normal project checks, CI, merge and preservation audit remain pending."
+}

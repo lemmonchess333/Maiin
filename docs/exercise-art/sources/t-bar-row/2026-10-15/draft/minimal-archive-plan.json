@@ -1,0 +1,64 @@
+{
+  "status": "current-minimal-plan-only",
+  "sourceOriginals": [
+    "originals/1-generated-master.png",
+    "originals/1-master.png",
+    "originals/4-peak-candidate.png",
+    "originals/4-peak-prompt.txt",
+    "originals/4-rigid-guide-prompt.txt",
+    "originals/DEFERRED.md",
+    "originals/master-framing.json",
+    "originals/PLAN.md",
+    "originals/prepare-master.cjs",
+    "originals/STATUS.md"
+  ],
+  "editables": ["1-native.ora", "2-native.ora", "1-framed.ora", "2-framed.ora"],
+  "artwork": [
+    "reference.png",
+    "1-framed.png",
+    "2-framed.png",
+    "final-frames/1.webp",
+    "final-frames/2.webp",
+    "final-frames/3.webp",
+    "final-frames/4.webp",
+    "final-frames/5.webp",
+    "final-frames/6.webp",
+    "card-cutout.webp"
+  ],
+  "metadata": [
+    "draft-beats.json",
+    "catalogue.json",
+    "source-provenance.json",
+    "colour-finishing-provenance.json",
+    "hardware-measurements.json",
+    "frame-package.json",
+    "card-pixel-proof.json",
+    "card-visual-review.json",
+    "editable-reproduction-verification.json",
+    "native-static-review.json",
+    "staged-card-provenance.json"
+  ],
+  "reviewEvidenceToAddAfterReview": [
+    "actual native/player/card acceptance",
+    "actual mobile evidence",
+    "project checks/CI/merge"
+  ],
+  "missingOriginalMasterPromptExplicitlyDisclosed": true,
+  "notSealed": true,
+  "reproduction": ["reproduce-reviewed-frames.py"],
+  "standardCardRecipe": ["stage-card.mts", "staged-card-provenance.json"],
+  "preparationRecipeDisclosure": "Original editable stack and standalone source-colour/ORA/frame verifier reproduce all accepted artwork pixels; original prepare-retained-pair.py used copied Pull-Up helper functions and is not needed by this standalone verifier.",
+  "reviewEvidenceAvailable": [
+    "native-static-review.json",
+    "card-visual-review.json",
+    "card-pixel-proof.json",
+    "editable-reproduction-verification.json"
+  ],
+  "reviewOnlyProofs": [
+    "card-light-full.png",
+    "card-dark-full.png",
+    "card-light-160.png",
+    "card-dark-160.png"
+  ],
+  "archivePlanFile": "minimal-archive-plan.json"
+}

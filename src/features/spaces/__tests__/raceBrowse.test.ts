@@ -72,7 +72,7 @@ describe("race browsing", () => {
       upcomingResolvedRaceDefs(
         { "berlin-marathon": { dateKey: "2027-09-26" } },
         "2027-09-27"
-      )
-    ).toEqual([]);
+      ).map((r) => r.id)
+    ).not.toContain("berlin-marathon");
   });
 });

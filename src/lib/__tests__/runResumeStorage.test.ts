@@ -60,6 +60,115 @@ afterEach(() => {
 });
 
 describe("writeStoredRun + readStoredRun — round-trip", () => {
+  it.each(["3.10", "3.", "-", "1e", "100001", ""])(
+    "round-trips optional editable distance text %j without changing v2",
+    (raw) => {
+      const snapshot = makeSnapshot({
+        manualDistanceDraft: { version: 1, raw, unit: "mi" },
+      });
+      expect(writeStoredRun(UID, snapshot)).toBe(true);
+      expect(readStoredRun(UID, snapshot.lastWriteAt)).toEqual(snapshot);
+      expect(snapshot.v).toBe(2);
+    }
+  );
+
+  it.each([
+    null,
+    { version: 2, raw: "3.1", unit: "mi" },
+    { version: 1, raw: 3.1, unit: "mi" },
+    { version: 1, raw: "3.1", unit: "miles" },
+  ])(
+    "ignores malformed optional distance data without dropping base or coaching: %j",
+    (manualDistanceDraft) => {
+      const snapshot = makeSnapshot({
+        playerCheckpoint: {
+          version: 1,
+          signature: "retained",
+          index: 0,
+          segmentStarts: [{ elapsed: 0, distance: 0 }],
+        },
+      });
+      expect(writeStoredRun(UID, snapshot)).toBe(true);
+      const meta = JSON.parse(localStorage.getItem(RUN_RESUME_KEY)!);
+      localStorage.setItem(
+        RUN_RESUME_KEY,
+        JSON.stringify({ ...meta, manualDistanceDraft })
+      );
+      expect(readStoredRun(UID, snapshot.lastWriteAt)).toEqual(snapshot);
+      expect(localStorage.getItem(RUN_RESUME_KEY)).not.toBeNull();
+    }
+  );
+
+  it("keeps drafts account/run scoped and clears them with the active snapshot", () => {
+    const first = makeSnapshot({
+      manualDistanceDraft: { version: 1, raw: "3.10", unit: "mi" },
+    });
+    expect(writeStoredRun(UID, first)).toBe(true);
+    expect(readStoredRun("user-B", first.lastWriteAt)).toBeNull();
+    const nextRun = makeSnapshot({ startedAt: first.startedAt + 1 });
+    expect(writeStoredRun(UID, nextRun)).toBe(true);
+    expect(
+      readStoredRun(UID, nextRun.lastWriteAt)?.manualDistanceDraft
+    ).toBeUndefined();
+    expect(writeStoredRun(UID, first)).toBe(true);
+    clearStoredRun(UID);
+    expect(readStoredRun(UID, first.lastWriteAt)).toBeNull();
+  });
+
+  it("round-trips optional coaching anchors without changing the base schema", () => {
+    const snapshot = makeSnapshot({
+      playerCheckpoint: {
+        version: 1,
+        signature: "stored execution identity",
+        index: 0,
+        segmentStarts: [{ elapsed: 0, distance: 0 }],
+      },
+    });
+    expect(writeStoredRun(UID, snapshot)).toBe(true);
+    expect(readStoredRun(UID, snapshot.lastWriteAt)).toEqual(snapshot);
+    expect(snapshot.v).toBe(2);
+  });
+
+  it.each([
+    { version: 99 },
+    { version: 1, signature: "broken", index: -1, segmentStarts: [] },
+    {
+      version: 1,
+      signature: "broken",
+      index: 0,
+      segmentStarts: [{ elapsed: "0", distance: 0 }],
+    },
+  ])(
+    "keeps legacy time, route and plan identity when optional coaching is malformed: %j",
+    (playerCheckpoint) => {
+      const snapshot = makeSnapshot({
+        points: [
+          {
+            lat: 51.5,
+            lon: -0.12,
+            timestamp: 1_001_000,
+            altitude: null,
+            accuracy: 5,
+            speed: 3,
+            rawLat: 51.5,
+            rawLon: -0.12,
+          },
+        ],
+      });
+      expect(writeStoredRun(UID, snapshot)).toBe(true);
+      const meta = JSON.parse(localStorage.getItem(RUN_RESUME_KEY)!);
+      localStorage.setItem(
+        RUN_RESUME_KEY,
+        JSON.stringify({ ...meta, playerCheckpoint })
+      );
+      expect(readStoredRun(UID, snapshot.lastWriteAt)).toEqual({
+        ...snapshot,
+        playerCheckpoint: null,
+      });
+      expect(localStorage.getItem(RUN_RESUME_KEY)).not.toBeNull();
+    }
+  );
+
   it("writes and reads back an identical snapshot", () => {
     // Bedrock: the JSON serialisation preserves every field the
     // resume flow reads on the way back in.
@@ -357,6 +466,73 @@ describe("clearStoredRun", () => {
 });
 
 describe("writeStoredRun — failure modes", () => {
+  it.each(["meta", "next chunk"])(
+    "preserves the committed prefix when %s fails after the partial chunk was extended",
+    (refusedWrite) => {
+      const now = 2_000_000;
+      const before = makeSnapshot({
+        lastWriteAt: now,
+        points: makePoints(200),
+      });
+      expect(writeStoredRun(UID, before)).toBe(true);
+      const real = Storage.prototype.setItem;
+      const refusedKey =
+        refusedWrite === "meta" ? runResumeKey(UID) : runResumeChunkKey(UID, 1);
+      const spy = vi
+        .spyOn(Storage.prototype, "setItem")
+        .mockImplementation(function (this: Storage, k: string, v: string) {
+          if (k === refusedKey)
+            throw new DOMException("quota", "QuotaExceededError");
+          return real.call(this, k, v);
+        });
+      const next = makeSnapshot({
+        lastWriteAt: now + 5_000,
+        accumulatedSeconds: before.accumulatedSeconds + 5,
+        points: makePoints(refusedWrite === "meta" ? 205 : 260),
+      });
+      try {
+        expect(writeStoredRun(UID, next)).toBe(false);
+        expect(readStoredRun(UID, now + 5_000)).toEqual(before);
+      } finally {
+        spy.mockRestore();
+      }
+      expect(writeStoredRun(UID, next)).toBe(true);
+      expect(readStoredRun(UID, now + 5_000)).toEqual(next);
+    }
+  );
+
+  it("rejects a shortened sealed chunk even when an extended tail keeps the total count equal", () => {
+    const now = 2_000_000;
+    writeStoredRun(
+      UID,
+      makeSnapshot({ lastWriteAt: now, points: makePoints(300) })
+    );
+    localStorage.setItem(
+      runResumeChunkKey(UID, 0),
+      JSON.stringify(makePoints(249))
+    );
+    localStorage.setItem(
+      runResumeChunkKey(UID, 1),
+      JSON.stringify(makePoints(51))
+    );
+    expect(readStoredRun(UID, now)).toBeNull();
+  });
+
+  it.each([
+    ["null", null],
+    ["non-array", "invalid chunk"],
+    ["short", []],
+    ["oversized", makePoints(251)],
+  ])("rejects a %s final chunk", (_label, chunk) => {
+    const now = 2_000_000;
+    writeStoredRun(
+      UID,
+      makeSnapshot({ lastWriteAt: now, points: makePoints(200) })
+    );
+    localStorage.setItem(runResumeChunkKey(UID, 0), JSON.stringify(chunk));
+    expect(readStoredRun(UID, now)).toBeNull();
+  });
+
   it("returns false when localStorage.setItem throws (quota / private mode)", () => {
     // Force setItem to throw. The function must not propagate.
     const original = Storage.prototype.setItem;

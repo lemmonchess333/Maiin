@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { paceLabel, durationLabel, distanceLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
-import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
+import type { SavedRunDoc } from "@/lib/runClaims";
 
 interface ExtrasExpandSheetProps {
   open: boolean;
@@ -154,7 +154,7 @@ function ExtraRunListItem({
         "bg-card border border-border/60",
         "flex items-center gap-3",
         "min-h-[44px]",
-        "motion-safe:transition-colors motion-safe:active:scale-[0.98]",
+        "motion-safe:transition motion-safe:active:scale-[0.98]",
         "hover:border-border"
       )}
     >

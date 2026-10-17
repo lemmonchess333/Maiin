@@ -24,6 +24,7 @@ import AdjustWeekSheet from "@/components/program/AdjustWeekSheet";
 import { localDateString } from "@/lib/dateHelpers";
 import { resolveRunPlan } from "@/lib/runPlanResolver";
 import { track as trackProgram } from "@/lib/programAnalytics";
+import { resolveDistanceUnit } from "@/lib/distanceUnits";
 
 export default function SettingsRunPlan() {
   const navigate = useNavigate();
@@ -141,6 +142,7 @@ export default function SettingsRunPlan() {
       {canAdjust && raceGoal && (
         <AdjustWeekSheet
           open={adjustOpen}
+          unit={resolveDistanceUnit(profile?.preferredDistanceUnit)}
           onClose={() => setAdjustOpen(false)}
           runDays={programState?.runDays ?? []}
           raceGoal={{

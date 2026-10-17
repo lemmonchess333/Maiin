@@ -1,0 +1,106 @@
+{
+  "reviewer": "Codex /root",
+  "reviewedAt": "2026-10-16T18:28:31.112638+00:00",
+  "actualRegisteredReviewComplete": true,
+  "strictCertified": false,
+  "manual": {
+    "dark": {
+      "sixSettledFramesAndCuesExact": true,
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    "light": {
+      "sixSettledFramesAndCuesExact": true,
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  },
+  "playback": {
+    "dark/normal": {
+      "allSixDecoded": true,
+      "wrapSixToOne": true,
+      "allSixSettledCuesAgree": true,
+      "transientObserverEntries": 9,
+      "observedRows": 19,
+      "source": "dark-normal-trace.json"
+    },
+    "dark/slower": {
+      "allSixDecoded": true,
+      "wrapSixToOne": true,
+      "allSixSettledCuesAgree": true,
+      "transientObserverEntries": 7,
+      "observedRows": 15,
+      "source": "dark-slower-trace.json"
+    },
+    "light/normal": {
+      "allSixDecoded": true,
+      "wrapSixToOne": true,
+      "allSixSettledCuesAgree": true,
+      "transientObserverEntries": 9,
+      "observedRows": 19,
+      "source": "light-normal-trace.json"
+    },
+    "light/slower": {
+      "allSixDecoded": true,
+      "wrapSixToOne": true,
+      "allSixSettledCuesAgree": true,
+      "transientObserverEntries": 7,
+      "observedRows": 15,
+      "source": "light-slower-trace.json"
+    }
+  },
+  "normalCardDimensions": [
+    480,
+    377
+  ],
+  "cardThemes": [
+    "dark",
+    "light"
+  ],
+  "normalCardLongSideLimits": [
+    480,
+    348,
+    160
+  ],
+  "preservedPriorPublicArtFiles": 1022,
+  "preservedHistoricalStrictRecords": 124,
+  "browserWarningsOrErrors": 0,
+  "nativeReview": "Both final whole native endpoints and both native contact crops reviewed; genuine connected movement, same FA56-based athlete/no shorts, intact trainers and source-derived palette. Fresh portable images and ORAs reproduce byte-exact.",
+  "limitations": [
+    "Two genuine physical endpoints occupy six cue slots; no continuous-motion or six-unique-pose certificate.",
+    "Normal cards use the established lossy export and transparent-background treatment. The white athlete has reduced contrast against the light card; at160px the complete apparatus/athlete is small. No strict readability certificate.",
+    "Actual native-coordinate source joins, anatomical colour boundaries and projected contact depth are qualitative findings. Strict visual checks remain null.",
+    "Alternating variation demonstrates the near-arm cycle; opposite-side repetition is stated in setup and cues. Far arm and its weight remain stationary. Exact3D elbow coordinates are unverified; minor local contour/projection differences remain findings."
+  ],
+  "previewDisposition": "Each accepted mobile capture explicitly checked390x844. Leg-press initial card-metric case-sensitive text probe returned false for uppercased COMMON MISTAKES; retained under first-case-sensitive filename, then corrected read-only probe recaptured the actual dark page. No app change or fabricated observation.",
+  "evidenceHashes": {
+    "review/browser-warnings-errors.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "review/dark-card-metrics.json": "91c2c4e3eb317ed6148a01ac8b4cb3c3242d2cfb91cea71893e4e659db6d988a",
+    "review/dark-cards.png": "e80925c768aafedd9e0ca19bd33fea4ab0206a4834d482249cbd6df8155ac7fd",
+    "review/dark-manual-1.png": "343f209bd2151717f94b1d8e2d35487410537fe0e98dcffffd7edb06dc0cf450",
+    "review/dark-manual-2.png": "c99c0dd96314606a52362324f8b03d8ce3a57465b9c5454d79532f5871b0b4b5",
+    "review/dark-manual-3.png": "3676e637b1911e6e928c938b882cbeed61d0c9ac95307a5ff7aba51e4a83565c",
+    "review/dark-manual-4.png": "cf0f8e170e22d957521e96885184d51d1c434e7a0ef8f7ebeaf345a5ec32f55e",
+    "review/dark-manual-5.png": "d2770f412ef0c495070908acebc2cdd6dc18d7b626305a1862beebcb86a3c352",
+    "review/dark-manual-6.png": "2c105b10fb791ddd0e3ef3e27419e8308ac3bc6cadb999fd2b48b69382533f2a",
+    "review/dark-manual-six.json": "55cf4f12a7c64eb8fdce702b0b4c68667d50bd37dcd80ce278ed01d8953e2659",
+    "review/dark-normal-trace.json": "4394cbfe0d7e6684c7bc780fcda3b0812f69265d30a8cd58880c5c5e61910825",
+    "review/dark-slower-trace.json": "7397c717bdc3cc45f7819889c8e6ee670dec96d01c2b34d7a732814829601b9c",
+    "review/light-card-metrics.json": "e1adb1454911607182d475fa8fd2290e42b7b7662eeb91c12eacd9f3503970f7",
+    "review/light-cards.png": "908f770a92b41356273fd1babd58d1b1e33cf1c3604b9ddc8361bd88bfe4865a",
+    "review/light-manual-1.png": "a4d065b912d4f46340cb03a563af65ec61829fb7b4235fbd5eda88884e181190",
+    "review/light-manual-2.png": "e507a01cb0536b30cd9a02933077e366e67f09f369958e62f4763c7647d6cbcb",
+    "review/light-manual-3.png": "07aa9c961d27acff5b8adca419d359fd69d8a32c44841e38cde8521a9018468f",
+    "review/light-manual-4.png": "2c5f3cf91efa8b5587095e50a95f47c2053b674fab24e8579061e899dc2cb92b",
+    "review/light-manual-5.png": "1157b2b25147f5d6cba4607b671af0b18310660bcd6834aa3dd5fe1530f0f9f1",
+    "review/light-manual-6.png": "5b873dc6a3e11aa2a923fa2bd9d0546b2fcfa3922de107195ae10ad1434b1347",
+    "review/light-manual-six.json": "05d879f50dbedfb4bc1b5e156f4fb2a3fd432bcfea720681cafed2ed96a4b4f0",
+    "review/light-normal-trace.json": "fd26e98bd7e027ce882237c44930d2ca915c3fd4b6382ae21291fc73800a76bc",
+    "review/light-slower-trace.json": "309c66d591b8d3830d273a019e99c798723e758308d30c9445fe4270109b651c"
+  },
+  "completionCredit": false
+}

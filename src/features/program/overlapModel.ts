@@ -62,6 +62,7 @@ import {
   rescaleForSwap,
 } from "./variationBank";
 import { allowsComplexity, type Experience } from "./experienceModel";
+import { longRunDayOf } from "./runPlacement";
 
 /** Patterns whose systemic cost is capped independently of muscle volume. */
 export const EXPENSIVE_PATTERNS: ReadonlySet<MovementCategory> = new Set([
@@ -224,6 +225,11 @@ export const MAX_WEEKLY_LIFT_EXPOSURES = 2;
  * progression anchor and usually the lift the day is named for), then
  * earliest day, then earliest slot. Fully deterministic — a regenerate must
  * not churn the programme (the lesson of #11 and #17).
+ *
+ * The injury and equipment filters run after this and keep the cap in their
+ * own pickers, in the same order (`matchTemplate.ts`): this picker knows
+ * nothing of the person's kit or injuries, so running it after them would
+ * hand back lifts they can't do.
  */
 export function capRepeatedLifts(
   workouts: WorkoutDay[],
@@ -401,15 +407,61 @@ export function posteriorChainOverlap(a: WorkoutDay, b: WorkoutDay): number {
   return total;
 }
 
+/** The lower body's direct and indirect sets in a session (Lift13). */
+const LEGS: ReadonlySet<CanonicalMuscle> = new Set([
+  "Quads",
+  "Hamstrings",
+  "Glutes",
+] as CanonicalMuscle[]);
+
+function legSets(day: WorkoutDay): number {
+  return weeklyVolumeByMuscle([day])
+    .filter((v) => LEGS.has(v.muscle))
+    .reduce((sum, v) => sum + v.sets, 0);
+}
+
+/**
+ * Which session, by its place in the week's order, falls the day before the
+ * long run (Lift13), or null: no run day, or no lift that day. The long run's
+ * day is the run plans' own pick (`longRunDayOf`); Sunday's lift is the day
+ * before a Monday long run, as the week repeats.
+ */
+export function sessionBeforeLongRun(
+  schedule: ReadonlyArray<{ day: number; type: string }> | undefined | null,
+  sessionCount: number
+): number | null {
+  if (!schedule || schedule.length === 0) return null;
+  const longDay = longRunDayOf(schedule);
+  if (longDay === null) return null;
+  const liftDays = [...schedule]
+    .filter((d) => d.type === "lift" || d.type === "both")
+    .map((d) => weekPosition(d.day))
+    .sort((a, b) => a - b)
+    .slice(0, sessionCount);
+  const at = liftDays.indexOf((weekPosition(longDay) + 6) % 7);
+  return at >= 0 ? at : null;
+}
+
 /**
  * Reorder the week so the sessions that land on BACK-TO-BACK days aren't the
- * two that load the same posterior chain hardest (M6).
+ * two that load the same posterior chain hardest (M6), and so the session the
+ * day before the long run is the one with the least leg work in it (Lift13).
+ *
+ * Lift13: the default week can put a lift day the day before the long run
+ * (two lift and four run days, three and three, four and two), and the order
+ * the builders produce put a deadlift or Romanian deadlift there in every
+ * goal, which "Why this session" then warns about (Lift4 (10)). The
+ * evidence's convention is the long run 48 hours after heavy legs
+ * (running-evidence, the long run's placement; Doma 2019). A new plan picks
+ * the order with the fewest leg sets on that day; a plan the person has
+ * keeps its order, and a clash they make themselves is the note, as Lift4
+ * (10) locked.
  *
  * Returns the input untouched when there is nothing to do — no back-to-back
- * pairs (the Mon/Wed/Fri case), fewer than three sessions, or no ordering
- * that improves on the one the builders produced. Deterministic: ties keep
- * the earlier permutation, so the same week in always gives the same week
- * out.
+ * pairs (the Mon/Wed/Fri case) and no lift the day before the long run, a
+ * single session, or no ordering that improves on the one the builders
+ * produced. Deterministic: ties keep the earlier permutation, so the same
+ * week in always gives the same week out.
  *
  * The CALLER must only apply this when there is no existing plan to carry —
  * `workouts[i]` is matched to saved state positionally, so reordering an
@@ -421,13 +473,16 @@ export function orderForAdjacency(
   schedule: ReadonlyArray<{ day: number; type: string }> | undefined | null
 ): WorkoutDay[] {
   const n = workouts.length;
-  if (n < 3) return workouts; // nothing meaningful to permute
-  const adjacency = backToBackPairs(schedule, n);
-  const wrapAdjacent = weekWrapsBackToBack(schedule, n);
-  if (!adjacency.some(Boolean) && !wrapAdjacent) return workouts;
+  if (n < 2) return workouts; // nothing to permute
+  // Under three sessions no seam is worth a reorder; the long run's eve is.
+  const adjacency = n < 3 ? [] : backToBackPairs(schedule, n);
+  const wrapAdjacent = n >= 3 && weekWrapsBackToBack(schedule, n);
+  const eve = sessionBeforeLongRun(schedule, n);
+  if (!adjacency.some(Boolean) && !wrapAdjacent && eve === null)
+    return workouts;
 
   const cost = (order: number[]) => {
-    let total = 0;
+    let total = eve === null ? 0 : legSets(workouts[order[eve]]);
     for (let i = 0; i + 1 < order.length; i += 1) {
       if (!adjacency[i]) continue; // only back-to-back seams are penalised
       total += posteriorChainOverlap(

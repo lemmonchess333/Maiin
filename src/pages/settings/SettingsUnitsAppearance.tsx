@@ -10,6 +10,7 @@ export default function SettingsUnitsAppearance() {
   async function toggleUnit(
     key:
       | "preferredWeightUnit"
+      | "liftingWeightUnit"
       | "preferredHeightUnit"
       | "preferredDistanceUnit",
     current: string
@@ -17,6 +18,16 @@ export default function SettingsUnitsAppearance() {
     if (key === "preferredWeightUnit") {
       await updateProfile({
         preferredWeightUnit: current === "kg" ? "lbs" : "kg",
+      });
+    } else if (key === "liftingWeightUnit") {
+      /* Display, like its siblings: every load stays stored in kg. What
+         changes besides is the kit the plan rounds to from here on. The
+         plan's copy of the unit (`settings.loadUnit`) follows from
+         useProgram, which writes it whenever it differs from this field,
+         on Home, Train and the programme pages: before any session can
+         start. Mounting the programme here for it cost the page 1.8 kB. */
+      await updateProfile({
+        liftingWeightUnit: current === "lbs" ? "kg" : "lbs",
       });
     } else if (key === "preferredHeightUnit") {
       await updateProfile({

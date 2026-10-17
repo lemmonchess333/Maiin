@@ -1,0 +1,172 @@
+{
+  "status": "Final PNG draft set reviewed; production delivery and project checks pending",
+  "files": [
+    "frame1-rigid-equipment-v6-draft.png",
+    "frame2-rigid-equipment-v3-draft.png",
+    "frame3-rigid-equipment-v3-draft.png",
+    "frame4-rigid-equipment-v2-draft.png",
+    "frame5-rigid-equipment-v3-draft.png",
+    "frame6-rigid-equipment-v2-draft.png"
+  ],
+  "source": "Real ExerciseFormContent / ExerciseFormFrames and project styles in local Vite harness; temporary draft-only getFormBeats/key transform. Native review is a separate 1:1 image player. No authenticated app-navigation claim.",
+  "viewport": [390, 844],
+  "observedClientAndScrollWidths": [
+    [380, 380],
+    [390, 390]
+  ],
+  "horizontalOverflow": false,
+  "screenshots": [
+    {
+      "theme": "dark",
+      "frame": 1,
+      "file": "rigid-mobile-dark-frame1.jpg",
+      "size": [380, 1163],
+      "sha256": "7d90291033d72eb63493e043ddcd310140e5ecab855d7b2647a575422273d3ba",
+      "actuallyViewed": true,
+      "finding": "Complete athlete/equipment fit the real stage; label, key and cues readable; no clipping."
+    },
+    {
+      "theme": "dark",
+      "frame": 2,
+      "file": "rigid-mobile-dark-frame2.jpg",
+      "size": [380, 1163],
+      "sha256": "2e513f7d84facf5ebbdd97b2fcb28e5a03d9c55df5bf22a3edbbb5029520d25f",
+      "actuallyViewed": true,
+      "finding": "Complete athlete/equipment fit the real stage; label, key and cues readable; no clipping."
+    },
+    {
+      "theme": "dark",
+      "frame": 3,
+      "file": "rigid-mobile-dark-frame3.jpg",
+      "size": [380, 1163],
+      "sha256": "4d2e2870e778942a84c6ce533667ccd5489c70050f76257ba081f718f3c88bcd",
+      "actuallyViewed": true,
+      "finding": "Complete athlete/equipment fit the real stage; label, key and cues readable; no clipping."
+    },
+    {
+      "theme": "dark",
+      "frame": 4,
+      "file": "rigid-mobile-dark-frame4.jpg",
+      "size": [380, 1163],
+      "sha256": "6d8cb3167d321ac597dea89df7821088a43cbfb9354f6c6553f9c0586bbaa620",
+      "actuallyViewed": true,
+      "finding": "Complete athlete/equipment fit the real stage; label, key and cues readable; no clipping."
+    },
+    {
+      "theme": "dark",
+      "frame": 5,
+      "file": "rigid-mobile-dark-frame5.jpg",
+      "size": [380, 1163],
+      "sha256": "92dc1326ca03d6c313ad2d1690037ecc33d97f2ce208d59d8b42317c2301729d",
+      "actuallyViewed": true,
+      "finding": "Complete athlete/equipment fit the real stage; label, key and cues readable; no clipping."
+    },
+    {
+      "theme": "dark",
+      "frame": 6,
+      "file": "rigid-mobile-dark-frame6.jpg",
+      "size": [380, 1163],
+      "sha256": "8a5bd90cb116a3bc50579fa6f723dd765061566c96e5de6af3af38fcd8853222",
+      "actuallyViewed": true,
+      "finding": "Complete athlete/equipment fit the real stage; label, key and cues readable; no clipping."
+    },
+    {
+      "theme": "light",
+      "frame": 1,
+      "file": "rigid-mobile-light-frame1.jpg",
+      "size": [380, 1163],
+      "sha256": "e5084b8b09822fa1ed9b48c74c13d448720f35235baed6af8c519dcb2bb7c435",
+      "actuallyViewed": true,
+      "finding": "Complete athlete/equipment fit the real stage; label, key and cues readable; no clipping."
+    },
+    {
+      "theme": "light",
+      "frame": 2,
+      "file": "rigid-mobile-light-frame2.jpg",
+      "size": [380, 1163],
+      "sha256": "c4e832cf63ec522f0b0f30f4538255f1a0dcbf7ef6ea7df3cb36dbb3bd3f8555",
+      "actuallyViewed": true,
+      "finding": "Complete athlete/equipment fit the real stage; label, key and cues readable; no clipping."
+    },
+    {
+      "theme": "light",
+      "frame": 3,
+      "file": "rigid-mobile-light-frame3.jpg",
+      "size": [380, 1163],
+      "sha256": "1b6198c4da7dd4a2798b37151b4a433a2d1715efe2ce2e7c50d400cecae49430",
+      "actuallyViewed": true,
+      "finding": "Complete athlete/equipment fit the real stage; label, key and cues readable; no clipping."
+    },
+    {
+      "theme": "light",
+      "frame": 4,
+      "file": "rigid-mobile-light-frame4.jpg",
+      "size": [380, 1163],
+      "sha256": "149983cfd60577539fed96894a9855e97903c5f41c69a6b919ce8671edcaf2b8",
+      "actuallyViewed": true,
+      "finding": "Complete athlete/equipment fit the real stage; label, key and cues readable; no clipping."
+    },
+    {
+      "theme": "light",
+      "frame": 5,
+      "file": "rigid-mobile-light-frame5.jpg",
+      "size": [380, 1163],
+      "sha256": "df36a0dba78cb0f42829c36afba4dc7702bd3a84dcff5283eb3a4b57b01b69d8",
+      "actuallyViewed": true,
+      "finding": "Complete athlete/equipment fit the real stage; label, key and cues readable; no clipping."
+    },
+    {
+      "theme": "light",
+      "frame": 6,
+      "file": "rigid-mobile-light-frame6.jpg",
+      "size": [380, 1163],
+      "sha256": "5af704a784b263c19edf91f8bda45aad052011e9555524277caf5860d985aa9f",
+      "actuallyViewed": true,
+      "finding": "Complete athlete/equipment fit the real stage; label, key and cues readable; no clipping."
+    }
+  ],
+  "playback": {
+    "dark": {
+      "trace": "rigid-mobile-dark-autoplay-trace.json",
+      "completeCycleCaptured": true,
+      "firstCompleteCycle": {
+        "frames": [1, 2, 3, 4, 5, 6, 1],
+        "timesMs": [404, 1608, 2827, 4039, 5251, 6463, 7669],
+        "intervalsMs": [1204, 1219, 1212, 1212, 1212, 1206]
+      },
+      "everyImageLoadedAt1024x1536": true,
+      "playAndPauseControlsObserved": true
+    },
+    "light": {
+      "trace": "rigid-mobile-light-autoplay-trace.json",
+      "completeCycleCaptured": true,
+      "firstCompleteCycle": {
+        "frames": [1, 2, 3, 4, 5, 6, 1],
+        "timesMs": [88989, 90200, 91413, 92625, 93834, 95036, 96239],
+        "intervalsMs": [1211, 1213, 1212, 1209, 1202, 1203]
+      },
+      "everyImageLoadedAt1024x1536": true,
+      "playAndPauseControlsObserved": true
+    }
+  },
+  "nativeLoop": {
+    "trace": "rigid-native-autoplay-trace.json",
+    "completeCycleCaptured": true,
+    "frames": [1, 2, 3, 4, 5, 6, 1],
+    "timesMs": [17553, 18749, 19950, 21149, 22350, 23547, 24749],
+    "renderedAndNaturalSize": [1024, 1536],
+    "viewport": [1024, 1700],
+    "pausedScreenshot": "rigid-native-loop-paused.jpg",
+    "actuallyViewed": true
+  },
+  "explicitPauseEvidence": {
+    "action": "Clicked real Pause control in light mode",
+    "result": "Button became Play and selected frame5 remained frame5 across later observations.",
+    "trace": "rigid-mobile-final-trace.json"
+  },
+  "browserErrorsObserved": [],
+  "remaining": [
+    "Record whole-set anatomy/contact/physics decision with explicit evidence.",
+    "Complete current repository baseline, then integration, delivery/cutout checks and post-change verification."
+  ]
+}

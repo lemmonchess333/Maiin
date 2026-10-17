@@ -7,10 +7,11 @@ import { haptic } from "@/lib/haptic";
 import { paceBandLabel, paceLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
+  benchmarkFromRaceTime,
+  manualRunFitness,
   paceTableFromFitness,
-  vdotFromRace,
-  parseRaceTimeToSeconds,
   type RaceDistanceKey,
+  type RaceTimeError,
 } from "@/lib/runPaces";
 import { usePaceInsight } from "@/hooks/usePaceInsight";
 import PaceInsightCard from "@/components/run/PaceInsightCard";
@@ -23,24 +24,26 @@ import type { UserProfile } from "@/lib/auth";
  * Lets the user set a benchmark (a recent race / time-trial) from which all
  * training paces are derived, and shows the resulting personalised paces. The
  * benchmark is the locked-decision "ask" capture path (§10); the silent-derive
- * path lives in useRunFitnessAutoDerive. Free tier (paces are free; only the
- * adaptive Pace-Insights loop is Pro).
+ * path lives in useRunFitnessAutoDerive, and since Pgm8 R1 derives only from
+ * a race, a time trial or a tempo, which the pending note says. Free tier
+ * (paces are free; only the adaptive Pace-Insights loop is Pro).
  *
  * Writes `profile.runFitness` through `updateProfile` (guarded write chain +
  * allow-list fixed in Phase 0). Distances in metres, paces in sec/km — the
  * canonical contracts.
  */
 
-const RACE_OPTIONS: {
-  value: RaceDistanceKey;
-  label: string;
-  meters: number;
-}[] = [
-  { value: "5k", label: "5K", meters: 5000 },
-  { value: "10k", label: "10K", meters: 10000 },
-  { value: "half", label: "Half", meters: 21097.5 },
-  { value: "marathon", label: "Marathon", meters: 42195 },
+const RACE_OPTIONS: { value: RaceDistanceKey; label: string }[] = [
+  { value: "5k", label: "5K" },
+  { value: "10k", label: "10K" },
+  { value: "half", label: "Half" },
+  { value: "marathon", label: "Marathon" },
 ];
+
+const RACE_TIME_ERRORS: Record<RaceTimeError, string> = {
+  format: "Enter a time like 22:30 (or 1:45:00 for longer races).",
+  implausible: "That time doesn't look right. Check it and try again.",
+};
 
 export default function RunFitnessSection({
   profile,
@@ -97,32 +100,16 @@ export default function RunFitnessSection({
   }
 
   async function handleSave() {
-    const seconds = parseRaceTimeToSeconds(timeStr);
-    if (seconds === null) {
-      setError("Enter a time like 22:30 (or 1:45:00 for longer races).");
-      return;
-    }
-    const meters = RACE_OPTIONS.find((o) => o.value === distance)!.meters;
-    const vdot = vdotFromRace(meters, seconds);
-    if (vdot <= 0) {
-      setError("That time doesn't look right. Check it and try again.");
+    const entry = benchmarkFromRaceTime(distance, timeStr);
+    if ("error" in entry) {
+      setError(RACE_TIME_ERRORS[entry.error]);
       return;
     }
     setError(null);
     setSaving(true);
     try {
       await updateProfile(
-        {
-          runFitness: {
-            benchmark: { distanceM: meters, timeS: seconds },
-            vdot: Math.round(vdot * 10) / 10,
-            source: "manual",
-            updatedAt: new Date().toISOString(),
-            // RUN-EV-08: a manual entry is consented by definition; literal
-            // false so a prior pending auto-derive can't survive the merge.
-            pendingConfirmation: false,
-          },
-        },
+        { runFitness: manualRunFitness(entry, new Date()) },
         { throwOnError: true }
       );
       haptic("success");
@@ -192,9 +179,9 @@ export default function RunFitnessSection({
             {fitness?.pendingConfirmation && (
               <div className="rounded-lg bg-muted/60 p-3 space-y-2">
                 <p className="text-xs text-muted-foreground leading-snug">
-                  Set automatically from your recent running. It shapes
-                  predictions now — accept it to also drive your session pace
-                  targets, or remove it to stay on standard paces.
+                  Set automatically from a race, time trial or tempo you ran. It
+                  shapes predictions now — accept it to also drive your session
+                  pace targets, or remove it to stay on standard paces.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Button
@@ -221,8 +208,11 @@ export default function RunFitnessSection({
                 dash where one row is too narrow for it. Wide-first. */}
             <div className="grid grid-cols-2 @max-[10em]:grid-cols-1 gap-2">
               <PaceRow label="Easy" band={paceTable.easy} />
-              <PaceRow label="Threshold" band={paceTable.threshold} />
-              <PaceRow label="Interval" band={paceTable.interval} />
+              {/* Named for the sessions run at them (Run21 (2)): the
+                  physiology names, threshold and VO2 max, are the "Coaches
+                  also call this" line in each run's "Why this run". */}
+              <PaceRow label="Tempo" band={paceTable.threshold} />
+              <PaceRow label="Intervals" band={paceTable.interval} />
               <PaceRow label="10K race" value={paceTable.race["10k"]} />
             </div>
           </>
@@ -233,7 +223,7 @@ export default function RunFitnessSection({
                 Set your fitness
               </p>
               <p className="text-xs text-muted-foreground">
-                Add a recent race and we'll personalize every run pace to you.
+                Add a recent race and we'll personalise every run pace to you.
               </p>
             </div>
             {!editing && (

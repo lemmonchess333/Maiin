@@ -60,7 +60,7 @@ describe("guarded-write enforcement (no raw setDoc/addDoc/updateDoc/deleteDoc)",
   it("no src file outside the allow-list calls the raw write SDK", () => {
     const offenders: string[] = [];
     for (const file of sourceFiles(srcRoot)) {
-      const rel = relative(repoRoot, file);
+      const rel = relative(repoRoot, file).replaceAll("\\", "/");
       if (ALLOWLIST.has(rel)) continue;
       const src = readFileSync(file, "utf8");
       // Check line-by-line so the message can name the exact line, and so a

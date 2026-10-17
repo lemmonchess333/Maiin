@@ -30,6 +30,7 @@
  * create sheet opens prefilled.
  */
 
+import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import { useCallback, useEffect, useState, type MutableRefObject } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Copy, Users } from "lucide-react";
@@ -64,6 +65,11 @@ import CircleWeeklyFocusSheet from "./CircleWeeklyFocusSheet";
 import RestrictedNotice from "./RestrictedNotice";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import { showRestrictedToast } from "@/lib/accountRestriction";
+import {
+  containsProfanity,
+  OBJECTIONABLE_NAME_MESSAGE,
+} from "@/lib/profanityFilter";
+import { circleTitle } from "@/features/goalSpace/circleTitle";
 
 // weekly_check_in copy is dynamic (checkInTimelineCopy — the focus
 // changes the sentence); the static map covers every other kind.
@@ -535,6 +541,7 @@ export default function CirclesSection({
           text,
           url: window.location.origin,
         });
+        trackSocialEvent("circle_invite_sent", { inviteMethod: "share" });
       } catch {
         /* user cancelled */
       }
@@ -544,6 +551,7 @@ export default function CirclesSection({
           `${text} ${window.location.origin}`
         );
         toast.success("Invite copied.");
+        trackSocialEvent("circle_invite_sent", { inviteMethod: "copy" });
       } catch {
         toast.error("Couldn't copy. Long-press the code to select it.");
       }
@@ -556,6 +564,7 @@ export default function CirclesSection({
         inviteString(h.spaceId, h.inviteCode)
       );
       toast.success("Invite code copied.");
+      trackSocialEvent("circle_invite_sent", { inviteMethod: "copy" });
     } catch {
       toast.error("Couldn't copy. Long-press the code to select it.");
     }
@@ -563,8 +572,14 @@ export default function CirclesSection({
 
   const create = async () => {
     if (refused()) return;
-    setBusy(true);
     const trimmed = title.trim();
+    // Everyone invited reads the name, so it meets the word filter a
+    // display name does; the server refuses it with the same sentence.
+    if (containsProfanity(trimmed)) {
+      toast.error(OBJECTIONABLE_NAME_MESSAGE);
+      return;
+    }
+    setBusy(true);
     const res = await createCircle({
       type: template,
       title: trimmed,
@@ -576,6 +591,7 @@ export default function CirclesSection({
       setShowCreate(false);
       setTitle("");
       setPendingTargetDate(null);
+      trackSocialEvent("circle_created", { circleType: template });
       // Straight into the invite hand-off — a circle of one isn't done.
       setInviteHandoff({ title: trimmed, ...res });
     } else {
@@ -599,6 +615,7 @@ export default function CirclesSection({
       setShowJoin(false);
       setJoinInput("");
       toast.success("You're in.");
+      trackSocialEvent("circle_joined");
     } else {
       // The server distinguishes a full circle, a closed one, a wrong code
       // and a tripped limiter; `describeJoinRejection` turns each into a
@@ -799,7 +816,7 @@ export default function CirclesSection({
             className="block w-full min-h-[44px] text-left active:scale-[0.97] transition-transform"
           >
             <p className="text-base font-bold text-foreground truncate">
-              {featured.space.title}
+              {circleTitle(featured.space)}
               {!featured.space.active && (
                 <span className="font-normal text-muted-foreground">
                   {" "}
@@ -820,18 +837,22 @@ export default function CirclesSection({
               )}
             </p>
             {/* Chosen-focus pulse — a count, never a ranking. */}
-            {featuredDetail && featuredFocusCount > 0 && (
-              <p className="text-xs text-muted-foreground mt-1">
-                <span className="font-mono tabular-nums">
-                  {featuredFocusCount}
-                </span>{" "}
-                of{" "}
-                <span className="font-mono tabular-nums">
-                  {featuredDetail.members.length}
-                </span>{" "}
-                focusing this week
-              </p>
-            )}
+            {/* Not in a Circle of one, where "1 of 1 focusing" sits above
+                the prompt to invite someone. */}
+            {featuredDetail &&
+              featuredDetail.members.length >= 2 &&
+              featuredFocusCount > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  <span className="font-mono tabular-nums">
+                    {featuredFocusCount}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-mono tabular-nums">
+                    {featuredDetail.members.length}
+                  </span>{" "}
+                  focusing this week
+                </p>
+              )}
           </button>
           {isTargetReached(featured.space, uid) ? (
             /* CIRCLE-TARGET-LIFECYCLE — the deadline arrived. The owner
@@ -919,7 +940,7 @@ export default function CirclesSection({
                   if (!code) return; // narrowing lost across the closure
                   haptic("light");
                   setInviteHandoff({
-                    title: featured.space.title,
+                    title: circleTitle(featured.space),
                     spaceId: featured.space.id,
                     inviteCode: code,
                   });
@@ -959,7 +980,7 @@ export default function CirclesSection({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-foreground truncate">
-                  {c.space.title}
+                  {circleTitle(c.space)}
                   {!c.space.active && (
                     <span className="font-normal text-muted-foreground">
                       {" "}
@@ -1035,7 +1056,7 @@ export default function CirclesSection({
                 setGoalPrechosen(true); // goal chosen here — skip the re-pick
                 setShowCreate(true);
               }}
-              className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition-colors active:scale-[0.97]"
+              className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition active:scale-[0.97]"
             >
               <p className="text-sm font-semibold text-foreground">{t.label}</p>
               <p className="text-xs text-muted-foreground">{t.description}</p>
@@ -1048,7 +1069,7 @@ export default function CirclesSection({
               setChooserOpen(false);
               navigate("/review");
             }}
-            className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition-colors active:scale-[0.97]"
+            className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition active:scale-[0.97]"
           >
             <p className="text-sm font-semibold text-foreground">
               Private progress
@@ -1132,7 +1153,7 @@ export default function CirclesSection({
                     setTemplate(t.type);
                   }}
                   className={cn(
-                    "w-full min-h-[44px] p-3 rounded-xl text-left transition-colors active:scale-[0.97]",
+                    "w-full min-h-[44px] p-3 rounded-xl text-left transition active:scale-[0.97]",
                     template === t.type
                       ? "bg-primary/10 border border-primary/40"
                       : "bg-muted border border-transparent"
@@ -1200,7 +1221,7 @@ export default function CirclesSection({
                 void openDetail(existing);
               }}
             >
-              Open {trainTogether.existing.space.title}
+              Open {circleTitle(trainTogether.existing.space)}
             </Button>
             <Button
               variant="secondary"
@@ -1258,7 +1279,7 @@ export default function CirclesSection({
         onOpenChange={(open) => {
           if (!open) setDetailOf(null);
         }}
-        title={detailOf?.space.title ?? ""}
+        title={detailOf ? circleTitle(detailOf.space) : ""}
         description={detailOf ? memberLine(detailOf.space) : undefined}
       >
         {detailOf && (
@@ -1309,7 +1330,12 @@ export default function CirclesSection({
                         ?.writeText(
                           inviteString(detailOf.space.id, detailOf.inviteCode!)
                         )
-                        .then(() => toast.success("Invite code copied."))
+                        .then(() => {
+                          toast.success("Invite code copied.");
+                          trackSocialEvent("circle_invite_sent", {
+                            inviteMethod: "copy",
+                          });
+                        })
                         .catch(() =>
                           toast.error("Couldn't copy. Long-press to select it.")
                         );

@@ -40,6 +40,12 @@ describe("RunFitnessSection", () => {
   it("prompts to set fitness when no benchmark", () => {
     renderWith({ runFitness: null });
     expect(screen.getByText("Set your fitness")).toBeInTheDocument();
+    // In British spelling, as "personalised paces" are below.
+    expect(
+      screen.getByText(
+        "Add a recent race and we'll personalise every run pace to you."
+      )
+    ).toBeInTheDocument();
   });
 
   it("shows VDOT + personalised paces when a benchmark exists", () => {
@@ -52,8 +58,46 @@ describe("RunFitnessSection", () => {
       },
     });
     expect(screen.getByText("Personalised paces")).toBeInTheDocument();
-    expect(screen.getByText("Threshold")).toBeInTheDocument();
+    // Named for the sessions run at them (Run21 (2)).
+    expect(screen.getByText("Tempo")).toBeInTheDocument();
+    expect(screen.getByText("Intervals")).toBeInTheDocument();
+    expect(screen.queryByText("Threshold")).toBeNull();
     expect(screen.getByText(/VDOT/)).toBeInTheDocument();
+  });
+});
+
+describe("RunFitnessSection — a race time typed in", () => {
+  const enter = (time: string) => {
+    fireEvent.change(screen.getByLabelText("Finish time"), {
+      target: { value: time },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save fitness" }));
+  };
+
+  it("saves it as the person's own benchmark, never pending", async () => {
+    const updateProfile = renderWith({ runFitness: null });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    enter("22:30");
+    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
+    expect(updateProfile.mock.calls[0][0]).toEqual({
+      runFitness: {
+        benchmark: { distanceM: 5000, timeS: 1350 },
+        vdot: 43.4,
+        source: "manual",
+        updatedAt: expect.any(String),
+        pendingConfirmation: false,
+      },
+    });
+  });
+
+  it("refuses a time faster than anyone has raced", () => {
+    const updateProfile = renderWith({ runFitness: null });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    enter("12:00");
+    expect(
+      screen.getByText("That time doesn't look right. Check it and try again.")
+    ).toBeInTheDocument();
+    expect(updateProfile).not.toHaveBeenCalled();
   });
 });
 
@@ -106,5 +150,21 @@ describe("RunFitnessSection — pending auto-derive (RUN-EV-08)", () => {
   it("names the source run's date in the provenance line", () => {
     renderWith({ runFitness: pending });
     expect(screen.getByText(/From your run on/i)).toBeInTheDocument();
+  });
+
+  /* Pgm8 R1: the app derives a benchmark from efforts only. */
+  it("says the benchmark came from a race, time trial or tempo", () => {
+    renderWith({ runFitness: pending });
+    expect(
+      screen.getByText(/from a race, time trial or tempo you ran/i)
+    ).toBeInTheDocument();
+  });
+
+  it("shows paces for one derived from a tempo, which stores no race result", () => {
+    renderWith({ runFitness: { ...pending, benchmark: null, vdot: 41.4 } });
+    expect(screen.getByText("41.4")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Use for pace targets/i })
+    ).toBeInTheDocument();
   });
 });

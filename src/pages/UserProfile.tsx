@@ -36,6 +36,8 @@ import { Spinner } from "../components/ui/Spinner";
 import { distanceValue } from "@/lib/runLabels";
 import { distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 import { useUserProfileData } from "@/hooks/useUserProfileData";
 import { profileWeek } from "@/lib/profileWeek";
 
@@ -71,6 +73,8 @@ function ProfilePage({
   viewerUid: string | null;
 }) {
   const unit = useDistanceUnit();
+  // Lift18: their week's volume, stored in kg, in the reader's unit.
+  const liftUnit = useLiftUnit();
   const navigate = useNavigate();
   const isOwnProfile = viewerUid === uid;
   const {
@@ -302,8 +306,10 @@ function ProfilePage({
               unit={`${distanceUnitLabel(unit)} run`}
             />
             <StatFigure
-              value={Math.round(week.volumeKg).toLocaleString()}
-              unit="kg lifted"
+              value={Math.round(
+                liftVolumeIn(week.volumeKg, liftUnit)
+              ).toLocaleString()}
+              unit={`${liftUnitLabel(liftUnit)} lifted`}
             />
           </div>
         ) : (

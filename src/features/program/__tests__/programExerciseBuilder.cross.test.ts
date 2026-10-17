@@ -65,6 +65,15 @@ describe("buildProgramExercise CF ↔ client normalizeExercise parity", () => {
       },
       // Lift4 (11): the lift a swap replaced, for the way back.
       { swappedFrom: { exerciseId: "squat" } },
+      // Pgm7 A3: a target stretched past its range, for its one line.
+      {
+        stretched: {
+          exerciseId: "lateral-raise",
+          weight: 10,
+          next: 12.5,
+          ceiling: 19,
+        },
+      },
     ];
 
     let compared = 0;

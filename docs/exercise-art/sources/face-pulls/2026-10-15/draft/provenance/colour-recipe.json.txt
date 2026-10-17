@@ -1,0 +1,246 @@
+{
+  "status": "one-colour-only-proposal-awaiting-parent-native-review",
+  "canonicalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\identity\\athlete-anatomy-v3.png",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "primaryRearDelts": "#7B72E9",
+  "secondaryRhomboidsTrapsVisibleRotatorCuff": "#9590E0",
+  "method": "Existing upper-back source-chroma coverage only; two broad source-field shoulder-cap ownership polygons choose primary, remaining existing back chroma is secondary. No new anatomical fields or contour strokes.",
+  "coverage": {
+    "upperBackRoiInclusive": [
+      76,
+      275,
+      382,
+      526
+    ],
+    "blueExcess": "B - min(R,G)",
+    "continuousCoverage": "clip((blueExcess - 3) / 18, 0, 1)",
+    "isolatedNoiseRejection": "Keep 8-connected source-chroma components with at least32 weak pixels and16 strong pixels (blueExcess>=21). No eroding, expanding or drawing a human silhouette."
+  },
+  "sourceValueAnchorsSharedAcrossPoses": {
+    "primary": 243.0,
+    "secondary": 247.0
+  },
+  "shading": "Source per-pixel maximum-channel brightness is monotonically mapped through the fixed declared role anchor. Existing fine light/dark contours remain; no spatial gradient, blur, anatomy retouch or new highlight is drawn. Source bright highlights above the declared anchor clamp to the role palette.",
+  "primaryOwnershipPolygonsNative": {
+    "1": [
+      [
+        [
+          102,
+          359
+        ],
+        [
+          120,
+          360
+        ],
+        [
+          134,
+          378
+        ],
+        [
+          140,
+          399
+        ],
+        [
+          137,
+          418
+        ],
+        [
+          120,
+          435
+        ],
+        [
+          102,
+          423
+        ],
+        [
+          98,
+          395
+        ]
+      ],
+      [
+        [
+          222,
+          383
+        ],
+        [
+          242,
+          370
+        ],
+        [
+          263,
+          359
+        ],
+        [
+          288,
+          351
+        ],
+        [
+          324,
+          350
+        ],
+        [
+          351,
+          357
+        ],
+        [
+          376,
+          370
+        ],
+        [
+          367,
+          389
+        ],
+        [
+          342,
+          412
+        ],
+        [
+          320,
+          429
+        ],
+        [
+          294,
+          431
+        ],
+        [
+          268,
+          426
+        ],
+        [
+          248,
+          416
+        ],
+        [
+          232,
+          402
+        ]
+      ]
+    ],
+    "4": [
+      [
+        [
+          79,
+          363
+        ],
+        [
+          88,
+          350
+        ],
+        [
+          103,
+          344
+        ],
+        [
+          117,
+          342
+        ],
+        [
+          128,
+          349
+        ],
+        [
+          132,
+          366
+        ],
+        [
+          140,
+          390
+        ],
+        [
+          132,
+          402
+        ],
+        [
+          118,
+          413
+        ],
+        [
+          103,
+          413
+        ],
+        [
+          91,
+          406
+        ],
+        [
+          84,
+          395
+        ],
+        [
+          79,
+          378
+        ]
+      ],
+      [
+        [
+          240,
+          380
+        ],
+        [
+          253,
+          367
+        ],
+        [
+          268,
+          357
+        ],
+        [
+          284,
+          346
+        ],
+        [
+          299,
+          340
+        ],
+        [
+          325,
+          341
+        ],
+        [
+          349,
+          350
+        ],
+        [
+          370,
+          362
+        ],
+        [
+          372,
+          373
+        ],
+        [
+          350,
+          391
+        ],
+        [
+          332,
+          409
+        ],
+        [
+          313,
+          417
+        ],
+        [
+          289,
+          418
+        ],
+        [
+          269,
+          410
+        ],
+        [
+          254,
+          399
+        ]
+      ]
+    ]
+  },
+  "ownershipAntialiasing": "4x polygon rasterization downsampled to native coordinates; clipped to actual source-chroma coverage.",
+  "noCropOrScale": true,
+  "humanGeometryEdited": false,
+  "neutralHumanPixelsPainted": false,
+  "equipmentEdited": false,
+  "imageGenerationRequests": 0,
+  "repoOrPublicEdits": false,
+  "scopeLimit": "Semantic field ownership and native quality require actual parent visual review. Numeric preservation facts are not acceptance. No missing or hidden rotator-cuff region is invented."
+}

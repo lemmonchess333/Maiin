@@ -1,0 +1,272 @@
+{
+  "exerciseId": "ab-wheel",
+  "reviewedAt": "2026-10-14T23:15:12.055566+00:00",
+  "baselineHead": "82d6d829ad20ad3c8924933f736ad615b83054f6",
+  "baselineLogSha256": "9bed359f766e07164ac82a46a1d1719ff54b1b88bfa659152258e1ba0b01ba41",
+  "testedWorkingTreeHead": "82d6d829ad20ad3c8924933f736ad615b83054f6",
+  "normalCommand": "npm run verify",
+  "allNormalVerifyStagesPresent": true,
+  "normalVerifyStages": [
+    "lint",
+    "check:form-art",
+    "check:form-drafts",
+    "check:cycles",
+    "build",
+    "check:dist-size",
+    "test"
+  ],
+  "comparisonComplete": true,
+  "comparisonValid": true,
+  "inputStatePreserved": true,
+  "snapshotPreservedExactly": true,
+  "snapshotSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+  "overallVerifyExitCode": 1,
+  "overallGreen": false,
+  "fullWindowsNonGreen": true,
+  "baselineExitCode": 1,
+  "baselineTestFiles": {
+    "failed": 55,
+    "passed": 1114,
+    "skipped": 10,
+    "total": 1179
+  },
+  "baselineTests": {
+    "failed": 87,
+    "passed": 13130,
+    "skipped": 409,
+    "total": 13626
+  },
+  "branchTestFiles": {
+    "failed": 58,
+    "passed": 1111,
+    "skipped": 10,
+    "total": 1179
+  },
+  "branchTests": {
+    "failed": 90,
+    "passed": 13129,
+    "skipped": 409,
+    "total": 13628
+  },
+  "additionalFullRunFailureIdentities": [
+    "FAIL  |node| src/features/program/__tests__/trainingBlock.timezone.test.ts > training block calendar dates across timezones > keeps week boundaries, progression holds and end dates in UTC",
+    "FAIL  |node| src/lib/__tests__/bodyRig.test.ts > form beats — the caption is a claim about the frame > the loop closes from the start pose or a controlled return towards it",
+    "FAIL  |node| src/lib/__tests__/bodyRig.test.ts > supplied placard frames > all of a sequence's frames share one canvas",
+    "FAIL  |node| src/lib/__tests__/formArtOwnerRelease.test.ts > owner-authorized artwork activation > releases every approved set as its review recorded it, with its cues live",
+    "FAIL  |root-node| scripts/release-debug-token.test.ts > release App Check debug-token guard > refuses an environment token without printing its value"
+  ],
+  "unresolvedAdditionalFailureIdentities": [],
+  "baselineFailuresAbsentFromBranchFullRun": [
+    "FAIL  |node| src/lib/__tests__/weekAnchorProse.test.ts > week-anchor prose > never tells a reader the week starts on Sunday",
+    "FAIL  |root-node| scripts/art/cutout-manifest.test.ts > is exactly what the cut-out generator writes"
+  ],
+  "changedDetailsForExistingFailures": [
+    {
+      "identity": "FAIL  |root-node| scripts/art/form-art-releases.test.ts > approved artwork releases > are generated from today's release records",
+      "baseline": [
+        "AssertionError: src/lib/formArtReleases.data.ts is not what the release records say: run npm run art:releases: expected false to be true // Object.is equality",
+        "- Expected",
+        "+ Received"
+      ],
+      "branch": [
+        "Error: Test timed out in 5000ms.",
+        "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+        "❯ scripts/art/form-art-releases.test.ts:51:3"
+      ]
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]",
+      "baseline": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/92]⎯",
+        "FAIL  |node| src/lib/__tests__/iosProjectWiring.test.ts [ src/lib/__tests__/iosProjectWiring.test.ts ]"
+      ],
+      "branch": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/95]⎯",
+        "FAIL  |node| src/lib/__tests__/iosProjectWiring.test.ts [ src/lib/__tests__/iosProjectWiring.test.ts ]"
+      ]
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]",
+      "baseline": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/92]⎯",
+        "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+      ],
+      "branch": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/95]⎯",
+        "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+      ]
+    }
+  ],
+  "parentChangedDetailReviews": [
+    {
+      "identity": "FAIL  |root-node| scripts/art/form-art-releases.test.ts > approved artwork releases > are generated from today's release records",
+      "baselineDetailLines": [
+        "AssertionError: src/lib/formArtReleases.data.ts is not what the release records say: run npm run art:releases: expected false to be true // Object.is equality",
+        "- Expected",
+        "+ Received"
+      ],
+      "branchDetailLines": [
+        "Error: Test timed out in 5000ms.",
+        "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+        "❯ scripts/art/form-art-releases.test.ts:51:3"
+      ],
+      "classification": "reviewed-existing-diagnostic-change",
+      "rationale": "Fresh baseline reported generated-data byte inequality; the branch full run instead hit5000ms timeout without a byte assertion. Both exact diagnostics remain recorded. The whole release-data file then passed in the normal focused batch. The branch adds only the Ab Wheel entry; no unrelated generator fix or full Windows green result is claimed."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]",
+      "baselineDetailLines": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/92]⎯",
+        "FAIL  |node| src/lib/__tests__/iosProjectWiring.test.ts [ src/lib/__tests__/iosProjectWiring.test.ts ]"
+      ],
+      "branchDetailLines": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/95]⎯",
+        "FAIL  |node| src/lib/__tests__/iosProjectWiring.test.ts [ src/lib/__tests__/iosProjectWiring.test.ts ]"
+      ],
+      "classification": "reviewed-existing-diagnostic-change",
+      "rationale": "The substantive import diagnostic and following failing file are identical. The middle reporter divider changes its total-failure ordinal from92 to95; this is retained as reporter detail, not a changed syntax failure or resolution."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]",
+      "baselineDetailLines": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/92]⎯",
+        "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+      ],
+      "branchDetailLines": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/95]⎯",
+        "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+      ],
+      "classification": "reviewed-existing-diagnostic-change",
+      "rationale": "The substantive import diagnostic and following failing file are identical. The middle reporter divider changes its total-failure ordinal from92 to95; this is retained as reporter detail, not a changed syntax failure or resolution."
+    }
+  ],
+  "parentReviewedFocusedNonReproductions": [
+    {
+      "identity": "FAIL  |node| src/features/program/__tests__/trainingBlock.timezone.test.ts > training block calendar dates across timezones > keeps week boundaries, progression holds and end dates in UTC",
+      "parentRationale": "The original UTC child hit its existing15000ms ETIMEDOUT limit before returning date results. No calendar assertion mismatch was reported and inspected inputs remain byte-identical to fresh main. Its whole file subsequently passed normally; this records non-reproduction, not a baseline defect or a fix.",
+      "result": "checks/focused-correction-result.json",
+      "log": "checks/focused-correction.log",
+      "exitCode": 0,
+      "file": "src/features/program/__tests__/trainingBlock.timezone.test.ts",
+      "wholeFilePassed": true,
+      "evidenceKind": "exact-complete-normal-five-file-batch-aggregate",
+      "meaning": "Full-run added failure remains real; normal focused whole-file check did not reproduce it. Parent reviewed this disposition; no code fix or pre-existing classification claimed."
+    },
+    {
+      "identity": "FAIL  |node| src/lib/__tests__/bodyRig.test.ts > supplied placard frames > all of a sequence's frames share one canvas",
+      "parentRationale": "The original whole-library canvas case hit its5000ms timeout with no dimension mismatch reported. All six new files decode1448x924 and remain unchanged; the complete bodyRig file subsequently passed normally. This timeout is retained separately from the actually fixed coordinate assertion.",
+      "result": "checks/focused-correction-result.json",
+      "log": "checks/focused-correction.log",
+      "exitCode": 0,
+      "file": "src/lib/__tests__/bodyRig.test.ts",
+      "wholeFilePassed": true,
+      "evidenceKind": "exact-complete-normal-five-file-batch-aggregate",
+      "meaning": "Full-run added failure remains real; normal focused whole-file check did not reproduce it. Parent reviewed this disposition; no code fix or pre-existing classification claimed."
+    },
+    {
+      "identity": "FAIL  |node| src/lib/__tests__/formArtOwnerRelease.test.ts > owner-authorized artwork activation > releases every approved set as its review recorded it, with its cues live",
+      "parentRationale": "The original all-approved-library activation case hit its30000ms timeout with no review/hash/cue assertion mismatch reported. The entire owner-release file subsequently passed normally on the corrected metadata and unchanged imagery. No timing cause, pre-existing status or timeout fix is claimed.",
+      "result": "checks/focused-correction-result.json",
+      "log": "checks/focused-correction.log",
+      "exitCode": 0,
+      "file": "src/lib/__tests__/formArtOwnerRelease.test.ts",
+      "wholeFilePassed": true,
+      "evidenceKind": "exact-complete-normal-five-file-batch-aggregate",
+      "meaning": "Full-run added failure remains real; normal focused whole-file check did not reproduce it. Parent reviewed this disposition; no code fix or pre-existing classification claimed."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/release-debug-token.test.ts > release App Check debug-token guard > refuses an environment token without printing its value",
+      "parentRationale": "The original case hit the existing5000ms test timeout while awaiting Vite configuration; no token-refusal assertion error was reported. Its unchanged whole file passed normally. Retain the full-run timeout as a reviewed focused non-reproduction.",
+      "result": "checks/focused-correction-result.json",
+      "log": "checks/focused-correction.log",
+      "exitCode": 0,
+      "file": "scripts/release-debug-token.test.ts",
+      "wholeFilePassed": true,
+      "evidenceKind": "exact-complete-normal-five-file-batch-aggregate",
+      "meaning": "Full-run added failure remains real; normal focused whole-file check did not reproduce it. Parent reviewed this disposition; no code fix or pre-existing classification claimed."
+    }
+  ],
+  "parentDecision": {
+    "reviewer": "Parent Codex reviewed exact terminal logs, comparison, t-only correction and normal whole-file outcomes",
+    "reviewedAt": "2026-10-14T23:14:02.198373+00:00",
+    "evidencePath": "project-check-evidence/checks/parent-check-decision.json"
+  },
+  "evidenceHashes": {
+    "project-check-evidence/baseline/baseline-failure-identities.json": "41c24e76dbd4eb4ea84cd398f514b0a02882c49f254654507fa920cdf145a1ca",
+    "project-check-evidence/baseline/baseline-final-input-manifest.json": "a3fed3c2febceac5de8f3e9190bd1e2db935d94eddd037a6179b0b332a924e4b",
+    "project-check-evidence/baseline/baseline-input-manifest.json": "a3fed3c2febceac5de8f3e9190bd1e2db935d94eddd037a6179b0b332a924e4b",
+    "project-check-evidence/baseline/baseline-inputs.json": "eb513df355954c02be02503a5444287af906476b94c7c2828b1e659d1e24c117",
+    "project-check-evidence/baseline/baseline-planSweep-after-run.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "project-check-evidence/baseline/baseline-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "project-check-evidence/baseline/baseline-proof-hashes.json": "39d8f746baadccc058c5f0a39b42300ba9ae59e8c277f83003b52d13c0222464",
+    "project-check-evidence/baseline/baseline-summary.json": "35aeb1e0d36220b435ec2b6108fd149dd47d8aca1e3fc6af00f15a82b79082ad",
+    "project-check-evidence/baseline/baseline-verify-result.json": "d3d202f548dcb57298db3afc64edd9599d0e3ea977382f450512c15ad893b55e",
+    "project-check-evidence/baseline/baseline-verify.log": "9bed359f766e07164ac82a46a1d1719ff54b1b88bfa659152258e1ba0b01ba41",
+    "project-check-evidence/baseline/run-current-main-baseline.py": "aa1761dddc2fe7820db06539c2841427f997e3989de0b83c488f7f76a54c1db3",
+    "project-check-evidence/checks/ab-wheel-code-after.ts.txt": "551a25ebbc70557a36be597a8b14e1cd52479d275746d86fb3208851f8d68dda",
+    "project-check-evidence/checks/ab-wheel-code-before.ts.txt": "af092871b6dda8fe0117f970f5e4633355b1c07dfe37155cf68e95781cc06939",
+    "project-check-evidence/checks/ab-wheel-t-only.patch": "ae727404179d94a149b4a3f258a50a8da0c6bf8e04bdece001a05322d998a711",
+    "project-check-evidence/checks/branch-comparison-summary.md": "7b6ea1a1f3e72095322e4df15fee425481a6334464c89d1927c108c0faad0d4b",
+    "project-check-evidence/checks/branch-failure-comparison.json": "3ec2d523b3024e4537c5966becadd8a29fd6f5136d090636cef4c9822ae02548",
+    "project-check-evidence/checks/branch-failure-identities.txt": "db0cbdeeb49023b64ed1d000c89aa7c71f8dcac67f1420f27c0b6386467ca057",
+    "project-check-evidence/checks/branch-first-run-proof-hashes.json": "7024d75386f46818392fdabbcc01629ac15f1da3fd4de474a3b439980ec360b7",
+    "project-check-evidence/checks/branch-input-manifest.json": "c6542df909b915934472bd8310f21b393a7a19405122107f6386604b04602b47",
+    "project-check-evidence/checks/branch-planSweep-after-run.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "project-check-evidence/checks/branch-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "project-check-evidence/checks/branch-verify-result.json": "001e08a1328eac67c95329c5a86755d83076c94af5a86b8ec91784b8a27e711a",
+    "project-check-evidence/checks/branch-verify-tools.py": "ef8c673c8b589f891d07a43792621c723e06ff32cf4e7cd9d0d952bccec7402b",
+    "project-check-evidence/checks/branch-verify.log": "cff94bf7b6ca8cb1176d5c225ec1b05e1963b55903c0ad832519cfdd0c18c9f7",
+    "project-check-evidence/checks/candidate-runner-preparation.json": "2ae650dd06f6fec105dc58ee2ad4b06c339843ee394855d06fdff7a8c42eb5fd",
+    "project-check-evidence/checks/corrected-beat-metadata-parent-signoff.json": "0f18496c410a5912e138e565cecbb45d77b2bea15a4d20e21eb9b8e0d7e154cd",
+    "project-check-evidence/checks/corrected-beat-metadata-review.json": "6f3ca7a8cc0ac0c4a57fbc843509cb8eaf18ebe99dad25697be564ce4be2782a",
+    "project-check-evidence/checks/focused-correction-input-manifest.json": "3090f1c9179469281a2fcac491bb1899d0b2b115c4cf131d84035fb67244e1a8",
+    "project-check-evidence/checks/focused-correction-placard-before-run.ts.txt": "551a25ebbc70557a36be597a8b14e1cd52479d275746d86fb3208851f8d68dda",
+    "project-check-evidence/checks/focused-correction-proof-hashes.json": "1e2bdf87700a5cc13df1db3371e6d7e1ba78bd58062113ea0e92575278bd04ef",
+    "project-check-evidence/checks/focused-correction-result.json": "ae38299e3e8baf3e81110a9a8696851c6ef197fc941d8eb6f296ac40f1f0e983",
+    "project-check-evidence/checks/focused-correction.log": "b093be98ebb3ff464495e294d1ccbd6fad4d4bfa7480da6e86a2cceab6976bb9",
+    "project-check-evidence/checks/parent-check-decision.json": "a553dd958961754755afe8d43b4f80462a733fe2017e190b8554049f96fc4135",
+    "project-check-evidence/checks/run-focused-correction.py": "1fcba43c2237ae2f6a8060e3753095c6442613ced92099216937614f669d8608",
+    "project-check-evidence/write-project-checks-final.py": "31b5ab485a217f786ebd0979d05329c80885bc3a55c4f4806920d2b2043eafca",
+    "project-check-evidence/write-project-checks.py": "c0481ae653abb1c18739460d53f2e8195c21beb8c03dd5ea25a034d88f0448f0",
+    "project-check-inputs-exact.zip": "551ab7db77e2f946dbe42a0d8142afa3b8fa36d0dcb187bb0a6b9d4a5f236100"
+  },
+  "copyThenFormatThenHashOrdering": "Exact raw inputs preserved in ZIP; copied JSON semantic equality rechecked after ordinary formatting; evidenceHashes bind current copied bytes before source seal.",
+  "meaning": "A terminal exit1 full run stays non-green and every original additional full-run failure remains disclosed. A reviewed exact authored-coordinate fix plus normal whole-file pass is recorded separately under parentReviewedFixedRegressions; it is not called a transient non-reproduction or pre-existing failure. Other parent-reviewed focused non-reproductions retain their original failures and do not claim code fixes. Changed existing diagnostics remain retained with explicit parent review. Baseline failures absent in this branch are observed set differences, not claimed fixes. Hooks, current-head required CI and actual merge remain separate.",
+  "completionCredit": false,
+  "parentReviewedFixedRegressions": [
+    {
+      "identity": "FAIL  |node| src/lib/__tests__/bodyRig.test.ts > form beats — the caption is a claim about the frame > the loop closes from the start pose or a controlled return towards it",
+      "parentRationale": "The first full run exposed the new Ab Wheel scalar-coordinate defect. Parent reviewed the exact five numeric substitutions, their reconstruction hash, and unchanged images, labels, cues and setup. Corrected excursion [0,.5,1,1,.5,0] now closes the loop; all83 bodyRig cases passed in the normal whole-file batch. The original failure is retained as a fixed regression.",
+      "correctionAddendum": "checks/corrected-beat-metadata-review.json",
+      "correctionAddendumSha256": "14630d395b5fa8def72eb2467ecefe7683489b9746ef4fd2caef27ec54130ecd",
+      "originalFullRunFailureRetained": true,
+      "exactTOnlyChangeIndependentlyVerified": true,
+      "beforeT": [0, 0.2, 0.4, 0.6, 0.8, 1],
+      "afterT": [0, 0.5, 1, 1, 0.5, 0],
+      "patchSha256": "ae727404179d94a149b4a3f258a50a8da0c6bf8e04bdece001a05322d998a711",
+      "correctionEvidenceHashes": {
+        "checks/ab-wheel-code-before.ts.txt": "af092871b6dda8fe0117f970f5e4633355b1c07dfe37155cf68e95781cc06939",
+        "checks/ab-wheel-code-after.ts.txt": "551a25ebbc70557a36be597a8b14e1cd52479d275746d86fb3208851f8d68dda",
+        "checks/ab-wheel-t-only.patch": "ae727404179d94a149b4a3f258a50a8da0c6bf8e04bdece001a05322d998a711",
+        "checks/focused-correction-result.json": "aebdb6e33d5c890fc7b377f83b9c2923462530007785e15debd37b1a486c19ff",
+        "checks/focused-correction.log": "b093be98ebb3ff464495e294d1ccbd6fad4d4bfa7480da6e86a2cceab6976bb9",
+        "checks/corrected-beat-metadata-parent-signoff.json": "09ad75180fc1505f5c5f1ca22ec331e909604765b2ab07a789453486c4fe3006"
+      },
+      "result": "checks/focused-correction-result.json",
+      "log": "checks/focused-correction.log",
+      "exitCode": 0,
+      "file": "src/lib/__tests__/bodyRig.test.ts",
+      "wholeFilePassed": true,
+      "evidenceKind": "exact-complete-normal-five-file-batch-aggregate",
+      "meaning": "The original full-run new regression remains recorded. After the separately hash-bound exact authored-coordinate fix, the normal focused whole file passed. This is a reviewed fixed regression, not an unchanged non-reproduction or pre-existing failure."
+    }
+  ]
+}

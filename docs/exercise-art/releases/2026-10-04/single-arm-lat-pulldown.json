@@ -1,0 +1,239 @@
+{
+  "exerciseId": "single-arm-lat-pulldown",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-05T00:50:03.613Z",
+  "reference": {
+    "path": "form-frames/single-arm-lat-pulldown/1.webp",
+    "sha256": "d4efe89d65991bc136941a9de73182f239c5590724df055b54987bef12905f56"
+  },
+  "cueSha256": "2c6531f2a5dae942ddfb68ceb7198479cb45d0f2ed417581fbbeda8c8815dbcb",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical v3 white-grey faceless athlete, white trainers and smooth neutral pelvis; canonical reference attached to every generation. No code transformation of moving anatomy."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed rear/side three-quarter view,1024x1536. Master uniformly resized and padded before pose generation; all subsequent frames preserve framing."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Four native poses: extended overhead arm, initiating elbow bend, middle pull, elbow beside waist. Torso and lower body stay seated and steady; no twisting."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Supported flat bench, single neutral D-handle, two fixed overhead pulleys. Five original selected plates move as one rigid packet; twelve lower plates stay fixed. Imagegen removed selected packet to create continuous empty rails; only that machine region is reused."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Four measured bench/sole anchors and three selected widths invariant. Exact stationary contact copies; no moving hand, arm or torso manipulation. Closed handle grip visually reviewed in every configuration."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Selected packet rises0,102,293,395,293,102px. Independent pixel search confirms original plate interior unchanged; cable-centroid deviation at most0.502px. Tangent lengths and changing wrap arcs conserve cable length within0.383px. Image-space landmarks selected manually; no real-world calibration claimed."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Purple working lat, lilac biceps and rear deltoid, neutral forearm/legs. Same hierarchy throughout."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six pose-specific cues, each at most seven words; sequence0,1/3,2/3,1,2/3,1/3."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six and6to1 manually inspected in actual ExerciseFormFrames; middle and early configurations reused during controlled return. No torso or contact jump."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six and6to1 inspected at390x844 in actual ExerciseFormFrames light mode. Full athlete and machine, readable cues."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and6to1 inspected at390x844 in actual ExerciseFormFrames dark mode. Full athlete and machine, readable cues."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Seated unilateral high-cable pull with planted feet",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["frontBenchFoot", "rearBenchFoot", "nearSole", "farSole"],
+      "dimensionNames": [
+        "frontBenchFootWidth",
+        "nearShoeWidth",
+        "farShoeWidth"
+      ],
+      "evidence": "Pixel-derived bench/sole anchors and selected widths; exact stationary contact copies. Moving handle grip reviewed visually; rigid packet and cable checked separately."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/single-arm-lat-pulldown/1.webp",
+      "sha256": "d4efe89d65991bc136941a9de73182f239c5590724df055b54987bef12905f56",
+      "anchors": {
+        "frontBenchFoot": {
+          "x": 245,
+          "y": 1340
+        },
+        "rearBenchFoot": {
+          "x": 400,
+          "y": 1262
+        },
+        "nearSole": {
+          "x": 564,
+          "y": 1271
+        },
+        "farSole": {
+          "x": 400,
+          "y": 1233
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootWidth": 191,
+        "nearShoeWidth": 151,
+        "farShoeWidth": 129
+      }
+    },
+    {
+      "path": "form-frames/single-arm-lat-pulldown/2.webp",
+      "sha256": "93f697da1c69e0d987743715a40d134a6e768e37f7758fb14655b4b3d48c9acc",
+      "anchors": {
+        "frontBenchFoot": {
+          "x": 245,
+          "y": 1340
+        },
+        "rearBenchFoot": {
+          "x": 400,
+          "y": 1262
+        },
+        "nearSole": {
+          "x": 564,
+          "y": 1271
+        },
+        "farSole": {
+          "x": 400,
+          "y": 1233
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootWidth": 191,
+        "nearShoeWidth": 151,
+        "farShoeWidth": 129
+      }
+    },
+    {
+      "path": "form-frames/single-arm-lat-pulldown/3.webp",
+      "sha256": "45cfd269912adcc993678b09de3c57beb461ee797e503d5caefeec46daed7069",
+      "anchors": {
+        "frontBenchFoot": {
+          "x": 245,
+          "y": 1340
+        },
+        "rearBenchFoot": {
+          "x": 400,
+          "y": 1262
+        },
+        "nearSole": {
+          "x": 564,
+          "y": 1271
+        },
+        "farSole": {
+          "x": 400,
+          "y": 1233
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootWidth": 191,
+        "nearShoeWidth": 151,
+        "farShoeWidth": 129
+      }
+    },
+    {
+      "path": "form-frames/single-arm-lat-pulldown/4.webp",
+      "sha256": "5c0c18004638be48b1d04ed59bd295c86a4899b34a9e2ffdabc3f2c5440a02c4",
+      "anchors": {
+        "frontBenchFoot": {
+          "x": 245,
+          "y": 1340
+        },
+        "rearBenchFoot": {
+          "x": 400,
+          "y": 1262
+        },
+        "nearSole": {
+          "x": 564,
+          "y": 1271
+        },
+        "farSole": {
+          "x": 400,
+          "y": 1233
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootWidth": 191,
+        "nearShoeWidth": 151,
+        "farShoeWidth": 129
+      }
+    },
+    {
+      "path": "form-frames/single-arm-lat-pulldown/5.webp",
+      "sha256": "45cfd269912adcc993678b09de3c57beb461ee797e503d5caefeec46daed7069",
+      "anchors": {
+        "frontBenchFoot": {
+          "x": 245,
+          "y": 1340
+        },
+        "rearBenchFoot": {
+          "x": 400,
+          "y": 1262
+        },
+        "nearSole": {
+          "x": 564,
+          "y": 1271
+        },
+        "farSole": {
+          "x": 400,
+          "y": 1233
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootWidth": 191,
+        "nearShoeWidth": 151,
+        "farShoeWidth": 129
+      }
+    },
+    {
+      "path": "form-frames/single-arm-lat-pulldown/6.webp",
+      "sha256": "93f697da1c69e0d987743715a40d134a6e768e37f7758fb14655b4b3d48c9acc",
+      "anchors": {
+        "frontBenchFoot": {
+          "x": 245,
+          "y": 1340
+        },
+        "rearBenchFoot": {
+          "x": 400,
+          "y": 1262
+        },
+        "nearSole": {
+          "x": 564,
+          "y": 1271
+        },
+        "farSole": {
+          "x": 400,
+          "y": 1233
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootWidth": 191,
+        "nearShoeWidth": 151,
+        "farShoeWidth": 129
+      }
+    }
+  ]
+}

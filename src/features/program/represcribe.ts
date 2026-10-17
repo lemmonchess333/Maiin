@@ -34,14 +34,18 @@
  * was added, removed or swapped mid-block.
  */
 
+import type { LiftUnit } from "@/lib/liftLoad";
+import { kgToLb, lbToKg } from "@/lib/weightUnits";
 import {
   assignDayRoles,
+  dayRoleOf,
   prescribedRepCeiling,
   undulationDeltaFor,
   repFloorFor,
   repRangeMaxFor,
 } from "./programEngine";
 import { usesUndulation } from "./experienceModel";
+import { exerciseRole } from "./exerciseRole";
 import { roleReps, roleRepsFor } from "./roleTable";
 import { getRaceFloorWeeks } from "./runPlanTiming";
 import type {
@@ -77,12 +81,16 @@ import type {
 export function scaleLoadForReps(
   weight: number,
   fromReps: number,
-  toReps: number
+  toReps: number,
+  /** The lifter's kit (Lift18): 2.5 kg steps, or 5 lb. */
+  unit: LiftUnit = "kg"
 ): number {
   if (!Number.isFinite(weight) || weight <= 0) return 0;
   if (!Number.isFinite(fromReps) || !Number.isFinite(toReps)) return weight;
   if (toReps <= fromReps) return weight;
   const ratio = (1 + fromReps / 30) / (1 + toReps / 30);
+  if (unit === "lbs")
+    return lbToKg(Math.round(kgToLb(weight * ratio) / 5 + 1e-9) * 5);
   return Math.round((weight * ratio) / 2.5) * 2.5;
 }
 
@@ -98,15 +106,22 @@ export function scaleLoadForReps(
 export function represcribeWorkouts(
   workouts: readonly WorkoutDay[],
   goal: PrimaryGoal,
-  experience: Experience | undefined
+  experience: Experience | undefined,
+  /** The plan's kit (`settings.loadUnit`, Lift18). */
+  unit: LiftUnit = "kg"
 ): WorkoutDay[] {
-  // Undulation is applied per DAY INDEX, so the roles have to be computed
-  // over the whole week before any slot is touched.
-  const roles = assignDayRoles(workouts.length);
+  // Undulation follows each session's own role, kept with it as the week's
+  // order carries over (`dayRoleOf`). An older plan keeps none, so its roles
+  // come from the days' positions, over the whole week before any slot is
+  // touched, and are kept from here: a block's end then finds the roles its
+  // start used, whatever the order has done since.
+  const byPosition = assignDayRoles(workouts.length);
+  const roles = workouts.map((day, i) => dayRoleOf(day, byPosition[i]));
   const undulates = usesUndulation(experience);
 
   return workouts.map((day, dayIndex) => ({
     ...day,
+    dayRole: roles[dayIndex],
     exercises: day.exercises.map((ex) => {
       // A 30-45s plank is not a 12-rep set, and the table authors no
       // seconds target. `prescribedRepCeiling` already returns Infinity for
@@ -138,7 +153,7 @@ export function represcribeWorkouts(
         baseReps: reps,
         // A range climbs; a fixed target steps whenever every set reaches it.
         progressionType: row.top === undefined ? "linear" : "double",
-        weight: scaleLoadForReps(ex.weight, ex.baseReps ?? ex.reps, reps),
+        weight: scaleLoadForReps(ex.weight, ex.baseReps ?? ex.reps, reps, unit),
         // Failure counters accumulated against a rep target that no longer
         // exists are not evidence of anything.
         consecutiveFailures: 0,
@@ -149,11 +164,89 @@ export function represcribeWorkouts(
       if (rangeMax !== undefined) out.repRangeMax = rangeMax;
       else delete out.repRangeMax;
       // A lowered lift's way back is a weight for the old target, and its
-      // line names that target (Lift4); neither holds for the new one.
+      // line names that target (Lift4); neither holds for the new one. A
+      // stretched target's line names the old range's ceiling (Pgm7 A3),
+      // and the new target starts inside the new range.
       delete out.lowered;
+      delete out.stretched;
       return out;
     }),
   }));
+}
+
+/**
+ * A level change (Lift4 (12)): it sets how the main lifts progress. Each
+ * main lift takes the new level's numbers from the role table (a
+ * beginner's one target, or everyone else's range) with its session's
+ * heavier or lighter shift where the level brings one, as the plan's own
+ * generator gives a lifter at that level. A main lift whose numbers stay
+ * the same keeps everything, its climb included, and nothing else moves:
+ * the other lifts, every lift's sets, and the exercises themselves. A level
+ * change never rebuilds or swaps (Pgm5's content-edit rule); whether
+ * lighter weeks come, and what a plan built later picks, read the level
+ * where they're used.
+ */
+export function represcribeMainLifts(
+  workouts: readonly WorkoutDay[],
+  goal: PrimaryGoal,
+  experience: Experience | undefined,
+  unit: LiftUnit = "kg"
+): WorkoutDay[] {
+  const fresh = represcribeWorkouts(workouts, goal, experience, unit);
+  return fresh.map((day, d) => ({
+    ...day,
+    exercises: day.exercises.map((ex, e) => {
+      const before = workouts[d].exercises[e];
+      if (exerciseRole(before) !== "main" || before.repUnit === "seconds")
+        return before;
+      const same =
+        (before.baseReps ?? before.reps) === ex.baseReps &&
+        before.repRangeMax === ex.repRangeMax &&
+        before.progressionType === ex.progressionType;
+      return same ? before : ex;
+    }),
+  }));
+}
+
+/**
+ * A lift a person puts into a plan takes its role's numbers (Lift5): Train's
+ * Replace with an exercise of another role, and Add. The reps, range and
+ * progression its role gives on that session, with the session's heavier
+ * or lighter shift, its load moved to those reps, and its role's sets, no
+ * more than `maxSets` (the slot's, for a Replace). Everything else stays.
+ * Mirrored by `functions/lib/represcribe.js`, which the commands run.
+ */
+export function withRoleNumbers(
+  workouts: readonly WorkoutDay[],
+  dayIndex: number,
+  instanceId: string,
+  goal: PrimaryGoal,
+  experience: Experience | undefined,
+  maxSets?: number
+): WorkoutDay[] {
+  const fresh = represcribeWorkouts(workouts, goal, experience)[
+    dayIndex
+  ]?.exercises.find((ex) => ex.instanceId === instanceId);
+  if (!fresh) return [...workouts];
+  return workouts.map((day, d) =>
+    d !== dayIndex
+      ? day
+      : {
+          ...day,
+          exercises: day.exercises.map((ex) => {
+            if (ex.instanceId !== instanceId || ex.repUnit === "seconds")
+              return ex;
+            const roleSets = roleRepsFor(goal, ex, experience).sets;
+            const sets =
+              maxSets === undefined ? roleSets : Math.min(maxSets, roleSets);
+            return {
+              ...fresh,
+              sets,
+              ...(ex.baseSets !== undefined ? { baseSets: sets } : {}),
+            };
+          }),
+        }
+  );
 }
 
 /**
@@ -168,9 +261,10 @@ export function represcribeSwapped(
   before: readonly WorkoutDay[],
   after: readonly WorkoutDay[],
   goal: PrimaryGoal,
-  experience: Experience | undefined
+  experience: Experience | undefined,
+  unit: LiftUnit = "kg"
 ): WorkoutDay[] {
-  const fresh = represcribeWorkouts(after, goal, experience);
+  const fresh = represcribeWorkouts(after, goal, experience, unit);
   return after.map((day, d) => ({
     ...day,
     exercises: day.exercises.map((ex, e) => {
@@ -358,11 +452,11 @@ export function blockConsequence(input: {
 
   // Same focus: the prescription is untouched, so the block's whole value is
   // the window and the pace. Naming the focus keeps it concrete.
-  const kept = focusLabel(currentFocus).toLowerCase();
   if (pace === "full") {
-    // "gives 8 weeks of stay fit a shape" read as a sentence with a verb
-    // phrase wedged into it; the focus goes at the end, as the thing kept.
-    return `Nothing about your sessions changes — the block just gives the next ${weeks} a shape and a finish line, with the same ${kept} focus.`;
+    // The focus's name is the person's own goal ("Support my running"),
+    // so it goes in whole, as the thing kept, not lowercased into the
+    // sentence.
+    return `Nothing about your sessions changes — the block just gives the next ${weeks} a shape and a finish line. Your focus stays ${focusLabel(currentFocus)}.`;
   }
   if (pace === "lighter") {
     return `Same prescription for ${weeks}, ${trimmed} each time — the full one is always a tap away.`;

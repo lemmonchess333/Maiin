@@ -1,0 +1,17 @@
+{
+  "reviewedAt": "2026-10-13T14:31:48.357619+00:00",
+  "previousArtworkFilesPreserved": 868,
+  "canonicalPreserved": true,
+  "approvedActiveSets": 116,
+  "verifiedFrames": 696,
+  "registeredMobileLightDark": true,
+  "controlsPassed": true,
+  "consoleErrors": 0,
+  "editableFilesPixelExact": 3,
+  "losslessFramesPixelExact": 6,
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "cardSha256": "e54af7cdd3faf276817541516d4d8d2551dba87b8d549ec00693166d2eb55027",
+  "projectVerification": "pending",
+  "merge": "pending"
+}

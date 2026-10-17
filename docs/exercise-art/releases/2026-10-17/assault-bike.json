@@ -1,0 +1,146 @@
+{
+  "exerciseId": "assault-bike",
+  "version": "anatomy-v3-2026-10-17-gemini-front-air-bike-v1",
+  "width": 1024,
+  "height": 1024,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Claude Code, session_015b5TWTtYEo43etRFZF8nJr",
+  "reviewedAt": "2026-10-17T13:04:25+00:00",
+  "reference": {
+    "path": "form-frames/assault-bike/1.webp",
+    "sha256": "9ff463d8f00fb6621b87eb272c183ab7477442e75377b04635da94c4a75cc675"
+  },
+  "cueSha256": "737487eec3e7f81638e8753c748e07f302944d2e31bc2af785e29b045c8f0de6",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Unverified. Observed: The canonical faceless anatomy-v3 athlete with white trainers in every frame, seen on the contact sheet."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Unverified. Observed: One straight-on front camera. Frames 3 and 4 are frame 1 mirrored, which the symmetric front view allows."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Unverified. Observed: No extra or missing limbs seen at contact-sheet size; not inspected at native size frame by frame."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Unverified. Observed: The bike is drawn left-right symmetric, so the mirrored frames keep it in place; any small asymmetric detail flips with the mirror."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Floor and equipment contacts look plausible at contact-sheet size; no anchors were measured."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Two pedal positions half a turn apart: one knee up, then the other."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Unverified. Observed: The colours follow the brief's strongest-purple and lilac hierarchy at contact-sheet size."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Unverified. Observed: The cues coach the whole stroke over its two positions, as the elliptical's do."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Reviewed as a loop: two beats of one pedal position, two of the other, two of the first again, the elliptical's pattern."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Not reviewed in the app's player at phone size; the owner reviewed a contact sheet and an animated loop."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Unverified. Observed: Not reviewed in the app's player at phone size; the owner reviewed a contact sheet and an animated loop."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/assault-bike/1.webp",
+      "sha256": "9ff463d8f00fb6621b87eb272c183ab7477442e75377b04635da94c4a75cc675",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-17/front.png",
+        "sha256": "c787d82d95d0549ba604f57b09b125fea485c335e2856e5c00fa3169e2bf41b0",
+        "generatedSha256": "f531defcb9f1f6ad154cfcf46c4f43d8d0cb0427fdf6665f0c15f7b7251428b8"
+      }
+    },
+    {
+      "path": "form-frames/assault-bike/2.webp",
+      "sha256": "9ff463d8f00fb6621b87eb272c183ab7477442e75377b04635da94c4a75cc675",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-17/front.png",
+        "sha256": "c787d82d95d0549ba604f57b09b125fea485c335e2856e5c00fa3169e2bf41b0",
+        "generatedSha256": "f531defcb9f1f6ad154cfcf46c4f43d8d0cb0427fdf6665f0c15f7b7251428b8"
+      }
+    },
+    {
+      "path": "form-frames/assault-bike/3.webp",
+      "sha256": "6061a215b93b24199418f088d081b2c50e4badc406703fe85916a6679f4692df",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-17/front-mirrored.png",
+        "sha256": "9c41aa00f8efb0c354b6e690274d9abf37a35acc813bca8f93516a4f4cc93673",
+        "generatedSha256": "f531defcb9f1f6ad154cfcf46c4f43d8d0cb0427fdf6665f0c15f7b7251428b8"
+      }
+    },
+    {
+      "path": "form-frames/assault-bike/4.webp",
+      "sha256": "6061a215b93b24199418f088d081b2c50e4badc406703fe85916a6679f4692df",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-17/front-mirrored.png",
+        "sha256": "9c41aa00f8efb0c354b6e690274d9abf37a35acc813bca8f93516a4f4cc93673",
+        "generatedSha256": "f531defcb9f1f6ad154cfcf46c4f43d8d0cb0427fdf6665f0c15f7b7251428b8"
+      }
+    },
+    {
+      "path": "form-frames/assault-bike/5.webp",
+      "sha256": "9ff463d8f00fb6621b87eb272c183ab7477442e75377b04635da94c4a75cc675",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-17/front.png",
+        "sha256": "c787d82d95d0549ba604f57b09b125fea485c335e2856e5c00fa3169e2bf41b0",
+        "generatedSha256": "f531defcb9f1f6ad154cfcf46c4f43d8d0cb0427fdf6665f0c15f7b7251428b8"
+      }
+    },
+    {
+      "path": "form-frames/assault-bike/6.webp",
+      "sha256": "9ff463d8f00fb6621b87eb272c183ab7477442e75377b04635da94c4a75cc675",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-17/front.png",
+        "sha256": "c787d82d95d0549ba604f57b09b125fea485c335e2856e5c00fa3169e2bf41b0",
+        "generatedSha256": "f531defcb9f1f6ad154cfcf46c4f43d8d0cb0427fdf6665f0c15f7b7251428b8"
+      }
+    }
+  ],
+  "recordStage": "Owner release recorded; project verification, CI and merge remain separate gates",
+  "approval": {
+    "actor": "The owner, in this session",
+    "instruction": "\"No just figure it out, it's ok if it's not perfect but I've been trying to release this for ages\", answering whether the bike should get one still pose or be left out, after six methods had failed to draw a second side-view pedal position.",
+    "context": "The owner asked for the exercises without art to be generated in the house style with their Gemini key, saw this set as a contact sheet and an animated loop, and released it knowing the findings below."
+  },
+  "findings": [
+    "Two physical poses only: frames 3 and 4 are frame 1 mirrored, and frames 2, 5 and 6 repeat frame 1.",
+    "Six side-view methods failed to draw the second pedal position (edit chains, fresh drawings, an empty-bike plate, a side-by-side pair and Gemini 2.5 Flash Image): the model always drew the near knee high. The set moved to a front view, where the mirror is the other half of the stroke.",
+    "Any asymmetric detail of the bike flips with the mirror.",
+    "From the front the fan reads as a narrow guard, not a wheel; the bike reads by its handles and frame.",
+    "No contacts or anchors were measured."
+  ],
+  "provenance": {
+    "method": "One gemini-3-pro-image generation through scripts/art/gemini-image.py, with the canonical athlete and the earlier side-view bike attached for identity and finish: a straight-on front view, the knee on the viewer's left raised. front-mirrored.png is that image flipped left to right. Frames 1, 2, 5 and 6 are front.png and frames 3 and 4 front-mirrored.png. Nothing was redrawn by hand.",
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  }
+}

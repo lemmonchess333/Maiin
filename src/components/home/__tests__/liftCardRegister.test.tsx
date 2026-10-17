@@ -76,10 +76,22 @@ describe("the run card keeps its date-pinned register", () => {
     // date, so this line is correct and the asymmetry is the point.
     render(
       <RunCTACard
+        unit="km"
         todayRun={{ templateId: "easy_30" } as never}
         navigate={vi.fn()}
       />
     );
     expect(screen.getByText("Today · Run day")).toBeInTheDocument();
+  });
+});
+
+describe("the lift card's muscle line", () => {
+  it("keeps each group whole, so a narrow card breaks between groups", () => {
+    renderLift({ muscleGroups: "Back · Shoulders · Legs + more" });
+    const last = screen.getByText("Legs + more");
+    expect(last).toHaveClass("whitespace-nowrap");
+    expect(last.parentElement?.parentElement).toHaveTextContent(
+      "Back · Shoulders · Legs + more"
+    );
   });
 });

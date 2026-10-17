@@ -1,0 +1,292 @@
+[
+  {
+    "ms": 114,
+    "frame": 1,
+    "src": "final-frames/1.webp",
+    "alt": "Seated Calf Raise, Stretch",
+    "playing": false,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 19809,
+    "frame": 1,
+    "src": "final-frames/1.webp",
+    "alt": "Seated Calf Raise, Stretch",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 19811,
+    "frame": 1,
+    "src": "final-frames/1.webp",
+    "alt": "Seated Calf Raise, Stretch",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 20855,
+    "frame": 2,
+    "src": "final-frames/2.webp",
+    "alt": "Seated Calf Raise, Rise",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 21828,
+    "frame": 3,
+    "src": "final-frames/3.webp",
+    "alt": "Seated Calf Raise, Squeeze",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 22824,
+    "frame": 4,
+    "src": "final-frames/4.webp",
+    "alt": "Seated Calf Raise, Hold",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 23826,
+    "frame": 5,
+    "src": "final-frames/5.webp",
+    "alt": "Seated Calf Raise, Lower",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 24828,
+    "frame": 6,
+    "src": "final-frames/6.webp",
+    "alt": "Seated Calf Raise, Reset",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 25819,
+    "frame": 1,
+    "src": "final-frames/1.webp",
+    "alt": "Seated Calf Raise, Stretch",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 26815,
+    "frame": 2,
+    "src": "final-frames/2.webp",
+    "alt": "Seated Calf Raise, Rise",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 27819,
+    "frame": 3,
+    "src": "final-frames/3.webp",
+    "alt": "Seated Calf Raise, Squeeze",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 28836,
+    "frame": 4,
+    "src": "final-frames/4.webp",
+    "alt": "Seated Calf Raise, Hold",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 29834,
+    "frame": 5,
+    "src": "final-frames/5.webp",
+    "alt": "Seated Calf Raise, Lower",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 30830,
+    "frame": 6,
+    "src": "final-frames/6.webp",
+    "alt": "Seated Calf Raise, Reset",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 31834,
+    "frame": 1,
+    "src": "final-frames/1.webp",
+    "alt": "Seated Calf Raise, Stretch",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 32832,
+    "frame": 2,
+    "src": "final-frames/2.webp",
+    "alt": "Seated Calf Raise, Rise",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 33815,
+    "frame": 3,
+    "src": "final-frames/3.webp",
+    "alt": "Seated Calf Raise, Squeeze",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 34815,
+    "frame": 4,
+    "src": "final-frames/4.webp",
+    "alt": "Seated Calf Raise, Hold",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 35818,
+    "frame": 5,
+    "src": "final-frames/5.webp",
+    "alt": "Seated Calf Raise, Lower",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 36818,
+    "frame": 6,
+    "src": "final-frames/6.webp",
+    "alt": "Seated Calf Raise, Reset",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 37819,
+    "frame": 1,
+    "src": "final-frames/1.webp",
+    "alt": "Seated Calf Raise, Stretch",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 38815,
+    "frame": 2,
+    "src": "final-frames/2.webp",
+    "alt": "Seated Calf Raise, Rise",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 39818,
+    "frame": 3,
+    "src": "final-frames/3.webp",
+    "alt": "Seated Calf Raise, Squeeze",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 40818,
+    "frame": 4,
+    "src": "final-frames/4.webp",
+    "alt": "Seated Calf Raise, Hold",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 41818,
+    "frame": 5,
+    "src": "final-frames/5.webp",
+    "alt": "Seated Calf Raise, Lower",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 42815,
+    "frame": 6,
+    "src": "final-frames/6.webp",
+    "alt": "Seated Calf Raise, Reset",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 43818,
+    "frame": 1,
+    "src": "final-frames/1.webp",
+    "alt": "Seated Calf Raise, Stretch",
+    "playing": true,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 44818,
+    "frame": 2,
+    "src": "final-frames/2.webp",
+    "alt": "Seated Calf Raise, Rise",
+    "playing": false,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  },
+  {
+    "ms": 44819,
+    "frame": 2,
+    "src": "final-frames/2.webp",
+    "alt": "Seated Calf Raise, Rise",
+    "playing": false,
+    "natural": [940, 1310],
+    "rendered": [940, 1310],
+    "documentHidden": false
+  }
+]

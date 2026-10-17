@@ -16,7 +16,7 @@ export default function PrivacyPolicy() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 min-h-[44px] -my-2 text-sm text-muted-foreground hover:text-foreground transition-colors active:scale-[0.97]"
+          className="inline-flex items-center gap-2 min-h-[44px] -my-2 text-sm text-muted-foreground hover:text-foreground transition active:scale-[0.97]"
         >
           <ArrowLeft className="size-4" />
           Back
@@ -414,6 +414,16 @@ export default function PrivacyPolicy() {
                 Functions (our server code), App Check (which checks that
                 requests come from the real app; on the web it uses reCAPTCHA)
                 and Google Analytics for Firebase (usage analytics, section 2).
+              </li>
+              <li>
+                <strong className="text-foreground">
+                  Photo checks (Google Cloud Vision):
+                </strong>{" "}
+                a photo you set as your profile photo or attach to a Space post
+                is checked by Google Cloud Vision&apos;s SafeSearch before other
+                people can see it, and a photo with nudity is deleted. Google
+                processes the photo only to return the check and does not use it
+                to train its models.
               </li>
               <li>
                 <strong className="text-foreground">

@@ -1,0 +1,116 @@
+[
+  {
+    "cue": "Straight arms; keep heels against the wall.",
+    "decoded": true,
+    "natural": [
+      688,
+      1504
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 1: Stack",
+    "src": "/form-frames/handstand-push-ups/1.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Brace your torso; keep legs together.",
+    "decoded": true,
+    "natural": [
+      688,
+      1504
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 2: Brace",
+    "src": "/form-frames/handstand-push-ups/2.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Bend elbows; lower under control.",
+    "decoded": true,
+    "natural": [
+      688,
+      1504
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 3: Lower",
+    "src": "/form-frames/handstand-push-ups/3.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Touch lightly; keep support through your palms.",
+    "decoded": true,
+    "natural": [
+      688,
+      1504
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 4: Touch lightly",
+    "src": "/form-frames/handstand-push-ups/4.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Press through both palms to straight arms.",
+    "decoded": true,
+    "natural": [
+      688,
+      1504
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 5: Press",
+    "src": "/form-frames/handstand-push-ups/5.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Reset with head neutral and heels supported.",
+    "decoded": true,
+    "natural": [
+      688,
+      1504
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 6: Reset",
+    "src": "/form-frames/handstand-push-ups/6.webp",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  }
+]

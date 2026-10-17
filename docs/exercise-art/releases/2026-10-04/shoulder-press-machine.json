@@ -1,0 +1,211 @@
+{
+  "exerciseId": "shoulder-press-machine",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 900,
+  "height": 1500,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-05T09:14:01.414Z",
+  "reference": {
+    "path": "form-frames/shoulder-press-machine/1.webp",
+    "sha256": "cca40a9911d691e35bf53c5cded011d4c0a697ac2b3ccb867de4a81b66e0a5a8"
+  },
+  "cueSha256": "56e3f05b789c8df77ed5b6a074a549b1f1146cab483a0b8afac2d5383f8ff23c",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical v3 bald faceless white-grey anatomical athlete with white trainers and neutral featureless pelvis. Canonical and exercise master used for moving-pose edits; no code anatomy transformations."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed frontal camera. All original poses977x1609 and common final crop40,15,900,1500 without rescaling anatomy."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native four distinct press poses inspected, including closed bilateral grips, near-straight comfortable extension and stable seated torso/head. Return reuses matching configurations."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two complete rigid sliding collars and straight pronated grips travel vertically on fixed rails. Original equipment alpha silhouettes translated by0,48,137,295pixels. Fixed rail profiles and early arch repair preserve stationary machine geometry; no anatomy transformed."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both planted soles and machine-base anchors and three widths measured invariant after exact stationary copies. Native patch boundaries inspected."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Seated supported bilateral upward press with controlled elbow extension and return. No shrug or torso swing. Resistance transmission/coupling enclosed; no visible stack-lift or calibrated internal ratio claimed."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary deltoids strongest purple, secondary triceps lilac, other anatomy neutral. Stable hierarchy through outward and return phases."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "All six cues at most seven words and agree with Set,Initiate,Press,Extend,Lower,Return."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six and6to1 reviewed in actual ExerciseFormFrames. Middle and early poses reused for return. Automatic playback observed advancing Set to Lower."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six and6to1 inspected at390x844 in actual player after final crop/contact repair. Full machine, athlete and both grips visible; readable cues and stable contacts."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and6to1 inspected at390x844 dark mode after final crop/contact repair. No clipping or contact jump; readable captions and cues."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Seated supported press with planted soles",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["leftSole", "rightSole", "machineBase"],
+      "dimensionNames": ["leftShoeWidth", "rightShoeWidth", "machineBaseWidth"],
+      "evidence": "Pixel-derived sole and tower-base contacts, exact stationary master copies. Both moving grips and arms reviewed visually."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/shoulder-press-machine/1.webp",
+      "sha256": "cca40a9911d691e35bf53c5cded011d4c0a697ac2b3ccb867de4a81b66e0a5a8",
+      "anchors": {
+        "leftSole": {
+          "x": 237,
+          "y": 1476
+        },
+        "rightSole": {
+          "x": 626,
+          "y": 1476
+        },
+        "machineBase": {
+          "x": 415,
+          "y": 1368
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 134,
+        "rightShoeWidth": 134,
+        "machineBaseWidth": 82
+      }
+    },
+    {
+      "path": "form-frames/shoulder-press-machine/2.webp",
+      "sha256": "95e9bc5f89df0fcff41b14c7e116dbcd9b6ae9ff29c7d099d3c0f062c61f9a46",
+      "anchors": {
+        "leftSole": {
+          "x": 237,
+          "y": 1476
+        },
+        "rightSole": {
+          "x": 626,
+          "y": 1476
+        },
+        "machineBase": {
+          "x": 415,
+          "y": 1368
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 134,
+        "rightShoeWidth": 134,
+        "machineBaseWidth": 82
+      }
+    },
+    {
+      "path": "form-frames/shoulder-press-machine/3.webp",
+      "sha256": "86223ef175eafcb4c7b8f91d9be74ba86e7f030949656df016f4838bd6cfc8f5",
+      "anchors": {
+        "leftSole": {
+          "x": 237,
+          "y": 1476
+        },
+        "rightSole": {
+          "x": 626,
+          "y": 1476
+        },
+        "machineBase": {
+          "x": 415,
+          "y": 1368
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 134,
+        "rightShoeWidth": 134,
+        "machineBaseWidth": 82
+      }
+    },
+    {
+      "path": "form-frames/shoulder-press-machine/4.webp",
+      "sha256": "1f64368222fb66640f588e34f1f4a9a564d586573b3c70f843ba7fa993a86588",
+      "anchors": {
+        "leftSole": {
+          "x": 237,
+          "y": 1476
+        },
+        "rightSole": {
+          "x": 626,
+          "y": 1476
+        },
+        "machineBase": {
+          "x": 415,
+          "y": 1368
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 134,
+        "rightShoeWidth": 134,
+        "machineBaseWidth": 82
+      }
+    },
+    {
+      "path": "form-frames/shoulder-press-machine/5.webp",
+      "sha256": "86223ef175eafcb4c7b8f91d9be74ba86e7f030949656df016f4838bd6cfc8f5",
+      "anchors": {
+        "leftSole": {
+          "x": 237,
+          "y": 1476
+        },
+        "rightSole": {
+          "x": 626,
+          "y": 1476
+        },
+        "machineBase": {
+          "x": 415,
+          "y": 1368
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 134,
+        "rightShoeWidth": 134,
+        "machineBaseWidth": 82
+      }
+    },
+    {
+      "path": "form-frames/shoulder-press-machine/6.webp",
+      "sha256": "95e9bc5f89df0fcff41b14c7e116dbcd9b6ae9ff29c7d099d3c0f062c61f9a46",
+      "anchors": {
+        "leftSole": {
+          "x": 237,
+          "y": 1476
+        },
+        "rightSole": {
+          "x": 626,
+          "y": 1476
+        },
+        "machineBase": {
+          "x": 415,
+          "y": 1368
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeWidth": 134,
+        "rightShoeWidth": 134,
+        "machineBaseWidth": 82
+      }
+    }
+  ]
+}

@@ -80,6 +80,8 @@ export function BackDismissProvider({ children }: { children: ReactNode }) {
             pushSentinel: () =>
               window.history.pushState({ __overlayDismiss: true }, ""),
             back: () => window.history.back(),
+            defer: (fn) => queueMicrotask(fn),
+            url: () => window.location.href,
           }),
     []
   );

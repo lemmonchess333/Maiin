@@ -1,0 +1,28 @@
+{
+  "startedAt": "2026-10-15T12:48:13.109348+00:00",
+  "finishedAt": "2026-10-15T12:58:00.282217+00:00",
+  "normalCommand": "npm run verify",
+  "exitCode": 1,
+  "durationSeconds": 585.0780000000086,
+  "headBefore": "2efdec417e43a868bb2ece7a63baff8de6271db3",
+  "headAfter": "2efdec417e43a868bb2ece7a63baff8de6271db3",
+  "headUnchanged": true,
+  "statusBefore": " M scripts/dist-size.baseline.json\n M src/lib/__tests__/formArtOwnerRelease.test.ts\n M src/lib/formArtCutouts.data.ts\n M src/lib/formArtwork.ts\n M src/lib/releasedFormPlacards.ts\n?? docs/exercise-art/releases/2026-10-15/face-pulls.json\n?? docs/exercise-art/sources/face-pulls/\n?? masters/face-pulls/\n?? public/form-art/face-pulls.webp\n?? public/form-frames/face-pulls/\n",
+  "statusAfterTestBeforeSnapshotRestore": " M scripts/dist-size.baseline.json\n M src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap\n M src/lib/__tests__/formArtOwnerRelease.test.ts\n M src/lib/formArtCutouts.data.ts\n M src/lib/formArtwork.ts\n M src/lib/releasedFormPlacards.ts\n?? docs/exercise-art/releases/2026-10-15/face-pulls.json\n?? docs/exercise-art/sources/face-pulls/\n?? masters/face-pulls/\n?? public/form-art/face-pulls.webp\n?? public/form-frames/face-pulls/\n",
+  "statusAfter": " M scripts/dist-size.baseline.json\n M src/lib/__tests__/formArtOwnerRelease.test.ts\n M src/lib/formArtCutouts.data.ts\n M src/lib/formArtwork.ts\n M src/lib/releasedFormPlacards.ts\n?? docs/exercise-art/releases/2026-10-15/face-pulls.json\n?? docs/exercise-art/sources/face-pulls/\n?? masters/face-pulls/\n?? public/form-art/face-pulls.webp\n?? public/form-frames/face-pulls/\n",
+  "statusRestored": true,
+  "snapshotRestores": [
+    {
+      "path": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+      "originalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "testOutputSha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "restoredExact": true
+    }
+  ],
+  "inputCount": 2656,
+  "changedInputsAfterRestoration": [],
+  "allInputsUnchanged": true,
+  "log": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining19-execution-20261015\\checks\\face-pulls-final-sized-2efdec417\\verify.log",
+  "logSha256": "cfc1ebdeca3392fdc3683979eb7bd2ebf4605318c202ff7438b4f0e72127515f",
+  "fullVerificationPassed": false
+}

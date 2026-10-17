@@ -1,0 +1,181 @@
+{
+  "exerciseId": "incline-treadmill-walk",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 1250,
+  "height": 940,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-04T20:22:18.600Z",
+  "reference": {
+    "path": "form-frames/incline-treadmill-walk/1.webp",
+    "sha256": "b3dff293c1af2fb00942c3bc50f2effbc2a17e1981848dfff5368d947282f473"
+  },
+  "cueSha256": "569fedb68c28e67028415ad4d675bcfac08e00933e87bc47db8d1585ad3c9566",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical faceless white-grey anatomical athlete, neutral pelvis and white trainers; canonical and exercise master attached to every moving-pose generation."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed right-facing oblique view. Whole master scene reduced uniformly to90percent for headroom; final common1250x940crop removes only empty margins. No anatomy warps or mirrors."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "All6 final native frames inspected. Near leg leads and supports1/2/3, far leg leads and supports4/5/6. Initial frame4 overlap and frame6 arm swing/support contact corrected through imagegen. Connected hips, knees, ankles, elbows and wrists; proportions remain consistent."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Stationary console, upright and lower base copied from exercise master using the previously authorized equipment method. Regions exclude athlete pixels. Full machine visible in every pose."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Each pose visibly retains at least one supporting foot on the belt. Supporting feet travel backward while the opposite foot swings forward. Fixed rear support and front support edges and complete horizontal widths measured identically across all6; moving shoe coordinates are deliberately not treated as fixed anchors."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Inclined walking variation supported by catalogue; front of deck raised, slight ankle lean and no waist fold. The projected deck slope is illustrative, not a calibrated real-world grade. Alternating heel contact, loading and swing; one foot remains on the belt, arms counter-swing, hands remain free of rails. Frame6 leads to next near heel contact. Illustrative six-pose cycle, not a calibrated gait simulation."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Glutes and calves strong purple; quads and hamstrings pale lilac, matching the existing incline treadmill rig."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words describe hands-free uphill stepping, weight transfer, opposite swing, soft landing with ankle lean, counter-swinging arms and an even stride."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All6 and6to1 inspected manually in actual ExerciseFormFrames. Near/far leg alternation and opposing arm swing remain visible; machine stays fixed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Final common-crop frames1..6 and6to1 inspected in actual ExerciseFormFrames at390x844 light mode4October2026. Full machine and figure remain visible and captions readable."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All6 final cropped frames and6to1 inspected at390x844 dark mode. Purple/lilac hierarchy, foot silhouettes and captions readable."
+    }
+  },
+  "contactPhases": [
+    {
+      "name": "Fixed equipment through walking cycle",
+      "frames": [1, 2, 3, 4, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["rearSupportBottom", "frontSupportBottom"],
+      "dimensionNames": ["rearSupportWidth", "frontSupportWidth"],
+      "evidence": "Pixel-derived stationary equipment edges and full horizontal widths match across six grounded walking poses. Foot contact and alternation reviewed separately because shoes move with the belt."
+    }
+  ],
+  "airborneFrames": [],
+  "frames": [
+    {
+      "path": "form-frames/incline-treadmill-walk/1.webp",
+      "sha256": "b3dff293c1af2fb00942c3bc50f2effbc2a17e1981848dfff5368d947282f473",
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 119,
+          "y": 905
+        },
+        "frontSupportBottom": {
+          "x": 1148,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 41,
+        "frontSupportWidth": 54
+      }
+    },
+    {
+      "path": "form-frames/incline-treadmill-walk/2.webp",
+      "sha256": "926ee1e63086626dd1f9cdb3edd5062609977e9cbc5df85915c41441bd9e184d",
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 119,
+          "y": 905
+        },
+        "frontSupportBottom": {
+          "x": 1148,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 41,
+        "frontSupportWidth": 54
+      }
+    },
+    {
+      "path": "form-frames/incline-treadmill-walk/3.webp",
+      "sha256": "f6b5f88c7ddc8152b006e0170a6163c88e741a235a1956ce29b8f9ca529336d2",
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 119,
+          "y": 905
+        },
+        "frontSupportBottom": {
+          "x": 1148,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 41,
+        "frontSupportWidth": 54
+      }
+    },
+    {
+      "path": "form-frames/incline-treadmill-walk/4.webp",
+      "sha256": "69044609d3c1c6849f97f6bb619090e7d5ebb59399d34ec2332bca8676eea270",
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 119,
+          "y": 905
+        },
+        "frontSupportBottom": {
+          "x": 1148,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 41,
+        "frontSupportWidth": 54
+      }
+    },
+    {
+      "path": "form-frames/incline-treadmill-walk/5.webp",
+      "sha256": "b593eacd03a0d178608f3d072780f65160264f1e7da96d71a40aae092c9037d8",
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 119,
+          "y": 905
+        },
+        "frontSupportBottom": {
+          "x": 1148,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 41,
+        "frontSupportWidth": 54
+      }
+    },
+    {
+      "path": "form-frames/incline-treadmill-walk/6.webp",
+      "sha256": "3301781a93371ec9c0b294e406a8ec35313d643c5dcf2443ce86d061de6e4886",
+      "anchors": {
+        "rearSupportBottom": {
+          "x": 119,
+          "y": 905
+        },
+        "frontSupportBottom": {
+          "x": 1148,
+          "y": 896
+        }
+      },
+      "invariantDimensions": {
+        "rearSupportWidth": 41,
+        "frontSupportWidth": 54
+      }
+    }
+  ]
+}

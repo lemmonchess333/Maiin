@@ -1,0 +1,216 @@
+{
+  "status": "actual measured source findings; strict fixed-spindle failure retained; root acceptance pending",
+  "exerciseId": "bike",
+  "measuredAt": "2026-10-14T23:48:21.464054+00:00",
+  "sourceCoordinateSpace": [1024, 1536],
+  "crop": [48, 32, 977, 1464],
+  "framedCoordinateConversion": "subtract48 from normalized x and32 from normalized y",
+  "rows": [
+    {
+      "pose": 1,
+      "wholeSceneOffset": [0, 0],
+      "equipmentThresholds": [
+        {
+          "threshold": 20,
+          "frontAnchor": [81.0, 1393.0],
+          "frontWidthAtY1400": 124,
+          "rearAnchor": [943.0, 1394.5],
+          "rearWidthAtY1400": 112
+        },
+        {
+          "threshold": 25,
+          "frontAnchor": [81.0, 1394.0],
+          "frontWidthAtY1400": 124,
+          "rearAnchor": [943.0, 1395.0],
+          "rearWidthAtY1400": 111
+        },
+        {
+          "threshold": 30,
+          "frontAnchor": [82.0, 1394.0],
+          "frontWidthAtY1400": 124,
+          "rearAnchor": [943.0, 1394.5],
+          "rearWidthAtY1400": 111
+        },
+        {
+          "threshold": 35,
+          "frontAnchor": [82.0, 1394.0],
+          "frontWidthAtY1400": 124,
+          "rearAnchor": [943.0, 1395.0],
+          "rearWidthAtY1400": 111
+        },
+        {
+          "threshold": 40,
+          "frontAnchor": [82.0, 1394.0],
+          "frontWidthAtY1400": 102,
+          "rearAnchor": [943.0, 1395.0],
+          "rearWidthAtY1400": 110
+        },
+        {
+          "threshold": 50,
+          "frontAnchor": [82.0, 1394.0],
+          "frontWidthAtY1400": 102,
+          "rearAnchor": [942.0, 1395.0],
+          "rearWidthAtY1400": 110
+        }
+      ],
+      "spindleApertureROI": [539, 1129, 554, 1145],
+      "spindleDarkApertureSamples": [
+        {
+          "thresholdMaxRGB": 40,
+          "samples": 56,
+          "centroid": [543.9821428571429, 1135.25]
+        },
+        {
+          "thresholdMaxRGB": 50,
+          "samples": 66,
+          "centroid": [544.1969696969697, 1135.469696969697]
+        },
+        {
+          "thresholdMaxRGB": 60,
+          "samples": 88,
+          "centroid": [544.4318181818181, 1135.7045454545455]
+        },
+        {
+          "thresholdMaxRGB": 70,
+          "samples": 107,
+          "centroid": [545.0747663551402, 1135.4579439252336]
+        }
+      ]
+    },
+    {
+      "pose": 2,
+      "wholeSceneOffset": [-1, 16],
+      "equipmentThresholds": [
+        {
+          "threshold": 20,
+          "frontAnchor": [82.0, 1394.5],
+          "frontWidthAtY1400": 125,
+          "rearAnchor": [941.0, 1397.5],
+          "rearWidthAtY1400": 111
+        },
+        {
+          "threshold": 25,
+          "frontAnchor": [82.0, 1395.0],
+          "frontWidthAtY1400": 125,
+          "rearAnchor": [941.0, 1397.5],
+          "rearWidthAtY1400": 111
+        },
+        {
+          "threshold": 30,
+          "frontAnchor": [82.0, 1394.5],
+          "frontWidthAtY1400": 125,
+          "rearAnchor": [941.0, 1398.0],
+          "rearWidthAtY1400": 111
+        },
+        {
+          "threshold": 35,
+          "frontAnchor": [82.0, 1394.5],
+          "frontWidthAtY1400": 125,
+          "rearAnchor": [941.0, 1399.0],
+          "rearWidthAtY1400": 111
+        },
+        {
+          "threshold": 40,
+          "frontAnchor": [82.0, 1394.5],
+          "frontWidthAtY1400": 125,
+          "rearAnchor": [940.0, 1398.0],
+          "rearWidthAtY1400": 110
+        },
+        {
+          "threshold": 50,
+          "frontAnchor": [82.0, 1395.5],
+          "frontWidthAtY1400": 125,
+          "rearAnchor": [940.0, 1398.5],
+          "rearWidthAtY1400": 110
+        }
+      ],
+      "spindleApertureROI": [546, 1112, 563, 1131],
+      "spindleDarkApertureSamples": [
+        {
+          "thresholdMaxRGB": 40,
+          "samples": 90,
+          "centroid": [554.0222222222222, 1122.1666666666667]
+        },
+        {
+          "thresholdMaxRGB": 50,
+          "samples": 97,
+          "centroid": [553.8556701030927, 1122.2268041237114]
+        },
+        {
+          "thresholdMaxRGB": 60,
+          "samples": 109,
+          "centroid": [553.8715596330276, 1121.9816513761468]
+        },
+        {
+          "thresholdMaxRGB": 70,
+          "samples": 125,
+          "centroid": [553.76, 1122.0]
+        }
+      ]
+    }
+  ],
+  "fixedAnchors": [
+    {
+      "name": "frontStabilizerLeftmostNeutralOuterEdgeMidpoint",
+      "normalizedNativePoints": [
+        [82.0, 1394.0],
+        [82.0, 1394.5]
+      ],
+      "framedPoints": [
+        [34.0, 1362.0],
+        [34.0, 1362.5]
+      ],
+      "driftPx": 0.5,
+      "strict1pxPassed": true,
+      "method": "ROI75,1370,225,1450; common meanRGB>30 and max-minRGB<12; leftmost edge then midpoint of its actual y plateau."
+    },
+    {
+      "name": "rearStabilizerRightmostNeutralOuterEdgeMidpoint",
+      "normalizedNativePoints": [
+        [943.0, 1394.5],
+        [941.0, 1398.0]
+      ],
+      "framedPoints": [
+        [895.0, 1362.5],
+        [893.0, 1366.0]
+      ],
+      "driftPx": 4.031128874149275,
+      "strict1pxPassed": false,
+      "method": "ROI815,1370,968,1450; same threshold; rightmost edge then midpoint of actual y plateau."
+    },
+    {
+      "name": "fixedCrankSpindleDarkBearingApertureCentroid",
+      "normalizedNativePoints": [
+        [544.4318181818181, 1135.7045454545455],
+        [553.8715596330276, 1121.9816513761468]
+      ],
+      "framedPoints": [
+        [496.43181818181813, 1103.7045454545455],
+        [505.8715596330276, 1089.9816513761468]
+      ],
+      "deltaUpperMinusLowerPx": [9.439741451209443, -13.722894078398667],
+      "driftPx": 16.656126216879812,
+      "strict1pxPassed": false,
+      "method": "Actual visible enclosed dark bearing aperture centroid, common maxRGB<60 within per-source inspected literal aperture ROIs.40/50/70 sensitivity retained; all show substantial same-direction drift. Not an inferred ankle/joint or background coordinate."
+    }
+  ],
+  "projectedDimensions": [
+    {
+      "name": "frontStabilizerVisibleNeutralEndcapWidthAtNormalizedY1400",
+      "valuesPx": [124, 125],
+      "relativeChangePercent": 0.8064516129032251,
+      "strict1PercentPassed": true
+    },
+    {
+      "name": "rearStabilizerVisibleNeutralEndcapWidthAtNormalizedY1400",
+      "valuesPx": [111, 111],
+      "relativeChangePercent": 0.0,
+      "strict1PercentPassed": true
+    }
+  ],
+  "dimensionSensitivity": "Front width is124/125 at thresholds20/25/30/35; threshold40 erodes the first source shaded endcap to102 versus125, so it is unsuitable for the full visible neutral endcap feature. Rear is111/111 at25/30/35 and110/110 at40/50. These are visible raster cross-sections, not complete unoccluded hardware dimensions.",
+  "decision": "No strict apparatus pass is claimed. The16.6px spindle drift and rear-foot drift are actual retained source findings. Root must judge actual native/mobile continuity under the owner relaxation; otherwise hold. Do not hide them behind two base anchors, contact phase groups, a noise/perspective explanation or code equipment/anatomy correction.",
+  "calibrated3DClaim": false,
+  "equipmentPixelsEdited": false,
+  "completionCredit": false
+}

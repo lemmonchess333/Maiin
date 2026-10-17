@@ -1,0 +1,62 @@
+{
+  "status": "ready-for-parent-actual-ui-review-with-existing-findings",
+  "createdAtUtc": "2026-10-15T19:36:09.987642+00:00",
+  "reviewScope": "Independent native corrected1/4 framed pair plus raw fixed hardware, compared against previously viewed old delivered pair and original1/4 model/gear. One bounded material correction only. No code/material generation, reproduction, tests or package/repo edits.",
+  "reviewedFinalImages": {
+    "draft/1-framed.png": "18f430df219ac55d5f9d57c002a3eac6fbbf9c301594814997a5d571bbfbaef6",
+    "draft/4-framed.png": "6acccd299ad36e353d110f0e2c8fee19571857962ddfd7e6107c89c15c01adc8",
+    "draft/fixed-covered-housings-and-chassis-unoccluded.png": "6ca59c579cdf3b9c2247ed8f3606ac38f346b6a92a39edf8c1e83dcddae29b72"
+  },
+  "frozenMaterialInputManifest": {
+    "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\leg-extension\\endpoint-material-finish-20261015\\material-attempt-review-inputs.json",
+    "sha256": "761ae2f6f4452ddd9e840afc0bbb2d9511918a41d7814a617f1e6f15814905f4",
+    "allPinnedInputsVerified": 63,
+    "allSameBeforeAfterAudit": true
+  },
+  "priorIndependentHold": {
+    "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\independent-leg-extension-endpoint-review-20261015\\native-mechanics-and-artistic-consistency-review.json",
+    "sha256": "24d80bdd3af13a41060d5ea9e694d354a41ac205ffdaa61746688dc0b0175570"
+  },
+  "independentPreservationChecks": {
+    "sameWorkingUnitCamera": true,
+    "sameWorldDimensionsJointsAndAllEndpointGeometry": true,
+    "sameStaticWorldGeometryExceptMaterialRgbaHash": true,
+    "sameCropAndImageDimensions": true,
+    "allWorkingUnitAlphaMasksExact": {
+      "working-unit/1-equipment-back.png": true,
+      "working-unit/1-equipment-front-unoccluded.png": true,
+      "working-unit/1-equipment-front-with-existing-depth.png": true,
+      "working-unit/4-equipment-back.png": true,
+      "working-unit/4-equipment-front-unoccluded.png": true,
+      "working-unit/4-equipment-front-with-existing-depth.png": true
+    },
+    "bothStaticDepthAlphasAndRawStaticAlphaExact": true,
+    "poseRgbScope": {
+      "1": {
+        "changedPixels": 409972,
+        "changedOutsideExistingColourAndSameEquipmentCoverage": 0,
+        "sourceBodyNeutralRgbaOutsideTheseSupportsExact": true
+      },
+      "4": {
+        "changedPixels": 396618,
+        "changedOutsideExistingColourAndSameEquipmentCoverage": 0,
+        "sourceBodyNeutralRgbaOutsideTheseSupportsExact": true
+      }
+    }
+  },
+  "nativeVisualFindings": {
+    "quadForm": "The corrected near/far quad fields visibly retain the original fine longitudinal striation, curved highlights and lower-edge shadow instead of broad uniform paint. Source-local tonal form reads consistently with adjacent white-grey anatomy. No prominent blot, new muscle compartment or material boundary gap observed.",
+    "metalFinish": "Large covered columns and chassis now have restrained neutral tonal variation, fine bright/dark edge depth and brushed reflections. They read as metal panels alongside the original padded seat and metal support frame. Their simpler matte/brushed treatment is no longer a material style break at the actual full native view.",
+    "remainingMinorStyle": "Some narrow cylindrical posts/arms show visible facet/banding under the material finish. The panel system remains simpler than the original richly detailed source seat frame. These remain ordinary finish findings rather than blockers; no further polish requested.",
+    "bodyAndContact": "Same intact seated body/grips/trainers and lower-anterior-shin pad placement as the prior construction. No newly observed body proportion, foot substitution or contact failure.",
+    "geometryLimits": "Original human depth/camera was not recovered. Skin-depth, trainer/housing occlusion and external knee-axis placement remain native visual judgments. Covered routing/weights/cams are not verified by the apparatus projection equations."
+  },
+  "decision": "The specific material blockers in the prior independent hold are sufficiently addressed for parent actual native/card/mobile/UI review. This verdict does not grant release acceptance or strict mechanical certification. Do not prolong material iteration; parent should judge the actual final UI with the existing findings. SidePlank/Calf publication need not depend on this candidate.",
+  "remainingMaterialFindings": [],
+  "releaseApproved": false,
+  "strictMechanicsPass": false,
+  "nativeMobileAcceptanceByThisAudit": false,
+  "filesWrittenInsidePackageOrRepo": 0,
+  "newImageRequests": 0,
+  "completionCredit": false
+}

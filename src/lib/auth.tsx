@@ -141,6 +141,13 @@ export interface UserProfileCore {
    * to a Timestamp. Read for the #972 cold-start activation window.
    */
   createdAt?: Timestamp | FieldValue;
+  /**
+   * When setup last finished, stamped by `completeOnboarding` (server time; a
+   * client can't write it). A new runner's first weeks count from it
+   * (`profileNewRunnerUntil`), as setup's own plan does. Absent on a profile
+   * set up before it was kept.
+   */
+  onboardingCompletedAt?: Timestamp | FieldValue;
 }
 
 /** Physical attributes and fitness metrics */
@@ -265,6 +272,10 @@ export interface SubscriptionTrial {
 /** User preferences and settings */
 export interface UserProfilePreferences {
   preferredWeightUnit: "kg" | "lbs";
+  /** The unit lifting loads are shown and typed in (Lift18); missing reads
+   *  as kg. Storage stays kg — see src/lib/liftLoad.ts. Its own setting,
+   *  not preferredWeightUnit: a lifter who weighs in in stone lifts in kg. */
+  liftingWeightUnit?: "kg" | "lbs";
   preferredHeightUnit: "cm" | "ft";
   /** Display unit for run distance and pace. Storage stays metric always
    *  — see src/lib/distanceUnits.ts. Elevation is NOT covered yet (feet

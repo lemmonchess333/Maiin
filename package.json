@@ -25,6 +25,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:auth": "playwright test --project=auth-emulator --workers=1",
+    "test:e2e:journeys": "playwright test --project=journeys --workers=1",
     "test:design-qa": "playwright test --project=auth-emulator e2e/design-qa",
     "test:rules": "firebase emulators:exec --only firestore 'vitest run firestore.rules.test.ts firestore.spaces.rules.test.ts firestore.profile.rules.test.ts firestore.goalSpaces.rules.test.ts firestore.partnerBonds.rules.test.ts firestore.ownerSubcollections.rules.test.ts firestore.restriction.rules.test.ts firestore.collectionGroup.test.ts'",
     "test:rules:storage": "firebase emulators:exec --only firestore,storage --project demo-tropos 'vitest run storage.rules.test.ts'",
@@ -44,6 +45,7 @@
     "check:form-art": "node --import tsx scripts/audit-form-art.ts",
     "art:cutouts": "node --import tsx scripts/art/cut-out-form-art.ts",
     "art:releases": "node --import tsx scripts/art/gen-form-art-releases.ts",
+    "art:run-poses": "node --import tsx scripts/art/cut-out-run-poses.ts",
     "check:form-drafts": "node --import tsx scripts/audit-form-drafts.ts",
     "races:refresh": "tsx scripts/refresh-race-dates.ts",
     "races:check": "tsx scripts/check-race-dates.ts"
@@ -131,7 +133,7 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",
     "vite": "^7.3.1",
-    "vitest": "^4.1.11"
+    "vitest": "^5.0.4"
   },
   "overrides": {
     "@firebase/firestore": {

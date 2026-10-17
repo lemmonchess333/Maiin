@@ -35,6 +35,7 @@ import {
   OBJECTIONABLE_NAME_MESSAGE,
 } from "@/lib/profanityFilter";
 import { validateDisplayName } from "@/lib/displayName";
+import { HATE_PHRASES, HATE_SPELLINGS, HATE_WORDS } from "@/lib/hateTerms";
 
 const require = createRequire(import.meta.url);
 const server = require("../../../functions/profanityFilter.js");
@@ -67,6 +68,18 @@ const CORPUS: string[] = [
   "sucked",
   "hello@example.com",
   "\u{1F3C3} 10k done",
+  // hateTerms.ts, which leo-profanity's list does not reach.
+  "Hitler",
+  "Hitler's gym",
+  "nazi-gym",
+  "h1tl3r",
+  "H!tler",
+  "Ashkenazi family",
+  "Heilbronn half marathon",
+  "white powerlifting belt",
+  "Sieg Heil",
+  "White Power crew",
+  "Jennifer Heil",
 ];
 
 const NON_STRINGS: unknown[] = [undefined, null, 0, 42, {}, [], true];
@@ -120,6 +133,25 @@ describe("profanity filter — TS and JS copies agree", () => {
     expect(fns.dependencies["leo-profanity"]).toBe(
       root.dependencies["leo-profanity"]
     );
+  });
+});
+
+describe("the hate-term lists are one list", () => {
+  /* hateTerms.ts and functions/lib/hateTerms.js carry the words by hand —
+     nothing installs them — so the lists themselves are compared, not just
+     the corpus above. */
+  const fns = require("../../../functions/lib/hateTerms.js");
+
+  it("whole words", () => {
+    expect([...fns.HATE_WORDS]).toEqual([...HATE_WORDS]);
+  });
+
+  it("phrases", () => {
+    expect([...fns.HATE_PHRASES]).toEqual([...HATE_PHRASES]);
+  });
+
+  it("spellings", () => {
+    expect([...fns.HATE_SPELLINGS]).toEqual([...HATE_SPELLINGS]);
   });
 });
 

@@ -109,17 +109,42 @@ describe("SessionCommandCard", () => {
 });
 
 describe("SessionCommandCard — the picture at the right (DS3)", () => {
-  it("draws a run's type in a tile after the title, as Home's run card does", async () => {
-    const { runTemplateIcon } =
-      await import("@/components/run/runTemplateIcons");
-    const { container } = renderCard({ icon: runTemplateIcon("zap") });
+  it("draws the sport's icon in a tile after the title when there is no figure", () => {
+    const { container } = renderCard();
     const heading = screen.getByRole("heading", { name: "Long 15K" });
-    const tile = container.querySelector("svg.lucide-zap")!;
+    const tile = container.querySelector("svg.lucide-footprints")!;
     expect(tile).not.toBeNull();
     // After the title in reading order: the words lead, the picture follows.
     expect(
       heading.compareDocumentPosition(tile) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
+  });
+
+  it("makes the picture a named button when it opens a guide", () => {
+    const onFigurePress = vi.fn();
+    renderCard({
+      figure: <span data-testid="runner" />,
+      onFigurePress,
+      figureLabel: "Running form",
+    });
+    // The words under the meta stand in for the picture where it gives
+    // way (jsdom applies no container queries, so both are in the tree).
+    const [words, picture] = screen.getAllByRole("button", {
+      name: "Running form",
+    });
+    expect(picture).toContainElement(screen.getByTestId("runner"));
+    expect(picture).toHaveClass("@max-[14em]:hidden");
+    expect(words).toHaveClass("hidden", "@max-[14em]:inline-flex");
+    fireEvent.click(picture);
+    fireEvent.click(words);
+    expect(onFigurePress).toHaveBeenCalledTimes(2);
+  });
+
+  it("leaves the picture out of the tab order when it opens nothing", () => {
+    renderCard({ figure: <span data-testid="runner" /> });
+    expect(
+      screen.queryByRole("button", { name: "Running form" })
+    ).not.toBeInTheDocument();
   });
 
   it("lets a figure take the tile's place", () => {

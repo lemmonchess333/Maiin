@@ -15,7 +15,8 @@ import GuideHint from "@/components/guide/GuideHint";
 import { useGuideHint } from "@/hooks/useGuideHint";
 import { guideRequest, hintDue } from "@/lib/firstGuide";
 import { useDailyLogs } from "@/hooks/useFirestore";
-import { useUid } from "@/lib/auth";
+import { useAuth, useUid } from "@/lib/auth";
+import { startDayKey } from "@/lib/startDay";
 import { addDays, differenceInCalendarDays, format } from "date-fns";
 import { toast } from "@/lib/toast";
 import { motion } from "framer-motion";
@@ -448,8 +449,14 @@ export default function Food() {
 
   /* Hide the entries now, delete them when the undo window closes, and
      hand back the toast's Undo. Deleting a row and stepping its servings
-     down both come here. */
-  const hideThenDelete = (mealIds: string[], foodName: string) =>
+     down both come here. Leaving the app writes the delete early, and the
+     toast `toastId` names goes with it: sonner holds a toast while the
+     page is hidden, and its Undo would come back with nothing to undo. */
+  const hideThenDelete = (
+    mealIds: string[],
+    foodName: string,
+    toastId: string
+  ) =>
     deleteAfterUndoWindow(mealIds, {
       hide: (ids) =>
         setPendingDeleteIds((prev) => {
@@ -468,7 +475,10 @@ export default function Food() {
       // harmless no-op filter on entries that no longer exist. Clearing
       // them before that snapshot arrives flashes the rows back into the
       // list. `commitDeletes` clears only the ids whose write REJECTED.
-      commit: (ids) => void commitDeletes([...ids], foodName),
+      commit: (ids) => {
+        toast.dismiss(toastId);
+        void commitDeletes([...ids], foodName);
+      },
     });
 
   // Food6 ci3+perf: capture initial-render duration. `renderStartRef`
@@ -545,6 +555,14 @@ export default function Food() {
     [visibleTodaysMeals]
   );
 
+  /* The day the account began, as Home's strip and Analytics read it, so
+     the week strip draws no ring before it (Food10 (3)). */
+  const { profile: accountProfile } = useAuth();
+  const accountStartKey = useMemo(
+    () => startDayKey(accountProfile?.createdAt),
+    [accountProfile?.createdAt]
+  );
+
   /* The week strip. Each day's target as it stood is read over the same
      span as the meals, so the two move together and a week inside the
      last month never waits on a second read. The extra day covers the
@@ -563,8 +581,10 @@ export default function Food() {
         hiddenMealIds: pendingDeleteIds,
         snapshots: dayTargets,
         selectedTarget: dailyTargets.finalTarget,
+        startKey: accountStartKey,
       }),
     [
+      accountStartKey,
       selectedDate,
       todayStr,
       minDateStr,
@@ -987,12 +1007,50 @@ export default function Food() {
       return;
     }
     if (confidence === "nl-parse") {
-      const zeroItems = items.filter((i) => i.calories === 0);
-      if (zeroItems.length > 0) {
+      const quantityIssues = items.filter((i) => i.quantityIssue);
+      if (quantityIssues.length > 0) {
+        const corrections = quantityIssues.map((item) => {
+          const issue = item.quantityIssue!;
+          return `${item.name} (${issue.expectedUnit ? `use ${issue.expectedUnit}` : `reference portion: ${issue.referencePortion}`})`;
+        });
         toast.warning(
-          `Couldn't find macros for: ${zeroItems.map((i) => i.name).join(", ")}. Search the foods to fill them in.`,
-          { id: "food-nl-warning" }
+          `Couldn't calculate these quantities: ${corrections.join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
+          {
+            id: "food-nl-warning",
+            duration: 10000,
+            action: {
+              label: "Edit description",
+              onClick: (event) => {
+                // Release the toast's focus restoration before handing
+                // focus to the editable draft.
+                event.currentTarget.blur();
+                inputRef.current?.focus();
+              },
+            },
+          }
         );
+        setNlParsing(false);
+        return;
+      }
+      const unresolved = items.filter((i) => i.unrecognized);
+      if (unresolved.length > 0) {
+        toast.warning(
+          `Couldn't find macros for: ${unresolved.map((i) => i.name).join(", ")}. Nothing logged. Correct the description or add the foods manually.`,
+          {
+            id: "food-nl-warning",
+            action: {
+              label: "Edit description",
+              onClick: (event) => {
+                event.currentTarget.blur();
+                inputRef.current?.focus();
+              },
+            },
+          }
+        );
+        // Keep the whole draft: saving a known subtotal would lose the
+        // unresolved foods from the diary and from later corrections.
+        setNlParsing(false);
+        return;
       }
     }
     /* Per-item suspicious-value validation. Runs only on freshly
@@ -1241,9 +1299,11 @@ export default function Food() {
            this, stepping a count down was irreversible. */
         const removes = currentCount - targetCount;
         const toRemove = groupMeals.slice(-removes);
+        const toastId = `food-edit-${foodName}`;
         const undo = hideThenDelete(
           toRemove.map((m) => m.id),
-          foodName
+          foodName,
+          toastId
         );
         setEditingGroup(null);
         setOpenRowId(null);
@@ -1251,7 +1311,7 @@ export default function Food() {
         toast.success(
           `Updated to ${targetCount} ${targetCount === 1 ? "serving" : "servings"}`,
           {
-            id: `food-edit-${foodName}`,
+            id: toastId,
             action: { label: "Undo", onClick: undo },
             duration: MEAL_UNDO_WINDOW_MS,
           }
@@ -1304,7 +1364,8 @@ export default function Food() {
       });
     }
 
-    const undo = hideThenDelete(mealIds, foodName);
+    const toastId = `food-delete-${mealIds[0]}`;
+    const undo = hideThenDelete(mealIds, foodName, toastId);
     setOpenRowId(null);
 
     // Pluralised when the group held multiple servings so the user knows
@@ -1315,6 +1376,7 @@ export default function Food() {
         : `${mealIds.length} servings of ${foodName} deleted`;
 
     toast(message, {
+      id: toastId,
       action: { label: "Undo", onClick: undo },
       duration: MEAL_UNDO_WINDOW_MS,
     });
@@ -2034,14 +2096,19 @@ export default function Food() {
            mealSlotPickerIdentity.test.tsx pins it.
 
            The group takes its name FROM the visible heading, so the two
-           cannot disagree. */
+           cannot disagree.
+
+           At larger text the two controls drop under the words together,
+           at the right, once the words would have less than 7em beside
+           them: at double size on a 320px screen, "Your usual at
+           breakfast" ran 74px past the card. */
         <Card
           size="compact"
-          className="flex items-center gap-2"
+          className="flex flex-wrap items-center gap-2"
           role="group"
           aria-labelledby={usualHeadingId}
         >
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 grow basis-[7em]">
             <p
               id={usualHeadingId}
               className="text-micro leading-tight text-muted-foreground"
@@ -2058,22 +2125,24 @@ export default function Food() {
               kcal{usualPortion && ` · ${usualPortion}`}
             </p>
           </div>
-          <IconButton
-            aria-label="Adjust portion or meal"
-            disabled={quickAdding !== null}
-            onClick={() => setPortionMeal(usual)}
-            icon={<Pencil className="size-4" />}
-          />
-          {/* Logs to the slot the heading names. With no slot selected the
-              heading names the hour's slot, and a meal saved without one
-              is filed by the diary's own hour rule, which differs. */}
-          <Button
-            variant="nutrition"
-            disabled={quickAdding !== null}
-            onClick={() => void handleQuickMealAdd(usual, usualSlot)}
-          >
-            Log
-          </Button>
+          <div className="ml-auto flex items-center gap-2">
+            <IconButton
+              aria-label="Adjust portion or meal"
+              disabled={quickAdding !== null}
+              onClick={() => setPortionMeal(usual)}
+              icon={<Pencil className="size-4" />}
+            />
+            {/* Logs to the slot the heading names. With no slot selected
+                the heading names the hour's slot, and a meal saved without
+                one is filed by the diary's own hour rule, which differs. */}
+            <Button
+              variant="nutrition"
+              disabled={quickAdding !== null}
+              onClick={() => void handleQuickMealAdd(usual, usualSlot)}
+            >
+              Log
+            </Button>
+          </div>
         </Card>
       )}
       {copyPreviewOpen && (

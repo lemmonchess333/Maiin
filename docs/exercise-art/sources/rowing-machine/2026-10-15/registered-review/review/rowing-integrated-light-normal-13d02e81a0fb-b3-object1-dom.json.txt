@@ -1,0 +1,421 @@
+{
+  "reviewLabel": "rowing-integrated-light-normal",
+  "settledTrace": [
+    {
+      "ms": 173300,
+      "observedAt": "2026-10-15T22:45:30.013Z",
+      "src": "/form-frames/rowing-machine/1.webp",
+      "currentSrc": "http://127.0.0.1:62325/form-frames/rowing-machine/1.webp",
+      "alt": "Rowing Machine, Catch",
+      "playing": true,
+      "slower": "false",
+      "selectedInstruction": "Show frame 1: Catch",
+      "selectedInstructionText": "Compress with straight arms and vertical shins.",
+      "instructionRows": [
+        {
+          "label": "Show frame 1: Catch",
+          "current": "step"
+        },
+        {
+          "label": "Show frame 2: Drive",
+          "current": null
+        },
+        {
+          "label": "Show frame 3: Finish",
+          "current": null
+        },
+        {
+          "label": "Show frame 4: Relax",
+          "current": null
+        },
+        {
+          "label": "Show frame 5: Recover",
+          "current": null
+        },
+        {
+          "label": "Show frame 6: Reset",
+          "current": null
+        }
+      ],
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1416,
+      "naturalHeight": 830,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "devicePixelRatio": 1.0000000298023224,
+      "reviewScope": "actual-registered-lookup",
+      "sectionText": "CATCH 1/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 174510,
+      "observedAt": "2026-10-15T22:45:31.222Z",
+      "src": "/form-frames/rowing-machine/2.webp",
+      "currentSrc": "http://127.0.0.1:62325/form-frames/rowing-machine/2.webp",
+      "alt": "Rowing Machine, Drive",
+      "playing": true,
+      "slower": "false",
+      "selectedInstruction": "Show frame 2: Drive",
+      "selectedInstructionText": "Push with your legs; keep arms straight.",
+      "instructionRows": [
+        {
+          "label": "Show frame 1: Catch",
+          "current": null
+        },
+        {
+          "label": "Show frame 2: Drive",
+          "current": "step"
+        },
+        {
+          "label": "Show frame 3: Finish",
+          "current": null
+        },
+        {
+          "label": "Show frame 4: Relax",
+          "current": null
+        },
+        {
+          "label": "Show frame 5: Recover",
+          "current": null
+        },
+        {
+          "label": "Show frame 6: Reset",
+          "current": null
+        }
+      ],
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1416,
+      "naturalHeight": 830,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "devicePixelRatio": 1.0000000298023224,
+      "reviewScope": "actual-registered-lookup",
+      "sectionText": "DRIVE 2/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 175721,
+      "observedAt": "2026-10-15T22:45:32.434Z",
+      "src": "/form-frames/rowing-machine/3.webp",
+      "currentSrc": "http://127.0.0.1:62325/form-frames/rowing-machine/3.webp",
+      "alt": "Rowing Machine, Finish",
+      "playing": true,
+      "slower": "false",
+      "selectedInstruction": "Show frame 3: Finish",
+      "selectedInstructionText": "Lean back slightly; draw handle below ribs.",
+      "instructionRows": [
+        {
+          "label": "Show frame 1: Catch",
+          "current": null
+        },
+        {
+          "label": "Show frame 2: Drive",
+          "current": null
+        },
+        {
+          "label": "Show frame 3: Finish",
+          "current": "step"
+        },
+        {
+          "label": "Show frame 4: Relax",
+          "current": null
+        },
+        {
+          "label": "Show frame 5: Recover",
+          "current": null
+        },
+        {
+          "label": "Show frame 6: Reset",
+          "current": null
+        }
+      ],
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1416,
+      "naturalHeight": 830,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "devicePixelRatio": 1.0000000298023224,
+      "reviewScope": "actual-registered-lookup",
+      "sectionText": "FINISH 3/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 176935,
+      "observedAt": "2026-10-15T22:45:33.648Z",
+      "src": "/form-frames/rowing-machine/4.webp",
+      "currentSrc": "http://127.0.0.1:62325/form-frames/rowing-machine/4.webp",
+      "alt": "Rowing Machine, Relax",
+      "playing": true,
+      "slower": "false",
+      "selectedInstruction": "Show frame 4: Relax",
+      "selectedInstructionText": "Stay supported; keep wrists and shoulders relaxed.",
+      "instructionRows": [
+        {
+          "label": "Show frame 1: Catch",
+          "current": null
+        },
+        {
+          "label": "Show frame 2: Drive",
+          "current": null
+        },
+        {
+          "label": "Show frame 3: Finish",
+          "current": null
+        },
+        {
+          "label": "Show frame 4: Relax",
+          "current": "step"
+        },
+        {
+          "label": "Show frame 5: Recover",
+          "current": null
+        },
+        {
+          "label": "Show frame 6: Reset",
+          "current": null
+        }
+      ],
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1416,
+      "naturalHeight": 830,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "devicePixelRatio": 1.0000000298023224,
+      "reviewScope": "actual-registered-lookup",
+      "sectionText": "RELAX 4/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 178147,
+      "observedAt": "2026-10-15T22:45:34.860Z",
+      "src": "/form-frames/rowing-machine/5.webp",
+      "currentSrc": "http://127.0.0.1:62325/form-frames/rowing-machine/5.webp",
+      "alt": "Rowing Machine, Recover",
+      "playing": true,
+      "slower": "false",
+      "selectedInstruction": "Show frame 5: Recover",
+      "selectedInstructionText": "Arms away, then hinge forward before sliding.",
+      "instructionRows": [
+        {
+          "label": "Show frame 1: Catch",
+          "current": null
+        },
+        {
+          "label": "Show frame 2: Drive",
+          "current": null
+        },
+        {
+          "label": "Show frame 3: Finish",
+          "current": null
+        },
+        {
+          "label": "Show frame 4: Relax",
+          "current": null
+        },
+        {
+          "label": "Show frame 5: Recover",
+          "current": "step"
+        },
+        {
+          "label": "Show frame 6: Reset",
+          "current": null
+        }
+      ],
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1416,
+      "naturalHeight": 830,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "devicePixelRatio": 1.0000000298023224,
+      "reviewScope": "actual-registered-lookup",
+      "sectionText": "RECOVER 5/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 179360,
+      "observedAt": "2026-10-15T22:45:36.073Z",
+      "src": "/form-frames/rowing-machine/6.webp",
+      "currentSrc": "http://127.0.0.1:62325/form-frames/rowing-machine/6.webp",
+      "alt": "Rowing Machine, Reset",
+      "playing": true,
+      "slower": "false",
+      "selectedInstruction": "Show frame 6: Reset",
+      "selectedInstructionText": "Recover twice as slowly as you drive.",
+      "instructionRows": [
+        {
+          "label": "Show frame 1: Catch",
+          "current": null
+        },
+        {
+          "label": "Show frame 2: Drive",
+          "current": null
+        },
+        {
+          "label": "Show frame 3: Finish",
+          "current": null
+        },
+        {
+          "label": "Show frame 4: Relax",
+          "current": null
+        },
+        {
+          "label": "Show frame 5: Recover",
+          "current": null
+        },
+        {
+          "label": "Show frame 6: Reset",
+          "current": "step"
+        }
+      ],
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1416,
+      "naturalHeight": 830,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "devicePixelRatio": 1.0000000298023224,
+      "reviewScope": "actual-registered-lookup",
+      "sectionText": "RESET 6/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 180576,
+      "observedAt": "2026-10-15T22:45:37.289Z",
+      "src": "/form-frames/rowing-machine/1.webp",
+      "currentSrc": "http://127.0.0.1:62325/form-frames/rowing-machine/1.webp",
+      "alt": "Rowing Machine, Catch",
+      "playing": true,
+      "slower": "false",
+      "selectedInstruction": "Show frame 1: Catch",
+      "selectedInstructionText": "Compress with straight arms and vertical shins.",
+      "instructionRows": [
+        {
+          "label": "Show frame 1: Catch",
+          "current": "step"
+        },
+        {
+          "label": "Show frame 2: Drive",
+          "current": null
+        },
+        {
+          "label": "Show frame 3: Finish",
+          "current": null
+        },
+        {
+          "label": "Show frame 4: Relax",
+          "current": null
+        },
+        {
+          "label": "Show frame 5: Recover",
+          "current": null
+        },
+        {
+          "label": "Show frame 6: Reset",
+          "current": null
+        }
+      ],
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1416,
+      "naturalHeight": 830,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "devicePixelRatio": 1.0000000298023224,
+      "reviewScope": "actual-registered-lookup",
+      "sectionText": "CATCH 1/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 181783,
+      "observedAt": "2026-10-15T22:45:38.496Z",
+      "src": "/form-frames/rowing-machine/2.webp",
+      "currentSrc": "http://127.0.0.1:62325/form-frames/rowing-machine/2.webp",
+      "alt": "Rowing Machine, Drive",
+      "playing": true,
+      "slower": "false",
+      "selectedInstruction": "Show frame 2: Drive",
+      "selectedInstructionText": "Push with your legs; keep arms straight.",
+      "instructionRows": [
+        {
+          "label": "Show frame 1: Catch",
+          "current": null
+        },
+        {
+          "label": "Show frame 2: Drive",
+          "current": "step"
+        },
+        {
+          "label": "Show frame 3: Finish",
+          "current": null
+        },
+        {
+          "label": "Show frame 4: Relax",
+          "current": null
+        },
+        {
+          "label": "Show frame 5: Recover",
+          "current": null
+        },
+        {
+          "label": "Show frame 6: Reset",
+          "current": null
+        }
+      ],
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1416,
+      "naturalHeight": 830,
+      "display": [
+        324,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "devicePixelRatio": 1.0000000298023224,
+      "reviewScope": "actual-registered-lookup",
+      "sectionText": "DRIVE 2/6\n\nPause\nNormal"
+    }
+  ]
+}

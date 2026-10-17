@@ -1,0 +1,18 @@
+{
+  "status": "native-eligible-for-local-integrated-owner-review",
+  "strictCertified": false,
+  "completionCredit": false,
+  "newSourceAuthoring": "Two new built-in full-frame connected head-profile edits. First breadth94.53px remained broad; single targeted correction87.42px now matches87.01px accepted top within0.47percent at threshold200. Crown stays floor-contact and head correctly inverted. No code head graft, resize or anatomy fit.",
+  "profileDiagnostics": "head-profile-corrected-diagnostics.json",
+  "sourceBWholeFrameSha256": "2e3921b4752b6430511b3c6f8e8c50b9d307872f52337c9a5b036bb24bc6268e",
+  "actuallyReviewed": [
+    "Final full native top/bottom",
+    "Both native head/palm/floor contact views",
+    "Source head/trainer/core diagnostics",
+    "Final shoulders/triceps/core palette and grey wall/floor"
+  ],
+  "findings": "Minor palm/finger contour differences and uncalibrated wide-elbow projection retained. No exact fixed-joint or3D vertical-forearm certificate; no missing-middle objection under the two-essential-state allowance.",
+  "neutralPixelsUnchangedDuringFinishing": true,
+  "poseCount": 2,
+  "slots": 6
+}

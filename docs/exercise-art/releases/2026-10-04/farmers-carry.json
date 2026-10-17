@@ -1,0 +1,194 @@
+{
+  "exerciseId": "farmers-carry",
+  "version": "anatomy-v3-2026-10-04",
+  "width": 768,
+  "height": 1600,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-04T14:41:19.166Z",
+  "reference": {
+    "path": "form-frames/farmers-carry/1.webp",
+    "sha256": "ce1331be36dbb8adfd355acc8ce61136280aaed1c6c1b6e17d137f878118b89b"
+  },
+  "cueSha256": "e588a66fc3b56a8b7cf1ba6abd0b74b670b630d39295fda880d684f74a5a2e58",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Same bald faceless white-grey anatomical athlete and white trainers across five unique gait poses; neutral smooth featureless pelvis. Frozen master adapted from approved shrug starting pose with canonical identity reference."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed oblique view relative to the upper body, as in the existing isolated carry gait demonstration. Black environment has no fixed-world objects. Identical768x1600 viewport from x128..895 and32px top/bottom padding, no resampling and zero clipped bright pixels."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native review traces each thigh, knee and ankle through near-leg lead/support, far-leg lead/support and near-leg passing. Both arms stay long and plumb, torso upright, shoulders packed; no weight swing, shrug or high-knee marching."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two modest matching hex dumbbells throughout, each visibly gripped. Near dumbbell full projected span213-215px and far front-plate width89px, measured on delivered frames; same plate shapes and equipment count."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Three real hand-edge anchors remain within1px and equipment dimensions within1percent. These are hand-to-dumbbell contacts in an upper-body-relative gait view, NOT planted-foot or fixed-world anchors. Feet correctly move during walking; no blank-canvas measurements."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Alternating short carry steps with one supporting leg as the other passes, upright braced trunk and stable weights. The guide teaches the walking portion; catalogue instructions retain controlled pickup and set-down. It does not depict a different lift or imply the feet stay planted."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Forearms strongest purple for grip; trapezius, abs and quadriceps secondary lilac per existing carry model. Unrelated regions neutral. Qualitative contribution hierarchy remains consistent through gait."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "All six exact cues reviewed with their frames: short steady lead, support, opposite step, transfer, next step and continuing gait. Each cue fits the seven-word limit."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six and6-to-1 manually stepped in actual ExerciseFormFrames at phone size. Frame6 repeats the lead configuration for continuing stride; poses do not mirror or interpolate anatomy. Native anatomy and equipment inspected."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six final framed PNGs and closing loop inspected at390x844 in actual player on4October2026. Full head, shoes and both dumbbells fit; alternating support and cues remain legible. Delivered WebP pixels equal reviewed PNGs."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Same final six and loop inspected at390x844 dark theme. A first-frame screenshot briefly appeared blank; next/previous navigation confirmed the visible lead pose. All poses, weights and exact cues inspected in task screenshots."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/farmers-carry/1.webp",
+      "sha256": "ce1331be36dbb8adfd355acc8ce61136280aaed1c6c1b6e17d137f878118b89b",
+      "anchors": {
+        "nearGripLeft": {
+          "x": 522,
+          "y": 822
+        },
+        "nearGripRight": {
+          "x": 565,
+          "y": 822
+        },
+        "farGripLeft": {
+          "x": 198,
+          "y": 809
+        }
+      },
+      "invariantDimensions": {
+        "nearDumbbellSpan": 214,
+        "farPlateWidth": 89
+      }
+    },
+    {
+      "path": "form-frames/farmers-carry/2.webp",
+      "sha256": "104bfa59308436773d7ed717ce6e3bcf482d23a95c0a63fa8636be1773a48fcf",
+      "anchors": {
+        "nearGripLeft": {
+          "x": 522,
+          "y": 822
+        },
+        "nearGripRight": {
+          "x": 565,
+          "y": 822
+        },
+        "farGripLeft": {
+          "x": 198,
+          "y": 809
+        }
+      },
+      "invariantDimensions": {
+        "nearDumbbellSpan": 215,
+        "farPlateWidth": 89
+      }
+    },
+    {
+      "path": "form-frames/farmers-carry/3.webp",
+      "sha256": "0b14427063d37680c4bb6ba28513d9882d15b804b59192f38cbef48d172835e0",
+      "anchors": {
+        "nearGripLeft": {
+          "x": 522,
+          "y": 822
+        },
+        "nearGripRight": {
+          "x": 565,
+          "y": 822
+        },
+        "farGripLeft": {
+          "x": 198,
+          "y": 809
+        }
+      },
+      "invariantDimensions": {
+        "nearDumbbellSpan": 215,
+        "farPlateWidth": 89
+      }
+    },
+    {
+      "path": "form-frames/farmers-carry/4.webp",
+      "sha256": "dfb8af1e71e71e36c9d6ac82ba95f06b165edeb86731d4ccead1442944e7ab48",
+      "anchors": {
+        "nearGripLeft": {
+          "x": 521,
+          "y": 822
+        },
+        "nearGripRight": {
+          "x": 564,
+          "y": 822
+        },
+        "farGripLeft": {
+          "x": 198,
+          "y": 809
+        }
+      },
+      "invariantDimensions": {
+        "nearDumbbellSpan": 213,
+        "farPlateWidth": 89
+      }
+    },
+    {
+      "path": "form-frames/farmers-carry/5.webp",
+      "sha256": "03284a41694c52966dbf77f9426b2d254e7a94f401487c1fbb59d2b3a70dfd84",
+      "anchors": {
+        "nearGripLeft": {
+          "x": 521,
+          "y": 822
+        },
+        "nearGripRight": {
+          "x": 564,
+          "y": 822
+        },
+        "farGripLeft": {
+          "x": 198,
+          "y": 809
+        }
+      },
+      "invariantDimensions": {
+        "nearDumbbellSpan": 213,
+        "farPlateWidth": 89
+      }
+    },
+    {
+      "path": "form-frames/farmers-carry/6.webp",
+      "sha256": "ce1331be36dbb8adfd355acc8ce61136280aaed1c6c1b6e17d137f878118b89b",
+      "anchors": {
+        "nearGripLeft": {
+          "x": 522,
+          "y": 822
+        },
+        "nearGripRight": {
+          "x": 565,
+          "y": 822
+        },
+        "farGripLeft": {
+          "x": 198,
+          "y": 809
+        }
+      },
+      "invariantDimensions": {
+        "nearDumbbellSpan": 214,
+        "farPlateWidth": 89
+      }
+    }
+  ]
+}

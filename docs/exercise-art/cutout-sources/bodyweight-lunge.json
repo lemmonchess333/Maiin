@@ -1,0 +1,8 @@
+{
+  "reviewStatus": "reviewed",
+  "reference": "form-frames/bodyweight-lunge/3.webp",
+  "referenceSha256": "0d878c4e11da8ae75626ff721fd3bc57b5d63d89e19c885348ff071a62f975e5",
+  "image": "bodyweight-lunge.png",
+  "imageSha256": "2119a4ea1c607021737437e2ad8852d09746f517627f12cf003a252c411f3a18",
+  "evidence": "Native prepared cutout and mobile both themes reviewed; image derives only from pose3 with black background removal. Canonical source frame unchanged. Standard cutout pipeline supplies final card sizing and manifest."
+}

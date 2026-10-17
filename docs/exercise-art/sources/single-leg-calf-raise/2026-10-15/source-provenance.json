@@ -1,0 +1,89 @@
+{
+  "status": "outside-production-two-endpoint-candidate-not-accepted",
+  "exerciseId": "single-leg-calf-raise",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "model": "Current bald featureless anatomical model without shorts; original human/trainer shape retained.",
+  "primary": {
+    "muscle": "Calves",
+    "basis": "#7B72E9"
+  },
+  "secondary": {
+    "muscle": "Soleus",
+    "basis": "#9590E0"
+  },
+  "physicalPoses": 2,
+  "sourcePoseOrder": [
+    1,
+    1,
+    3,
+    3,
+    1,
+    1
+  ],
+  "excursionPositions": [
+    0,
+    0,
+    1,
+    1,
+    0,
+    0
+  ],
+  "wholeSceneTranslations": {
+    "1": [
+      0,
+      0
+    ],
+    "3": [
+      0,
+      32
+    ]
+  },
+  "commonCrop": [
+    217,
+    158,
+    843,
+    1367
+  ],
+  "framedDimensions": [
+    626,
+    1209
+  ],
+  "newImageRequests": 0,
+  "bodyAndEquipmentEdits": 0,
+  "colourMethod": "Role traces label the already-coloured visible gastrocnemius belly and distinct lighter lower soleus compartments. Only original purple chroma in the native calf ROI is changed. Existing maximum channel and existing chroma strength drive the remap to the exact palette bases; no new spatial shading or gradient is authored. Original neutral RGBA outside source colour support remains exact. Native support/role masks and separate colour layers are retained. This is a colour finish, not an exact recovery of an uncoloured original.",
+  "inputs": {
+    "originals/1.png": "fbebd81cfce565ab461ccf22279a7c109d3131fe0bb2358512de271904e0e558",
+    "originals/3-rejected.png": "23a5180acd41518fca84b0bd1334f633da3f4c0da6fce32c483e7c4e144522b2",
+    "history/ledger.json": "7cbbb101b36a408dd1942e634794ad3dff583fe50217791094a56a9b5a5057bd",
+    "history/provenance.json": "b0c8fb26882219c591ad5d5f66e9db31b7163042718f718dc80d320f0685160c",
+    "history/registration-feasibility.json": "506f28a5230373dbf9870a00f16f8ffd1e19db5ee54fcf8e8adb4364ac841be6",
+    "history/REVIEW.md": "ad4a6aba0ec9db8b40dc7ce33a571fc0da536c7cc6afde1cf5583d0a5ee06f78"
+  },
+  "historicalStatus": "Original source3 filename/rejection and original adjacent metadata are retained unchanged. Earlier gear-anchor/skeleton-motion concerns are historical evidence; the current source-preserving two-endpoint scope is separately reviewed. No past failure is renamed or counted as accepted.",
+  "candidateFindings": [
+    "Modest pictured below-step heel range, not a deep or maximum stretch claim.",
+    "Small inherited posture/contour differences; no established material proportion failure, no claim of exact anatomical identity.",
+    "Several-pixel residual original step/rail and hand/forefoot contact differences; not strict1px hardware certification.",
+    "Two physical endpoints repeated honestly across six paths; no authored intermediate or continuous trajectory.",
+    "Only the source-visible near calf/soleus is coloured; no invented hidden-side muscle geometry."
+  ],
+  "portableReproduction": {
+    "entry": "reproduce.py",
+    "defaultInputs": [
+      "originals/1.png",
+      "originals/3-rejected.png"
+    ],
+    "commands": [
+      "python reproduce.py --verify",
+      "python reproduce.py --build --output-dir <candidate-directory>",
+      "python reproduce.py --source1 <original1> --source3 <original3> --output-dir <candidate-directory> --build"
+    ],
+    "note": "When building into a separate destination, copy the recipe and originals for a complete portable deliverable, or supply source paths explicitly. No WORK constant or repository dependency. PNG/ORA layers and lossless WebP decoded pixels are independently rechecked."
+  },
+  "notClaims": [
+    "No strict hardware1px pass",
+    "No deep or maximum lower-range image claim",
+    "No six-unique-pose or continuous-trajectory claim",
+    "No parent native/mobile acceptance, app registration, CI, merge or completion credit"
+  ]
+}

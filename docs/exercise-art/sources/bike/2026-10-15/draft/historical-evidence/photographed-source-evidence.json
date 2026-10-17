@@ -1,0 +1,65 @@
+{
+  "url": "https://www.youtube.com/watch?v=fW-gDFOLaCk",
+  "title": "How To Properly Use The Upright Bike",
+  "publisher": "Live Lean TV Daily Exercises",
+  "duration": 67.641,
+  "references": [
+    {
+      "phase": 1,
+      "source": "phase-1-reference.png",
+      "target": "phase-1-photo.png",
+      "time": 46.230007,
+      "crop": [430, 65, 1050, 927],
+      "sourceSHA256": "91e6c5986247d093c0808c9cf2fd82ff6944eaf7f99a64bfe687ef268036a4c9",
+      "targetSHA256": "b78dbd54929470dd061172e61419b267ff715804c6472761bd50ddea5c8cc609"
+    },
+    {
+      "phase": 2,
+      "source": "phase-2-reference.png",
+      "target": "phase-2-photo.png",
+      "time": 46.355004,
+      "crop": [430, 65, 1050, 927],
+      "sourceSHA256": "8ce40d42dbf98f3a0008b25f70e1e10281fdabbfbb9c7bfbbbb0e77cafa068ab",
+      "targetSHA256": "41a6449634253ab9523a7669d6445c5485915cc527f5ef2bbea96889d5ab5f60"
+    },
+    {
+      "phase": 3,
+      "source": "phase-3-reference.png",
+      "target": "phase-3-photo.png",
+      "time": 46.480004,
+      "crop": [430, 65, 1050, 927],
+      "sourceSHA256": "bd70bd79a8062f1dd454cced533cb8a7d97b7c106d985ec2b7e8b917b066d56f",
+      "targetSHA256": "ac9c4a43160a4cfbbcfd7a58454846f1d55976a9968e141142cc0bb87afbb53d"
+    },
+    {
+      "phase": 4,
+      "source": "phase-4-reference.png",
+      "target": "phase-4-photo.png",
+      "time": 46.605004,
+      "crop": [430, 65, 1050, 927],
+      "sourceSHA256": "7223e81d990c459c9ec4346eb78ee78a6de907a133dac3bd091ff0e923ac85e9",
+      "targetSHA256": "0b71abd14acade69fe373c09d67b0b003f4a7f5cabb708b18cb4d8f4c84b986a"
+    },
+    {
+      "phase": 5,
+      "source": "phase-5-reference.png",
+      "target": "phase-5-photo.png",
+      "time": 46.730005,
+      "crop": [430, 65, 1050, 927],
+      "sourceSHA256": "cbc3dbf4dcf16701e22d69fd596cf21f411b99da66501c610823370bea8184b8",
+      "targetSHA256": "d8d9a68cd65f8f307b131d32c81bffcd27feba9a1a462973d2e5c3911d08de23"
+    },
+    {
+      "phase": 6,
+      "source": "phase-6-reference.png",
+      "target": "phase-6-photo.png",
+      "time": 46.855004,
+      "crop": [430, 65, 1050, 927],
+      "sourceSHA256": "54f85f74db2f977b824403f20450638e7da44f53cac84550999084508a4ce61d",
+      "targetSHA256": "ab3c31011126ea585945382fe4122003e6c9beaf103356deb82c9aedd8bfa00a"
+    }
+  ],
+  "method": "Actual paused, decoded24fps frames via UI stepping. Identical620x862 whole-rider crops; no body transforms. Six consecutive phases separated by3video frames each, roughly one photographed revolution.",
+  "limits": "Foot motion blur is present in the source. Bottom frame edge touches stabiliser feet, so finished illustration needs full black margin. Photographs constrain pose and mechanism, not canonical identity or artwork quality.",
+  "review": "Camera and bike stay fixed; both hands grip, rider remains seated, far leg is correctly occluded by the housing. Actual photo targets must be viewed before edits; generated sequence remains subject to all release checks."
+}

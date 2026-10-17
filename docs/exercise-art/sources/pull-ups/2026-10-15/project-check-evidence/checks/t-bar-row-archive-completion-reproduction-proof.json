@@ -1,0 +1,42 @@
+{
+  "auditedAt": "2026-10-15T08:39:44.849282+00:00",
+  "exerciseId": "t-bar-row",
+  "command": [
+    "C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\sources\\t-bar-row\\2026-10-15\\draft\\reproduce-reviewed-frames.py"
+  ],
+  "exitCode": 0,
+  "stdout": "{\"status\": \"exact\", \"sourceColourRecipeReproducedFromOriginals\": true, \"sourceNeutralRGBAndAlphaExact\": true, \"nativeOras\": 2, \"framedOras\": 2, \"losslessFrames\": 6, \"referenceExact\": true, \"physicalPoses\": 2, \"size\": [918, 1036]}\n",
+  "stderr": "",
+  "originalReviewZipSha256": "8c376b867ec35e3d7b322407a1642d5f1814ceb958e5decc57d9639ebecdfb33",
+  "originalReviewZipUnchanged": true,
+  "acceptedManifestSha256": "301b59517a07cad4292b0d4ec3525ccee097210d2b62b9479c8dc7710ac99cbd",
+  "completionZipSha256": "2d145d6d905841d4531cbd519368bdf7961eda1951711ace143260207bc6eced",
+  "addendumSha256": "876fb3ec7a1ba51ea70c4a2b770ad83406251e7fd2ae5eda32dce9d34eafc73a",
+  "members": [
+    {
+      "sourcePath": "1-native.ora",
+      "archivePath": "draft/1-native.ora",
+      "readablePath": "draft/1-native.ora",
+      "sha256": "fb352f103a31f68324bd980ef9b741ad05a833d6e15aaada08a74bc1f0b92226",
+      "bytes": 2134571
+    },
+    {
+      "sourcePath": "2-native.ora",
+      "archivePath": "draft/2-native.ora",
+      "readablePath": "draft/2-native.ora",
+      "sha256": "4817ccb5a5428d3a55d83ca232eb8e0d9cbad505df74cfbed5c3323fb34e8a94",
+      "bytes": 2238758
+    },
+    {
+      "sourcePath": "stage-card.mts",
+      "archivePath": "draft/stage-card.mts",
+      "readablePath": "draft/stage-card.mts.txt",
+      "sha256": "0b515773c8258453202d63ffba1e5d107d153ad25a2344623c9959a9bb23512b",
+      "bytes": 6496
+    }
+  ],
+  "actualArchivedStandaloneReproductionPassed": true,
+  "noArtworkOrApprovalChanges": true,
+  "repoMutationByVerify": false
+}

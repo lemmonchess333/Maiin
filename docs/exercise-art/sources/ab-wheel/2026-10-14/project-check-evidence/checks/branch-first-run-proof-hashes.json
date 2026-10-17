@@ -1,0 +1,20 @@
+{
+  "prefix": "branch",
+  "firstCompleteRunImmutable": true,
+  "hashes": {
+    "branch-verify.log": "cff94bf7b6ca8cb1176d5c225ec1b05e1963b55903c0ad832519cfdd0c18c9f7",
+    "branch-verify-result.json": "814b830bd3dba2459333540c709f2f4fde4a3acb653d5c3133a9bf3ac16c9999",
+    "branch-failure-comparison.json": "0a68c90ff36f2772c607b936f111ebe30f3a7f3290a031cefbd85347f1b6a1d6",
+    "branch-input-manifest.json": "5de0885b0fdd3843200aaf918ccb1d8ab8560268ed9359076d01b03fda55f3ba",
+    "branch-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "branch-planSweep-after-run.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "branch-failure-identities.txt": "db0cbdeeb49023b64ed1d000c89aa7c71f8dcac67f1420f27c0b6386467ca057",
+    "branch-comparison-summary.md": "40b41839ebafec1c3bc3acbb396324f2b99b47481c6fc36a8dcab855d2b3731a",
+    "branch-verify-tools.py": "ef8c673c8b589f891d07a43792621c723e06ff32cf4e7cd9d0d952bccec7402b"
+  },
+  "snapshotFinalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+  "inputStatePreserved": true,
+  "normalVerifyExitCode": 1,
+  "overallGreen": false,
+  "futureRunMustUseNewPrefix": true
+}

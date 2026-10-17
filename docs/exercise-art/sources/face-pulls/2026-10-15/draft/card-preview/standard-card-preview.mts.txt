@@ -1,0 +1,271 @@
+// Standard card preview only. No production main or registry import.
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const args = process.argv.slice(2);
+if (args.includes("--help")) {
+  console.log("node --import <tsx-loader> card-preview/standard-card-preview.mts --repo <frozen-repo> --expected-input-sha <sha256>");
+  process.exit(0);
+}
+function argument(name: string) {
+  const position = args.indexOf(name);
+  if (position < 0 || !args[position + 1]) throw new Error(`Required argument: ${name}`);
+  return args[position + 1];
+}
+if (args.length !== 4 || args[0] !== "--repo" || args[2] !== "--expected-input-sha")
+  throw new Error("Expected only --repo <path> --expected-input-sha <sha256>");
+const repo = resolve(argument("--repo"));
+const expectedInputSha = argument("--expected-input-sha");
+if (!/^[a-f0-9]{64}$/.test(expectedInputSha)) throw new Error("Invalid input SHA256");
+const here = dirname(fileURLToPath(import.meta.url));
+const require = createRequire(resolve(repo, "package.json"));
+const sharp = require("sharp");
+const productionPath = resolve(repo, "scripts/art/cut-out-form-art.ts");
+const productionBytes = readFileSync(productionPath);
+const productionSha = createHash("sha256").update(productionBytes).digest("hex");
+const pin = JSON.parse(readFileSync(resolve(here, "production-core-pin.json"), "utf8"));
+if (productionSha !== pin.productionSha256) throw new Error("Frozen production generator changed");
+const productionText = productionBytes.toString("utf8").replace(/\r\n/g, "\n");
+const helperBytes = readFileSync(fileURLToPath(import.meta.url));
+const helperText = helperBytes.toString("utf8").replace(/\r\n/g, "\n");
+function between(text: string, start: string, end: string) {
+  const first = text.indexOf(start);
+  const last = text.indexOf(end, first + start.length);
+  if (first < 0 || last < 0) throw new Error("Missing exact extraction boundary");
+  return text.slice(first + start.length, last);
+}
+// BEGIN EXACT PRODUCTION PURE BLOCK
+const DARK_MAX = 14;
+const ERODE_RADIUS = 3;
+const MIN_REGION = 1200;
+const GROW_RADIUS = 4;
+const EDGE_RAMP = 48;
+const PAD_SHARE = 0.04;
+const LONG_SIDE = 480;
+
+const sha256 = (bytes: Buffer) =>
+  createHash("sha256").update(bytes).digest("hex");
+
+/** Separable square min (erode) or max (dilate) filter over a 0/1 mask. */
+function squareFilter(
+  mask: Uint8Array,
+  w: number,
+  h: number,
+  radius: number,
+  mode: "min" | "max"
+): Uint8Array {
+  const pick = mode === "min" ? Math.min : Math.max;
+  // Outside the image counts as background for the erosion, so the
+  // backdrop is not eaten away from the canvas border.
+  const edge = mode === "min" ? 1 : 0;
+  const tmp = new Uint8Array(mask.length);
+  const out = new Uint8Array(mask.length);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let v = mode === "min" ? 1 : 0;
+      for (let d = -radius; d <= radius; d++) {
+        const xx = x + d;
+        const s = xx < 0 || xx >= w ? edge : mask[y * w + xx];
+        v = pick(v, s);
+      }
+      tmp[y * w + x] = v;
+    }
+  }
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let v = mode === "min" ? 1 : 0;
+      for (let d = -radius; d <= radius; d++) {
+        const yy = y + d;
+        const s = yy < 0 || yy >= h ? edge : tmp[yy * w + x];
+        v = pick(v, s);
+      }
+      out[y * w + x] = v;
+    }
+  }
+  return out;
+}
+
+/** Keep the 4-connected regions of `mask` with at least `min` pixels. */
+function bigRegions(
+  mask: Uint8Array,
+  w: number,
+  h: number,
+  min: number
+): Uint8Array {
+  const seen = new Uint8Array(mask.length);
+  const keep = new Uint8Array(mask.length);
+  const stack = new Int32Array(mask.length);
+  const region: number[] = [];
+  for (let start = 0; start < mask.length; start++) {
+    if (!mask[start] || seen[start]) continue;
+    let top = 0;
+    stack[top++] = start;
+    seen[start] = 1;
+    region.length = 0;
+    while (top > 0) {
+      const i = stack[--top];
+      region.push(i);
+      const x = i % w;
+      const y = (i - x) / w;
+      if (x > 0 && mask[i - 1] && !seen[i - 1]) {
+        seen[i - 1] = 1;
+        stack[top++] = i - 1;
+      }
+      if (x < w - 1 && mask[i + 1] && !seen[i + 1]) {
+        seen[i + 1] = 1;
+        stack[top++] = i + 1;
+      }
+      if (y > 0 && mask[i - w] && !seen[i - w]) {
+        seen[i - w] = 1;
+        stack[top++] = i - w;
+      }
+      if (y < h - 1 && mask[i + w] && !seen[i + w]) {
+        seen[i + w] = 1;
+        stack[top++] = i + w;
+      }
+    }
+    if (region.length >= min) for (const i of region) keep[i] = 1;
+  }
+  return keep;
+}
+
+async function cutOut(file: string): Promise<{
+  rgba: Buffer;
+  width: number;
+  height: number;
+  keyed: boolean;
+}> {
+  const { data, info } = await sharp(file)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const w = info.width;
+  const h = info.height;
+  const n = w * h;
+  let hasOwnAlpha = false;
+  for (let i = 0; i < n; i++) {
+    if (data[i * 4 + 3] < 255) {
+      hasOwnAlpha = true;
+      break;
+    }
+  }
+  if (hasOwnAlpha) return { rgba: data, width: w, height: h, keyed: false };
+
+  const dark = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    const p = i * 4;
+    dark[i] = Math.max(data[p], data[p + 1], data[p + 2]) <= DARK_MAX ? 1 : 0;
+  }
+  const eroded = squareFilter(dark, w, h, ERODE_RADIUS, "min");
+  const keep = bigRegions(eroded, w, h, MIN_REGION);
+  const near = squareFilter(keep, w, h, GROW_RADIUS, "max");
+  for (let i = 0; i < n; i++) {
+    if (!near[i]) continue;
+    const p = i * 4;
+    const lum = Math.max(data[p], data[p + 1], data[p + 2]);
+    data[p + 3] =
+      lum <= DARK_MAX
+        ? 0
+        : Math.min(
+            255,
+            Math.round(((lum - DARK_MAX) * 255) / (EDGE_RAMP - DARK_MAX))
+          );
+  }
+  return { rgba: data, width: w, height: h, keyed: true };
+}
+
+/** Bounding box of pixels with visible alpha, padded and clamped. */
+function contentBox(rgba: Buffer, w: number, h: number) {
+  let x0 = w;
+  let y0 = h;
+  let x1 = -1;
+  let y1 = -1;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (rgba[(y * w + x) * 4 + 3] > 8) {
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+    }
+  }
+  if (x1 < 0) throw new Error("image has no visible content");
+  const pad = Math.round(Math.max(x1 - x0, y1 - y0) * PAD_SHARE);
+  const left = Math.max(0, x0 - pad);
+  const top = Math.max(0, y0 - pad);
+  return {
+    left,
+    top,
+    width: Math.min(w, x1 + pad + 1) - left,
+    height: Math.min(h, y1 + pad + 1) - top,
+  };
+}
+
+// END EXACT PRODUCTION PURE BLOCK
+
+async function main() {
+  const frozenCore = productionText.slice(productionText.indexOf("const DARK_MAX = 14;"), productionText.indexOf("async function main()"));
+  const embeddedCore = between(helperText, "// BEGIN EXACT PRODUCTION PURE BLOCK\n", "// END EXACT PRODUCTION PURE BLOCK");
+  if (embeddedCore !== frozenCore || sha256(Buffer.from(embeddedCore)) !== pin.pureBlockLfSha256)
+    throw new Error("Pure production function/constant equivalence failed");
+  const pipelineStart = productionText.indexOf("    const { rgba, width, height, keyed } = await cutOut(inputPath);");
+  const pipelineEnd = productionText.indexOf("      .toBuffer();", pipelineStart) + "      .toBuffer();".length;
+  const frozenPipeline = productionText.slice(pipelineStart, pipelineEnd);
+  const embeddedPipeline = between(helperText, "// BEGIN EXACT PRODUCTION ENCODE PIPELINE\n", "\n// END EXACT PRODUCTION ENCODE PIPELINE");
+  if (embeddedPipeline !== frozenPipeline || sha256(Buffer.from(embeddedPipeline)) !== pin.encodePipelineLfSha256)
+    throw new Error("Production extract/resize/encode equivalence failed");
+  const inputPath = resolve(here, "../1-framed.png");
+  const outputPath = resolve(here, "../card.webp");
+  const proofPath = resolve(here, "../card-preview-proof.json");
+  if (existsSync(outputPath) || existsSync(proofPath)) throw new Error("Preserve existing card preview; refusing overwrite");
+  const inputBytes = readFileSync(inputPath);
+  const inputSha = sha256(inputBytes);
+  if (inputSha !== expectedInputSha) throw new Error("Actual framed input does not match ready signal hash");
+// BEGIN EXACT PRODUCTION ENCODE PIPELINE
+    const { rgba, width, height, keyed } = await cutOut(inputPath);
+    const box = contentBox(rgba, width, height);
+    const scale = Math.min(1, LONG_SIDE / Math.max(box.width, box.height));
+    const outW = Math.round(box.width * scale);
+    const outH = Math.round(box.height * scale);
+    const webp = await sharp(rgba, { raw: { width, height, channels: 4 } })
+      .extract(box)
+      .resize(outW, outH, { kernel: "lanczos3" })
+      .webp({ quality: 82, alphaQuality: 90, effort: 6 })
+      .toBuffer();
+// END EXACT PRODUCTION ENCODE PIPELINE
+  const decoded = await sharp(webp).metadata();
+  if (decoded.width !== outW || decoded.height !== outH || decoded.format !== "webp" || !decoded.hasAlpha)
+    throw new Error("Card output decode failed");
+  if (sha256(readFileSync(inputPath)) !== inputSha) throw new Error("Framed source changed during card preparation");
+  if (sha256(readFileSync(productionPath)) !== productionSha) throw new Error("Production generator changed during preview");
+  writeFileSync(outputPath, webp, { flag: "wx" });
+  const proof = {
+    status: "standard-card-preview-generated-not-visual-acceptance",
+    createdAtUtc: new Date().toISOString(),
+    source: "1-framed.png", sourceSha256: inputSha,
+    sourceDimensions: [width, height],
+    card: "card.webp", sha256: sha256(webp), bytes: webp.length,
+    width: outW, height: outH, keyed, contentBox: box,
+    scale, decodedFormat: decoded.format, decodedHasAlpha: decoded.hasAlpha,
+    productionScript: "scripts/art/cut-out-form-art.ts", productionSha256: productionSha,
+    pureBlockLfSha256: pin.pureBlockLfSha256,
+    encodePipelineLfSha256: pin.encodePipelineLfSha256,
+    exactPureBlockEquivalentExceptEol: true,
+    exactEncodePipelineEquivalentExceptEol: true,
+    helper: "card-preview/standard-card-preview.mts", helperSha256: sha256(helperBytes),
+    parameters: { DARK_MAX, ERODE_RADIUS, MIN_REGION, GROW_RADIUS, EDGE_RAMP, PAD_SHARE, LONG_SIDE, visibleAlphaThreshold: 8, kernel: "lanczos3", webpQuality: 82, alphaQuality: 90, effort: 6 },
+    sharpVersions: sharp.versions,
+    preparedAlphaCorrection: false, thresholdsChanged: false,
+    productionMainInvoked: false, productionImportsInvoked: false,
+    manifestsGenerated: false, repoOrPublicEdits: false,
+    nativeCardReviewPending: true, acceptedForRelease: false,
+    sourceAndProductionBytesUnchanged: true,
+  };
+  writeFileSync(proofPath, JSON.stringify(proof, null, 2) + "\n", { flag: "wx" });
+  console.log(JSON.stringify({ status: proof.status, outputPath, proofPath, width: outW, height: outH, keyed, sha256: proof.sha256 }));
+}
+await main();

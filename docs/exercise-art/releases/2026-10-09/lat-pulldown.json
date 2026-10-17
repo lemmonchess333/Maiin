@@ -1,0 +1,222 @@
+{
+  "exerciseId": "lat-pulldown",
+  "version": "anatomy-v3-2026-10-09-four-pose-v1",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standards",
+  "reviewedAt": "2026-10-09T13:25:45.676599+00:00",
+  "reference": {
+    "path": "form-frames/lat-pulldown/4.webp",
+    "sha256": "70d3b715d1803b634964f0602e614926e2dbab9358c3846bb40db657e4a867bc"
+  },
+  "cueSha256": "9cbad7c2e8610877da261d0d6f7e8db8a03acb5e49f4f3085dfc5de14743ca50",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 referenced for original master and poses. All4native selected poses reviewed: lean build, bald faceless head, neutral pelvis, white trainers. No anatomy transformations."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Same1024x1536 canvas and camera. Only equipment and palette pixels edited; outside documented gear mask and tint mask original pixels retained."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Stable seated support and leg proportions; overhand grips connected throughout, elbows flex down and extend on return. Small contour/head differences visually accepted under revised rule."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Reconstructed fixed master tower/upper beam, same four selected plates with exact pixels and eight stationary plates. Packet rise equals connector-neck cable payout0/56/204/355px. Fixed gear/source pixels verified. Small3.4percent projected bar narrowing at chest retained under revised visual rule, not misreported as identical."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both sampled soles vary at most1px, thighs stay under pads and seat support remains visible. Fixed tower anchors and actual neutral-metal profile dimensions match; fixed-measurements.json."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Two fixed pulley visible path with1:1 payout; selected packet rises as attachment descends, stationary packet remains fixed. Bar travels in front of head to upper chest. Equipment edit never relocates hands."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Lats primary#7B72E9; biceps/rear delts secondary#9590E0; tinted gradients flattened, fine neutral contours preserved, remaining anatomy unchanged. Editable recomposition and lossless WebP exact."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues matched to four selected positions and their return. Each cue at most7words; actual form component rendered and checked."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Four unique physical poses across six playback beats1,2,3,4,3,2, as explicitly authorized. Native1024x1536 loop trace recorded."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All6decoded beats and6-to1 closure at390x844 in real form component, screenshot and trace saved."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All6decoded beats and6-to1 closure at390x844, pause/manual Next checked, console errors empty."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/lat-pulldown/1.webp",
+      "sha256": "7d02664e77ecad6d137acfd86ffec248dbcf947f2296495faeb021bd67d7b178",
+      "anchors": {
+        "towerTopAt870": {
+          "x": 870,
+          "y": 151
+        },
+        "baseBottomAt900": {
+          "x": 900,
+          "y": 1220
+        },
+        "leftSoleAt180": {
+          "x": 180,
+          "y": 1283
+        },
+        "rightSoleAt410": {
+          "x": 410,
+          "y": 1334
+        }
+      },
+      "invariantDimensions": {
+        "fixedUprightWidthAtY300": 34,
+        "fixedTopBeamDepthAtX700": 20
+      }
+    },
+    {
+      "path": "form-frames/lat-pulldown/2.webp",
+      "sha256": "3550fc088c881eb4f910788e1d46fe8f7d05102762ea14d83552efe9c1c6ab2a",
+      "anchors": {
+        "towerTopAt870": {
+          "x": 870,
+          "y": 151
+        },
+        "baseBottomAt900": {
+          "x": 900,
+          "y": 1220
+        },
+        "leftSoleAt180": {
+          "x": 180,
+          "y": 1283
+        },
+        "rightSoleAt410": {
+          "x": 410,
+          "y": 1334
+        }
+      },
+      "invariantDimensions": {
+        "fixedUprightWidthAtY300": 34,
+        "fixedTopBeamDepthAtX700": 20
+      }
+    },
+    {
+      "path": "form-frames/lat-pulldown/3.webp",
+      "sha256": "8d6423e4ab17395a0cf108568d9912ee9deb86f8b5b46b4e778321591e401aaa",
+      "anchors": {
+        "towerTopAt870": {
+          "x": 870,
+          "y": 151
+        },
+        "baseBottomAt900": {
+          "x": 900,
+          "y": 1220
+        },
+        "leftSoleAt180": {
+          "x": 180,
+          "y": 1283
+        },
+        "rightSoleAt410": {
+          "x": 410,
+          "y": 1334
+        }
+      },
+      "invariantDimensions": {
+        "fixedUprightWidthAtY300": 34,
+        "fixedTopBeamDepthAtX700": 20
+      }
+    },
+    {
+      "path": "form-frames/lat-pulldown/4.webp",
+      "sha256": "70d3b715d1803b634964f0602e614926e2dbab9358c3846bb40db657e4a867bc",
+      "anchors": {
+        "towerTopAt870": {
+          "x": 870,
+          "y": 151
+        },
+        "baseBottomAt900": {
+          "x": 900,
+          "y": 1220
+        },
+        "leftSoleAt180": {
+          "x": 180,
+          "y": 1284
+        },
+        "rightSoleAt410": {
+          "x": 410,
+          "y": 1335
+        }
+      },
+      "invariantDimensions": {
+        "fixedUprightWidthAtY300": 34,
+        "fixedTopBeamDepthAtX700": 20
+      }
+    },
+    {
+      "path": "form-frames/lat-pulldown/5.webp",
+      "sha256": "8d6423e4ab17395a0cf108568d9912ee9deb86f8b5b46b4e778321591e401aaa",
+      "anchors": {
+        "towerTopAt870": {
+          "x": 870,
+          "y": 151
+        },
+        "baseBottomAt900": {
+          "x": 900,
+          "y": 1220
+        },
+        "leftSoleAt180": {
+          "x": 180,
+          "y": 1283
+        },
+        "rightSoleAt410": {
+          "x": 410,
+          "y": 1334
+        }
+      },
+      "invariantDimensions": {
+        "fixedUprightWidthAtY300": 34,
+        "fixedTopBeamDepthAtX700": 20
+      }
+    },
+    {
+      "path": "form-frames/lat-pulldown/6.webp",
+      "sha256": "3550fc088c881eb4f910788e1d46fe8f7d05102762ea14d83552efe9c1c6ab2a",
+      "anchors": {
+        "towerTopAt870": {
+          "x": 870,
+          "y": 151
+        },
+        "baseBottomAt900": {
+          "x": 900,
+          "y": 1220
+        },
+        "leftSoleAt180": {
+          "x": 180,
+          "y": 1283
+        },
+        "rightSoleAt410": {
+          "x": 410,
+          "y": 1334
+        }
+      },
+      "invariantDimensions": {
+        "fixedUprightWidthAtY300": 34,
+        "fixedTopBeamDepthAtX700": 20
+      }
+    }
+  ],
+  "distinctPoses": 4,
+  "sourcePoseOrder": [1, 2, 3, 4, 3, 2],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Complete: native and registered mobile light/dark six-beat loops, card, pause/manual6-to1. Lint/art/drafts/typecheck/build/stamp passed. Full suite not green; no new FAIL headings versus measured same-HEAD baseline. See revised-production/final-verification.json."
+}

@@ -1,7 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import ExerciseRowSummary from "../ExerciseRowSummary";
+import { LiftUnitContext } from "@/hooks/useLiftUnit";
 import ExerciseThumb from "../ExerciseThumb";
+import * as formArtCutouts from "@/lib/formArtCutouts";
 
 function exercise(over: Record<string, unknown> = {}) {
   return {
@@ -27,13 +29,20 @@ describe("ExerciseThumb — each exercise's picture", () => {
   });
 
   it("shows the muscles its category works when it has no drawing", () => {
-    // Pull-ups have no released drawing yet; their category is Back.
-    const { container } = render(<ExerciseThumb exerciseId="pull-ups" />);
-    const tile = container.firstElementChild as HTMLElement;
-    expect(tile.dataset.thumb).toBe("muscles");
-    expect(tile.querySelector("img")!.getAttribute("src")).toMatch(
-      /^data:image\/svg\+xml,/
-    );
+    // Exercise the missing-art branch even after this drawing is released.
+    const missingArt = vi
+      .spyOn(formArtCutouts, "getFormArtCutout")
+      .mockReturnValue(null);
+    try {
+      const { container } = render(<ExerciseThumb exerciseId="pull-ups" />);
+      const tile = container.firstElementChild as HTMLElement;
+      expect(tile.dataset.thumb).toBe("muscles");
+      expect(tile.querySelector("img")!.getAttribute("src")).toMatch(
+        /^data:image\/svg\+xml,/
+      );
+    } finally {
+      missingArt.mockRestore();
+    }
   });
 
   it("falls back to a dumbbell for an exercise the library does not know", () => {
@@ -69,6 +78,84 @@ describe("ExerciseRowSummary — one row's words", () => {
     expect(container).toHaveTextContent(
       "Down from 100 kg: two sessions under 5 reps"
     );
+  });
+
+  it("carries the line when the target climbed past its range (Pgm7 A3)", () => {
+    const { container } = render(
+      <ExerciseRowSummary
+        exercise={exercise({
+          exerciseId: "lateral-raise",
+          name: "Lateral Raise",
+          weight: 10,
+          reps: 16,
+          baseReps: 12,
+          repRangeMax: 15,
+          progressionType: "double",
+          stretched: {
+            exerciseId: "lateral-raise",
+            weight: 10,
+            next: 12.5,
+            ceiling: 19,
+          },
+        })}
+      />
+    );
+    expect(container).toHaveTextContent("3 sets × 12–16 reps · 10 kg");
+    expect(container).toHaveTextContent(
+      "Up to 19 reps on 10 kg: 12.5 kg is a big jump"
+    );
+  });
+
+  it("reads its loads in lb for a lifter who lifts in lb (Lift18)", () => {
+    const { container } = render(
+      <LiftUnitContext value="lbs">
+        <ExerciseRowSummary
+          exercise={exercise({
+            weight: 90,
+            reps: 5,
+            lowered: {
+              exerciseId: "bench-press",
+              from: 100,
+              unit: "kg",
+              target: 5,
+            },
+          })}
+          lastSets={[
+            { weightKg: 100, reps: 4 },
+            { weightKg: 100, reps: 4 },
+            { weightKg: 90, reps: 5 },
+          ]}
+        />
+      </LiftUnitContext>
+    );
+    expect(container).toHaveTextContent("· 198.4 lb");
+    expect(container).toHaveTextContent("Last: 220.5 lb × 4, 4 · 198.4 lb × 5");
+    expect(container).toHaveTextContent(
+      "Down from 220.5 lb: two sessions under 5 reps"
+    );
+    expect(container).not.toHaveTextContent("kg");
+  });
+
+  it("reads a kettlebell in whole lb, as the bell is labelled (Lift18)", () => {
+    const { container } = render(
+      <LiftUnitContext value="lbs">
+        <ExerciseRowSummary
+          exercise={exercise({
+            exerciseId: "kettlebell-swing",
+            name: "Kettlebell Swing",
+            weight: 16,
+            reps: 15,
+          })}
+          lastSets={[
+            { weightKg: 16, reps: 15 },
+            { weightKg: 16, reps: 15 },
+          ]}
+        />
+      </LiftUnitContext>
+    );
+    expect(container).toHaveTextContent("· 35 lb");
+    expect(container).toHaveTextContent("Last: 35 lb × 15, 15");
+    expect(container).not.toHaveTextContent("35.3");
   });
 
   it("states a climbing lift's range, and a fixed lift's target (Lift4 (3))", () => {
@@ -110,23 +197,48 @@ describe("ExerciseRowSummary — one row's words", () => {
     expect(container).toHaveTextContent("Last: 77.5 kg × 8");
   });
 
-  it("never prints a bodyweight lift's stored load as if it were lifted", () => {
-    // Chin-ups read "3 sets x 13 reps" over "Last: 35 kg x 12" before the
-    // bodyweight case came first.
+  it("prints a bodyweight lift's load as weight added to it (Pgm8 L6)", () => {
+    // Chin-ups once read "Last: 35 kg x 12", a load a swap had handed them
+    // printed as the lift's own (repaired since, `migrations.ts`). The row
+    // then left a bodyweight lift's load out, but the plan now follows the
+    // weight on the belt, so the row says it, as weight added to the body.
     const { container } = render(
       <ExerciseRowSummary
         exercise={exercise({
           exerciseId: "pull-ups",
           name: "Pull-Ups",
-          reps: 13,
-          weight: 35,
+          reps: 9,
+          weight: 10,
         })}
-        lastSets={[{ weightKg: 35, reps: 12 }]}
+        lastSets={[
+          { weightKg: 10, reps: 8 },
+          { weightKg: 10, reps: 8 },
+          { weightKg: 10, reps: 8 },
+        ]}
       />
     );
-    expect(container).toHaveTextContent("3 sets × 13 reps");
-    expect(container).toHaveTextContent("Last: BW × 12");
-    expect(container).not.toHaveTextContent("35 kg");
+    expect(container).toHaveTextContent("3 sets × 9 reps · +10 kg");
+    expect(container).toHaveTextContent("Last: +10 kg × 8, 8, 8");
+  });
+
+  it("names each load a bodyweight lift's sets were done at, and none as BW", () => {
+    const { container } = render(
+      <ExerciseRowSummary
+        exercise={exercise({
+          exerciseId: "pull-ups",
+          name: "Pull-Ups",
+          reps: 8,
+          weight: 0,
+        })}
+        lastSets={[
+          { weightKg: 5, reps: 8 },
+          { weightKg: 0, reps: 12 },
+          { weightKg: 0, reps: 11 },
+        ]}
+      />
+    );
+    expect(container).toHaveTextContent("Last: +5 kg × 8 · BW × 12, 11");
+    expect(container).not.toHaveTextContent("· +0");
   });
 
   it("gives a timed exercise its seconds", () => {
@@ -155,6 +267,18 @@ describe("ExerciseRowSummary — one row's words", () => {
       />
     );
     expect(container).toHaveTextContent("Pause at the chest");
+  });
+
+  it("leaves its drawing to a row that draws it as a button of its own", () => {
+    /* Train's drawing opens the form guide, and a button cannot sit in
+       the row's own; the reorder rows keep the summary's. */
+    const { rerender, container } = render(
+      <ExerciseRowSummary exercise={exercise()} />
+    );
+    expect(container.querySelector("[data-thumb]")).not.toBeNull();
+    rerender(<ExerciseRowSummary exercise={exercise()} showThumb={false} />);
+    expect(container.querySelector("[data-thumb]")).toBeNull();
+    expect(container).toHaveTextContent("Bench Press");
   });
 
   it("lists every set of the last session, not just the best", () => {

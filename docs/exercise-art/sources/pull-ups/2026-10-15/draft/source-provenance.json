@@ -1,0 +1,52 @@
+{
+  "exerciseId": "pull-ups",
+  "status": "separate-static-native-accepted-pending-player-mobile",
+  "canonicalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\identity\\athlete-anatomy-v3.png",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "originals": [
+    {
+      "pose": 1,
+      "source": "originals/1-matching-hang-generated.png",
+      "sourceSha256": "02aa500bacd5e820c5b0f59b39d9e2a0ea9a83aba0cb4d458f94042663634eea",
+      "generationId": "34a09a79-00dd-4159-a620-47159f5449bd",
+      "prompt": "originals/matching-hang-prompt.txt",
+      "promptSha256": "54d1d17a397fa858bf4fd28a0886389e0fe129e9755b5b8b69d2b84870bf08a3"
+    },
+    {
+      "pose": 2,
+      "source": "originals/2-pull-generated.png",
+      "sourceSha256": "fd08401e55cc802a003846b3887c9af1a2e2fe48011722eb550df666074a9825",
+      "generationId": "0d520a77-d708-481f-afc7-2992f968449d",
+      "prompt": "originals/high-pull-prompt.txt",
+      "promptSha256": "94ad281c7737f954d6bf71484dddaf228d5ca715977194eaa685a5075550e81f",
+      "retentionHistory": "Rejected as insufficient height for Muscle-Up high pull; retained as ordinary chin-above-bar endpoint. Not service-rejected output. No regeneration or rename into a new authored pose."
+    }
+  ],
+  "sourcePoseOrder": [1, 1, 2, 2, 1, 1],
+  "physicalPoseCount": 2,
+  "noNewGeneration": true,
+  "noAnatomyWarpGraftOrLimbFit": true,
+  "finishingProvenance": "v2/colour-finishing-provenance.json",
+  "equipmentBackgroundProvenance": {
+    "explanation": "The two generated sources are bar-only central-region outputs from the existing Muscle-Up rig authoring workflow, not standalone full-scene masters. The review draft reuses the original complete Muscle-Up rack as its fixed equipment/background, exactly as compose-sequence.py did.",
+    "fixedFullRackSourcePath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\muscle-ups\\1-master.png",
+    "fixedFullRackSourceSha256": "49f8b14e5ad1d24e23d22755a3f4e33821fcaa312f8562b62b923b24c8e38acb",
+    "nativeRackCanvas": [1024, 1536],
+    "originalMovingRegionCleared": [256, 0, 768, 1536],
+    "generatedWholeOutputPlacedAtX": 256,
+    "fixedOuterColumnsByteExact": [
+      [0, 255],
+      [768, 1023]
+    ],
+    "barJoinY": 519,
+    "fixedOuterBarSpanPx": 587,
+    "fixedOuterBarDiameterPx": 13,
+    "fixedLeftRigHeightPx": 961,
+    "centralBarLimit": "Generated central bar shading and thickness differ modestly; only outer rig dimensions are claimed invariant. Common vertical alignment is within0.5px. Native joins require review.",
+    "sameAuthorizedMethod": "Complete moving output uniformly normalized; no isolated limb, hand, head, shoe or body segment transforms; no fixed rack deformation.",
+    "archivedFullRackSource": "originals/fixed-rig-1-master.png"
+  },
+  "normalizationAndCrop": "v2/normalization-and-preservation.json",
+  "userScope": "Root accepted honest two-state endpoint pilot after native colour/identity/endpoint review under existing user relaxation. Small colour fringes judged minor; no continuous-motion claim.",
+  "repoChanges": 0
+}

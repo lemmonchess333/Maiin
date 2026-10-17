@@ -31,21 +31,56 @@ function byStem(stem: string): string | null {
   return null;
 }
 
-/* Challenge metric → asset stem. Sport-coded like everything else:
-   run metrics share the runner shot, lift metrics the lifting shot,
-   hybrid (and any future unknown metric) the general shot. */
-const CHALLENGE_STEM: Record<string, string> = {
-  total_km: "challenge-run",
-  fastest_effort: "challenge-run",
-  total_volume: "challenge-lift",
-  workout_count: "challenge-lift",
-  hybrid_score: "challenge-hybrid",
+/* Each challenge the server defines has its own photo, chosen by the id
+   prefix its definition stamps (functions/lib/challengeDefs.js), and a
+   seasonal one by its season's name, so no two challenge cards show the
+   same photo (the owner, of photos shared by metric: "these are just
+   recycled"). A challenge from anywhere else falls back, by metric, to
+   the definition that measures the same thing. */
+const CHALLENGE_STEM_BY_PREFIX: readonly (readonly [string, string])[] = [
+  ["weekly-", "challenge-weekly"],
+  ["global-monthly-", "challenge-hybrid-hero"],
+  ["monthly-", "challenge-mileage"],
+  ["fastest-5k-", "challenge-fastest-5k"],
+  ["group-goal-", "challenge-together"],
+];
+
+const SEASONS = ["spring", "summer", "autumn", "winter"] as const;
+
+const CHALLENGE_STEM_BY_METRIC: Record<string, string> = {
+  total_km: "challenge-mileage",
+  fastest_effort: "challenge-fastest-5k",
+  total_volume: "challenge-weekly",
+  workout_count: "challenge-weekly",
+  hybrid_score: "challenge-hybrid-hero",
 };
 
-/** Editorial photo URL for a challenge metric, or null when no
- *  licensed asset has been added yet. */
-export function challengeEditorialImage(metric: string): string | null {
-  return byStem(CHALLENGE_STEM[metric] ?? "challenge-hybrid");
+export interface EditorialChallenge {
+  id: string;
+  metric: string;
+  name?: string;
+}
+
+/** The asset stem of a challenge's photo. */
+export function challengeEditorialStem(challenge: EditorialChallenge): string {
+  if (challenge.id.startsWith("seasonal-")) {
+    const name = (challenge.name ?? "").toLowerCase();
+    const season = SEASONS.find((s) => name.includes(s));
+    if (season) return `challenge-season-${season}`;
+  }
+  const byPrefix = CHALLENGE_STEM_BY_PREFIX.find(([prefix]) =>
+    challenge.id.startsWith(prefix)
+  );
+  if (byPrefix) return byPrefix[1];
+  return CHALLENGE_STEM_BY_METRIC[challenge.metric] ?? "challenge-hybrid-hero";
+}
+
+/** Editorial photo URL for a challenge, or null when its licensed asset
+ *  has not been added. */
+export function challengeEditorialImage(
+  challenge: EditorialChallenge
+): string | null {
+  return byStem(challengeEditorialStem(challenge));
 }
 
 /** Editorial photo URL for a community space (Spc1 PR2) — stems are

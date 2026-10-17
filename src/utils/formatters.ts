@@ -1,18 +1,27 @@
 /**
  * Formatting utilities for display values across the app.
  */
+import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "@/lib/liftLoad";
 
-/** Format lifting volume for display (e.g. 500 → "500", 1500 → "1.5k") */
-export function formatVolume(kg: number): { value: string; unit: string } {
+/**
+ * Format lifting volume (stored as kg) in the lifter's unit (500 → "500",
+ * 1500 → "1.5k", 1,500,000 → "1.5M"). Millions are their own step because a lifetime
+ * total reaches them in a year or two of regular lifting, and "1500.0k"
+ * was wider than History's Lifetime tile on a 320 px phone.
+ */
+export function formatVolume(
+  kg: number,
+  liftUnit: LiftUnit
+): { value: string; unit: string } {
   if (kg <= 0) return { value: "\u2014", unit: "" };
-  if (kg >= 1000) return { value: (kg / 1000).toFixed(1) + "k", unit: "kg" };
-  return { value: String(Math.round(kg)), unit: "kg" };
-}
-
-/** A set's load: "BW" for bodyweight (0 kg), else "60 kg" / "62.5 kg". */
-export function formatLoadKg(kg: number): string {
-  if (kg === 0) return "BW";
-  return `${kg % 1 === 0 ? kg.toFixed(0) : kg.toFixed(1)} kg`;
+  const amount = liftVolumeIn(kg, liftUnit);
+  const unit = liftUnitLabel(liftUnit);
+  if (amount >= 1000) {
+    const thousands = (amount / 1000).toFixed(1);
+    if (Number(thousands) < 1000) return { value: thousands + "k", unit };
+    return { value: (amount / 1_000_000).toFixed(1) + "M", unit };
+  }
+  return { value: String(Math.round(amount)), unit };
 }
 
 /**
@@ -68,6 +77,15 @@ export function formatDayMonthYear(d: Date): string {
     day: "numeric",
     month: "short",
     year: "numeric",
+  });
+}
+
+/** "Sat 11 Oct" — the short weekday form (a session's day in a list). */
+export function formatShortWeekdayDayMonth(d: Date): string {
+  return d.toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
   });
 }
 

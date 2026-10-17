@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 
 import {
   assignDayRoles,
+  dayRoleOf,
   goalProfileFor,
   prescribedRepCeiling,
   repDeltaForRole,
@@ -14,6 +15,7 @@ import {
   BLOCK_AMNESTY_WEEKS,
   represcribeWorkouts,
   scaleLoadForReps,
+  withRoleNumbers,
 } from "../represcribe";
 import { makeBlockId } from "../trainingBlock";
 import type { PrimaryGoal, WorkoutDay } from "../programTypes";
@@ -35,13 +37,15 @@ import type { Experience } from "../experienceModel";
  * they saw when they started the block, with nothing thrown and nothing
  * logged. So this walks the full cross-product rather than sampling — every
  * goal × every experience × week lengths 0-6 — because the undulation delta
- * is per DAY INDEX and only shows up at particular week shapes.
+ * follows each day's role (by its position on a plan that keeps none) and
+ * only shows up at particular week shapes.
  */
 const require = createRequire(import.meta.url);
 const cf = require("../../../../functions/lib/represcribe") as {
   BLOCK_AMNESTY_WEEKS: number;
   PRIMARY_GOALS: readonly string[];
   assignDayRoles: (count: number) => string[];
+  dayRoleOf: (day: unknown, byPosition: string) => string;
   goalProfileFor: (goal?: string) => Record<string, unknown>;
   makeBlockId: (startDate: string, createdAt: number) => string;
   prescribedRepCeiling: (ex: unknown) => number;
@@ -55,9 +59,23 @@ const cf = require("../../../../functions/lib/represcribe") as {
   represcribeWorkouts: (
     workouts: unknown,
     goal: string,
-    experience: string | undefined
+    experience: string | undefined,
+    unit?: "kg" | "lbs"
   ) => WorkoutDay[];
-  scaleLoadForReps: (w: number, from: number, to: number) => number;
+  scaleLoadForReps: (
+    w: number,
+    from: number,
+    to: number,
+    unit?: "kg" | "lbs"
+  ) => number;
+  withRoleNumbers: (
+    workouts: unknown,
+    dayIndex: number,
+    instanceId: string,
+    goal: string,
+    experience: string | undefined,
+    maxSets?: number
+  ) => WorkoutDay[];
   toExperience: (v: string | undefined) => string;
   usesUndulation: (e: string | undefined) => boolean;
 };
@@ -134,6 +152,24 @@ function week(days: number): WorkoutDay[] {
         baseReps: 12,
         weight: 8,
       }),
+      // Stretched past its range on 10 kg dumbbells (Pgm7 A3): both copies
+      // drop the record, whose ceiling was the old range's.
+      exercise({
+        instanceId: `curl-${i}`,
+        exerciseId: "db-curl",
+        movementCategory: "arms_biceps",
+        isAccessory: true,
+        reps: 16,
+        baseReps: 12,
+        repRangeMax: 15,
+        weight: 10,
+        stretched: {
+          exerciseId: "db-curl",
+          weight: 10,
+          next: 12.5,
+          ceiling: 19,
+        },
+      }),
       // Bodyweight: a LOWER ceiling (15), the branch a single fixture misses.
       exercise({
         instanceId: `bw-${i}`,
@@ -208,6 +244,25 @@ describe("goal-prescription engine — client vs functions mirror", () => {
     }
   });
 
+  it("dayRoleOf agrees on a kept role, none, and a stored value that isn't one", () => {
+    const days = [
+      { dayRole: "heavy" },
+      { dayRole: "moderate" },
+      { dayRole: "pump" },
+      {},
+      { dayRole: "light" },
+      { dayRole: 3 },
+    ];
+    for (const day of days) {
+      for (const byPosition of ["heavy", "moderate", "pump"] as const) {
+        expect(
+          cf.dayRoleOf(day, byPosition),
+          `${JSON.stringify(day)} at ${byPosition}`
+        ).toBe(dayRoleOf(day as Pick<WorkoutDay, "dayRole">, byPosition));
+      }
+    }
+  });
+
   it("repDeltaForRole agrees", () => {
     for (const role of ["heavy", "moderate", "pump"]) {
       expect(cf.repDeltaForRole(role)).toBe(
@@ -271,6 +326,15 @@ describe("goal-prescription engine — client vs functions mirror", () => {
             `w=${w} ${from}->${to}`
           ).toBe(scaleLoadForReps(w, from, to));
         }
+    // On an lb kit (Lift18), the same 5 lb steps on both sides, the half
+    // nudged up the same way.
+    for (const w of [...weights, 135 / 2.20462, 225 / 2.20462])
+      for (const from of reps)
+        for (const to of reps)
+          expect(
+            cf.scaleLoadForReps(w, from, to, "lbs"),
+            `lb w=${w} ${from}->${to}`
+          ).toBe(scaleLoadForReps(w, from, to, "lbs"));
     // Non-finite inputs take the early returns on both sides.
     expect(cf.scaleLoadForReps(NaN, 8, 12)).toBe(scaleLoadForReps(NaN, 8, 12));
     expect(cf.scaleLoadForReps(60, NaN, 12)).toBe(
@@ -294,7 +358,67 @@ describe("goal-prescription engine — client vs functions mirror", () => {
             cf.represcribeWorkouts(week(days), goal, experience),
             `goal=${goal} exp=${experience} days=${days}`
           ).toEqual(represcribeWorkouts(week(days), goal, experience));
+          expect(
+            cf.represcribeWorkouts(week(days), goal, experience, "lbs"),
+            `lb goal=${goal} exp=${experience} days=${days}`
+          ).toEqual(represcribeWorkouts(week(days), goal, experience, "lbs"));
         }
+      }
+    }
+  });
+
+  it("represcribeWorkouts agrees on sessions that keep their roles, in a carried-over order", () => {
+    for (const goal of GOALS) {
+      for (const experience of EXPERIENCES) {
+        for (let days = 2; days <= 6; days++) {
+          const roles = assignDayRoles(days);
+          const kept = week(days).map((day, i) => ({
+            ...day,
+            dayRole: roles[i],
+          }));
+          // The week opened with its second session.
+          const rotated = [...kept.slice(1), kept[0]];
+          expect(
+            cf.represcribeWorkouts(rotated, goal, experience),
+            `goal=${goal} exp=${experience} days=${days}`
+          ).toEqual(represcribeWorkouts(rotated, goal, experience));
+        }
+      }
+    }
+  });
+
+  it("withRoleNumbers agrees on every slot, goal and level, capped or not (Lift5)", () => {
+    for (const goal of GOALS) {
+      for (const experience of EXPERIENCES) {
+        const roles = assignDayRoles(4);
+        const kept = week(4).map((day, i) => ({ ...day, dayRole: roles[i] }));
+        const ws = [...kept.slice(1), kept[0]];
+        ws.forEach((day, d) => {
+          for (const ex of day.exercises) {
+            for (const maxSets of [undefined, 2]) {
+              expect(
+                cf.withRoleNumbers(
+                  ws,
+                  d,
+                  ex.instanceId!,
+                  goal,
+                  experience,
+                  maxSets
+                ),
+                `goal=${goal} exp=${experience} day=${d} ${ex.instanceId} cap=${String(maxSets)}`
+              ).toEqual(
+                withRoleNumbers(
+                  ws,
+                  d,
+                  ex.instanceId!,
+                  goal,
+                  experience,
+                  maxSets
+                )
+              );
+            }
+          }
+        });
       }
     }
   });

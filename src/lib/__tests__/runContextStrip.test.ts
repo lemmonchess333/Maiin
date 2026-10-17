@@ -31,22 +31,28 @@ const racePlan = {
 
 describe("deriveStrip — the programme-context line above the run chooser", () => {
   it("renders nothing for a freeform runner", () => {
-    expect(deriveStrip(freeformPlanMetadata("freeform"), undefined)).toBeNull();
+    expect(
+      deriveStrip(freeformPlanMetadata("freeform"), undefined, "km")
+    ).toBeNull();
   });
 
   it("rest and completed days name themselves", () => {
     expect(
-      deriveStrip(racePrepToday({ planSource: "rest_day" }), racePlan)
+      deriveStrip(racePrepToday({ planSource: "rest_day" }), racePlan, "km")
     ).toEqual({
       kind: "rest_day",
     });
     expect(
-      deriveStrip(racePrepToday({ planSource: "completed_day" }), racePlan)
+      deriveStrip(
+        racePrepToday({ planSource: "completed_day" }),
+        racePlan,
+        "km"
+      )
     ).toEqual({ kind: "completed_day" });
   });
 
   it("race prep today carries the week label, the distance and the target date", () => {
-    expect(deriveStrip(racePrepToday(), racePlan)).toEqual({
+    expect(deriveStrip(racePrepToday(), racePlan, "km")).toEqual({
       kind: "race_prep_today",
       weekLabel: "Week 3 of 8",
       distanceLabel: "10K",
@@ -58,7 +64,8 @@ describe("deriveStrip — the programme-context line above the run chooser", () 
     expect(
       deriveStrip(
         racePrepToday({ planSource: "url_template", plannedRunDayIndex: null }),
-        racePlan
+        racePlan,
+        "km"
       )
     ).toBeNull();
   });
@@ -73,7 +80,8 @@ describe("deriveStrip — the programme-context line above the run chooser", () 
     expect(
       deriveStrip(
         racePrepToday({ planSource: "manual", plannedRunDayIndex: null }),
-        elapsedPlan
+        elapsedPlan,
+        "km"
       )
     ).toEqual({ kind: "race_prep_elapsed" });
   });
@@ -85,14 +93,28 @@ describe("deriveStrip — the programme-context line above the run chooser", () 
     };
     const strip = deriveStrip(
       racePrepToday({ planSource: "manual", plannedRunDayIndex: null }),
-      todayPlan
+      todayPlan,
+      "km"
     );
     expect(strip?.kind).not.toBe("race_prep_elapsed");
   });
 
   it("a structured today names the planned template", () => {
     expect(
-      deriveStrip(racePrepToday({ planMode: "structured" }), undefined)
+      deriveStrip(racePrepToday({ planMode: "structured" }), undefined, "km")
     ).toEqual({ kind: "structured_today", todayLabel: "Easy 40" });
+  });
+
+  it("names today's long run in miles for a reader in miles", () => {
+    expect(
+      deriveStrip(
+        racePrepToday({
+          planMode: "structured",
+          plannedTemplateId: "long_12k",
+        }),
+        undefined,
+        "mi"
+      )
+    ).toEqual({ kind: "structured_today", todayLabel: "Long 7.5 mi" });
   });
 });

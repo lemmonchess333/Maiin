@@ -1,0 +1,15 @@
+{
+  "imagegenId": "23eb9742-3338-476b-b38f-be66913f8377",
+  "source": "1-top-window-corrected.png",
+  "sha256": "45aee7db581cdceb53fe7828c036d3cdab8041ce5c5693a1ac022be8c297518e",
+  "prompt": "top-window-correction-prompt.txt",
+  "promptSha256": "d2bd151924ef806ef96e14928e052873ffefa654a33d23c3566d2e6dbb54805e",
+  "uniformUndoPreviewZoom": 0.5,
+  "placement": [280, 0],
+  "mask": "1-moving-mask.png",
+  "newMaskOrAnatomicalFitting": false,
+  "outsideMovingMaskPixelsChanged": 0,
+  "lowerFixedScenePixelsChanged": 0,
+  "changedPixels": 168959,
+  "status": "Corrected draft placed for native review; not released."
+}

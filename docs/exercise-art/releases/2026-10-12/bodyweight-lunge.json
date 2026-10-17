@@ -1,0 +1,193 @@
+{
+  "exerciseId": "bodyweight-lunge",
+  "version": "anatomy-v3-2026-10-12-registered-three-pose-v1",
+  "width": 590,
+  "height": 770,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-12T10:24:59.421077+00:00",
+  "reference": {
+    "path": "form-frames/bodyweight-lunge/3.webp",
+    "sha256": "0d878c4e11da8ae75626ff721fd3bc57b5d63d89e19c885348ff071a62f975e5"
+  },
+  "cueSha256": "8afefe5040bd52b8346bef30426b81b5152de8eadda38186d51c59499342d3ba",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Retained canonical anatomy-v3 standing master and generated adjacent far-leg swing/low sources, each originally made with canonical and exercise master references. Bald faceless lean white model, smooth neutral pelvis, low-profile white trainers; native comparison and final mobile review passed. No new identity generation in this recovery."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Standing and swing retain their saved1536x1024 scene. The COMPLETE low image is translated by integer(-66,+44), with no scaling, rotation, warping or separate body-part fitting. One shared crop[380,170,970,940] produces590x770 at native scale. Source provenance and registration-audit.json retained."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Standing, far-leg airborne forward step and low lunge with an upright torso/hands on hips. Lead knee bends over ankle; rear knee hovers and heel lifts. Visible head width remains approximately82px in all three sources; no obvious limb distortion in native/mobile review. Minor source contour/pose variation retained under the revised standard."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Bodyweight exercise, hands on hips; no equipment, load or artificial support introduced."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Standing/swing/return/reset retain the near supporting sole within1px. Low/hold share both planted contacts. Cross-phase low registration aligns the rear forefoot local contact area; heel lift changes the shoe-tip silhouette by about10px and is not represented as pixel-identical contact geometry. Leading foot travels while airborne and lands forward; the rejected short landing is omitted to avoid a sliding planted front foot."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Forward step, controlled descent, endpoint hold, push back and reset. Front and rear contacts are at different depths in the oblique floor plane; the front foot is not forced onto its standing horizontal pixel row. Actual publisher technique review and screenshot were recorded2026-10-11 in incremental-landing-production/REFERENCE-AND-NEXT.md. Catalogue hovering rear knee and hands-on-hips variation retained."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Quads #7B72E9, secondary Glutes/Hamstrings #9590E0, both legs. Exact flat fields with inherited fine #777777 contours, neutral original anatomy pixels unchanged outside colour masks. No new gradients."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Ready/Step/Lower/Hold/Return/Reset, three physical poses across six distinct playback paths1,2,3,3,2,1. Cues match actual foot/body states; Reset cues alternating legs next repetition. Reuse is explicitly disclosed."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six final frames decoded at590x770 native rendered size; native poses and transitions reviewed. Three-pose forward movement/return and6to1 reset accepted under revised standard. No in-between image interpolation is claimed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent at390x844 in light theme, all six frames and6to1 loop decoded; complete body visible and captions/key readable. staged-light.png and staged-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual component at390x844 dark, all six frames and6to1 loop, pause and manual6to1 verified. staged-dark.png, staged-controls.json; console errors empty."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/bodyweight-lunge/1.webp",
+      "sha256": "9ca259aa0233673704e9beef40c6596b49a80b4681e0979ae6dfae57aaa9236b",
+      "anchors": {
+        "supportSoleLeft": {
+          "x": 443,
+          "y": 729
+        },
+        "supportSoleRight": {
+          "x": 461,
+          "y": 729
+        }
+      },
+      "invariantDimensions": {
+        "headWidth": 81,
+        "supportShoeWidth": 115
+      }
+    },
+    {
+      "path": "form-frames/bodyweight-lunge/2.webp",
+      "sha256": "df68aec89d1f76334ee9a3631a6a865bd31d719d36ae6bdd7d5205a9ed612817",
+      "anchors": {
+        "supportSoleLeft": {
+          "x": 444,
+          "y": 729
+        },
+        "supportSoleRight": {
+          "x": 460,
+          "y": 729
+        }
+      },
+      "invariantDimensions": {
+        "headWidth": 81,
+        "supportShoeWidth": 116
+      }
+    },
+    {
+      "path": "form-frames/bodyweight-lunge/3.webp",
+      "sha256": "0d878c4e11da8ae75626ff721fd3bc57b5d63d89e19c885348ff071a62f975e5",
+      "anchors": {
+        "frontSole": {
+          "x": 69,
+          "y": 715
+        },
+        "rearForefoot": {
+          "x": 444,
+          "y": 728
+        }
+      },
+      "invariantDimensions": {
+        "headWidth": 80,
+        "frontShoeWidth": 119
+      }
+    },
+    {
+      "path": "form-frames/bodyweight-lunge/4.webp",
+      "sha256": "0d878c4e11da8ae75626ff721fd3bc57b5d63d89e19c885348ff071a62f975e5",
+      "anchors": {
+        "frontSole": {
+          "x": 69,
+          "y": 715
+        },
+        "rearForefoot": {
+          "x": 444,
+          "y": 728
+        }
+      },
+      "invariantDimensions": {
+        "headWidth": 80,
+        "frontShoeWidth": 119
+      }
+    },
+    {
+      "path": "form-frames/bodyweight-lunge/5.webp",
+      "sha256": "df68aec89d1f76334ee9a3631a6a865bd31d719d36ae6bdd7d5205a9ed612817",
+      "anchors": {
+        "supportSoleLeft": {
+          "x": 444,
+          "y": 729
+        },
+        "supportSoleRight": {
+          "x": 460,
+          "y": 729
+        }
+      },
+      "invariantDimensions": {
+        "headWidth": 81,
+        "supportShoeWidth": 116
+      }
+    },
+    {
+      "path": "form-frames/bodyweight-lunge/6.webp",
+      "sha256": "9ca259aa0233673704e9beef40c6596b49a80b4681e0979ae6dfae57aaa9236b",
+      "anchors": {
+        "supportSoleLeft": {
+          "x": 443,
+          "y": 729
+        },
+        "supportSoleRight": {
+          "x": 461,
+          "y": 729
+        }
+      },
+      "invariantDimensions": {
+        "headWidth": 81,
+        "supportShoeWidth": 115
+      }
+    }
+  ],
+  "contactPhases": [
+    {
+      "name": "Standing support during step and return",
+      "frames": [1, 2, 5, 6],
+      "referenceFrame": 1,
+      "anchorNames": ["supportSoleLeft", "supportSoleRight"],
+      "dimensionNames": ["headWidth", "supportShoeWidth"],
+      "evidence": "Near supporting sole remains planted while far foot lifts forward and returns. Native sole endpoints vary at most1px. No body is wholly airborne."
+    },
+    {
+      "name": "Planted low lunge and hold",
+      "frames": [3, 4],
+      "referenceFrame": 3,
+      "anchorNames": ["frontSole", "rearForefoot"],
+      "dimensionNames": ["headWidth", "frontShoeWidth"],
+      "evidence": "Both feet support the low pose, front heel down and rear forefoot supporting the raised heel. Hold reuses this physical pose."
+    }
+  ],
+  "airborneFrames": [],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Complete: native and registered390x844 mobile both modes/card/pause/manual6to1, three reopened ORAs and lossless exports verified. Lint/art/drafts/typecheck/build/stamp passed. Full suite remains failing; fresh same-HEAD baseline and any focused follow-up show no unresolved additional failures. See registered-scene-production/final-verification.json."
+}

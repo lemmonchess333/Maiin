@@ -1,0 +1,9 @@
+{
+  "commonCrop": [48, 8, 1496, 932],
+  "nativeDimensions": [1448, 924],
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "physicalPoses": 3,
+  "separateBeatPaths": 6,
+  "anatomyTransforms": false,
+  "equipmentEdits": false
+}

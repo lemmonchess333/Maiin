@@ -1,0 +1,283 @@
+{
+  "status": "held-native-fullscope-far-mechanics-clarification-required",
+  "reviewedAt": "2026-10-15T11:46:24.089889+00:00",
+  "sourcePath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\spin-bike\\whole-sequence-sheet-20261015\\1-whole-sequence-original.png",
+  "sourceSha256": "83ad4e7d901d2f73832b7c5ef51766ccd3105bdbcb73138df9ea98fef6462c3b",
+  "actualDecodedSize": [
+    1254,
+    1254
+  ],
+  "actualEqualCellSize": [
+    627,
+    627
+  ],
+  "metadataCorrection": "The literal PNG is1254x1254, not1280x1280. Use actual pixel coordinates; apparent14px panel shifts under640-cell assumptions are not valid.",
+  "promptSha256": "03c41f869f8ac8029d654507d69f9814cc426780a99ee18735952fc103308860",
+  "generationId": "exec744124d3",
+  "actuallyViewed": "Original native sheet plus four literal no-resampling crank inspection crops; original source unchanged.",
+  "physicalScope": {
+    "seatedAandBVisible": true,
+    "genuineStandingCandDVisible": true,
+    "nearLegStatesDistinct": true,
+    "canonicalNoShortsAppearance": "Broadly consistent bald/faceless lean white-grey athlete, white trainers, neutral smooth pelvis and head scale. No gross identity-scale defect observed; exact limb/head invariants are not certified.",
+    "nativeQuality": "Readable crisp contours at actual627-cell scale; not a2048-source quality claim."
+  },
+  "panels": [
+    {
+      "panel": "A",
+      "actualCell": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "posture": "Seated pelvis supported by saddle; near leg low, far leg folded high.",
+      "nearVisibleCrankCentreEnclosure": [
+        269,
+        438,
+        283,
+        453
+      ],
+      "nearVisiblePedalAssemblyEnclosure": [
+        314,
+        484,
+        336,
+        500
+      ],
+      "farShoeInspectionRoi": [
+        251,
+        325,
+        347,
+        387
+      ],
+      "farSupport": "Partial far shoe is high and forward/right while near-low pedal is also forward/right of visible near crank centre. A complete far crank-to-platform connection is not readable.",
+      "decision": "Qualitative opposition concern; no exact hidden far-shaft/radius claim."
+    },
+    {
+      "panel": "B",
+      "actualCell": [
+        627,
+        0,
+        1254,
+        627
+      ],
+      "posture": "Seated, near knee raised and near crank visibly upward.",
+      "nearVisibleCrankCentreEnclosure": [
+        894,
+        438,
+        909,
+        453
+      ],
+      "nearVisiblePedalAssemblyEnclosure": [
+        915,
+        386,
+        938,
+        406
+      ],
+      "farSupport": "Far low sole/platform/crank is occluded by near leg/frame/drive assembly; no valid actual far contact polygon can be measured.",
+      "decision": "Far support/opposed mechanism not established."
+    },
+    {
+      "panel": "C",
+      "actualCell": [
+        0,
+        627,
+        627,
+        1254
+      ],
+      "posture": "Genuine standing climb: pelvis clearly forward/above saddle, near leg low.",
+      "nearVisibleCrankCentreEnclosure": [
+        268,
+        1063,
+        284,
+        1078
+      ],
+      "nearVisiblePedalAssemblyEnclosure": [
+        297,
+        1096,
+        321,
+        1117
+      ],
+      "farShoeInspectionRoi": [
+        251,
+        945,
+        349,
+        1005
+      ],
+      "farSupport": "Same partial upper far shoe forward/right concern asA; far platform/crank connection not readable.",
+      "decision": "Standing achieved; paired mechanics not established."
+    },
+    {
+      "panel": "D",
+      "actualCell": [
+        627,
+        627,
+        1254,
+        1254
+      ],
+      "posture": "Genuine saddle-cleared standing, near knee high with near crank upward.",
+      "nearVisibleCrankCentreEnclosure": [
+        894,
+        1064,
+        909,
+        1079
+      ],
+      "nearVisiblePedalAssemblyEnclosure": [
+        875,
+        1005,
+        902,
+        1030
+      ],
+      "farShoeInspectionRoi": [
+        955,
+        1024,
+        993,
+        1052
+      ],
+      "farSupport": "Small far white toe/sole wedge is above/right of visible near crank centre while near pedal is above/left. Actual far platform/shaft connection is hidden.",
+      "decision": "Opposition concern; not calibrated3D geometry."
+    }
+  ],
+  "measurementLimits": "All centre/platform boxes are conservative manually read native feature enclosures, not fitted joints or valid release contact polygons. Far shaft is not visible. Visible front belt-pulley/flywheel centre is NOT treated as a hidden far crank axle. No exact3D radius, crank-length or projection diagnosis is claimed.",
+  "crownScans": {
+    "A": {
+      "inspectionRoi": [
+        270,
+        0,
+        355,
+        110
+      ],
+      "firstNeutralLightPixelY": {
+        "180": 16,
+        "220": 16
+      },
+      "meaning": "Actual crown-support pixel scan only, not a head-height/proportion release metric."
+    },
+    "B": {
+      "inspectionRoi": [
+        895,
+        0,
+        985,
+        110
+      ],
+      "firstNeutralLightPixelY": {
+        "180": 16,
+        "220": 16
+      },
+      "meaning": "Actual crown-support pixel scan only, not a head-height/proportion release metric."
+    },
+    "C": {
+      "inspectionRoi": [
+        320,
+        590,
+        410,
+        710
+      ],
+      "firstNeutralLightPixelY": {
+        "180": 610,
+        "220": 610
+      },
+      "meaning": "Actual crown-support pixel scan only, not a head-height/proportion release metric."
+    },
+    "D": {
+      "inspectionRoi": [
+        945,
+        590,
+        1035,
+        710
+      ],
+      "firstNeutralLightPixelY": {
+        "180": 610,
+        "220": 610
+      },
+      "meaning": "Actual crown-support pixel scan only, not a head-height/proportion release metric."
+    }
+  },
+  "layout": "Standing crowns begin around610, above actual row boundary627. A literal equal-cell cut clips their tops; whole-scene extraction/padding must preserve complete original figures.",
+  "fixedKnobRegistration": {
+    "A": {
+      "roi": [
+        355,
+        285,
+        391,
+        320
+      ],
+      "maskPixels": 120,
+      "sheetCentroid": [
+        372.7916666666667,
+        303.35
+      ],
+      "actualCellCentroid": [
+        372.7916666666667,
+        303.35
+      ],
+      "purpose": "Resistance-knob registration only, not a crank axle/release measurement."
+    },
+    "B": {
+      "roi": [
+        981,
+        285,
+        1017,
+        320
+      ],
+      "maskPixels": 121,
+      "sheetCentroid": [
+        999.7933884297521,
+        303.3801652892562
+      ],
+      "actualCellCentroid": [
+        372.7933884297521,
+        303.3801652892562
+      ],
+      "purpose": "Resistance-knob registration only, not a crank axle/release measurement."
+    },
+    "C": {
+      "roi": [
+        355,
+        911,
+        391,
+        946
+      ],
+      "maskPixels": 119,
+      "sheetCentroid": [
+        373.0504201680672,
+        930.1008403361344
+      ],
+      "actualCellCentroid": [
+        373.0504201680672,
+        303.1008403361344
+      ],
+      "purpose": "Resistance-knob registration only, not a crank axle/release measurement."
+    },
+    "D": {
+      "roi": [
+        981,
+        911,
+        1017,
+        946
+      ],
+      "maskPixels": 123,
+      "sheetCentroid": [
+        999.8048780487804,
+        930.2682926829268
+      ],
+      "actualCellCentroid": [
+        372.80487804878044,
+        303.2682926829268
+      ],
+      "purpose": "Resistance-knob registration only, not a crank axle/release measurement."
+    }
+  },
+  "registration": false,
+  "ordinaryFinishingFindings": [
+    "Calf colour fields are visible despite requested quads primary/hamstrings-core secondary; calves should be neutral.",
+    "Resistance knobs are red although equipment must be neutral grey.",
+    "Colour finishing cannot establish or hide unresolved far pedal mechanics."
+  ],
+  "rootOwnedCorrectionIfChosen": "One whole-source correction may address readable connected far leg/shoe/pedal/crank relationships in every intact scene, preserving actual seated/standing poses, same athlete/body proportions, fixed camera and apparatus. No source coordinate should be invented for the hidden far shaft. No limb/shoe fitting, graft or code human pose. Reinspect native equal-opposed crank connections after any real output; if still unresolved, hold. Reviewer submits no image request.",
+  "acceptedSource": false,
+  "newImageRequestsByReviewer": 0,
+  "artworkChanges": "Only diagnostic native crops were written; source hash unchanged.",
+  "repoOrPublicChanges": false,
+  "completionCredit": false
+}

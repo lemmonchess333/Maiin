@@ -1,6 +1,8 @@
+import { useEffect, useRef } from "react";
 import WeekPulseCard from "@/components/WeekPulseCard";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import CompletionExtras from "@/components/workout/CompletionExtras";
+import SessionBadge from "@/components/workout/SessionBadge";
 import SectionHeading from "@/components/ui/SectionHeading";
 import StatFigure from "@/components/ui/StatFigure";
 import { Card } from "@/components/ui/Card";
@@ -15,7 +17,11 @@ import { durationFigure, setsFigure, workFigure } from "@/lib/liftFigures";
 import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { cn } from "@/lib/utils";
 import { setPRDescription, type SetPR, type RepBucket } from "@/lib/prTracking";
+import { formatLoad } from "@/lib/liftLoad";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import type { SessionShareAction } from "@/lib/sessionPost";
 
@@ -67,6 +73,7 @@ export default function SessionCompleteScreen({
   onEdit,
   onClose,
 }: SessionCompleteScreenProps) {
+  const liftUnit = useLiftUnit();
   const heading =
     saveStatus === "queued"
       ? "Saved on this phone"
@@ -76,6 +83,29 @@ export default function SessionCompleteScreen({
   // The day as Train, Home and the workout screen name it: "Legs ·
   // Deadlift focus". A routine's own name, with no separator, is itself.
   const dayLabel = liftDayLine(dayName);
+  const reduce = useReducedMotion();
+
+  const status = completing
+    ? "Saving workout…"
+    : saveStatus === "queued"
+      ? "Waiting to sync"
+      : saveStatus === "needs-attention"
+        ? "Needs attention · your session is here to retry"
+        : saved
+          ? "Synced"
+          : "Not saved yet";
+
+  /* Saving swaps the review's Save for the saved screen's Done, pinned at
+     the bottom (Pol1). The button that had focus goes with the review, so
+     a screen reader would start again from the top: focus moves to Done,
+     unless something else on the screen already holds it. */
+  const doneRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!saved) return;
+    const active = document.activeElement;
+    if (!active || active === document.body)
+      doneRef.current?.focus({ preventScroll: true });
+  }, [saved]);
 
   /* The three figures are written by `liftFigures`, the rule the saved
      session's page uses too, so the page you come back to says what the
@@ -116,7 +146,7 @@ export default function SessionCompleteScreen({
         .reduce((t, s) => t + s.reps, 0)
     );
   }, 0);
-  const work = workFigure(totalVolume, totalReps);
+  const work = workFigure(totalVolume, totalReps, liftUnit);
 
   // WORKING sets only. This was the one header stat that did not exclude
   // warm-ups, so it counted the auto-generated ramp that VOLUME and the
@@ -199,9 +229,17 @@ export default function SessionCompleteScreen({
       animate={{ opacity: 1 }}
       role="region"
       aria-label="Session completion"
-      className="fixed inset-0 z-50 bg-background overflow-y-auto pt-[var(--safe-top)] safe-area-pb"
+      className="fixed inset-0 z-50 bg-background overflow-y-auto pt-[var(--safe-top)]"
     >
-      <div className="max-w-md mx-auto px-5 py-8 space-y-6">
+      {/* A column at least the screen's height, so the saved screen's
+          Done can sit at the bottom of a short one and stay pinned there
+          on a long one. The footer owns the safe area once it shows. */}
+      <div
+        className={cn(
+          "max-w-md mx-auto px-5 pt-8 min-h-full flex flex-col space-y-6",
+          !saved && "pb-[calc(2rem+var(--safe-bottom))]"
+        )}
+      >
         {/* Hero Section */}
         <motion.div
           className="text-center space-y-2"
@@ -209,7 +247,10 @@ export default function SessionCompleteScreen({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <h2 className="text-h1 font-extrabold tracking-tight text-foreground text-balance">
+          {/* A display heading (text-h2, bold), under the figures' weight:
+              at the page-title size, centred over three hero figures, it
+              outshouted them. */}
+          <h2 className="text-h2 font-bold tracking-tight text-foreground text-balance">
             {heading}
           </h2>
           <p className="text-base text-muted-foreground">{dayLabel}</p>
@@ -242,8 +283,20 @@ export default function SessionCompleteScreen({
           <StatFigure size="lg" count={sets} unit={sets.unit} />
         </motion.div>
 
+        {/* The session's best moment lands a beat after the screen, a
+            little large and settling, and its trophy after it (Pol1). */}
         {bests.length > 0 && (
-          <section aria-labelledby="session-new-bests" className="space-y-2">
+          <motion.section
+            aria-labelledby="session-new-bests"
+            className="space-y-2 origin-top"
+            initial={reduce ? false : { opacity: 0, scale: 0.94 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{
+              delay: 0.45,
+              duration: 0.46,
+              ease: [0.34, 1.56, 0.64, 1],
+            }}
+          >
             <SectionHeading
               size="compact"
               id="session-new-bests"
@@ -263,27 +316,48 @@ export default function SessionCompleteScreen({
                       {name}
                     </p>
                     <p className="text-lg font-extrabold font-mono tabular-nums text-achievement-strong">
-                      {result.weight} kg × {result.reps}
+                      {formatLoad(result.weight, liftUnit)} × {result.reps}
                     </p>
                     {result.bestBeforeSession && (
                       <p className="text-xs text-muted-foreground">
                         Was{" "}
                         <span className="font-mono tabular-nums">
-                          {result.bestBeforeSession.weight} kg ×{" "}
-                          {result.bestBeforeSession.reps}
+                          {formatLoad(
+                            result.bestBeforeSession.weight,
+                            liftUnit
+                          )}{" "}
+                          × {result.bestBeforeSession.reps}
                         </span>
                       </p>
                     )}
                   </div>
-                  <Trophy
-                    className="size-5 shrink-0 text-achievement"
-                    aria-hidden="true"
-                  />
+                  <motion.span
+                    className="shrink-0"
+                    initial={
+                      reduce ? false : { opacity: 0, scale: 0.4, rotate: -18 }
+                    }
+                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                    transition={{
+                      delay: 0.7,
+                      duration: 0.52,
+                      ease: [0.34, 1.56, 0.64, 1],
+                    }}
+                  >
+                    <Trophy
+                      className="size-5 text-achievement"
+                      aria-hidden="true"
+                    />
+                  </motion.span>
                 </div>
               ))}
             </Card>
-          </section>
+          </motion.section>
         )}
+
+        {/* The badge this session earned sits with its new bests, on the
+            first screen (Pol1). Below Done, tapping Done (the obvious
+            move) would send it to Home unopened. */}
+        {saved && <SessionBadge />}
 
         {firsts.length > 0 && (
           <Card size="compact" tone="muted" className="space-y-1">
@@ -291,7 +365,9 @@ export default function SessionCompleteScreen({
               <p key={key} className="text-sm text-muted-foreground">
                 <span className="font-semibold text-foreground">{name}</span>
                 {" · "}
-                <InlineNumerals>{setPRDescription(result)}</InlineNumerals>
+                <InlineNumerals>
+                  {setPRDescription(result, liftUnit)}
+                </InlineNumerals>
               </p>
             ))}
           </Card>
@@ -327,51 +403,36 @@ export default function SessionCompleteScreen({
           </Card>
         )}
 
-        <div className="space-y-2">
-          <p
-            role="status"
-            className="text-center text-sm text-muted-foreground"
-          >
-            {completing
-              ? "Saving workout…"
-              : saveStatus === "queued"
-                ? "Waiting to sync"
-                : saveStatus === "needs-attention"
-                  ? "Needs attention · your session is here to retry"
-                  : saved
-                    ? "Synced"
-                    : "Not saved yet"}
-          </p>
-          <Button
-            fullWidth
-            size="lg"
-            aria-label={
-              saved
-                ? "Done"
-                : saveStatus === "needs-attention"
-                  ? "Retry sync"
-                  : "Save workout"
-            }
-            onClick={saved ? onClose : onFinish}
-            loading={completing}
-          >
-            {saved
-              ? "Done"
-              : saveStatus === "needs-attention"
-                ? "Retry sync"
-                : "Save workout"}
-          </Button>
-          {!saved && onEdit && (
+        {/* Before saving, the decision comes before the session's detail. */}
+        {!saved && (
+          <div className="space-y-2">
+            <p
+              role="status"
+              className="text-center text-sm text-muted-foreground"
+            >
+              {status}
+            </p>
             <Button
               fullWidth
-              variant="secondary"
-              onClick={onEdit}
-              disabled={completing}
+              size="lg"
+              aria-label={
+                saveStatus === "needs-attention" ? "Retry sync" : "Save workout"
+              }
+              onClick={onFinish}
+              loading={completing}
             >
-              Edit workout
+              {saveStatus === "needs-attention" ? "Retry sync" : "Save workout"}
             </Button>
-          )}
-          {!saved && (
+            {onEdit && (
+              <Button
+                fullWidth
+                variant="secondary"
+                onClick={onEdit}
+                disabled={completing}
+              >
+                Edit workout
+              </Button>
+            )}
             <Button
               fullWidth
               variant="ghost"
@@ -382,8 +443,8 @@ export default function SessionCompleteScreen({
                 ? "Close"
                 : "Close without saving"}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
         {saved && planContext && (
           <div className="space-y-2 text-sm text-muted-foreground">
             <p>
@@ -395,7 +456,7 @@ export default function SessionCompleteScreen({
           </div>
         )}
         {saved && <WeekPulseCard />}
-        {saved && <CompletionExtras share={share} />}
+        {saved && <CompletionExtras share={share} badge={false} />}
         <details className="space-y-4">
           <summary className="min-h-11 py-3 cursor-pointer text-sm font-semibold text-foreground">
             Session details
@@ -427,7 +488,7 @@ export default function SessionCompleteScreen({
                   <div className="text-right shrink-0 ml-3">
                     <p className="text-sm font-mono tabular-nums font-semibold text-lifting-strong">
                       {ex.bestWeight > 0
-                        ? `${ex.bestWeight} kg × ${ex.bestReps}${ex.repUnit === "seconds" ? " s" : ""}`
+                        ? `${formatLoad(ex.bestWeight, liftUnit)} × ${ex.bestReps}${ex.repUnit === "seconds" ? " s" : ""}`
                         : `${ex.bestReps} ${ex.repUnit === "seconds" ? "s" : "reps"}`}
                     </p>
                     <p
@@ -442,6 +503,29 @@ export default function SessionCompleteScreen({
             </div>
           </motion.div>
         </details>
+
+        {/* Saved, Done comes last and stays in thumb reach (Pol1): at the
+            bottom of a short screen, pinned to the bottom of a long one,
+            with the save's state under it. */}
+        {saved && (
+          <div className="sticky bottom-0 z-10 -mx-5 mt-auto border-t border-border/50 bg-background px-5 pt-3 pb-[calc(1rem+var(--safe-bottom))]">
+            <Button
+              ref={doneRef}
+              fullWidth
+              size="lg"
+              aria-label="Done"
+              onClick={onClose}
+            >
+              Done
+            </Button>
+            <p
+              role="status"
+              className="mt-2 text-center text-sm text-muted-foreground"
+            >
+              {status}
+            </p>
+          </div>
+        )}
       </div>
     </motion.div>
   );

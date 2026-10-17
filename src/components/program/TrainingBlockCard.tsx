@@ -1,3 +1,5 @@
+import { formatLoad } from "@/lib/liftLoad";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 /**
  * Training Block card (Blk2) — the Lift tab's block header and its sheets.
@@ -186,6 +188,7 @@ export default function TrainingBlockCard({
   detailOpen,
   onDetailOpenChange,
 }: Props) {
+  const liftUnit = useLiftUnit();
   const navigate = useNavigate();
   const { blocks, archiveBlock, loadReviewWorkouts } = useTrainingBlock(uid);
   const [showCreate, setShowCreate] = useState(false);
@@ -426,7 +429,7 @@ export default function TrainingBlockCard({
                     setFocus(g);
                   }}
                   className={cn(
-                    "w-full min-h-[44px] px-3 rounded-xl flex items-center justify-between gap-3 transition-colors active:scale-[0.97]",
+                    "w-full min-h-[44px] px-3 rounded-xl flex items-center justify-between gap-3 transition active:scale-[0.97]",
                     focus === g
                       ? "bg-primary/10 border border-primary/40"
                       : "bg-muted border border-transparent"
@@ -501,7 +504,7 @@ export default function TrainingBlockCard({
                       setPace(p.value);
                     }}
                     className={cn(
-                      "w-full min-h-[44px] p-3 rounded-xl text-left transition-colors active:scale-[0.97]",
+                      "w-full min-h-[44px] p-3 rounded-xl text-left transition active:scale-[0.97]",
                       pace === p.value
                         ? "bg-primary/10 border border-primary/40"
                         : "bg-muted border border-transparent"
@@ -683,11 +686,11 @@ export default function TrainingBlockCard({
                         </p>
                         <p className="text-xs text-muted-foreground shrink-0">
                           <span className="font-mono tabular-nums">
-                            ~{formatOneRepMaxRange(a.endE1rm!)}
+                            ~{formatOneRepMaxRange(a.endE1rm!, liftUnit)}
                           </span>
                           {gain > 0 && (
                             <span className="ml-1.5 font-mono tabular-nums text-success-strong">
-                              +{gain} kg
+                              +{formatLoad(gain, liftUnit)}
                             </span>
                           )}
                         </p>

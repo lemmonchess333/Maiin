@@ -1,0 +1,37 @@
+import { createRoot } from 'react-dom/client';
+import { useEffect, useState } from 'react';
+import '../../Maiin-burpees/src/index.css';
+import ExerciseFormFrames from '../../Maiin-burpees/src/components/ExerciseFormFrames';
+import plan from './candidate/sequence-plan.json';
+import catalogue from './candidate/authoring/catalogue-snapshot.json';
+import { CardViews, PlaybackEvidence, ThemeControl } from './review-shared';
+
+const beats = plan.beats.map(({ t, label, cue }, index) => ({ t, label, cue, image: `candidate/draft/frames/${index + 1}.webp` }));
+
+function Review() {
+  const [index, setIndex] = useState(0);
+  const [size, setSize] = useState<[number, number] | null>(null);
+  useEffect(() => {
+    const image = new Image();
+    image.onload = () => setSize([image.naturalWidth, image.naturalHeight]);
+    image.src = '/candidate/draft/1-framed.png';
+    return () => { image.onload = null; };
+  }, []);
+  return <main id="native-review" data-review-scope="unregistered-native-two-stride-state" className="min-h-screen bg-background text-foreground p-4 space-y-3">
+    <h1 className="text-h2 font-bold">Elliptical: native 1047×1072 actual ExerciseFormFrames</h1>
+    <p>Two intact retained stride states; six paths in source order1,1,4,4,1,1. Repeated hold beats and endpoint cuts; no illustrated human interpolation.</p>
+    <ThemeControl />
+    <p>Actual loaded PNG: {size ? `${size[0]}×${size[1]}` : 'loading'}. Plan: {plan.dimensions.join('×')}.</p>
+    {size && <style>{`#native-review section>.bg-stage{width:${size[0] + 24}px}#native-review section>.bg-stage>div.relative{width:${size[0]}px!important;height:${size[1]}px!important;max-width:${size[0]}px!important}#native-review section{max-width:${size[0] + 24}px}`}</style>}
+    <div style={{ overflowX: 'auto' }}><ExerciseFormFrames beats={beats} name="Elliptical" onStep={setIndex} /></div>
+    <p data-testid="draft-selected-cue">{index + 1}. {beats[index].label}: {beats[index].cue}</p>
+    <p>Catalogue technique: {catalogue.instructions.join(' ')}</p>
+    <p>Primary: {plan.primary.join(', ')}. Secondary: {plan.secondary.join(', ')}.</p>
+    <CardViews src="/candidate/draft/card.webp" />
+    <PlaybackEvidence />
+  </main>;
+}
+
+const root = createRoot(document.getElementById('root')!);
+root.render(<Review />);
+if (import.meta.hot) import.meta.hot.dispose(() => root.unmount());

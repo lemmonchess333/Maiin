@@ -1,0 +1,32 @@
+{
+  "status": "parent-reviewed-exact-immutable-original-format-preservation",
+  "reviewer": "Root exact immutable-original formatter preservation review, after terminal branch4 and host complete-file check",
+  "reviewedAt": "2026-10-15T09:32:54+00:00",
+  "testedPrefix": "branch4",
+  "path": ".prettierignore",
+  "beforeProof": "checks/prettierignore-tested-before.txt",
+  "afterProof": "checks/prettierignore-canonical-lf-after.txt",
+  "originalProof": "checks/immutable-original-prepare-master.cjs.txt",
+  "testedIgnoreSha256": "a7da164688cc3f0bff23b603dce296dda8731c60da00867505021a30f5d9a5ec",
+  "currentIgnoreSha256": "6bc615ce4711133047790434cc5d12b7657ca216d5fe78f4d432e4d394e7fc0f",
+  "originalSourceSha256": "832f7b0eb9ee5985b602e190fb824ca960ad659c9e4d474858934bd53b7a703a",
+  "originalReviewZipSha256": "8c376b867ec35e3d7b322407a1642d5f1814ceb958e5decc57d9639ebecdfb33",
+  "reviewedEvidenceHashes": {
+    "checks/prettierignore-tested-before.txt": "a7da164688cc3f0bff23b603dce296dda8731c60da00867505021a30f5d9a5ec",
+    "checks/prettierignore-canonical-lf-after.txt": "6bc615ce4711133047790434cc5d12b7657ca216d5fe78f4d432e4d394e7fc0f",
+    "checks/immutable-original-prepare-master.cjs.txt": "832f7b0eb9ee5985b602e190fb824ca960ad659c9e4d474858934bd53b7a703a",
+    "checks/record-immutable-format-preservation.py": "906444981183557b11f98abed5ca236530219bc82dc50f1a9259319bafa8a8b1",
+    "checks/branch4-input-manifest.json": "d69c2197db41d5b1e6a996aa28edd1129a3c28ab3d264f4681c0c87a4dc5ad13",
+    "checks/branch4-verify-result.json": "34677cbede98a05b187e76b1e4c805f2f55b27f4071093b7a36f93ddf28a6268",
+    "checks/branch4-failure-comparison.json": "378756d39d0c5f8e5b3c8b4fb5021747cc7932f7387e90f25d04c42f0795a555",
+    "checks/branch4-verify.log": "94c9a934d1b49e3c50250c15897e714ba641b04fbf03b716653c0870ee11aac8"
+  },
+  "source": "Existing .prettierignore preserves upstream skills and verbatim plans. This applies that convention only to one immutable original authoring script.",
+  "eolNormalization": "Only .prettierignore CRLF to canonical LF is normalized; original script stays byte-exact.",
+  "productionCodeChanged": false,
+  "checkerOrLimitsChanged": false,
+  "claimsAllCurrentInputsEqualTested": false,
+  "normalProductionAndReadableEvidenceFormattingStillRequired": true,
+  "newFullVerifyPassClaim": false,
+  "completionCredit": false
+}

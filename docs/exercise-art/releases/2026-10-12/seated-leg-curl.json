@@ -1,0 +1,175 @@
+{
+  "exerciseId": "seated-leg-curl",
+  "version": "anatomy-v3-2026-10-12-reviewed-seated-leg-curl-v1",
+  "width": 561,
+  "height": 701,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-12T16:18:24.989398+00:00",
+  "reference": {
+    "path": "form-frames/seated-leg-curl/1.webp",
+    "sha256": "e2808ed49b6f64ebcedb29a3454746aa2bdc9e00490c9646bf5f6a101bef5e9b"
+  },
+  "cueSha256": "db1f1ed7c90fd99db908bd5965aacca2126a07964177a2cafd822781b0ae325a",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical athlete-anatomy-v3 is the sole identity reference for all direct-photo pose edits and the single targeted correction. Bald faceless lean white anatomical male, smooth featureless pelvis, white trainers, fine grey contours. Curled master accompanies adjacent targets. No anatomy warps, grafts or separate limb fitting."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed front-three-quarter view from actual Insignia SS-SLC footage. Identical whole-scene photo crops in reference-evidence.json. All accepted generated sources1122x1402; uniform half-size export561x701 only. Generated composition differs from photograph, so exact photo registration is not claimed. No independent geometric fitting."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Continuous paired calves, shins, ankles and shoes after one middle correction. Supported torso and hips, restrained thighs and closed hands remain steady in native561x701 and mobile390x844 review. Small head/shoe/contour variation accepted under revised standard; no calibrated bone-length assertion."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Neutral grey Insignia-style apparatus, fixed complete bearing support, seat/back, thigh restraint/handles and base. Roller and its connected lever move together behind both calves. One generated contact correction replaces the initial anterior-roller overlap. Isolated neutral covers hide a numbered/segmented strip without altering athlete or lever/roller geometry; equipment-repair-audit.json. No visible plate/cable travel is invented."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both hands remain wrapped around the restraint handles, back/hips stay supported and thighs remain under restraint. Both posterior lower calves remain supported by the roller, with anterior shin-to-ankle paths intact. Fixed hand-highlight centroid varies less than one native pixel; base sole varies one pixel. Additional fixed tower/foot diagnostics have limited scope; measurement-method.json."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Manufacturer video24.017835s extended,24.751161s intermediate,25.417827s curled plus Insignia manual page32. Lower legs and roller curl down/back, pause and return under control; knees stay softly extended at reset and torso does not rise. Fixed knee-bearing support remains connected. Front-three-quarter projection changes on-screen limb/lever dimensions, so no constant2D radius or calibrated3D/routing-ratio certification is claimed."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Visible posterior/lateral hamstrings primary#7B72E9 and calves secondary#9590E0, matching catalogue. Front quads/shins and other anatomy remain neutral. Fine inherited grey contours. Colour layers only affect existing chromatic fields; original neutral pixels outside explicit equipment cover masks remain byte-identical."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Extend/Curl/Squeeze/Hold/Return/Reset maps to three poses reused1,2,3,3,2,1 across six distinct file paths. Every cue seven words or fewer. Return/reset keep tension, and do not instruct a stack slam. Pose reuse disclosed."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Native561x701 playback including6to1 and stepped middle inspected; native-trace.json, native-middle.png and revised-native-review.md. Three1122x1402 ORAs reopen exactly; six lossless WebPs match native PNGs."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent390x844 light: all six decoded and6to1 loop verified, full athlete/apparatus visible, key/cues readable; staged-light.png and staged-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent390x844 dark: all six decoded and6to1 loop verified; pause and manual6to1 checked with no console errors; staged-dark.png, staged-trace.json, staged-controls.json."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/seated-leg-curl/1.webp",
+      "sha256": "e2808ed49b6f64ebcedb29a3454746aa2bdc9e00490c9646bf5f6a101bef5e9b",
+      "anchors": {
+        "leftBaseSoleSample": {
+          "x": 130,
+          "y": 617
+        },
+        "nearHandleTopHighlight": {
+          "x": 348.95384615384614,
+          "y": 216.4
+        }
+      },
+      "invariantDimensions": {
+        "towerTopHorizontalChord": 192,
+        "projectedFrontFootSampleSeparation": 220.44500447957535
+      }
+    },
+    {
+      "path": "form-frames/seated-leg-curl/2.webp",
+      "sha256": "c36f2e5854c6b6f11bdcc283ed4028ba06c7e12824f4ee37c1d4f2562dbf7013",
+      "anchors": {
+        "leftBaseSoleSample": {
+          "x": 130,
+          "y": 616
+        },
+        "nearHandleTopHighlight": {
+          "x": 349.0285714285714,
+          "y": 216.45714285714286
+        }
+      },
+      "invariantDimensions": {
+        "towerTopHorizontalChord": 191,
+        "projectedFrontFootSampleSeparation": 220.5810508633958
+      }
+    },
+    {
+      "path": "form-frames/seated-leg-curl/3.webp",
+      "sha256": "f6d0ea75a1dbd14033be6fe4559dd99bc63aaeb60aa6abc987692532201812f7",
+      "anchors": {
+        "leftBaseSoleSample": {
+          "x": 130,
+          "y": 616
+        },
+        "nearHandleTopHighlight": {
+          "x": 348.67164179104475,
+          "y": 216.38805970149252
+        }
+      },
+      "invariantDimensions": {
+        "towerTopHorizontalChord": 193,
+        "projectedFrontFootSampleSeparation": 220.51077071199947
+      }
+    },
+    {
+      "path": "form-frames/seated-leg-curl/4.webp",
+      "sha256": "f6d0ea75a1dbd14033be6fe4559dd99bc63aaeb60aa6abc987692532201812f7",
+      "anchors": {
+        "leftBaseSoleSample": {
+          "x": 130,
+          "y": 616
+        },
+        "nearHandleTopHighlight": {
+          "x": 348.67164179104475,
+          "y": 216.38805970149252
+        }
+      },
+      "invariantDimensions": {
+        "towerTopHorizontalChord": 193,
+        "projectedFrontFootSampleSeparation": 220.51077071199947
+      }
+    },
+    {
+      "path": "form-frames/seated-leg-curl/5.webp",
+      "sha256": "c36f2e5854c6b6f11bdcc283ed4028ba06c7e12824f4ee37c1d4f2562dbf7013",
+      "anchors": {
+        "leftBaseSoleSample": {
+          "x": 130,
+          "y": 616
+        },
+        "nearHandleTopHighlight": {
+          "x": 349.0285714285714,
+          "y": 216.45714285714286
+        }
+      },
+      "invariantDimensions": {
+        "towerTopHorizontalChord": 191,
+        "projectedFrontFootSampleSeparation": 220.5810508633958
+      }
+    },
+    {
+      "path": "form-frames/seated-leg-curl/6.webp",
+      "sha256": "e2808ed49b6f64ebcedb29a3454746aa2bdc9e00490c9646bf5f6a101bef5e9b",
+      "anchors": {
+        "leftBaseSoleSample": {
+          "x": 130,
+          "y": 617
+        },
+        "nearHandleTopHighlight": {
+          "x": 348.95384615384614,
+          "y": 216.4
+        }
+      },
+      "invariantDimensions": {
+        "towerTopHorizontalChord": 192,
+        "projectedFrontFootSampleSeparation": 220.44500447957535
+      }
+    }
+  ],
+  "distinctPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "minorFindings": "One native pixel of base outline/tower-chord variation and small head/shoe/pad/lever contours remain. The front-three-quarter view foreshortens raised legs and changes moving-part projections; constant2D limb/lever length is not a valid requirement. This is a qualitative illustrative motion review, not a calibrated3D mechanism certificate. No distracting body jump, broken grip or missing calf observed after the single contact correction.",
+  "integrationValidation": "Complete: native and registered390x844 light/dark/card/pause/manual6to1 reviewed; three reopened ORAs and six lossless exports. Lint/art/drafts/typecheck/build/stamp passed. Full suite compared against fresh verified same-HEAD baseline with no unresolved additional failures. See photo-pose-production/final-verification.json."
+}

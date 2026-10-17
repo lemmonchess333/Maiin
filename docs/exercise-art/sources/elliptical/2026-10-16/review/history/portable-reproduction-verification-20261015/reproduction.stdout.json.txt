@@ -1,0 +1,42 @@
+{
+  "candidate": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\elliptical\\owner-guide-custom-equipment-20261015\\portable-reproduction-verification-20261015\\reproduced",
+  "manifestSha256": "cae9c3e9a0c7184974b6d4a072901589b850b669c3b9ecc825c21048485dfcf5",
+  "payloadFiles": 58,
+  "fourOraReadbacks": [
+    {
+      "path": "1-native.ora",
+      "sha256": "662010cce21faac6c91cc6c83efb30a2f419dbcca8bcb38b12b2b096e8cce868",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "59d534959fc09a2d13879785be4ecf64fa34ea743bab2f09a1f80ed668793e02"
+    },
+    {
+      "path": "1-framed.ora",
+      "sha256": "9455f2cae2c4f0742682fe3fb2db2d089befd6b2f96b0d4527bfc9189eb049c3",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "b841b1d390f624ca3a5491ed69bce1c6e0caefcf4527b6b9f1b42a816409b546"
+    },
+    {
+      "path": "4-native.ora",
+      "sha256": "d8d436f38988299eb90f036c19d5aa49209fa4ba205d6c54aaf6817315c91047",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "bbbd66cfa61fb277197f854dda388c387bf1168d306bf72b4008e734dbefa3a9"
+    },
+    {
+      "path": "4-framed.ora",
+      "sha256": "ace2c7822351443d4f57970f821e4af3d02c1d9b437cf30e28b6dcd5e10349b5",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "0de1af8ffdc6a1c6903ca7708b370f8e3ca67cf7a4d07bfc5d8f7a81d29a3c90"
+    }
+  ],
+  "sixLosslessFrameSlotsExact": true,
+  "repositoryAccess": false,
+  "approval": false
+}

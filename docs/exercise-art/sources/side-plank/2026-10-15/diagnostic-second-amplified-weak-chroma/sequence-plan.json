@@ -1,0 +1,92 @@
+{
+  "exerciseId": "side-plank",
+  "name": "Side Plank",
+  "sourceScope": "Candidate: one intact retained raised forearm side-plank hold, six separate paths with honest repeated form-focus beats. No illustrated rise/lower/switch or six physical states claimed. No new image requests or human geometry edits.",
+  "primary": [
+    "Obliques"
+  ],
+  "secondary": [
+    "Core",
+    "Shoulders"
+  ],
+  "physicalPoses": 1,
+  "sourcePoseOrder": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "commonCrop": [
+    32,
+    168,
+    1512,
+    864
+  ],
+  "dimensions": [
+    1480,
+    696
+  ],
+  "setup": [
+    "Lie on your side with your forearm on the floor, elbow under your shoulder.",
+    "Stack your feet (or stagger for easier) and brace your core.",
+    "Lift your hips off the floor into a straight line from head to feet."
+  ],
+  "catalogueInstructionsUnchanged": [
+    "Lie on your side with your forearm on the floor, elbow under your shoulder.",
+    "Stack your feet (or stagger for easier) and brace your core.",
+    "Lift your hips off the floor into a straight line from head to feet.",
+    "Hold for time, breathing normally, then switch sides."
+  ],
+  "afterHold": "Hold for time, breathing normally, then switch sides.",
+  "beats": [
+    {
+      "t": 1,
+      "label": "Support",
+      "cue": "Keep your elbow beneath your shoulder."
+    },
+    {
+      "t": 1,
+      "label": "Stack",
+      "cue": "Keep your feet stacked and steady."
+    },
+    {
+      "t": 1,
+      "label": "Align",
+      "cue": "Keep head, hips and feet aligned."
+    },
+    {
+      "t": 1,
+      "label": "Brace",
+      "cue": "Keep your hips raised and core braced."
+    },
+    {
+      "t": 1,
+      "label": "Breathe",
+      "cue": "Breathe normally without dropping your hips."
+    },
+    {
+      "t": 1,
+      "label": "Time",
+      "cue": "Hold for time; then repeat opposite side."
+    }
+  ],
+  "frameHashes": {
+    "draft/frames/1.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc",
+    "draft/frames/2.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc",
+    "draft/frames/3.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc",
+    "draft/frames/4.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc",
+    "draft/frames/5.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc",
+    "draft/frames/6.webp": "392ab6125750e5175996281d3095cdc51f2c0bfcc26d7327dba0143cd38b98bc"
+  },
+  "referenceFrame": 1,
+  "findingsPendingReview": [
+    "One physical isometric hold. Setup and switching sides remain written instructions, with no fabricated transition imagery.",
+    "Recognizable canonical white-grey anatomy/no shorts/featureless pelvis. Trainer straps and shading differ in detail from the global canonical image; no strict identity equivalence claimed.",
+    "Raw lower/side obliques were primary; rectus and delts were pale. Source-derived role maps need actual native semantic palette review.",
+    "Old -4px forearm/-12px shoe mismatch against a separate low pose remains historical; no pair movement is used in this static guide."
+  ],
+  "releaseApproved": false,
+  "completionCredit": false
+}

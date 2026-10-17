@@ -1,0 +1,95 @@
+FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]
+FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]
+FAIL  |node| src/lib/__tests__/iosProjectWiring.test.ts [ src/lib/__tests__/iosProjectWiring.test.ts ]
+FAIL  |node| src/lib/__tests__/requiredCheckComposition.test.ts [ src/lib/__tests__/requiredCheckComposition.test.ts ]
+FAIL  |node| src/lib/__tests__/storageDeployIamCheck.test.ts [ src/lib/__tests__/storageDeployIamCheck.test.ts ]
+FAIL  |root-node| scripts/release-debug-token.test.ts > release App Check debug-token guard > refuses an environment token without printing its value
+FAIL  |root-node| scripts/art/form-art-releases.test.ts > approved artwork releases > are generated from today's release records
+FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses ["nope","60"]
+FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses ["install-deps"]
+FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses ["install","0"]
+FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses ["install","60","safari"]
+FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are Chromium when a job names none
+FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are the ones a job names
+FAIL  |dom| src/components/__tests__/FoodCameraModal.photoLock.test.tsx > FoodCameraModal — photo scanning not on the tier > the offer's buttons: Pro hands off to the page, Scan a barcode goes back to Barcode
+FAIL  |dom| src/hooks/__tests__/firestoreHookCoverage.test.ts > Firestore hook coverage > no NEW suite hand-rolls its own firebase/firestore mock
+FAIL  |dom| src/styles/__tests__/paletteClassGuard.test.ts > no raw Tailwind palette colour classes > colours come from Tropos tokens, not the stock palette
+FAIL  |dom| src/styles/__tests__/rangeInputContract.test.ts > range input — the app's only drag control > every range input in the app goes through the primitive
+FAIL  |dom| src/styles/__tests__/rgbaColourGuard.test.ts > no hardcoded coloured rgba() > colours come from tokens, not decimal rgba literals
+FAIL  |dom| src/components/analytics/__tests__/chartBarWidth.test.ts > Recharts bars — width is constrained > finds the chart files (a scan that matches nothing proves nothing)
+FAIL  |dom| src/components/analytics/__tests__/chartBarWidth.test.ts > Recharts bars — width is constrained > every bar caps its width, or is listed as exempt with a reason
+FAIL  |dom| src/components/analytics/__tests__/chartBarWidth.test.ts > Recharts bars — width is constrained > every exemption names a file that still has a bar in it
+FAIL  |dom| src/components/analytics/__tests__/chartStyleGuard.test.ts > Recharts charts share one tick and one tooltip > finds the chart files (a scan that matches nothing proves nothing)
+FAIL  |dom| src/components/settings/__tests__/DataExportSection.test.tsx > user-facing copy is sentence case > no Title Case labels outside the closed list
+FAIL  |dom| src/features/goalSpace/__tests__/joinRejection.test.ts > the mapping tracks the server > covers every refusal reachable from the join path
+FAIL  |node| src/utils/__tests__/timeTreatment.test.ts > one time of day (24-hour HH:mm, via formatTimeOfDay) > names a home that is where formatTimeOfDay lives
+FAIL  |node| src/utils/__tests__/unitTreatment.test.ts > one unit treatment (spaced: '60 kg', '5.2 km') > no unspaced kg/km value+unit adjacency in rendered code
+FAIL  |node| src/utils/__tests__/unitTreatment.test.ts > one unit treatment (spaced: '60 kg', '5.2 km') > no pace glued to its unit ('5:34 /km', never '5:34/km')
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > has each field exactly once, and only fields with a known limit
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > puts a text box straight after every marker
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > name fits Apple's limit
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > subtitle fits Apple's limit
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > promotional-text fits Apple's limit
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > description fits Apple's limit
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > keywords fits Apple's limit
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > review-notes fits Apple's limit
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > iap-monthly-name fits Apple's limit
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > iap-monthly-description fits Apple's limit
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > iap-yearly-name fits Apple's limit
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > iap-yearly-description fits Apple's limit
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > separates keywords with bare commas and spends no bytes twice
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the pasteable fields > links the Terms and the Privacy Policy from the description
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: claims the code can contradict > quotes the trial length the paywall offers
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: claims the code can contradict > quotes how long the phone keeps meal photos
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: claims the code can contradict > claims no feature the app doesn't have
+FAIL  |node| src/lib/__tests__/appStoreListing.test.ts > App Store listing: the privacy label and the privacy manifest agree > declares exactly the label's data types, for the label's purposes
+FAIL  |node| src/lib/__tests__/basemap.test.ts > every map carries the credit > finds the maps (the scan reaches them)
+FAIL  |node| src/lib/__tests__/bodyRig.test.ts > form beats — the caption is a claim about the frame > the loop closes from the start pose or a controlled return towards it
+FAIL  |node| src/lib/__tests__/bodyRig.test.ts > supplied placard frames > all of a sequence's frames share one canvas
+FAIL  |node| src/lib/__tests__/calorieUnitGate.test.ts > the calorie unit comes from CALORIE_UNIT > no surface writes the calorie unit by hand
+FAIL  |node| src/lib/__tests__/claudeMdFreshness.test.ts > CLAUDE.md — the deploy workflows > finds the workflows and the section
+FAIL  |node| src/lib/__tests__/claudeMdFreshness.test.ts > CLAUDE.md — the deploy workflows > says a push to main runs a workflow only when it does
+FAIL  |node| src/lib/__tests__/componentReachability.test.ts > component reachability (src/components + src/features) > no NEW component is rendered by nothing
+FAIL  |node| src/lib/__tests__/copyCasing.test.ts > user-facing copy is sentence case > no Title Case labels outside the closed list
+FAIL  |node| src/lib/__tests__/deadPathReferences.test.ts > dead file references in production comments > every path cited in a comment names a file that still exists
+FAIL  |node| src/lib/__tests__/designSystemInvariants.test.ts > D15 · DS invariant — touch-target primitive (44px floor) > hand-rolled role=switch toggles do not increase (use the Toggle primitive)
+FAIL  |node| src/lib/__tests__/designSystemInvariants.test.ts > DS ratchets — surface-level drift > the section-tier label appears only on the two Food surfaces
+FAIL  |node| src/lib/__tests__/distanceUnitGate.test.ts > run distances are formatted through runLabels, not inline > no display surface formats a distance by hand
+FAIL  |node| src/lib/__tests__/distanceUnitGate.test.ts > run distances are formatted through runLabels, not inline > no surface prints a logged aggregate with a hardcoded unit
+FAIL  |node| src/lib/__tests__/effectiveTargetsSingleSource.test.ts > useEffectiveTargets single-source (D11) > the day-type macro splitter is imported only by the canonical hook
+FAIL  |node| src/lib/__tests__/firestoreWriteGuard.test.ts > guarded-write enforcement (no raw setDoc/addDoc/updateDoc/deleteDoc) > no src file outside the allow-list calls the raw write SDK
+FAIL  |node| src/lib/__tests__/formArtOwnerRelease.test.ts > owner-authorized artwork activation > releases every approved set as its review recorded it, with its cues live
+FAIL  |node| src/lib/__tests__/functionsScheduleUtcGuard.test.ts > scheduled-function UTC enforcement > the file scan itself isn't vacuous
+FAIL  |node| src/lib/__tests__/hookSurfaceReachability.test.ts > hook return surfaces are reachable > has no unpinned dead properties
+FAIL  |node| src/lib/__tests__/hookSurfaceReachability.test.ts > hook return surfaces are reachable > pins only properties that still exist
+FAIL  |node| src/lib/__tests__/iosPrivacyDeclarations.test.ts > SDKs — nothing that tracks is built in > the committed Package.swift is the one cap sync writes from that config
+FAIL  |node| src/lib/__tests__/leaderboard.test.ts > leaderboard weekly cutoff — local vs UTC date string > uses the LOCAL date of `since` under a positive-offset TZ (regression)
+FAIL  |node| src/lib/__tests__/leaderboard.test.ts > boardFigure > converts the volume board, and only that one
+FAIL  |node| src/lib/__tests__/legalCopyClaims.test.ts > Apple Health is read-only, and its count is never kept > the one HealthKit module asks to read steps and nothing else
+FAIL  |node| src/lib/__tests__/localDateKeyParsing.test.ts > date keys are parsed locally, not as UTC midnight > still sees the pattern at all
+FAIL  |node| src/lib/__tests__/localDateKeyParsing.test.ts > date keys are parsed locally, not as UTC midnight > every classified entry still corresponds to a real site
+FAIL  |node| src/lib/__tests__/localDateKeyParsing.test.ts > date keys are parsed locally, not as UTC midnight > no unclassified site parses a date key as UTC
+FAIL  |node| src/lib/__tests__/localDayKeyGuard.test.ts > a day key is derived locally, never from the UTC clock > no src/ file slices a day key off new Date().toISOString()
+FAIL  |node| src/lib/__tests__/localStorageGuard.test.ts > single-door enforcement (no raw localStorage outside localStore.ts) > scans a sane number of files (the walk isn't silently empty)
+FAIL  |node| src/lib/__tests__/localStorageGuard.test.ts > single-door enforcement (no raw localStorage outside localStore.ts) > no file outside the door references the localStorage global
+FAIL  |node| src/lib/__tests__/localStorageUidScoping.test.ts > localStorage keys are uid-scoped > resolves a key through a same-file const rather than guessing from its name
+FAIL  |node| src/lib/__tests__/localStorageUidScoping.test.ts > localStorage keys are uid-scoped > no unscoped key holds per-account state
+FAIL  |node| src/lib/__tests__/mealActiveSingleSource.test.ts > HOME-MEALS-01 — one owner for 'does this meal count?' > nothing hand-writes the soft-delete rule outside the allowlist
+FAIL  |node| src/lib/__tests__/perfDocMirrorGuard.test.ts > the never-written performance mirrors are read only by the resolver > no file outside the resolver reads flags.deloadRecommended or labels.loadBand
+FAIL  |node| src/lib/__tests__/performanceEngine.test.ts > localWeekKey / weekKeyMinusN — UTC/local drift > localWeekKey keys a late-Sunday-night local time to its local week under a negative-offset TZ
+FAIL  |node| src/lib/__tests__/performanceEngineConsumers.test.ts > client PI engine — production consumers > the app imports only the two non-scoring helpers
+FAIL  |node| src/lib/__tests__/performanceEngineConsumers.test.ts > client PI engine — production consumers > the seeds are the only non-test callers of the scoring pipeline
+FAIL  |node| src/lib/__tests__/rechartsMockCompleteness.test.ts > a wholesale recharts mock exports what its component imports > is looking at something
+FAIL  |node| src/lib/__tests__/savedSessionsReaderGuard.test.ts > saved runs have one reader > no src file outside the allow-list queries the collection
+FAIL  |node| src/lib/__tests__/savedSessionsReaderGuard.test.ts > saved workouts have one reader > no src file outside the allow-list queries the collection
+FAIL  |node| src/lib/__tests__/settingsSectionCoverage.test.ts > settings section analytics coverage > no SETTINGS surface emits a section the union does not declare
+FAIL  |node| src/lib/__tests__/stylesUsage.test.ts > src/styles class usage > scans a plausible number of declarations (guards a broken scan)
+FAIL  |node| src/lib/__tests__/symbolReachability.test.ts > symbol-level reachability > the pinned list stays honest — no entry that is now reachable
+FAIL  |node| src/lib/__tests__/transitionalExpiry.test.ts > deferred removals expire > registers every TRANSITIONAL marker in src/ and functions/
+FAIL  |node| src/lib/__tests__/weekAnchorProse.test.ts > week-anchor prose > scans both sides of the mirror, and a non-trivial number of files
+FAIL  |node| src/lib/__tests__/workoutBurn.test.ts > one run-burn formula > 1.036 appears exactly once in production src/
+FAIL  |node| src/lib/__tests__/writeOnlyProfileFields.test.ts > write-only profile fields > scans enough source to mean something
+FAIL  |node| src/features/program/__tests__/generatorAudit.test.ts > generator audit — every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline
+FAIL  |node| src/features/program/__tests__/racePlanSafetySweep.test.ts > race plans — nothing is scheduled after race day > holds across every distance, race date and weekday
+FAIL  |node| src/features/program/__tests__/trainingBlock.timezone.test.ts > training block calendar dates across timezones > keeps week boundaries, progression holds and end dates in UTC
+FAIL  |node| src/features/program/__tests__/useProgramWriters.test.ts > RUN-RESCHEDULE-01 — moveRunDay > refuses to move a race slot (immovable identity)

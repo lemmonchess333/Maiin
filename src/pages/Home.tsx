@@ -95,6 +95,7 @@ import TrialEndedDialog from "@/components/home/TrialEndedDialog";
 import { recalibrationCheckIn } from "@/lib/recalibrationCheckIn";
 import { shouldShowHomeProStrip } from "@/lib/homeProStrip";
 import { isCheckoutTrialEligible } from "@/lib/subscription";
+import { resolveDistanceUnit } from "@/lib/distanceUnits";
 
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
 
@@ -969,6 +970,7 @@ export default function Home() {
             <SectionErrorBoundary sectionName="quick-actions">
               <StackedCTACards
                 session={session}
+                unit={resolveDistanceUnit(profile?.preferredDistanceUnit)}
                 navigate={function (p: string) {
                   closePeek();
                   navigate(p);
@@ -1104,7 +1106,12 @@ export default function Home() {
         >
           <Card className="space-y-4">
             <SectionErrorBoundary sectionName="week-summary">
-              <WeekSummary counts={weekCounts} />
+              <WeekSummary
+                counts={weekCounts}
+                runner={
+                  !!profile?.runFrequency && profile.runFrequency !== "none"
+                }
+              />
             </SectionErrorBoundary>
             <div className="border-t border-border pt-3">
               <TrackSectionView section="hero">

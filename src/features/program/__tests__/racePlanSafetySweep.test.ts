@@ -30,7 +30,7 @@
  * easy 30 the day after a 5K is ordinary; three of them after a marathon is
  * not. If this gets fixed, the distance is the axis that matters.
  *
- * ── 2. A compressed plan doubles the long run in one week ──
+ * ── 2. A compressed plan doubled the long run in one week (fixed, Run23) ──
  *
  *   distance   plan      long run       jump
  *   marathon   6 weeks   12 km → 25 km  +108%
@@ -38,16 +38,16 @@
  *   10K        4 weeks    6 km → 12 km  +100%
  *   5K         4 weeks    6 km →  8 km   +33%
  *
- * This is the compressed-but-above-floor band specifically, and the contrast
- * with its neighbours is what makes it look like a gap rather than a choice.
- * BELOW the floor the generator already has a safety answer — all easy, no
- * quality, no long ramp at all. ABOVE it, a full-length plan ramps in ~25-33%
- * steps with down weeks (12→15→15→12→15→20→20→15→20→20→25 for a 20-week
- * marathon). Only the middle band has a single build week that doubles.
+ * The ramp climbs a straight line and each week takes the tier at or below
+ * it, so a short block, whose line climbs several km a week, passed tiers
+ * by. Run23 (owner, 2026-10-13): a week's long run is never more than one
+ * rung above the longest the ramp gave any week before it, so the band
+ * above the floor climbs 12 → 15, 10 → 12 and 6 → 8 and peaks a rung lower.
+ * A full-length plan already climbed a rung at a time and is unchanged.
  *
  * Note 25-33% steps are NOT the alarming thing and this file does not treat
  * them as such: the 10%-per-week guideline is about weekly VOLUME, and
- * 12 km → 15 km is a standard long-run progression. The finding is the
+ * 12 km → 15 km is a standard long-run progression. The finding was the
  * doubling, not the ramp.
  *
  * ── What was checked and found correct ──
@@ -94,6 +94,7 @@ function plan(o: {
   runDays?: number;
   /** Shift week 0's start so the race lands on a different weekday. */
   startOffsetDays?: number;
+  easyPaceSPerKm?: number;
 }) {
   const start = MONDAY + (o.startOffsetDays ?? 0) * DAY;
   const key = (d: number) =>
@@ -113,6 +114,7 @@ function plan(o: {
       currentDate: key(0),
       weekStart: key(0),
       recentLayoff: "none",
+      easyPaceSPerKm: o.easyPaceSPerKm,
     }),
   };
 }
@@ -122,44 +124,67 @@ const longRuns = (weeks: { templateId: string }[][]) =>
   weeks.map((w) => Math.max(0, ...w.map((r) => longKmOf(r.templateId))));
 
 describe("race plans — nothing is scheduled after race day", () => {
-  it("holds across every distance, race date and weekday", () => {
-    let total = 0;
-    let withRunsAfter = 0;
-    const perDistance = new Map<string, { n: number; bad: number }>();
+  // Each independent distance/start-day pair keeps the full date sweep.
+  // Splitting the CPU work also makes a failure name its distance and start.
+  const raceDaysOut = Array.from({ length: 208 }, (_, i) => i + 3);
+  const distanceStarts = RACE_DISTANCES.flatMap((distance) =>
+    Array.from({ length: 7 }, (_, startOffsetDays) => ({
+      distance,
+      startOffsetDays,
+    }))
+  );
 
-    // Every weekday the race can fall on × three weeks out to thirty.
-    for (let startOffsetDays = 0; startOffsetDays < 7; startOffsetDays++) {
-      for (const distance of RACE_DISTANCES) {
-        for (let daysOut = 3; daysOut <= 210; daysOut++) {
-          const { out, raceDate } = plan({
-            distance,
-            daysOut,
-            startOffsetDays,
-          });
-          const after = out.weeks
-            .flat()
-            .filter((r) => r.type !== "race" && r.date && r.date > raceDate);
-          total++;
-          const d = perDistance.get(distance) ?? { n: 0, bad: 0 };
-          d.n++;
-          if (after.length > 0) {
-            withRunsAfter++;
-            d.bad++;
-          }
-          perDistance.set(distance, d);
-        }
-      }
+  it("retains all 5,824 distance, race-date and start-weekday scenarios", () => {
+    expect(raceDaysOut).toHaveLength(208);
+    expect(new Set(raceDaysOut).size).toBe(208);
+    expect(raceDaysOut.every(Number.isInteger)).toBe(true);
+    expect(Math.min(...raceDaysOut)).toBe(3);
+    expect(Math.max(...raceDaysOut)).toBe(210);
+    expect(distanceStarts).toHaveLength(28);
+    expect(
+      new Set(
+        distanceStarts.map(({ distance, startOffsetDays }) =>
+          [distance, startOffsetDays].join(":")
+        )
+      ).size
+    ).toBe(28);
+    for (const distance of RACE_DISTANCES) {
+      const starts = distanceStarts.filter((c) => c.distance === distance);
+      expect(
+        starts.map((c) => c.startOffsetDays),
+        distance
+      ).toEqual([0, 1, 2, 3, 4, 5, 6]);
+      expect(starts.length * raceDaysOut.length, distance).toBe(1456);
     }
-
-    expect(total).toBe(5824);
-    /* Was 1652 (28.4%), and identically 413 per distance — a calendar
-       property, not a distance rule, which is why the marathon case was
-       unguarded. The race week now keeps only the shakeouts BEFORE race day. */
-    expect(withRunsAfter).toBe(0);
-    for (const [distance, d] of perDistance) {
-      expect(d.bad, distance).toBe(0);
-    }
+    expect(distanceStarts.length * raceDaysOut.length).toBe(5824);
   });
+
+  it.each(distanceStarts)(
+    "$distance starting +$startOffsetDays days: nothing follows any race date",
+    ({ distance, startOffsetDays }) => {
+      let total = 0;
+      let withRunsAfter = 0;
+      for (const daysOut of raceDaysOut) {
+        const { out, raceDate } = plan({
+          distance,
+          daysOut,
+          startOffsetDays,
+        });
+        const after = out.weeks
+          .flat()
+          .filter((r) => r.type !== "race" && r.date && r.date > raceDate);
+        total++;
+        if (after.length > 0) withRunsAfter++;
+      }
+      expect(total).toBe(208);
+      /* Was 1652 (28.4%), and identically 413 per distance — a calendar
+         property, not a distance rule, which is why the marathon case was
+         unguarded. The race week now keeps only the shakeouts BEFORE race day.
+         Requiring zero in every pair preserves the whole-matrix and each
+         distance's former zero-bad-plans assertions without shared counters. */
+      expect(withRunsAfter, distance).toBe(0);
+    }
+  );
 
   it("leaves a Sunday marathon week with the race and nothing after it", () => {
     /* The concrete worst case, and the modal one — most road races are on a
@@ -379,13 +404,13 @@ describe("race plans — the block is the calendar weeks from this week through 
   });
 });
 
-describe("race plans — the compressed band doubles the long run", () => {
+describe("race plans — the long run climbs one rung a week (Run23)", () => {
   it.each([
-    { distance: "marathon" as const, weeksOut: 6, from: 12, to: 25 },
-    { distance: "half" as const, weeksOut: 5, from: 10, to: 20 },
-    { distance: "10k" as const, weeksOut: 4, from: 6, to: 12 },
+    { distance: "marathon" as const, weeksOut: 6, from: 12, to: 15 },
+    { distance: "half" as const, weeksOut: 5, from: 10, to: 12 },
+    { distance: "10k" as const, weeksOut: 4, from: 6, to: 8 },
   ])(
-    "$distance in $weeksOut weeks jumps $from km → $to km in one week",
+    "$distance in $weeksOut weeks climbs $from km → $to km, where it doubled",
     ({ distance, weeksOut, from, to }) => {
       const { out } = plan({ distance, weeksOut });
       expect(out.compressed).toBe(true);
@@ -393,13 +418,37 @@ describe("race plans — the compressed band doubles the long run", () => {
       const longs = longRuns(out.weeks);
       expect(longs[0]).toBe(from);
       expect(longs[1]).toBe(to);
-      expect((to - from) / from).toBeGreaterThanOrEqual(1); // a doubling
     }
   );
 
+  it("no long run is more than one rung above the longest before it", () => {
+    const rungs = [6, 8, 10, 12, 15, 20, 25, 30];
+    for (const distance of RACE_DISTANCES)
+      for (let weeksOut = 2; weeksOut <= 30; weeksOut++)
+        for (const easyPaceSPerKm of [undefined, 300, 420])
+          for (const runDays of [2, 4]) {
+            const { out } = plan({
+              distance,
+              weeksOut,
+              runDays,
+              easyPaceSPerKm,
+            });
+            let longest = 0;
+            for (const km of longRuns(out.weeks)) {
+              if (km === 0) continue;
+              if (longest > 0)
+                expect(
+                  rungs.indexOf(km) - rungs.indexOf(longest),
+                  `${distance} in ${weeksOut} weeks, ${easyPaceSPerKm ?? "no"} pace, ${runDays} days`
+                ).toBeLessThanOrEqual(1);
+              longest = Math.max(longest, km);
+            }
+          }
+  });
+
   it("below the floor there is no long-run ramp at all", () => {
-    /* The generator's own safety answer at the extreme — which is what makes
-       the middle band look like a gap rather than a decision. */
+    /* The generator's own safety answer at the extreme — which is what made
+       the middle band's doubling look like a gap rather than a decision. */
     const { out } = plan({ distance: "marathon", weeksOut: 3 });
     expect(out.belowFloor).toBe(true);
     expect(longRuns(out.weeks)).toEqual([0, 0, 0]);
@@ -409,18 +458,21 @@ describe("race plans — the compressed band doubles the long run", () => {
   });
 
   it("a full-length plan ramps in ordinary steps, with down weeks", () => {
-    /* The contrast case, pinned so the finding above is not read as "the ramp
-       is too steep". 25-33% long-run steps are standard progression; the
-       doubling is the outlier. */
+    /* The contrast case, pinned so Run23 is not read as "the ramp is too
+       steep". 25-33% long-run steps are standard progression and stay; the
+       doubling was the outlier. A full-length plan already climbed a rung
+       at a time, so Run23 leaves it as it was. */
     const { out } = plan({ distance: "marathon", weeksOut: 20 });
     expect(out.compressed).toBe(false);
     const longs = longRuns(out.weeks).filter((k) => k > 0);
     // Run17: the curve now aims at the schedulable ceiling (25 km on the
     // nominal table, plus the 10% hold) instead of the 32 km config peak,
     // so the block spends three weeks at 25 km rather than five, and the
-    // early weeks climb from base more gradually.
+    // early weeks climb from base more gradually. Run22: the taper keeps a
+    // long run three and two weeks before race week, 75% and 60% of the
+    // 25 km in the plan's own sizes at most that share — 15 km both times.
     expect(longs).toEqual([
-      12, 12, 15, 12, 15, 15, 15, 15, 20, 20, 20, 15, 20, 25, 25, 25,
+      12, 12, 15, 12, 15, 15, 15, 15, 20, 20, 20, 15, 20, 25, 25, 25, 15, 15,
     ]);
     // No step past a third, and the sequence genuinely steps back down.
     for (let i = 1; i < longs.length; i++) {

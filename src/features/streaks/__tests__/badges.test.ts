@@ -4,6 +4,7 @@ import {
   TIER_COLORS,
   CATEGORY_LABELS,
   initBadges,
+  badgeDescription,
   type BadgeTier,
 } from "../badges";
 
@@ -74,5 +75,39 @@ describe("badges", () => {
   it("has badges in every tier", () => {
     const tiers = new Set(BADGE_DEFINITIONS.map((b) => b.tier));
     expect(tiers.size).toBe(4);
+  });
+});
+
+/* Lift18: the plate clubs in an lb lifter's plates. The thresholds stay
+   60/100/140 kg, and each lb figure is at or above its kg one. */
+describe("badgeDescription", () => {
+  const byId = (id: string) => BADGE_DEFINITIONS.find((b) => b.id === id)!;
+  it("names the lb plate clubs for an lb lifter", () => {
+    expect(badgeDescription(byId("plate_club"), "lbs")).toBe(
+      "Lift 135 lb on any compound"
+    );
+    expect(badgeDescription(byId("two_plate"), "lbs")).toBe(
+      "Lift 225 lb on any compound"
+    );
+    expect(badgeDescription(byId("three_plate"), "lbs")).toBe(
+      "Lift 315 lb on any compound"
+    );
+  });
+
+  it("never asks an lb lifter for less than the badge needs", () => {
+    for (const [lb, kg] of [
+      [135, 60],
+      [225, 100],
+      [315, 140],
+    ])
+      expect(lb / 2.20462).toBeGreaterThanOrEqual(kg);
+  });
+
+  it("is the kg copy for a kg lifter, and for every other badge", () => {
+    expect(badgeDescription(byId("plate_club"), "kg")).toBe(
+      "Lift 60 kg on any compound"
+    );
+    const other = BADGE_DEFINITIONS.find((b) => b.id === "first_pr")!;
+    expect(badgeDescription(other, "lbs")).toBe(other.description);
   });
 });

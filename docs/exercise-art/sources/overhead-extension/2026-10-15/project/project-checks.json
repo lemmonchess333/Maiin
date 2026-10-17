@@ -1,0 +1,116 @@
+{
+  "exerciseId": "overhead-extension",
+  "baselineHead": "96fea6f1e887fe7be6c760ba427f14069e85c42b",
+  "normalFullVerification": {
+    "baseline": "remaining18-baseline-96fea6f1",
+    "candidate": "overhead-extension-final-96fea6f1",
+    "baselineCounts": {
+      "Test Files": {
+        "failed": 3,
+        "passed": 1171,
+        "skipped": 10,
+        "total": 1184,
+        "verbatim": "Test Files  3 failed | 1171 passed | 10 skipped (1184)"
+      },
+      "Tests": {
+        "failed": 1,
+        "passed": 13436,
+        "skipped": 409,
+        "total": 13846,
+        "verbatim": "Tests  1 failed | 13436 passed | 409 skipped (13846)"
+      }
+    },
+    "candidateCounts": {
+      "Test Files": {
+        "failed": 6,
+        "passed": 1168,
+        "skipped": 10,
+        "total": 1184,
+        "verbatim": "Test Files  6 failed | 1168 passed | 10 skipped (1184)"
+      },
+      "Tests": {
+        "failed": 4,
+        "passed": 13435,
+        "skipped": 409,
+        "total": 13848,
+        "verbatim": "Tests  4 failed | 13435 passed | 409 skipped (13848)"
+      }
+    },
+    "baselineExitCode": 1,
+    "candidateExitCode": 1,
+    "addedFailures": [
+      "node|src/features/program/__tests__/generatorAudit.test.ts|generator audit \u2014 every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+      "node|src/lib/__tests__/bodyRig.test.ts|supplied placard frames > all of a sequence's frames share one canvas",
+      "node|src/lib/__tests__/noDisabledTests.test.ts|no test is switched off outright > finds no unconditional skip in src/ or functions/"
+    ],
+    "resolvedFailures": [],
+    "sameRawDiagnosticFailures": [
+      "node|src/features/program/__tests__/useProgramWriters.test.ts|RUN-RESCHEDULE-01 \u2014 moveRunDay > refuses to move a race slot (immovable identity)",
+      "root-node|scripts/ios/asc-signing.test.ts|[suite]",
+      "root-node|scripts/write-functions-env.test.ts|[suite]"
+    ],
+    "changedRawDiagnosticFailures": [],
+    "runtimeInputDifferences": [
+      "scripts/dist-size.baseline.json",
+      "src/lib/__tests__/formArtOwnerRelease.test.ts",
+      "src/lib/formArtCutouts.data.ts",
+      "src/lib/formArtwork.ts",
+      "src/lib/releasedFormPlacards.ts"
+    ],
+    "bothNormalFullRunsCompleted": true,
+    "fullCandidateGreen": false,
+    "allNineNewAssetsAndReleaseUnchangedAcrossVerification": true
+  },
+  "normalWholeFileFollowup": {
+    "normalWholeFileFollowupCompleted": true,
+    "wholeFileCount": 10,
+    "testsPassed": 470,
+    "failedTestCases": 0,
+    "skippedTestCases": 0,
+    "failedImportSuites": 2,
+    "remainingImportDiagnosticsByteIdenticalToFreshBaseline": {
+      "root-node|scripts/write-functions-env.test.ts|[suite]": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+      "root-node|scripts/ios/asc-signing.test.ts|[suite]": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548"
+    },
+    "fullRunAddedTimeoutCasesCoveredAndPassing": [
+      "node|src/features/program/__tests__/generatorAudit.test.ts|generator audit \u2014 every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+      "node|src/lib/__tests__/bodyRig.test.ts|supplied placard frames > all of a sequence's frames share one canvas",
+      "node|src/lib/__tests__/noDisabledTests.test.ts|no test is switched off outright > finds no unconditional skip in src/ or functions/"
+    ],
+    "allRuntimeInputsUnchanged": true,
+    "rawLogSha256": "bb09cbe0cf1b4adaaecae012370ba1c9adc6c0efd9d27af38b83f67be18dee50",
+    "fullRunResultStillFailed": true,
+    "fullVerificationPassed": false,
+    "disposition": "Three additional full-run failures were5000ms timeouts. All three cases pass in the unchanged normal complete-file cohort, along with every other test case in those10files. Two baseline Windows SyntaxError import suites remain. The baseline programme case also passes in this follow-up; its original full-run failure is retained. No test timeout, worker count, filter, validator, skip, or runtime source was changed. Current-head CI and actual merge remain publication gates."
+  },
+  "focusedArtWholeFiles": {
+    "filesPassed": 5,
+    "testsPassed": 367,
+    "exitCode": 0,
+    "normalRunner": true,
+    "scope": "Actual five complete existing artwork/guide files; tool result recorded in this chat, no runner overrides."
+  },
+  "normalBuild": {
+    "command": "npm run build",
+    "startedAtUtc": "2026-10-15T16:05:25.428739+00:00",
+    "finishedAtUtc": "2026-10-15T16:06:51.434058+00:00",
+    "exitCode": 0,
+    "seconds": 86.00575260000187,
+    "logSha256": "8c1d1ea63d619a52b94cc663058742a3c9c4fd27b610a21e58e5fcd6b27d3331"
+  },
+  "sizeBudget": {
+    "normalUpdateCommand": "node scripts/check-dist-size.mjs --update",
+    "beforeExitCode": 1,
+    "afterExitCode": 0,
+    "oldChunkBytes": 74740,
+    "newChunkBytes": 78929,
+    "oldTotalBytes": 6246966,
+    "newTotalBytes": 6251155,
+    "allOtherBaselinesUnchanged": true,
+    "toleranceAndCheckerUnchanged": true,
+    "reason": "Measured guide text and owner-release data for the new Overhead Extension guide; other chunk budgets are preserved.",
+    "baselineSha256": "8a0a5b5521a10f9ad8424894cbc87232e9c4fab1069b9c6325229f96977ec18c"
+  },
+  "completionCredit": false,
+  "publication": "Actual current-head CI, merge and postmerge preservation are still required. The Windows full-run result is reported exactly; no all-green claim."
+}

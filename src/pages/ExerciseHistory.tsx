@@ -7,7 +7,10 @@ import { ChevronLeft, Trophy, Search, Dumbbell } from "lucide-react";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { EXERCISES } from "@/lib/exercises";
 import { epley1RMExact } from "@/lib/analytics";
-import { formatDayMonth, formatLoadKg } from "@/utils/formatters";
+import { formatDayMonth } from "@/utils/formatters";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { liftUnitLabel, liftVolumeIn, wholeLoadIn } from "@/lib/liftLoad";
+import { formatKitLoad, kitLoadIn } from "@/features/program/loadSteps";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -83,6 +86,9 @@ export default function ExerciseHistory() {
   const { workouts, loading } = useWorkouts({ coverage: "complete" });
   const navigate = useNavigate();
   const location = useLocation();
+  // Loads are kg in the log; the lifter reads them in their unit (Lift18).
+  const liftUnit = useLiftUnit();
+  const unitLabel = liftUnitLabel(liftUnit);
 
   const [timeRange, setTimeRange] =
     useState<(typeof RANGE_ORDER)[number]>("3M");
@@ -226,7 +232,8 @@ export default function ExerciseHistory() {
     );
     const totalSets = allSessions.reduce((t, s) => t + s.sets.length, 0);
     return {
-      best1RM: Math.round(best1RM),
+      // Rounded where it is shown, once, in the lifter's unit.
+      best1RM,
       maxReps,
       longestHold,
       totalSessions: allSessions.length,
@@ -243,17 +250,26 @@ export default function ExerciseHistory() {
       if (isTimed) {
         value = s.topSet?.reps ?? 0;
       } else if (isBodyweight) {
-        value = metric === "Volume" ? s.volume : s.totalReps;
+        value =
+          metric === "Volume" ? liftVolumeIn(s.volume, liftUnit) : s.totalReps;
       } else if (metric === "1RM") {
-        value = Math.round(s.e1rm);
+        value = wholeLoadIn(s.e1rm, liftUnit);
       } else if (metric === "Max Weight") {
-        value = s.maxWeight;
+        value = kitLoadIn(s.maxWeight, liftUnit, exercise?.id);
       } else {
-        value = s.volume;
+        value = liftVolumeIn(s.volume, liftUnit);
       }
       return { date: s.date, value, isPR: prDates.has(s.date) };
     });
-  }, [filteredSessions, metric, isBodyweight, isTimed, prDates]);
+  }, [
+    filteredSessions,
+    metric,
+    isBodyweight,
+    isTimed,
+    prDates,
+    liftUnit,
+    exercise?.id,
+  ]);
 
   // For BW exercises the toggle simplifies to Reps / Volume — no
   // weight-based option makes sense when the weight is implicit. The
@@ -377,13 +393,13 @@ export default function ExerciseHistory() {
                   : isBodyweight
                     ? headerStats.maxReps || "—"
                     : headerStats.best1RM
-                      ? `${headerStats.best1RM}`
+                      ? `${wholeLoadIn(headerStats.best1RM, liftUnit)}`
                       : "—"}
                 {!isTimed && !isBodyweight && headerStats.best1RM > 0 && (
                   <>
                     {" "}
                     <span className="text-xs font-normal text-muted-foreground">
-                      kg
+                      {unitLabel}
                     </span>
                   </>
                 )}
@@ -453,12 +469,12 @@ export default function ExerciseHistory() {
                     <p className="text-sm font-bold font-mono tabular-nums text-foreground mt-0.5">
                       {isBodyweight && pr.weightKg === 0
                         ? "BW"
-                        : `${pr.weightKg}`}
+                        : `${kitLoadIn(pr.weightKg, liftUnit, exercise?.id)}`}
                       {pr.weightKg > 0 && !isBodyweight && (
                         <>
                           {" "}
                           <span className="text-caption font-normal text-muted-foreground">
-                            kg
+                            {unitLabel}
                           </span>
                         </>
                       )}
@@ -597,7 +613,7 @@ export default function ExerciseHistory() {
                             ? `${s.totalReps}s total`
                             : isBodyweight
                               ? `${s.totalReps} reps total`
-                              : `${Math.round(s.volume)} kg volume`}
+                              : `${Math.round(liftVolumeIn(s.volume, liftUnit))} ${unitLabel} volume`}
                         </p>
                       </div>
                       <div className="ml-auto text-right flex-shrink-0">
@@ -605,7 +621,7 @@ export default function ExerciseHistory() {
                           {s.topSet
                             ? isTimed
                               ? `${s.topSet.reps}s`
-                              : `${formatLoadKg(s.topSet.weightKg)} × ${s.topSet.reps}`
+                              : `${s.topSet.weightKg === 0 ? "BW" : formatKitLoad(s.topSet.weightKg, liftUnit, exercise?.id)} × ${s.topSet.reps}`
                             : "—"}
                         </p>
                         {delta != null && delta !== 0 && (
@@ -619,7 +635,10 @@ export default function ExerciseHistory() {
                             }}
                           >
                             {delta > 0 ? "+" : ""}
-                            {delta} {isTimed ? "s" : "kg"} from last
+                            {isTimed
+                              ? `${delta} s`
+                              : `${kitLoadIn(delta, liftUnit, exercise?.id)} ${unitLabel}`}{" "}
+                            from last
                           </p>
                         )}
                       </div>

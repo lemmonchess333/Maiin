@@ -1,0 +1,2281 @@
+{
+  "status": "completed-normal-runs-compared-exactly-no-failure-disposition",
+  "comparedAt": "2026-10-15T12:59:28.118108+00:00",
+  "baselineHead": "2efdec417e43a868bb2ece7a63baff8de6271db3",
+  "candidateLabel": "face-pulls-final-sized-2efdec417",
+  "normalCommand": "npm run verify",
+  "baseline": {
+    "folder": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining19-execution-20261015\\checks\\baseline-main-2efdec417",
+    "sourceProofHashes": {
+      "verify.log": "4115ee4003933201a321b227d6b174a6daeb4525449cf87babe86081fd8dcda1",
+      "result.json": "6b6a178bdaf3e4a3e91dc49b08cb9000f1e21c97a585f6dbe0ad9adcf2753acd",
+      "inputs-before.json": "02541fbbe605be694c91a5db3d1654ae005a47820802c146baf30b44fbd9b44f",
+      "inputs-after.json": "02541fbbe605be694c91a5db3d1654ae005a47820802c146baf30b44fbd9b44f",
+      "start.json": "26fd902607584ce369fbc35d7e3ceb6ca32c15520f56aa5dc80dd75ab93e84af"
+    },
+    "snapshotProofHashes": {
+      "snapshot-before-0.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-1.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-2.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-3.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-4.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-5.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-6.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-7.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-8.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-9.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-10.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-11.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-12.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-13.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-14.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-15.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-16.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-17.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-18.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-19.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-20.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-21.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-22.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-23.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-24.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-25.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-26.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-27.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-28.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-29.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-30.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-31.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-32.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-33.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-34.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-35.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-36.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-37.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-38.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-39.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-40.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-41.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-42.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-test-output-42.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f"
+    },
+    "capturedSnapshotProofs": [
+      {
+        "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/baseline/baseline-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-0.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/baseline/baseline-planSweep-before.snap",
+        "capturedFile": "snapshot-before-1.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-2.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/baseline/baseline-planSweep-before.snap",
+        "capturedFile": "snapshot-before-3.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/checks/branch-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-4.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/checks/branch-planSweep-before.snap",
+        "capturedFile": "snapshot-before-5.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-6.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+        "capturedFile": "snapshot-before-7.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+        "capturedFile": "snapshot-before-8.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+        "capturedFile": "snapshot-before-9.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-10.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+        "capturedFile": "snapshot-before-11.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-12.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+        "capturedFile": "snapshot-before-13.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+        "capturedFile": "snapshot-before-14.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+        "capturedFile": "snapshot-before-15.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+        "capturedFile": "snapshot-before-16.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+        "capturedFile": "snapshot-before-17.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-18.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+        "capturedFile": "snapshot-before-19.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+        "capturedFile": "snapshot-before-20.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+        "capturedFile": "snapshot-before-21.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-22.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+        "capturedFile": "snapshot-before-23.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-24.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+        "capturedFile": "snapshot-before-25.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+        "capturedFile": "snapshot-before-26.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+        "capturedFile": "snapshot-before-27.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+        "capturedFile": "snapshot-before-28.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+        "capturedFile": "snapshot-before-29.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-30.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+        "capturedFile": "snapshot-before-31.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+        "capturedFile": "snapshot-before-32.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+        "capturedFile": "snapshot-before-33.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-34.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+        "capturedFile": "snapshot-before-35.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-36.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+        "capturedFile": "snapshot-before-37.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+        "capturedFile": "snapshot-before-38.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+        "capturedFile": "snapshot-before-39.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+        "capturedFile": "snapshot-before-40.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+        "capturedFile": "snapshot-before-41.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+        "capturedFile": "snapshot-before-42.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": true
+      }
+    ],
+    "testFiles": {
+      "failed": 52,
+      "passed": 1117,
+      "skipped": 10,
+      "total": 1179,
+      "verbatim": "Test Files  52 failed | 1117 passed | 10 skipped (1179)"
+    },
+    "tests": {
+      "failed": 77,
+      "passed": 13148,
+      "skipped": 409,
+      "total": 13634,
+      "verbatim": "Tests  77 failed | 13148 passed | 409 skipped (13634)"
+    },
+    "failureHeaderCount": 82,
+    "testFailureHeaders": 77,
+    "suiteFailureHeaders": 5
+  },
+  "candidate": {
+    "folder": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining19-execution-20261015\\checks\\face-pulls-final-sized-2efdec417",
+    "sourceProofHashes": {
+      "verify.log": "cfc1ebdeca3392fdc3683979eb7bd2ebf4605318c202ff7438b4f0e72127515f",
+      "result.json": "af8dca46775820b7e4319a992d41bf56ba571f9a74e78257c9efdd112f96e4a0",
+      "inputs-before.json": "48404e4d96bdb09aeb5d9bc7e435595d4f0c96565ecd92988b327b6c9738163b",
+      "inputs-after.json": "48404e4d96bdb09aeb5d9bc7e435595d4f0c96565ecd92988b327b6c9738163b",
+      "start.json": "a7353d7c4f64a665ebde29cdb1f5295727304431b79a837f94f1fceb2f98eb39"
+    },
+    "snapshotProofHashes": {
+      "snapshot-before-0.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-1.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-2.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-3.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-4.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-5.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-6.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-7.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-8.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-9.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-10.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-11.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-12.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-13.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-14.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-15.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-16.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-17.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-18.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-19.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-20.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-21.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-22.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-23.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-24.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-25.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-26.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-27.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-28.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-29.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-30.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-31.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-32.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-33.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-34.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-35.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-36.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "snapshot-before-37.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-38.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-39.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-40.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-41.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-before-42.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "snapshot-test-output-42.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f"
+    },
+    "capturedSnapshotProofs": [
+      {
+        "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/baseline/baseline-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-0.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/baseline/baseline-planSweep-before.snap",
+        "capturedFile": "snapshot-before-1.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-2.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/baseline/baseline-planSweep-before.snap",
+        "capturedFile": "snapshot-before-3.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/checks/branch-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-4.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/checks/branch-planSweep-before.snap",
+        "capturedFile": "snapshot-before-5.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-6.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+        "capturedFile": "snapshot-before-7.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+        "capturedFile": "snapshot-before-8.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+        "capturedFile": "snapshot-before-9.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-10.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+        "capturedFile": "snapshot-before-11.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-12.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+        "capturedFile": "snapshot-before-13.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+        "capturedFile": "snapshot-before-14.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+        "capturedFile": "snapshot-before-15.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+        "capturedFile": "snapshot-before-16.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+        "capturedFile": "snapshot-before-17.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-18.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+        "capturedFile": "snapshot-before-19.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+        "capturedFile": "snapshot-before-20.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+        "capturedFile": "snapshot-before-21.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-22.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+        "capturedFile": "snapshot-before-23.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-24.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+        "capturedFile": "snapshot-before-25.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+        "capturedFile": "snapshot-before-26.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+        "capturedFile": "snapshot-before-27.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+        "capturedFile": "snapshot-before-28.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+        "capturedFile": "snapshot-before-29.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-30.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+        "capturedFile": "snapshot-before-31.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+        "capturedFile": "snapshot-before-32.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+        "capturedFile": "snapshot-before-33.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-34.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+        "capturedFile": "snapshot-before-35.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+        "capturedFile": "snapshot-before-36.snap",
+        "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+        "capturedFile": "snapshot-before-37.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+        "capturedFile": "snapshot-before-38.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+        "capturedFile": "snapshot-before-39.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+        "capturedFile": "snapshot-before-40.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+        "capturedFile": "snapshot-before-41.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": false
+      },
+      {
+        "sourcePath": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+        "capturedFile": "snapshot-before-42.snap",
+        "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "boundByInputManifest": true
+      }
+    ],
+    "testFiles": {
+      "failed": 50,
+      "passed": 1119,
+      "skipped": 10,
+      "total": 1179,
+      "verbatim": "Test Files  50 failed | 1119 passed | 10 skipped (1179)"
+    },
+    "tests": {
+      "failed": 75,
+      "passed": 13152,
+      "skipped": 409,
+      "total": 13636,
+      "verbatim": "Tests  75 failed | 13152 passed | 409 skipped (13636)"
+    },
+    "failureHeaderCount": 80,
+    "testFailureHeaders": 75,
+    "suiteFailureHeaders": 5
+  },
+  "normalStagesObserved": [
+    "lint",
+    "check:form-art",
+    "check:form-drafts",
+    "check:cycles",
+    "build",
+    "check:dist-size",
+    "test"
+  ],
+  "baselineExitCode": 1,
+  "candidateExitCode": 1,
+  "candidateFullVerificationPassed": false,
+  "candidateInputsPreserved": true,
+  "candidateInputCount": 2656,
+  "candidateSnapshotRestores": [
+    {
+      "path": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+      "originalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "testOutputSha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "restoredExact": true
+    }
+  ],
+  "baselineToCandidateChangedInputPaths": [
+    "scripts/dist-size.baseline.json",
+    "src/lib/__tests__/formArtOwnerRelease.test.ts",
+    "src/lib/formArtCutouts.data.ts",
+    "src/lib/formArtwork.ts",
+    "src/lib/releasedFormPlacards.ts"
+  ],
+  "identityDefinition": "Vitest project|forward-slash source filename|exact case path, or [suite]. Raw source headers remain in the preserved log at headerLine.",
+  "diagnosticHashDefinition": "SHA256 of the exact raw log byte range, first own nonblank line through last own nonblank line plus its original line ending; stops before the case ordinal separator. No path, Unicode or line-ending normalization.",
+  "baselineIndexSha256": "7cb0982a4ffc7c796b8757556d8c21f8004a65302c71e7bc337456fdbf59bfd9",
+  "baselineParserSha256": "6733c4044a9e71c89c3cdc9450375849bd2b154b4665b7e845006e6eef3d7b5e",
+  "comparisonHelperSha256": "69d1e6b616691b67c5c997afab3f3907b707ac57b04802fd76b1ff67afa73ffd",
+  "counts": {
+    "added": 1,
+    "removed": 3,
+    "changedDiagnostics": 0,
+    "identicalDiagnostics": 79
+  },
+  "added": [
+    {
+      "canonicalId": "node|src/lib/__tests__/bodyRig.test.ts|form beats — the caption is a claim about the frame > every cue fits the hold it is read in",
+      "baseline": null,
+      "candidate": {
+        "canonicalId": "node|src/lib/__tests__/bodyRig.test.ts|form beats — the caption is a claim about the frame > every cue fits the hold it is read in",
+        "project": "node",
+        "file": "src/lib/__tests__/bodyRig.test.ts",
+        "kind": "test",
+        "case": "form beats — the caption is a claim about the frame > every cue fits the hold it is read in",
+        "headerLine": 1416,
+        "headerRawSha256": "b8609c1e6e35ad8c5b71c2c46b542546672908d34b91cddf080c623a46b79fe9",
+        "diagnostic": {
+          "startLine": 1417,
+          "endLineInclusive": 1424,
+          "byteStart": 98499,
+          "byteEndExclusive": 98971,
+          "rawSha256": "cc7fef4778b2e71ad7fe1f699c9bc684a288fce633eeb2a55559aeb40fc36087",
+          "firstOwnLine": "AssertionError: face-pulls \"Reach\": 10 words: expected 10 to be less than or equal to 7"
+        },
+        "firstThreeOwnLines": [
+          "AssertionError: face-pulls \"Reach\": 10 words: expected 10 to be less than or equal to 7",
+          " ❯ src/lib/__tests__/bodyRig.test.ts:4817:61",
+          "    4815|       for (const b of getAuthoredBeats(id)!) {"
+        ]
+      }
+    }
+  ],
+  "removed": [
+    {
+      "canonicalId": "node|src/features/program/__tests__/generatorAudit.test.ts|generator audit — every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+      "baseline": {
+        "canonicalId": "node|src/features/program/__tests__/generatorAudit.test.ts|generator audit — every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+        "project": "node",
+        "file": "src/features/program/__tests__/generatorAudit.test.ts",
+        "kind": "test",
+        "case": "generator audit — every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+        "headerLine": 2780,
+        "headerRawSha256": "b013654d3017765c18fde88fd5183f35b7802a00f30b2a54c4cf3899d6927092",
+        "diagnostic": {
+          "startLine": 2781,
+          "endLineInclusive": 2789,
+          "byteStart": 163869,
+          "byteEndExclusive": 164416,
+          "rawSha256": "b23bfc7d5409dfeef7a855c216093984474602f74a0222dfe237771e08735b4f",
+          "firstOwnLine": "Error: Test timed out in 5000ms."
+        },
+        "firstThreeOwnLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/features/program/__tests__/generatorAudit.test.ts:147:3"
+        ]
+      },
+      "candidate": null
+    },
+    {
+      "canonicalId": "node|src/features/program/__tests__/racePlanSafetySweep.test.ts|race plans — nothing is scheduled after race day > holds across every distance, race date and weekday",
+      "baseline": {
+        "canonicalId": "node|src/features/program/__tests__/racePlanSafetySweep.test.ts|race plans — nothing is scheduled after race day > holds across every distance, race date and weekday",
+        "project": "node",
+        "file": "src/features/program/__tests__/racePlanSafetySweep.test.ts",
+        "kind": "test",
+        "case": "race plans — nothing is scheduled after race day > holds across every distance, race date and weekday",
+        "headerLine": 2793,
+        "headerRawSha256": "b706e3636e861eebf03af777b526a46fd209357c2b59c8f2debe0d592ddcb1f6",
+        "diagnostic": {
+          "startLine": 2794,
+          "endLineInclusive": 2802,
+          "byteStart": 164674,
+          "byteEndExclusive": 165138,
+          "rawSha256": "8f8f12cb32f576611301fb61a2d0b95eda164ef5ab79b02cfa3f33adc7a2d3c7",
+          "firstOwnLine": "Error: Test timed out in 5000ms."
+        },
+        "firstThreeOwnLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/features/program/__tests__/racePlanSafetySweep.test.ts:127:3"
+        ]
+      },
+      "candidate": null
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/bodyRig.test.ts|supplied placard frames > all of a sequence's frames share one canvas",
+      "baseline": {
+        "canonicalId": "node|src/lib/__tests__/bodyRig.test.ts|supplied placard frames > all of a sequence's frames share one canvas",
+        "project": "node",
+        "file": "src/lib/__tests__/bodyRig.test.ts",
+        "kind": "test",
+        "case": "supplied placard frames > all of a sequence's frames share one canvas",
+        "headerLine": 1422,
+        "headerRawSha256": "5d6ee5cf13ec2d43cf48cb88d85341f7fcc4cb96c882f53e8ab2356cad899f0e",
+        "diagnostic": {
+          "startLine": 1423,
+          "endLineInclusive": 1431,
+          "byteStart": 98926,
+          "byteEndExclusive": 99397,
+          "rawSha256": "8be605a31a3f6cae770e97df9d90ed12d89e94082217c8380f7d21c04b59ce19",
+          "firstOwnLine": "Error: Test timed out in 5000ms."
+        },
+        "firstThreeOwnLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/lib/__tests__/bodyRig.test.ts:5109:3"
+        ]
+      },
+      "candidate": null
+    }
+  ],
+  "changedDiagnostics": [],
+  "presentInBothWithIdenticalDiagnosticBytes": [
+    "dom|src/components/__tests__/FoodCameraModal.photoLock.test.tsx|FoodCameraModal — photo scanning not on the tier > names the offer the way the Pro line under the composer does once the trial is used",
+    "dom|src/components/analytics/__tests__/chartBarWidth.test.ts|Recharts bars — width is constrained > every bar caps its width, or is listed as exempt with a reason",
+    "dom|src/components/analytics/__tests__/chartBarWidth.test.ts|Recharts bars — width is constrained > every exemption names a file that still has a bar in it",
+    "dom|src/components/analytics/__tests__/chartBarWidth.test.ts|Recharts bars — width is constrained > finds the chart files (a scan that matches nothing proves nothing)",
+    "dom|src/components/analytics/__tests__/chartStyleGuard.test.ts|Recharts charts share one tick and one tooltip > finds the chart files (a scan that matches nothing proves nothing)",
+    "dom|src/components/settings/__tests__/DataExportSection.test.tsx|user-facing copy is sentence case > no Title Case labels outside the closed list",
+    "dom|src/features/goalSpace/__tests__/joinRejection.test.ts|the mapping tracks the server > covers every refusal reachable from the join path",
+    "dom|src/hooks/__tests__/firestoreHookCoverage.test.ts|Firestore hook coverage > no NEW suite hand-rolls its own firebase/firestore mock",
+    "dom|src/styles/__tests__/paletteClassGuard.test.ts|no raw Tailwind palette colour classes > colours come from Tropos tokens, not the stock palette",
+    "dom|src/styles/__tests__/rangeInputContract.test.ts|range input — the app's only drag control > every range input in the app goes through the primitive",
+    "dom|src/styles/__tests__/rgbaColourGuard.test.ts|no hardcoded coloured rgba() > colours come from tokens, not decimal rgba literals",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: claims the code can contradict > claims no feature the app doesn't have",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: claims the code can contradict > quotes how long the phone keeps meal photos",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: claims the code can contradict > quotes the trial length the paywall offers",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > description fits Apple's limit",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > has each field exactly once, and only fields with a known limit",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > iap-monthly-description fits Apple's limit",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > iap-monthly-name fits Apple's limit",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > iap-yearly-description fits Apple's limit",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > iap-yearly-name fits Apple's limit",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > keywords fits Apple's limit",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > links the Terms and the Privacy Policy from the description",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > name fits Apple's limit",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > promotional-text fits Apple's limit",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > puts a text box straight after every marker",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > review-notes fits Apple's limit",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > separates keywords with bare commas and spends no bytes twice",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > subtitle fits Apple's limit",
+    "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the privacy label and the privacy manifest agree > declares exactly the label's data types, for the label's purposes",
+    "node|src/lib/__tests__/basemap.test.ts|every map carries the credit > finds the maps (the scan reaches them)",
+    "node|src/lib/__tests__/calorieUnitGate.test.ts|the calorie unit comes from CALORIE_UNIT > no surface writes the calorie unit by hand",
+    "node|src/lib/__tests__/claudeMdFreshness.test.ts|CLAUDE.md — the deploy workflows > finds the workflows and the section",
+    "node|src/lib/__tests__/claudeMdFreshness.test.ts|CLAUDE.md — the deploy workflows > says a push to main runs a workflow only when it does",
+    "node|src/lib/__tests__/componentReachability.test.ts|component reachability (src/components + src/features) > no NEW component is rendered by nothing",
+    "node|src/lib/__tests__/copyCasing.test.ts|user-facing copy is sentence case > no Title Case labels outside the closed list",
+    "node|src/lib/__tests__/deadPathReferences.test.ts|dead file references in production comments > every path cited in a comment names a file that still exists",
+    "node|src/lib/__tests__/designSystemInvariants.test.ts|D15 · DS invariant — touch-target primitive (44px floor) > hand-rolled role=switch toggles do not increase (use the Toggle primitive)",
+    "node|src/lib/__tests__/designSystemInvariants.test.ts|DS ratchets — surface-level drift > the section-tier label appears only on the two Food surfaces",
+    "node|src/lib/__tests__/distanceUnitGate.test.ts|run distances are formatted through runLabels, not inline > no display surface formats a distance by hand",
+    "node|src/lib/__tests__/distanceUnitGate.test.ts|run distances are formatted through runLabels, not inline > no surface prints a logged aggregate with a hardcoded unit",
+    "node|src/lib/__tests__/effectiveTargetsSingleSource.test.ts|useEffectiveTargets single-source (D11) > the day-type macro splitter is imported only by the canonical hook",
+    "node|src/lib/__tests__/firestoreWriteGuard.test.ts|guarded-write enforcement (no raw setDoc/addDoc/updateDoc/deleteDoc) > no src file outside the allow-list calls the raw write SDK",
+    "node|src/lib/__tests__/functionsScheduleUtcGuard.test.ts|scheduled-function UTC enforcement > the file scan itself isn't vacuous",
+    "node|src/lib/__tests__/hookSurfaceReachability.test.ts|hook return surfaces are reachable > has no unpinned dead properties",
+    "node|src/lib/__tests__/hookSurfaceReachability.test.ts|hook return surfaces are reachable > pins only properties that still exist",
+    "node|src/lib/__tests__/iosPrivacyDeclarations.test.ts|SDKs — nothing that tracks is built in > the committed Package.swift is the one cap sync writes from that config",
+    "node|src/lib/__tests__/iosProjectWiring.test.ts|[suite]",
+    "node|src/lib/__tests__/leaderboard.test.ts|leaderboard weekly cutoff — local vs UTC date string > uses the LOCAL date of `since` under a positive-offset TZ (regression)",
+    "node|src/lib/__tests__/legalCopyClaims.test.ts|Apple Health is read-only, and its count is never kept > the one HealthKit module asks to read steps and nothing else",
+    "node|src/lib/__tests__/localDateKeyParsing.test.ts|date keys are parsed locally, not as UTC midnight > every classified entry still corresponds to a real site",
+    "node|src/lib/__tests__/localDateKeyParsing.test.ts|date keys are parsed locally, not as UTC midnight > no unclassified site parses a date key as UTC",
+    "node|src/lib/__tests__/localDateKeyParsing.test.ts|date keys are parsed locally, not as UTC midnight > still sees the pattern at all",
+    "node|src/lib/__tests__/localDayKeyGuard.test.ts|a day key is derived locally, never from the UTC clock > no src/ file slices a day key off new Date().toISOString()",
+    "node|src/lib/__tests__/localStorageGuard.test.ts|single-door enforcement (no raw localStorage outside localStore.ts) > no file outside the door references the localStorage global",
+    "node|src/lib/__tests__/localStorageGuard.test.ts|single-door enforcement (no raw localStorage outside localStore.ts) > scans a sane number of files (the walk isn't silently empty)",
+    "node|src/lib/__tests__/localStorageUidScoping.test.ts|localStorage keys are uid-scoped > no unscoped key holds per-account state",
+    "node|src/lib/__tests__/localStorageUidScoping.test.ts|localStorage keys are uid-scoped > resolves a key through a same-file const rather than guessing from its name",
+    "node|src/lib/__tests__/mealActiveSingleSource.test.ts|HOME-MEALS-01 — one owner for 'does this meal count?' > nothing hand-writes the soft-delete rule outside the allowlist",
+    "node|src/lib/__tests__/perfDocMirrorGuard.test.ts|the never-written performance mirrors are read only by the resolver > no file outside the resolver reads flags.deloadRecommended or labels.loadBand",
+    "node|src/lib/__tests__/performanceEngine.test.ts|localWeekKey / weekKeyMinusN — UTC/local drift > localWeekKey keys a late-Sunday-night local time to its local week under a negative-offset TZ",
+    "node|src/lib/__tests__/performanceEngineConsumers.test.ts|client PI engine — production consumers > the app imports only the two non-scoring helpers",
+    "node|src/lib/__tests__/performanceEngineConsumers.test.ts|client PI engine — production consumers > the seeds are the only non-test callers of the scoring pipeline",
+    "node|src/lib/__tests__/rechartsMockCompleteness.test.ts|a wholesale recharts mock exports what its component imports > is looking at something",
+    "node|src/lib/__tests__/requiredCheckComposition.test.ts|[suite]",
+    "node|src/lib/__tests__/savedSessionsReaderGuard.test.ts|saved runs have one reader > no src file outside the allow-list queries the collection",
+    "node|src/lib/__tests__/savedSessionsReaderGuard.test.ts|saved workouts have one reader > no src file outside the allow-list queries the collection",
+    "node|src/lib/__tests__/settingsSectionCoverage.test.ts|settings section analytics coverage > no SETTINGS surface emits a section the union does not declare",
+    "node|src/lib/__tests__/storageDeployIamCheck.test.ts|[suite]",
+    "node|src/lib/__tests__/stylesUsage.test.ts|src/styles class usage > scans a plausible number of declarations (guards a broken scan)",
+    "node|src/lib/__tests__/symbolReachability.test.ts|symbol-level reachability > the pinned list stays honest — no entry that is now reachable",
+    "node|src/lib/__tests__/transitionalExpiry.test.ts|deferred removals expire > registers every TRANSITIONAL marker in src/ and functions/",
+    "node|src/lib/__tests__/weekAnchorProse.test.ts|week-anchor prose > scans both sides of the mirror, and a non-trivial number of files",
+    "node|src/lib/__tests__/workoutBurn.test.ts|one run-burn formula > 1.036 appears exactly once in production src/",
+    "node|src/lib/__tests__/writeOnlyProfileFields.test.ts|write-only profile fields > scans enough source to mean something",
+    "node|src/utils/__tests__/timeTreatment.test.ts|one time of day (24-hour HH:mm, via formatTimeOfDay) > names a home that is where formatTimeOfDay lives",
+    "node|src/utils/__tests__/unitTreatment.test.ts|one unit treatment (spaced: '60 kg', '5.2 km') > no pace glued to its unit ('5:34 /km', never '5:34/km')",
+    "node|src/utils/__tests__/unitTreatment.test.ts|one unit treatment (spaced: '60 kg', '5.2 km') > no unspaced kg/km value+unit adjacency in rendered code",
+    "root-node|scripts/ios/asc-signing.test.ts|[suite]",
+    "root-node|scripts/write-functions-env.test.ts|[suite]"
+  ],
+  "candidateFailures": [
+    {
+      "canonicalId": "root-node|scripts/write-functions-env.test.ts|[suite]",
+      "project": "root-node",
+      "file": "scripts/write-functions-env.test.ts",
+      "kind": "suite",
+      "case": null,
+      "headerLine": 773,
+      "headerRawSha256": "106d0a219ee689c698953dc2b9e6acf09062b42c7f63335d24834d628db3254b",
+      "diagnostic": {
+        "startLine": 774,
+        "endLineInclusive": 774,
+        "byteStart": 67073,
+        "byteEndExclusive": 67114,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token"
+      }
+    },
+    {
+      "canonicalId": "root-node|scripts/ios/asc-signing.test.ts|[suite]",
+      "project": "root-node",
+      "file": "scripts/ios/asc-signing.test.ts",
+      "kind": "suite",
+      "case": null,
+      "headerLine": 777,
+      "headerRawSha256": "e0a80464cefd95fa376b838268c66668b45caacf35a16a4ac1f7a17466737263",
+      "diagnostic": {
+        "startLine": 778,
+        "endLineInclusive": 778,
+        "byteStart": 67281,
+        "byteEndExclusive": 67322,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/iosProjectWiring.test.ts|[suite]",
+      "project": "node",
+      "file": "src/lib/__tests__/iosProjectWiring.test.ts",
+      "kind": "suite",
+      "case": null,
+      "headerLine": 781,
+      "headerRawSha256": "9a7eec99987bddff9bf2cd10d5fd35d748f9ac3be7f5c0ba248b1820e61f89b7",
+      "diagnostic": {
+        "startLine": 782,
+        "endLineInclusive": 791,
+        "byteStart": 67506,
+        "byteEndExclusive": 67942,
+        "rawSha256": "82775e7ee15cd1ffad999ead080bc80ba4b827626d8029a351da369e11ef88a4",
+        "firstOwnLine": "Error: file reference 504EC3101FED79650016851F missing"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/requiredCheckComposition.test.ts|[suite]",
+      "project": "node",
+      "file": "src/lib/__tests__/requiredCheckComposition.test.ts",
+      "kind": "suite",
+      "case": null,
+      "headerLine": 795,
+      "headerRawSha256": "52ad6760290bbaed2bc7968ecefb3c7cf6169ec56e3162c31818c3fd9b24b331",
+      "diagnostic": {
+        "startLine": 796,
+        "endLineInclusive": 804,
+        "byteStart": 68143,
+        "byteEndExclusive": 68741,
+        "rawSha256": "79d949dfe0707131f579d617989687ba6c66483e42a4755ff3ec4e0a78e2f176",
+        "firstOwnLine": "AssertionError: ci.yml has no job named \"unit\": expected -1 to be greater than -1"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/storageDeployIamCheck.test.ts|[suite]",
+      "project": "node",
+      "file": "src/lib/__tests__/storageDeployIamCheck.test.ts",
+      "kind": "suite",
+      "case": null,
+      "headerLine": 808,
+      "headerRawSha256": "673a0cf5ce2ea9679a519a93cf1acf396665acb02ac15fbec4ac6b0388726285",
+      "diagnostic": {
+        "startLine": 809,
+        "endLineInclusive": 817,
+        "byteStart": 68936,
+        "byteEndExclusive": 69501,
+        "rawSha256": "8d255f9c8a5666ee3f81df264a5f54974f2646550a78b4f24cdad3f43ac8823f",
+        "firstOwnLine": "AssertionError: no job named \"deploy\": expected -1 to be greater than -1"
+      }
+    },
+    {
+      "canonicalId": "dom|src/components/__tests__/FoodCameraModal.photoLock.test.tsx|FoodCameraModal — photo scanning not on the tier > names the offer the way the Pro line under the composer does once the trial is used",
+      "project": "dom",
+      "file": "src/components/__tests__/FoodCameraModal.photoLock.test.tsx",
+      "kind": "test",
+      "case": "FoodCameraModal — photo scanning not on the tier > names the offer the way the Pro line under the composer does once the trial is used",
+      "headerLine": 824,
+      "headerRawSha256": "88bf9c5e01fdac6866262882daaa66cab379b492200a1989b613fb5458ab195e",
+      "diagnostic": {
+        "startLine": 825,
+        "endLineInclusive": 833,
+        "byteStart": 69853,
+        "byteEndExclusive": 70309,
+        "rawSha256": "2990d90ace885773c296209e5cf3a1cb860f218eeb30b7a72beb2dc2d6d21c52",
+        "firstOwnLine": "Error: Hook timed out in 10000ms."
+      }
+    },
+    {
+      "canonicalId": "dom|src/hooks/__tests__/firestoreHookCoverage.test.ts|Firestore hook coverage > no NEW suite hand-rolls its own firebase/firestore mock",
+      "project": "dom",
+      "file": "src/hooks/__tests__/firestoreHookCoverage.test.ts",
+      "kind": "test",
+      "case": "Firestore hook coverage > no NEW suite hand-rolls its own firebase/firestore mock",
+      "headerLine": 837,
+      "headerRawSha256": "6e1a5527b3775026a8d0a11de22d4ecf67d6364c573c3a7c6788ec5ab317b593",
+      "diagnostic": {
+        "startLine": 838,
+        "endLineInclusive": 854,
+        "byteStart": 70537,
+        "byteEndExclusive": 71230,
+        "rawSha256": "b8f1155d29286bdc1f39ec268f5a360fc41954d4e881951aeb608848a1819cef",
+        "firstOwnLine": "AssertionError: Use bare vi.mock(\"firebase/firestore\") + seedFirestore() instead. If the fake lacks behaviour you need, extend src/test/firestoreFake.ts.: expected [ Array(1) ] to deeply equal [ Array(1) ]"
+      }
+    },
+    {
+      "canonicalId": "dom|src/styles/__tests__/paletteClassGuard.test.ts|no raw Tailwind palette colour classes > colours come from Tropos tokens, not the stock palette",
+      "project": "dom",
+      "file": "src/styles/__tests__/paletteClassGuard.test.ts",
+      "kind": "test",
+      "case": "no raw Tailwind palette colour classes > colours come from Tropos tokens, not the stock palette",
+      "headerLine": 858,
+      "headerRawSha256": "ea442ff5a4829a3db3c98bf060948f808aa1d355d3add05962565fba72987186",
+      "diagnostic": {
+        "startLine": 859,
+        "endLineInclusive": 878,
+        "byteStart": 71469,
+        "byteEndExclusive": 72212,
+        "rawSha256": "45d18a7b8036abf916da4ee01e4312645cfa03a1168cd67d068e34b66d122051",
+        "firstOwnLine": "AssertionError: raw Tailwind palette class — use a Tropos token (token class on themed surfaces; fixed THEME.* via style on the always-dark run surface). If a site is a genuinely designed micro-palette, add the FILE to EXEMPT with its reason:"
+      }
+    },
+    {
+      "canonicalId": "dom|src/styles/__tests__/rangeInputContract.test.ts|range input — the app's only drag control > every range input in the app goes through the primitive",
+      "project": "dom",
+      "file": "src/styles/__tests__/rangeInputContract.test.ts",
+      "kind": "test",
+      "case": "range input — the app's only drag control > every range input in the app goes through the primitive",
+      "headerLine": 882,
+      "headerRawSha256": "96e59a5184c56dd07726cf4df3f14d532bb3d1d2cb814ec941e9603be02bb250",
+      "diagnostic": {
+        "startLine": 883,
+        "endLineInclusive": 899,
+        "byteStart": 72458,
+        "byteEndExclusive": 73056,
+        "rawSha256": "ce431d198c917f00d527f9db6e497f3c086ef4d445aa60e32846d5d82628e8ce",
+        "firstOwnLine": "AssertionError: these render a raw range input, so `--range-pct` is unset and the track paints all-groove. Use `<RangeInput>`.: expected [ Array(1) ] to deeply equal []"
+      }
+    },
+    {
+      "canonicalId": "dom|src/styles/__tests__/rgbaColourGuard.test.ts|no hardcoded coloured rgba() > colours come from tokens, not decimal rgba literals",
+      "project": "dom",
+      "file": "src/styles/__tests__/rgbaColourGuard.test.ts",
+      "kind": "test",
+      "case": "no hardcoded coloured rgba() > colours come from tokens, not decimal rgba literals",
+      "headerLine": 903,
+      "headerRawSha256": "7749afde83d0a0a132eadadf77787a06a5f45994d7ca81af02ed713f844ae00b",
+      "diagnostic": {
+        "startLine": 904,
+        "endLineInclusive": 939,
+        "byteStart": 73280,
+        "byteEndExclusive": 74980,
+        "rawSha256": "173e88d61d09dae54ea5598ab0385aab43443f7def944a7a3b9fec5bb643e687",
+        "firstOwnLine": "AssertionError: hardcoded coloured rgba() — the hex ESLint rule cannot see these (no '#', and it only reads style={} attributes). Use hsl(var(--token) / a) on themed surfaces, `${THEME.x}NN` for a fixed Tropos colour, or add the FILE to EXEMPT with its reason:"
+      }
+    },
+    {
+      "canonicalId": "dom|src/components/analytics/__tests__/chartBarWidth.test.ts|Recharts bars — width is constrained > finds the chart files (a scan that matches nothing proves nothing)",
+      "project": "dom",
+      "file": "src/components/analytics/__tests__/chartBarWidth.test.ts",
+      "kind": "test",
+      "case": "Recharts bars — width is constrained > finds the chart files (a scan that matches nothing proves nothing)",
+      "headerLine": 943,
+      "headerRawSha256": "8236c87ad6258683db48a081a6fd7e4cf5f0728fb427f1767dc0a4c59f00377b",
+      "diagnostic": {
+        "startLine": 944,
+        "endLineInclusive": 951,
+        "byteStart": 75239,
+        "byteEndExclusive": 75747,
+        "rawSha256": "72ee9650dd961706e08a79fd4f054400e377ca8e10ca03ac4c1182202854c4af",
+        "firstOwnLine": "AssertionError: expected [ …(2) ] to include 'components/progress/CalorieBalanceCha…'"
+      }
+    },
+    {
+      "canonicalId": "dom|src/components/analytics/__tests__/chartBarWidth.test.ts|Recharts bars — width is constrained > every bar caps its width, or is listed as exempt with a reason",
+      "project": "dom",
+      "file": "src/components/analytics/__tests__/chartBarWidth.test.ts",
+      "kind": "test",
+      "case": "Recharts bars — width is constrained > every bar caps its width, or is listed as exempt with a reason",
+      "headerLine": 955,
+      "headerRawSha256": "b44a3563951e6c768253c47a75b017333c9979cb779c0beb837012bd199a435d",
+      "diagnostic": {
+        "startLine": 956,
+        "endLineInclusive": 973,
+        "byteStart": 76002,
+        "byteEndExclusive": 76610,
+        "rawSha256": "78c359b9aef1ed63ff4e7ce60848887f3c0d9c1c7b726b31d8cb0d4eeb339653",
+        "firstOwnLine": "AssertionError: uncapped Recharts bars: expected [ …(2) ] to deeply equal []"
+      }
+    },
+    {
+      "canonicalId": "dom|src/components/analytics/__tests__/chartBarWidth.test.ts|Recharts bars — width is constrained > every exemption names a file that still has a bar in it",
+      "project": "dom",
+      "file": "src/components/analytics/__tests__/chartBarWidth.test.ts",
+      "kind": "test",
+      "case": "Recharts bars — width is constrained > every exemption names a file that still has a bar in it",
+      "headerLine": 977,
+      "headerRawSha256": "9f10d922864d35933e27cb7f697b18e7dc6e6b581040ddc9299ea84d0987232f",
+      "diagnostic": {
+        "startLine": 978,
+        "endLineInclusive": 994,
+        "byteStart": 76858,
+        "byteEndExclusive": 77465,
+        "rawSha256": "e7f286c739478ccc20804f83a6a1cc384c50dee64d9a6b31e9f807f64371fb0f",
+        "firstOwnLine": "AssertionError: exemptions for files with no Recharts bar: expected [ Array(1) ] to deeply equal []"
+      }
+    },
+    {
+      "canonicalId": "dom|src/components/analytics/__tests__/chartStyleGuard.test.ts|Recharts charts share one tick and one tooltip > finds the chart files (a scan that matches nothing proves nothing)",
+      "project": "dom",
+      "file": "src/components/analytics/__tests__/chartStyleGuard.test.ts",
+      "kind": "test",
+      "case": "Recharts charts share one tick and one tooltip > finds the chart files (a scan that matches nothing proves nothing)",
+      "headerLine": 998,
+      "headerRawSha256": "ad39e7e16a7499cda875e910f19058ff4c2f56d2a5d0789a0a4b2ed8e305231a",
+      "diagnostic": {
+        "startLine": 999,
+        "endLineInclusive": 1006,
+        "byteStart": 77734,
+        "byteEndExclusive": 78237,
+        "rawSha256": "26b393968dd147675114535c7d5a4cb214e6f240298ed4ef2ddf4fa2fa26e05f",
+        "firstOwnLine": "AssertionError: expected [ …(8) ] to include 'components/progress/TrendWeight.tsx'"
+      }
+    },
+    {
+      "canonicalId": "dom|src/components/settings/__tests__/DataExportSection.test.tsx|user-facing copy is sentence case > no Title Case labels outside the closed list",
+      "project": "dom",
+      "file": "src/components/settings/__tests__/DataExportSection.test.tsx",
+      "kind": "test",
+      "case": "user-facing copy is sentence case > no Title Case labels outside the closed list",
+      "headerLine": 1010,
+      "headerRawSha256": "d98749087ef3af3fd0d25ba9160b1afb59c425e6fffc2a4e44d10d32b310ab10",
+      "diagnostic": {
+        "startLine": 1011,
+        "endLineInclusive": 1028,
+        "byteStart": 78473,
+        "byteEndExclusive": 79172,
+        "rawSha256": "8da6f47afff8f17c34fc5d698d0d7069796234e04f0be04719afc18a00ef23b6",
+        "firstOwnLine": "AssertionError: Title Case in user-facing copy. Sentence case is the rule — see the Capitalisation section of docs/voice-and-tone.md. If the phrase is genuinely the NAME of something, add it to NAMED here and to the table in that doc, in the same commit."
+      }
+    },
+    {
+      "canonicalId": "dom|src/features/goalSpace/__tests__/joinRejection.test.ts|the mapping tracks the server > covers every refusal reachable from the join path",
+      "project": "dom",
+      "file": "src/features/goalSpace/__tests__/joinRejection.test.ts",
+      "kind": "test",
+      "case": "the mapping tracks the server > covers every refusal reachable from the join path",
+      "headerLine": 1032,
+      "headerRawSha256": "a8d466d8ad24f760c3e6ff19060f368200d9c1b58ba89884f647a5fb5209d0e7",
+      "diagnostic": {
+        "startLine": 1033,
+        "endLineInclusive": 1054,
+        "byteStart": 79403,
+        "byteEndExclusive": 80084,
+        "rawSha256": "7a37fbc5e7497f6f490ec65d8c3ca691751d84a697d9f058144195c8e521837e",
+        "firstOwnLine": "AssertionError: goalSpaceMembership.js can refuse a join for reasons joinRejection.ts has no sentence for, so they reach the user as the fallback. Add a BY_MESSAGE row for each.: expected [ 'memberUid required', …(5) ] to deeply equal []"
+      }
+    },
+    {
+      "canonicalId": "node|src/utils/__tests__/timeTreatment.test.ts|one time of day (24-hour HH:mm, via formatTimeOfDay) > names a home that is where formatTimeOfDay lives",
+      "project": "node",
+      "file": "src/utils/__tests__/timeTreatment.test.ts",
+      "kind": "test",
+      "case": "one time of day (24-hour HH:mm, via formatTimeOfDay) > names a home that is where formatTimeOfDay lives",
+      "headerLine": 1058,
+      "headerRawSha256": "756432d69925bb89d82c2eb73a0eb0253774e505f21dfa065f4491bf016be57b",
+      "diagnostic": {
+        "startLine": 1059,
+        "endLineInclusive": 1066,
+        "byteStart": 80325,
+        "byteEndExclusive": 80723,
+        "rawSha256": "d0fa91b946c7d19a8fd11399858016fa2574896c1aa12262cf7a3d82ca720190",
+        "firstOwnLine": "TypeError: .toMatch() expects to receive a string, but got undefined"
+      }
+    },
+    {
+      "canonicalId": "node|src/utils/__tests__/unitTreatment.test.ts|one unit treatment (spaced: '60 kg', '5.2 km') > no unspaced kg/km value+unit adjacency in rendered code",
+      "project": "node",
+      "file": "src/utils/__tests__/unitTreatment.test.ts",
+      "kind": "test",
+      "case": "one unit treatment (spaced: '60 kg', '5.2 km') > no unspaced kg/km value+unit adjacency in rendered code",
+      "headerLine": 1070,
+      "headerRawSha256": "76e90e49ce696518446bfcf3aed937a27eb3ef2e3bae3e578ffe66c7f05168cc",
+      "diagnostic": {
+        "startLine": 1071,
+        "endLineInclusive": 1122,
+        "byteStart": 80965,
+        "byteEndExclusive": 85162,
+        "rawSha256": "05be4f27608bdb14c7d6c0aa06315a5a64731b3aa7d4a934e3ec5cb4d601f066",
+        "firstOwnLine": "AssertionError: unspaced unit — the app writes '60 kg' / '5.2 km' (space before the unit). If a site is a genuinely deliberate compact variant, document it at the site and add the FILE to EXEMPT here:"
+      }
+    },
+    {
+      "canonicalId": "node|src/utils/__tests__/unitTreatment.test.ts|one unit treatment (spaced: '60 kg', '5.2 km') > no pace glued to its unit ('5:34 /km', never '5:34/km')",
+      "project": "node",
+      "file": "src/utils/__tests__/unitTreatment.test.ts",
+      "kind": "test",
+      "case": "one unit treatment (spaced: '60 kg', '5.2 km') > no pace glued to its unit ('5:34 /km', never '5:34/km')",
+      "headerLine": 1126,
+      "headerRawSha256": "ad11f6ba46021566740130bbd45bda689ef0a3dd106c507dd205afc0f707db31",
+      "diagnostic": {
+        "startLine": 1127,
+        "endLineInclusive": 1144,
+        "byteStart": 85404,
+        "byteEndExclusive": 86060,
+        "rawSha256": "7bc0d1b6dbc12cfe3cea939625cb9339ca5b7a4554f9eb5c9aae09f6c02ccbd4",
+        "firstOwnLine": "AssertionError: pace glued to its unit — the app writes '5:34 /km' (a space before the unit; a range '5:05–5:12 /km', unit once). Use `paceLabel` / `paceBandLabel` from runLabels, or put {\" \"} before the unit in JSX:"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > has each field exactly once, and only fields with a known limit",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: the pasteable fields > has each field exactly once, and only fields with a known limit",
+      "headerLine": 1148,
+      "headerRawSha256": "d37467eae5c26022954efb42540d5f0d59cfa1fdefe286f8d78a32eaa5208581",
+      "diagnostic": {
+        "startLine": 1149,
+        "endLineInclusive": 1163,
+        "byteStart": 86303,
+        "byteEndExclusive": 86778,
+        "rawSha256": "01dbafc5a2ddb86273148c2ef1d07de758fec31b9ce30ced2f4149f1c2f6cb7f",
+        "firstOwnLine": "AssertionError: name: expected +0 to be 1 // Object.is equality"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > puts a text box straight after every marker",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: the pasteable fields > puts a text box straight after every marker",
+      "headerLine": 1167,
+      "headerRawSha256": "bbcb0888a59716cb5d74c295dd7c1e7c91db9e34190b99a8ce045edaa6aa228f",
+      "diagnostic": {
+        "startLine": 1168,
+        "endLineInclusive": 1182,
+        "byteStart": 87001,
+        "byteEndExclusive": 87386,
+        "rawSha256": "f629c86e53a989c0fb74bad1cc6158285ca158636aca8c9a09271438131dcd84",
+        "firstOwnLine": "AssertionError: expected +0 to be 10 // Object.is equality"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > name fits Apple's limit",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: the pasteable fields > name fits Apple's limit",
+      "headerLine": 1186,
+      "headerRawSha256": "f1ce21c89a2c0cd237f2b47906e9dde04f2de66c0a46a96be168eea59c59ad73",
+      "diagnostic": {
+        "startLine": 1187,
+        "endLineInclusive": 1195,
+        "byteStart": 87589,
+        "byteEndExclusive": 87980,
+        "rawSha256": "d50dba2051cec8546bdf44d1ab57d6a37c88a8281595d15122c382075a9fb22f",
+        "firstOwnLine": "Error: expected one \"name\" field in the listing"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > subtitle fits Apple's limit",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: the pasteable fields > subtitle fits Apple's limit",
+      "headerLine": 1199,
+      "headerRawSha256": "15574eac89f52ecd2403dda5c4224a7de79a6a5c87c52c03f791fa2775ea11d2",
+      "diagnostic": {
+        "startLine": 1200,
+        "endLineInclusive": 1208,
+        "byteStart": 88187,
+        "byteEndExclusive": 88582,
+        "rawSha256": "14edffd8b36f1c93a5fb249d9dfd83f0c72c2eb50aad333c2ad9ffe7eed6e6ce",
+        "firstOwnLine": "Error: expected one \"subtitle\" field in the listing"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > promotional-text fits Apple's limit",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: the pasteable fields > promotional-text fits Apple's limit",
+      "headerLine": 1212,
+      "headerRawSha256": "28e386ab4655ccde6ee7cdc982b313a633fd6ba066c5d8bc31361a965f6d06ea",
+      "diagnostic": {
+        "startLine": 1213,
+        "endLineInclusive": 1221,
+        "byteStart": 88797,
+        "byteEndExclusive": 89200,
+        "rawSha256": "81e88b37ea4575c8d19a173d8b5ef8635d63c6026020496dace708cbb6845a5d",
+        "firstOwnLine": "Error: expected one \"promotional-text\" field in the listing"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > description fits Apple's limit",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: the pasteable fields > description fits Apple's limit",
+      "headerLine": 1225,
+      "headerRawSha256": "418fe0917bc51735261da5bcba8fdb473f3bfa1926b18a788d09d1c01a87eafa",
+      "diagnostic": {
+        "startLine": 1226,
+        "endLineInclusive": 1234,
+        "byteStart": 89410,
+        "byteEndExclusive": 89808,
+        "rawSha256": "7a23607c8ede12d8f60008082a1c4f1226ee5828551c9d9d759d63afba3a77ed",
+        "firstOwnLine": "Error: expected one \"description\" field in the listing"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > keywords fits Apple's limit",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: the pasteable fields > keywords fits Apple's limit",
+      "headerLine": 1238,
+      "headerRawSha256": "e7a569aabd3e0f02688b60e3ba800fd7e6d57550f042a402d79b990d61da4950",
+      "diagnostic": {
+        "startLine": 1239,
+        "endLineInclusive": 1247,
+        "byteStart": 90015,
+        "byteEndExclusive": 90410,
+        "rawSha256": "1721e07b70be8d50b60236c744c8ed791069c00fb1527841b1e9cfa4b42f1560",
+        "firstOwnLine": "Error: expected one \"keywords\" field in the listing"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > review-notes fits Apple's limit",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: the pasteable fields > review-notes fits Apple's limit",
+      "headerLine": 1251,
+      "headerRawSha256": "8f89127bfd52c182cc42db952d89aab19ab1bb951dc77984bde74ee12249cb51",
+      "diagnostic": {
+        "startLine": 1252,
+        "endLineInclusive": 1260,
+        "byteStart": 90621,
+        "byteEndExclusive": 91020,
+        "rawSha256": "9a5d54997ac9a06df79725f1bc9eb75372497f803976a265ca156011b2c174ff",
+        "firstOwnLine": "Error: expected one \"review-notes\" field in the listing"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > iap-monthly-name fits Apple's limit",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: the pasteable fields > iap-monthly-name fits Apple's limit",
+      "headerLine": 1264,
+      "headerRawSha256": "efb283ef607fcd028d97ece845353ea854d214a801ee2bb77ce53d7d8424fa76",
+      "diagnostic": {
+        "startLine": 1265,
+        "endLineInclusive": 1273,
+        "byteStart": 91235,
+        "byteEndExclusive": 91638,
+        "rawSha256": "19da4f888fa3c6b200cc75187694e461b49bdd08c641d43ca6d8f5eebad6df39",
+        "firstOwnLine": "Error: expected one \"iap-monthly-name\" field in the listing"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > iap-monthly-description fits Apple's limit",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: the pasteable fields > iap-monthly-description fits Apple's limit",
+      "headerLine": 1277,
+      "headerRawSha256": "e4b069802f2b00d210500487398aef741a0761bd67d5ad65639ebff36f1be897",
+      "diagnostic": {
+        "startLine": 1278,
+        "endLineInclusive": 1286,
+        "byteStart": 91860,
+        "byteEndExclusive": 92270,
+        "rawSha256": "e713eb16eb41a0b3e075a17deb8fdaf5b0107b7aac9e123a388e18a004056c45",
+        "firstOwnLine": "Error: expected one \"iap-monthly-description\" field in the listing"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > iap-yearly-name fits Apple's limit",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: the pasteable fields > iap-yearly-name fits Apple's limit",
+      "headerLine": 1290,
+      "headerRawSha256": "4d18245861e4e8048d31c2df41311d21dc46de5884ddf5172b997c9860084b6c",
+      "diagnostic": {
+        "startLine": 1291,
+        "endLineInclusive": 1299,
+        "byteStart": 92484,
+        "byteEndExclusive": 92886,
+        "rawSha256": "d3eb7d277fcedd4e20acec71061233c359f91e1a3aec25f4071c81ffb5931439",
+        "firstOwnLine": "Error: expected one \"iap-yearly-name\" field in the listing"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > iap-yearly-description fits Apple's limit",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: the pasteable fields > iap-yearly-description fits Apple's limit",
+      "headerLine": 1303,
+      "headerRawSha256": "1a70b0829297b1ade054d69743cbf404969acc996f2d9663715d930fbf77fe54",
+      "diagnostic": {
+        "startLine": 1304,
+        "endLineInclusive": 1312,
+        "byteStart": 93107,
+        "byteEndExclusive": 93516,
+        "rawSha256": "403161685f14e94b91a1e9227e89e63030979753061023152a414aebb250fe93",
+        "firstOwnLine": "Error: expected one \"iap-yearly-description\" field in the listing"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > separates keywords with bare commas and spends no bytes twice",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: the pasteable fields > separates keywords with bare commas and spends no bytes twice",
+      "headerLine": 1316,
+      "headerRawSha256": "cc30e26e737a2598c1fca9ad71197cbb3fc911e9ba014f73f4588f5fd6c6c062",
+      "diagnostic": {
+        "startLine": 1317,
+        "endLineInclusive": 1325,
+        "byteStart": 93757,
+        "byteEndExclusive": 94153,
+        "rawSha256": "10509a243e74ca2baf0a3b120087167c9f18eec30b1af3da9cadf68d840e29be",
+        "firstOwnLine": "Error: expected one \"keywords\" field in the listing"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the pasteable fields > links the Terms and the Privacy Policy from the description",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: the pasteable fields > links the Terms and the Privacy Policy from the description",
+      "headerLine": 1329,
+      "headerRawSha256": "42fb9cb0b30a3e3b136e17d62a8c8e843f4bd841906760424e2263c52b18d2ae",
+      "diagnostic": {
+        "startLine": 1330,
+        "endLineInclusive": 1338,
+        "byteStart": 94392,
+        "byteEndExclusive": 94791,
+        "rawSha256": "949b25401dc3e7ac2d2a92b34fb7e3221dab1ecb6c282109d4382081018ba633",
+        "firstOwnLine": "Error: expected one \"description\" field in the listing"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: claims the code can contradict > quotes the trial length the paywall offers",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: claims the code can contradict > quotes the trial length the paywall offers",
+      "headerLine": 1342,
+      "headerRawSha256": "9368149d57698bd00dc11a19124b57c0484a62aff625f5b75d1761a464743958",
+      "diagnostic": {
+        "startLine": 1343,
+        "endLineInclusive": 1350,
+        "byteStart": 95023,
+        "byteEndExclusive": 95347,
+        "rawSha256": "13b347ff75b5e6dafe8fe0f8ebd2c557c3ae0f8183bf1e68c36255c8eb68e700",
+        "firstOwnLine": "AssertionError: expected 0 to be greater than 0"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: claims the code can contradict > quotes how long the phone keeps meal photos",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: claims the code can contradict > quotes how long the phone keeps meal photos",
+      "headerLine": 1354,
+      "headerRawSha256": "03332fb9ffee69c8269230e7f317ba44acbd1234b67549e80f166274f6a3ffaa",
+      "diagnostic": {
+        "startLine": 1355,
+        "endLineInclusive": 1363,
+        "byteStart": 95580,
+        "byteEndExclusive": 95980,
+        "rawSha256": "9e0a4c0172623d4e9ba20b164cedf6da7e575e79a3ff19fdd5de998210e08a03",
+        "firstOwnLine": "Error: expected one \"review-notes\" field in the listing"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: claims the code can contradict > claims no feature the app doesn't have",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: claims the code can contradict > claims no feature the app doesn't have",
+      "headerLine": 1367,
+      "headerRawSha256": "3d26e255e1a196f68aafa78adb679d399a5fe144b3ed94cc40f249d2dfa67324",
+      "diagnostic": {
+        "startLine": 1368,
+        "endLineInclusive": 1376,
+        "byteStart": 96208,
+        "byteEndExclusive": 96599,
+        "rawSha256": "5500984061a3419c24e1fdd9200f325fbb536af9b959290430c9d330030d58b7",
+        "firstOwnLine": "Error: expected one \"name\" field in the listing"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/appStoreListing.test.ts|App Store listing: the privacy label and the privacy manifest agree > declares exactly the label's data types, for the label's purposes",
+      "project": "node",
+      "file": "src/lib/__tests__/appStoreListing.test.ts",
+      "kind": "test",
+      "case": "App Store listing: the privacy label and the privacy manifest agree > declares exactly the label's data types, for the label's purposes",
+      "headerLine": 1380,
+      "headerRawSha256": "b0e2f42baa8802490a46245777f7abca3477e83597bf54e7bf8a9b384f1fd88f",
+      "diagnostic": {
+        "startLine": 1381,
+        "endLineInclusive": 1389,
+        "byteStart": 96872,
+        "byteEndExclusive": 97426,
+        "rawSha256": "199db64ebd3c59cede43ee054cc64a027ed6e4178ecaeeb6941a9f474c2e1510",
+        "firstOwnLine": "TypeError: Cannot read properties of undefined (reading 'split')"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/basemap.test.ts|every map carries the credit > finds the maps (the scan reaches them)",
+      "project": "node",
+      "file": "src/lib/__tests__/basemap.test.ts",
+      "kind": "test",
+      "case": "every map carries the credit > finds the maps (the scan reaches them)",
+      "headerLine": 1393,
+      "headerRawSha256": "061e275e33bb8513af1f46fd45b8d64d171100de725e8790b7ab3dad7a8e161d",
+      "diagnostic": {
+        "startLine": 1394,
+        "endLineInclusive": 1412,
+        "byteStart": 97625,
+        "byteEndExclusive": 98276,
+        "rawSha256": "aef6c3380595bb27d64f748d16b6383ddfecd9789377bb7d277ef704547d5aba",
+        "firstOwnLine": "AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/bodyRig.test.ts|form beats — the caption is a claim about the frame > every cue fits the hold it is read in",
+      "project": "node",
+      "file": "src/lib/__tests__/bodyRig.test.ts",
+      "kind": "test",
+      "case": "form beats — the caption is a claim about the frame > every cue fits the hold it is read in",
+      "headerLine": 1416,
+      "headerRawSha256": "b8609c1e6e35ad8c5b71c2c46b542546672908d34b91cddf080c623a46b79fe9",
+      "diagnostic": {
+        "startLine": 1417,
+        "endLineInclusive": 1424,
+        "byteStart": 98499,
+        "byteEndExclusive": 98971,
+        "rawSha256": "cc7fef4778b2e71ad7fe1f699c9bc684a288fce633eeb2a55559aeb40fc36087",
+        "firstOwnLine": "AssertionError: face-pulls \"Reach\": 10 words: expected 10 to be less than or equal to 7"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/calorieUnitGate.test.ts|the calorie unit comes from CALORIE_UNIT > no surface writes the calorie unit by hand",
+      "project": "node",
+      "file": "src/lib/__tests__/calorieUnitGate.test.ts",
+      "kind": "test",
+      "case": "the calorie unit comes from CALORIE_UNIT > no surface writes the calorie unit by hand",
+      "headerLine": 1428,
+      "headerRawSha256": "095d58d3d4417e2d2f06cf969ba9e42065837187fdb5035a25ead7686e35200d",
+      "diagnostic": {
+        "startLine": 1429,
+        "endLineInclusive": 1446,
+        "byteStart": 99194,
+        "byteEndExclusive": 99794,
+        "rawSha256": "89975e5312f32872c7a6b23a901f8cc0316fff97d1879999fa46c7be24ec4cfa",
+        "firstOwnLine": "AssertionError: Render the calorie unit with CALORIE_UNIT from src/utils/formatNutrition.ts. A literal here is how the app came to show \"cal\" on one card and \"kcal\" on the next:"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/claudeMdFreshness.test.ts|CLAUDE.md — the deploy workflows > finds the workflows and the section",
+      "project": "node",
+      "file": "src/lib/__tests__/claudeMdFreshness.test.ts",
+      "kind": "test",
+      "case": "CLAUDE.md — the deploy workflows > finds the workflows and the section",
+      "headerLine": 1450,
+      "headerRawSha256": "a72d7bfc5ff1deec979752230c84bd247b3833319937c385383aa14144790b5c",
+      "diagnostic": {
+        "startLine": 1451,
+        "endLineInclusive": 1458,
+        "byteStart": 100006,
+        "byteEndExclusive": 100389,
+        "rawSha256": "deb8bcbc8b6129f2f5691e861eddf6fefcf8dcfb61069d79f2448ac12d8f42df",
+        "firstOwnLine": "AssertionError: expected [] to include 'push'"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/claudeMdFreshness.test.ts|CLAUDE.md — the deploy workflows > says a push to main runs a workflow only when it does",
+      "project": "node",
+      "file": "src/lib/__tests__/claudeMdFreshness.test.ts",
+      "kind": "test",
+      "case": "CLAUDE.md — the deploy workflows > says a push to main runs a workflow only when it does",
+      "headerLine": 1462,
+      "headerRawSha256": "69e684ce982d3b220bef4f7f8dc811148a1c630d283144e9690a4fbc8f42a49f",
+      "diagnostic": {
+        "startLine": 1463,
+        "endLineInclusive": 1479,
+        "byteStart": 100619,
+        "byteEndExclusive": 101177,
+        "rawSha256": "b619f887bc75d36917c0f37efac78519676f6bc72fe49f3c3ce5106a3435e824",
+        "firstOwnLine": "AssertionError: The CI/CD bullets for deploy-production.yml disagree with their workflows about running on push. An agent follows the bullet.: expected [ 'deploy-production.yml' ] to deeply equal []"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/componentReachability.test.ts|component reachability (src/components + src/features) > no NEW component is rendered by nothing",
+      "project": "node",
+      "file": "src/lib/__tests__/componentReachability.test.ts",
+      "kind": "test",
+      "case": "component reachability (src/components + src/features) > no NEW component is rendered by nothing",
+      "headerLine": 1483,
+      "headerRawSha256": "ce9f8b9b0a1bba00473548fd5bd28740840f26631147d72022de17d4516d2169",
+      "diagnostic": {
+        "startLine": 1484,
+        "endLineInclusive": 1846,
+        "byteStart": 101417,
+        "byteEndExclusive": 119615,
+        "rawSha256": "3de63eb12d4ab007dd5d8eb863d9434fcb7bbc2dcf79c6108e8807144fe79b9c",
+        "firstOwnLine": "AssertionError: Component(s) that nothing renders. A component nobody renders is indistinguishable from a shipped feature when you read it — that is the cost, not the bytes. Either render it, or delete it with its tests. Do NOT add it to KNOWN_ORPHAN_COMPONENTS; that list is delete-only.: expected [ …(347) ] to deeply equal []"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/copyCasing.test.ts|user-facing copy is sentence case > no Title Case labels outside the closed list",
+      "project": "node",
+      "file": "src/lib/__tests__/copyCasing.test.ts",
+      "kind": "test",
+      "case": "user-facing copy is sentence case > no Title Case labels outside the closed list",
+      "headerLine": 1850,
+      "headerRawSha256": "e9bf3584b4df101229e87a314cc267d6ff35eba9740ae0376bd269ba4da5efb4",
+      "diagnostic": {
+        "startLine": 1851,
+        "endLineInclusive": 1868,
+        "byteStart": 119828,
+        "byteEndExclusive": 120527,
+        "rawSha256": "8da6f47afff8f17c34fc5d698d0d7069796234e04f0be04719afc18a00ef23b6",
+        "firstOwnLine": "AssertionError: Title Case in user-facing copy. Sentence case is the rule — see the Capitalisation section of docs/voice-and-tone.md. If the phrase is genuinely the NAME of something, add it to NAMED here and to the table in that doc, in the same commit."
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/deadPathReferences.test.ts|dead file references in production comments > every path cited in a comment names a file that still exists",
+      "project": "node",
+      "file": "src/lib/__tests__/deadPathReferences.test.ts",
+      "kind": "test",
+      "case": "dead file references in production comments > every path cited in a comment names a file that still exists",
+      "headerLine": 1872,
+      "headerRawSha256": "c6d7337cbd1d22ac03195baed380fdc6c38b00eca2c348ddaf16beb36165c09c",
+      "diagnostic": {
+        "startLine": 1873,
+        "endLineInclusive": 1881,
+        "byteStart": 120774,
+        "byteEndExclusive": 121165,
+        "rawSha256": "64082c54d48818899fac57a1f0a4f8d4bd90ad609642d88f69c6c35d296b3de3",
+        "firstOwnLine": "Error: Test timed out in 5000ms."
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/designSystemInvariants.test.ts|D15 · DS invariant — touch-target primitive (44px floor) > hand-rolled role=switch toggles do not increase (use the Toggle primitive)",
+      "project": "node",
+      "file": "src/lib/__tests__/designSystemInvariants.test.ts",
+      "kind": "test",
+      "case": "D15 · DS invariant — touch-target primitive (44px floor) > hand-rolled role=switch toggles do not increase (use the Toggle primitive)",
+      "headerLine": 1885,
+      "headerRawSha256": "32a72fdac087d542ebdbdaa719e850e3c4ff14106937dc9184dff0982317e9c7",
+      "diagnostic": {
+        "startLine": 1886,
+        "endLineInclusive": 1895,
+        "byteStart": 121446,
+        "byteEndExclusive": 122193,
+        "rawSha256": "d8c9909dc17edbc20f6b8007bcaa4af7e38c9125975e386107e020605e23d0cf",
+        "firstOwnLine": "AssertionError: hand-rolled role=switch: 2 violations, baseline 0. A change ADDED violations. Route the new control/number through the primitive / add the missing class, or justify and bump the baseline."
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/designSystemInvariants.test.ts|DS ratchets — surface-level drift > the section-tier label appears only on the two Food surfaces",
+      "project": "node",
+      "file": "src/lib/__tests__/designSystemInvariants.test.ts",
+      "kind": "test",
+      "case": "DS ratchets — surface-level drift > the section-tier label appears only on the two Food surfaces",
+      "headerLine": 1899,
+      "headerRawSha256": "344955ef74a87ae8534601baa37ac7c8c7c0b5012d6a192a41a5d49b968e8bc8",
+      "diagnostic": {
+        "startLine": 1900,
+        "endLineInclusive": 1919,
+        "byteStart": 122436,
+        "byteEndExclusive": 123112,
+        "rawSha256": "4c0ffe2c69689c2ee413b2881e376e2a0f38a12b21f45d5b85dd0acf34a31e62",
+        "firstOwnLine": "AssertionError: tier=\"section\" outside the Food carve-out — head the group with <SectionHeading> (size \"compact\" in a sheet, card or form):"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/distanceUnitGate.test.ts|run distances are formatted through runLabels, not inline > no display surface formats a distance by hand",
+      "project": "node",
+      "file": "src/lib/__tests__/distanceUnitGate.test.ts",
+      "kind": "test",
+      "case": "run distances are formatted through runLabels, not inline > no display surface formats a distance by hand",
+      "headerLine": 1923,
+      "headerRawSha256": "c27c550b30b612848cd802c2f1fd87f3de2d4cc25ff751835b63262c0737ed35",
+      "diagnostic": {
+        "startLine": 1924,
+        "endLineInclusive": 1943,
+        "byteStart": 123356,
+        "byteEndExclusive": 124476,
+        "rawSha256": "44f73a848dcdb14907224641aff45473cc36f15e18e07912880d1e44645e38e9",
+        "firstOwnLine": "AssertionError: Format run distances with distanceLabel / distanceLabel2 / distanceValue / nearDistanceLabel from src/lib/runLabels.ts — they take the unit as a REQUIRED argument, so a miles reader can't be silently left on km. If a surface must stay metric, mark it at the point of use with SPLIT_LAP_IS_METRIC or SHARE_CARD_IS_METRIC:"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/distanceUnitGate.test.ts|run distances are formatted through runLabels, not inline > no surface prints a logged aggregate with a hardcoded unit",
+      "project": "node",
+      "file": "src/lib/__tests__/distanceUnitGate.test.ts",
+      "kind": "test",
+      "case": "run distances are formatted through runLabels, not inline > no surface prints a logged aggregate with a hardcoded unit",
+      "headerLine": 1947,
+      "headerRawSha256": "12be8aa70d06c8ce8c24fdab477ed4acd7b31f9e38ba65093bfe484fab093772",
+      "diagnostic": {
+        "startLine": 1948,
+        "endLineInclusive": 1967,
+        "byteStart": 124733,
+        "byteEndExclusive": 125809,
+        "rawSha256": "f315de98a28d6239a913c739601b0c0c645849c50896d5f8d6f2e77a1797132b",
+        "firstOwnLine": "AssertionError: These fields hold KILOMETRES the user actually ran. Render them with storedKmLabel(km, unit, true, 1) from src/lib/runLabels.ts so a miles reader sees their own unit — a hardcoded \"km\" beside one of these shows the metric figure to everyone:"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/effectiveTargetsSingleSource.test.ts|useEffectiveTargets single-source (D11) > the day-type macro splitter is imported only by the canonical hook",
+      "project": "node",
+      "file": "src/lib/__tests__/effectiveTargetsSingleSource.test.ts",
+      "kind": "test",
+      "case": "useEffectiveTargets single-source (D11) > the day-type macro splitter is imported only by the canonical hook",
+      "headerLine": 1971,
+      "headerRawSha256": "aad711f87e4aded3f58973d584f5eb02256b762710cf18b9ea4fa83515adba6b",
+      "diagnostic": {
+        "startLine": 1972,
+        "endLineInclusive": 1989,
+        "byteStart": 126068,
+        "byteEndExclusive": 126827,
+        "rawSha256": "b6d7ee2f0ebb91d9f994f5f121cbcfd469327c79c1c25e0947e4630340c332e5",
+        "firstOwnLine": "AssertionError: These files import getAdjustedTargets directly, re-deriving the day's macros instead of reading useEffectiveTargets. Route the display through the hook, or (if genuinely a new derivation source) add the file to ALLOWED_SPLITTER_IMPORTERS with a justification."
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/firestoreWriteGuard.test.ts|guarded-write enforcement (no raw setDoc/addDoc/updateDoc/deleteDoc) > no src file outside the allow-list calls the raw write SDK",
+      "project": "node",
+      "file": "src/lib/__tests__/firestoreWriteGuard.test.ts",
+      "kind": "test",
+      "case": "guarded-write enforcement (no raw setDoc/addDoc/updateDoc/deleteDoc) > no src file outside the allow-list calls the raw write SDK",
+      "headerLine": 1993,
+      "headerRawSha256": "fac7086dabab72db1bfbd40dd0c21d842f332c2db4f4602c7cb132338524aef5",
+      "diagnostic": {
+        "startLine": 1994,
+        "endLineInclusive": 2017,
+        "byteStart": 127098,
+        "byteEndExclusive": 128062,
+        "rawSha256": "266b1eae290b1f5e1044034337b7db0b2589c304b401e92345f7a509cf4fcd1e",
+        "firstOwnLine": "AssertionError: Raw Firestore write(s) found. Route through addDocGuarded / setDocGuarded / updateDocGuarded / deleteDocGuarded (src/lib/firestoreWrite.ts) — they strip undefined and survive offline-queue replay. If this is a new legitimate low-level writer, add it to ALLOWLIST with a reason."
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/functionsScheduleUtcGuard.test.ts|scheduled-function UTC enforcement > the file scan itself isn't vacuous",
+      "project": "node",
+      "file": "src/lib/__tests__/functionsScheduleUtcGuard.test.ts",
+      "kind": "test",
+      "case": "scheduled-function UTC enforcement > the file scan itself isn't vacuous",
+      "headerLine": 2021,
+      "headerRawSha256": "8be36c53e28df34651a8addcfdbfe8c844b6a95f6f25d51190b43cffa9fe5899",
+      "diagnostic": {
+        "startLine": 2022,
+        "endLineInclusive": 2036,
+        "byteStart": 128281,
+        "byteEndExclusive": 128745,
+        "rawSha256": "a477d5e3058e164e9852cc9fb2e3b1c5ec8d550243cc83cd3dcea6783885df13",
+        "firstOwnLine": "AssertionError: expected false to be true // Object.is equality"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/hookSurfaceReachability.test.ts|hook return surfaces are reachable > has no unpinned dead properties",
+      "project": "node",
+      "file": "src/lib/__tests__/hookSurfaceReachability.test.ts",
+      "kind": "test",
+      "case": "hook return surfaces are reachable > has no unpinned dead properties",
+      "headerLine": 2040,
+      "headerRawSha256": "26cca812b14c50795923373f8b672eb9792757d7ac11871687840bc152e99e23",
+      "diagnostic": {
+        "startLine": 2041,
+        "endLineInclusive": 2057,
+        "byteStart": 128959,
+        "byteEndExclusive": 129353,
+        "rawSha256": "bac505aeee6fbc1ff3b946bb9b84e0cfe2f02f22cbe327298b247e2a893c530f",
+        "firstOwnLine": "AssertionError: expected [ Array(1) ] to deeply equal []"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/hookSurfaceReachability.test.ts|hook return surfaces are reachable > pins only properties that still exist",
+      "project": "node",
+      "file": "src/lib/__tests__/hookSurfaceReachability.test.ts",
+      "kind": "test",
+      "case": "hook return surfaces are reachable > pins only properties that still exist",
+      "headerLine": 2061,
+      "headerRawSha256": "9d2da0496d004e9e8407a2319f2cd5f7c4b78886b948d63a0ee049248bc1d014",
+      "diagnostic": {
+        "startLine": 2062,
+        "endLineInclusive": 2081,
+        "byteStart": 129573,
+        "byteEndExclusive": 130115,
+        "rawSha256": "08caa13b2f50b28c34697ecefabf653cc5366b89899d000e4284b398d9717844",
+        "firstOwnLine": "AssertionError: expected [ …(4) ] to deeply equal []"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/iosPrivacyDeclarations.test.ts|SDKs — nothing that tracks is built in > the committed Package.swift is the one cap sync writes from that config",
+      "project": "node",
+      "file": "src/lib/__tests__/iosPrivacyDeclarations.test.ts",
+      "kind": "test",
+      "case": "SDKs — nothing that tracks is built in > the committed Package.swift is the one cap sync writes from that config",
+      "headerLine": 2085,
+      "headerRawSha256": "dde67c4bd8ab5a26d145e941afd1203fef42b5dec6a3064cfdcf1bb84cc42878",
+      "diagnostic": {
+        "startLine": 2086,
+        "endLineInclusive": 2159,
+        "byteStart": 130374,
+        "byteEndExclusive": 135297,
+        "rawSha256": "b8e61ff86d3803c538aedb507d6bfae22e034080b42c1770d4b239a593214089",
+        "firstOwnLine": "AssertionError: expected '// swift-tools-version: 6.1\\r\\nimport…' to match /^\\/\\/ swift-tools-version: 6\\.1\\n/\\"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/leaderboard.test.ts|leaderboard weekly cutoff — local vs UTC date string > uses the LOCAL date of `since` under a positive-offset TZ (regression)",
+      "project": "node",
+      "file": "src/lib/__tests__/leaderboard.test.ts",
+      "kind": "test",
+      "case": "leaderboard weekly cutoff — local vs UTC date string > uses the LOCAL date of `since` under a positive-offset TZ (regression)",
+      "headerLine": 2163,
+      "headerRawSha256": "484b3b6888108471e0a5ea704b7cafc1b67d650bea2c487e16b0623d788005c1",
+      "diagnostic": {
+        "startLine": 2164,
+        "endLineInclusive": 2203,
+        "byteStart": 135558,
+        "byteEndExclusive": 137739,
+        "rawSha256": "ef90b9e8914233d6a38dd2a5d436e0977a6a20f307e6f1450bccb8631ce1f394",
+        "firstOwnLine": "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval "
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/legalCopyClaims.test.ts|Apple Health is read-only, and its count is never kept > the one HealthKit module asks to read steps and nothing else",
+      "project": "node",
+      "file": "src/lib/__tests__/legalCopyClaims.test.ts",
+      "kind": "test",
+      "case": "Apple Health is read-only, and its count is never kept > the one HealthKit module asks to read steps and nothing else",
+      "headerLine": 2207,
+      "headerRawSha256": "31dc408f08d3cb52c1bd7a31ae9e104394ed51bc43ce8b65581fd849656f3dce",
+      "diagnostic": {
+        "startLine": 2208,
+        "endLineInclusive": 2224,
+        "byteStart": 137994,
+        "byteEndExclusive": 138376,
+        "rawSha256": "c11dc724431d6eb755720f47db5921be558f311ff2a21acec0d530a1a16b550b",
+        "firstOwnLine": "AssertionError: expected [ Array(1) ] to deeply equal []"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/localDateKeyParsing.test.ts|date keys are parsed locally, not as UTC midnight > still sees the pattern at all",
+      "project": "node",
+      "file": "src/lib/__tests__/localDateKeyParsing.test.ts",
+      "kind": "test",
+      "case": "date keys are parsed locally, not as UTC midnight > still sees the pattern at all",
+      "headerLine": 2228,
+      "headerRawSha256": "41a860da36e90ea184212d86b8587fe9008084c1a66484a5497a98cfac20a2a6",
+      "diagnostic": {
+        "startLine": 2229,
+        "endLineInclusive": 2243,
+        "byteStart": 138599,
+        "byteEndExclusive": 139067,
+        "rawSha256": "1d22b374f82514562180ee874afb0c15eba797cc65b4f8d914d95fa963db968b",
+        "firstOwnLine": "AssertionError: expected false to be true // Object.is equality"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/localDateKeyParsing.test.ts|date keys are parsed locally, not as UTC midnight > every classified entry still corresponds to a real site",
+      "project": "node",
+      "file": "src/lib/__tests__/localDateKeyParsing.test.ts",
+      "kind": "test",
+      "case": "date keys are parsed locally, not as UTC midnight > every classified entry still corresponds to a real site",
+      "headerLine": 2247,
+      "headerRawSha256": "7541717b5dd78b2495153ec0059db5af57bac7665fe0db5368571c72976f5e91",
+      "diagnostic": {
+        "startLine": 2248,
+        "endLineInclusive": 2269,
+        "byteStart": 139316,
+        "byteEndExclusive": 140087,
+        "rawSha256": "416714f7627070614d8311fd9eebff7471ac47bd5da07473c3b2f60f59a42896",
+        "firstOwnLine": "AssertionError: SPAN_ONLY entries matching no site: expected [ …(6) ] to deeply equal []"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/localDateKeyParsing.test.ts|date keys are parsed locally, not as UTC midnight > no unclassified site parses a date key as UTC",
+      "project": "node",
+      "file": "src/lib/__tests__/localDateKeyParsing.test.ts",
+      "kind": "test",
+      "case": "date keys are parsed locally, not as UTC midnight > no unclassified site parses a date key as UTC",
+      "headerLine": 2273,
+      "headerRawSha256": "88bdc9ab2eb6e2f5b5ae36a951bd4e877cc3808832fd840b6134630474eec070",
+      "diagnostic": {
+        "startLine": 2274,
+        "endLineInclusive": 2301,
+        "byteStart": 140326,
+        "byteEndExclusive": 141886,
+        "rawSha256": "6ec67c27ed177c862ad3d90dd485b31053f630cc00960650f64598bfd023b123",
+        "firstOwnLine": "AssertionError: These parse a \"YYYY-MM-DD\" key as UTC midnight. Rendered through toLocaleDateString they print the PREVIOUS day for every user at a negative UTC offset — and never for a UK developer, which is why five of these shipped. Use parseLocalDate() from @/lib/dateHelpers, or the + \"T12:00:00\" noon anchor. If the value is only ever used in a SPAN (later − earlier), classify it in SPAN_ONLY with the reason:"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/localDayKeyGuard.test.ts|a day key is derived locally, never from the UTC clock > no src/ file slices a day key off new Date().toISOString()",
+      "project": "node",
+      "file": "src/lib/__tests__/localDayKeyGuard.test.ts",
+      "kind": "test",
+      "case": "a day key is derived locally, never from the UTC clock > no src/ file slices a day key off new Date().toISOString()",
+      "headerLine": 2305,
+      "headerRawSha256": "af6c34c3702d9c502ccac1df85b3b9e3b956146abc44c6874b297a189ccb9732",
+      "diagnostic": {
+        "startLine": 2306,
+        "endLineInclusive": 2322,
+        "byteStart": 142140,
+        "byteEndExclusive": 142474,
+        "rawSha256": "d6c7cb1fd6f7a23549f8bea79fcac92aa06e5c4417d54f33f2724075b2803871",
+        "firstOwnLine": "AssertionError: expected [ Array(1) ] to deeply equal []"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/localStorageGuard.test.ts|single-door enforcement (no raw localStorage outside localStore.ts) > scans a sane number of files (the walk isn't silently empty)",
+      "project": "node",
+      "file": "src/lib/__tests__/localStorageGuard.test.ts",
+      "kind": "test",
+      "case": "single-door enforcement (no raw localStorage outside localStore.ts) > scans a sane number of files (the walk isn't silently empty)",
+      "headerLine": 2326,
+      "headerRawSha256": "01bdc3715bfaefa1b148b7c1403bf3491f456b90b9e512b88804d0d9cc1b37ce",
+      "diagnostic": {
+        "startLine": 2327,
+        "endLineInclusive": 2334,
+        "byteStart": 142744,
+        "byteEndExclusive": 143172,
+        "rawSha256": "5f9d64362be601eae0232b99ef3c1babf97585bf594fc2443083a931f37286b8",
+        "firstOwnLine": "AssertionError: expected [ 'src\\App.tsx', …(967) ] to include 'src/lib/localStore.ts'"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/localStorageGuard.test.ts|single-door enforcement (no raw localStorage outside localStore.ts) > no file outside the door references the localStorage global",
+      "project": "node",
+      "file": "src/lib/__tests__/localStorageGuard.test.ts",
+      "kind": "test",
+      "case": "single-door enforcement (no raw localStorage outside localStore.ts) > no file outside the door references the localStorage global",
+      "headerLine": 2338,
+      "headerRawSha256": "59982ae00b1b12053c7acfeac44e1be4120a5dedc0d84710721dab494f1d4dfb",
+      "diagnostic": {
+        "startLine": 2339,
+        "endLineInclusive": 2358,
+        "byteStart": 143441,
+        "byteEndExclusive": 144223,
+        "rawSha256": "8b42fa73fd4361ea408154dfb09cbe03ef9cb4f21fa455c317bee17205e6bf3e",
+        "firstOwnLine": "AssertionError: Raw localStorage reference(s) found. Route through readString / writeString / remove / readJson / writeJson (src/lib/localStore.ts) — the door never throws and reports whether a write landed. There is no allow-list to extend; if the door cannot express the need, extend the door."
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/localStorageUidScoping.test.ts|localStorage keys are uid-scoped > resolves a key through a same-file const rather than guessing from its name",
+      "project": "node",
+      "file": "src/lib/__tests__/localStorageUidScoping.test.ts",
+      "kind": "test",
+      "case": "localStorage keys are uid-scoped > resolves a key through a same-file const rather than guessing from its name",
+      "headerLine": 2362,
+      "headerRawSha256": "7f76065eba8da78f36319d41cf1c606dbdd5679f18c9a6e98a5f4a9de91b5334",
+      "diagnostic": {
+        "startLine": 2363,
+        "endLineInclusive": 2377,
+        "byteStart": 144478,
+        "byteEndExclusive": 144999,
+        "rawSha256": "79c643d48ad9e02ed31fb6fdfd81eb5fee4c20885b84b0cfc058fdb2c7d60bb4",
+        "firstOwnLine": "AssertionError: expected ProgrammeRunSection to still call the storage door: expected undefined to be truthy"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/localStorageUidScoping.test.ts|localStorage keys are uid-scoped > no unscoped key holds per-account state",
+      "project": "node",
+      "file": "src/lib/__tests__/localStorageUidScoping.test.ts",
+      "kind": "test",
+      "case": "localStorage keys are uid-scoped > no unscoped key holds per-account state",
+      "headerLine": 2381,
+      "headerRawSha256": "cde4b1a354a25eef6d5a2f3d6a4d946c92e9c0e0901e430846ffa2d514c883ea",
+      "diagnostic": {
+        "startLine": 2382,
+        "endLineInclusive": 2419,
+        "byteStart": 145218,
+        "byteEndExclusive": 147189,
+        "rawSha256": "33c40a2f040909181db1a1ac6fa3d9ccfe03ea48355d802877232cdfcb6fdcf4",
+        "firstOwnLine": "AssertionError: localStorage is per-DEVICE, so an unscoped key is shared by every account on the phone. Prefer useDismissOnce; use useUidForStorageKey() for raw access. If the state really belongs to the DEVICE, add it to DEVICE_SCOPED with the reason:"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/mealActiveSingleSource.test.ts|HOME-MEALS-01 — one owner for 'does this meal count?' > nothing hand-writes the soft-delete rule outside the allowlist",
+      "project": "node",
+      "file": "src/lib/__tests__/mealActiveSingleSource.test.ts",
+      "kind": "test",
+      "case": "HOME-MEALS-01 — one owner for 'does this meal count?' > nothing hand-writes the soft-delete rule outside the allowlist",
+      "headerLine": 2423,
+      "headerRawSha256": "bbde6282ad816768b6666a7f2019555fcb005a90116d9e5d78e262015ccaedc6",
+      "diagnostic": {
+        "startLine": 2424,
+        "endLineInclusive": 2443,
+        "byteStart": 147454,
+        "byteEndExclusive": 148126,
+        "rawSha256": "65c6767d7827b6f2715ce14e9f5c82c061783001f594086a7398be81fda68821",
+        "firstOwnLine": "AssertionError: hand-written soft-delete rule — call isActiveMealDoc / activeMealDocs from @/lib/mealTotals instead. If this site genuinely asks a different question (e.g. the restore archive), add it to ALLOWED_RAW_RULE with the reason:"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/perfDocMirrorGuard.test.ts|the never-written performance mirrors are read only by the resolver > no file outside the resolver reads flags.deloadRecommended or labels.loadBand",
+      "project": "node",
+      "file": "src/lib/__tests__/perfDocMirrorGuard.test.ts",
+      "kind": "test",
+      "case": "the never-written performance mirrors are read only by the resolver > no file outside the resolver reads flags.deloadRecommended or labels.loadBand",
+      "headerLine": 2447,
+      "headerRawSha256": "6dc3b90a395b26f91c0813a246c84186f50ef4b735ff5b8dc1e7d97c043815ed",
+      "diagnostic": {
+        "startLine": 2448,
+        "endLineInclusive": 2463,
+        "byteStart": 148414,
+        "byteEndExclusive": 149386,
+        "rawSha256": "e605b13c9efb25b5a1414ad4dad6e3926c8de0355e302952ea9fbe1a0573cdcf",
+        "firstOwnLine": "AssertionError: These read a performance-doc mirror that NO writer emits, so they resolve to undefined forever. Use resolveLoadBand() / resolveDeloadRecommended() from @/lib/performanceDocFields — both are total, and the band derivation reproduces the stored value exactly (computeLoadBand is the same pure function the writers used)."
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/performanceEngine.test.ts|localWeekKey / weekKeyMinusN — UTC/local drift > localWeekKey keys a late-Sunday-night local time to its local week under a negative-offset TZ",
+      "project": "node",
+      "file": "src/lib/__tests__/performanceEngine.test.ts",
+      "kind": "test",
+      "case": "localWeekKey / weekKeyMinusN — UTC/local drift > localWeekKey keys a late-Sunday-night local time to its local week under a negative-offset TZ",
+      "headerLine": 2468,
+      "headerRawSha256": "0c8aef95426636c82d1e1d6d3fa49df3926b5ecfa9220d1e01b17c06ac3b279a",
+      "diagnostic": {
+        "startLine": 2469,
+        "endLineInclusive": 2505,
+        "byteStart": 149671,
+        "byteEndExclusive": 151814,
+        "rawSha256": "b7f39a5f0aa894ad629cb7b52b71faa476d3b0703986d35716e76aadc0e8caff",
+        "firstOwnLine": "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval "
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/performanceEngineConsumers.test.ts|client PI engine — production consumers > the app imports only the two non-scoring helpers",
+      "project": "node",
+      "file": "src/lib/__tests__/performanceEngineConsumers.test.ts",
+      "kind": "test",
+      "case": "client PI engine — production consumers > the app imports only the two non-scoring helpers",
+      "headerLine": 2509,
+      "headerRawSha256": "89ea97a59044cbe57c3ba3089f162c293d187e6004c55d8c849d06d490f61d2c",
+      "diagnostic": {
+        "startLine": 2510,
+        "endLineInclusive": 2532,
+        "byteStart": 152055,
+        "byteEndExclusive": 152833,
+        "rawSha256": "9ea531843a3ee2b08326afb96793f78f1bd289a0d1a193dd0885cdd101b1c2af",
+        "firstOwnLine": "AssertionError: expected { …(2) } to deeply equal { …(2) }"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/performanceEngineConsumers.test.ts|client PI engine — production consumers > the seeds are the only non-test callers of the scoring pipeline",
+      "project": "node",
+      "file": "src/lib/__tests__/performanceEngineConsumers.test.ts",
+      "kind": "test",
+      "case": "client PI engine — production consumers > the seeds are the only non-test callers of the scoring pipeline",
+      "headerLine": 2536,
+      "headerRawSha256": "aa1e1d69a167a0afd993020d5ea62665e5fa2553af6de9aec36987e7bad6d042",
+      "diagnostic": {
+        "startLine": 2537,
+        "endLineInclusive": 2559,
+        "byteStart": 153089,
+        "byteEndExclusive": 153920,
+        "rawSha256": "9a9b1da04db98c4f0c6ce2d2e5cebb623403e2e9c7d4223b9856dc0ea4da92f3",
+        "firstOwnLine": "AssertionError: expected { …(2) } to deeply equal { …(2) }"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/rechartsMockCompleteness.test.ts|a wholesale recharts mock exports what its component imports > is looking at something",
+      "project": "node",
+      "file": "src/lib/__tests__/rechartsMockCompleteness.test.ts",
+      "kind": "test",
+      "case": "a wholesale recharts mock exports what its component imports > is looking at something",
+      "headerLine": 2563,
+      "headerRawSha256": "6909e3ce14387d38d90a816169c02278bebb2d8a531123ea00fdcb6c799483a3",
+      "diagnostic": {
+        "startLine": 2564,
+        "endLineInclusive": 2571,
+        "byteStart": 154153,
+        "byteEndExclusive": 154600,
+        "rawSha256": "e5ac523cb58fbc7bfe1c8d085688651f0bcffa1391c92a73f23ffda201caaadf",
+        "firstOwnLine": "AssertionError: expected [ …(6) ] to include 'src/components/analytics/__tests__/pi…'"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/savedSessionsReaderGuard.test.ts|saved runs have one reader > no src file outside the allow-list queries the collection",
+      "project": "node",
+      "file": "src/lib/__tests__/savedSessionsReaderGuard.test.ts",
+      "kind": "test",
+      "case": "saved runs have one reader > no src file outside the allow-list queries the collection",
+      "headerLine": 2575,
+      "headerRawSha256": "c30c3d0b45e3a30341eed8c28346288f6787f74db18c57aaa062b6adf7e9aaf8",
+      "diagnostic": {
+        "startLine": 2576,
+        "endLineInclusive": 2595,
+        "byteStart": 154833,
+        "byteEndExclusive": 155599,
+        "rawSha256": "76f1b8f66450a566ee136b95f0f950bf70ff643e3350f359b32df4183ff1a028",
+        "firstOwnLine": "AssertionError: Read saved runs through src/lib/savedRuns.ts (fetchSavedRuns, SAVED_RUNS) or useSavedRuns. The reader queries by the field every saved session has, dates each by the day it started (Lift3) and includes sessions saved on this phone that have not synced."
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/savedSessionsReaderGuard.test.ts|saved workouts have one reader > no src file outside the allow-list queries the collection",
+      "project": "node",
+      "file": "src/lib/__tests__/savedSessionsReaderGuard.test.ts",
+      "kind": "test",
+      "case": "saved workouts have one reader > no src file outside the allow-list queries the collection",
+      "headerLine": 2599,
+      "headerRawSha256": "bc301f3ab7f2e14bc6769233943d8c7badf88dc867f05c683887ae505e592b2d",
+      "diagnostic": {
+        "startLine": 2600,
+        "endLineInclusive": 2617,
+        "byteStart": 155836,
+        "byteEndExclusive": 156583,
+        "rawSha256": "2caefc9f4f83f7a0a4c08172531d51481fb5d1d24ac9c2678108a41745f4af4d",
+        "firstOwnLine": "AssertionError: Read saved workouts through src/lib/savedWorkouts.ts (fetchSavedWorkouts, SAVED_WORKOUTS) or useSavedSessions. The reader queries by the field every saved session has, dates each by the day it started (Lift3) and includes sessions saved on this phone that have not synced."
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/settingsSectionCoverage.test.ts|settings section analytics coverage > no SETTINGS surface emits a section the union does not declare",
+      "project": "node",
+      "file": "src/lib/__tests__/settingsSectionCoverage.test.ts",
+      "kind": "test",
+      "case": "settings section analytics coverage > no SETTINGS surface emits a section the union does not declare",
+      "headerLine": 2621,
+      "headerRawSha256": "69e09b03d5cd0e8b392b4a158f51a05ceab43845e39d0ba4f9cc9abe997453fc",
+      "diagnostic": {
+        "startLine": 2622,
+        "endLineInclusive": 2629,
+        "byteStart": 156829,
+        "byteEndExclusive": 157266,
+        "rawSha256": "988a540fe8ed81e2d80b217e674c7e70f640684646e0a1bf5442a9d75a1c82ef",
+        "firstOwnLine": "AssertionError: expected 0 to be greater than 0"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/stylesUsage.test.ts|src/styles class usage > scans a plausible number of declarations (guards a broken scan)",
+      "project": "node",
+      "file": "src/lib/__tests__/stylesUsage.test.ts",
+      "kind": "test",
+      "case": "src/styles class usage > scans a plausible number of declarations (guards a broken scan)",
+      "headerLine": 2633,
+      "headerRawSha256": "1332916f3300abab3809cb8a7bbc7b33b1905670d0bccab0b0e3d5ec25c24829",
+      "diagnostic": {
+        "startLine": 2634,
+        "endLineInclusive": 2648,
+        "byteStart": 157488,
+        "byteEndExclusive": 158009,
+        "rawSha256": "8e8974cbef5341998b33ddaa4f220e536d4798bfbe9f5dfd3ae8ac31cd1df39f",
+        "firstOwnLine": "AssertionError: expected 'src\\styles\\animations.css' to match /^src\\/styles\\//styles\\"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/symbolReachability.test.ts|symbol-level reachability > the pinned list stays honest — no entry that is now reachable",
+      "project": "node",
+      "file": "src/lib/__tests__/symbolReachability.test.ts",
+      "kind": "test",
+      "case": "symbol-level reachability > the pinned list stays honest — no entry that is now reachable",
+      "headerLine": 2652,
+      "headerRawSha256": "ef8ad1038af7fa7f84cdb71251bf6085e97bbcb29768f0f411642b2cfac3b2a6",
+      "diagnostic": {
+        "startLine": 2653,
+        "endLineInclusive": 2687,
+        "byteStart": 158241,
+        "byteEndExclusive": 159874,
+        "rawSha256": "69148c65936a7b7a6380b8dd2a0e60c804e6f72d6c05dbac33f892cd8da38c57",
+        "firstOwnLine": "AssertionError: These are pinned as orphans but are now reachable (or gone). Remove them from KNOWN_ORPHAN_EXPORTS — the list is delete-only.: expected [ …(19) ] to deeply equal []"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/transitionalExpiry.test.ts|deferred removals expire > registers every TRANSITIONAL marker in src/ and functions/",
+      "project": "node",
+      "file": "src/lib/__tests__/transitionalExpiry.test.ts",
+      "kind": "test",
+      "case": "deferred removals expire > registers every TRANSITIONAL marker in src/ and functions/",
+      "headerLine": 2691,
+      "headerRawSha256": "e93ebfa319f7a7ca2955ba5fa063da867f26ed7012b0f4b1162757b234d5b739",
+      "diagnostic": {
+        "startLine": 2692,
+        "endLineInclusive": 2709,
+        "byteStart": 160100,
+        "byteEndExclusive": 160842,
+        "rawSha256": "87af594a08c48597f17ecff5b2851ccc795a0c86b07eb163bc99bc83832cbf28",
+        "firstOwnLine": "AssertionError: These files mark code as TRANSITIONAL but name no condition anything checks. Add a DEFERRED row in this file saying what removes the branch and when — or, if the code is not actually transitional, say what it is instead of marking it for a removal nobody will make.: expected [ …(2) ] to deeply equal []"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/weekAnchorProse.test.ts|week-anchor prose > scans both sides of the mirror, and a non-trivial number of files",
+      "project": "node",
+      "file": "src/lib/__tests__/weekAnchorProse.test.ts",
+      "kind": "test",
+      "case": "week-anchor prose > scans both sides of the mirror, and a non-trivial number of files",
+      "headerLine": 2713,
+      "headerRawSha256": "af224c8d5fbb65a22019bb309c0e1ed8031d75390a9e998c879654b22b66d597",
+      "diagnostic": {
+        "startLine": 2714,
+        "endLineInclusive": 2728,
+        "byteStart": 161065,
+        "byteEndExclusive": 161603,
+        "rawSha256": "84227f79e19a6b4ec4f50f146d5b5f0f18f52823809dfa929911bf3e5aeda23c",
+        "firstOwnLine": "AssertionError: expected false to be true // Object.is equality"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/workoutBurn.test.ts|one run-burn formula > 1.036 appears exactly once in production src/",
+      "project": "node",
+      "file": "src/lib/__tests__/workoutBurn.test.ts",
+      "kind": "test",
+      "case": "one run-burn formula > 1.036 appears exactly once in production src/",
+      "headerLine": 2732,
+      "headerRawSha256": "b21985fee46feddcbfa3c682c9888bde8e9810ed4110520a59ffd868092c15af",
+      "diagnostic": {
+        "startLine": 2733,
+        "endLineInclusive": 2750,
+        "byteStart": 161805,
+        "byteEndExclusive": 162520,
+        "rawSha256": "e0b0bce00275eeadafb8686e1e4bbbf9b80394e2b8e57830f85187583de557a0",
+        "firstOwnLine": "AssertionError: The run-burn coefficient must have ONE home (workoutBurn.ts). Call estimateRunBurn — or estimateRunCalories for a distance in metres — rather than repeating it. Sites found:"
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/writeOnlyProfileFields.test.ts|write-only profile fields > scans enough source to mean something",
+      "project": "node",
+      "file": "src/lib/__tests__/writeOnlyProfileFields.test.ts",
+      "kind": "test",
+      "case": "write-only profile fields > scans enough source to mean something",
+      "headerLine": 2754,
+      "headerRawSha256": "92e8806f1366e6babfb5bbb3707d1a405dac203d774a2079cecf9f7abeb48ab9",
+      "diagnostic": {
+        "startLine": 2755,
+        "endLineInclusive": 2769,
+        "byteStart": 162730,
+        "byteEndExclusive": 163172,
+        "rawSha256": "3c93d033982285aae402fc37e24cfbda99b1d8812cd30c3c8db60007280795cd",
+        "firstOwnLine": "AssertionError: expected false to be true // Object.is equality"
+      }
+    }
+  ],
+  "requiredWholeFileFocus": [
+    {
+      "project": "node",
+      "file": "src/lib/__tests__/bodyRig.test.ts",
+      "failureIds": [
+        "node|src/lib/__tests__/bodyRig.test.ts|form beats — the caption is a claim about the frame > every cue fits the hold it is read in"
+      ],
+      "status": "unresolved-needs-normal-complete-file-evidence",
+      "evidence": null
+    }
+  ],
+  "dispositionPolicy": "Added or byte-changed failures are unresolved, including suite failures. Use normal complete-file test evidence for each affected file, with exact command, terminal counts, input/snapshot preservation and own diagnostics. Aggregate subset totals do not establish an individual suite pass. Removed failures are merely absent from this full-run failure report, not automatically fixed. Identical failures only describe these two measured runs; no broader pre-existing claim is made.",
+  "testsRunByComparer": false,
+  "repositoryModifiedByComparer": false,
+  "rawLogsModified": false,
+  "completionOrPublicationClaim": false
+}

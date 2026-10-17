@@ -1,0 +1,638 @@
+{
+  "archivedAtUtc": "2026-10-15T22:47:59.564145+00:00",
+  "sinceUtc": "2026-10-15T22:42:00Z",
+  "scopeFilter": "integrated",
+  "officialLog": "C:\\Users\\myles\\.codex\\sessions\\2026\\10\\04\\rollout-2026-10-04T14-18-53-01a10711-412c-7ce2-8907-eb9f63d462da.jsonl",
+  "logSnapshotBytes": 5442018741,
+  "boundedTailBytes": 120000000,
+  "source": "Only current-turn explicit rowing-draft-* / rowing-integrated-* official mcp__cua_repl.js returns",
+  "scope": "Exact screenshot bytes and original tool text are copied. JSON/JSON5 parses contain data only, never code execution. No capture, render, image edit, new image request, app mutation or QA acceptance.",
+  "mobileLimitation": "Earlier1280px traces remain real observations but are not390x844 mobile proof. Viewport values are retained/tagged per object; screenshot pixel dimensions do not independently establish CSS viewport. Only root can accept actual matching review observations.",
+  "helperSha256": "7258f951eb94f1a81c2b56568af5af2faa066403e99978acc345ff6736882bd7",
+  "artifacts": [
+    {
+      "title": "Review registered Rowing guide",
+      "callTimestamp": "2026-10-15T22:42:17.962Z",
+      "declaredKinds": [
+        "rowing-integrated-initial"
+      ],
+      "callRecordSha256": "cfa61806930bcd5a99769beca649fe1559448192b832ddf74552bc603ac8312e",
+      "callByteStart": 5441274161,
+      "callByteEndExclusive": 5441275183,
+      "callId": "call_adbf696ade104e1584ed78398924a3f3",
+      "outputTimestamp": "2026-10-15T22:42:33.711Z",
+      "outputRecordSha256": "1a81986e9de2d0bed28f9b801b3c8e71fed41bf989f2ea910a66f8221a4fcff4",
+      "outputByteStart": 5441277539,
+      "outputByteEndExclusive": 5441278163,
+      "file": "review/rowing-integrated-initial-adbf696ade10-b1-tool-text.txt",
+      "sha256": "5928a5d57f1a503361a69d4773095005f4ce330123449a5773a70f49ffca6f3c",
+      "bytes": 34,
+      "kind": null,
+      "sameCallKinds": [
+        "rowing-integrated-initial"
+      ],
+      "labelBinding": "literal call-code kinds only; returned observation not parsed",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Review registered Rowing guide",
+      "callTimestamp": "2026-10-15T22:42:17.962Z",
+      "declaredKinds": [
+        "rowing-integrated-initial"
+      ],
+      "callRecordSha256": "cfa61806930bcd5a99769beca649fe1559448192b832ddf74552bc603ac8312e",
+      "callByteStart": 5441274161,
+      "callByteEndExclusive": 5441275183,
+      "callId": "call_adbf696ade104e1584ed78398924a3f3",
+      "outputTimestamp": "2026-10-15T22:42:33.711Z",
+      "outputRecordSha256": "1a81986e9de2d0bed28f9b801b3c8e71fed41bf989f2ea910a66f8221a4fcff4",
+      "outputByteStart": 5441277539,
+      "outputByteEndExclusive": 5441278163,
+      "file": "review/rowing-integrated-initial-adbf696ade10-b2-tool-text.txt",
+      "sha256": "3264ac1d4eb977b02ce4c109516b3df9f29de2aa631dc6f2713fd819f1e9bef9",
+      "bytes": 90,
+      "kind": null,
+      "sameCallKinds": [
+        "rowing-integrated-initial"
+      ],
+      "labelBinding": "literal call-code kinds only; returned observation not parsed",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Inspect loaded registered Rowing guide",
+      "callTimestamp": "2026-10-15T22:43:14.269Z",
+      "declaredKinds": [
+        "rowing-integrated-initial"
+      ],
+      "callRecordSha256": "7f729ae290b46c7a618806cf773791c8072bf22bdf872c11bfdc77eb8dd5f6d2",
+      "callByteStart": 5441299503,
+      "callByteEndExclusive": 5441300459,
+      "callId": "call_0af2dbb492b8464795597ccb5abb0c14",
+      "outputTimestamp": "2026-10-15T22:43:17.204Z",
+      "outputRecordSha256": "49877b0719d69d7a8f28a7d56badc099040ee171a655e08c831c6c9449e72eeb",
+      "outputByteStart": 5441306800,
+      "outputByteEndExclusive": 5441311482,
+      "file": "review/rowing-integrated-initial-0af2dbb492b8-b1-tool-text.txt",
+      "sha256": "9491e32e2855e244f9e9a8f7003ed77a85b6fff3d369c0cb2a279fa20ad80147",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "rowing-integrated-initial"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Inspect loaded registered Rowing guide",
+      "callTimestamp": "2026-10-15T22:43:14.269Z",
+      "declaredKinds": [
+        "rowing-integrated-initial"
+      ],
+      "callRecordSha256": "7f729ae290b46c7a618806cf773791c8072bf22bdf872c11bfdc77eb8dd5f6d2",
+      "callByteStart": 5441299503,
+      "callByteEndExclusive": 5441300459,
+      "callId": "call_0af2dbb492b8464795597ccb5abb0c14",
+      "outputTimestamp": "2026-10-15T22:43:17.204Z",
+      "outputRecordSha256": "49877b0719d69d7a8f28a7d56badc099040ee171a655e08c831c6c9449e72eeb",
+      "outputByteStart": 5441306800,
+      "outputByteEndExclusive": 5441311482,
+      "file": "review/rowing-integrated-initial-0af2dbb492b8-b2-tool-text.txt",
+      "sha256": "27288d5e9e5abbb9765116c302e59fb6c5a8c9b38e87bbea0dedbd25128a7f08",
+      "bytes": 2117,
+      "kind": null,
+      "sameCallKinds": [
+        "rowing-integrated-initial"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Inspect loaded registered Rowing guide",
+      "callTimestamp": "2026-10-15T22:43:14.269Z",
+      "declaredKinds": [
+        "rowing-integrated-initial"
+      ],
+      "callRecordSha256": "7f729ae290b46c7a618806cf773791c8072bf22bdf872c11bfdc77eb8dd5f6d2",
+      "callByteStart": 5441299503,
+      "callByteEndExclusive": 5441300459,
+      "callId": "call_0af2dbb492b8464795597ccb5abb0c14",
+      "outputTimestamp": "2026-10-15T22:43:17.204Z",
+      "outputRecordSha256": "49877b0719d69d7a8f28a7d56badc099040ee171a655e08c831c6c9449e72eeb",
+      "outputByteStart": 5441306800,
+      "outputByteEndExclusive": 5441311482,
+      "file": "review/rowing-integrated-initial-0af2dbb492b8-b3-tool-text.txt",
+      "sha256": "199ae101de8b31fa0a453098188c11a4e3816bd6c5c4ac555e20aef7c12fc260",
+      "bytes": 1739,
+      "kind": "rowing-integrated-initial",
+      "sameCallKinds": [
+        "rowing-integrated-initial"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Inspect loaded registered Rowing guide",
+      "callTimestamp": "2026-10-15T22:43:14.269Z",
+      "declaredKinds": [
+        "rowing-integrated-initial"
+      ],
+      "callRecordSha256": "7f729ae290b46c7a618806cf773791c8072bf22bdf872c11bfdc77eb8dd5f6d2",
+      "callByteStart": 5441299503,
+      "callByteEndExclusive": 5441300459,
+      "callId": "call_0af2dbb492b8464795597ccb5abb0c14",
+      "outputTimestamp": "2026-10-15T22:43:17.204Z",
+      "outputRecordSha256": "49877b0719d69d7a8f28a7d56badc099040ee171a655e08c831c6c9449e72eeb",
+      "outputByteStart": 5441306800,
+      "outputByteEndExclusive": 5441311482,
+      "file": "review/rowing-integrated-initial-0af2dbb492b8-b3-dom.json",
+      "sha256": "c632d87bc337d65800bc6fd5f9afd4c630130d1af4c33bc426c1791b8cebf9e3",
+      "bytes": 2297,
+      "kind": "rowing-integrated-initial",
+      "block": 3,
+      "actualDomObservation": true,
+      "parseMethod": "JSON",
+      "originalTextFile": "review/rowing-integrated-initial-0af2dbb492b8-b3-tool-text.txt",
+      "originalTextSha256": "199ae101de8b31fa0a453098188c11a4e3816bd6c5c4ac555e20aef7c12fc260",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [],
+        "containsNon390x844Viewport": false,
+        "classification": "viewport not established",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Check registered Rowing dark frames, wraps and card",
+      "callTimestamp": "2026-10-15T22:43:56.841Z",
+      "declaredKinds": [
+        "rowing-integrated-dark-manual-card",
+        "rowing-integrated-dark-normal"
+      ],
+      "callRecordSha256": "22cfba758e5241b21f337655675e2cc07f16b1907b998f1ae62051c75a262765",
+      "callByteStart": 5441329376,
+      "callByteEndExclusive": 5441332243,
+      "callId": "call_04711e6c2101454695317688b8ea5082",
+      "outputTimestamp": "2026-10-15T22:44:04.410Z",
+      "outputRecordSha256": "417c38fe5771780db9d7678d9b193b288c71fd1bcd51c43f6faa0e50e556193d",
+      "outputByteStart": 5441401584,
+      "outputByteEndExclusive": 5441544715,
+      "file": "review/rowing-same-call-multiple-04711e6c2101-b1-tool-text.txt",
+      "sha256": "e6cd9f858428667f8b28ed956b40fd7e17501f32c76fb71ff9f0e4cb4e3b20aa",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "rowing-integrated-dark-manual-card",
+        "rowing-integrated-dark-normal"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check registered Rowing dark frames, wraps and card",
+      "callTimestamp": "2026-10-15T22:43:56.841Z",
+      "declaredKinds": [
+        "rowing-integrated-dark-manual-card",
+        "rowing-integrated-dark-normal"
+      ],
+      "callRecordSha256": "22cfba758e5241b21f337655675e2cc07f16b1907b998f1ae62051c75a262765",
+      "callByteStart": 5441329376,
+      "callByteEndExclusive": 5441332243,
+      "callId": "call_04711e6c2101454695317688b8ea5082",
+      "outputTimestamp": "2026-10-15T22:44:04.410Z",
+      "outputRecordSha256": "417c38fe5771780db9d7678d9b193b288c71fd1bcd51c43f6faa0e50e556193d",
+      "outputByteStart": 5441401584,
+      "outputByteEndExclusive": 5441544715,
+      "file": "review/rowing-same-call-multiple-04711e6c2101-b2-tool-text.txt",
+      "sha256": "11d89307e22a9e2cf5a792f8ab93c55d91101526969efdae4d2967faadb0a58a",
+      "bytes": 1199,
+      "kind": null,
+      "sameCallKinds": [
+        "rowing-integrated-dark-manual-card",
+        "rowing-integrated-dark-normal"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check registered Rowing dark frames, wraps and card",
+      "callTimestamp": "2026-10-15T22:43:56.841Z",
+      "declaredKinds": [
+        "rowing-integrated-dark-manual-card",
+        "rowing-integrated-dark-normal"
+      ],
+      "callRecordSha256": "22cfba758e5241b21f337655675e2cc07f16b1907b998f1ae62051c75a262765",
+      "callByteStart": 5441329376,
+      "callByteEndExclusive": 5441332243,
+      "callId": "call_04711e6c2101454695317688b8ea5082",
+      "outputTimestamp": "2026-10-15T22:44:04.410Z",
+      "outputRecordSha256": "417c38fe5771780db9d7678d9b193b288c71fd1bcd51c43f6faa0e50e556193d",
+      "outputByteStart": 5441401584,
+      "outputByteEndExclusive": 5441544715,
+      "file": "review/rowing-integrated-dark-normal-04711e6c2101-b3-tool-text.txt",
+      "sha256": "682de79a6449c436922e2b41b282c2ef201daf1e4d4ce78cd64c2c281bafdfcd",
+      "bytes": 14087,
+      "kind": null,
+      "sameCallKinds": [
+        "rowing-integrated-dark-manual-card",
+        "rowing-integrated-dark-normal"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check registered Rowing dark frames, wraps and card",
+      "callTimestamp": "2026-10-15T22:43:56.841Z",
+      "declaredKinds": [
+        "rowing-integrated-dark-manual-card",
+        "rowing-integrated-dark-normal"
+      ],
+      "callRecordSha256": "22cfba758e5241b21f337655675e2cc07f16b1907b998f1ae62051c75a262765",
+      "callByteStart": 5441329376,
+      "callByteEndExclusive": 5441332243,
+      "callId": "call_04711e6c2101454695317688b8ea5082",
+      "outputTimestamp": "2026-10-15T22:44:04.410Z",
+      "outputRecordSha256": "417c38fe5771780db9d7678d9b193b288c71fd1bcd51c43f6faa0e50e556193d",
+      "outputByteStart": 5441401584,
+      "outputByteEndExclusive": 5441544715,
+      "file": "review/rowing-same-call-multiple-04711e6c2101-b4.jpg",
+      "sha256": "0e9ec42b367a33346f3458ac775ff62ebc41e1f5e66d22684157a3abf3599d39",
+      "bytes": 94185,
+      "kind": null,
+      "sameCallKinds": [
+        "rowing-integrated-dark-manual-card",
+        "rowing-integrated-dark-normal"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 4,
+      "dimensions": [
+        380,
+        2436
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Check registered Rowing light frames and cards",
+      "callTimestamp": "2026-10-15T22:44:47.072Z",
+      "declaredKinds": [
+        "rowing-integrated-light-manual-card"
+      ],
+      "callRecordSha256": "b50ad406e520c9440e34aafba6bb9cd1c6077571fac642c077d5062e6989ad68",
+      "callByteStart": 5441568899,
+      "callByteEndExclusive": 5441570903,
+      "callId": "call_5771f892d4284386ba175750a0fdf08a",
+      "outputTimestamp": "2026-10-15T22:44:53.999Z",
+      "outputRecordSha256": "093a6b8a5c18bb3bce98acfa89da8411268d73ade8fb1641f3ef84a7cbd06443",
+      "outputByteStart": 5441639405,
+      "outputByteEndExclusive": 5441770885,
+      "file": "review/rowing-integrated-light-manual-card-5771f892d428-b1-tool-text.txt",
+      "sha256": "794c16ffe6121d65e03a827dbca2365d150d97eefb8c5f87dda7408ac8f977eb",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "rowing-integrated-light-manual-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check registered Rowing light frames and cards",
+      "callTimestamp": "2026-10-15T22:44:47.072Z",
+      "declaredKinds": [
+        "rowing-integrated-light-manual-card"
+      ],
+      "callRecordSha256": "b50ad406e520c9440e34aafba6bb9cd1c6077571fac642c077d5062e6989ad68",
+      "callByteStart": 5441568899,
+      "callByteEndExclusive": 5441570903,
+      "callId": "call_5771f892d4284386ba175750a0fdf08a",
+      "outputTimestamp": "2026-10-15T22:44:53.999Z",
+      "outputRecordSha256": "093a6b8a5c18bb3bce98acfa89da8411268d73ade8fb1641f3ef84a7cbd06443",
+      "outputByteStart": 5441639405,
+      "outputByteEndExclusive": 5441770885,
+      "file": "review/rowing-integrated-light-manual-card-5771f892d428-b2-tool-text.txt",
+      "sha256": "f4fe40bb8796873b9ca006efb565a54c11619aa94b3007683ece825e9295cdb0",
+      "bytes": 1022,
+      "kind": null,
+      "sameCallKinds": [
+        "rowing-integrated-light-manual-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check registered Rowing light frames and cards",
+      "callTimestamp": "2026-10-15T22:44:47.072Z",
+      "declaredKinds": [
+        "rowing-integrated-light-manual-card"
+      ],
+      "callRecordSha256": "b50ad406e520c9440e34aafba6bb9cd1c6077571fac642c077d5062e6989ad68",
+      "callByteStart": 5441568899,
+      "callByteEndExclusive": 5441570903,
+      "callId": "call_5771f892d4284386ba175750a0fdf08a",
+      "outputTimestamp": "2026-10-15T22:44:53.999Z",
+      "outputRecordSha256": "093a6b8a5c18bb3bce98acfa89da8411268d73ade8fb1641f3ef84a7cbd06443",
+      "outputByteStart": 5441639405,
+      "outputByteEndExclusive": 5441770885,
+      "file": "review/rowing-integrated-light-manual-card-5771f892d428-b3-tool-text.txt",
+      "sha256": "efd9085545dca3003825e081c8b2fb13f53755ddfe2f9c0808259ad14fb31950",
+      "bytes": 1828,
+      "kind": "rowing-integrated-light-manual-card",
+      "sameCallKinds": [
+        "rowing-integrated-light-manual-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Check registered Rowing light frames and cards",
+      "callTimestamp": "2026-10-15T22:44:47.072Z",
+      "declaredKinds": [
+        "rowing-integrated-light-manual-card"
+      ],
+      "callRecordSha256": "b50ad406e520c9440e34aafba6bb9cd1c6077571fac642c077d5062e6989ad68",
+      "callByteStart": 5441568899,
+      "callByteEndExclusive": 5441570903,
+      "callId": "call_5771f892d4284386ba175750a0fdf08a",
+      "outputTimestamp": "2026-10-15T22:44:53.999Z",
+      "outputRecordSha256": "093a6b8a5c18bb3bce98acfa89da8411268d73ade8fb1641f3ef84a7cbd06443",
+      "outputByteStart": 5441639405,
+      "outputByteEndExclusive": 5441770885,
+      "file": "review/rowing-integrated-light-manual-card-5771f892d428-b3-dom.json",
+      "sha256": "527aa99d8dbf1127af86e75d116b02a8795d97a10c3d94f36a8380cae36094c0",
+      "bytes": 2691,
+      "kind": "rowing-integrated-light-manual-card",
+      "block": 3,
+      "actualDomObservation": true,
+      "parseMethod": "JSON",
+      "originalTextFile": "review/rowing-integrated-light-manual-card-5771f892d428-b3-tool-text.txt",
+      "originalTextSha256": "efd9085545dca3003825e081c8b2fb13f53755ddfe2f9c0808259ad14fb31950",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [],
+        "containsNon390x844Viewport": false,
+        "classification": "viewport not established",
+        "qaAcceptance": false
+      }
+    },
+    {
+      "title": "Check registered Rowing light frames and cards",
+      "callTimestamp": "2026-10-15T22:44:47.072Z",
+      "declaredKinds": [
+        "rowing-integrated-light-manual-card"
+      ],
+      "callRecordSha256": "b50ad406e520c9440e34aafba6bb9cd1c6077571fac642c077d5062e6989ad68",
+      "callByteStart": 5441568899,
+      "callByteEndExclusive": 5441570903,
+      "callId": "call_5771f892d4284386ba175750a0fdf08a",
+      "outputTimestamp": "2026-10-15T22:44:53.999Z",
+      "outputRecordSha256": "093a6b8a5c18bb3bce98acfa89da8411268d73ade8fb1641f3ef84a7cbd06443",
+      "outputByteStart": 5441639405,
+      "outputByteEndExclusive": 5441770885,
+      "file": "review/rowing-integrated-light-manual-card-5771f892d428-b4.jpg",
+      "sha256": "4cc8455f954b5ad8e2294c2a4919cde7e733b5ed099b1127faaa531f92bc54c0",
+      "bytes": 95813,
+      "kind": "rowing-integrated-light-manual-card",
+      "sameCallKinds": [
+        "rowing-integrated-light-manual-card"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 4,
+      "dimensions": [
+        380,
+        2436
+      ],
+      "copiedReturnedImageBytesExactly": true,
+      "sameCallObservedViewportScope": {
+        "observations": [
+          {
+            "kind": "rowing-integrated-light-manual-card",
+            "viewportScope": {
+              "topLevelViewport": null,
+              "explicitViewportPairs": [],
+              "containsNon390x844Viewport": false,
+              "classification": "viewport not established",
+              "qaAcceptance": false
+            }
+          }
+        ],
+        "screenshotSpecificViewportNotInferred": true,
+        "qaAcceptance": false
+      },
+      "screenshotViewportNotInferredFromPixelDimensions": true
+    },
+    {
+      "title": "Verify registered normal cycle and slower control",
+      "callTimestamp": "2026-10-15T22:45:36.960Z",
+      "declaredKinds": [
+        "rowing-integrated-light-normal",
+        "rowing-integrated-light-slower-start"
+      ],
+      "callRecordSha256": "bd383b1335f24ee43588bb2cabb13b7d8039f525b9b36a36fe90e4669d26eeb6",
+      "callByteStart": 5441790680,
+      "callByteEndExclusive": 5441792000,
+      "callId": "call_13d02e81a0fb4e82a54031f0e4eb0ebf",
+      "outputTimestamp": "2026-10-15T22:45:40.268Z",
+      "outputRecordSha256": "f202c1edd4d764dd8d820aaeeef53eeea75a6e676ca99e6e6417392f79603f3a",
+      "outputByteStart": 5441859821,
+      "outputByteEndExclusive": 5441869050,
+      "file": "review/rowing-same-call-multiple-13d02e81a0fb-b1-tool-text.txt",
+      "sha256": "61d84e35aa43140d4569b93bcec0f4409e7294065437e45a9a033178e552c634",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "rowing-integrated-light-normal",
+        "rowing-integrated-light-slower-start"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify registered normal cycle and slower control",
+      "callTimestamp": "2026-10-15T22:45:36.960Z",
+      "declaredKinds": [
+        "rowing-integrated-light-normal",
+        "rowing-integrated-light-slower-start"
+      ],
+      "callRecordSha256": "bd383b1335f24ee43588bb2cabb13b7d8039f525b9b36a36fe90e4669d26eeb6",
+      "callByteStart": 5441790680,
+      "callByteEndExclusive": 5441792000,
+      "callId": "call_13d02e81a0fb4e82a54031f0e4eb0ebf",
+      "outputTimestamp": "2026-10-15T22:45:40.268Z",
+      "outputRecordSha256": "f202c1edd4d764dd8d820aaeeef53eeea75a6e676ca99e6e6417392f79603f3a",
+      "outputByteStart": 5441859821,
+      "outputByteEndExclusive": 5441869050,
+      "file": "review/rowing-same-call-multiple-13d02e81a0fb-b2-tool-text.txt",
+      "sha256": "fdc3f13ccd944ee518017161dbbcc22ec690e00722b53cb5f175b33a5815c3ea",
+      "bytes": 521,
+      "kind": null,
+      "sameCallKinds": [
+        "rowing-integrated-light-normal",
+        "rowing-integrated-light-slower-start"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify registered normal cycle and slower control",
+      "callTimestamp": "2026-10-15T22:45:36.960Z",
+      "declaredKinds": [
+        "rowing-integrated-light-normal",
+        "rowing-integrated-light-slower-start"
+      ],
+      "callRecordSha256": "bd383b1335f24ee43588bb2cabb13b7d8039f525b9b36a36fe90e4669d26eeb6",
+      "callByteStart": 5441790680,
+      "callByteEndExclusive": 5441792000,
+      "callId": "call_13d02e81a0fb4e82a54031f0e4eb0ebf",
+      "outputTimestamp": "2026-10-15T22:45:40.268Z",
+      "outputRecordSha256": "f202c1edd4d764dd8d820aaeeef53eeea75a6e676ca99e6e6417392f79603f3a",
+      "outputByteStart": 5441859821,
+      "outputByteEndExclusive": 5441869050,
+      "file": "review/rowing-integrated-light-normal-13d02e81a0fb-b3-tool-text.txt",
+      "sha256": "1eb434b7067346e77a2111100bc63d00947fb553a608ddde5943fbdb4f5fdf30",
+      "bytes": 7317,
+      "kind": null,
+      "sameCallKinds": [
+        "rowing-integrated-light-normal",
+        "rowing-integrated-light-slower-start"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify slower Rowing cycle and final console",
+      "callTimestamp": "2026-10-15T22:47:17.626Z",
+      "declaredKinds": [
+        "rowing-integrated-final-console",
+        "rowing-integrated-light-slower"
+      ],
+      "callRecordSha256": "508ad94ea05f2ac70799376b6cb09d4c6e24655762b911e2d50ccd68c9f6d4cf",
+      "callByteStart": 5441924376,
+      "callByteEndExclusive": 5441926032,
+      "callId": "call_7caa024869e547f8ba2d7da1b25f0335",
+      "outputTimestamp": "2026-10-15T22:47:21.796Z",
+      "outputRecordSha256": "48a438897db8d7ffb1fd93db82bbdfb247e5a0c0c8a70540e4b33b3445d6b2be",
+      "outputByteStart": 5441994189,
+      "outputByteEndExclusive": 5441998317,
+      "file": "review/rowing-same-call-multiple-7caa024869e5-b1-tool-text.txt",
+      "sha256": "d5d318510d6b5f41ee44113a15e3ce380ff21efe4eaee70eed292df1ea95d4a6",
+      "bytes": 33,
+      "kind": null,
+      "sameCallKinds": [
+        "rowing-integrated-final-console",
+        "rowing-integrated-light-slower"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 1,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify slower Rowing cycle and final console",
+      "callTimestamp": "2026-10-15T22:47:17.626Z",
+      "declaredKinds": [
+        "rowing-integrated-final-console",
+        "rowing-integrated-light-slower"
+      ],
+      "callRecordSha256": "508ad94ea05f2ac70799376b6cb09d4c6e24655762b911e2d50ccd68c9f6d4cf",
+      "callByteStart": 5441924376,
+      "callByteEndExclusive": 5441926032,
+      "callId": "call_7caa024869e547f8ba2d7da1b25f0335",
+      "outputTimestamp": "2026-10-15T22:47:21.796Z",
+      "outputRecordSha256": "48a438897db8d7ffb1fd93db82bbdfb247e5a0c0c8a70540e4b33b3445d6b2be",
+      "outputByteStart": 5441994189,
+      "outputByteEndExclusive": 5441998317,
+      "file": "review/rowing-same-call-multiple-7caa024869e5-b2-tool-text.txt",
+      "sha256": "d63aa0e41a8f316d71575abb32d52e19c78ab041433be15a720f357139509977",
+      "bytes": 364,
+      "kind": null,
+      "sameCallKinds": [
+        "rowing-integrated-final-console",
+        "rowing-integrated-light-slower"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 2,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    },
+    {
+      "title": "Verify slower Rowing cycle and final console",
+      "callTimestamp": "2026-10-15T22:47:17.626Z",
+      "declaredKinds": [
+        "rowing-integrated-final-console",
+        "rowing-integrated-light-slower"
+      ],
+      "callRecordSha256": "508ad94ea05f2ac70799376b6cb09d4c6e24655762b911e2d50ccd68c9f6d4cf",
+      "callByteStart": 5441924376,
+      "callByteEndExclusive": 5441926032,
+      "callId": "call_7caa024869e547f8ba2d7da1b25f0335",
+      "outputTimestamp": "2026-10-15T22:47:21.796Z",
+      "outputRecordSha256": "48a438897db8d7ffb1fd93db82bbdfb247e5a0c0c8a70540e4b33b3445d6b2be",
+      "outputByteStart": 5441994189,
+      "outputByteEndExclusive": 5441998317,
+      "file": "review/rowing-integrated-light-slower-7caa024869e5-b3-tool-text.txt",
+      "sha256": "c6e41c68f44947761dafbf165e31920ea3a5ee8c284e4319eb3f0c46ab5eb79c",
+      "bytes": 2861,
+      "kind": null,
+      "sameCallKinds": [
+        "rowing-integrated-final-console",
+        "rowing-integrated-light-slower"
+      ],
+      "labelBinding": "all same-call returned text kinds",
+      "block": 3,
+      "copiedReturnedTextExactly": true,
+      "includesToolError": false
+    }
+  ],
+  "unparsedObservations": [
+    {
+      "callId": "call_04711e6c2101454695317688b8ea5082",
+      "file": "review/rowing-integrated-dark-normal-04711e6c2101-b3-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    },
+    {
+      "callId": "call_13d02e81a0fb4e82a54031f0e4eb0ebf",
+      "file": "review/rowing-integrated-light-normal-13d02e81a0fb-b3-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    },
+    {
+      "callId": "call_7caa024869e547f8ba2d7da1b25f0335",
+      "file": "review/rowing-integrated-light-slower-7caa024869e5-b3-tool-text.txt",
+      "reason": "Unparsed; exact official text retained"
+    }
+  ],
+  "callsAwaitingOutputWithinSnapshot": [],
+  "qaAcceptance": false
+}

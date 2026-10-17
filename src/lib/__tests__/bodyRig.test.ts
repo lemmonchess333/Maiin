@@ -4829,6 +4829,152 @@ describe("form beats — the caption is a claim about the frame", () => {
       const beats = getAuthoredBeats(id)!;
       const first = beats[0].t;
       const last = beats[beats.length - 1].t;
+      if (id === "jump-rope") {
+        // Rope rotation continues forward through flight and landing.
+        expect(beats.map((beat) => beat.t)).toEqual([
+          0,
+          120 / 360,
+          180 / 360,
+          225 / 360,
+          280 / 360,
+          325 / 360,
+        ]);
+        expect(beats.map((beat) => beat.label)).toEqual([
+          "Overhead",
+          "Take off",
+          "Clear",
+          "Descend",
+          "Land",
+          "Rebound",
+        ]);
+        const advances = beats.map(
+          (beat, i) => (beats[(i + 1) % beats.length].t - beat.t + 1) % 1
+        );
+        expect(advances.every((step) => step > 0 && step <= 1 / 3 + 1e-9)).toBe(
+          true
+        );
+        expect(advances.reduce((sum, step) => sum + step, 0)).toBeCloseTo(1);
+        expect(beats[2].cue).toContain("beneath both shoes");
+        expect(beats[4].cue).toContain("forefeet");
+        continue;
+      }
+      if (id === "burpees") {
+        // This compound movement ends airborne, then lands into the next
+        // squat. It is not a single joint's outward-and-return scalar loop.
+        expect(beats.map((beat) => beat.t)).toEqual([0, 0.25, 0.5, 0.25, 0, 1]);
+        expect(beats.map((beat) => beat.label)).toEqual([
+          "Squat",
+          "Plank",
+          "Lower",
+          "Press",
+          "Tuck",
+          "Jump",
+        ]);
+        expect(beats[2].cue).toContain("chest to the floor");
+        expect(beats[5].cue).toContain("land softly");
+        continue;
+      }
+      if (id === "man-maker") {
+        // These are successive compound-movement phases, not a scalar
+        // joint excursion. The high-plank reset leads into the push-up.
+        expect(beats.map((beat) => beat.t)).toEqual([0, 0.2, 0.4, 0.6, 0.8, 1]);
+        expect(beats.map((beat) => beat.label)).toEqual([
+          "Push-Up",
+          "Row One",
+          "Row Two",
+          "Clean",
+          "Press",
+          "Reset",
+        ]);
+        expect(beats[0].cue).toContain("Lower your chest");
+        expect(beats[5].cue).toContain("return to a braced plank");
+        continue;
+      }
+      if (id === "turkish-get-up") {
+        // The get-up's positions one after another on the way up; the
+        // last cue sends the lifter back down the same way.
+        expect(beats.map((beat) => beat.t)).toEqual([0, 0.2, 0.4, 0.6, 0.8, 1]);
+        expect(beats.map((beat) => beat.label)).toEqual([
+          "Press",
+          "Elbow",
+          "Hand",
+          "Bridge",
+          "Kneel",
+          "Stand",
+        ]);
+        expect(beats[5].cue).toContain("reverse each step");
+        continue;
+      }
+      if (id === "swimming") {
+        // Front crawl advances through a periodic stroke, each arm's catch,
+        // pull and entry in turn. The wrap keeps the stroke rate.
+        for (let i = 0; i < beats.length; i++) {
+          const next = beats[(i + 1) % beats.length].t;
+          expect((next - beats[i].t + 1) % 1).toBeCloseTo(1 / 6);
+        }
+        expect(beats.map((beat) => beat.label)).toEqual([
+          "Catch",
+          "Pull",
+          "Breathe",
+          "Switch",
+          "Drive",
+          "Enter",
+        ]);
+        expect(beats[2].cue).toContain("breathe");
+        continue;
+      }
+      if (id === "treadmill" || id === "incline-treadmill-walk") {
+        // Walking advances through a periodic gait phase, rather than
+        // reversing a joint excursion. The wrap must preserve cadence.
+        for (let i = 0; i < beats.length; i++) {
+          const next = beats[(i + 1) % beats.length].t;
+          expect((next - beats[i].t + 1) % 1).toBeCloseTo(1 / 6);
+        }
+        expect(beats[0].label).toBe("Contact");
+        expect(beats[3].label).toBe("Switch");
+        if (id === "treadmill") {
+          expect(beats[3].cue).toContain("other heel");
+          expect(beats[0].cue).toContain("hands off rails");
+        } else {
+          expect(beats[3].cue).toContain("from your ankles");
+          expect(beats[0].cue).toContain("hands free");
+        }
+        continue;
+      }
+      if (id === "walking-dumbbell-lunges") {
+        // Alternating strides advance around a gait cycle. The two low
+        // poses each have a held beat; the loop continues into the next
+        // forward stride instead of reversing the final knee extension.
+        expect(beats.map((beat) => beat.t)).toEqual([
+          0, 0, 0.25, 0.5, 0.5, 0.75,
+        ]);
+        const advances = beats.map(
+          (beat, i) => (beats[(i + 1) % beats.length].t - beat.t + 1) % 1
+        );
+        expect(advances).toEqual([0, 0.25, 0.25, 0, 0.25, 0.25]);
+        expect(advances.reduce((sum, step) => sum + step, 0)).toBeCloseTo(1);
+        expect(beats[2].cue).toContain("rear leg through");
+        expect(beats[3].cue).toContain("opposite leg");
+        expect(beats[5].cue).toContain("next stride");
+        continue;
+      }
+      if (id === "box-jumps") {
+        // Flight, landing and the backward step-down are successive phases.
+        // Reversing a scalar jump would incorrectly show jumping down.
+        expect(beats.map((beat) => beat.t)).toEqual([0, 0.2, 0.4, 0.6, 0.8, 1]);
+        expect(beats.map((beat) => beat.label)).toEqual([
+          "Setup",
+          "Load",
+          "Jump",
+          "Land",
+          "Stand",
+          "Step Down",
+        ]);
+        expect(beats[3].cue).toContain("both feet together");
+        expect(beats[4].cue).toContain("fully upright");
+        expect(beats[5].cue).toContain("Step down backward");
+        continue;
+      }
       if (id === "mountain-climbers") {
         // Each leg returns to plank before the opposite leg starts. The
         // scalar knee-drive amount reverses at that deliberate reset.
@@ -5051,17 +5197,28 @@ describe("a placard goes live with its art, not before", () => {
      exercise must play exactly as it did — authoring content is not a
      product change. */
   it("an authored placard with no frames is not live", () => {
-    const authored = FORM_BEAT_IDS.filter(
-      (id) => !getAuthoredBeats(id)!.every((b) => b.image)
-    );
-    expect(
-      authored.length,
-      "expected some positions authored ahead"
-    ).toBeGreaterThan(0);
-    for (const id of authored) {
-      expect(getAuthoredBeats(id), id).not.toBeNull();
+    const id = "bench-press";
+    const authored = getAuthoredBeats(id)!;
+    expect(getFormBeats(id)).not.toBeNull();
+    expect(authored).toHaveLength(6);
+    const images = authored.map((beat) => beat.image);
+    expect(images.every(Boolean)).toBe(true);
+    try {
+      // Use a missing-art fixture; releasing every placard is valid progress.
+      delete authored[0].image;
+      expect(
+        getFormBeats(id),
+        `${id} went live with a partial card`
+      ).toBeNull();
+      for (const beat of authored) delete beat.image;
+      expect(getAuthoredBeats(id)).toBe(authored);
       expect(getFormBeats(id), `${id} went live without its card`).toBeNull();
+    } finally {
+      authored.forEach((beat, i) => {
+        beat.image = images[i];
+      });
     }
+    expect(getFormBeats(id)).not.toBeNull();
   });
 
   it("a placard whose frames are all present IS live", () => {

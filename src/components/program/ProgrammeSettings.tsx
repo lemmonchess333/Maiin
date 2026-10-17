@@ -35,6 +35,10 @@
  * stay in Settings → Profile / Units. The day-by-day weekly layout stays in
  * ScheduleLayoutSheet — both views link to it.
  */
+import {
+  isRateLimitedRejection,
+  PLAN_SAVES_TOO_OFTEN,
+} from "@/lib/callableErrors";
 import { useId, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -70,6 +74,7 @@ import BaseSectionLabel from "@/components/ui/SectionLabel";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
+import { profileNewRunnerUntil } from "@/features/program/newRunner";
 import { toExperience } from "@/features/program/experienceModel";
 import {
   focusRepSummary,
@@ -108,6 +113,7 @@ import type {
 } from "@/features/program/programTypes";
 import type { ProgramReadiness } from "@/features/program/useProgram";
 import { DEFAULT_PROGRAM_SETTINGS } from "@/features/program/programTypes";
+import { smallPlatesHint } from "@/lib/liftRules";
 import type { UserProfile } from "@/lib/auth";
 
 // RunMode / RaceDistance / Experience / Equipment are imported from the
@@ -263,7 +269,7 @@ function SettingsOptionCard({
 
 // Each focus card gets a distinct GLYPH for scannability, but all keep the
 // purple lifting accent — every option here is a lifting goal (primaryGoal
-// drives the lift split's rep ranges; "Running support" is lifting that
+// drives the lift split's rep ranges; "Support my running" is lifting that
 // complements runs, NOT run scheduling). So per sport-coding, purple is
 // correct; only the icon varies. Do not recolour these to coral.
 const FOCUS_OPTIONS: {
@@ -295,13 +301,13 @@ const FOCUS_OPTIONS: {
   },
   {
     id: "general",
-    label: "Stay fit",
+    label: "General fitness",
     desc: "Balanced general training",
     icon: <Heart size={18} style={{ color: THEME.brand }} />,
   },
   {
     id: "running",
-    label: "Running support",
+    label: "Support my running",
     desc: "Lifting that complements your runs",
     icon: <Footprints size={18} style={{ color: THEME.brand }} />,
   },
@@ -593,7 +599,11 @@ export default function ProgrammeSettings({
 
   // P2: weekly-layout preview counts, derived from the draft lift/run days
   // (consistent with the double-day warning) — no stored weekSchedule needed.
-  const weekLiftDays = liftDays;
+  // The Programme page edits nothing, so it counts the SAVED lift days, as
+  // its Current setup line does. The draft is a copy taken when the page
+  // opened: a lift-day count saved while it was open left the page saying
+  // "5 lift days" over a "3 lift" layout.
+  const weekLiftDays = variant === "overview" ? saved.liftDays : liftDays;
   const weekRunDays = effectiveRunDays;
   const weekDoubleDays = Math.max(0, weekLiftDays + weekRunDays - 7);
   const weekRestDays = Math.max(0, 7 - weekLiftDays - weekRunDays);
@@ -671,6 +681,7 @@ export default function ProgrammeSettings({
         runningBaseline: profile.runningBaseline ?? null,
         runTimeLimits: profile.runTimeLimits ?? null,
         recentLayoff,
+        newRunnerUntil: profileNewRunnerUntil(profile),
         weekSchedule: profile.weekSchedule,
         ...(saved.runMode === "race_prep" && saved.raceTargetDate
           ? {
@@ -701,7 +712,8 @@ export default function ProgrammeSettings({
         plan.programState.workouts = represcribeWorkouts(
           plan.programState.workouts,
           primaryGoal,
-          experience
+          experience,
+          plan.programState.settings?.loadUnit
         );
       }
 
@@ -763,6 +775,8 @@ export default function ProgrammeSettings({
         code === "invalid-argument"
       ) {
         toast.error("Plan didn't validate. Try a different combination.");
+      } else if (isRateLimitedRejection(err)) {
+        toast.error(PLAN_SAVES_TOO_OFTEN);
       } else {
         toast.error("Couldn't save your plan. Try again.");
       }
@@ -849,6 +863,7 @@ export default function ProgrammeSettings({
                       : programmePreservationNote({
                           liftDaysChanged,
                           weekNumber: programState?.weekNumber,
+                          levelChanged: experience !== saved.experience,
                           ...(sessionMinutesChanged
                             ? { sessionMinutesTo: sessionMinutes }
                             : {}),
@@ -1274,7 +1289,7 @@ export default function ProgrammeSettings({
             <div>
               <p className="text-sm text-foreground">I have small plates</p>
               <p className="text-xs text-muted-foreground">
-                Barbell lifts go up 1.25 kg at a time instead of 2.5 kg.
+                {smallPlatesHint(settings.loadUnit ?? "kg")}
               </p>
             </div>
             <Toggle

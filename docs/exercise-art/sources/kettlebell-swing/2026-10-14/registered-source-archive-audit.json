@@ -1,0 +1,354 @@
+{
+  "auditedAt": "2026-10-14T20:33:21.988591+00:00",
+  "exerciseId": "kettlebell-swing",
+  "passed": true,
+  "scope": "Independent read-only registration/source-archive/preservation audit. No repo/public/source edits, counter credit, image generation or project-test reruns.",
+  "checks": {
+    "previous-artwork-and-canonical": {
+      "passed": true,
+      "evidence": {
+        "prior896PublicFilesUnchanged": true,
+        "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+        "currentPublicAssetCount": 903,
+        "onlyNewPublicAssets": [
+          "public/form-art/kettlebell-swing.webp",
+          "public/form-frames/kettlebell-swing/1.webp",
+          "public/form-frames/kettlebell-swing/2.webp",
+          "public/form-frames/kettlebell-swing/3.webp",
+          "public/form-frames/kettlebell-swing/4.webp",
+          "public/form-frames/kettlebell-swing/5.webp",
+          "public/form-frames/kettlebell-swing/6.webp"
+        ]
+      }
+    },
+    "exact-originals-prompts-and-source-archive": {
+      "passed": true,
+      "evidence": {
+        "retainedOriginals": 3,
+        "originalPrompts": 3,
+        "archive": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\sources\\kettlebell-swing\\2026-10-14",
+        "newGeneration": false,
+        "rows": [
+          {
+            "pose": 1,
+            "source": "1-master.png",
+            "originalSource": "C:\\Users\\myles\\Documents\\Codex\\2026-09-29\\ok-continue-on-with-the-doing\\work\\kettlebell-swing-production-review\\1-master.png",
+            "sourceSha256": "c48e17588b1c937dc54a49bb28713bfdeb3783cdf20713977a684c719b52c00e",
+            "promptSha256": "c6b8d6d000e909697d0c70333bffbb8760b0eb0e6a3e9a450ac6910a8bde16ae",
+            "sourceBytesAndExactArchivedPromptBytesVerified": true,
+            "sourceArchiveCopies": [
+              "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\sources\\kettlebell-swing\\2026-10-14\\1-master.png"
+            ],
+            "promptExactByteArchiveCopies": [
+              "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\sources\\kettlebell-swing\\2026-10-14\\original-prompts-exact.zip::master-prompt.txt"
+            ],
+            "looseReadablePromptSha256": "c36b5d5a3ff5ed6e289414a2c468fcc61d1e4007a3e140fa446f5303605759a9",
+            "loosePromptBytesExact": false,
+            "loosePromptNormalizationIfDifferent": "Only line-ending/terminal-newline normalization; exact historical bytes retained in ZIP."
+          },
+          {
+            "pose": 2,
+            "source": "2-hike-candidate.png",
+            "originalSource": "C:\\Users\\myles\\Documents\\Codex\\2026-09-29\\ok-continue-on-with-the-doing\\work\\kettlebell-swing-production-review\\2-hike-candidate.png",
+            "sourceSha256": "5552c7d32578de3a5417e1940ac679580654f78d38df0658ead7ecb04889d2c4",
+            "promptSha256": "c2ebc7ed616d3ae37804e6a883bac3cd7197beb6b68056d2a3ae58d27cdce8ef",
+            "sourceBytesAndExactArchivedPromptBytesVerified": true,
+            "sourceArchiveCopies": [
+              "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\sources\\kettlebell-swing\\2026-10-14\\2-hike-candidate.png"
+            ],
+            "promptExactByteArchiveCopies": [
+              "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\sources\\kettlebell-swing\\2026-10-14\\original-prompts-exact.zip::2-hike-prompt.txt"
+            ],
+            "looseReadablePromptSha256": "2f3ad7b800d4b15b6085803f6e224b0abab8b6c144dca0fc23f1c406c2c654cb",
+            "loosePromptBytesExact": false,
+            "loosePromptNormalizationIfDifferent": "Only line-ending/terminal-newline normalization; exact historical bytes retained in ZIP."
+          },
+          {
+            "pose": 3,
+            "source": "3-mid-candidate.png",
+            "originalSource": "C:\\Users\\myles\\Documents\\Codex\\2026-09-29\\ok-continue-on-with-the-doing\\work\\kettlebell-swing-production-review\\3-mid-candidate.png",
+            "sourceSha256": "6a0ff5550d20ff24088f1558b0acec3f07a27d6946eb20bf2cf052dda1c9d248",
+            "promptSha256": "11725f4245e64e6a671c7123d1705a4b02d43648daa8bcc80d9f5df87713b980",
+            "sourceBytesAndExactArchivedPromptBytesVerified": true,
+            "sourceArchiveCopies": [
+              "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\sources\\kettlebell-swing\\2026-10-14\\3-mid-candidate.png"
+            ],
+            "promptExactByteArchiveCopies": [
+              "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\sources\\kettlebell-swing\\2026-10-14\\original-prompts-exact.zip::3-mid-prompt.txt"
+            ],
+            "looseReadablePromptSha256": "ce8b8ac282b5d18fb9b5119d2eec31010cb8910aa1bd8a86bc4f9a1db334c81e",
+            "loosePromptBytesExact": false,
+            "loosePromptNormalizationIfDifferent": "Only line-ending/terminal-newline normalization; exact historical bytes retained in ZIP."
+          }
+        ]
+      }
+    },
+    "three-openraster-editables": {
+      "passed": true,
+      "evidence": {
+        "threeEditableStacksIndependentlyReopenedExact": true,
+        "rows": [
+          {
+            "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\1-framed.ora",
+            "sha256": "7bc00c115eeaf0ca965c969ccda44f0da6d120b4458753ebbeaa8ad1c7ddfacb",
+            "layerCount": 4,
+            "recomposedExactly": true,
+            "mergedPreviewExactly": true,
+            "sourceArchiveCopies": [
+              "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\sources\\kettlebell-swing\\2026-10-14\\1-framed.ora"
+            ]
+          },
+          {
+            "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\2-framed.ora",
+            "sha256": "a85109fde3bfe1f4fb0f67e16ed18aa2063b53c4a421813267d5c8aaba0f1729",
+            "layerCount": 4,
+            "recomposedExactly": true,
+            "mergedPreviewExactly": true,
+            "sourceArchiveCopies": [
+              "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\sources\\kettlebell-swing\\2026-10-14\\2-framed.ora"
+            ]
+          },
+          {
+            "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\3-framed.ora",
+            "sha256": "3bdb6be39d4395bf2bf46e897ea084586ce0b94bb8deeeb5cae94ac78833c484",
+            "layerCount": 4,
+            "recomposedExactly": true,
+            "mergedPreviewExactly": true,
+            "sourceArchiveCopies": [
+              "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\sources\\kettlebell-swing\\2026-10-14\\3-framed.ora"
+            ]
+          }
+        ]
+      }
+    },
+    "frame-order-and-master-frame3": {
+      "passed": true,
+      "evidence": {
+        "sourcePoseOrder": [2, 3, 1, 1, 3, 2],
+        "threeGenuinePosesSixPaths": true,
+        "referenceFrame": 3,
+        "frames": [
+          {
+            "beat": 1,
+            "sourcePose": 2,
+            "publicPath": "public/form-frames/kettlebell-swing/1.webp",
+            "sha256": "7350f03abe14eeee78e95ddabecd12bd886aa7f0c9709bc04081ad398426dc2c",
+            "decodedPixelsExactlyFramed": true
+          },
+          {
+            "beat": 2,
+            "sourcePose": 3,
+            "publicPath": "public/form-frames/kettlebell-swing/2.webp",
+            "sha256": "809cf18e049248f85df9302fae91c90b2e254a5ec945f644c2beda102cd61c27",
+            "decodedPixelsExactlyFramed": true
+          },
+          {
+            "beat": 3,
+            "sourcePose": 1,
+            "publicPath": "public/form-frames/kettlebell-swing/3.webp",
+            "sha256": "b3c25c2b09318c3951294e6d2767f73ffb94a6bc565b45c2d18329b03c5a590b",
+            "decodedPixelsExactlyFramed": true
+          },
+          {
+            "beat": 4,
+            "sourcePose": 1,
+            "publicPath": "public/form-frames/kettlebell-swing/4.webp",
+            "sha256": "b3c25c2b09318c3951294e6d2767f73ffb94a6bc565b45c2d18329b03c5a590b",
+            "decodedPixelsExactlyFramed": true
+          },
+          {
+            "beat": 5,
+            "sourcePose": 3,
+            "publicPath": "public/form-frames/kettlebell-swing/5.webp",
+            "sha256": "809cf18e049248f85df9302fae91c90b2e254a5ec945f644c2beda102cd61c27",
+            "decodedPixelsExactlyFramed": true
+          },
+          {
+            "beat": 6,
+            "sourcePose": 2,
+            "publicPath": "public/form-frames/kettlebell-swing/6.webp",
+            "sha256": "7350f03abe14eeee78e95ddabecd12bd886aa7f0c9709bc04081ad398426dc2c",
+            "decodedPixelsExactlyFramed": true
+          }
+        ],
+        "masterMatches": [
+          {
+            "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\masters\\kettlebell-swing\\1.png",
+            "sha256": "ba27273937d489ffec03ba0357a9f14227cf4d106b67eb26966b5c5458e3b46b"
+          }
+        ]
+      }
+    },
+    "prepared-card-preservation-and-public-copy": {
+      "passed": true,
+      "evidence": {
+        "preparedNativeSha256": "08e4e912eb1303ac565f6057208449fce224062e07ef9cf408cbe6d259add1a0",
+        "registeredCutoutSourceBytesExact": true,
+        "cardSha256": "1e8b1d6b4f0140fe2eed49b9c90718affa3283e772829ebc916583262a72b9be",
+        "publicCardBytesExact": true,
+        "preparedRGBExactlyFrame3": true,
+        "allOriginalBrightPixelsRemainOpaque": 148087,
+        "dimensions": [307, 480],
+        "priorIndependentAlphaAndLightDarkReviewHashSealExact": true,
+        "cardRGBExactnessLimit": "Only native prepared PNG RGB is exact; resized lossy card retains accepted reviewed bytes."
+      }
+    },
+    "approved-release-truthful-geometry-and-registry": {
+      "passed": true,
+      "evidence": {
+        "recordPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\releases\\2026-10-14\\kettlebell-swing.json",
+        "recordSha256": "b1f93df69f858297651ef4900e096499e56282126ee6a7f912aac23c73b89f21",
+        "all11ReviewChecksWithEvidence": true,
+        "referenceFrame3": true,
+        "registryMatchesRecord": true,
+        "cueSha256": "17fc3f85add5676fee4fbebd328b34bcaacb239c38615c9f8da678790bb8411b",
+        "measurementsRecomputedFromOriginalWhiteShoePixels": true,
+        "soleROIOriginalNeutralPixelsExact": true,
+        "anchorsWithin1Pixel": true,
+        "spansWithin1Percent": true,
+        "frames": [
+          {
+            "beat": 1,
+            "sourcePose": 2,
+            "anchors": {
+              "nearSoleHeelEdge": {
+                "x": 86,
+                "y": 949
+              },
+              "farSoleHeelEdge": {
+                "x": 226,
+                "y": 912
+              }
+            },
+            "invariantDimensions": {
+              "nearLowerSoleBrightSpan": 153,
+              "farLowerSoleBrightSpan": 159
+            }
+          },
+          {
+            "beat": 2,
+            "sourcePose": 3,
+            "anchors": {
+              "nearSoleHeelEdge": {
+                "x": 86,
+                "y": 949
+              },
+              "farSoleHeelEdge": {
+                "x": 226,
+                "y": 912
+              }
+            },
+            "invariantDimensions": {
+              "nearLowerSoleBrightSpan": 153,
+              "farLowerSoleBrightSpan": 159
+            }
+          },
+          {
+            "beat": 3,
+            "sourcePose": 1,
+            "anchors": {
+              "nearSoleHeelEdge": {
+                "x": 86,
+                "y": 949
+              },
+              "farSoleHeelEdge": {
+                "x": 226,
+                "y": 912
+              }
+            },
+            "invariantDimensions": {
+              "nearLowerSoleBrightSpan": 154,
+              "farLowerSoleBrightSpan": 160
+            }
+          },
+          {
+            "beat": 4,
+            "sourcePose": 1,
+            "anchors": {
+              "nearSoleHeelEdge": {
+                "x": 86,
+                "y": 949
+              },
+              "farSoleHeelEdge": {
+                "x": 226,
+                "y": 912
+              }
+            },
+            "invariantDimensions": {
+              "nearLowerSoleBrightSpan": 154,
+              "farLowerSoleBrightSpan": 160
+            }
+          },
+          {
+            "beat": 5,
+            "sourcePose": 3,
+            "anchors": {
+              "nearSoleHeelEdge": {
+                "x": 86,
+                "y": 949
+              },
+              "farSoleHeelEdge": {
+                "x": 226,
+                "y": 912
+              }
+            },
+            "invariantDimensions": {
+              "nearLowerSoleBrightSpan": 153,
+              "farLowerSoleBrightSpan": 159
+            }
+          },
+          {
+            "beat": 6,
+            "sourcePose": 2,
+            "anchors": {
+              "nearSoleHeelEdge": {
+                "x": 86,
+                "y": 949
+              },
+              "farSoleHeelEdge": {
+                "x": 226,
+                "y": 912
+              }
+            },
+            "invariantDimensions": {
+              "nearLowerSoleBrightSpan": 153,
+              "farLowerSoleBrightSpan": 159
+            }
+          }
+        ],
+        "truthfulLimits": "Planted heel-edge raster anchors and projected outsole spans only; no fake constant rotating-bell bbox, moving head y or head scale invariant."
+      }
+    },
+    "platform-cues-preparation-and-source-provenance": {
+      "passed": true,
+      "evidence": {
+        "recordedSourceRouteTruthful": true,
+        "noInventedFullGenerationIDs": true,
+        "exactHistoricalPromptsRetainedInZIP": true,
+        "sourceArchiveSealEntriesCurrentlyVerified": 0,
+        "sourceArchiveSealStatus": "Integrated review/check evidence and source hash seal pending.",
+        "actualPlatformSixCueRowsExact": true,
+        "actualPrimarySecondaryKeyExact": true,
+        "actualPreparationStringsExactlyCatalogueFirstTwoInstructions": true,
+        "writtenPickupScopeHonestlyDisclosed": true
+      }
+    }
+  },
+  "failures": [],
+  "gitAtStart": {
+    "head": "af7ac48299e9a0daa35ce0effb72336e46d05adc",
+    "branch": "art/kettlebell-retained-cycle-20261014",
+    "statusPorcelain": "M src/components/ExerciseFormContent.tsx\n M src/components/__tests__/ExerciseFormContent.lifecycle.test.tsx\n M src/components/__tests__/ExerciseFormContent.test.tsx\n M src/lib/formArtCutouts.data.ts\n M src/lib/formArtReleases.data.ts\n M src/lib/formGuides.ts\n M src/lib/releasedFormPlacards.ts\n?? docs/exercise-art/cutout-sources/kettlebell-swing.json\n?? docs/exercise-art/cutout-sources/kettlebell-swing.png\n?? docs/exercise-art/releases/2026-10-14/kettlebell-swing.json\n?? docs/exercise-art/sources/kettlebell-swing/\n?? masters/kettlebell-swing/\n?? public/form-art/kettlebell-swing.webp\n?? public/form-frames/kettlebell-swing/\n?? src/lib/__tests__/formGuides.setup.test.ts"
+  },
+  "sourceArchivePath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\docs\\exercise-art\\sources\\kettlebell-swing\\2026-10-14",
+  "acceptedInputsSha256": "76f15ed15c7c001ed44f67cbfdb90cbf6dc72ba5dea6e087e5fbd9dad2983f9e",
+  "gitAtEnd": {
+    "head": "af7ac48299e9a0daa35ce0effb72336e46d05adc",
+    "branch": "art/kettlebell-retained-cycle-20261014",
+    "statusPorcelain": "M src/components/ExerciseFormContent.tsx\n M src/components/__tests__/ExerciseFormContent.lifecycle.test.tsx\n M src/components/__tests__/ExerciseFormContent.test.tsx\n M src/lib/formArtCutouts.data.ts\n M src/lib/formArtReleases.data.ts\n M src/lib/formGuides.ts\n M src/lib/releasedFormPlacards.ts\n?? docs/exercise-art/cutout-sources/kettlebell-swing.json\n?? docs/exercise-art/cutout-sources/kettlebell-swing.png\n?? docs/exercise-art/releases/2026-10-14/kettlebell-swing.json\n?? docs/exercise-art/sources/kettlebell-swing/\n?? masters/kettlebell-swing/\n?? public/form-art/kettlebell-swing.webp\n?? public/form-frames/kettlebell-swing/\n?? src/lib/__tests__/formGuides.setup.test.ts"
+  },
+  "limitations": [
+    "This script verifies accepted assets/provenance and schema facts. Root owns integrated public-path playback/mobile review, project checks, CI and actual merge.",
+    "Git status is observed, not forced clean during active root registration. No completion credit is assigned by this report."
+  ]
+}

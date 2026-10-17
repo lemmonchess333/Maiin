@@ -23,6 +23,7 @@ import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
 import { containsProfanity } from "@/lib/profanityFilter";
 import { uploadSpacePostPhoto } from "@/lib/spacePhotoUpload";
+import { PhotoRefusedError } from "@/lib/photoScreen";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import SustainedOfflineBanner from "@/components/ui/SustainedOfflineBanner";
@@ -35,7 +36,7 @@ import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
 import RestrictedNotice from "@/components/social/RestrictedNotice";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import type { SpacePostActivitySnapshot } from "./spaceTypes";
-import type { RecentSession } from "./useRecentSessions";
+import { recentSessionDay, type RecentSession } from "./useRecentSessions";
 import { distanceLabel } from "@/lib/runLabels";
 import { clipRouteEnds, DEFAULT_CLIP_METERS } from "@/lib/shareCard/polyline";
 import type { DistanceUnit } from "@/lib/distanceUnits";
@@ -189,10 +190,12 @@ export default function SpacePostComposer({
     if (photoFile) {
       try {
         photoUrl = await uploadSpacePostPhoto(user.uid, photoFile);
-      } catch {
+      } catch (error) {
         haptic("error");
         toast.error(
-          "Photo upload failed. Try again, or remove the photo to post without it."
+          error instanceof PhotoRefusedError
+            ? error.message
+            : "Photo upload failed. Try again, or remove the photo to post without it."
         );
         setBusy(false);
         return;
@@ -350,6 +353,9 @@ export default function SpacePostComposer({
                 <span className="flex-1 text-sm font-medium text-foreground truncate">
                   {attachableLabel(attached, unit)}
                 </span>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {recentSessionDay(attached)}
+                </span>
                 <button
                   type="button"
                   onClick={() => {
@@ -384,6 +390,9 @@ export default function SpacePostComposer({
                     )}
                     <span className="flex-1 text-sm text-foreground truncate">
                       {attachableLabel(a, unit)}
+                    </span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {recentSessionDay(a)}
                     </span>
                   </button>
                 ))}

@@ -1,0 +1,75 @@
+{
+  "reviewLabel": "elliptical-integrated-dark-manual",
+  "states": [
+    {
+      "alt": "Elliptical, Stride A",
+      "cue": "Stand tall; keep both feet on pedals.",
+      "natural": [
+        1047,
+        1072
+      ],
+      "selected": "Show frame 1: Stride A",
+      "src": "/form-frames/elliptical/1.webp"
+    },
+    {
+      "alt": "Elliptical, Hold A",
+      "cue": "Keep both feet planted in the pedals.",
+      "natural": [
+        1047,
+        1072
+      ],
+      "selected": "Show frame 2: Hold A",
+      "src": "/form-frames/elliptical/2.webp"
+    },
+    {
+      "alt": "Elliptical, Stride B",
+      "cue": "Coordinate your push and pull with legs.",
+      "natural": [
+        1047,
+        1072
+      ],
+      "selected": "Show frame 3: Stride B",
+      "src": "/form-frames/elliptical/3.webp"
+    },
+    {
+      "alt": "Elliptical, Hold B",
+      "cue": "Hold both grips; keep your chest tall.",
+      "natural": [
+        1047,
+        1072
+      ],
+      "selected": "Show frame 4: Hold B",
+      "src": "/form-frames/elliptical/4.webp"
+    },
+    {
+      "alt": "Elliptical, Return A",
+      "cue": "Return smoothly to the first shown stride.",
+      "natural": [
+        1047,
+        1072
+      ],
+      "selected": "Show frame 5: Return A",
+      "src": "/form-frames/elliptical/5.webp"
+    },
+    {
+      "alt": "Elliptical, Reset",
+      "cue": "Keep your torso tall without leaning forward.",
+      "natural": [
+        1047,
+        1072
+      ],
+      "selected": "Show frame 6: Reset",
+      "src": "/form-frames/elliptical/6.webp"
+    },
+    {
+      "alt": "Elliptical, Stride A",
+      "cue": "Stand tall; keep both feet on pedals.",
+      "natural": [
+        1047,
+        1072
+      ],
+      "selected": "Show frame 1: Stride A",
+      "src": "/form-frames/elliptical/1.webp"
+    }
+  ]
+}

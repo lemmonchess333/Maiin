@@ -1,0 +1,95 @@
+{
+  "exerciseId": "pendlay-row",
+  "version": "anatomy-v3-2026-10-15-retained-whole-pair-pendlay-v1",
+  "reviewer": "root actual native and390x844 draft review under existing user conversion/merge authorization",
+  "reviewedAt": "2026-10-15T21:41:44.748Z",
+  "allowLocalIntegration": true,
+  "completionCredit": false,
+  "strictChecksRemainNull": true,
+  "planSha256": "e7e4998f98a9242e935a3d90cc4128afea6c448ba271be0ee38f05895e61f34c",
+  "payloadManifestSha256": "e8b3e3a58ee721bba6b2f01a4f72b2ecb65a6bef19c499241f1208ec2183b185",
+  "cardSha256": "05636de34da823f2d03ec2ab83ca5506ee1042e304f99ef25f955b3cc6bc5498",
+  "approval": {
+    "actor": "User explicit continuation and merge instructions plus prior minor-requirement relaxation",
+    "instruction": "Preserve the approved no-shorts FA56 model, colours, neutral shading and equipment; complete and merge usable conversions without routine approval questions.",
+    "context": "Draft acceptance allows local registration only. Actual registered review, normal checks, exact-head CI and merge remain required."
+  },
+  "findings": [
+    "Minor original head/neck/upperbody lift and knee/hip variation after ground registration; no strict fixed-torso certification.",
+    "Modest original far-hand/bar grip spacing variation remains; no exact rigid hand placement certification.",
+    "Two physical endpoints repeated across6separatepaths; no authored intermediate or continuous trajectory claim.",
+    "Biceps/Core remain neutral original source anatomy; legend includes their secondary functional role. No new highlight boundary is invented."
+  ],
+  "observations": {
+    "identity": {
+      "observed": true,
+      "evidence": "Root viewed FA56 and both intact source/final native endpoints. Bald faceless lean white-grey anatomical athlete without shorts, featureless pelvis and complete white trainers remain; fine detail varies in original source, no exact canonical pixel identity certification."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "Only full-scene integer placement floor(0,+32)/top(0,0) on1536x1056 and commoncrop[200,90,1380,982] were used. No scaling, rotation or per-part fit. This does not recover original3D camera/depth."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "Fresh knee/ankle/sole review corrected old32px shin inference. Approximate knee-to-ankle span differs~7px, not32; registerednearsole aligns andfarwithin1px. Root native and324px playback show no material disproportion or foot sliding. Small original hip/knee/head changes remain."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "Original whole barbell and both plate assemblies remain pixel-exact outside existing muscle colour support. Stable plate count/radii and complete sleeves retained. No repaired or invented equipment geometry."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Original closed overhand grips stay on actual source shaft and both shoes stay on their original support plane after whole-scene ground registration. Modest far-hand grip-spacing variation remains disclosed; no exact rigid-grip calibration."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "Actual floor/straight-arm and lower-chest/elbows-back endpoints depict the catalogue row. Torso stays low with minor original head/neck/hip movement; no strict fixed-torso or continuous trajectory claim. Two states honestly reused over6paths."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Root inspected both final native1180x892 images and actual mobilelight/dark. Existing Lats fields use primary#7B72E9 and upperback/reardelt fields secondary#9590E0 with original local brightness/fibre contours. No new spatial body gradient, shape change, neutralBiceps/Core paint or equipment recolour."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Actual draft six cue list and activeplayer captions/sourcepaths agree: floorSet/Brace/Lower/Reset and chestRow/Squeeze. Exact cataloguefirst2setupstrings andLats/RhomboidsRearDeltsBicepsCore appear. Registered manual instruction selection remains a separate next gate."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Actual390x844 draft trace contains all6distinct candidate WebP paths and automatic6-to-1 wraps in both themes at~1206ms. Sourceorder[1,1,4,4,1,1] gives2physicalposes; no invented in-between. Registeredmanual/slower/wrap controls not yet reviewed."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Root inspected real390x844 light draft, wholeart324x360 with allathlete/plates/trainers readable, exactcue/setup/legend andnormal480x352card displayed348x255/160x117. No horizontaloverflow or materialclipping."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Root inspected real390x844 dark draft, normalall6paths/wrap andfullpage withbothnormalcard sizes. Fullbody/gear/colours readable; no horizontaloverflow/materialclipping. Actualdevlogs queriederror+warn returnedempty."
+    }
+  },
+  "evidence": {
+    "sourceEligibility": {
+      "path": "parent-source-eligibility.json",
+      "sha256": "606cad1560942a9769ef7e5c6c9a2248d66d3ec9e1fb372a8444207a4c3caa41"
+    },
+    "portableReproduction": {
+      "path": "portable-reproduction-verification-20261015/portable-reproduction-proof.json",
+      "sha256": "cc9d0ebf1e1fb8718753f9c190950e6ca25cb58507a7fe81d49b9b5f7b04f022"
+    },
+    "actualDraftBrowser": {
+      "tab": "50",
+      "origin": "http://127.0.0.1:62324",
+      "correctViewport": [
+        390,
+        844
+      ],
+      "earlier1280TraceExcludedFromMobileClaim": true,
+      "consoleQueriedLevels": [
+        "error",
+        "warn"
+      ],
+      "consoleLogs": []
+    }
+  },
+  "registeredReviewComplete": false,
+  "publicationApproved": false
+}

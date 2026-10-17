@@ -1,0 +1,30 @@
+{
+  "status": "parent-reviewed-intended-card-registry-size-growth",
+  "reviewedAt": "2026-10-15T08:48:45.250795+00:00",
+  "reviewer": "Parent actual failed-size-gate, measured-chunk and exact two-scalar diff review",
+  "baselineHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+  "reason": "Three additional exercise card/guide registrations grow the existing card metadata chunk beyond the accumulated old baseline allowance. Refresh only this measured chunk and the corresponding arithmetic total; all other entries and the5%/2KiB check limits remain unchanged.",
+  "path": "scripts/dist-size.baseline.json",
+  "beforeChunkBytes": 35200,
+  "afterChunkBytes": 37381,
+  "beforeTotal": 6244785,
+  "afterTotal": 6246966,
+  "measuredBuildFile": "formArtCutouts-CmzHA7qT.js",
+  "measuredBuildSha256": "50e66784d9b8cf37696db4295aba2dd5ccc197ca68612099ae36462deb986a0c",
+  "preflightCommand": "npm run check:dist-size",
+  "observedPreflightExitCode": 0,
+  "limitsOrCheckerChanged": false,
+  "reviewedEvidenceHashes": {
+    "checks/branch2-verify.log": "4940d235745994f51ade45d386b6593c7be409aabc04ae74b16a4837e6fa7b55",
+    "checks/branch2-verify-result.json": "ebbeee02dc6a2276e338af74d361577681749de98c2c63332440ff040d617be8",
+    "checks/branch2-failure-comparison.json": "965d6fa5daa9eaafd97e2f3ce7373025db69521d72d305aa8bb02d92a41b465f",
+    "checks/branch2-input-manifest.json": "e968960c374575b38d15d471d38b1f9bfaf4ce6c5ba8fe62ee297044f50e9207",
+    "checks/card-registry-size-preflight.log": "a3343f922cdf7f6470877c2525c5d4778176ecc89e1cb1a6121746b286f06964"
+  },
+  "reviewedRepositoryHashes": {
+    "scripts/dist-size.baseline.json": "51e3b337a2b3998e06782a1278cdcd8a7e300c89cc192f563ea1a7ea757c64f1",
+    "scripts/check-dist-size.mjs": "3bcde18a9e8340330cdaca09f9063e6566e8a719770dedc175c9a01d33d5355e"
+  },
+  "finalFullVerifyStillRequired": true,
+  "completionCredit": false
+}

@@ -1,10 +1,15 @@
 import { describe, it, expect } from "vitest";
 import {
   startingWeightForCategory,
+  startingWeightForExercise,
   seedStartingLoads,
   weightAfterExerciseSwap,
   type StartingLoadContext,
 } from "../startingLoads";
+import { equipmentGridFor, loadGridFor } from "../loadSteps";
+import { EXERCISES } from "@/lib/exercises";
+import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
+import { buildOnboardingPlan } from "@/lib/onboardingPlan";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
 
 const ctx = (over: Partial<StartingLoadContext> = {}): StartingLoadContext => ({
@@ -426,5 +431,288 @@ describe("seedStartingLoads", () => {
     ];
     seedStartingLoads(input, ctx());
     expect(input[0].exercises[0].weight).toBe(80);
+  });
+});
+
+/* Pgm8 L15: a barbell lift a plan is being built with, whose first weight
+   would be under the 20 kg bar, is built as its dumbbell version where the
+   bank has one, and starts at the bar where it hasn't. A lift the plan
+   already has keeps its exercise and its weight (Lift4 (2), Pgm5). The
+   simulator found the plans it fixes (F10): curls at 5–17.5 kg, skull
+   crushers at 15–17.5 kg and a weak lifter's press at 12.5–15 kg. */
+describe("a new lift under the bar (Pgm8 L15)", () => {
+  // A 60 kg woman new to lifting: a 5 kg barbell curl (60 × 0.12 × 0.75 =
+  // 5.4), a 12.5 kg press (60 × 0.3 × 0.75 = 13.5) and a 20 kg bench.
+  const light = ctx({ bodyweightKg: 60, sex: "female" });
+  const lift = (exerciseId: string, over: Partial<ProgramExercise> = {}) => {
+    const catalogue = EXERCISES.find((e) => e.id === exerciseId);
+    return ex({
+      exerciseId,
+      name: catalogue?.name ?? exerciseId,
+      movementCategory: inferMovementCategory(
+        catalogue?.name ?? exerciseId,
+        exerciseId
+      ),
+      instanceId: `${exerciseId}-slot`,
+      weight: 0,
+      lastSuccessfulWeight: 0,
+      lastAttemptedWeight: 0,
+      ...over,
+    });
+  };
+  const curl = (over: Partial<ProgramExercise> = {}) =>
+    lift("barbell-curl", { isAccessory: true, ...over });
+  const build = (workouts: WorkoutDay[], building = {}) =>
+    seedStartingLoads(workouts, light, 8, { building });
+
+  it("builds a barbell curl under the bar as a dumbbell curl, on the rack", () => {
+    const [built] = build([day([curl()])])[0].exercises;
+    // The bank's dumbbell curl loads 0.4 of the category's barbell curl: 2 kg
+    // a hand, a weight the rack has.
+    expect(built).toMatchObject({
+      exerciseId: "db-curl",
+      name: "Dumbbell Curl",
+      movementCategory: "arms_biceps",
+      weight: 2,
+      lastSuccessfulWeight: 2,
+      lastAttemptedWeight: 2,
+    });
+  });
+
+  it("builds a compound under the bar as its dumbbell version too", () => {
+    const [press] = build([day([lift("overhead-press")])])[0].exercises;
+    expect(press).toMatchObject({
+      exerciseId: "db-shoulder-press",
+      name: "Dumbbell Shoulder Press",
+      movementCategory: "vertical_push",
+      weight: 5,
+    });
+  });
+
+  it("keeps the slot it fills: its place, numbers and role, with no way back", () => {
+    const [built] = build([
+      day([
+        curl({
+          sets: 2,
+          reps: 10,
+          baseReps: 10,
+          repRangeMax: 15,
+          progressionType: "double",
+          performanceHistory: [
+            {
+              date: "2026-10-01",
+              weight: 0,
+              repsCompleted: 10,
+              repsTarget: 10,
+            },
+          ],
+        }),
+      ]),
+    ])[0].exercises;
+    expect(built).toMatchObject({
+      exerciseId: "db-curl",
+      instanceId: "barbell-curl-slot",
+      sets: 2,
+      reps: 10,
+      baseReps: 10,
+      repRangeMax: 15,
+      progressionType: "double",
+      isAccessory: true,
+      performanceHistory: [],
+      lastPerformance: null,
+    });
+    // Not an equipment or injury swap: lifting a limitation never brings the
+    // barbell back (`restoreSwappedLifts`).
+    expect(built.swappedFrom).toBeUndefined();
+  });
+
+  it("leaves a lift at the bar or over it as it is", () => {
+    const [bench] = build([day([lift("bench-press")])])[0].exercises;
+    expect(bench).toMatchObject({ exerciseId: "bench-press", weight: 20 });
+  });
+
+  it("takes the next dumbbell version when the day holds the first", () => {
+    const [built] = build([day([curl(), lift("db-curl")])])[0].exercises;
+    expect(built.exerciseId).toBe("hammer-curl");
+  });
+
+  it("takes no dumbbell version past twice a week (`capRepeatedLifts`)", () => {
+    const [built] = build([
+      day([curl()]),
+      day([lift("db-curl", { instanceId: "a" })]),
+      day([lift("db-curl", { instanceId: "b" })]),
+    ])[0].exercises;
+    expect(built.exerciseId).toBe("hammer-curl");
+  });
+
+  it("takes no dumbbell version the person's injuries rule out", () => {
+    const [built] = build([day([curl()])], { injuries: ["elbow"] })[0]
+      .exercises;
+    expect(built.exerciseId).toBe("hammer-curl");
+  });
+
+  it("starts the lift at the bar when the day holds every dumbbell version", () => {
+    const [built] = build([
+      day([
+        curl(),
+        lift("db-curl"),
+        lift("hammer-curl"),
+        lift("cross-body-hammer-curl"),
+      ]),
+    ])[0].exercises;
+    expect(built).toMatchObject({
+      exerciseId: "barbell-curl",
+      weight: 20,
+      lastSuccessfulWeight: 20,
+      lastAttemptedWeight: 20,
+    });
+  });
+
+  it("starts a barbell lift the bank has no dumbbell version of at the bar", () => {
+    // The EZ-bar curl is a barbell lift outside the bank.
+    const [built] = build([
+      day([lift("ez-bar-curl", { isAccessory: true })]),
+    ])[0].exercises;
+    expect(built).toMatchObject({ exerciseId: "ez-bar-curl", weight: 20 });
+  });
+
+  it("keeps a lift the plan already has, under the bar", () => {
+    const press = lift("overhead-press", { weight: 15 });
+    const [kept] = build([day([press])], { kept: [day([press])] })[0].exercises;
+    // Seeded as an untrained lift always is, and neither floored nor swapped.
+    expect(kept).toMatchObject({ exerciseId: "overhead-press", weight: 12.5 });
+  });
+
+  it("swaps and floors nothing for a plan the person has (no `building`)", () => {
+    const out = seedStartingLoads(
+      [day([curl(), lift("overhead-press")])],
+      light,
+      8
+    );
+    expect(
+      out[0].exercises.map((e) => `${e.exerciseId} ${String(e.weight)}`)
+    ).toEqual(["barbell-curl 5", "overhead-press 12.5"]);
+  });
+
+  it("builds nothing once the week is fitted: a lift under the bar starts at the bar", () => {
+    // `buildPlan` seeds the fitted week again, where a dumbbell version
+    // would be a lift the time fit never priced.
+    const [built] = build([day([curl()])], { fitted: true })[0].exercises;
+    expect(built).toMatchObject({ exerciseId: "barbell-curl", weight: 20 });
+  });
+
+  it("changes nothing seeded a second time, as a plan build seeds twice", () => {
+    const week = [
+      day([curl(), lift("overhead-press"), lift("bench-press")]),
+      day([
+        lift("barbell-curl", { instanceId: "curl-2", isAccessory: true }),
+        lift("db-curl"),
+        lift("hammer-curl"),
+        lift("cross-body-hammer-curl"),
+      ]),
+    ];
+    const once = build(week);
+    // As `buildPlan` seeds the fitted week, and as a rebuild would.
+    expect(build(once, { fitted: true })).toEqual(once);
+    expect(build(once)).toEqual(once);
+  });
+});
+
+/* A start on the equipment's own weights. Plates and stacks move in 2.5 kg,
+   but a rack of dumbbells goes 1–10 kg in 1 kg steps (`loadSteps.ts`), so a
+   2.5 or 7.5 kg dumbbell start is a weight nobody can pick up. */
+describe("a start on the equipment's own weights", () => {
+  const racked = EXERCISES.filter(
+    (e) => e.equipment === "Dumbbells" || e.equipment === "Kettlebell"
+  );
+
+  it("starts every dumbbell and kettlebell lift on its rack", () => {
+    expect(racked.length).toBeGreaterThan(10);
+    const off: string[] = [];
+    for (const e of racked)
+      for (const bodyweightKg of [50, 62, 80, 110])
+        for (const experience of [
+          "beginner",
+          "intermediate",
+          "advanced",
+        ] as const)
+          for (const sex of ["male", "female"])
+            for (const reps of [6, 10, 15]) {
+              const w = startingWeightForExercise(
+                e.id,
+                inferMovementCategory(e.name, e.id),
+                { bodyweightKg, experience, sex },
+                true,
+                reps
+              );
+              const grid = equipmentGridFor(e.id, false)!;
+              if (w > 0 && Math.abs(grid.nearest(w) - w) > 1e-9)
+                off.push(`${e.id} ${String(w)} kg`);
+            }
+    expect(off).toEqual([]);
+  });
+
+  it("keeps every other start in 2.5 kg steps", () => {
+    const loaded = EXERCISES.filter(
+      (e) =>
+        e.equipment !== "Dumbbells" &&
+        e.equipment !== "Kettlebell" &&
+        e.equipment !== "Bodyweight"
+    );
+    expect(loaded.length).toBeGreaterThan(10);
+    const off: string[] = [];
+    for (const e of loaded)
+      for (const bodyweightKg of [50, 80, 110])
+        for (const reps of [5, 10, 15]) {
+          const w = startingWeightForExercise(
+            e.id,
+            inferMovementCategory(e.name, e.id),
+            ctx({ bodyweightKg }),
+            true,
+            reps
+          );
+          if (w % 2.5 !== 0) off.push(`${e.id} ${String(w)} kg`);
+        }
+    expect(off).toEqual([]);
+  });
+
+  it("starts every loaded lift of a new plan on its equipment's grid", () => {
+    const off = new Set<string>();
+    for (const primaryGoal of ["hypertrophy", "strength", "general"] as const)
+      for (const experience of [
+        "beginner",
+        "intermediate",
+        "advanced",
+      ] as const)
+        for (const gender of ["male", "female"] as const)
+          for (const equipment of ["full_gym", "home_gym"] as const)
+            for (const weightKg of [55, 80, 110]) {
+              const plan = buildOnboardingPlan(
+                {
+                  primaryGoal,
+                  daysPerWeek: 4,
+                  equipment,
+                  gender,
+                  experience,
+                  weightKg,
+                  runFrequency: "none",
+                  runMode: "freeform",
+                  weeklyRunDays: 0,
+                  raceDistance: "10k",
+                  raceTargetDate: "",
+                  injuries: ["none"],
+                },
+                "recomp",
+                "2026-09-07"
+              );
+              for (const d of plan.programState.workouts)
+                for (const e of d.exercises) {
+                  if (e.weight <= 0) continue;
+                  const grid = loadGridFor(e.exerciseId, false);
+                  if (Math.abs(grid.nearest(e.weight) - e.weight) > 1e-9)
+                    off.add(`${e.exerciseId} ${String(e.weight)} kg`);
+                }
+            }
+    expect([...off]).toEqual([]);
   });
 });

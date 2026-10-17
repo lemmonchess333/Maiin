@@ -20,14 +20,16 @@ const ChallengeList = lazyRetry(() =>
  * with whichever primitive is ALIVE for this user.
  *
  * - A LIVE (multi-member) circle is the deepest surface in the app —
- *   it leads, then Spaces, then Challenges (the original
- *   SOCIAL-HOME-01 order).
+ *   it leads, then Challenges, then Spaces.
  * - Without one (no circle, or a 1-member circle waiting on an
  *   invite), the lead position goes to the contexts a user can join
- *   ALONE on day one — Spaces, then Challenges — and Circles compacts
+ *   ALONE on day one — Challenges, then Spaces — and Circles compacts
  *   below as the start/join affordance. Leading with an invite-code
  *   group presupposes you already know someone here; joining is the
  *   only social act that doesn't.
+ * - Challenges sit above Spaces in both (Soc13): this week's challenge
+ *   is something to do now, with an end date; Spaces are a directory to
+ *   browse.
  *
  * Crews retired 2026-07-20 (docs/proposals/crews-retirement.md): the
  * legacy crew list/create/suggested sections that used to close this
@@ -130,8 +132,8 @@ export default function CommunityView({
   return (
     <section aria-label="Community" className="space-y-6">
       {contextsLead
-        ? [spaces, challenges, circles]
-        : [circles, spaces, challenges]}
+        ? [challenges, spaces, circles]
+        : [circles, challenges, spaces]}
     </section>
   );
 }

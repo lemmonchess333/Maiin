@@ -1,0 +1,11 @@
+check-dist-size: 370 chunks, 6125.3 kB total (baseline 6100.6 kB).
+  new small chunks (add to the baseline when convenient):
+    loadSteps: new 2.6 kB chunk
+    pause: new 0.2 kB chunk
+    photoScreen: new 0.4 kB chunk
+  smaller than baseline (lower it to lock in):
+    usePartnerStreak: 37.2 kB → 34.3 kB (-8.0%)
+    weightUnits: gone (was 0.4 kB) — remove it from the baseline
+check-dist-size: FAIL
+    ExerciseFormContent: 73.0 kB → 77.1 kB (+5.6%, allowed +3.6 kB)
+  If the growth is intended, run `node scripts/check-dist-size.mjs --update` in the same PR and say why in its body.

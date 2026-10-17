@@ -1,0 +1,18 @@
+{
+  "finalStatus": [
+    " M src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+    " M src/lib/formArtCutouts.data.ts",
+    " M src/lib/formArtReleases.data.ts",
+    " M src/lib/releasedFormPlacards.ts",
+    "?? docs/exercise-art/releases/2026-10-14/rear-delt-machine-fly.json",
+    "?? docs/exercise-art/sources/rear-delt-machine-fly/",
+    "?? masters/rear-delt-machine-fly/",
+    "?? public/form-art/rear-delt-machine-fly.webp",
+    "?? public/form-frames/rear-delt-machine-fly/"
+  ],
+  "phase": "branch",
+  "head": "26326d712111a3f8cb80fc825d037fef976ee5de",
+  "status": "terminal",
+  "exitCode": 1,
+  "finishedAt": "2026-10-14T14:27:01.5725619Z"
+}

@@ -1,3 +1,5 @@
+import { liftUnitLabel, loadIn } from "@/lib/liftLoad";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
 import {
   loweringOf,
   type ProgramExercise,
@@ -21,6 +23,7 @@ export default function LoweredLine({
   >;
   className?: string;
 }) {
+  const liftUnit = useLiftUnit();
   const lowered = loweringOf(exercise);
   if (!lowered || lowered.shown) return null;
   const now = lowered.unit === "kg" ? exercise.weight : exercise.reps;
@@ -29,12 +32,20 @@ export default function LoweredLine({
   const n = (value: number) => (
     <span className="font-mono tabular-nums">{value}</span>
   );
+  // `unit: "kg"` names what came down, the weight; the lifter reads it in
+  // their own unit (Lift18).
   const fromUnit =
-    lowered.unit === "kg" ? " kg" : lowered.unit === "s" ? "s" : " reps";
+    lowered.unit === "kg"
+      ? ` ${liftUnitLabel(liftUnit)}`
+      : lowered.unit === "s"
+        ? "s"
+        : " reps";
   const targetUnit = timed ? "s" : lowered.unit === "kg" ? " reps" : "";
+  const from =
+    lowered.unit === "kg" ? loadIn(lowered.from, liftUnit) : lowered.from;
   return (
     <p className={className}>
-      Down from {n(lowered.from)}
+      Down from {n(from)}
       {fromUnit}: two sessions under {n(lowered.target)}
       {targetUnit}
     </p>

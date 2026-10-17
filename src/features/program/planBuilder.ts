@@ -1,9 +1,11 @@
 import type { RunningBaseline } from "@/features/program/runningBaseline";
+import type { LiftUnit } from "@/lib/liftLoad";
 import type { RunTimeLimits } from "./runTimeLimits";
 import {
   continuingRacePlan,
   continuedBlockWeeks,
-  preserveEditedRunDays,
+  planWeekFromToday,
+  raceWeekFromToday,
 } from "./racePlanContinuation";
 /**
  * planBuilder · P0-C · spec v7.
@@ -73,6 +75,7 @@ import {
   balanceWeekVolume,
   generateProgram,
   expectedDayCount,
+  refitSessionsASaveOverran,
   oneSetFewer,
   raceWeekSession,
   resetToBaseSets,
@@ -84,7 +87,7 @@ import {
   raceBlockWeek,
 } from "./weekPrescription";
 import { mainRepAnchor } from "./roleTable";
-import { represcribeSwapped } from "./represcribe";
+import { represcribeMainLifts, represcribeSwapped } from "./represcribe";
 import { refitSessionsToTime, sessionMinutesFor } from "./sessionFit";
 import {
   loadContextFrom,
@@ -98,6 +101,7 @@ import {
   applyEquipmentFilterToWorkouts,
   restoreSwappedLifts,
 } from "./matchTemplate";
+import { contraindicatedFor } from "./injurySubstitutions";
 import {
   generateRacePlanV2,
   scheduleStructuredWeekV2,
@@ -179,6 +183,10 @@ export interface PlanBuilderInput {
   runningBaseline?: RunningBaseline | null;
   runTimeLimits?: RunTimeLimits | null;
   recentLayoff?: import("./layoffDetection").LayoffClass;
+  /** Run20 (5): the day a new runner's first weeks end (`newRunnerUntil`),
+   *  from setup's answer or the profile (`profileNewRunnerUntil`). Omitted →
+   *  no new runner's weeks. */
+  newRunnerUntil?: string | null;
   weekSchedule?: ScheduleDay[];
   raceGoal?: {
     distance: "5k" | "10k" | "half" | "marathon";
@@ -212,6 +220,10 @@ export interface PlanBuilderInput {
   /** Lift4 (11): "I have small plates", for a new plan's settings; a plan
    *  the person has keeps the setting it has. */
   smallPlates?: boolean;
+
+  /** Lift18: the lifter's kit is in lb, for a new plan's settings and its
+   *  starting loads; a plan the person has keeps the setting it has. */
+  loadUnit?: LiftUnit;
 
   injuries: string[];
 
@@ -290,9 +302,38 @@ export interface PlanBuilderOutput {
 /* ─── Sub-builders ──────────────────────────────────────────────── */
 
 /** Produces the 7-day type structure (lift/run/both/rest). Pure. */
-function buildWeekSchedule(input: PlanBuilderInput): ScheduleDay[] {
+function buildWeekSchedule(
+  input: Pick<
+    PlanBuilderInput,
+    "liftDays" | "runMode" | "weeklyRunDays" | "weekSchedule"
+  >
+): ScheduleDay[] {
   const runDays = input.runMode === "freeform" ? 0 : input.weeklyRunDays;
   return planWeekSchedule(input.liftDays, runDays, input.weekSchedule);
+}
+
+/**
+ * The gated week with every slot an injury holds given back as it was. A
+ * slot is held for an injury when the lift it replaced (`swappedFrom`) is
+ * one the person's injuries rule out. The gate maps each slot to one slot,
+ * so they line up by position.
+ */
+function keepInjurySwaps(
+  before: readonly WorkoutDay[],
+  gated: WorkoutDay[],
+  injuries: readonly string[]
+): WorkoutDay[] {
+  if (injuries.length === 0) return gated;
+  return gated.map((day, d) => ({
+    ...day,
+    exercises: day.exercises.map((ex, e) => {
+      const was = before[d]?.exercises[e];
+      const held =
+        was?.swappedFrom !== undefined &&
+        contraindicatedFor(was.swappedFrom.exerciseId, injuries).length > 0;
+      return held ? { ...was } : ex;
+    }),
+  }));
 }
 
 /**
@@ -309,7 +350,30 @@ function buildWeekSchedule(input: PlanBuilderInput): ScheduleDay[] {
  * role's numbers (`represcribeSwapped`), and its movement-specific
  * load/history is safely reinitialised.
  */
-function buildLiftProgram(input: PlanBuilderInput): {
+/** What the lift week is built from: the person's answers, and the plan
+ *  they have when there is one. */
+type LiftProgramInput = Pick<
+  PlanBuilderInput,
+  | "primaryGoal"
+  | "experience"
+  | "previousExperience"
+  | "sessionMinutes"
+  | "previousSessionMinutes"
+  | "bodyweightKg"
+  | "sex"
+  | "liftDays"
+  | "runMode"
+  | "weeklyRunDays"
+  | "weekSchedule"
+  | "equipment"
+  | "barbellAtHome"
+  | "injuries"
+  | "existingState"
+  | "preserveHistory"
+  | "loadUnit"
+>;
+
+function buildLiftProgram(input: LiftProgramInput): {
   splitType: SplitType;
   workouts: WorkoutDay[];
   /** The session length the workouts are fitted to; absent for a plan
@@ -321,6 +385,8 @@ function buildLiftProgram(input: PlanBuilderInput): {
     weightKg: input.bodyweightKg,
     experience: input.experience,
     sex: input.sex,
+    liftingWeightUnit:
+      input.existingState?.settings?.loadUnit ?? input.loadUnit,
   });
   const sameDayCount =
     !!existing &&
@@ -328,8 +394,9 @@ function buildLiftProgram(input: PlanBuilderInput): {
     existing.length === expectedDayCount(input.liftDays);
   // A level change is a content edit like any other (Lift4, restoring
   // Pgm5's rule): it never rebuilds the week and never swaps an exercise.
-  // The level reaches the plan through what reads it — whether lighter
-  // weeks come and the RPE row now, the exercises a plan built later picks.
+  // It sets how the main lifts progress (below); the rest of the level
+  // reaches the plan through what reads it — whether lighter weeks come and
+  // the RPE row now, the exercises a plan built later picks.
   const preserve = sameDayCount && !!input.existingState;
 
   const base =
@@ -361,30 +428,44 @@ function buildLiftProgram(input: PlanBuilderInput): {
   // Experience gate (2026-07-28). `generateProgram` gates internally, but that
   // is not enough and a sweep proved it: the PRESERVE branch above never calls
   // `generateProgram` at all, so a beginner seeded from a template — the only
-  // seed path at onboarding — was never gated once. It is idempotent, so the
-  // generated path pays nothing.
+  // seed path at onboarding — was never gated once. On a generated plan it
+  // runs after `generateProgram`'s own gate and filters, so it levels what
+  // the time fit and the kit swaps left above the person's level.
   //
   // Only for a plan being built: a generated one, or a template seeded at
   // onboarding, the one caller with no previous level. A settings save keeps
   // the exercises the plan has. Gated there, a level change kept as a content
   // edit would come back later as swaps on an unrelated save (Lift4: the
   // engine never swaps an exercise on its own).
+  //
+  // A lift held for an injury keeps its place: the injury filter may give a
+  // novice an above-level movement when it is the one that spares the injury
+  // (`applyInjuryFiltersToWorkouts`, the gate's one documented exception).
+  // Gated again here, a generated plan's injury swap went back to a lift
+  // chosen with no regard for the injuries or the twice-a-week cap: a sore
+  // back's Bulgarian split squat became a third leg press.
   const building = !preserve || input.previousExperience === undefined;
   const levelled = building
-    ? applyComplexityGate(
+    ? keepInjurySwaps(
         base.workouts,
-        toExperience(input.experience),
-        exerciseBank,
-        (ex, toId) =>
-          weightAfterExerciseSwap(ex as ProgramExercise, toId, loadCtx).weight,
-        exerciseDisplayName
+        applyComplexityGate(
+          base.workouts,
+          toExperience(input.experience),
+          exerciseBank,
+          (ex, toId) =>
+            weightAfterExerciseSwap(ex as ProgramExercise, toId, loadCtx)
+              .weight,
+          exerciseDisplayName
+        ),
+        input.injuries
       )
     : base.workouts;
 
   // Pgm5 follow-ups: honour the user's CURRENT injuries and equipment on the
   // regeneration path (generateProgram ignores both; the preserve branch keeps
   // whatever was there). Injuries first (safety), then equipment — the
-  // equipment picker is injury-aware, so a swap never reintroduces a risk.
+  // equipment picker is injury-aware, so a swap never reintroduces a risk,
+  // and neither swap gives a lift a third day in the week.
   // Both deep-clone (the pure builder never aliases existingState) and are
   // no-ops for healthy / full-gym users.
   //
@@ -420,7 +501,8 @@ function buildLiftProgram(input: PlanBuilderInput): {
       input.barbellAtHome
     ),
     input.primaryGoal,
-    toExperience(input.experience)
+    toExperience(input.experience),
+    input.existingState?.settings?.loadUnit ?? input.loadUnit
   );
   // Lift4 (5): a settings save that changes the session length re-fits the
   // plan the person has, sets only. Anything else keeps the plan's sets as
@@ -443,6 +525,24 @@ function buildLiftProgram(input: PlanBuilderInput): {
     : refit
       ? sessionMinutesFor(input.sessionMinutes)
       : input.existingState?.sessionMinutes;
+  // Lift4 (12): a level change sets how the main lifts progress, on the
+  // plan the person has (`represcribeMainLifts`), for the focus its
+  // sessions are set for: the plan's own, which is a block's while one
+  // runs. A focus changed in the same save with the sessions kept leaves
+  // them on the old focus; one with the sessions updated re-prescribes
+  // every lift afterwards anyway.
+  const relevel =
+    preserve &&
+    input.previousExperience !== undefined &&
+    toExperience(input.previousExperience) !== toExperience(input.experience);
+  const levelledMains = relevel
+    ? represcribeMainLifts(
+        fitted,
+        input.existingState?.primaryGoal ?? input.primaryGoal,
+        toExperience(input.experience),
+        input.existingState?.settings?.loadUnit ?? input.loadUnit
+      )
+    : fitted;
   // Template-seeded onboarding takes the preserve branch above. Those rows
   // historically arrived at 0 kg and therefore never passed through
   // generateProgram's cold-start seeding. Run the idempotent seeder across
@@ -450,7 +550,7 @@ function buildLiftProgram(input: PlanBuilderInput): {
   // With no bodyweight, a lift with no load starts from the bar (Lift4 (5));
   // the loads a plan already shows stay.
   const workouts = seedStartingLoads(
-    fitted,
+    levelledMains,
     loadCtx,
     // Must carry the SAME rep anchor generateProgram used, or this pass
     // silently undoes it: this seeder runs last and is the one that
@@ -460,15 +560,87 @@ function buildLiftProgram(input: PlanBuilderInput): {
     // 8-rep weight — the exact "tested copy vs running copy" shape, with
     // both copies in the same feature directory.
     mainRepAnchor(input.primaryGoal, toExperience(input.experience)),
-    { unloadedOnly: !loadCtx }
+    {
+      unloadedOnly: !loadCtx,
+      // Pgm8 L15, as generateProgram built the week, or this pass would put
+      // a lift it started at the bar back under it. The week is fitted, so
+      // nothing new is built here. A save that keeps the week builds
+      // nothing at all: existing plans keep their lifts.
+      ...(!preserve
+        ? {
+            building: {
+              kept: existing,
+              injuries: input.injuries,
+              fitted: true,
+            },
+          }
+        : {}),
+    }
   );
+  // Lift15: a new level never leaves a day over its length that fitted
+  // before it (`refitSessionsASaveOverran`). A level change only: an injury
+  // or a change of kit swaps lifts that come back when the injury or the kit
+  // does, and a cut made for the swap would outlast it. In an ordinary week
+  // only, as Lift7's rollover re-fit: a lighter week, a race week or a
+  // return's first week holds fewer sets than the plan's own already.
+  const kept = input.existingState;
+  const ordinaryWeek =
+    kept !== undefined &&
+    kept.currentPhase !== "deload" &&
+    kept.raceWeek === undefined &&
+    (kept.easingBack?.weeksLeft ?? 0) <= 0;
+  const keptLength =
+    relevel &&
+    !refit &&
+    ordinaryWeek &&
+    sessionMinutes !== undefined &&
+    existing
+      ? refitSessionsASaveOverran(
+          existing,
+          workouts,
+          input.primaryGoal,
+          toExperience(input.experience),
+          sessionMinutesFor(sessionMinutes)
+        )
+      : workouts;
   return {
     splitType: base.splitType,
     // New days or a new session length build the week's sets afresh, so a
     // week made lighter goes lighter again (`keepWeekLighter`).
-    workouts: !preserve || refit ? keepWeekLighter(input, workouts) : workouts,
+    workouts:
+      !preserve || refit ? keepWeekLighter(input, workouts) : keptLength,
     ...(sessionMinutes !== undefined ? { sessionMinutes } : {}),
   };
+}
+
+/** The answers a first plan's lift week is built from (`freshLiftWeek`). */
+export type FreshLiftAnswers = Pick<
+  PlanBuilderInput,
+  | "primaryGoal"
+  | "experience"
+  | "sessionMinutes"
+  | "bodyweightKg"
+  | "sex"
+  | "liftDays"
+  | "equipment"
+  | "barbellAtHome"
+  | "injuries"
+>;
+
+/**
+ * The lift week a first plan built from these answers holds: the same
+ * build setup and a rebuild make, with no plan to keep. The volume cards
+ * read what the days and time can fit from it (`weeklyVolumeTargets`), so
+ * it has to be the person's own week, on their kit, injuries, level and
+ * bodyweight, not a generic one. The week's layout among run days only
+ * orders the days; the lifts and sets are the same.
+ */
+export function freshLiftWeek(answers: FreshLiftAnswers): WorkoutDay[] {
+  return buildLiftProgram({
+    ...answers,
+    runMode: "freeform",
+    weeklyRunDays: 0,
+  }).workouts;
 }
 
 /**
@@ -479,7 +651,7 @@ function buildLiftProgram(input: PlanBuilderInput): {
  * while it still read as lighter.
  */
 function keepWeekLighter(
-  input: PlanBuilderInput,
+  input: Pick<PlanBuilderInput, "existingState" | "preserveHistory">,
   workouts: WorkoutDay[]
 ): WorkoutDay[] {
   const kept = input.preserveHistory ? input.existingState : undefined;
@@ -487,7 +659,11 @@ function keepWeekLighter(
   if (kept.currentPhase === "deload") {
     const lighter = applyDeload(workouts);
     return kept.raceWeek === "race"
-      ? raceWeekSession(lighter, kept.settings?.smallPlates === true)
+      ? raceWeekSession(
+          lighter,
+          kept.settings?.smallPlates === true,
+          kept.settings?.loadUnit ?? "kg"
+        )
       : lighter;
   }
   return firstWeekBack(kept) ? oneSetFewer(workouts) : workouts;
@@ -573,31 +749,39 @@ function buildRunPlan(
         runPlan: continued,
       };
     }
-    const racePlan = generateRacePlanV2({
-      weekSchedule,
-      // New plans have no prior layoff read; settings pass the same
-      // account-scoped evidence as the live weekly generator.
-      recentLayoff: input.recentLayoff ?? "none",
-      raceGoal: input.raceGoal,
-      weeklyRunDays: input.weeklyRunDays,
-      currentDate: input.currentDate,
-      weekStart,
-      tuning: input.runTuning ?? DEFAULT_RUN_TUNING,
-      easyPaceSPerKm: planningEasyPaceSPerKm(input.runFitness),
-      runningBaseline: input.runningBaseline,
-      runTimeLimits: input.runTimeLimits,
-      planTotalWeeks: continued?.totalWeeks,
-    });
+    const raceGoal = input.raceGoal;
+    // Run19: the week from today, or next week's when none of its run days
+    // is left (`raceWeekFromToday`).
+    const { plan: racePlan, runDays } = raceWeekFromToday(
+      (from) =>
+        generateRacePlanV2({
+          weekSchedule,
+          // New plans have no prior layoff read; settings pass the same
+          // account-scoped evidence as the live weekly generator.
+          recentLayoff: input.recentLayoff ?? "none",
+          raceGoal,
+          weeklyRunDays: input.weeklyRunDays,
+          currentDate: from.currentDate,
+          weekStart: from.weekStart,
+          tuning: input.runTuning ?? DEFAULT_RUN_TUNING,
+          easyPaceSPerKm: planningEasyPaceSPerKm(input.runFitness),
+          runningBaseline: input.runningBaseline,
+          runTimeLimits: input.runTimeLimits,
+          newRunnerUntil: input.newRunnerUntil,
+          planTotalWeeks: continued?.totalWeeks,
+        }),
+      { currentDate: input.currentDate, weekStart },
+      input.currentDate,
+      continued
+        ? {
+            runDays: input.existingState?.runDays ?? [],
+            manualCompletions: input.existingState?.manualCompletions,
+          }
+        : undefined
+    );
     const totalWeeks = continuedBlockWeeks(racePlan.totalWeeks, continued);
     return {
-      runDays: continued
-        ? preserveEditedRunDays(
-            input.existingState?.runDays ?? [],
-            racePlan.weeks[0] ?? [],
-            input.existingState?.manualCompletions,
-            input.currentDate
-          )
-        : (racePlan.weeks[0] ?? []),
+      runDays,
       runPlan: {
         ...continued,
         mode: "race_prep",
@@ -616,11 +800,14 @@ function buildRunPlan(
 
   // structured
   return {
-    runDays: scheduleStructuredWeekV2({
-      weekSchedule,
-      weekNumber: input.existingState?.weekNumber ?? 1,
-      weekStart,
-    }),
+    runDays: planWeekFromToday(
+      scheduleStructuredWeekV2({
+        weekSchedule,
+        weekNumber: input.existingState?.weekNumber ?? 1,
+        weekStart,
+      }),
+      input.currentDate
+    ),
     runPlan: { mode: "structured" },
   };
 }
@@ -811,6 +998,7 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
       ...(input.smallPlates !== undefined
         ? { smallPlates: input.smallPlates }
         : {}),
+      ...(input.loadUnit !== undefined ? { loadUnit: input.loadUnit } : {}),
     },
     weekHistory:
       input.preserveHistory && input.existingState

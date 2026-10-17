@@ -6,6 +6,7 @@ import { buttonClasses } from "@/components/ui/buttonClasses";
 import { workoutTitle, type Workout } from "@/hooks/useWorkouts";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonthYear } from "@/utils/formatters";
+import { Collapse } from "@/components/ui/Collapse";
 
 /** Reuses History's complete subscription; opening records adds no list query. */
 export default function WorkoutHistoryList({
@@ -28,12 +29,14 @@ export default function WorkoutHistoryList({
         aria-controls={listId}
         onClick={() => setOpen(!open)}
         rightIcon={
-          <ChevronRight className={`size-4 ${open ? "rotate-90" : ""}`} />
+          <ChevronRight
+            className={`size-4 motion-safe:transition-transform duration-200 ${open ? "rotate-90" : ""}`}
+          />
         }
       >
         Saved workouts
       </Button>
-      <div id={listId} hidden={!open}>
+      <Collapse open={open} id={listId}>
         <p className="px-3 py-2 text-xs text-muted-foreground">
           All dates · {workouts.length}{" "}
           {workouts.length === 1 ? "session" : "sessions"}
@@ -71,7 +74,7 @@ export default function WorkoutHistoryList({
             Show more workouts
           </Button>
         )}
-      </div>
+      </Collapse>
     </div>
   );
 }

@@ -86,7 +86,7 @@ describe.each(["runs", "workouts"] as const)(
     it("no src file outside the allow-list queries the collection", () => {
       const offenders: string[] = [];
       for (const file of sourceFiles(srcRoot)) {
-        const rel = relative(repoRoot, file);
+        const rel = relative(repoRoot, file).replaceAll("\\", "/");
         if (ALLOWLIST[name].has(rel)) continue;
         for (const line of matchLines(readFileSync(file, "utf8"), pattern))
           offenders.push(`${rel}:${line}`);

@@ -1,0 +1,49 @@
+{
+  "status": "Native-reviewed working equipment candidate; set-wide review pending",
+  "accepted": false,
+  "source": "1-editable-layers-zottman-frame3-v3-draft.png",
+  "output": "frame3-rigid-equipment-v3-draft.png",
+  "sha256": "cae4ae2ba12480824f9ee584cb9c6e8c7e393ac2d834d4876202e02c19bda575",
+  "method": "Complete old-gear component coverage, with a one-pixel background join and excluding actual editable arm-layer alpha; observed clean working-master upper-body/background replaces only that coverage; complete source hands restored. No anatomy warp.",
+  "limitations": [
+    "Hand boundary and central-body patch require actual review.",
+    "No release or acceptance inherited from prior mobile reviews."
+  ],
+  "nativeReview": {
+    "fullFrame": "frame3-rigid-equipment-v3-draft.png",
+    "enlargedGrips": "frame3-rigid-v3-grip-review.png",
+    "observedBackground": "1-editable-layers-zottman-v2-draft.png",
+    "findings": [
+      "All fingers remain in front of shafts; no obvious plate remnants or hanging-hand ghosts in enlarged review.",
+      "Enlarged review shows the corrected continuous near plate boundary after removing the post-equipment purple restoration.",
+      "Equipment occludes forearm edges; full native and set-wide lighting/contact review remains necessary.",
+      "Full final native frame actually reviewed, then all six compared together; authoritative whole-set visual decision is release-candidate/zottman-curl.visual-review.json."
+    ],
+    "limits": [
+      "Background derives from the accepted working master, not an invented hidden shoulder surface.",
+      "Fixed 2D equipment construction is not calibrated physical millimetres.",
+      "No new six-frame/mobile/release approval."
+    ],
+    "fullFrameActuallyViewed": true,
+    "enlargedGripsActuallyViewed": true
+  },
+  "verification": {
+    "changedPixels": 39310,
+    "outsideComposedCoverageChanges": 0,
+    "alphaChanges": 0,
+    "sourceExactPrimaryPixelsChanged": 122,
+    "namedSourceCropsExact": {
+      "head": true,
+      "abdomen": true,
+      "feet": true
+    },
+    "oraRecompositionExact": true,
+    "primarySourceChangesOutsideNewGear": 0,
+    "primarySourceChangesUnderNewGear": 122,
+    "purplePixelsOnOpaqueEquipment": 0
+  },
+  "backgroundSourceSha256": "923e8e8401287dbb3ee75498da93b4adc9c12ba764ba4b642e5bf4b43a23543b",
+  "frame": 3,
+  "nativeWorkingCandidateAccepted": true,
+  "releaseAccepted": false
+}

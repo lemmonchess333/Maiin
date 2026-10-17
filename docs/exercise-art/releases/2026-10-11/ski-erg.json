@@ -1,0 +1,240 @@
+{
+  "exerciseId": "ski-erg",
+  "version": "anatomy-v3-2026-10-11-four-pose-v1",
+  "width": 720,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standard",
+  "reviewedAt": "2026-10-11T20:21:42.975312+00:00",
+  "reference": {
+    "path": "form-frames/ski-erg/1.webp",
+    "sha256": "85eacaf747ad96a8f7055092353abc3efa9788605b5ac7590e4586060c6a48e3"
+  },
+  "cueSha256": "2041dce390c3dbeee13af926d116bdef0bfbea9257293ebe77c54ae3dbe6d5a0",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 reference used for catch, crunch, mid drive and new incremental finish. Lean bald faceless white athlete, neutral pelvis, same trainers and delicate grey anatomy. Full source images and editable sources retained; qualitative identity review, not exact 3D certification."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Four poses share original1536x1024 camera. Identical crop380,0,1100,1024 removes only empty side margins;720x1024 output has no scaling, registration, local anatomy warping or grafts. Mobile scene remains fully visible."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "All four native poses reviewed: upright high grips, initial core crunch, forward hinge/mid drive, extended-arm finish beside upper thighs. Same planted feet; modest lean and soft knees. Fine contour variations retained under revised cosmetic standard."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Neutral grey Ski Erg: two top cord outlets, fixed tower, monitor, low guarded flywheel, paired platform braces. Manufacturer assembly and cord-routing references inspected in prior working-master review. New finish preserves this scene without equipment repaint or repositioning."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both closed grips and separate handle/cord connections visible; finish far fingers visible in native crop. Near cord has natural depth occlusion behind head/torso and reappears toward the handle; no exposed line through head surface. Seven sole samples differ at most1px from catch. Tower/platform anchors within1px; two assembly dimensions vary at most2px."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Both handles descend with a modest core-led hinge; elbows extend until handles beside upper thighs. Tower/floor remain stationary, cords extend from fixed outlets and recover on return. No claimed calibrated3D linkage dimensions or independent limb transforms."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Existing ski-erg bodyRig mapping: primary upper back/lats, secondary core/triceps. Exact#7B72E9/#9590E0 opaque interiors, fine#777777 authored contours, neutral inherited shading preserved. Earlier reviewed editable layers retained byte-for-byte before common crop; finish independently traced and source contours recovered. Other body regions neutral."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Catch, Crunch, Drive, Finish, Recover, Reach cues describe the displayed movement, seven words maximum. Four physical poses reused1,2,3,4,3,2 across six distinct paths under user-approved revised standard."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Native720x1024 six-beat playback trace and full native poses inspected; visible outgoing and return sequence with6to1 closure. Two return poses intentionally reused, not six independently generated poses."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent at390x844 light: six decoded beats,6to1 closure, full athlete/machine, readable muscle key and cue controls. staged-light.png and staged-trace.json."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormContent at390x844 dark: six decoded beats and closure; pause and manual6to1 verified. No console errors. staged-dark.png and staged-controls.json."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/ski-erg/1.webp",
+      "sha256": "85eacaf747ad96a8f7055092353abc3efa9788605b5ac7590e4586060c6a48e3",
+      "anchors": {
+        "towerTop": {
+          "x": 100,
+          "y": 80
+        },
+        "platformLeft": {
+          "x": 43,
+          "y": 855
+        }
+      },
+      "invariantDimensions": {
+        "assemblyHeightAt480": 778,
+        "platformSpanAt855": 571
+      },
+      "observedContacts": {
+        "soleSamples": {
+          "770": 857,
+          "790": 852,
+          "820": 850,
+          "870": 890,
+          "890": 891,
+          "910": 886,
+          "930": 878
+        }
+      }
+    },
+    {
+      "path": "form-frames/ski-erg/2.webp",
+      "sha256": "6883ae3251324c90552810304190f0e0668a1798af0347434d3e2470880428d4",
+      "anchors": {
+        "towerTop": {
+          "x": 100,
+          "y": 80
+        },
+        "platformLeft": {
+          "x": 43,
+          "y": 855
+        }
+      },
+      "invariantDimensions": {
+        "assemblyHeightAt480": 778,
+        "platformSpanAt855": 573
+      },
+      "observedContacts": {
+        "soleSamples": {
+          "770": 856,
+          "790": 852,
+          "820": 849,
+          "870": 889,
+          "890": 891,
+          "910": 886,
+          "930": 878
+        }
+      }
+    },
+    {
+      "path": "form-frames/ski-erg/3.webp",
+      "sha256": "de23d6ad6fd83020582163a2e4837d830ba6ebd43820fd8c593ee03c66797ce0",
+      "anchors": {
+        "towerTop": {
+          "x": 100,
+          "y": 79
+        },
+        "platformLeft": {
+          "x": 43,
+          "y": 855
+        }
+      },
+      "invariantDimensions": {
+        "assemblyHeightAt480": 779,
+        "platformSpanAt855": 573
+      },
+      "observedContacts": {
+        "soleSamples": {
+          "770": 857,
+          "790": 852,
+          "820": 849,
+          "870": 890,
+          "890": 891,
+          "910": 887,
+          "930": 878
+        }
+      }
+    },
+    {
+      "path": "form-frames/ski-erg/4.webp",
+      "sha256": "0cc4a5ce9a23587d94b2c5cac4a3db079dbbd455855aa183098d16c02412ace1",
+      "anchors": {
+        "towerTop": {
+          "x": 100,
+          "y": 79
+        },
+        "platformLeft": {
+          "x": 43,
+          "y": 855
+        }
+      },
+      "invariantDimensions": {
+        "assemblyHeightAt480": 779,
+        "platformSpanAt855": 573
+      },
+      "observedContacts": {
+        "soleSamples": {
+          "770": 857,
+          "790": 852,
+          "820": 850,
+          "870": 890,
+          "890": 892,
+          "910": 887,
+          "930": 878
+        }
+      }
+    },
+    {
+      "path": "form-frames/ski-erg/5.webp",
+      "sha256": "de23d6ad6fd83020582163a2e4837d830ba6ebd43820fd8c593ee03c66797ce0",
+      "anchors": {
+        "towerTop": {
+          "x": 100,
+          "y": 79
+        },
+        "platformLeft": {
+          "x": 43,
+          "y": 855
+        }
+      },
+      "invariantDimensions": {
+        "assemblyHeightAt480": 779,
+        "platformSpanAt855": 573
+      },
+      "observedContacts": {
+        "soleSamples": {
+          "770": 857,
+          "790": 852,
+          "820": 849,
+          "870": 890,
+          "890": 891,
+          "910": 887,
+          "930": 878
+        }
+      }
+    },
+    {
+      "path": "form-frames/ski-erg/6.webp",
+      "sha256": "6883ae3251324c90552810304190f0e0668a1798af0347434d3e2470880428d4",
+      "anchors": {
+        "towerTop": {
+          "x": 100,
+          "y": 80
+        },
+        "platformLeft": {
+          "x": 43,
+          "y": 855
+        }
+      },
+      "invariantDimensions": {
+        "assemblyHeightAt480": 778,
+        "platformSpanAt855": 573
+      },
+      "observedContacts": {
+        "soleSamples": {
+          "770": 856,
+          "790": 852,
+          "820": 849,
+          "870": 889,
+          "890": 891,
+          "910": 886,
+          "930": 878
+        }
+      }
+    }
+  ],
+  "distinctPoses": 4,
+  "sourcePoseOrder": [1, 2, 3, 4, 3, 2],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Complete: native and registered mobile light/dark loops, card, pause/manual6to1; lint/art/drafts/typecheck/build/stamp passed. Full test result and measured same-HEAD baseline comparison in incremental-finish/final-verification.json; no new failure headings. Full suite remains failing."
+}

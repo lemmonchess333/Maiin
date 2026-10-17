@@ -1,0 +1,94 @@
+{
+  "status": "parent-reviewed-caption-and-fixture-correction",
+  "baselineHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+  "priorRunPrefix": "branch3",
+  "files": [
+    {
+      "path": "src/components/program/__tests__/ExerciseRowSummary.test.tsx",
+      "beforeProof": "checks/correction-before-exercise-row-summary.ts.txt",
+      "afterProof": "checks/correction-after-exercise-row-summary.ts.txt",
+      "beforeSha256": "27256b1a9c213893ac2cb15c3610ee72521d226ff2e5e871f779fc9cfb96583c",
+      "afterSha256": "d825bdb45b837f05cb2602aa3c19ac19fc69e485252aad32d0782903520f1d28"
+    },
+    {
+      "path": "src/lib/__tests__/bodyRig.test.ts",
+      "beforeProof": "checks/correction-before-body-rig.ts.txt",
+      "afterProof": "checks/correction-after-body-rig.ts.txt",
+      "beforeSha256": "fbf4d29243cb305b1cd4d6d2d2d98c09b16d6011a5335dfcd6f998ae33bfa132",
+      "afterSha256": "ea52132216f747e5a76d810b3e6680c0832e3226b89a1ac88cb71f471afb232b"
+    },
+    {
+      "path": "src/lib/releasedFormPlacards.ts",
+      "beforeProof": "checks/correction-before-released-placards.ts.txt",
+      "afterProof": "checks/correction-after-released-placards.ts.txt",
+      "beforeSha256": "4363d91ae4fb6df081fb5998d7d18d5bb80ce1c6b4653d4c1f75b5077c854843",
+      "afterSha256": "980f6cafebb60aac5ebf5923abbe99eb47de00a7aa5428e36362b1ae99073d76"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-15/t-bar-row.json",
+      "beforeProof": "checks/correction-before-t-bar-release.json",
+      "afterProof": "checks/correction-after-t-bar-release.json",
+      "beforeSha256": "bb335dfe7eb16143192de93c372a83bccc9f65d87e21b708cb15341abe7030d7",
+      "afterSha256": "31ac0588db8e3717e5fde743897047948fcc296b73ae6e705723a6c34ea77e62"
+    },
+    {
+      "path": "src/lib/formArtwork.ts",
+      "beforeProof": "checks/correction-before-artwork.ts.txt",
+      "afterProof": "checks/correction-after-artwork.ts.txt",
+      "beforeSha256": "2f536c60f84f71c703a5fd48f5c85c16b2077a09ec693344314c5ed91cc7585b",
+      "afterSha256": "10a80a4a2c374b3487bf5f4aac99fdccabce1314d84d8d46076195e898e9e0eb"
+    }
+  ],
+  "fixtureBounds": {
+    "src/components/program/__tests__/ExerciseRowSummary.test.tsx": {
+      "beforeBlockSha256": "9d22575f4d8664a40603957cf322dd4a0051ef6cbec541e80efadd1ab9c2954b",
+      "afterBlockSha256": "5a4af26d414390ef0661ddeb23635e6d94a152b14c6c843c060d928ef634f59f"
+    },
+    "src/lib/__tests__/bodyRig.test.ts": {
+      "beforeBlockSha256": "579ccb8f96690045d49187e0769c377551eb2ba0bd976e9b667aa63b25f50950",
+      "afterBlockSha256": "19d11f565f333b30abefb2da75df08965493deb3771e4951529e6cb11b728a01"
+    }
+  },
+  "originalReviewZipSha256": "8c376b867ec35e3d7b322407a1642d5f1814ceb958e5decc57d9639ebecdfb33",
+  "correctedBeatsProof": "checks/t-bar-row-corrected-beats.json",
+  "currentPlacardProof": "checks/t-bar-row-current-placard-proof.json",
+  "beforeCueSha256": "3d410fe6a43c4c3eb89a10cc70af6b2c6b5876ddae8f3e9f0f9d28b9c6277535",
+  "afterCueSha256": "2928161d4adcb9829744c193e75aa84c9836d16a8bd373ba5e2a5dfc3b0f0493",
+  "recordMutation": "Only cueSha256 scalar, explicit parent authorization. No original acceptance/ZIP/source-art changes.",
+  "newImageRequests": 0,
+  "completionCredit": false,
+  "reviewer": "Parent actual fixture diff and registered caption light/dark review",
+  "reviewedAt": "2026-10-15T09:08:04.697Z",
+  "reviewedEvidenceHashes": {
+    "checks/branch3-failure-comparison.json": "99330e812c272b5914b41047e70e2cc2685207440a84e56cb3edea35f8f1037a",
+    "checks/branch3-input-manifest.json": "93d3fa01ce2e6af801c22475bf8b1059943341ea180ded9a1792af467bc60b12",
+    "checks/branch3-verify-result.json": "1e50366c8b5717c934c78c3aa79ea723982ceec5a87132a415843b16509a81dd",
+    "checks/branch3-verify.log": "03b61570f019d7ac343f255395b1c4cae82e8f824726b4a1dcd793d4699c0d07",
+    "checks/caption-correction-preparation.json": "268c7b52c422c55f26d58d5bec0ebd04cc8d508236570f94a669ab7d71ca36c6",
+    "checks/correction-after-artwork.ts.txt": "10a80a4a2c374b3487bf5f4aac99fdccabce1314d84d8d46076195e898e9e0eb",
+    "checks/correction-after-body-rig.ts.txt": "ea52132216f747e5a76d810b3e6680c0832e3226b89a1ac88cb71f471afb232b",
+    "checks/correction-after-exercise-row-summary.ts.txt": "d825bdb45b837f05cb2602aa3c19ac19fc69e485252aad32d0782903520f1d28",
+    "checks/correction-after-released-placards.ts.txt": "980f6cafebb60aac5ebf5923abbe99eb47de00a7aa5428e36362b1ae99073d76",
+    "checks/correction-after-t-bar-release.json": "31ac0588db8e3717e5fde743897047948fcc296b73ae6e705723a6c34ea77e62",
+    "checks/correction-before-artwork.ts.txt": "2f536c60f84f71c703a5fd48f5c85c16b2077a09ec693344314c5ed91cc7585b",
+    "checks/correction-before-body-rig.ts.txt": "fbf4d29243cb305b1cd4d6d2d2d98c09b16d6011a5335dfcd6f998ae33bfa132",
+    "checks/correction-before-exercise-row-summary.ts.txt": "27256b1a9c213893ac2cb15c3610ee72521d226ff2e5e871f779fc9cfb96583c",
+    "checks/correction-before-released-placards.ts.txt": "4363d91ae4fb6df081fb5998d7d18d5bb80ce1c6b4653d4c1f75b5077c854843",
+    "checks/correction-before-t-bar-release.json": "bb335dfe7eb16143192de93c372a83bccc9f65d87e21b708cb15341abe7030d7",
+    "checks/record-caption-and-fixture-correction.py": "5ee6a1dbc4056a2bafb9b9e18d02e4958209344c81ab5b391202a37668c4e47b",
+    "checks/t-bar-return-caption-dark.png": "e8a899cf3fe878d309d616430668bb6ed9266ec92d0dd66de0e7b2e4e3da27de",
+    "checks/t-bar-return-caption-light.png": "d5b9b33806481f9e10f14277b175f89cd9e31fb882ff2c8645307b0c6204528b",
+    "checks/t-bar-return-caption-observation.json": "fad21862117c9f69c7260d3a205f0ff8d8cc5c6e6bdbdcda44631fcef7d1cea4",
+    "checks/t-bar-row-corrected-beats.json": "b34755a7f52ae0559d3e7a5ed4a898a8f6e47fa1847d253a765642e26902715d",
+    "checks/t-bar-row-current-placard-proof.json": "a0852c6e262453704ddcda9868cf6ea2bc8b8decd7fab5390ce124245170788e"
+  },
+  "correctedPriorFailureIdentities": [
+    "FAIL  |dom| src/components/program/__tests__/ExerciseRowSummary.test.tsx > ExerciseThumb — each exercise's picture > shows the muscles its category works when it has no drawing",
+    "FAIL  |node| src/lib/__tests__/bodyRig.test.ts > a placard goes live with its art, not before > an authored placard with no frames is not live",
+    "FAIL  |node| src/lib/__tests__/bodyRig.test.ts > form beats — the caption is a claim about the frame > every beat sequence names a real demo and stays inside its range"
+  ],
+  "originalAcceptanceAndZipUnchanged": true,
+  "historicalLabelWasStretch": true,
+  "parentObservedCaptionReview": "Actual unchanged ExerciseFormContent frame5 Return at390x844 light/dark; original native/mobile traces keep historical Stretch. No image/cue/t/setup change.",
+  "noNewFullVerifyPassClaim": true
+}

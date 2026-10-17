@@ -11,6 +11,8 @@ import { THEME } from "@/lib/theme";
 import { formatDayMonth } from "@/utils/formatters";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { formatLoad, liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 
 interface Props {
   open: boolean;
@@ -65,6 +67,8 @@ export default function ExerciseCompareSheet({
   authorTargetWeightKg,
 }: Props) {
   const uid = useUid();
+  // Lift18: both sets in the reader's unit; both are stored in kg.
+  const liftUnit = useLiftUnit();
   const { prMap, loading, error } = useUserPRMap(open ? uid : null);
 
   const bucket = getRepBucket(authorTargetReps);
@@ -94,7 +98,7 @@ export default function ExerciseCompareSheet({
           <SectionLabel>Their set</SectionLabel>
           <p className="text-sm font-mono tabular-nums text-foreground mt-1">
             {authorSummary ||
-              `${authorSetCount}×${authorTargetReps}×${authorTargetWeightKg} kg`}
+              `${authorSetCount}×${authorTargetReps}×${formatLoad(authorTargetWeightKg, liftUnit)}`}
           </p>
         </div>
 
@@ -131,7 +135,7 @@ export default function ExerciseCompareSheet({
               <SectionLabel>Your best</SectionLabel>
               <div className="flex items-baseline justify-between mt-1">
                 <p className="text-sm font-mono tabular-nums text-foreground">
-                  {yourPR.reps}×{yourPR.weight} kg
+                  {yourPR.reps}×{formatLoad(yourPR.weight, liftUnit)}
                 </p>
                 <p className="text-xs text-muted-foreground font-mono tabular-nums">
                   {formatDate(yourPR.date)}
@@ -153,7 +157,7 @@ export default function ExerciseCompareSheet({
               <p className="text-xs font-semibold font-mono tabular-nums">
                 {delta === 0
                   ? "Matched"
-                  : `${deltaSign}${delta.toFixed(1)} kg vs them`}
+                  : `${deltaSign}${liftVolumeIn(delta, liftUnit).toFixed(1)} ${liftUnitLabel(liftUnit)} vs them`}
               </p>
             </div>
           </>
@@ -162,7 +166,7 @@ export default function ExerciseCompareSheet({
         <button
           type="button"
           onClick={onClose}
-          className="w-full py-3 rounded-xl bg-muted text-foreground text-sm font-medium active:scale-[0.98]"
+          className="w-full py-3 rounded-xl bg-muted text-foreground text-sm font-medium transition-transform active:scale-[0.98]"
         >
           Close
         </button>

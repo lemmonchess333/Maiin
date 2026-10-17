@@ -185,3 +185,56 @@ itself makes: FrontDelts' band was re-authored press-inclusive (a
 direct-raise band against a press-counting tally repeated the original
 mismatch), and Glutes gained the hinge-inclusive band above. No band was
 adjusted to absorb a residual the sources do not explain.
+
+## Status addendum — 2026-10-07: Pelland 2025 reviewed; the plan keeps 1:1
+
+Pelland et al. 2025 (_Sports Med_; read in its preprint and OSF files) fitted
+weekly volume against growth and strength three ways and found fractional
+counting (an indirect set at about 0.38–0.39, with 0.5 close) fits both best,
+and direct-only counting fits weekly strength worst. That is a finding about
+which count best **predicts outcomes**. This ADR's question is which currency
+the plan's **bands** are published in, and Pelland publishes pooled curves, not
+per-muscle bands, and no maximum (its growth curve keeps rising, with no
+detectable gain past about 31 fractional sets a week), so it gives the judged
+layer nothing to re-denominate into.
+
+Decided (owner-delegated, 2026-10-07; `docs/training-engine-2026-10/owner-answers.md`
+A1): the plan keeps `SECONDARY_SET_WEIGHT = 1.0`. The simulator's virtual
+lifter and any forecast shown to a person count indirect sets at 0.5, because
+they use Pelland's curves. If the simulator shows a judged group fed mostly by
+compounds (triceps, biceps, hamstrings, chest) under-growing at an in-band
+tally because the reconciler cut its direct work, the fix is per group, through
+a further addendum with the planSweep measurement, never a global flip.
+
+## Status addendum — 2026-10-13: past the reconciler's floors, a new plan lets a supporting lift go (Lift12)
+
+The reconciler shrinks sets down to its floors (accessories 2, mains 3) and
+never takes a lift out. Measured over 900 first plans (five goals, three
+levels, 2–6 days, 30–75 minutes, three kits), that left 395 plans with a
+muscle over its ceiling, 1,580 readings over and 344 of them past 150%: the
+worst a beginner's six days of Get stronger at home, with the triceps and
+biceps at 21 sets against 9 and the upper back at 23. The excess sat in the
+groups fed through secondaries at 1:1, where every slot was already at its
+floor — the residual the first addendum named.
+
+Decided (owner, Lift12): the generator generalises L7's hinge rule to every
+muscle. While a muscle is over its ceiling in a balanced week, a supporting
+lift whose primary muscle it is comes out (`accessoriesPastCeiling`), and the
+week is fitted and balanced again without it; it stays out only when that
+week is the better one (`dropHolds`) — the muscle comes down, no muscle ends
+further over its ceiling, every muscle keeps its two days a week, and the
+muscle stays at its floor. A main lift, or a lift the week also has as a
+main, never goes. The reconciler's own contract is unchanged.
+
+Over the same 900 plans: readings over a ceiling 1,580 → 919, past 150%
+344 → 136, the worst 2.56 → 2.33 of its ceiling; 7% fewer lifts and 5.7%
+fewer sets, main-lift sets unchanged; the plan sweep's configurations over
+a ceiling 28 → 20. What stays over is fed through secondaries a muscle's two
+days need — the upper back by the rows that are also the lats' work — and a
+further step there would be per group, as the 2026-10-07 addendum says.
+
+The trade, accepted: a muscle fed through its secondaries can lose its last
+direct lift (a beginner's six days keep no curl or pushdown, their arms
+reading 11 sets at 1:1 from the presses and rows). The floor is kept at the
+plan's 1:1 count; at Pelland's fractional count, which the simulator's
+lifter uses, those groups are the ones that addendum asks it to watch.

@@ -1,0 +1,60 @@
+{
+  "baseline": "remaining18-baseline-96fea6f1",
+  "candidate": "overhead-extension-final-96fea6f1",
+  "baselineCounts": {
+    "Test Files": {
+      "failed": 3,
+      "passed": 1171,
+      "skipped": 10,
+      "total": 1184,
+      "verbatim": "Test Files  3 failed | 1171 passed | 10 skipped (1184)"
+    },
+    "Tests": {
+      "failed": 1,
+      "passed": 13436,
+      "skipped": 409,
+      "total": 13846,
+      "verbatim": "Tests  1 failed | 13436 passed | 409 skipped (13846)"
+    }
+  },
+  "candidateCounts": {
+    "Test Files": {
+      "failed": 6,
+      "passed": 1168,
+      "skipped": 10,
+      "total": 1184,
+      "verbatim": "Test Files  6 failed | 1168 passed | 10 skipped (1184)"
+    },
+    "Tests": {
+      "failed": 4,
+      "passed": 13435,
+      "skipped": 409,
+      "total": 13848,
+      "verbatim": "Tests  4 failed | 13435 passed | 409 skipped (13848)"
+    }
+  },
+  "baselineExitCode": 1,
+  "candidateExitCode": 1,
+  "addedFailures": [
+    "node|src/features/program/__tests__/generatorAudit.test.ts|generator audit \u2014 every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+    "node|src/lib/__tests__/bodyRig.test.ts|supplied placard frames > all of a sequence's frames share one canvas",
+    "node|src/lib/__tests__/noDisabledTests.test.ts|no test is switched off outright > finds no unconditional skip in src/ or functions/"
+  ],
+  "resolvedFailures": [],
+  "sameRawDiagnosticFailures": [
+    "node|src/features/program/__tests__/useProgramWriters.test.ts|RUN-RESCHEDULE-01 \u2014 moveRunDay > refuses to move a race slot (immovable identity)",
+    "root-node|scripts/ios/asc-signing.test.ts|[suite]",
+    "root-node|scripts/write-functions-env.test.ts|[suite]"
+  ],
+  "changedRawDiagnosticFailures": [],
+  "runtimeInputDifferences": [
+    "scripts/dist-size.baseline.json",
+    "src/lib/__tests__/formArtOwnerRelease.test.ts",
+    "src/lib/formArtCutouts.data.ts",
+    "src/lib/formArtwork.ts",
+    "src/lib/releasedFormPlacards.ts"
+  ],
+  "bothNormalFullRunsCompleted": true,
+  "fullCandidateGreen": false,
+  "allNineNewAssetsAndReleaseUnchangedAcrossVerification": true
+}

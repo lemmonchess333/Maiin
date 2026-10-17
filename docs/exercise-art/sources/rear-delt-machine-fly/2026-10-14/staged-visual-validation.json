@@ -1,0 +1,46 @@
+{
+  "passed": true,
+  "scope": "Staged exact source reuse for the catalogue's equivalent movement; not activated or counted complete.",
+  "nativeActualDimensions": [856, 1008],
+  "nativeManualFrames": 6,
+  "nativeTimedLoop6to1": true,
+  "mobile": {
+    "dark": {
+      "viewport": [390, 844],
+      "qualifyingObservations": 8,
+      "decodedFrames": [1, 2, 3, 4, 5, 6],
+      "loop6to1": true
+    },
+    "light": {
+      "viewport": [390, 844],
+      "qualifyingObservations": 8,
+      "decodedFrames": [1, 2, 3, 4, 5, 6],
+      "loop6to1": true
+    }
+  },
+  "controls": {
+    "selectSix": "/form-frames/rear-delt-machine-fly/6.webp",
+    "nextWrap": "/form-frames/rear-delt-machine-fly/1.webp",
+    "previousWrap": "/form-frames/rear-delt-machine-fly/6.webp",
+    "slowerPressed": "true",
+    "slowerStartedAfterMs": 218504,
+    "consoleErrors": [],
+    "timing": {
+      "normalMedianMs": 1209,
+      "slowerMedianMs": 2410.0,
+      "ratio": 1.9933829611248965
+    }
+  },
+  "physicalPoses": 3,
+  "targetPosesSeparatelyAuthored": 0,
+  "framesByteExactToApprovedSource": 6,
+  "editablesReopenedExact": 3,
+  "sourceExercise": "reverse-pec-deck",
+  "targetExercise": "rear-delt-machine-fly",
+  "sourceCardDimensions": [350, 480],
+  "sourceCardSha256": "0d95f217fc02eb026bce9a970e475f4f4e48f74a8c8116c06e67d4e416a7581d",
+  "imageRequests": 0,
+  "imagePixelsChanged": 0,
+  "visualFinding": "Same approved anatomy-v3 athlete, primary/secondary colours, neutral shading and apparatus. Chest supported, shoulders down, soft elbows, connected grips and planted trainers through outward sweep and reversed return. Native/full actual mobile light-dark checked.",
+  "remaining": "Finish Deadlift's required CI/actual merge first, then register this exact target ID, standard card, integrated target review, project checks and normal CI/merge. No completion credit yet."
+}

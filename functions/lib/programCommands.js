@@ -72,7 +72,12 @@ const {
   makeBlockId,
   represcribeWorkouts,
   toExperience,
+  withRoleNumbers,
 } = require("./represcribe");
+// The role an exercise takes in the plan (pinned to the client's by
+// roleTable.cross.test.ts): Lift5's Replace keeps the slot's numbers within
+// a role and takes the role table's across one.
+const { exerciseRole } = require("./roleTable");
 // Deload-transform mirror (pinned by a parity cross-test). Used by the
 // applyDeloadWeek reducer (PROGRAM-DELOAD-01).
 const {
@@ -199,6 +204,16 @@ function invalidCommand(message) {
 
 /** The weeks of a return after a break (client `EASING_BACK_WEEKS`). */
 const EASING_BACK_WEEKS = 2;
+
+/** The plan's kit (Lift18): "lbs" when its plates and rack are in lb, else
+ *  kg. Mirror of src/features/program/programTypes.ts settings.loadUnit. */
+function loadUnitOf(state) {
+  return state && isPlainObject(state.settings) && state.settings.loadUnit === "lbs"
+    ? "lbs"
+    : "kg";
+}
+
+const LOAD_UNITS = new Set(["kg", "lbs"]);
 
 function isPlainObject(value) {
   return (
@@ -730,7 +745,7 @@ const KIND_VALIDATORS = {
       command.settings,
       "settings",
       ["autoProgression"],
-      ["smallPlates", "microloading"]
+      ["smallPlates", "microloading", "loadUnit"]
     );
     if (command.settings.microloading !== undefined) {
       assertBoolean(command.settings.microloading, "settings.microloading");
@@ -745,6 +760,17 @@ const KIND_VALIDATORS = {
             smallPlates: assertBoolean(
               command.settings.smallPlates,
               "settings.smallPlates"
+            ),
+          }
+        : {}),
+      // Lift18: the kit the plan's loads round to, the engine's copy of
+      // the profile's liftingWeightUnit.
+      ...(command.settings.loadUnit !== undefined
+        ? {
+            loadUnit: assertEnum(
+              command.settings.loadUnit,
+              "settings.loadUnit",
+              LOAD_UNITS
             ),
           }
         : {}),
@@ -1512,7 +1538,8 @@ function startTrainingBlock(state, profile, command, now) {
         : represcribeWorkouts(
             workouts,
             command.focus,
-            toExperience(profile && profile.experience)
+            toExperience(profile && profile.experience),
+            loadUnitOf(state)
           ),
     trainingBlock: block,
   };
@@ -1548,7 +1575,8 @@ function releaseTrainingBlock(state, profile, command) {
         ? represcribeWorkouts(
             workouts,
             block.goalBefore,
-            toExperience(profile && profile.experience)
+            toExperience(profile && profile.experience),
+            loadUnitOf(state)
           )
         : workouts,
   };
@@ -1961,7 +1989,7 @@ function resolveCatalogExercise(exerciseId, label) {
   return getExerciseName(exerciseId);
 }
 
-function addExercises(state, command) {
+function addExercises(state, command, profile) {
   const day = requireWorkoutDay(state, command);
   // Deterministic instance ids derived from the commandId — a retry with the
   // same commandId produces the same ids (and is short-circuited by the receipt
@@ -1987,10 +2015,36 @@ function addExercises(state, command) {
       : Math.min(command.insertAt, exercises.length);
   exercises.splice(at, 0, ...built);
 
-  return mapWorkoutDay(state, command.dayIndex, (d) => ({ ...d, exercises }));
+  // Lift5: an added lift takes its role's numbers, unless the command
+  // brought its own.
+  const added = mapWorkoutDay(state, command.dayIndex, (d) => ({
+    ...d,
+    exercises,
+  }));
+  return {
+    ...added,
+    workouts: command.exercises.reduce(
+      (workouts, input, i) =>
+        input.sets === undefined && input.reps === undefined
+          ? withRoleNumbers(
+              workouts,
+              command.dayIndex,
+              built[i].instanceId,
+              planGoal(state),
+              toExperience(profile && profile.experience)
+            )
+          : workouts,
+      added.workouts
+    ),
+  };
 }
 
-function replaceExercise(state, command) {
+/** The focus the plan's lifts are set for (a block's while one runs). */
+function planGoal(state) {
+  return state.primaryGoal || "general";
+}
+
+function replaceExercise(state, command, profile) {
   const day = requireWorkoutDay(state, command);
   const idx = day.exercises.findIndex(
     (ex) => ex && ex.instanceId === command.oldInstanceId
@@ -2068,10 +2122,25 @@ function replaceExercise(state, command) {
     ...(old.isAccessory !== undefined ? { isAccessory: old.isAccessory } : {}),
   });
 
-  return mapWorkoutDay(state, command.dayIndex, (d) => ({
+  const replaced = mapWorkoutDay(state, command.dayIndex, (d) => ({
     ...d,
     exercises: d.exercises.map((ex, i) => (i === idx ? replacement : ex)),
   }));
+  // Lift5: within a role the slot's numbers stay, the person's own among
+  // them; across one the replacement takes its role's, no more sets than
+  // the slot had.
+  if (exerciseRole(old) === exerciseRole(replacement)) return replaced;
+  return {
+    ...replaced,
+    workouts: withRoleNumbers(
+      replaced.workouts,
+      command.dayIndex,
+      replacement.instanceId,
+      planGoal(state),
+      toExperience(profile && profile.experience),
+      old.sets
+    ),
+  };
 }
 
 // Local calendar date for the saved workout, in the user's timezone. The
@@ -2263,10 +2332,10 @@ function applyProgramCommand({ state, profile, command, now }) {
       next = reorderExercises(current, validated);
       break;
     case "addExercises":
-      next = addExercises(current, validated);
+      next = addExercises(current, validated, profile);
       break;
     case "replaceExercise":
-      next = replaceExercise(current, validated);
+      next = replaceExercise(current, validated, profile);
       break;
     case "restoreWorkoutDay":
       next = restoreWorkoutDay(current, validated);
@@ -2304,6 +2373,13 @@ function applyProgramCommand({ state, profile, command, now }) {
           smallPlates:
             validated.settings.smallPlates ??
             current.settings.smallPlates === true,
+          // An app from before Lift18 sends no unit; the plan keeps its own.
+          ...((validated.settings.loadUnit ?? current.settings.loadUnit)
+            ? {
+                loadUnit:
+                  validated.settings.loadUnit ?? current.settings.loadUnit,
+              }
+            : {}),
         },
       };
       break;

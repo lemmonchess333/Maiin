@@ -1,0 +1,47 @@
+{
+  "scope": "Actual post-reproduction standard-card extension ONLY. Prior68manifest preserved verbatim; all original68files unchanged. The2normal-preview card files were NOT part of the fresh68build.",
+  "priorManifest": {
+    "path": "candidate-payload-manifest-before-68.json",
+    "sha256": "b56bc499850ea893d4313d28c7de575761a007a69943b9b6b7ace7d31486cbdb",
+    "payloadFiles": 68
+  },
+  "finalManifestSha256": "bc5cb56e72e5a5a56954ad06d1f634222944d843f03fc0140721d6fcca8e2313",
+  "finalPayloadFiles": 70,
+  "allPrior68CandidateBytesUnchanged": true,
+  "freshReproduction": {
+    "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\spin-bike\\perspective-source-production-20261016\\independent-portable-reproduction-20261016\\independent-reproduction-proof.json",
+    "sha256": "7849ea30980eb5a16a80a51f8e954838e667e7a80bcb08383eb872d4a86e61f0",
+    "exitCode": 0,
+    "totalCompared": 68,
+    "byteExact": 68,
+    "manifestByteExact": true,
+    "commandEvidence": {
+      "start.json": "9ad1cd07b4a9068c99a41dbba39637bb4198e38e74ac966864deef95814f2490",
+      "result.json": "1f24cc9ed704bcc521f0f67e1c3bdca91c8fb63b259e6425b5d0baf3d3b09b85",
+      "reproduction.stdout.json": "ead63c32f248225b6b9a7fd068bfa7e45d47454e6dc287ffb683d02d1d254702",
+      "reproduction.stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "candidate-manifest-before.json": "b56bc499850ea893d4313d28c7de575761a007a69943b9b6b7ace7d31486cbdb"
+    }
+  },
+  "newFiles": {
+    "draft/card.webp": "273c462c1dec1af3711b9788a2c62d442e6f820b1d06f49e4681345414f5c1e0",
+    "card-preview-proof.json": "2c0afa3c26eb4074fe1e65b4df0ff788a60f3f78b441ede25533dce5234dbf31"
+  },
+  "normalCard": {
+    "sha256": "273c462c1dec1af3711b9788a2c62d442e6f820b1d06f49e4681345414f5c1e0",
+    "dimensions": [
+      304,
+      480
+    ],
+    "reference": "draft/frames/1.webp",
+    "referenceSha256": "4778b11213b83f0a6574bf61a5084764c406fdbd0e4949edc0c9ee42f81d3bab",
+    "normalGeneratorSha256": "a465f712bcb21078a171e6ddfd24f74112a5d379192c7159f133a0fb869f0f2f",
+    "noThresholdOrAlphaOverride": true,
+    "registeredNormalGeneratorMatchStillRequired": true
+  },
+  "sourceImageRecipeOrRendererReruns": 0,
+  "imageEdits": 0,
+  "qaAcceptance": false,
+  "completionCredit": false,
+  "helperSha256": "81a4f009b2264250b25606216c2e48946e9fc4448d078ab9f2c640cd913f8f1a"
+}

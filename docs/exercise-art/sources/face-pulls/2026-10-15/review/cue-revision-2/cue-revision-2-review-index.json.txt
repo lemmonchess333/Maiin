@@ -1,0 +1,93 @@
+{
+  "status": "current-revised-cue-review-copied-no-source-seal",
+  "cueRevision": 2,
+  "cueSha256": "56e28e9d01418ebeeafd0b3540677531fb85812d30932287ff520b56653bf68b",
+  "sequencePlanSha256": "c84ab270929558d02c66964c4d114d786debe8b083ace64699707920e56ea64c",
+  "parentReviewSha256": "6593c302c5503d48e6034d0a2b4e771be97e79de92cab0e0fad1c17cc1cfc930",
+  "browserEvidence": [
+    {
+      "originalPath": "native-playback-observed.json",
+      "archivePath": "review/cue-revision-2/native-playback-observed.json.txt",
+      "sha256": "c0361eb3546c32d6d7fd6834eb630d21738bc9cf1f6412ed70a5590b589c787c"
+    },
+    {
+      "originalPath": "native-manual-controls.txt",
+      "archivePath": "review/cue-revision-2/native-manual-controls.txt",
+      "sha256": "15e50115d0c95e1459a9f716890dc95a54e16afd95811a31f6fb4d3dac25c814"
+    },
+    {
+      "originalPath": "native-dark.png",
+      "archivePath": "review/cue-revision-2/native-dark.png",
+      "sha256": "1dc077a106d298549cbf7e851f955571049a5eda4019b1374686acfb61dd6a3e"
+    },
+    {
+      "originalPath": "native-light.png",
+      "archivePath": "review/cue-revision-2/native-light.png",
+      "sha256": "bc22990949f3868ebb3c5de34a341aed446b8e8ebf9699b23979495a99edbcec"
+    },
+    {
+      "originalPath": "native-cards-light.png",
+      "archivePath": "review/cue-revision-2/native-cards-light.png",
+      "sha256": "31a446465fe3e5bab61f76a863ce9eaa6aa3ca7d829d281b8137e963e648db66"
+    },
+    {
+      "originalPath": "native-cards-dark.png",
+      "archivePath": "review/cue-revision-2/native-cards-dark.png",
+      "sha256": "73e99038d2545c9234b96db84a08e99c2d8cfc32e77273caa1526cdec329ac4b"
+    },
+    {
+      "originalPath": "integrated-cue-revision2-playback.json",
+      "archivePath": "review/cue-revision-2/integrated-cue-revision2-playback.json.txt",
+      "sha256": "e35ddca4864bb394077718cdcd6b89a9687d6d7a3b2687da325687db5661c7eb"
+    },
+    {
+      "originalPath": "integrated-cue-revision2-manual.txt",
+      "archivePath": "review/cue-revision-2/integrated-cue-revision2-manual.txt",
+      "sha256": "368da4a24099093bcfc888ca6dcbfeb2e4cef009df79d52d0d0a944fbaaae8da"
+    },
+    {
+      "originalPath": "integrated-cue-revision2-light.png",
+      "archivePath": "review/cue-revision-2/integrated-cue-revision2-light.png",
+      "sha256": "1cb7e38351acf43582f64aee02fd3b48922c1336edd71e82257f1a7b359ce35c"
+    },
+    {
+      "originalPath": "integrated-cue-revision2-dark.png",
+      "archivePath": "review/cue-revision-2/integrated-cue-revision2-dark.png",
+      "sha256": "2a148358c912c91ec93f05b84a0a40e348f8cc25aa3e248a649d09696a5e1720"
+    },
+    {
+      "originalPath": "integrated-cue-revision2-console.json",
+      "archivePath": "review/cue-revision-2/integrated-cue-revision2-console.json.txt",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "originalPath": "review-vite.config.mjs",
+      "archivePath": "review/cue-revision-2/review-vite.config.mjs.txt",
+      "sha256": "9b4e856e69d8ffa7976233b8bfd0d9163595666daaf15f9fc45214bd48e2c3ad"
+    },
+    {
+      "originalPath": "native-review.tsx",
+      "archivePath": "review/cue-revision-2/native-review.tsx.txt",
+      "sha256": "441b78427994f53de4f2e63814cf13efaeccef2133613bc72a2824170bc35e37"
+    },
+    {
+      "originalPath": "integrated-review.tsx",
+      "archivePath": "review/cue-revision-2/integrated-review.tsx.txt",
+      "sha256": "65d616251d7a3a346d383733a502f19e32e900b5e09cddee56f3dfe68635a515"
+    },
+    {
+      "originalPath": "review-shared.tsx",
+      "archivePath": "review/cue-revision-2/review-shared.tsx.txt",
+      "sha256": "3f326e3a43c245d4017d3d2c9cce8695e5b90fdfb688bce87ddd6f0230bf0bd5"
+    }
+  ],
+  "historicalRevision1": {
+    "path": "review/final-parent-review.json.txt",
+    "sha256": "73d325fb950bfa2b4429e3e5ac1d85013df5b157403b3b0047181c567090451a",
+    "reason": "Actual normal verification found the original cue strings exceed the seven-word gate. That observed review is preserved as historical evidence for its original text, not reused as acceptance of corrected cues."
+  },
+  "unchangedScope": "All image/layer/frame/card bytes, labels, t values, setup and equipment findings unchanged. Six cue strings only were corrected and newly reviewed.",
+  "priorReview31FilesRemainExact": true,
+  "originalDraftPayloadsRemainExact": true,
+  "noSourceSealOrProjectPassClaim": true
+}

@@ -55,6 +55,7 @@ describe("session purpose command surfaces", () => {
     const run = { templateId: "easy_30", completed: false } as ScheduledRunDay;
     const { container } = render(
       <RunCTACard
+        unit="km"
         todayRun={run}
         navigate={vi.fn()}
         // @ts-expect-error -- no rationale or plan week on Home (owner, 2026-09-09)
@@ -89,12 +90,13 @@ describe("session purpose command surfaces", () => {
        twice. */
     const navigate = vi.fn();
     const { container } = render(
-      <RunCTACard todayRun={null} navigate={navigate} />
+      <RunCTACard unit="km" todayRun={null} navigate={navigate} />
     );
     expect(screen.getByText("Free run")).toBeInTheDocument();
     expect(container).not.toHaveTextContent(/week \d/i);
     fireEvent.click(screen.getByRole("button", { name: "Start run" }));
-    expect(navigate).toHaveBeenCalledExactlyOnceWith("/run");
+    // Starts the free run the card names (startOnArrival).
+    expect(navigate).toHaveBeenCalledExactlyOnceWith("/run?start=1");
   });
 });
 
@@ -183,10 +185,27 @@ describe("Home session actions and metadata", () => {
     expect(container).not.toHaveTextContent(/Session \d/);
   });
 
-  it("uses the real template duration and preserves the planned run identity", () => {
+  it("names a long run in the reader's unit", () => {
+    const longRun = {
+      id: "sunday long",
+      templateId: "long_6k",
+      status: "planned",
+    } as ScheduledRunDay;
+    const { container, rerender } = render(
+      <RunCTACard unit="mi" todayRun={longRun} navigate={vi.fn()} />
+    );
+    expect(container).toHaveTextContent("Long 3.7 mi");
+    expect(container).not.toHaveTextContent("6K");
+    rerender(<RunCTACard unit="km" todayRun={longRun} navigate={vi.fn()} />);
+    expect(container).toHaveTextContent("Long 6K");
+  });
+
+  it("states the dose it is given and preserves the planned run identity", () => {
+    // Run21 (5): the dose is `todaySession`'s; a timed run states its time.
     const navigate = vi.fn();
     const { container } = render(
       <RunCTACard
+        unit="km"
         todayRun={
           {
             id: "planned run",
@@ -195,12 +214,14 @@ describe("Home session actions and metadata", () => {
           } as ScheduledRunDay
         }
         navigate={navigate}
+        dose="30 min"
       />
     );
-    expect(container).toHaveTextContent("About 30 min");
+    expect(container).toHaveTextContent("30 min");
+    expect(container).not.toHaveTextContent(/about/i);
     fireEvent.click(screen.getByRole("button", { name: "Start run" }));
     expect(navigate).toHaveBeenCalledExactlyOnceWith(
-      "/run?template=easy_30&scheduledRunId=planned%20run"
+      "/run?template=easy_30&scheduledRunId=planned%20run&start=1"
     );
   });
 
@@ -208,6 +229,7 @@ describe("Home session actions and metadata", () => {
     const navigate = vi.fn();
     render(
       <RunCTACard
+        unit="km"
         todayRun={
           {
             id: "done",

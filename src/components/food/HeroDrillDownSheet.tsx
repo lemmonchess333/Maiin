@@ -69,17 +69,26 @@ function MacroRow({ label, consumed, target, color, mode }: MacroRowProps) {
      89%-full bar here, one tap apart. */
   const fillPct = barFillPct(pct, mode, consumed > target && target > 0);
   const shownPct = barLabelPct(pct, mode);
+  /* The headline counts the way the bar and the percentage do (Food10
+     (1)): what is left in left mode, what is logged in logged mode. It
+     led with the logged grams in both, so "64%" of what was left sat
+     beside the grams eaten. */
+  const over = consumed > target && target > 0;
+  const leftMode = mode === "left";
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
         <SectionLabel as="span">{label}</SectionLabel>
         <span className="font-mono tabular-nums text-sm">
           <span className="font-semibold text-foreground">
-            {formatMacro(consumed)}
+            {formatMacro(
+              leftMode ? (over ? consumed - target : remaining) : consumed
+            )}
           </span>
           <span className="text-muted-foreground">
-            {" / "}
-            {formatMacro(target)}g
+            {leftMode
+              ? `g ${over ? "over" : "left of"} ${formatMacro(target)}g`
+              : ` / ${formatMacro(target)}g`}
           </span>
         </span>
       </div>
@@ -90,9 +99,11 @@ function MacroRow({ label, consumed, target, color, mode }: MacroRowProps) {
         />
       </div>
       <p className="text-caption text-muted-foreground font-mono tabular-nums">
-        {remaining > 0
-          ? `${formatMacro(remaining)}g left`
-          : `${formatMacro(consumed - target)}g over`}
+        {leftMode
+          ? `${formatMacro(consumed)}g logged`
+          : remaining > 0
+            ? `${formatMacro(remaining)}g left`
+            : `${formatMacro(consumed - target)}g over`}
         {" · "}
         {shownPct}%
       </p>
@@ -240,11 +251,17 @@ export default function HeroDrillDownSheet({
             <SectionLabel tier="section">Calories</SectionLabel>
             <div className="flex items-baseline justify-between">
               <div className="flex items-baseline gap-1.5">
+                {/* Counted the way the bar and the percentage are, as
+                    each macro row is (Food10 (1)). */}
                 <span className="font-mono tabular-nums text-2xl font-extrabold text-foreground">
-                  {formatCalories(dailyTotals.calories)}
+                  {formatCalories(
+                    mode === "left" ? Math.abs(remaining) : dailyTotals.calories
+                  )}
                 </span>
                 <span className="text-sm text-muted-foreground font-mono tabular-nums">
-                  / {formatCalories(target)} {CALORIE_UNIT}
+                  {mode === "left"
+                    ? `${remaining < 0 ? "over" : "left of"} ${formatCalories(target)} ${CALORIE_UNIT}`
+                    : `/ ${formatCalories(target)} ${CALORIE_UNIT}`}
                 </span>
               </div>
               <span className="font-mono tabular-nums text-xs text-muted-foreground">
@@ -266,9 +283,11 @@ export default function HeroDrillDownSheet({
               />
             </div>
             <p className="text-xs text-muted-foreground font-mono tabular-nums">
-              {remaining > 0
-                ? `${formatCalories(remaining)} ${CALORIE_UNIT} left`
-                : `${formatCalories(-remaining)} ${CALORIE_UNIT} over target`}
+              {mode === "left"
+                ? `${formatCalories(dailyTotals.calories)} ${CALORIE_UNIT} logged`
+                : remaining > 0
+                  ? `${formatCalories(remaining)} ${CALORIE_UNIT} left`
+                  : `${formatCalories(-remaining)} ${CALORIE_UNIT} over target`}
             </p>
           </section>
 

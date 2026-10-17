@@ -1,0 +1,41 @@
+{
+  "status": "one-proposal-native-review-with-visible-finding-not-accepted",
+  "reviewedAtUtc": "2026-10-15T12:15:46.454094+00:00",
+  "actuallyViewed": [
+    "Both untouched native original sources",
+    "Both final1024x1536nativecolourproposals",
+    "Both literal326x260nativeupperbackcomparisoncrops"
+  ],
+  "visualObservations": {
+    "anatomyAndNeutralRegions": "Original no-shorts athlete, head, arms, trunk, legs, white trainers and equipment contours remain unchanged. No geometric human edits were performed.",
+    "paletteRoles": "Primary on the existing posterior shoulder-cap fields; secondary on the other existing upper-back tint fields. No missing or hidden rotator-cuff area was invented.",
+    "contourDetail": "Fine original dark contour and source shading detail remain visible.",
+    "qualityFinding": "Small pale source-highlight islands in the secondary trapezius/rhomboid/rotator-cuff fields become more conspicuous after source-chroma remapping. This may fail the required smooth, coherent colour-field standard. The numerical preservation proof does not establish a visual pass.",
+    "semanticBoundaryLimit": "Broad shoulder ownership polygons are a proposal only and require parent native review against the actual source contours; no independent anatomical-boundary certification is claimed."
+  },
+  "pixelProof": {
+    "path": "colour-pixel-proof.json",
+    "sha256": "2276494e672c11b772634a0ee3d8449482d918bb2e69cc0bef48b65ea00987dd",
+    "equipmentOverlapPixelsByPose": {
+      "1": 0,
+      "4": 0
+    },
+    "nativeDimensionsByPose": {
+      "1": [
+        1024,
+        1536
+      ],
+      "4": [
+        1024,
+        1536
+      ]
+    },
+    "oraReopenedExact": true,
+    "originalSourceCopiesExact": true,
+    "allPixelsOutsideActualSourceColourSupportExact": true,
+    "sourceAlphaExact": true
+  },
+  "noAdditionalPass": "Only one proposal was rendered. It is preserved for review; no iterative cosmetic rerender, body/equipment change, crop, image generation, public edit or registration was performed.",
+  "acceptance": false,
+  "completionCredit": false
+}

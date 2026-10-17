@@ -1,0 +1,32 @@
+[
+  {
+    "t": 0,
+    "label": "Lower Pedal",
+    "cue": "Keep a slight bend at the bottom."
+  },
+  {
+    "t": 0,
+    "label": "Posture",
+    "cue": "Sit tall; keep hips supported and level."
+  },
+  {
+    "t": 0.5,
+    "label": "Opposed Legs",
+    "cue": "Let the other leg take its turn."
+  },
+  {
+    "t": 0.5,
+    "label": "Relaxed Grip",
+    "cue": "Keep your grip relaxed and shoulders down."
+  },
+  {
+    "t": 0,
+    "label": "Cadence",
+    "cue": "Pedal steadily without yanking on the upstroke."
+  },
+  {
+    "t": 0,
+    "label": "Resistance",
+    "cue": "Adjust resistance to match your target effort."
+  }
+]

@@ -142,6 +142,10 @@ const PINNED: Record<string, string> = {
   // person, one sentence either way.
   "functions/lib/objectionableText.js":
     "src/lib/__tests__/profanityFilterMirror.cross.test.ts",
+  // The hate terms both filters add to leo-profanity's list, written by hand
+  // on each side, so the lists are compared as well as the corpus.
+  "functions/lib/hateTerms.js":
+    "src/lib/__tests__/profanityFilterMirror.cross.test.ts",
   // Report targets: the types and id shapes the server validates, which the
   // client builds (REPORT_TARGET_TYPES, reportTargetIds.ts). A mismatch
   // refuses every report of that kind.
@@ -196,7 +200,7 @@ const PINNED: Record<string, string> = {
   "functions/lib/workoutBurn.js":
     "src/features/program/__tests__/workoutBurn.cross.test.ts",
   // PROGRAM-DELOAD-01 — CF deload transform mirrors programEngine.ts
-  // applyDeload (and the easierToday.deloadWeight weight rule).
+  // applyDeload.
   "functions/lib/deloadEngine.js":
     "src/features/program/__tests__/deloadEngine.cross.test.ts",
   // One-off run move — the copy inside the command transaction is the one
@@ -288,6 +292,10 @@ const NOT_EQUALITY_MIRROR: Record<string, string> = {
     "was deleted there on purpose after the tested copy turned out to be the dead " +
     "one. Both headers say so at length. Only one copy runs, so an equality pin " +
     "has nothing to pin — see the module header for the full reasoning.",
+  "functions/lib/photoScreen.js":
+    "server-only screening (SafeSearch, the refusal rule, deleting the file); the " +
+    "client photoScreen.ts only calls the callable and names the refusal, so " +
+    "there is no shared logic to pin",
   "functions/lib/streakNudge.js":
     "server-only; its header states 'no TS↔JS port to keep in lockstep'",
   "functions/index.js":
@@ -297,6 +305,11 @@ const NOT_EQUALITY_MIRROR: Record<string, string> = {
     "(actualTemplateId, date-scoped ANY); client asks 'is this slot complete?' over a " +
     "NORMALISED SavedRunLike via the claim map. Different question, different shape — " +
     "an equality pin would be wrong, and pinning them is what produced the dead port.",
+  "functions/lib/raceReconciliation.js":
+    "server-only race-day decisions, moved verbatim out of index.js: its 'mirror' " +
+    "lines name the client effects these replaced, which PR-L L5 deleted (no client " +
+    "write path remains, useProgram.ts says), and the rule it calls in " +
+    "runModeResolution.js, which is pinned in its own right",
 };
 
 /* ── Reachability ─────────────────────────────────────────────────── */

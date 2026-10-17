@@ -37,6 +37,8 @@ import type { SpacePostDoc } from "./spaceTypes";
 import { distanceValue, paceMinSec } from "@/lib/runLabels";
 import { distanceUnitLabel, paceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 import { deleteDocGuarded } from "@/lib/firestoreWrite";
 import { spacePostReportTargetId } from "@/lib/reportTargetIds";
 
@@ -69,6 +71,8 @@ export default function SpacePostCard({
   onOpenComments?: () => void;
 }) {
   const unit = useDistanceUnit();
+  // Lift18: the poster's volume, stored in kg, in the reader's unit.
+  const liftUnit = useLiftUnit();
   const uid = useUid();
   const { addBlocked } = useBlockedUsers();
   const [showMenu, setShowMenu] = useState(false);
@@ -146,9 +150,13 @@ export default function SpacePostCard({
           {(activity.totalVolume ?? 0) > 0 && (
             <div className="absolute bottom-2.5 left-3.5">
               <p className="text-xl font-bold font-mono tabular-nums leading-none text-lifting">
-                {Math.round(activity.totalVolume ?? 0).toLocaleString()}
+                {Math.round(
+                  liftVolumeIn(activity.totalVolume ?? 0, liftUnit)
+                ).toLocaleString()}
               </p>
-              <SectionLabel className="mt-0.5">kg volume</SectionLabel>
+              <SectionLabel className="mt-0.5">
+                {liftUnitLabel(liftUnit)} volume
+              </SectionLabel>
             </div>
           )}
           {(activity.exerciseCount ?? 0) > 0 && (

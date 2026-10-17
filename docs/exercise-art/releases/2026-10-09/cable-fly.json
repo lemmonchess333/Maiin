@@ -1,0 +1,222 @@
+{
+  "exerciseId": "cable-fly",
+  "version": "anatomy-v3-2026-10-09-elevated-four-pose-v1",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native/mobile review under user-approved revised standards",
+  "reviewedAt": "2026-10-09T15:54:41.851530+00:00",
+  "reference": {
+    "path": "form-frames/cable-fly/1.webp",
+    "sha256": "4beafb43116d6e7d8838011248812f8a8500aa08a3bb7aa3f95033fa82d7acae"
+  },
+  "cueSha256": "50881438c1a63a1a6f4d1e91003589d0b91d4938b373e4ac9bae4e376a0c47d6",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 attached to every source generation; accepted open master attached to all adjacent poses. Native four-pose review preserves lean physique, faceless bald head, neutral pelvis and white trainers. No anatomy transforms or grafts."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed elevated front-three-quarter view, same1536x1024 canvas, fixed towers and stance. No normalization/rescaling of generated sources. Exact only-colour changes verified."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Visible soft elbows and closed D-handle grips; arms sweep inwards in front of torso, no deep press/reversal or obvious segment distortion. Elevated projection reviewed visually, not misreported as a calibrated3D angle."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two opaque grey towers remain fixed, each visible outlet connects by one taut cable to its own handle. Enclosed mechanism: no internal stack travel or cable ratio measurement is claimed."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both gripped handles stay connected. Split stance and sole contacts stable: frontsole y934, rearsole y797-798 at specified x samples. Two tower-cap anchors and measured77/76px tower-face profiles invariant."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Shoulder-driven inward fly and controlled return, body remains braced in split stance. Changing external cable span follows each handle; no unsupported mechanism reconstruction."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Chest primary#7B72E9 and front delts secondary#9590E0 in layered masks. Non-colour pixels exact original; inherited neutral shading retained. All four final exports inspected. ORA recomposition and lossless WebP exact."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six short cues correspond to open, early inward, late inward, closed, late return and early return; each at most7words. Actual form component cues checked."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Four physical poses across six playback beats1,2,3,4,3,2 under user-approved revised standards. Native1536x1024 loop and closure traced; small contour variation accepted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual staged form component at390x844: all6decoded beats,6-to1 closure and light screenshot reviewed; readable controls/cues and complete framed athlete/equipment."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Same actual component dark390x844, all6beats/closure, pause/manual Next and console errors checked."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/cable-fly/1.webp",
+      "sha256": "4beafb43116d6e7d8838011248812f8a8500aa08a3bb7aa3f95033fa82d7acae",
+      "anchors": {
+        "leftTowerCap": {
+          "x": 140,
+          "y": 21
+        },
+        "rightTowerCap": {
+          "x": 1380,
+          "y": 17
+        },
+        "frontSoleAt650": {
+          "x": 650,
+          "y": 934
+        },
+        "rearSoleAt855": {
+          "x": 855,
+          "y": 798
+        }
+      },
+      "invariantDimensions": {
+        "leftTowerFaceWidthY400": 77,
+        "rightTowerFaceWidthY400": 76
+      }
+    },
+    {
+      "path": "form-frames/cable-fly/2.webp",
+      "sha256": "69f7dee0759ea95295e3808b7142e52c3547732c4b5608e846a4a1b8b31ab341",
+      "anchors": {
+        "leftTowerCap": {
+          "x": 140,
+          "y": 21
+        },
+        "rightTowerCap": {
+          "x": 1380,
+          "y": 17
+        },
+        "frontSoleAt650": {
+          "x": 650,
+          "y": 934
+        },
+        "rearSoleAt855": {
+          "x": 855,
+          "y": 797
+        }
+      },
+      "invariantDimensions": {
+        "leftTowerFaceWidthY400": 77,
+        "rightTowerFaceWidthY400": 76
+      }
+    },
+    {
+      "path": "form-frames/cable-fly/3.webp",
+      "sha256": "0956de724e9ac4d7f4edccf50ed22c255217e6c5ea345a50af904f9f201462a2",
+      "anchors": {
+        "leftTowerCap": {
+          "x": 140,
+          "y": 21
+        },
+        "rightTowerCap": {
+          "x": 1380,
+          "y": 17
+        },
+        "frontSoleAt650": {
+          "x": 650,
+          "y": 934
+        },
+        "rearSoleAt855": {
+          "x": 855,
+          "y": 797
+        }
+      },
+      "invariantDimensions": {
+        "leftTowerFaceWidthY400": 77,
+        "rightTowerFaceWidthY400": 76
+      }
+    },
+    {
+      "path": "form-frames/cable-fly/4.webp",
+      "sha256": "fbb4054fcb765d30515090e510dfd7e4addb9b82fb12a06dbf31fe94c5e9299b",
+      "anchors": {
+        "leftTowerCap": {
+          "x": 140,
+          "y": 21
+        },
+        "rightTowerCap": {
+          "x": 1380,
+          "y": 17
+        },
+        "frontSoleAt650": {
+          "x": 650,
+          "y": 934
+        },
+        "rearSoleAt855": {
+          "x": 855,
+          "y": 797
+        }
+      },
+      "invariantDimensions": {
+        "leftTowerFaceWidthY400": 77,
+        "rightTowerFaceWidthY400": 76
+      }
+    },
+    {
+      "path": "form-frames/cable-fly/5.webp",
+      "sha256": "0956de724e9ac4d7f4edccf50ed22c255217e6c5ea345a50af904f9f201462a2",
+      "anchors": {
+        "leftTowerCap": {
+          "x": 140,
+          "y": 21
+        },
+        "rightTowerCap": {
+          "x": 1380,
+          "y": 17
+        },
+        "frontSoleAt650": {
+          "x": 650,
+          "y": 934
+        },
+        "rearSoleAt855": {
+          "x": 855,
+          "y": 797
+        }
+      },
+      "invariantDimensions": {
+        "leftTowerFaceWidthY400": 77,
+        "rightTowerFaceWidthY400": 76
+      }
+    },
+    {
+      "path": "form-frames/cable-fly/6.webp",
+      "sha256": "69f7dee0759ea95295e3808b7142e52c3547732c4b5608e846a4a1b8b31ab341",
+      "anchors": {
+        "leftTowerCap": {
+          "x": 140,
+          "y": 21
+        },
+        "rightTowerCap": {
+          "x": 1380,
+          "y": 17
+        },
+        "frontSoleAt650": {
+          "x": 650,
+          "y": 934
+        },
+        "rearSoleAt855": {
+          "x": 855,
+          "y": 797
+        }
+      },
+      "invariantDimensions": {
+        "leftTowerFaceWidthY400": 77,
+        "rightTowerFaceWidthY400": 76
+      }
+    }
+  ],
+  "distinctPoses": 4,
+  "sourcePoseOrder": [1, 2, 3, 4, 3, 2],
+  "standardsAuthorization": "work/REVISED-CONVERSION-STANDARDS-20261009.md",
+  "integrationValidation": "Complete: native and clean registered mobile light/dark six-beat loops, card, pause/manual6-to1. Lint/art/drafts/typecheck/build/stamp passed. Full suite48failed11240passed367skipped; no new FAIL headings versus measured same-HEAD baseline. See elevated-production/final-verification.json."
+}

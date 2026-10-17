@@ -114,6 +114,7 @@ export const DRAFT_RUN_FREQUENCIES = [
   "new",
 ] as const;
 export const DRAFT_RUN_MODES = ["freeform", "structured", "race_prep"] as const;
+export const DRAFT_RECENT_RACE_DISTANCES = ["5k", "10k"] as const;
 export const DRAFT_UNITS_HEIGHT = ["cm", "ft"] as const;
 export const DRAFT_UNITS_WEIGHT = ["kg", "lbs"] as const;
 
@@ -163,6 +164,16 @@ export interface OnboardingDraft {
    *  a race. Unanswered, the plan takes yes for Support my running and no
    *  otherwise. */
   raceLegTrim?: boolean;
+  /** Adaptive paces §10.2: setup's optional recent race, a 5K or a 10K,
+   *  and its time as typed, in minutes and seconds. Blank, no benchmark is
+   *  set. */
+  recentRaceDistance?: (typeof DRAFT_RECENT_RACE_DISTANCES)[number];
+  recentRaceMinutes?: string;
+  recentRaceSeconds?: string;
+  /** Raw optional goal input, including a partial answer that needs correction. */
+  goalWeightText?: string;
+  /** Unsigned weekly pace; the target weight supplies its direction. */
+  paceKgPerWeek?: 0.25 | 0.5 | 0.75;
 }
 
 interface DraftEnvelope {
@@ -236,7 +247,15 @@ export function isValidDraft(
       oneOf(DRAFT_SESSION_MINUTES, d.sessionMinutes)) &&
     (d.barbellAtHome === undefined || typeof d.barbellAtHome === "boolean") &&
     (d.smallPlates === undefined || typeof d.smallPlates === "boolean") &&
-    (d.raceLegTrim === undefined || typeof d.raceLegTrim === "boolean")
+    (d.raceLegTrim === undefined || typeof d.raceLegTrim === "boolean") &&
+    (d.recentRaceDistance === undefined ||
+      oneOf(DRAFT_RECENT_RACE_DISTANCES, d.recentRaceDistance)) &&
+    (d.recentRaceMinutes === undefined ||
+      typeof d.recentRaceMinutes === "string") &&
+    (d.recentRaceSeconds === undefined ||
+      typeof d.recentRaceSeconds === "string") &&
+    (d.goalWeightText === undefined || typeof d.goalWeightText === "string") &&
+    (d.paceKgPerWeek === undefined || oneOf([0.25, 0.5, 0.75], d.paceKgPerWeek))
   );
 }
 

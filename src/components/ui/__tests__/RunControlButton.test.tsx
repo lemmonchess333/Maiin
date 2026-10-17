@@ -68,20 +68,12 @@ describe("RunControlButton — sizes", () => {
 });
 
 describe("RunControlButton — variants", () => {
-  it("primary variant applies the teal background via inline style", () => {
+  it("primary variant applies the run's coral background via inline style", () => {
     render(
       <RunControlButton aria-label="Resume" icon={<svg />} variant="primary" />
     );
     const style = screen.getByRole("button").getAttribute("style") || "";
-    expect(style).toContain("rgb(82, 163, 189)");
-  });
-
-  it("danger variant applies the red border via inline style", () => {
-    render(
-      <RunControlButton aria-label="Stop" icon={<svg />} variant="danger" />
-    );
-    const style = screen.getByRole("button").getAttribute("style") || "";
-    expect(style).toContain("rgb(239, 68, 68)");
+    expect(style).toContain("rgb(212, 99, 122)");
   });
 
   it("neutral (default) variant has translucent white background", () => {
@@ -91,13 +83,13 @@ describe("RunControlButton — variants", () => {
   });
 
   it("glow prop is opt-in for variants other than primary", () => {
-    // primary has glow always on; neutral/danger respect the prop
+    // primary has glow always on; neutral respects the prop
     render(
       <RunControlButton aria-label="X" icon={<svg />} variant="neutral" />
     );
     const styleNoGlow = screen.getByRole("button").getAttribute("style") || "";
-    // neutral always has a drop-shadow but no teal-tinted glow
-    expect(styleNoGlow).not.toMatch(/rgba\(82,\s*163,\s*189/);
+    // neutral always has a drop-shadow but no coral-tinted glow
+    expect(styleNoGlow).not.toMatch(/rgba\(212,\s*99,\s*122/);
   });
 });
 

@@ -1,0 +1,59 @@
+{
+  "kind": "spin-draft-light-normal-card",
+  "cards": [
+    {
+      "alt": "Spin Bike normal card, 480px long-side limit",
+      "decoded": true,
+      "display": [
+        304,
+        480
+      ],
+      "natural": [
+        304,
+        480
+      ],
+      "src": "/candidate/draft/card.webp",
+      "theme": "",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike normal card, 348px long-side limit",
+      "decoded": true,
+      "display": [
+        220.39584350585935,
+        348
+      ],
+      "natural": [
+        304,
+        480
+      ],
+      "src": "/candidate/draft/card.webp",
+      "theme": "",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "alt": "Spin Bike normal card, 160px long-side limit",
+      "decoded": true,
+      "display": [
+        101.33333587646484,
+        160
+      ],
+      "natural": [
+        304,
+        480
+      ],
+      "src": "/candidate/draft/card.webp",
+      "theme": "",
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  ]
+}

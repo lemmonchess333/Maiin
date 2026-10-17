@@ -139,7 +139,7 @@ describe("deferred removals expire", () => {
     for (const root of ["src", "functions"]) {
       for (const file of walk(resolve(repoRoot, root))) {
         if (!readFileSync(file, "utf8").includes("TRANSITIONAL")) continue;
-        const rel = relative(repoRoot, file);
+        const rel = relative(repoRoot, file).replaceAll("\\", "/");
         if (!registered.has(rel)) unregistered.push(rel);
       }
     }

@@ -35,6 +35,8 @@ import { logger } from "@/lib/logger";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import { clearEasedWeekKey, setEasedWeekKey } from "@/lib/easeWeekNudgeMarkers";
 import { planEasierWeek, type EasySwap } from "@/lib/adjustWeek";
+import { runTemplateName } from "@/lib/runLabels";
+import type { DistanceUnit } from "@/lib/distanceUnits";
 import { track } from "@/lib/programAnalytics";
 import {
   classifyRaceTiming,
@@ -53,6 +55,8 @@ type Step =
 
 interface AdjustWeekSheetProps {
   open: boolean;
+  /** The reader's unit: a long run is named in it. */
+  unit: DistanceUnit;
   onClose: () => void;
   runDays: ScheduledRunDay[];
   raceGoal: {
@@ -111,6 +115,9 @@ interface AdjustWeekSheetProps {
    * can forget is to stop asking it to remember.
    */
   uid: string;
+  /** Run20 (5): the day a new runner's first weeks end, for the eased runs
+   *  (`planEasierWeek`). */
+  newRunnerUntil?: string | null;
 }
 
 const INTENTS: Array<{ id: Intent; label: string; hint: string }> = [
@@ -163,6 +170,7 @@ function applyStepInputs(current: Step, inputs: StepInputs): Step {
 
 export default function AdjustWeekSheet({
   open,
+  unit,
   onClose,
   runDays,
   raceGoal,
@@ -172,11 +180,12 @@ export default function AdjustWeekSheet({
   realignRacePlan,
   initialIntent,
   uid,
+  newRunnerUntil = null,
 }: AdjustWeekSheetProps) {
   const todayKey = localDateString();
   const swaps = useMemo(
-    () => planEasierWeek(runDays, todayKey),
-    [runDays, todayKey]
+    () => planEasierWeek(runDays, todayKey, newRunnerUntil),
+    [runDays, todayKey, newRunnerUntil]
   );
 
   // The inputs are applied on mount and again whenever one of them changes
@@ -477,14 +486,14 @@ export default function AdjustWeekSheet({
                     className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm"
                   >
                     <span className="text-muted-foreground line-through">
-                      {s.fromName}
+                      {runTemplateName(s.fromName, unit)}
                     </span>
                     <ArrowRight
                       className="size-3.5 text-muted-foreground shrink-0"
                       aria-hidden="true"
                     />
                     <span className="font-semibold text-foreground">
-                      {s.toName}
+                      {runTemplateName(s.toName, unit)}
                     </span>
                   </li>
                 ))}

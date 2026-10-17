@@ -3,27 +3,42 @@ import type { Workout } from "@/hooks/useWorkouts";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { db } from "@/lib/firebase";
-import { correctSavedWorkout } from "@/lib/workoutCorrection";
+import {
+  correctionToConfirm,
+  correctSavedWorkout,
+  type CorrectionQuestion,
+} from "@/lib/workoutCorrection";
 import { createWorkoutCompletionId } from "@/hooks/useWorkoutDraft";
 import { toast } from "sonner";
+import { liftUnitLabel, loadIn, type LiftUnit } from "@/lib/liftLoad";
+import { kitLoadIn, kitLoadToKg } from "@/features/program/loadSteps";
 
 export default function CorrectWorkoutSheet({
   uid,
   workout,
+  unit,
   onClose,
   onSaved,
 }: {
   uid: string;
   workout: Workout;
+  /** The unit weights are shown and typed in; the workout stays in kg. */
+  unit: LiftUnit;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [correctionId] = useState(createWorkoutCompletionId);
   const [minutes, setMinutes] = useState(String(workout.durationMinutes ?? 0));
-  const [sets, setSets] = useState(() =>
+  // Each weight as first shown, in the lifter's unit.
+  const [shown] = useState(() =>
     workout.exercises.map((ex) =>
-      ex.sets.map((set) => ({
-        weightKg: String(set.weightKg),
+      ex.sets.map((set) => String(kitLoadIn(set.weightKg, unit, ex.exerciseId)))
+    )
+  );
+  const [sets, setSets] = useState(() =>
+    workout.exercises.map((ex, i) =>
+      ex.sets.map((set, j) => ({
+        weight: shown[i][j],
         reps: String(set.reps),
       }))
     )
@@ -31,18 +46,45 @@ export default function CorrectWorkoutSheet({
   const [saving, setSaving] = useState(false);
   const pending = useRef(false);
   const [error, setError] = useState("");
+  const [question, setQuestion] = useState<CorrectionQuestion | null>(null);
   const number = (value: string) => (value.trim() ? Number(value) : NaN);
   const changed =
     minutes !== String(workout.durationMinutes ?? 0) ||
     sets.some((row, i) =>
       row.some(
         (set, j) =>
-          set.weightKg !== String(workout.exercises[i].sets[j].weightKg) ||
+          set.weight !== shown[i][j] ||
           set.reps !== String(workout.exercises[i].sets[j].reps)
       )
     );
-  async function save() {
+  async function save(confirmed: boolean) {
     if (pending.current || !changed) return;
+    const edits = {
+      durationMinutes: number(minutes),
+      exercises: sets.map((row, i) => ({
+        sets: row.map((set, j) => ({
+          // Untouched, a weight keeps the kg it was logged at, so reading
+          // it in lb and back can't move it.
+          weightKg:
+            set.weight === shown[i][j]
+              ? workout.exercises[i].sets[j].weightKg
+              : kitLoadToKg(
+                  number(set.weight),
+                  unit,
+                  workout.exercises[i].exerciseId
+                ),
+          reps: number(set.reps),
+        })),
+      })),
+    };
+    // Lift16: a weight far past the set's plan asks first.
+    const asked = confirmed
+      ? undefined
+      : correctionToConfirm(workout, edits, unit);
+    if (asked) {
+      setQuestion(asked);
+      return;
+    }
     pending.current = true;
     setSaving(true);
     setError("");
@@ -53,15 +95,8 @@ export default function CorrectWorkoutSheet({
         workout.id,
         workout.revision ?? 0,
         correctionId,
-        {
-          durationMinutes: number(minutes),
-          exercises: sets.map((row) => ({
-            sets: row.map((set) => ({
-              weightKg: number(set.weightKg),
-              reps: number(set.reps),
-            })),
-          })),
-        }
+        edits,
+        unit
       );
       toast.success("Workout corrected");
       onSaved();
@@ -79,9 +114,10 @@ export default function CorrectWorkoutSheet({
   function change(
     i: number,
     j: number,
-    field: "weightKg" | "reps",
+    field: "weight" | "reps",
     value: string
   ) {
+    setQuestion(null);
     setSets((before) =>
       before.map((row, ex) =>
         ex !== i
@@ -108,7 +144,7 @@ export default function CorrectWorkoutSheet({
         className="space-y-5"
         onSubmit={(event) => {
           event.preventDefault();
-          void save();
+          void save(false);
         }}
       >
         <label
@@ -144,16 +180,16 @@ export default function CorrectWorkoutSheet({
                   htmlFor={`correction-${i}-${j}-weight`}
                 >
                   Set <span className="font-mono tabular-nums">{j + 1}</span>{" "}
-                  weight (kg)
+                  weight ({liftUnitLabel(unit)})
                   <input
                     id={`correction-${i}-${j}-weight`}
                     type="number"
                     min="0"
-                    max="500"
+                    max={Math.floor(loadIn(500, unit))}
                     step="any"
-                    value={set.weightKg}
+                    value={set.weight}
                     onChange={(event) =>
-                      change(i, j, "weightKg", event.target.value)
+                      change(i, j, "weight", event.target.value)
                     }
                     className="ds-input min-h-11 mt-1 w-full font-mono tabular-nums"
                   />
@@ -185,20 +221,48 @@ export default function CorrectWorkoutSheet({
             {error}
           </p>
         )}
-        <div className="flex gap-3">
-          <Button
-            type="button"
-            variant="secondary"
-            fullWidth
-            disabled={saving}
-            onClick={onClose}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" fullWidth disabled={saving || !changed}>
-            {saving ? "Saving…" : "Save corrections"}
-          </Button>
-        </div>
+        {question ? (
+          <div className="space-y-3">
+            <div role="alert" className="space-y-1">
+              <p className="font-semibold">{question.title}</p>
+              <p className="text-sm text-muted-foreground">
+                {question.message}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                fullWidth
+                disabled={saving}
+                onClick={() => setQuestion(null)}
+              >
+                Change it
+              </Button>
+              <Button
+                fullWidth
+                disabled={saving}
+                onClick={() => void save(true)}
+              >
+                {saving ? "Saving…" : question.confirmLabel}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              fullWidth
+              disabled={saving}
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" fullWidth disabled={saving || !changed}>
+              {saving ? "Saving…" : "Save corrections"}
+            </Button>
+          </div>
+        )}
       </form>
     </Dialog>
   );

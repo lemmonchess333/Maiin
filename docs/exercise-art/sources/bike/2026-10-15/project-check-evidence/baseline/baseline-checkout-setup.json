@@ -1,0 +1,26 @@
+{
+  "startedAt": "2026-10-15T07:55:04.212963+00:00",
+  "finishedAt": "2026-10-15T07:55:41.596391+00:00",
+  "sourceRepository": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees",
+  "isolatedRepository": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\retained-endpoint-batch-20261015\\baseline-checkout-fbc3e887",
+  "head": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+  "detached": true,
+  "initialStatus": [],
+  "cloneCommand": [
+    "C:\\Program Files\\Git\\bin\\git.exe",
+    "-c",
+    "core.longpaths=true",
+    "clone",
+    "--shared",
+    "--local",
+    "--no-checkout",
+    "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees",
+    "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\retained-endpoint-batch-20261015\\baseline-checkout-fbc3e887"
+  ],
+  "dependencyJunction": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\retained-endpoint-batch-20261015\\baseline-checkout-fbc3e887\\node_modules",
+  "dependencyTarget": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\node_modules",
+  "sourceRepositoryStashResetOrCheckoutPerformed": false,
+  "usesReadOnlySharedImmutableGitObjects": true,
+  "freshCheckoutFromCommitExcludesActiveDirtyEdits": true,
+  "trackedPackageLockSha256": "ac49d54ee31c36d7ce4b5b98de4078bbce0ca54d6e3d17678c30a1cfec88d7b3"
+}

@@ -315,11 +315,37 @@ describe("parseFoodText — conjunctions", () => {
     expect(names).toEqual(["Toast with butter", "Eggs (x2)"]);
   });
 
-  it("does not split when a part is unrecognised", () => {
-    // "xqzv" resolves to nothing, so the phrase stays whole and takes the
-    // pre-existing single-phrase path rather than inventing a second row.
+  it("an unrecognised food after and is a row of its own", () => {
+    /* Kept whole, the phrase went to the longest key found inside it and
+       took that key's macros under the whole phrase's name. A part nobody
+       recognises is its own row now, with no macros, which the composer's
+       "Couldn't find macros for" warning names. */
     const result = parseFoodText("coffee and xqzvblorp");
-    expect(result).toHaveLength(1);
+    expect(result.map((r) => r.name)).toEqual(["Coffee", "Xqzvblorp"]);
+    expect(result[1]).toMatchObject({ calories: 0, unrecognized: true });
+  });
+
+  it("logs every food in a meal that names one the table lacks", () => {
+    /* Typed in the Food pass, before the table had a flat white: one row
+       named "Scrambled eggs on toast and a flat white (x2)" with the eggs'
+       182 kcal, the toast and the coffee in the name and in nothing else,
+       and no warning. The unknown food here is made up, so the case holds
+       whatever the table learns. */
+    const result = parseFoodText("2 scrambled eggs on toast and a vlorpcake");
+    expect(result.map((r) => r.name)).toEqual([
+      "Scrambled eggs (x2)",
+      "Toast",
+      "Vlorpcake",
+    ]);
+    expect(result[0].calories).toBe(
+      parseFoodText("2 scrambled eggs")[0].calories
+    );
+    expect(result[1].calories).toBe(parseFoodText("toast")[0].calories);
+    expect(result[2]).toMatchObject({ calories: 0, unrecognized: true });
+  });
+
+  it("a phrase with no food in it stays whole", () => {
+    expect(parseFoodText("xqzv and blorp")).toHaveLength(1);
   });
 
   it("commas still separate, and the two rules compose", () => {
@@ -737,4 +763,246 @@ describe("a count of a food eaten in pieces counts pieces", () => {
   it("logs wings with their skin, as they are eaten", () => {
     expect(parseFoodText("100g chicken wing")[0].calories).toBe(290);
   });
+});
+
+/* Everyday foods the table lacked. Typed in the Food pass, "2 scrambled
+   eggs on toast and a flat white" counted the eggs alone: there was no
+   flat white, nor honey, sourdough, a jacket potato or the plated dishes
+   people type by name, so each logged nothing. */
+describe("parseFoodText — everyday foods", () => {
+  it("counts the coffee in a cafe breakfast", () => {
+    const result = parseFoodText("2 scrambled eggs on toast and a flat white");
+    expect(result.map((r) => r.name)).toEqual([
+      "Scrambled eggs (x2)",
+      "Toast",
+      "Flat white",
+    ]);
+    expect(result[2].calories).toBeGreaterThan(0);
+  });
+
+  it("knows the cafe coffees, honey and sourdough", () => {
+    for (const food of ["an americano", "a mocha", "honey", "sourdough"]) {
+      expect(parseFoodText(food)[0].calories, food).toBeGreaterThan(0);
+    }
+  });
+
+  it("logs a plated dish by its name, as one meal", () => {
+    for (const dish of [
+      "spaghetti bolognese",
+      "lasagne",
+      "lasagna",
+      "chilli con carne",
+      "mac and cheese",
+      "macaroni cheese",
+      "bangers and mash",
+      "jacket potato",
+    ]) {
+      const result = parseFoodText(dish);
+      expect(result, dish).toHaveLength(1);
+      expect(result[0].calories, dish).toBeGreaterThan(200);
+    }
+  });
+
+  it("merges the two spellings of one dish", () => {
+    expect(parseFoodText("lasagne, lasagna")).toHaveLength(1);
+    expect(parseFoodText("mac and cheese, macaroni cheese")).toHaveLength(1);
+  });
+});
+
+describe("quantities inside with phrases", () => {
+  const calories = (text: string) =>
+    parseFoodText(text).reduce((sum, item) => sum + item.calories, 0);
+  const totals = (text: string) =>
+    parseFoodText(text).reduce(
+      (sum, item) => ({
+        calories: sum.calories + item.calories,
+        protein: sum.protein + item.protein,
+        carbs: sum.carbs + item.carbs,
+        fat: sum.fat + item.fat,
+      }),
+      { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    );
+  it.each([
+    ["200g chicken with rice", "200g chicken, rice"],
+    ["200 g chicken with 158g rice", "200 g chicken, 158g rice"],
+    ["150ml milk with 2 eggs", "150ml milk, 2 eggs"],
+    ["0g chicken with rice", "0g chicken, rice"],
+    ["0ml milk with 2 eggs", "0ml milk, 2 eggs"],
+    ["2 eggs with 2 toast", "2 eggs, 2 toast"],
+    ["2 eggs with 200g rice", "2 eggs, 200g rice"],
+    ["2 coffee with 50ml milk", "2 coffee, 50ml milk"],
+    ["2 cereal with 150ml milk", "2 cereal, 150ml milk"],
+    ["0 eggs with 2 toast", "0 eggs, 2 toast"],
+    ["0 eggs with 200g rice", "0 eggs, 200g rice"],
+    ["0 coffee with 50ml milk", "0 coffee, 50ml milk"],
+    ["2 eggs with 0 toast", "2 eggs, 0 toast"],
+    ["2 eggs with 0g rice", "2 eggs, 0g rice"],
+    ["2 coffee with 0ml milk", "2 coffee, 0ml milk"],
+    ["2 coffee with 1 splash of milk", "2 coffee, 30ml milk"],
+    ["2 coffee with 0 splash of milk", "2 coffee, 0ml milk"],
+    ["0 coffee with 1 splash of milk", "0 coffee, 30ml milk"],
+    ["2 coffee with 2 splashes of milk", "2 coffee, 60ml milk"],
+    ["10 almonds with 1 yogurt", "10 almonds, 1 yogurt"],
+    ["2 chicken wings with 1 rice", "2 chicken wings, 1 rice"],
+    ["almonds with 1 yogurt", "almonds, 1 yogurt"],
+    ["2 cans of sardines with 1 rice", "2 cans of sardines, 1 rice"],
+    ["0 almonds with 1 yogurt", "0 almonds, 1 yogurt"],
+  ])("applies each explicit quantity once: %s", (compound, separate) => {
+    expect(totals(compound)).toEqual(totals(separate));
+  });
+  it("keeps explicit quantities in the compound name instead of suggesting the whole meal repeats", () => {
+    expect(parseFoodText("2 eggs with 2 toast")[0].name).toBe(
+      "2 eggs with 2 toast"
+    );
+  });
+  it("keeps a zero base and implicit per-serving additions at zero", () => {
+    expect(totals("0 toast with butter")).toEqual({
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+    });
+    expect(totals("0 tea with milk")).toEqual({
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+    });
+  });
+  it("comma and and joins agree on toast plus two eggs", () => {
+    expect(calories("toast, 2 eggs")).toBe(236);
+    expect(calories("toast and 2 eggs")).toBe(236);
+  });
+  it("preserves the explicit egg count inside a with phrase", () => {
+    expect(calories("toast with 2 eggs")).toBe(calories("toast, 2 eggs"));
+  });
+  it("preserves the explicit rice weight inside a with phrase", () => {
+    expect(calories("chicken with 200g rice")).toBe(
+      calories("chicken, 200g rice")
+    );
+  });
+  it("preserves milk explicitly measured in ml without applying the implied splash", () => {
+    expect(calories("coffee with 50ml milk")).toBe(
+      calories("coffee, 50ml milk")
+    );
+    expect(calories("cereal with 150ml milk")).toBe(
+      calories("cereal, 150ml milk")
+    );
+  });
+  it("preserves a counted piece food inside a with phrase", () => {
+    expect(calories("toast with 10 almonds")).toBe(
+      calories("toast, 10 almonds")
+    );
+  });
+  it("preserves outer quantity and implied milk splash semantics", () => {
+    expect(calories("2 cups of tea with milk")).toBe(
+      2 * calories("tea with milk")
+    );
+    expect(calories("2 toast with butter")).toBe(
+      2 * calories("toast with butter")
+    );
+    expect(calories("tea with milk")).toBe(21);
+    expect(calories("tea with a splash of milk")).toBe(
+      calories("tea with milk")
+    );
+    expect(calories("2 cups of tea with a splash of milk")).toBe(
+      calories("2 cups of tea with milk")
+    );
+    expect(calories("coffee with 2 splashes of milk")).toBe(
+      Math.round(calories("coffee") + (calories("milk") * 60) / 240)
+    );
+  });
+});
+
+describe("incomplete with phrases", () => {
+  it.each([
+    ["chicken with tahini", "Tahini"],
+    ["tahini with chicken", "Tahini"],
+    ["200g chicken with 30g tahini", "30g tahini"],
+    ["chicken with tahini with rice", "Tahini"],
+  ])("preserves the unresolved ingredient in %s", (text, missing) => {
+    const rows = parseFoodText(text);
+    expect(rows.find((row) => row.unrecognized)).toMatchObject({
+      name: missing,
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+    });
+    expect(
+      rows
+        .filter((row) => !row.unrecognized)
+        .every((row) => !row.name.toLowerCase().includes("tahini"))
+    ).toBe(true);
+    expect(rows.some((row) => !row.unrecognized && row.calories > 0)).toBe(
+      true
+    );
+  });
+});
+
+describe("measured quantities require a compatible nutrition reference", () => {
+  it.each([
+    ["50g milk", "240ml", "ml"],
+    ["500g milk", "240ml", "ml"],
+    ["5ml olive oil", "1 tbsp (14g)", "g"],
+    ["50ml olive oil", "1 tbsp (14g)", "g"],
+    ["150ml chicken", "150g cooked", "g"],
+    ["200g pizza", "1 slice", null],
+    ["a pint of pizza", "1 slice", null],
+  ] as const)(
+    "requires correction for %s instead of substituting one serving",
+    (text, referencePortion, expectedUnit) => {
+      const rows = parseFoodText(text);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        quantityIssue: { referencePortion, expectedUnit },
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+      });
+      expect(rows[0].unrecognized).not.toBe(true);
+      expect(rows[0].portionLabel).toBeDefined();
+    }
+  );
+
+  it.each([
+    ["50g milk with 2 eggs", "50g milk"],
+    ["chicken with 5ml olive oil", "5ml olive oil"],
+    ["2 coffee with 50g milk", "50g milk"],
+    ["2 eggs and 50ml olive oil", "50ml olive oil"],
+  ])("keeps the incompatible part visible in %s", (text, unresolved) => {
+    const rows = parseFoodText(text);
+    const issue = rows.find((row) => row.quantityIssue);
+    expect(issue?.name.toLowerCase()).toBe(unresolved);
+    expect(issue?.calories).toBe(0);
+    expect(
+      rows
+        .filter((row) => !row.quantityIssue)
+        .every((row) => !row.name.toLowerCase().includes(unresolved))
+    ).toBe(true);
+    expect(rows.some((row) => !row.quantityIssue && row.calories > 0)).toBe(
+      true
+    );
+  });
+
+  it.each([
+    ["120ml milk", 75, 4, 6, 4],
+    ["240ml milk", 150, 8, 12, 8],
+    ["0.24l milk", 150, 8, 12, 8],
+    ["7g olive oil", 60, 0, 0, 7],
+    ["14g olive oil", 119, 0, 0, 14],
+    ["0.014kg olive oil", 119, 0, 0, 14],
+    ["2 eggs", 156, 12, 2, 10],
+  ] as const)(
+    "retains independently calculated macros for %s",
+    (text, calories, protein, carbs, fat) => {
+      // References: milk 150/8/12/8 per 240ml; oil 119/0/0/14 per 14g;
+      // one egg 78/6/1/5. Scaling happens before whole-gram rounding.
+      expect(parseFoodText(text)).toEqual([
+        expect.objectContaining({ calories, protein, carbs, fat }),
+      ]);
+      expect(parseFoodText(text)[0].quantityIssue).toBeUndefined();
+    }
+  );
 });

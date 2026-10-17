@@ -138,14 +138,70 @@ describe("distance & pace unit toggle", () => {
 });
 
 describe("body weight unit scope", () => {
-  it("names the body-weight scope and keeps lifting loads explicit", () => {
+  it("names the body-weight scope, and leaves lifting loads alone", () => {
     const { toggleUnit } = renderSection({ preferredWeightUnit: "lbs" });
     fireEvent.click(option("Body weight unit", "kg"));
     expect(toggleUnit).toHaveBeenCalledWith("preferredWeightUnit", "lbs");
+    expect(toggleUnit).not.toHaveBeenCalledWith(
+      "liftingWeightUnit",
+      expect.anything()
+    );
     expect(screen.getByText("Weigh-ins and goal weight")).toBeInTheDocument();
+  });
+});
+
+/* Lift18: lifting loads have a switch of their own. It replaced the footer
+   that said they were always in kg. */
+describe("lifting load unit", () => {
+  it("reads kg for a profile that has never set it, lb for one that has", () => {
+    renderSection();
+    expect(option("Lifting load unit", "kg")).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+    cleanup();
+    renderSection({ liftingWeightUnit: "lbs" });
+    expect(option("Lifting load unit", "lb")).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+  });
+
+  it("is its own switch: a stone weigh-in can lift in kg", () => {
+    renderSection({ preferredWeightUnit: "lbs", liftingWeightUnit: "kg" });
+    expect(option("Body weight unit", "lb")).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+    expect(option("Lifting load unit", "kg")).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+  });
+
+  it("flips the profile field, passing the current value, and reports it", () => {
+    const { toggleUnit } = renderSection();
+    fireEvent.click(option("Lifting load unit", "lb"));
+    expect(toggleUnit).toHaveBeenCalledWith("liftingWeightUnit", "kg");
+    expect(track).toHaveBeenCalledWith("settings_toggle_changed", {
+      toggle: "lifting_unit",
+      value: "lbs",
+    });
+  });
+
+  it("does nothing when the chosen unit is tapped", () => {
+    const { toggleUnit } = renderSection({ liftingWeightUnit: "lbs" });
+    fireEvent.click(option("Lifting load unit", "lb"));
+    expect(toggleUnit).not.toHaveBeenCalled();
+  });
+
+  it("names what moves with it, and no longer says loads are always kg", () => {
+    renderSection();
+    expect(screen.getByText("Lifting loads")).toBeInTheDocument();
     expect(
-      screen.getByText("Lifting loads are always in kg.")
+      screen.getByText("Sets, targets, plates and bests")
     ).toBeInTheDocument();
+    expect(screen.queryByText(/always in kg/)).not.toBeInTheDocument();
   });
 });
 

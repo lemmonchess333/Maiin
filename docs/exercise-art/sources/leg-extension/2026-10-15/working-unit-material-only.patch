@@ -1,0 +1,19 @@
+--- previous/construct-working-unit.py
++++ material/construct-working-unit.py
+@@ -87,14 +87,8 @@
+     return faces
+ 
+ def render(faces):
+-    im=Image.new('RGBA',(SIZE[0]*AA,SIZE[1]*AA))
+-    draw=ImageDraw.Draw(im)
+-    light=unit(np.array([-.35,-.5,-.8]))
+-    for vertices,normal,base in sorted(faces,key=lambda f:float(np.mean([p[2] for p in f[0]])),reverse=True):
+-        shade=int(np.clip(base*(.62+.38*max(0,float(normal@light))),15,175))
+-        polygon=[tuple(project(p)*AA) for p in vertices]
+-        draw.polygon(polygon,fill=(shade,shade,shade,255))
+-    return im.resize(SIZE,Image.Resampling.LANCZOS)
++    from material_finish import render as shade_material
++    return shade_material(faces,SIZE,AA,project)
+ 
+ assert np.allclose(np.column_stack([U,V,N]).T@np.column_stack([U,V,N]),np.eye(3),atol=1e-12)
+ assert abs(UP@N)<1e-12

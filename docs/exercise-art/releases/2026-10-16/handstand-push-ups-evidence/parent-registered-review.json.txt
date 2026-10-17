@@ -1,0 +1,113 @@
+{
+  "reviewer": "Codex /root",
+  "reviewedAt": "2026-10-16T17:27:14.165267+00:00",
+  "actualRegisteredReviewComplete": true,
+  "strictCertified": false,
+  "manual": {
+    "dark": {
+      "sixSettledFramesAndCuesExact": true,
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    "light": {
+      "sixSettledFramesAndCuesExact": true,
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  },
+  "playback": {
+    "dark/normal": {
+      "allSixDecoded": true,
+      "wrapSixToOne": true,
+      "allSixSettledCuesAgree": true,
+      "transientObserverEntries": 66,
+      "observedRows": 133,
+      "source": "dark-normal-trace.json"
+    },
+    "dark/slower": {
+      "allSixDecoded": true,
+      "wrapSixToOne": true,
+      "allSixSettledCuesAgree": true,
+      "transientObserverEntries": 24,
+      "observedRows": 50,
+      "source": "dark-slower-trace.json"
+    },
+    "light/normal": {
+      "allSixDecoded": true,
+      "wrapSixToOne": true,
+      "allSixSettledCuesAgree": true,
+      "transientObserverEntries": 33,
+      "observedRows": 67,
+      "source": "light-normal-trace.json"
+    },
+    "light/slower": {
+      "allSixDecoded": true,
+      "wrapSixToOne": true,
+      "allSixSettledCuesAgree": true,
+      "transientObserverEntries": 35,
+      "observedRows": 72,
+      "source": "light-slower-trace.json"
+    }
+  },
+  "normalCardDimensions": [
+    220,
+    480
+  ],
+  "cardThemes": [
+    "dark",
+    "light"
+  ],
+  "normalCardLongSideLimits": [
+    480,
+    348,
+    160
+  ],
+  "preservedPriorPublicArtFiles": 1015,
+  "preservedHistoricalStrictRecords": 124,
+  "browserWarningsOrErrors": 0,
+  "nativeReview": "Final whole native locked-arm top and corrected-head bent-arm bottom, both head/palm/floor crops and source profile diagnostics reviewed. Native connected head authoring uses the whole generated frame; no head graft/resize or body fitting. Final colour preserves all selected neutral pixels exactly.",
+  "limitations": [
+    "Two genuine press endpoints repeated A,A,B,B,A,A; no continuous or six-unique-pose claim.",
+    "New head breadth/length match within1percent at threshold200; projected diagnostics do not certify3D skull geometry. Minor inherited palm/finger variation and wide-elbow projections remain findings; strict certification remains unverified.",
+    "The normal220x480 cutout retains the grey wall/floor as apparatus context. At160px long-side limit the complete figure is small; no body-only transparent cutout or strict readability certificate is claimed."
+  ],
+  "previewResetDisposition": "The new tab initially used1280x720. Those actual desktop six/normal observations are retained with desktop filenames; viewport was then explicitly set and checked at390x844 before all accepted mobile observations. Cue shortening was completed before those mobile captures.",
+  "evidenceHashes": {
+    "review/browser-warnings-errors.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "review/dark-card-metrics.json": "7e9145c821328e1b0ab9cd40043a37ee42e81e519d64c71b5a8fec638e0af851",
+    "review/dark-cards.png": "801bce2a182a78289977b8df050fc1252e2ef39a1319a7123980639ad6ed79a3",
+    "review/dark-desktop-manual-1.png": "a20da4968dceb429c1830bbac944e72358d80ab745471d973e29c4b89056e596",
+    "review/dark-desktop-manual-2.png": "bdfe291ff9a32bd95e057a274e93a4aa883d52f36691958b5c46febee9f41e3b",
+    "review/dark-desktop-manual-3.png": "723c7089a58285737e28f00730b76f8a729d55355fce5b14d58777e2a5ee9017",
+    "review/dark-desktop-manual-4.png": "02d37178b6ec7a5a13fb24adab87c2adef6492ffd09a6991228a5b3d1be0735d",
+    "review/dark-desktop-manual-5.png": "f68d101cdc0bef15f547377049464b549629e5d88423afe08b2031123059a609",
+    "review/dark-desktop-manual-6.png": "cf732d0841a41d7e46af38689df0333ea2b9810bd9fdb0cc1080090608881c7a",
+    "review/dark-desktop-manual-six.json": "d9cc7bbb81bbbde276b17e3212c7b9706f6929c6349923cfe249c22c603a9251",
+    "review/dark-desktop-normal-trace.json": "4360546478163af6049b6ac5f7e0139849bc31a32311549f3ca8a6c2e1e31f10",
+    "review/dark-manual-1.png": "98527b580bc743a15f0ccc1698d56dabb024dc96b10994fa101821737b93d786",
+    "review/dark-manual-2.png": "f9eb415964994b5b5950600e2b9414df9d58848e71c4fe89067d0cc67f380879",
+    "review/dark-manual-3.png": "88170ab6ab387478a3ac84e4895ae307307ccafe5023b3173cb41efbd903ceb3",
+    "review/dark-manual-4.png": "97d2efd73ee9fd3ce7a23c6382fd92030e66e1e944d74ea1808132053b348f3d",
+    "review/dark-manual-5.png": "1f5c387931117dde17b5005693a629bcb42070bd48e26e5c94c6734a5c2bb2d5",
+    "review/dark-manual-6.png": "dff760f4a7ccc21fc457e18d4cdb0a1f942dedc2d83c48f997f25ffb56017121",
+    "review/dark-manual-six.json": "57c89542aee0aa090e2910b5b9862138f5855a92ef244cbdb86798859bf1f677",
+    "review/dark-normal-trace.json": "08457f18c97a833e2cc943cd6c2af7a0efb1453b41e84714c3932e974cf93eb7",
+    "review/dark-slower-trace.json": "6668748dd980956222cc97af724cd51efecdacf98bc966996f73353e5e2c5cad",
+    "review/light-card-metrics.json": "2e9ea62c0f72e76684f6ac5e2a2ebe4ac533392a0a52a51cc3dbe09479d77b87",
+    "review/light-cards.png": "940a225fc639149fdeba71ca88fcc0bed27bbe5fdc1f318c704cec7b3ec840b1",
+    "review/light-manual-1.png": "410b01970b0fa02af605aff4b80962c4042f96be464e8b8095e36a7d622c3783",
+    "review/light-manual-2.png": "159870ac8895b9282ef9f86a6955d4271739c19669525b2d259915ee138c00db",
+    "review/light-manual-3.png": "17dac114346f0fdb8e53a35aeccf72dccce31c48faab35f0a098d7d0b1f8ca71",
+    "review/light-manual-4.png": "e29552e5734f95a9c30d756a0b3d164d85472464e25c9d525c3817cfb0ae79ca",
+    "review/light-manual-5.png": "30db4541620d1c308d6a83e1ee950d681ae8d39d2cb5378c26fc7e984750f741",
+    "review/light-manual-6.png": "7d1849a166c8c398e342fd0870bd1365d135631cf49e2d777ef27d3826174343",
+    "review/light-manual-six.json": "fec071d018a5a2ce24aa9d3ac182fa793029dfd3b8dbfe9d8f13b78825603b18",
+    "review/light-normal-trace.json": "8e2c479942ab823bab589d4c9e58aa71c494eea0f14fa71a67dfdc1bd51d1db7",
+    "review/light-slower-trace.json": "f75ee3797a497c84b738e7c0c8cf668b519d97014c7df92971249859bdd9c43a"
+  },
+  "completionCredit": false
+}

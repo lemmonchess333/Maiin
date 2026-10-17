@@ -81,7 +81,7 @@ it belongs next to Apple Fitness / Strava / a well-made iOS health app.
 | `src/index.css`                      | The **canonical HSL colour variables** (`--primary`, `--card`, `--destructive`, etc.) for `:root` (light) and `.dark`, plus the Tailwind `@theme` bridge that exposes them as `bg-primary`, `text-muted-foreground`, etc. Also app-shell layout vars (`--tab-bar-height`, safe-area insets). |
 | `src/lib/theme.ts`                   | The `THEME` **JavaScript object** — sport colours, semantic colours, macro colours, chart colours, gradients. Used in TS/inline styles where a CSS class can't reach. Also `MACROS_TEXT_LIGHT` + `useMacroPalette()`.                                                                        |
 | `src/styles/components.css`          | Shared CSS primitives: `.ds-card`, `.ds-card-interactive`, `.ds-input`, `.ds-status-banner`, `.bottom-nav-frost`, auth shell, `.stat-number`, `.progress-ring`, `.pressable`.                                                                                                                |
-| `src/styles/animations.css`          | Keyframes + classes: `ds-fade-up`, `ds-scale-in`, stagger delays, run-button pulse, skeleton shimmer, number-update flash, PR flash, tab bounce.                                                                                                                                             |
+| `src/styles/animations.css`          | The Start Run pulse (`ds-run-pulse`, `.btn-start-run-pulse`), the skeleton shimmer and pulse, and the global reduced-motion reset. Nothing else: what moves is framer-motion in its component (§8).                                                                                          |
 | `src/components/ui/`                 | React primitives: `Button`, `IconButton`, `Banner`, `BottomSheet`, `Dialog`, `ConfirmDialog`, `ChoiceSheet`, `Tooltip`, `Toggle`, `Spinner`, `AnimatedNumber`, `ErrorState`.                                                                                                                 |
 | `CLAUDE.md` → "Tropos Design System" | The authoritative spec this guide summarises. If you need deeper detail, read that section.                                                                                                                                                                                                  |
 
@@ -429,10 +429,19 @@ behaviour.
   Use `.pressable` or the primitives (which bake it in).
 - **Haptics:** call the `haptic()` utility on button/card taps (Capacitor).
 - **Count-up:** the moments' numbers count up as they appear, through
-  `AnimatedNumber` (or `useCountUp` for a once-a-session count on Home).
-  Under Reduce Motion `AnimatedNumber` is plain text from the first paint.
-- **Entrance:** `ds-fade-up` / `ds-scale-in` with `ds-stagger-*` delays.
-- **Number updates:** `.ds-stat-updated` flash; PRs use `.ds-badge-new-pr`.
+  `AnimatedNumber` (`StatFigure`'s `count` draws one; `useCountUp` is for
+  a once-a-session count on Home). Under Reduce Motion `AnimatedNumber` is
+  plain text from the first paint.
+- **Entrance:** a page's header and sections rise in, staggered, through
+  the framer variants in `src/components/ui/pageMotion.ts`
+  (`pageItemVariant` inside `pageStaggerContainer`), which `PageShell`
+  applies; a page that animates a section itself imports
+  `pageItemVariant`. Content replacing its placeholder fades in instead
+  (`ArrivalFade`, under Pol1 below).
+- **Numbers and records:** no flash class. A figure counts up (above), a
+  set ticked on screen pops its check (`SetCheck`, under Pol1 below) and a
+  new best is the gold card docked above the workout's bottom bar
+  (`NewBestMoment`).
 - **Focus ring:** `focus-visible` only (mouse clicks shouldn't draw it) —
   `ring-2 ring-primary/40 ring-offset-2`. The primitives already do this.
 - **Reduced motion:** `prefers-reduced-motion: reduce` is honoured globally
@@ -441,6 +450,22 @@ behaviour.
   offsets, `pathLength` and count-ups are not covered: if you add one,
   gate it in the component with the `useReducedMotion` hook, as
   `ProgressRing` and `AnimatedNumber` do.
+- **A change seen on screen moves; the same state arriving by mount does
+  not** (Pol1, 2026-10-11). A set ticked on screen pops its check
+  (`SetCheck`); a done set on a resumed session or a return to its
+  exercise just shows. Content replacing its placeholder fades in where
+  the placeholder was (`ArrivalFade` with `useArrivedAfterLoading`);
+  content that was ready, or comes back on a tab or view switch, just
+  shows.
+- **Transient workout cards dock above the bottom bar** (Pol1): the rest
+  timer and the new-best moment take their room from the bottom of the
+  list, so nothing above them moves under the thumb that ticked the set.
+- **The workout screen fixes only its top bar and exercise strip** (owner,
+  2026-10-12). Finish sits by Close in the top bar, as Hevy and Strong put
+  it, and the exercise's name, set count and effort cue head the list and
+  scroll away with it; another exercise opens at its head. Fixed, they
+  took about 290 px of a 715 px phone, and the set being logged went out
+  of sight.
 
 ---
 
@@ -500,6 +525,13 @@ true, which is the whole point of separating them.
 | **Offline / queued**     | Whether the entry is saved on this device and waiting to sync — and say this ONLY where the app actually provides that guarantee. Claiming a durability we do not have is worse than saying nothing.                                                                                 |
 | **Error / interruption** | What failed, what was preserved, and the next safe action. A failed map must not take the run controls with it.                                                                                                                                                                      |
 | **Success / correction** | What changed, in neutral specific copy, plus Undo or an edit route. No automatic sharing, no extra celebration dialog.                                                                                                                                                               |
+
+A placeholder holds the loaded content's shape, at every text size: set
+a line of text's placeholder in that line's own classes (`LineBar` in
+`LoadingSkeleton.tsx`) and a chart's at the chart's aspect ratio, rather
+than a bar in pixels that matches one size and shoves everything under it
+at the others (Pol1: Analytics' placeholder had drifted from its page,
+and the score arriving dropped the page about 70 px).
 
 The trap this table exists to catch is the middle one: a loading state
 that is height-stable and confident reads as final. Home renders past the
@@ -601,9 +633,11 @@ inventing._
 
 **Daily logging simplification (user direction, 2026-09-09):** Keep decorative food photos out of the calorie summary; retain meal photos on meal entries. Home session cards show the session and dose; rationale lives behind “Why this run” in day details. Water and weight saves update the tile, with editing available by reopening; persistent sync errors remain visible.
 
-**Set types and the set table (owner direction, 2026-10-04):** A set's type is picked from its badge, as Hevy and MacroFactor do it: tap the number (or W, D or F) and a sheet lists Working set, Warm-up, Drop set and To failure, each with one line on what it does in Tropos. The words live in `setLabels.ts` beside the numbering, and the sheet works on a done set too, working the session's bests out again. Warm-ups are lettered, not numbered: the sets that count are "Set 1 of 3" however long the ramp, and a warm-up is optional, so starting the working sets passes over the ramp and never holds the exercise open (`isSetOutstanding`). Previous shows the same counted set last session. A done row turns green with the filled tick; the row being logged keeps the lifting tint.
+**Set types and the set table (owner direction, 2026-10-04):** A set's type is picked from its badge, as Hevy and MacroFactor do it: tap the number (or W, D or F) and a sheet lists Working set, Warm-up, Drop set and To failure, each with one line on what it does in Tropos. The words live in `setLabels.ts` beside the numbering, and the sheet works on a done set too, working the session's bests out again. Warm-ups are lettered, not numbered: the sets that count are "Set 1 of 3" however long the ramp, and a warm-up is optional, so starting the working sets passes over the ramp and never holds the exercise open (`isSetOutstanding`). Previous shows the same counted set last session. A done row turns green with the filled tick; the row being logged keeps the lifting tint. (Revised 2026-10-12, owner: "tone down colours". A done row keeps the card's colour and says done with its filled green tick alone, the row being logged is the table's one tinted row, the warm-up badge is grey, not amber (amber is a status colour, and every exercise opens on three or four warm-ups), and Previous is grey, not purple, still a tap to fill.)
 
 **Lift reasons (owner choice, 2026-10-03):** A lift day's details carry the same closed disclosure, “Why this session”: under the session card on Train's lift tab (on a day still to train this week), in the day sheet's lift block, and under the planned lift in Home's day details. One control draws both (`PurposeDisclosure`). The words come from `liftSessionPurpose.ts`, which states only what the plan stores — the training focus, a lighter week, the last full week before one, and weights holding in an easing block's first weeks — and says nothing without a programme. Home's Today cards stay free of reasons.
+
+**The live run screen (owner call, 2026-10-12, the run screen pass):** its accent is the run's coral: the timer, the km bar, the best lap, Resume, the step card, the route and the position dot on the live map, and the GPS search. It was teal, water's colour, from before DS3. Teal stays only as the first step of the heart-rate zone scale, which is a scale, not the accent. `runScreenCoral.test.ts` holds it.
 
 **The rules sheet (owner lock Lift4 (3), 2026-10-05):** "Why this session" keeps its place on all three surfaces, but opens one sheet rather than a disclosure: the session's reasons first, then "How your plan works", the plan's rules for this person (`liftRules.ts`, its numbers read from the engine's constants), ending on "Stuck on a lift? A variation often gets it moving." Train also has an ⓘ beside the week label that opens the same rules on any day. The sheet loads when first opened (`LiftRulesSheet`). "Why this run" stays a disclosure.
 
@@ -712,6 +746,11 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
   engine phases (`getPhaseForWeek`): **Base · Build · Taper · Race** — no
   invented "Peak" segment, so the active highlight always maps to a phase
   the scheduler can emit. Renders ONLY in the race-goal overlay.
+  Under the rail sits a closed disclosure, "The weeks ahead"
+  (`RaceWeeksAhead`, R23 in Pgm8, 2026-10-11): one row a week to race
+  week, each week's long run and quality sessions by name and "Lighter
+  week" on a step-back week, with no days, no easy runs and no base, build
+  or peak (E3a). It is worked out when opened.
 - **`SessionCommandCard`** — the "what's next" command surface. Eyebrow +
   title (the card's one big line, H2) + one quiet meta line + a single
   primary action (its own control, NOT the whole card) + an overflow that
@@ -857,7 +896,7 @@ macro rings, calorie data), not a per-screen button colour: reserve the filled
 `nutrition` variant for genuinely nutrition-PRIMARY, glanceable actions where
 orange IS the meaning, and keep ordinary Food CTAs (Add, Save, Log) on `primary`.
 
-**Exceptions, owner calls:** three Food-page buttons are `nutrition`. Brand
+**Exceptions, owner calls:** four Food-page buttons are `nutrition`. Brand
 purple stays for Pro there ("Try Pro free"). Other Food CTAs follow the rule
 above until the owner says otherwise.
 
@@ -877,6 +916,9 @@ above until the owner says otherwise.
 - **2026-09-23 — the scan result sheet's Log** ("Log to Breakfast"). It
   matches the usual row's Log: logging food is the page's one action, and
   the sheet opens over the orange camera button that started it.
+- **2026-10-13 — Copy yesterday's "Log selected meals"** (Food10 (2),
+  decided under the owner's delegation). The page's third way to log food
+  says it in the same colour as the other two.
 
 Scope note: this is for **buttons** — visual CTA/action controls. It is NOT a
 mandate to wrap every `<button>` element: pressable cards, list/table rows,

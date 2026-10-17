@@ -234,6 +234,17 @@ describe("PeriodSummaryCard", () => {
     expect(ends[1]).toBe("This week");
     expect(full).toContain(ends[0]!);
   });
+
+  it("takes more card to name all six of a Monday's weeks than five", () => {
+    const { unmount } = card();
+    expect(screen.getByTestId("axis-labels")).toHaveClass("@max-[11em]:hidden");
+    expect(screen.getByTestId("axis-ends")).toHaveClass("@max-[11em]:flex");
+    unmount();
+    // The 30 days up to a Monday draw six weeks (binAxis).
+    card({ bins: [{ ...WEEKS[0], key: "2026-08-17" }, ...WEEKS] });
+    expect(screen.getByTestId("axis-labels")).toHaveClass("@max-[12em]:hidden");
+    expect(screen.getByTestId("axis-ends")).toHaveClass("@max-[12em]:flex");
+  });
 });
 
 describe("History feeds the plan from the profile, not a literal", () => {

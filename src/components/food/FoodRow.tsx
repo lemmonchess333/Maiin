@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   motion,
-  AnimatePresence,
   useMotionValue,
   useTransform,
   type PanInfo,
 } from "framer-motion";
-import { Trash2, Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
+import { MEAL_SLOT_ICONS, type MealKey } from "./mealConstants";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
@@ -48,13 +48,25 @@ interface FoodRowProps {
    * machinery is untouched, the row just grows a second line.
    */
   subLabel?: ReactNode;
+  /** Identifies a portion when the diary has several rows with the same name. */
+  accessibleFoodName?: string;
   /**
-   * Optional captured-meal photo — renders as a hero image above the
-   * text row INSIDE the swipeable surface ("photos big, text compact"),
-   * so photo cards keep the exact same tap-to-edit / swipe-to-delete
-   * behaviour as text rows. Only AI-scanned meals carry one.
+   * Optional captured-meal photo, as a 52 px thumbnail at the start of
+   * the row (Pol1), inside the swipeable surface, so a photo meal keeps
+   * the same tap-to-edit and swipe-to-delete as any other. Only scanned
+   * meals carry one.
    */
   photoUrl?: string;
+  /** The row's meal slot, drawn in a tile the thumbnail's size when the
+   *  day has photos and this row has none. */
+  slot?: MealKey;
+  /**
+   * The day has a photo somewhere, so every row keeps the thumbnail's
+   * column (its photo, or its slot's tile) and every name starts in the
+   * same place. A day without photos keeps the compact rows: most logs
+   * have no photo, and a tile on each would only make them taller.
+   */
+  thumbnailColumn?: boolean;
 }
 
 // Single destructive swipe action (Delete only). Editing is reached by
@@ -145,7 +157,10 @@ export default function FoodRow({
   onDelete,
   onEdit,
   subLabel,
+  accessibleFoodName,
   photoUrl,
+  slot,
+  thumbnailColumn = false,
 }: FoodRowProps) {
   const reduce = useReducedMotion() === true;
   const hasFiredHapticRef = useRef(false);
@@ -209,6 +224,7 @@ export default function FoodRow({
   };
 
   const quantityLabel = formatQuantityLabel(group);
+  const actionName = accessibleFoodName ?? group.foodName;
 
   /* Shared inner content (name, quantity/edited pills, kcal). The row
      used to open with a dot coloured by whichever macro gave the most
@@ -267,9 +283,6 @@ export default function FoodRow({
     </>
   );
 
-  // Photo cards stack the hero image above the meta row inside the same
-  // swipeable surface. pointer-events-none keeps the browser's native
-  // image drag / long-press callout from fighting the framer x-drag.
   /* Remember WHICH src failed, not merely that one did. The device-local
      read is async, so a group's photo can arrive after the row has
      already rendered; keying on the src means a later, working source
@@ -277,32 +290,55 @@ export default function FoodRow({
      also what keeps this off `react-hooks/set-state-in-effect`). */
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const photoFailed = !!photoUrl && failedSrc === photoUrl;
+  const hasPhoto = !!photoUrl && !photoFailed;
+  const SlotIcon = slot ? MEAL_SLOT_ICONS[slot] : null;
 
-  const rowInner =
-    photoUrl && !photoFailed ? (
-      <div className="flex-1 min-w-0">
-        <img
-          src={photoUrl}
-          alt={group.foodName}
-          className="w-full h-44 object-cover rounded-lg mb-2.5 pointer-events-none select-none"
-          loading="lazy"
-          draggable={false}
-          /* A meal photo can genuinely go missing underneath a rendered
-           row: photos are device-local and age out at 90 days, a legacy
-           Storage URL can 404, and browser storage can be evicted. With
-           no handler the row keeps a 176px frame holding alt text and
-           then reflows. Collapsing to the ordinary compact row is the
-           honest degrade — that is the shape most rows already have, so
-           it reads as a text log rather than as breakage. */
-          onError={() => setFailedSrc(photoUrl)}
-        />
-        <div className="flex flex-wrap items-center justify-between gap-y-1">
+  /* The thumbnail column (Pol1): the photo, 52 px and rounded, or on a
+     day with photos the slot's tile in its place. A 176 px photo card
+     above each row makes a day of photographed meals a screen and a half
+     long. pointer-events-none keeps the browser's native image
+     drag and long-press callout from fighting the row's swipe. The name
+     is beside it, so the picture says nothing a reader needs. */
+  const leading = hasPhoto ? (
+    <img
+      src={photoUrl}
+      alt=""
+      className="size-[52px] shrink-0 rounded-xl object-cover pointer-events-none select-none"
+      loading="lazy"
+      decoding="async"
+      draggable={false}
+      /* A meal photo can genuinely go missing underneath a rendered row:
+         photos are device-local and age out at 90 days, a legacy Storage
+         URL can 404, and browser storage can be evicted. The row falls
+         back to the shape a row without a photo has on this day. */
+      onError={() => setFailedSrc(photoUrl ?? null)}
+    />
+  ) : thumbnailColumn && SlotIcon ? (
+    <span
+      aria-hidden="true"
+      data-slot-tile={slot}
+      className="flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground @max-[11em]:hidden"
+    >
+      <SlotIcon className="size-5" strokeWidth={1.75} />
+    </span>
+  ) : null;
+
+  /* Under 11em of row (larger text, a narrow phone) the column takes the
+     name's room: the photo goes above the name, and the slot's tile, which
+     is only there to line names up, gives way. Beside it, the names broke
+     mid-word at double text on a 320 px phone. */
+  const rowInner = leading ? (
+    <div className="@container flex-1 min-w-0">
+      <div className="flex items-center gap-3 @max-[11em]:flex-col @max-[11em]:items-start @max-[11em]:gap-2">
+        {leading}
+        <div className="flex w-full flex-1 min-w-0 flex-wrap items-center justify-between gap-y-1">
           {rowBody}
         </div>
       </div>
-    ) : (
-      rowBody
-    );
+    </div>
+  ) : (
+    rowBody
+  );
 
   // ── Reduced-motion fallback: no drag gesture. The row body is a tap
   //    target that opens the edit sheet (mirrors the swipe path's
@@ -315,7 +351,7 @@ export default function FoodRow({
           <button
             type="button"
             onClick={onEdit}
-            aria-label={`Edit ${group.foodName}`}
+            aria-label={`Edit ${actionName}`}
             className="flex flex-wrap items-center gap-y-1 flex-1 min-w-0 px-3 py-2.5 text-left transition-colors active:bg-muted/40"
           >
             {rowInner}
@@ -328,8 +364,8 @@ export default function FoodRow({
         <button
           type="button"
           onClick={onDelete}
-          aria-label={`Delete ${group.foodName}`}
-          className="p-2.5 mr-1 rounded-lg text-muted-foreground hover:text-destructive-strong hover:bg-destructive/10 transition-colors active:scale-90"
+          aria-label={`Delete ${actionName}`}
+          className="p-2.5 mr-1 rounded-lg text-muted-foreground hover:text-destructive-strong hover:bg-destructive/10 transition active:scale-90"
         >
           <Trash2 aria-hidden="true" className="size-4" />
         </button>
@@ -338,78 +374,80 @@ export default function FoodRow({
   }
 
   // ── Standard swipe row: tap to edit, swipe to delete ────────────────────
+  /* The exit folds the row away when its meal is deleted. It plays
+     because FoodTimeline's list holds the AnimatePresence: a presence of
+     the row's own would unmount with the row, which would vanish in one
+     frame while the rows below jumped up (Pol1). */
   return (
-    <AnimatePresence>
-      <motion.div
-        className="relative overflow-hidden"
-        data-food-row
-        /* Swipe-to-delete owns the horizontal gesture here. Marking the
+    <motion.div
+      className="relative overflow-hidden"
+      data-food-row
+      /* Swipe-to-delete owns the horizontal gesture here. Marking the
            row `data-swipe-card` makes useSwipeNavigation (the page-level
            swipe-between-tabs handler in Layout) hard-block when a swipe
            starts inside this row — without it, swiping to delete also
            navigated to the adjacent tab ("it just switches pages"). */
-        data-swipe-card
-        exit={{ height: 0, opacity: 0 }}
-        transition={{ height: { duration: 0.25 }, opacity: { duration: 0.2 } }}
-      >
-        {/*
+      data-swipe-card
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ height: { duration: 0.25 }, opacity: { duration: 0.2 } }}
+    >
+      {/*
           Single Delete panel revealed from the right. The button spans
           the full width (so a full swipe floods red behind the row — the
           iOS Mail look) while its icon+label sit in a fixed slot at the
           right edge so they stay put as the row slides past OPEN_OFFSET.
           Tapping the exposed strip deletes.
         */}
-        <motion.button
-          data-motion-driven
-          type="button"
-          onClick={onDelete}
-          aria-label={`Delete ${group.foodName}`}
-          className="absolute inset-0 flex items-center justify-end bg-destructive text-destructive-foreground active:brightness-90"
-          style={{ opacity: deletePanelOpacity }}
+      <motion.button
+        data-motion-driven
+        type="button"
+        onClick={onDelete}
+        aria-label={`Delete ${actionName}`}
+        className="absolute inset-0 flex items-center justify-end bg-destructive text-destructive-foreground active:brightness-90"
+        style={{ opacity: deletePanelOpacity }}
+      >
+        <span
+          className="flex flex-col items-center justify-center gap-1 text-caption font-medium tracking-wide"
+          style={{ width: Math.abs(OPEN_OFFSET) }}
         >
-          <span
-            className="flex flex-col items-center justify-center gap-1 text-caption font-medium tracking-wide"
-            style={{ width: Math.abs(OPEN_OFFSET) }}
-          >
-            <Trash2
-              className="size-[18px]"
-              strokeWidth={1.75}
-              aria-hidden="true"
-            />
-            Delete
-          </span>
-        </motion.button>
+          <Trash2
+            className="size-[18px]"
+            strokeWidth={1.75}
+            aria-hidden="true"
+          />
+          Delete
+        </span>
+      </motion.button>
 
-        {/* Draggable row content on top. Tapping it opens the edit sheet
+      {/* Draggable row content on top. Tapping it opens the edit sheet
             (or closes the row when already swiped open). */}
-        <motion.div
-          data-motion-driven
-          drag="x"
-          dragDirectionLock
-          dragConstraints={{ left: OPEN_OFFSET, right: 0 }}
-          dragElastic={{ left: 0.7, right: 0 }}
-          onDrag={handleDrag}
-          onDragEnd={handleDragEnd}
-          onTap={handleTap}
-          style={{ x }}
-          animate={{ x: targetX }}
-          transition={{ type: "spring", stiffness: 400, damping: 35 }}
-          role="button"
-          tabIndex={0}
-          aria-label={`Edit ${group.foodName}`}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              onEdit?.();
-            }
-          }}
-          className={cn(
-            "relative bg-card flex flex-wrap items-center justify-between gap-y-1 px-3 py-2.5 touch-pan-y cursor-pointer select-none"
-          )}
-        >
-          {rowInner}
-        </motion.div>
+      <motion.div
+        data-motion-driven
+        drag="x"
+        dragDirectionLock
+        dragConstraints={{ left: OPEN_OFFSET, right: 0 }}
+        dragElastic={{ left: 0.7, right: 0 }}
+        onDrag={handleDrag}
+        onDragEnd={handleDragEnd}
+        onTap={handleTap}
+        style={{ x }}
+        animate={{ x: targetX }}
+        transition={{ type: "spring", stiffness: 400, damping: 35 }}
+        role="button"
+        tabIndex={0}
+        aria-label={`Edit ${actionName}`}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onEdit?.();
+          }
+        }}
+        className={cn(
+          "relative bg-card flex flex-wrap items-center justify-between gap-y-1 px-3 py-2.5 touch-pan-y cursor-pointer select-none"
+        )}
+      >
+        {rowInner}
       </motion.div>
-    </AnimatePresence>
+    </motion.div>
   );
 }

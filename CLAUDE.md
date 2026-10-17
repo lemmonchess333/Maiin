@@ -11,6 +11,7 @@ npm run test:watch   # Vitest watch mode
 npm run test:e2e     # Playwright E2E tests
 npm run test:e2e:ui  # Playwright E2E tests (interactive UI)
 npm run test:e2e:auth # Signed-in E2E against the emulator, one test at a time (as CI)
+npm run test:e2e:journeys # Journeys: one person through weeks of the app, against the emulator
 npm run verify       # Everything CI's unit job blocks a merge on: run before pushing
 ```
 
@@ -142,6 +143,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `privacyZones.ts`       | GPS privacy zone detection for runs                            |
 | `prTracking.ts`         | Personal record tracking system                                |
 | `liftRecordsStore.ts`   | Best-lift map: load or rebuild, checked commit, invalidation   |
+| `liftLoad.ts`           | Lifting loads in the lifter's unit: stored kg, shown kg or lb  |
 | `scheduleUtils.ts`      | Weekly schedule generation (lift/run/rest)                     |
 | `exercises.ts`          | Exercise database                                              |
 | `workoutTemplates.ts`   | Workout template library                                       |
@@ -380,6 +382,7 @@ already made for this repo.
 - Specs in `e2e/`: `*.spec.ts` run signed out on the `chromium` and `mobile` projects; `*.auth.spec.ts` and `*.capture.spec.ts` run on `auth-emulator` against the emulator rig
 - Run: `npm run test:e2e` or `npm run test:e2e:ui` (interactive)
 - Signed-in specs locally: `npm run test:e2e:auth`, which runs them one at a time as CI does; in parallel they share one seeded account and fail with nothing wrong in the app
+- Journeys (`e2e/journeys/*.auth.spec.ts`, the `journeys` project, CI's `journeys` job): one new account through weeks of the app, its day moved with the app open (`e2e/helpers/journey.ts`), the callables answered by their real handlers (`realCallables.ts`), and a trigger's step a journey needs run in its process (`serverSteps.ts`; the rig runs no Functions). Run them with `npm run test:e2e:journeys` against the emulators, in UTC. The names they find on screen live in `src/test/journeyScreens.ts`, pinned against the components by unit tests: rename a button there, not in a spec
 - Capture specs, the emulator rig and screenshot diffs: `docs/agents/capture-rig.md`
 - `e2e/screenshots/largeText.capture.spec.ts` opens the main screens, every Settings section, a workout, a run, the detail pages, the Weekly review, sign-up, setup and Pro at 393 and 320 px with 1.35× and 2× text, and fails on anything past the screen or wider than its box. When it fails, fix the layout (wrap, give way, px for controls and margins), not the list: its `ACCEPTED` entries each carry a reason
 
@@ -606,12 +609,15 @@ from, its version and the local changes to carry into the next update are in
 
 ### Reusable prompts
 
-Two paste-ready session prompts live in `docs/agents/`, each carrying the
-measured baseline and the pre-decided calls its last run earned:
-`visual-pass-prompt.md` for the pixels-only visual pass, and
+Three paste-ready session prompts live in `docs/agents/`, each carrying its
+measured baseline: `visual-pass-prompt.md` for the pixels-only visual pass,
 `app-improvement-prompt.md` for the whole-app pass (security, guards,
-de-slop, front-end, design). Re-verify their cited lines before acting; the
-citations are starting points, not a to-do list.
+de-slop, front-end, design), and `training-engine-prompt.md` for lifting and
+running (a simulator on the real engine, end-to-end journeys, owner
+decisions; its inputs, checked against their sources on 2026-10-07, are in
+`docs/training-engine-2026-10/`). The first two
+also carry the calls their last run earned. Re-verify their cited lines
+before acting; the citations are starting points, not a to-do list.
 `app-improvement-pass-2026-09-05.md` is that prompt's first run: what
 shipped, what was declined and why, the operator checklist, the open owner
 calls with both options measured, and the ratchet baselines it left.

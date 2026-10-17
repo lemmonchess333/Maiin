@@ -1,0 +1,104 @@
+{
+  "status": "parent-actual-integrated-accepted",
+  "exercises": {
+    "t-bar-row": {
+      "reviewedAt": "2026-10-15T08:29:52.896613+00:00",
+      "decision": "owner-released-with-findings",
+      "checks": {
+        "identity": {
+          "passed": true,
+          "evidence": "Parent inspected both original/final native918x1036 endpoints, actual native ExerciseFormFrames and actual390x844 light/dark ExerciseFormContent. Same FA56 bald faceless lean white anatomical model without shorts, original trainers/contours/shading. No anatomy fitting, graft or new generation."
+        },
+        "camera": {
+          "passed": true,
+          "evidence": "Same original fixed camera and common crop[41,226,959,1262] at918x1036 preserve complete head, planted shoes, hinge/base, grips and both plates. No per-limb fitting or source athlete rescaling."
+        },
+        "anatomy": {
+          "passed": true,
+          "evidence": "Intact coherent straight-arm hinged bottom and elbows-back lower-chest row top. Head/torso hinge/legs/shoes stay coherent; no amputated/duplicated anatomy or substituted body part. Full native and actual mobile states reviewed."
+        },
+        "equipment": {
+          "passed": true,
+          "evidence": "Both original scenes retain same connected bar/handle/hinge and two consistent plates. Actual base anchors agree within1px and real base-edge dimensions within1%; articulated pin/projected rotating shaft are not claimed invariant. Two plates depart from later one-plate default: parent accepts only as explicit owner finding under earlier user relaxation, not strict equipment certification."
+        },
+        "contact": {
+          "passed": true,
+          "evidence": "Both original hands visibly close around neutral handles in each endpoint; bar/handle/load remains connected to fixed ground hinge. Both trainers stay planted, no grip substitution, clipping or floor sliding seen in native/mobile playback."
+        },
+        "physics": {
+          "passed": true,
+          "evidence": "Genuine hinged row bottom and chestward squeeze endpoints, neutral torso and no upright heave. Six beat paths reuse two poses; no illustrated intermediate, calibrated3D bar length or continuous trajectory claimed."
+        },
+        "muscles": {
+          "passed": true,
+          "evidence": "Actual key matches catalogue MidBack primary/Lats,Rhomboids,Biceps secondary. Existing source back colour fields normalized to established palette with source brightness; original neutral body/equipment pixels and anatomical outlines retained. Hidden muscle fields are not invented."
+        },
+        "cueAgreement": {
+          "passed": true,
+          "evidence": "Parent selected all six actual public instruction/frame paths and read exact two authored preparation sentences including45degree hinge. Position coordinates0,0,1,1,0,0 match actual two states1,1,2,2,1,1."
+        },
+        "sequenceAndLoop": {
+          "passed": true,
+          "evidence": "Actual foreground raw traces show all six decoded public paths and sequential6-to-1 in dark/light/slower. Pause/selectall6/next6-to-1/previous1-to-6 checked. Actual slower cadence about2.4s versus1.2s; repeated endpoint scope explicitly retained."
+        },
+        "mobileLight": {
+          "passed": true,
+          "evidence": "Parent visually inspected unchanged actual ExerciseFormContent at390x844 light with complete athlete/2plates/hinge/card/trainers, exact muscle key/setup/six cues and controls readable. Raw trace/fullpage proof retained; console warnings/errors empty."
+        },
+        "mobileDark": {
+          "passed": true,
+          "evidence": "Parent visually inspected unchanged actual ExerciseFormContent at390x844 dark with full clear silhouette/neutral grips/planted shoes/2plates/pivot/card, proper keys/setup/cues. Raw trace/fullpage proof retained; console warnings/errors empty."
+        }
+      },
+      "controls": {
+        "pause": true,
+        "selectAllSix": true,
+        "nextSixToOne": true,
+        "previousOneToSix": true,
+        "slower": true
+      },
+      "consoleErrors": 0,
+      "traceFiles": {
+        "dark": "t-bar-row-dark-trace.json",
+        "light": "t-bar-row-light-trace.json",
+        "slower": "t-bar-row-slower-trace.json"
+      },
+      "reviewedEvidenceHashes": {
+        "t-bar-row-dark-trace.json": "82abd0547b5b8f2405db42f7c4dd8325be0f9e42fae8476f22245d006a983ebe",
+        "t-bar-row-light-trace.json": "ef30494f01e5999706fdd879ef37d052ebcebe1973bf7adb985d02e75975b2f2",
+        "t-bar-row-slower-trace.json": "3203a193715d6bb22a0e1755d34fd73f54fd552e480b8bcf2dcb31551097cbe0",
+        "t-bar-row-dark-full.jpg": "8dd3ba1d2dce244f2a98633dab00ba79de1426c36f251e1eb3e4620e9741a156",
+        "t-bar-row-light-full.jpg": "f0f48718686db5d005b28198b388eb676c1432234740ce9d802d6fb898a4eb9a",
+        "t-bar-row-controls.json": "8b701ec772afee4453317feaba6bc5e112039633f46a3bf052a01469668cae05",
+        "t-bar-row-console.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "t-bar-row-observed-cadence.json": "6ab473fae1c8287ceabbd7671c0d15730e338a5148a330b153aebafdec9c69fa"
+      },
+      "reviewedRepositoryHashes": {
+        "public/form-frames/t-bar-row/1.webp": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+        "public/form-frames/t-bar-row/2.webp": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+        "public/form-frames/t-bar-row/3.webp": "04776e18e6ea03f6772056901fd78840a801572ff940cc74c53eaf59628966e4",
+        "public/form-frames/t-bar-row/4.webp": "04776e18e6ea03f6772056901fd78840a801572ff940cc74c53eaf59628966e4",
+        "public/form-frames/t-bar-row/5.webp": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+        "public/form-frames/t-bar-row/6.webp": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+        "public/form-art/t-bar-row.webp": "65ebae4c3a85ac5bb4a2206af5203d10cb9924091bb9614aad4835447d3cda44",
+        "masters/t-bar-row/1.png": "353e71cb10b0f587123dadb2ff374cc02d7d34dbc69c1ccfc565e7f7f5e49635",
+        "src/lib/releasedFormPlacards.ts": "bcd8f8e6a17490a6d934535f3fde072ae2e241606974c3c6153d3b258b60d325",
+        "src/lib/formArtwork.ts": "ffcd0b329c148fc796c717734f0160686ec3b6122a11def1c71141387b1b1175",
+        "src/lib/formArtCutouts.data.ts": "a6ef6695076686426fa6f53654382a1e5c4081b14febac6960ec58dd8126e08a"
+      },
+      "ownerFindingAccepted": true,
+      "approval": {
+        "actor": "User, through earlier explicit slight-requirements relaxation/trial/continue instruction; parent applies that existing authorization after actual review.",
+        "instruction": "User asked to lower strict requirements slightly for exercises that cannot pass, approved a trial then said \"ok do it then and continue wiht the rest\"; repeatedly authorized completing and merging without further approval while preserving the model without shorts.",
+        "context": "Parent explicitly retains the two consistent original plates instead of the later one-plate default. This is an owner-with-findings release; actual numeric base checks pass but do not erase the equipment-count departure. No new generation, removal/repair around refused requests, anatomy fitting or clothing change."
+      },
+      "findings": [
+        "Both retained original endpoints show two consistent grey plates instead of the later one-plate default. This departure is accepted explicitly under existing slight-requirements relaxation; no one/two-plate mixing or removal is supplied.",
+        "Actual fixed floor-base measurements pass within1px/1%, but articulated yoke pin/projected rotating shaft geometry is not calibrated3D invariance and is not certified.",
+        "Two physical start/top drawings repeat across six paths; illustrated intermediate/continuous trajectory/six unique poses are not supplied.",
+        "Exact original master prompt was unavailable in retained files. Exact successful master bytes, framing record generation31e3e68c, plan, peak prompt and original history are preserved; no prompt text is invented."
+      ]
+    }
+  },
+  "completionCredit": false
+}

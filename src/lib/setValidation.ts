@@ -12,9 +12,9 @@
  *
  *   - `severity: "block"` — invalid input, the set must not complete
  *     (caller surfaces an error toast and leaves the row editable).
- *   - `severity: "warn"` — input is sane but suspicious (e.g. a
- *     huge jump over the current PR). Caller should require an
- *     explicit confirmation before treating the set as a PR.
+ *   - `severity: "warn"` — input is sane but suspicious (a jump
+ *     past today's plan or the current best). The caller asks before
+ *     the set completes.
  *   - `ok: true` — input is normalised; caller can complete the set
  *     and run PR detection.
  *
@@ -32,12 +32,18 @@
  *            movement), `weight: 0` is allowed and the validator
  *            only checks reps.
  *
- * Jump rule
- *   If `currentBestForBucket` is provided and the new weight is
- *   > 1.25 × current (default), the result carries
- *   `severity: "warn"` so the caller can require confirmation
- *   before treating it as a PR.
+ * Jump rules (Lift16)
+ *   A weight more than twice today's planned weight (`plannedWeight`),
+ *   or more than 1.25 × the best in its rep bucket
+ *   (`currentBestForBucket`), carries `severity: "warn"`. The workout
+ *   screen asks before the set completes ("125 kg? Today's plan is
+ *   12.5 kg.", Log 125 kg / Change it): a set it logs moves the plan,
+ *   which follows the load lifted, and the records, so a typo that
+ *   only skipped the PR still moved the plan. The plan rule covers a
+ *   first session, which has no best to compare against.
  */
+
+import { formatLoad, liftUnitLabel, loadIn, type LiftUnit } from "./liftLoad";
 
 export type SetValidationResult =
   | { ok: true; normalized: { reps: number; weight: number }; warn?: undefined }
@@ -50,9 +56,13 @@ export type SetValidationResult =
 
 export interface SetValidationWarn {
   severity: "warn";
-  kind: "huge-jump";
+  /** Past twice today's plan, or 25% past the best for these reps. */
+  kind: "past-plan" | "huge-jump";
+  /** The question: "125 kg?" */
+  title: string;
+  /** What the weight is checked against: "Today's plan is 12.5 kg." */
   message: string;
-  /** Caller-friendly confirm CTA wording, e.g. "Yes, log as PR". */
+  /** The confirm button: "Log 125 kg". */
   confirmLabel: string;
   /** What the jump was, in case the caller wants to display it. */
   fromKg: number;
@@ -71,15 +81,22 @@ export interface SetValidationInput {
   /** When present, enables the huge-jump warning. Caller's current
    *  best in the matching rep bucket. */
   currentBestForBucket?: number;
+  /** Today's planned weight for the lift: a weight more than twice it
+   *  warns (Lift16). */
+  plannedWeight?: number;
   /** Override the jump-warn ratio. Default 1.25 (> 25% over PR
    *  triggers warn). */
   jumpWarnRatio?: number;
+  /** The unit the messages speak (Lift18); kg when absent. Every weight
+   *  above, and every number checked, is kg whatever this says. */
+  unit?: LiftUnit;
 }
 
 const REP_MAX = 100;
 const HOLD_MAX_SECONDS = 3600;
 const WEIGHT_MAX_KG = 500;
 const DEFAULT_JUMP_WARN_RATIO = 1.25;
+const PLAN_WARN_RATIO = 2;
 
 /**
  * Coerce raw user input (which may arrive as string from a text
@@ -97,6 +114,7 @@ function toFiniteNumber(raw: unknown): number | null {
 }
 
 export function validateSet(input: SetValidationInput): SetValidationResult {
+  const unit = input.unit ?? "kg";
   const reps = toFiniteNumber(input.reps);
   const timed = input.timed === true;
   if (reps === null) {
@@ -168,33 +186,53 @@ export function validateSet(input: SetValidationInput): SetValidationResult {
     return {
       ok: false,
       severity: "block",
-      message: `Weight looks too high (max ${WEIGHT_MAX_KG} kg). Check the value.`,
+      message: `Weight looks too high (max ${Math.floor(
+        loadIn(WEIGHT_MAX_KG, unit)
+      ).toLocaleString("en-GB")} ${liftUnitLabel(unit)}). Check the value.`,
     };
   }
 
-  // Jump check — only meaningful when caller supplies a current
-  // best AND the current best is positive. A first-ever lift in a
-  // bucket has no jump to compare against.
+  // Jump checks — each only meaningful against a positive weight to
+  // compare with. The plan comes first: it is what the person was
+  // asked to lift today.
+  const planned = input.plannedWeight;
+  if (typeof planned === "number" && planned > 0 && weight > 0) {
+    const ratio = weight / planned;
+    if (ratio > PLAN_WARN_RATIO)
+      return {
+        ok: true,
+        normalized: { reps, weight },
+        warn: {
+          severity: "warn",
+          kind: "past-plan",
+          title: `${formatLoad(weight, unit)}?`,
+          message: `Today's plan is ${formatLoad(planned, unit)}.`,
+          confirmLabel: `Log ${formatLoad(weight, unit)}`,
+          fromKg: planned,
+          toKg: weight,
+          ratio,
+        },
+      };
+  }
   const currentBest = input.currentBestForBucket;
   const jumpRatio = input.jumpWarnRatio ?? DEFAULT_JUMP_WARN_RATIO;
   if (typeof currentBest === "number" && currentBest > 0 && weight > 0) {
     const ratio = weight / currentBest;
-    if (ratio > jumpRatio) {
-      const pctOver = Math.round((ratio - 1) * 100);
+    if (ratio > jumpRatio)
       return {
         ok: true,
         normalized: { reps, weight },
         warn: {
           severity: "warn",
           kind: "huge-jump",
-          message: `${weight} kg is ${pctOver}% over your current best (${currentBest} kg). Confirm it's right.`,
-          confirmLabel: "Log as PR",
+          title: `${formatLoad(weight, unit)}?`,
+          message: `Your best at these reps is ${formatLoad(currentBest, unit)}.`,
+          confirmLabel: `Log ${formatLoad(weight, unit)}`,
           fromKg: currentBest,
           toKg: weight,
           ratio,
         },
       };
-    }
   }
 
   return { ok: true, normalized: { reps, weight } };

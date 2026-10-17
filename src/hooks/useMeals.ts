@@ -20,7 +20,6 @@ import {
   runTransaction,
   QueryDocumentSnapshot,
 } from "firebase/firestore";
-import { setDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
 import { deleteFoodPhoto } from "@/lib/foodPhotoStore";
 import { invalidateFoodPhotoCache } from "@/hooks/useFoodPhotoUrls";
 import { noteActivitySnapshot } from "@/lib/activationTracker";
@@ -34,7 +33,12 @@ import {
   subscribeQueuedWrites,
 } from "@/lib/offlineQueue";
 import { logger } from "@/lib/logger";
-import { clampFoodName } from "@/lib/mealEntry";
+import {
+  clampFoodName,
+  undoMealEntries,
+  restoreMealEntries,
+  hardDeleteMealEntry,
+} from "@/lib/mealEntry";
 
 export interface MealItem {
   name: string;
@@ -69,7 +73,7 @@ export interface Meal {
    *  written by the pre-Food9 background upload. NOTHING WRITES THIS ANY
    *  MORE: captures now live on the device (`src/lib/foodPhotoStore.ts`)
    *  and no photo field is persisted at all. It stays parsed so docs
-   *  written before the swap keep rendering their photo card, and it
+   *  written before the swap keep rendering their photo, and it
    *  drains on its own as those meals fall out of the diary's 90-day
    *  tap-back window. Do not add new writers.
    *
@@ -350,7 +354,7 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
     );
   }, [uid, from, lastDoc, hasMore, scope, revision]);
 
-  // F5c — soft-delete: writes `deletedAt: serverTimestamp()` instead
+  // F5c — soft-delete: queues `deletedAt: Timestamp.now()` instead
   // of removing the doc. Restoration clears `deletedAt`.
   //
   // NOTE this comment used to claim "the 24h auto-purge cron CF
@@ -362,24 +366,18 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
   // account deletion) and none purges `meals`. A soft-deleted meal doc
   // lives forever unless the user taps "Delete permanently" in Settings
   // → Recently Deleted (`hardDeleteMeal`), or the account is deleted.
-  // The "24h window" is
-  // therefore a UI convention on the archive screen, not a retention
-  // guarantee — treat it as such when reasoning about anything hung
-  // off a meal doc's lifetime.
+  // The archive keeps all soft-deleted meals accessible so people can
+  // restore them or explicitly remove them permanently.
   //
   // Existing call sites (Food.tsx) keep their 3-second in-session
   // undo timer in front of this call, so the soft-delete only fires
   // after the user has had a chance to undo. That's the in-session
   // toast surface; the Recently-Deleted Settings archive covers
-  // longer-term recovery within 24h.
+  // longer-term recovery until an explicit permanent delete.
   const deleteMeal = useCallback(
     async (mealId: string) => {
       if (!uid) return;
-      await setDocGuarded(
-        doc(db, "users", uid, "meals", mealId),
-        { deletedAt: serverTimestamp() },
-        { merge: true }
-      );
+      await undoMealEntries(uid, [mealId]);
     },
     [uid]
   );
@@ -387,11 +385,7 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
   const restoreMeal = useCallback(
     async (mealId: string) => {
       if (!uid) return;
-      await setDocGuarded(
-        doc(db, "users", uid, "meals", mealId),
-        { deletedAt: null },
-        { merge: true }
-      );
+      await restoreMealEntries(uid, [mealId]);
     },
     [uid]
   );
@@ -480,8 +474,8 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
    *  by the retention sweep instead. */
   const hardDeleteMeal = useCallback(
     async (mealId: string) => {
-      if (!uid) return;
-      await deleteDocGuarded(doc(db, "users", uid, "meals", mealId));
+      if (!uid) throw new Error("Sign in again before deleting this meal.");
+      await hardDeleteMealEntry(uid, mealId);
       await deleteFoodPhoto(uid, mealId);
       invalidateFoodPhotoCache(uid, mealId);
     },

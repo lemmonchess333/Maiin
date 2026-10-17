@@ -1,0 +1,25 @@
+{
+  "phase": "baseline",
+  "head": "af7ac48299e9a0daa35ce0effb72336e46d05adc",
+  "branch": "main",
+  "startedAt": "2026-10-14T19:49:41.2672281Z",
+  "status": "terminal",
+  "initialStatus": [],
+  "command": "npm run verify",
+  "node": "C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe",
+  "npmCli": "C:/Users/myles/Documents/Codex/2026-10-04/lg/work/merge-reviewed-20261012/runtime/node_modules/npm/bin/npm-cli.js",
+  "nodeVersion": "v24.19.0",
+  "npmVersion": "11.21.0",
+  "savedSnapshot": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+  "savedSnapshotSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+  "finishedAt": "2026-10-14T20:01:29.3738214Z",
+  "exitCode": 1,
+  "afterRunStatus": [
+    " M src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap"
+  ],
+  "snapshotAfterRunSha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+  "snapshotRestoredFromExactBytes": true,
+  "snapshotFinalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+  "finalStatus": [],
+  "finalHead": "af7ac48299e9a0daa35ce0effb72336e46d05adc"
+}

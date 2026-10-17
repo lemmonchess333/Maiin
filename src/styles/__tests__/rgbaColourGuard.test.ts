@@ -69,14 +69,6 @@ const EXEMPT: Record<string, string> = {
   // frames from the capture channel rather than a green unit suite.
   "components/home/WaterCard.tsx": "hydration fill ramp (deferred, #2220)",
   "components/home/WaterWave.tsx": "hydration fill ramp (deferred, #2220)",
-
-  // The active-run cockpit's Stop button. Its red (#EF4444) is
-  // deliberately NOT THEME.danger: danger is #D4637A, the coral that
-  // IS the running identity on this very surface, so a coral Stop
-  // would read as the run's own colour rather than as an interrupt.
-  // Always-dark surface, no stop-red token, one call site — a token
-  // invented for a single button would be worse than the literal.
-  "components/ui/RunControlButton.tsx": "always-dark cockpit Stop red",
 };
 
 /** `rgb(…)` / `rgba(…)` opening with three decimal channels. */
@@ -143,7 +135,7 @@ describe("no hardcoded coloured rgba()", () => {
   it("colours come from tokens, not decimal rgba literals", () => {
     const hits: string[] = [];
     for (const file of walk(SRC_ROOT)) {
-      const rel = file.slice(SRC_ROOT.length + 1);
+      const rel = file.slice(SRC_ROOT.length + 1).replaceAll("\\", "/");
       if (EXEMPT[rel]) continue;
       for (const hit of findHits(stripComments(readFileSync(file, "utf8")))) {
         hits.push(`${rel}:${hit}`);
