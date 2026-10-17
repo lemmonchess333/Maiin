@@ -4,7 +4,8 @@
  * `/run?scheduledRunId=` is the one way into a run that keeps its link to
  * the plan; the run summary's router state, the other way a spec logs a
  * run, saves none (test-infrastructure-audit §4(b)). Here a race plan's
- * first run is started from Home's card, done on the treadmill, and saved.
+ * first run is started from Home's card, moved to the treadmill from the
+ * GPS screen it starts on, and saved.
  * The treadmill is where a run is done, not a run type (Pgm8): the saved
  * run carries the planned run's id and its type, with the treadmill as its
  * place. So the summary names the planned session complete and asks
@@ -30,7 +31,6 @@ import {
 import { plannedSize } from "../helpers/journeyRun";
 import { emulatorAdmin } from "../helpers/realCallables";
 import { resetNodeClock } from "../helpers/nodeClock";
-import { ACTIVITY_TYPES } from "../../src/components/run/runConfigDefaults";
 import { RUN_TEMPLATES } from "../../src/lib/workoutTemplates";
 import { RUN, STRIP, TABS } from "../../src/test/journeyScreens";
 
@@ -90,16 +90,13 @@ test("a planned run, done on a treadmill, is the planned run", async ({
         template.id === (planned!.userOverride ?? planned!.templateId)
     );
     expect(session, "today's run is a session the app knows").toBeTruthy();
-    const typeName = ACTIVITY_TYPES.find(
-      (type) => type.type === session!.type
-    )?.name;
-    expect(typeName, "today's run has a type the setup names").toBeTruthy();
     // The run as planned: its distance where the plan sets one, else its
     // time, at the journey runner's six minutes a kilometre.
     const size = plannedSize(planned!);
     const minutes = Math.round(size.minutes);
 
-    // Today's run, started from Home's card: the Run page opens on it.
+    // Today's run, started from Home's card: it starts there and then,
+    // looking for the GPS, with no second Start on the Run page.
     await page
       .getByRole("button", { name: RUN.homeStart, exact: true })
       .click();
@@ -107,19 +104,10 @@ test("a planned run, done on a treadmill, is the planned run", async ({
       new RegExp(`scheduledRunId=${encodeURIComponent(planned!.id!)}`)
     );
 
-    // On the treadmill: the place changes, the type and the link stay.
+    // On the treadmill: the place changes, the type and the link stay
+    // (checked on the saved run below).
     await page
-      .getByRole("button", { name: RUN.customise, exact: true })
-      .click();
-    await page.getByRole("switch", { name: RUN.treadmill }).click();
-    await expect(
-      page.getByRole("switch", { name: RUN.treadmill })
-    ).toBeChecked();
-    await expect(
-      page.getByRole("button", { name: RUN.runType(typeName!), exact: true })
-    ).toBeVisible();
-    await page
-      .getByRole("button", { name: RUN.startTreadmill, exact: true })
+      .getByRole("button", { name: RUN.gpsTreadmill, exact: true })
       .click();
     // The run's clock starts with the treadmill screen; the run's time on.
     const distance = page.getByRole("textbox", { name: RUN.distance });

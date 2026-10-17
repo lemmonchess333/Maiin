@@ -58,6 +58,7 @@ import {
 import RunSetupSkeleton from "../components/run/RunSetupSkeleton";
 import RunResumePrompt from "../components/run/RunResumePrompt";
 import { Banner } from "@/components/ui/Banner";
+import { Button } from "@/components/ui/Button";
 import {
   readStoredRun,
   writeStoredRun,
@@ -124,6 +125,11 @@ import {
   runSessionReducer,
   initialRunPhase,
 } from "../features/run/runSessionReducer";
+import {
+  FIRST_RUN_CHECK_MS,
+  START_ON_ARRIVAL_PARAM,
+  startOnArrival,
+} from "../features/run/startOnArrival";
 import { haptic } from "../lib/haptic";
 import { distanceLabel, distanceValue, paceLabel } from "../lib/runLabels";
 import {
@@ -168,7 +174,7 @@ function sessionSegmentsFor(
 export default function Run() {
   const unit = useDistanceUnit();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   // Optional route to follow — passed via navigation state from RunDetail's
   // "Re-run this route". Captured once on mount (the polyline of a past run);
@@ -330,6 +336,15 @@ export default function Run() {
   // Both reset naturally on each /run mount.
   const [forceModal, setForceModal] = useState(false);
   const [launchShoeId, setLaunchShoeId] = useState<string | null>(null);
+  // Home's run card asks for its run to start as the page opens
+  // (`?start=1`, startOnArrival). "deciding" until the page knows enough
+  // to start or to show itself, "starting" from the start until the GPS
+  // screen takes over, "done" otherwise. The setup surfaces stay hidden
+  // until "done", so the run's own card never flashes up on the way in.
+  const [arrival, setArrival] = useState<"deciding" | "starting" | "done">(
+    () =>
+      searchParams.get(START_ON_ARRIVAL_PARAM) === "1" ? "deciding" : "done"
+  );
   // `startedAtRef` mirrors the timer's original-start epoch for the
   // active run so the periodic write effect can persist it without
   // racing with React state. Set on handleStart and on Resume.
@@ -738,6 +753,83 @@ export default function Run() {
     gps.preWarm();
     gps.start();
   };
+
+  // ─── Start on arrival (Home's run card) ──────────────────────────
+  // Home's Start goes straight into the run: the planned run as its card's
+  // Start would begin it, or a free run as the Free tile would. The page
+  // shows itself instead when there is something to see first
+  // (startOnArrival). The flag comes off the address as soon as the page
+  // acts on it, so going Back to this page from the summary, or a reload,
+  // never starts another run.
+  const [firstRunCheckOver, setFirstRunCheckOver] = useState(false);
+  useEffect(() => {
+    if (arrival !== "deciding" || !firstRunHint.owed) return;
+    const t = setTimeout(() => setFirstRunCheckOver(true), FIRST_RUN_CHECK_MS);
+    return () => clearTimeout(t);
+  }, [arrival, firstRunHint.owed]);
+  const startArrivalRun = useEffectEvent((kind: "planned" | "free") => {
+    const audioCuesOn = profile?.audioCues !== false;
+    const config =
+      kind === "planned"
+        ? buildLaunchConfig(planDecision, audioCuesOn, launchShoeId)
+        : buildTileConfig(
+            "freerun",
+            paceTable,
+            planDecision.metadata,
+            audioCuesOn,
+            launchShoeId
+          );
+    handleStart(config).catch((err) => {
+      logger.error("[Run] Start from Home failed", err);
+      setArrival("done");
+    });
+  });
+  const arrivalUid = profile?.uid;
+  const arrivalPlanReady = isFreeformUser || !programLoading;
+  const arrivalFirstRunHint = !firstRunHint.owed
+    ? "not-due"
+    : firstRunMoment
+      ? "due"
+      : runHistory.loading && !firstRunCheckOver
+        ? "checking"
+        : "not-due";
+  const arrivalPlannedRun = launchWorkout !== null;
+  const arrivalRouteToFollow = targetRoute != null;
+  const arrivalState = location.state;
+  useEffect(() => {
+    if (arrival !== "deciding" || phase !== "waiting" || !arrivalUid) return;
+    const decision = startOnArrival({
+      planReady: arrivalPlanReady,
+      // Read here rather than from `resumePrompt`, which the restore
+      // effect sets in this same pass.
+      interruptedRun: readStoredRun(arrivalUid) !== null,
+      routeToFollow: arrivalRouteToFollow,
+      firstRunHint: arrivalFirstRunHint,
+      plannedRun: arrivalPlannedRun,
+    });
+    if (decision === "wait") return;
+    setSearchParams(
+      (params) => {
+        params.delete(START_ON_ARRIVAL_PARAM);
+        return params;
+      },
+      { replace: true, state: arrivalState }
+    );
+    // The decision reads localStorage and the router, outside React.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
+    setArrival(decision === "show" ? "done" : "starting");
+    if (decision !== "show") startArrivalRun(decision);
+  }, [
+    arrival,
+    phase,
+    arrivalUid,
+    arrivalPlanReady,
+    arrivalRouteToFollow,
+    arrivalFirstRunHint,
+    arrivalPlannedRun,
+    arrivalState,
+    setSearchParams,
+  ]);
 
   // ─── Phase B3: persistence write + restore handlers ─────────────
   //
@@ -1333,6 +1425,20 @@ export default function Run() {
     haptic("heavy");
   }, [gps, timer, sessionSegments, replaceManualDistanceDraft]);
 
+  const handleMoveToTreadmill = useCallback(() => {
+    /* On a treadmill after all. A run from Home's Start never passes the
+       setup's "On a treadmill" switch (Pgm8), so the GPS screen offers
+       it. Only the place changes, as with the switch: the type, the
+       session and the plan's link stay, and the distance is typed in from
+       the treadmill at the end. */
+    gps.stop();
+    replaceManualDistanceDraft(null);
+    setRunConfig((prev) => (prev ? { ...prev, place: "treadmill" } : prev));
+    dispatch({ type: "MANUAL_FALLBACK" });
+    timer.start();
+    haptic("heavy");
+  }, [gps, timer, replaceManualDistanceDraft]);
+
   if (locked && (phase === "active" || phase === "paused")) {
     return (
       <div
@@ -1446,7 +1552,7 @@ export default function Run() {
         id="first-run"
         layer="session"
         placement="top"
-        when={phase === "waiting" && firstRunMoment}
+        when={phase === "waiting" && arrival === "done" && firstRunMoment}
       />
       {phase === "waiting" && (
         <>
@@ -1455,8 +1561,10 @@ export default function Run() {
               real programme prefill on its first render. Freeform
               users skip the wait. Skeleton appears only after a
               100ms threshold (cached useProgram reads return faster
-              than this, so the skeleton flash is rare). */}
-          {!isFreeformUser && programLoading ? (
+              than this, so the skeleton flash is rare). A start from
+              Home waits the same way, with nothing to show until the
+              run starts or the page shows itself. */}
+          {arrival !== "done" || (!isFreeformUser && programLoading) ? (
             showSkeleton ? (
               <RunSetupSkeleton />
             ) : null
@@ -1716,10 +1824,20 @@ export default function Run() {
                     </p>
                   </div>
                 )}
+                <Button
+                  variant="ghost"
+                  fullWidth
+                  onClick={handleMoveToTreadmill}
+                  className="rounded-2xl bg-stage-raised text-white hover:bg-white/10"
+                >
+                  On a treadmill
+                </Button>
                 <button
                   type="button"
                   onClick={() => {
                     gps.stop();
+                    // Back to the run's own card, where Customise is.
+                    setArrival("done");
                     dispatch({ type: "CANCEL_ACQUIRING" });
                   }}
                   className="text-sm"

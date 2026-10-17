@@ -5,6 +5,8 @@ import { Play } from "lucide-react";
 import RunTemplateIcon from "@/components/run/RunTemplateIcon";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
+import { unlockSpeech } from "@/lib/speechUnlock";
+import { START_ON_ARRIVAL_PARAM } from "@/features/run/startOnArrival";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { RacePaceWork } from "@/lib/racePace";
 import { runSessionName } from "@/lib/runSessionAbout";
@@ -19,8 +21,9 @@ import { cardClasses } from "@/components/ui/cardClasses";
 
 /**
  * Today's run, as Home's lead card (DS3). Twin of LiftCTACard: Start
- * begins the run, anywhere else on the card opens it in Train, and a
- * finished or skipped run says so instead of offering Start. The card
+ * begins the run, straight into finding the GPS (`startOnArrival`),
+ * anywhere else on the card opens it in Train, and a finished or skipped
+ * run says so instead of offering Start. The card
  * shows the session and its dose; why this run matters lives in Train's
  * day details ("Why this run"), per the 2026-09-09 daily-logging note.
  */
@@ -62,11 +65,14 @@ export default function RunCTACard({
   // P0-6: pass scheduledRunId so Run.tsx can pin the exact runDay
   // being fulfilled. Falls back to ?template= alone for legacy
   // runDays without v2 ids (no id field on the schedule object).
+  // Start goes straight into the run, the planned one or a free run, with
+  // no second Start on the Run page (`startOnArrival`).
   const params: string[] = [];
   if (tmpl) params.push("template=" + tmpl.id);
   if (todayRun?.id)
     params.push("scheduledRunId=" + encodeURIComponent(todayRun.id));
-  const queryString = params.length ? "?" + params.join("&") : "";
+  params.push(START_ON_ARRIVAL_PARAM + "=1");
+  const startTarget = "/run?" + params.join("&");
 
   // HOME-ACTION-01: a terminal/reconciliation run must not relaunch the run
   // flow, so it gets no Start. No todayRun (cold-start) is startable.
@@ -138,9 +144,12 @@ export default function RunCTACard({
             size="lg"
             className="pointer-events-auto w-full"
             onClick={function () {
+              // The run starts as the Run page opens, so the voice cues
+              // are unlocked here, inside the tap.
+              unlockSpeech();
               haptic();
               trackHomeEvent("home_card_tapped", { card: "today_run" });
-              navigate("/run" + queryString);
+              navigate(startTarget);
             }}
           >
             <Play className="size-4 fill-current" aria-hidden="true" />

@@ -197,6 +197,21 @@ describe("Train's start, as the journeys press it", () => {
   });
 });
 
+describe("Train's run, as the journeys open it", () => {
+  it("a planned day's card opens the run's own card by its name", () => {
+    // Home's Start goes straight into the run, so the run's own card is
+    // read from Train's, which hands its card the label.
+    const section = readFileSync(
+      resolve(
+        dirname(fileURLToPath(import.meta.url)),
+        "../../components/program/ProgrammeRunSection.tsx"
+      ),
+      "utf8"
+    );
+    expect(section).toContain(`: "${TRAIN.viewRun}"`);
+  });
+});
+
 describe("Home, where setup lands", () => {
   it("is titled as the journeys wait for it", () => {
     const home = readFileSync(
