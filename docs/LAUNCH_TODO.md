@@ -153,8 +153,12 @@ errors on permissions instead, enable it once by hand:
   - `com.tropos.app.pro.yearly`
 - In App Store Connect → App Information → App Store Server
   Notifications, set the **Production URL** and **Sandbox URL** to
-  the deployed `appleIAPWebhook` function URL (format:
-  `https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/appleIAPWebhook`).
+  **RevenueCat's** URL, Version 2 (RevenueCat → the App Store app →
+  Apple Server to Server notification settings → Apply in App Store
+  Connect). Apple takes one URL and RevenueCat reads them (ADR-0006,
+  `docs/iap/revenuecat-setup.md`). This line used to name
+  `appleIAPWebhook`, the hand-rolled path from before RevenueCat that
+  #1104 retires.
 
 ---
 
@@ -947,7 +951,7 @@ Code side is ready. No code changes needed for any of these.
 6. Generate App Store Server API key (download `.p8` once, save
    Key ID + Issuer ID) — this `.p8` is what item 2 consumes
 7. Point App Store Server Notifications V2 (Production + Sandbox)
-   at the deployed `appleIAPWebhook` URL from item 3
+   at RevenueCat's URL, not `appleIAPWebhook` (see section 4)
 
 ### reCAPTCHA + App Check (browser, ~30 min, do gradually)
 

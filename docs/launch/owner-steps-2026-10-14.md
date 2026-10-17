@@ -133,8 +133,10 @@ These steps are what's left.
 - [ ] On **each** product: Introductory Offer → **Free**, **7 days**, new
       subscribers.
 - [ ] App Information → App Store Server Notifications: Production and
-      Sandbox URLs both set to
-      `https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/appleIAPWebhook`.
+      Sandbox both set to **RevenueCat's** URL, Version 2 (the last box in
+      4.2 fills these in for you). Apple takes one URL, and RevenueCat is
+      what reads them. Not the old `appleIAPWebhook` address: that is the
+      path from before RevenueCat, due to be retired (#1104).
 
 ### 4.2 RevenueCat dashboard: check each of these is done
 
@@ -146,6 +148,10 @@ These steps are what's left.
 - [ ] Project settings → transfer behaviour: **Keep with original App User
       ID** (do not transfer).
 - [ ] Copy the **public** Apple SDK key (starts `appl_`).
+- [ ] The App Store app's settings → **Apple Server to Server notification
+      settings** → **Apply in App Store Connect**, Version 2. This sets both
+      URLs in 4.1. If the button isn't offered, copy the URL shown there into
+      both of 4.1's fields.
 
 ### 4.3 Turn purchases on in the iPhone build (only after 4.1 and 4.2 are complete)
 
