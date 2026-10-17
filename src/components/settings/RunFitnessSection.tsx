@@ -267,7 +267,7 @@ export default function RunFitnessSection({
               <input
                 id="benchmark-time"
                 type="text"
-                inputMode="numeric"
+                inputMode="decimal"
                 placeholder={distance === "5k" ? "22:30" : "1:45:00"}
                 value={timeStr}
                 onChange={(e) => setTimeStr(e.target.value)}

@@ -152,10 +152,13 @@ const INTENSITY_PCT: Record<RunIntensity, [number, number]> = {
 };
 
 /** Parse a "mm:ss" or "h:mm:ss" finish time to seconds. Null when unparseable
- *  (UI benchmark entry). Minutes/seconds must be < 60; result must be > 0. */
+ *  (UI benchmark entry). Minutes/seconds must be < 60; result must be > 0.
+ *  A ".", a "," or a space divides the parts as a ":" does: the boxes open
+ *  the iPhone's decimal pad, which has no ":" key, so "22.30" is 22:30. */
 export function parseRaceTimeToSeconds(input: string): number | null {
-  const parts = input.trim().split(":");
+  const parts = input.trim().split(/\s*[:.,]\s*|\s+/);
   if (parts.length < 2 || parts.length > 3) return null;
+  if (parts.some((p) => !/^\d+$/.test(p))) return null;
   const nums = parts.map((p) => Number(p));
   if (nums.some((n) => !Number.isFinite(n) || n < 0)) return null;
   let seconds: number;

@@ -758,7 +758,7 @@ export default function RunPlanSettings({
           <input
             id="ps-race-time"
             type="text"
-            inputMode="numeric"
+            inputMode="decimal"
             value={raceTimeStr}
             onChange={(e) => setRaceTimeStr(e.target.value)}
             placeholder={`e.g. ${goalTimeExample(raceDistance)}`}
