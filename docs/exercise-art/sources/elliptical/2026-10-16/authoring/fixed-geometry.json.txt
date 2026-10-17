@@ -1,0 +1,80 @@
+{
+  "parameters": {
+    "yaw": 10.0,
+    "pitch": 16.964038452880608,
+    "roll": -3.0,
+    "focal": 2366.80515486071,
+    "scale": 418.47089803084725,
+    "crankX": 477.51976863819885,
+    "crankY": 774.2488686573223,
+    "phase1": 7.097770892719382,
+    "phase4": 195.21620599920197,
+    "width": 0.2,
+    "gripWidth": 0.32,
+    "pivotX": 1.0292358850860681,
+    "pivotUp": 0.7332624181428602,
+    "crank": 0.4173863994475161,
+    "rocker": 0.9031744275046691,
+    "coupler": 1.3565543143401704,
+    "along": 0.30261436349556375,
+    "bracket": 0.11434403409200447,
+    "upper": 0.4942791061590125,
+    "bend": 5.0751837426897595,
+    "holdAsym": 0.05,
+    "pedalAsym": -0.025
+  },
+  "sourcePoseAnglesDegrees": {
+    "1": 7.097770892719382,
+    "4": 195.21620599920197
+  },
+  "pitch": {
+    "1": {
+      "near": 8.0,
+      "far": 14.0
+    },
+    "4": {
+      "near": 16.0,
+      "far": 7.0
+    }
+  },
+  "gripAxis": {
+    "1": {
+      "near": -74.0,
+      "far": -69.0
+    },
+    "4": {
+      "near": -68.0,
+      "far": -88.0
+    }
+  },
+  "camera": "One fixed pinhole camera, principal[768,512]; unchanged equipment and human source coordinate system.",
+  "canvas": [
+    1536,
+    1120
+  ],
+  "oldSourceCanvas": [
+    1536,
+    1024
+  ],
+  "commonPadding": [
+    0,
+    0,
+    0,
+    96
+  ],
+  "gripAssemblyM": {
+    "mirroredNormalOffset": 0.02,
+    "inboardOffset": 0.012,
+    "returnCurve": 0.045,
+    "sleeveLength": 0.22,
+    "sleeveOuterDiameter": 0.044,
+    "returnTubeDiameter": 0.012
+  },
+  "denseFixedEquipmentClosure": {
+    "samples": 721,
+    "minimumMargin": 0.39295857960848524,
+    "maxStep": 0.005389418320018467,
+    "closureAtCycle": 2.220446049250313e-16
+  },
+  "scope": "Fixed equipment only. No inferred human interpolation, contact acceptance by equations, exact3D source recovery, or strict certificate."
+}

@@ -89,6 +89,8 @@ function validProfileUpdates(overrides = {}) {
   };
 }
 
+// Bootstrap the entire functions module separately from the unchanged
+// emulator cleanup and assertion deadlines.
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
   // Require index BEFORE touching admin.initializeApp() ourselves.
@@ -103,7 +105,7 @@ beforeAll(() => {
   completeOnboarding = idx.completeOnboarding;
   admin = require("firebase-admin");
   db = admin.firestore();
-});
+}, 30_000);
 
 // Firestore emulator under CI load occasionally returns
 // batch.commit() success a few milliseconds before the

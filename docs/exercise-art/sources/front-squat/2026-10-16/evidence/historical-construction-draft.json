@@ -1,0 +1,149 @@
+{
+  "status": "single-construction-native-eligibility-draft-awaiting-review",
+  "geometry": {
+    "kind": "custom compact rigid shoulder harness",
+    "frameDepthMm": 330.2,
+    "frameHeightMm": 338.4,
+    "adjustedShoulderSpacingMm": 300,
+    "paddedArches": "two curved load-bearing shoulder supports",
+    "barDiameterMm": 28,
+    "padFrontDeltContactPlaneYmm": 45,
+    "barCenterYFrontMm": 165,
+    "barCenterZAboveShoulderContactMm": 70,
+    "cradleInnerRadiusMm": 14,
+    "cradleWallMm": 6,
+    "cradleRiser": "solid plate connecting cradle bottom to same curved steel frame",
+    "frontUprightsAndLowerCrossBrace": true,
+    "stockReplica": false,
+    "sameGeometryForBothStates": true
+  },
+  "geometrySha256": "43f5267e9f3d37c128cfce7016ac0755210e346171cdd02fb9ab31f32d39d48d",
+  "projection": {
+    "scalePixelsPerMm": 0.36,
+    "azimuthDegrees": 20,
+    "elevationDegrees": 9.25,
+    "cameraAndBodyCalibrated": false,
+    "commonProjectionAcrossPoses": true
+  },
+  "poses": [
+    {
+      "name": "standing",
+      "source": "1-rack-grip-candidate.png",
+      "sha256": "4138d453c00c9de84930655df5281bea91ddc53d1364c3e6ed10a80b60deb902",
+      "rotationRadians": 0,
+      "nearCatchPixels": [735, 326],
+      "unchangedForegroundHandWindows": [
+        [658, 300, 725, 355],
+        [835, 312, 907, 371]
+      ],
+      "foregroundArmPolygons": [
+        [
+          [663, 309],
+          [700, 305],
+          [712, 315],
+          [720, 329],
+          [733, 348],
+          [745, 379],
+          [738, 401],
+          [725, 407],
+          [712, 393],
+          [707, 374],
+          [698, 353],
+          [687, 341],
+          [670, 339]
+        ],
+        [
+          [836, 328],
+          [845, 319],
+          [863, 319],
+          [883, 327],
+          [899, 344],
+          [909, 368],
+          [922, 387],
+          [921, 410],
+          [905, 415],
+          [893, 398],
+          [888, 381],
+          [879, 358],
+          [872, 350],
+          [853, 348],
+          [838, 342]
+        ]
+      ],
+      "sourcePath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\front-squat\\thruster-original-source-review-20261014\\1-rack-grip-candidate.png",
+      "changedPixels": 8639,
+      "changedOutsideActualEquipmentAlpha": 0,
+      "humanReposedOrWarped": false,
+      "noBodyPixelMovement": true,
+      "sameCoordinateHandOcclusionRestoration": true,
+      "nativeSha256": "2fde311f88488c6d297b9016d6978451c38fc1a88485a4b7c04f2f77647c4691"
+    },
+    {
+      "name": "bottom",
+      "source": "2-squat-candidate.png",
+      "sha256": "e6f6b16212becfabf17e24c48fdd79fcac5a9f993148d8d38746c23f58056673",
+      "rotationRadians": -0.020594885173533087,
+      "nearCatchPixels": [735, 487],
+      "unchangedForegroundHandWindows": [
+        [658, 458, 725, 514],
+        [835, 470, 907, 529]
+      ],
+      "foregroundArmPolygons": [
+        [
+          [663, 467],
+          [700, 463],
+          [712, 473],
+          [720, 487],
+          [733, 506],
+          [745, 537],
+          [738, 559],
+          [725, 565],
+          [712, 551],
+          [707, 532],
+          [698, 511],
+          [687, 499],
+          [670, 497]
+        ],
+        [
+          [836, 486],
+          [845, 477],
+          [863, 477],
+          [883, 485],
+          [899, 502],
+          [909, 526],
+          [922, 545],
+          [921, 568],
+          [905, 573],
+          [893, 556],
+          [888, 539],
+          [879, 516],
+          [872, 508],
+          [853, 506],
+          [838, 500]
+        ]
+      ],
+      "sourcePath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\front-squat\\thruster-original-source-review-20261014\\2-squat-candidate.png",
+      "changedPixels": 8482,
+      "changedOutsideActualEquipmentAlpha": 0,
+      "humanReposedOrWarped": false,
+      "noBodyPixelMovement": true,
+      "sameCoordinateHandOcclusionRestoration": true,
+      "nativeSha256": "c4e483f2c4b9cf0469383fcc807db240ffa3ef6ff36abdbafe5a08adbc4beeb9"
+    }
+  ],
+  "anatomicalTransforms": 0,
+  "newImageGenerationRequests": 0,
+  "originalArtworkModified": false,
+  "compositorCorrection": "First compositor altered near-black background; original proof preserved in siblingcustom-harness-native-proof. This run changes only actual equipment-alpha pixels, same geometric construction, no pose/fit correction.",
+  "nominalNeckClearance": "Pad fronts atY45mm and shaftcenterY165mm. A conservative nominal100mmneck-front envelope leaves51mmshaft-surface clearance; this is explicit shared equipment/anatomical-depth interpretation, NOT a calibrated3D reconstruction of the2Dsource neck. Source-facing overlap is intentional foregroundshaft/behindneck depth, never necksupport. Native judgment required.",
+  "singleGlobalCorrection": "One shorter338.4mm common frame replaces the thigh-colliding533.4mm frame. Bar/pad relative geometry and both sourcepose placements remain identical; foreground-arm occlusion now restores source-neutral arm pixels only inside traced source-coordinate polygons, not whole rectangles. Original longframe/allrawproofs preserved.",
+  "findings": [
+    "Custom shoulder-harness assisted variant; not ordinary direct-delt rack or stockTitanreplica.",
+    "Existing low elbows retained; load is borne by padded arches, solid cradles and connected frame.",
+    "Hand windows remain at their original coordinates; projected overlap is disclosed and must be reviewed against legitimate depth ordering.",
+    "Source palette still original; no final exact-palette finishing or mobile review yet."
+  ],
+  "strictChecks": null,
+  "productionEligible": false,
+  "completionCredit": false
+}

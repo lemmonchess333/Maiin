@@ -1,0 +1,25 @@
+{
+  "docWidth": 380,
+  "image": [
+    {
+      "alt": "Elliptical, Stride B",
+      "natural": [
+        1047,
+        1072
+      ],
+      "objectFit": "contain",
+      "rect": {
+        "height": 360,
+        "width": 324,
+        "x": 28,
+        "y": 242.11459350585935
+      },
+      "src": "/form-frames/elliptical/3.webp"
+    }
+  ],
+  "reviewLabel": "elliptical-integrated-full-figure",
+  "viewport": [
+    390,
+    844
+  ]
+}

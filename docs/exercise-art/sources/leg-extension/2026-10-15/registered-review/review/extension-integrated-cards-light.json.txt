@@ -1,0 +1,39 @@
+{
+  "artifactName": "extension-integrated-cards-light.json",
+  "cards": [
+    {
+      "complete": true,
+      "display": [
+        358,
+        480
+      ],
+      "natural": [
+        480,
+        384
+      ],
+      "src": "/form-art/leg-extension.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "complete": true,
+      "display": [
+        200,
+        160
+      ],
+      "natural": [
+        480,
+        384
+      ],
+      "src": "/form-art/leg-extension.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  ]
+}

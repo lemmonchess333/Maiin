@@ -1,0 +1,199 @@
+{
+  "exerciseId": "incline-db-curl",
+  "version": "anatomy-v3-2026-10-16-native-moving-source-v1",
+  "width": 992,
+  "height": 784,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex /root",
+  "reviewedAt": "2026-10-16T18:28:31.112638+00:00",
+  "recordStage": "Actual native/mobile/card review complete; normal verification, required CI and actual merge remain separate gates.",
+  "reference": {
+    "path": "form-frames/incline-db-curl/1.webp",
+    "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac"
+  },
+  "cueSha256": "ab4685bf7f13c67744126b45d550b3959d8a1ae0681ca0d43b43ae6f6fea8f32",
+  "frames": [
+    {
+      "path": "form-frames/incline-db-curl/1.webp",
+      "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/incline-db-curl/2026-10-16/draft/A-native.png",
+        "sha256": "f2f2a8d7f0aad77fde701892895e6ef2ba90a21fb5cc0616774c7e3ad5e252c8"
+      }
+    },
+    {
+      "path": "form-frames/incline-db-curl/2.webp",
+      "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/incline-db-curl/2026-10-16/draft/A-native.png",
+        "sha256": "f2f2a8d7f0aad77fde701892895e6ef2ba90a21fb5cc0616774c7e3ad5e252c8"
+      }
+    },
+    {
+      "path": "form-frames/incline-db-curl/3.webp",
+      "sha256": "25451a1d061e3436f5e592e1a57f52350fdd7847b22d4c4dd135fd22ef96c19a",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/incline-db-curl/2026-10-16/draft/B-native.png",
+        "sha256": "4ac5e0f3704dbbb77d1da0b418e9394b00bbd7cffeec3f42e7906717be28953d"
+      }
+    },
+    {
+      "path": "form-frames/incline-db-curl/4.webp",
+      "sha256": "25451a1d061e3436f5e592e1a57f52350fdd7847b22d4c4dd135fd22ef96c19a",
+      "sourcePose": "B",
+      "source": {
+        "path": "docs/exercise-art/sources/incline-db-curl/2026-10-16/draft/B-native.png",
+        "sha256": "4ac5e0f3704dbbb77d1da0b418e9394b00bbd7cffeec3f42e7906717be28953d"
+      }
+    },
+    {
+      "path": "form-frames/incline-db-curl/5.webp",
+      "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/incline-db-curl/2026-10-16/draft/A-native.png",
+        "sha256": "f2f2a8d7f0aad77fde701892895e6ef2ba90a21fb5cc0616774c7e3ad5e252c8"
+      }
+    },
+    {
+      "path": "form-frames/incline-db-curl/6.webp",
+      "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+      "sourcePose": "A",
+      "source": {
+        "path": "docs/exercise-art/sources/incline-db-curl/2026-10-16/draft/A-native.png",
+        "sha256": "f2f2a8d7f0aad77fde701892895e6ef2ba90a21fb5cc0616774c7e3ad5e252c8"
+      }
+    }
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": ["A", "A", "B", "B", "A", "A"],
+  "positionCoordinates": [0, 0, 1, 1, 0, 0],
+  "variation": "Alternating incline curl, near arm demonstrated",
+  "setup": [
+    "Lie back on a low incline bench with both feet planted.",
+    "Hold one dumbbell in each hand and curl one arm at a time.",
+    "The near arm is demonstrated; repeat the same controlled curl on the other side."
+  ],
+  "advice": {
+    "tip": "Keep the working upper arm beside the bench and lower the dumbbell slowly before changing sides.",
+    "commonMistakes": [
+      "Swinging the upper arm to lift the weight.",
+      "Bending the wrist back.",
+      "Lifting the shoulder away from the bench."
+    ]
+  },
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "approval": {
+    "actor": "Human owner",
+    "instruction": "ok carry on with the remaining8, same model and colours, no shorts. figure out another way to finish them and get them merged, stop repeating failed attempts and asking for approval",
+    "context": "Standing authorization covers native-coordinate generated moving-part composites, palette/equipment edits, local registration, checks, owner release with findings, PR and merge. Strict certification is not implied."
+  },
+  "findings": [
+    "This is an alternating variation: one complete near-arm curl is demonstrated and the setup/cues explicitly say to repeat the opposite side. The far arm holds its weight stationary beside the body; a simultaneous bilateral curl is not claimed.",
+    "The older bilateral hang request remains closed. The retained complete near-arm endpoint is reused for a new actual elbow-flexed source, authored with the canonical identity reference. The earlier rough projected-arm-shortening concern was not a measured3D result; intact native chains are reviewed directly.",
+    "One connected near-arm/weight region is inserted from the new native B at unchanged coordinates. All source pixels outside this documented moving region are taken from A, including the head, lower body, trainers, far grip and bench. No anatomy warp, fitted limb or head/shoe graft.",
+    "The same restrained-grey near hex dumbbell and closed grip are visible at both endpoints. Minor local contour/shading joins at the moving-region edge remain qualitative; exact3D joint positions are unverified.",
+    "Biceps primary#7B72E9 and forearms secondary#9590E0 use the original source tone and saturation. No additional spatial body shading.",
+    "Two genuine near-arm elbow endpoints occupy six cue slots; no six-unique-pose or continuous-animation claim. Strict certification remains unverified.",
+    "Two genuine physical endpoints occupy six cue slots; no continuous-motion or six-unique-pose certificate.",
+    "Normal cards use the established lossy export and transparent-background treatment. The white athlete has reduced contrast against the light card; at160px the complete apparatus/athlete is small. No strict readability certificate.",
+    "Actual native-coordinate source joins, anatomical colour boundaries and projected contact depth are qualitative findings. Strict visual checks remain null.",
+    "Alternating variation demonstrates the near-arm cycle; opposite-side repetition is stated in setup and cues. Far arm and its weight remain stationary. Exact3D elbow coordinates are unverified; minor local contour/projection differences remain findings."
+  ],
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Same FA56-based approved athlete, no shorts, smooth grey anatomy, fine contours, white trainers. Actual final native whole endpoints and local contacts reviewed."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Native1536x1024 source at scale1; common crop[320, 224, 1248, 944] and integer padding[32, 32], output[992, 784]. No anatomical transforms or individually fitted limbs."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Two genuine connected movement endpoints. New B moving region inserted at unchanged source coordinates; fixed source pixels outside it remain RGB exact. Source proportions and local contour continuity reviewed qualitatively."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Same low incline bench and two grey hex dumbbells. Complete near grip/weight at both endpoints, far arm/weight stationary."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Near closed hand around the same dumbbell; planted complete trainers and supported torso. Natural grip/forearm continuity reviewed."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Working elbow flexes without shoulder swing; far arm stays stationary, then setup/cues say to repeat the opposite side. Projected anatomy, not calibrated3D."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Strict certification unverified. Biceps#7B72E9, forearms#9590E0 from original source tone/saturation; no added body gradient. Native contour boundaries reviewed."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual registered ExerciseFormContent at390x844: all six decoded public paths, labels, short cues, preparation and advice agree in both themes."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual normal/slower playback in both themes includes all six paths,6-to1 wrap and matching settled cues. Two real states and recorded scalar phases; observer transitions retained."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual390x844 light six-frame, normal/slower loop and normal-card review at480/348/160px limits complete; full athlete/apparatus retained, no page overflow."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual390x844 dark six-frame, normal/slower loop and normal-card review complete; full athlete/apparatus retained, controls/cues readable and no captured browser warnings/errors."
+    }
+  },
+  "observedQaChecks": {
+    "identity": {
+      "observed": true,
+      "evidence": "Same FA56-based approved athlete, no shorts, smooth grey anatomy, fine contours, white trainers. Actual final native whole endpoints and local contacts reviewed."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "Native1536x1024 source at scale1; common crop[320, 224, 1248, 944] and integer padding[32, 32], output[992, 784]. No anatomical transforms or individually fitted limbs."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "Two genuine connected movement endpoints. New B moving region inserted at unchanged source coordinates; fixed source pixels outside it remain RGB exact. Source proportions and local contour continuity reviewed qualitatively."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "Same low incline bench and two grey hex dumbbells. Complete near grip/weight at both endpoints, far arm/weight stationary."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Near closed hand around the same dumbbell; planted complete trainers and supported torso. Natural grip/forearm continuity reviewed."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "Working elbow flexes without shoulder swing; far arm stays stationary, then setup/cues say to repeat the opposite side. Projected anatomy, not calibrated3D."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Biceps#7B72E9, forearms#9590E0 from original source tone/saturation; no added body gradient. Native contour boundaries reviewed."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Actual registered ExerciseFormContent at390x844: all six decoded public paths, labels, short cues, preparation and advice agree in both themes."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Actual normal/slower playback in both themes includes all six paths,6-to1 wrap and matching settled cues. Two real states and recorded scalar phases; observer transitions retained."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Actual390x844 light six-frame, normal/slower loop and normal-card review at480/348/160px limits complete; full athlete/apparatus retained, no page overflow."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Actual390x844 dark six-frame, normal/slower loop and normal-card review complete; full athlete/apparatus retained, controls/cues readable and no captured browser warnings/errors."
+    }
+  },
+  "publicationGate": "No completion credit before integrated review, verification disposition, CI, actual merge and preservation audit."
+}

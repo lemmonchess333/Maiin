@@ -1,0 +1,67 @@
+{
+  "status": "native-source-reassessment-parent-full-guide-eligibility-review-pending",
+  "exerciseId": "rowing-machine",
+  "scope": "Bounded direct native inspection of exactly the named retained catch, leg-drive and finish. Historical holds are evidence, not user authority. No source-bank scan or image request.",
+  "sources": [
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\rowing-machine\\1-master.png",
+      "sha256": "54976c3327f10fcd229c6fbe20225d7c31af877896d1d0a77fc5424fb912466e",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\rowing-machine\\2-leg-drive-candidate.png",
+      "sha256": "c9e9d5359938dfab494dd01d9bbfe6a09d64bd21df669c376fa8bee307579609",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\rowing-machine\\3-finish-bent-knees.png",
+      "sha256": "b325b7dec503c4c1b2541a636ebc3434791214ac4d6c6e6eb2e6f8ea0db0a046",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  ],
+  "observations": [
+    "Catch has compressed knees, near-vertical shins, straight arms, strapped feet and seated support.",
+    "Leg-drive has a substantial rearward seat/hip move with straight arms and forward body angle; it is not an arms-pulled finish.",
+    "Finish has the handle at lower ribs, bent elbows behind the torso and controlled rearward body lean; complete original legs/trainers, both grips and apparatus remain visible.",
+    "Finish thigh/shin directions retain visible knee flexion similar to the leg-drive. Native crop shows a real corner at the knee rather than a cropped straight limb. The degree of residual softness is an uncalibrated visual finding; it is not fairly described as a literal half-drive.",
+    "Approximate seat-left edge moves from x311 in drive to x322 in finish at about y574. This small original source variation is disclosed, not by itself a release blocker.",
+    "Full native camera/fan/footplate arrangement looks consistent and the no-shorts canonical-style athlete identity is retained. No gear-only correction is needed merely to evaluate the knee finding."
+  ],
+  "limits": [
+    "No 3D joint centres, exact limb angles or arbitrary pixel tolerance are certified. Thick anatomical contours and oblique view limit a calibrated flexion estimate.",
+    "The prior request to move the seat80px is not independently justified by this reassessment and is not retried.",
+    "Leg-drive cannot be substituted for pulled finish. Any accepted guide must use the actual pulled source and preserve the complete legs-first, body-swing, arms-pull scope and reverse recovery."
+  ],
+  "eligibility": "Parent is independently reviewing the full native source and guide. Residual finish flexion appears more than a minimally unlocked knee to this reviewer, but modest-versus-moderate interpretation is retained as a finding rather than an old numeric/global rejection. No acceptance, artwork draft or completion claim is made.",
+  "primaryTechniqueReference": {
+    "url": "https://www.concept2.com/training/rowing-technique",
+    "support": "Manufacturer technique shows legs extended and handle below ribs at finish; the recovery reverses arms, body and legs. No precise knee-angle threshold is supplied here."
+  },
+  "nativeDiagnosticCrops": {
+    "crop": [
+      300,
+      410,
+      900,
+      730
+    ],
+    "method": "Literal native pixel crop without resizing, recolouring or anatomy edits",
+    "files": {
+      "drive-knees-native-crop.png": "6a47bb4f1597adc3c0fc46b936714337c50aec6a470aff61ce6f6ec6b1442ef3",
+      "finish-knees-native-crop.png": "e75ba3841e9ffe30c953a84c70eaf35aefa543a49adf43629d2c4475db5fe2f7"
+    }
+  },
+  "imageRequests": 0,
+  "sourceArtworkEdits": 0,
+  "repositoryOrProgressWrites": 0,
+  "strictCertified": false,
+  "completionCredit": false
+}

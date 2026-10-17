@@ -1,0 +1,116 @@
+{
+  "status": "colour-only-pixel-preservation-proved-not-visual-acceptance",
+  "recordedAtUtc": "2026-10-15T12:14:27.350447+00:00",
+  "poses": [
+    {
+      "pose": 1,
+      "sourcePath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\face-pulls\\1-master.png",
+      "sourceSha256": "30c17a6d7c4416cb908d6f87ac5fb754bb45cb86116844a953893b761f48f8aa",
+      "copiedOriginalExact": true,
+      "nativeSize": [
+        1024,
+        1536
+      ],
+      "proposalSha256": "99feb6a27ab1feb92723e74f360431e6b7643e886519f5020b55dd999a3b9e00",
+      "oraSha256": "579584a58908c20c95fc6b5921ddbf9199c6f3afa153a804d931c78d880a98e8",
+      "colourLayerSha256": "357dc3d003d7553e0feaafc7a0a5073d0a519b5352bd93353744b768abd6037e",
+      "supportMaskSha256": "0d9412ed5e582b8ff205af47cf163dd80098a4e164c8e514300eaec64b081d9d",
+      "sourceChromaComponents": [
+        {
+          "pixels": 16268,
+          "strongPixels": 15172,
+          "boundsInclusive": [
+            181,
+            302,
+            372,
+            513
+          ]
+        },
+        {
+          "pixels": 8224,
+          "strongPixels": 7454,
+          "boundsInclusive": [
+            107,
+            309,
+            192,
+            518
+          ]
+        }
+      ],
+      "sourceColourSupportPixels": 24492,
+      "actualChangedPixels": 24486,
+      "supportBoundsInclusive": [
+        107,
+        302,
+        372,
+        518
+      ],
+      "allPixelsOutsideSourceColourSupportExact": true,
+      "originalAlphaExact": true,
+      "rightApparatusRegionExact": true,
+      "oraReopenedExact": true,
+      "equipmentMaskPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\face-pulls\\ergonomic-handle-equipment-proposal-20261015\\1-start-equipment-mask.png",
+      "equipmentMaskSha256": "7d70c6712afdc3c4ad169058fd480d09f955c435fbaa90fa377f436479a3a711",
+      "equipmentOverlapPixels": 0,
+      "exactPrimaryPixels": 43,
+      "exactSecondaryPixels": 76
+    },
+    {
+      "pose": 4,
+      "sourcePath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\face-pulls\\4-rope-rejected.png",
+      "sourceSha256": "eb07393aa9a70788874b70bfc48cdab5de143798082cc300d627fd3aeea7c628",
+      "copiedOriginalExact": true,
+      "nativeSize": [
+        1024,
+        1536
+      ],
+      "proposalSha256": "cad8a6136dda074e266b820463046a2c305c9bc6307d0860a8a62f116a30b6b5",
+      "oraSha256": "b5328d9b00a251b52da07740ce319625adf30d8e4b525e3dbcd844d97e033d3e",
+      "colourLayerSha256": "7a3ba87b6fbc4fad1b9c9354cb970ec0cd3a935be851a1ba7ff53b163348666e",
+      "supportMaskSha256": "b67ce2bf5c2eb3f6e68f026996ee2d300b36e54840269bf462ecc9290b6a17d1",
+      "sourceChromaComponents": [
+        {
+          "pixels": 16036,
+          "strongPixels": 14617,
+          "boundsInclusive": [
+            185,
+            294,
+            369,
+            514
+          ]
+        },
+        {
+          "pixels": 10696,
+          "strongPixels": 9941,
+          "boundsInclusive": [
+            80,
+            300,
+            195,
+            517
+          ]
+        }
+      ],
+      "sourceColourSupportPixels": 26732,
+      "actualChangedPixels": 26728,
+      "supportBoundsInclusive": [
+        80,
+        294,
+        369,
+        517
+      ],
+      "allPixelsOutsideSourceColourSupportExact": true,
+      "originalAlphaExact": true,
+      "rightApparatusRegionExact": true,
+      "oraReopenedExact": true,
+      "equipmentMaskPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\face-pulls\\ergonomic-handle-equipment-proposal-20261015\\4-finish-equipment-mask.png",
+      "equipmentMaskSha256": "20b4bf3661c9f41fd452625e9798bf96850d57574aedb31bb5c8141c138b4ef3",
+      "equipmentOverlapPixels": 0,
+      "exactPrimaryPixels": 34,
+      "exactSecondaryPixels": 65
+    }
+  ],
+  "recipeSha256": "c57da00dfca26c291a0df847744a542bc3c0b3ff999eb6b338513cd12814bfe0",
+  "scriptSha256": "3b978b916caa12da902090dfe5037c9c2e4a740ad6d9365f8b29da6aa962c1b7",
+  "registration": false,
+  "completionCredit": false
+}

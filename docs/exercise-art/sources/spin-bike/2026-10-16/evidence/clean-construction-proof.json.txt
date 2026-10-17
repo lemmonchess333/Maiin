@@ -1,0 +1,663 @@
+{
+  "status": "equipment-only-native-review-draft-not-approved",
+  "sourcePath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\spin-bike\\whole-sequence-sheet-20261015\\1-whole-sequence-original.png",
+  "sourceSha256": "83ad4e7d901d2f73832b7c5ef51766ccd3105bdbcb73138df9ea98fef6462c3b",
+  "sourceDimensions": [
+    1254,
+    1254
+  ],
+  "canvas": [
+    700,
+    700
+  ],
+  "commonPadding": [
+    20,
+    40
+  ],
+  "cameraStudy": {
+    "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining11-new-authoring-20261016\\equipment-route\\spin-seated-standing-wide-pedal-perspective-study.json",
+    "sha256": "1b92302cf6d075d556c7949775fb13bebad2ab21944bfd4aa58ba281324273c9"
+  },
+  "bodyOperation": "Exact native original pixels selected and retained. A/B identity plus commonpadding; C documented whole-sceneinteger(+6,+7) plus commonpadding. No anatomy resize/warp/repaint/graft.",
+  "sourceColourFinishing": "Not done; inherited source palette intentionally retained for native review.",
+  "mechanics": "One fixed common3Dgear/camera,170mmopposedcrank,160mmcrankQ,220mmforefootcontactspacing,140x100mmpassiverockingpedals;fixedmulti-positionloopbars.",
+  "poses": {
+    "A": {
+      "sourceExtract": [
+        0,
+        0,
+        627,
+        600
+      ],
+      "wholeSceneTranslation": [
+        0,
+        0
+      ],
+      "preservedGuardPixels": 45434,
+      "changedGuardPixels": 0,
+      "allSeedPixelsExact": true,
+      "oraIndependentRecompositionExact": true,
+      "geometry": {
+        "contacts": {
+          "far": {
+            "crankPin": [
+              347.22843037602365,
+              414.67796192885066
+            ],
+            "topCorners": [
+              [
+                323.2712559087652,
+                410.80780576742546
+              ],
+              [
+                356.80272019064245,
+                414.1012160983579
+              ],
+              [
+                369.86516350825787,
+                405.55087588202167
+              ],
+              [
+                337.2563051201165,
+                402.7145547680042
+              ]
+            ],
+            "worldCrankPin": [
+              -0.05966593115005007,
+              0.15918535315787533,
+              0.11
+            ],
+            "worldTopCentre": [
+              -0.06239483355016765,
+              0.1840359686772268,
+              0.11
+            ],
+            "platformDimensionsMetres": [
+              0.14,
+              0.1,
+              0.022
+            ],
+            "passiveAxisWorld": [
+              0.9940246207740591,
+              0.10915609600470336,
+              0.0
+            ]
+          },
+          "near": {
+            "crankPin": [
+              345.07432064333716,
+              530.912858742283
+            ],
+            "topCorners": [
+              [
+                318.47832341258925,
+                529.7062086381025
+              ],
+              [
+                354.1854928850661,
+                533.3439449078855
+              ],
+              [
+                368.5843803793788,
+                518.3115185672585
+              ],
+              [
+                333.9019718104933,
+                515.4737251617255
+              ]
+            ],
+            "worldCrankPin": [
+              0.05966593115005009,
+              -0.15918535315787533,
+              -0.11
+            ],
+            "worldTopCentre": [
+              0.05372288427189244,
+              -0.13490202155358305,
+              -0.11
+            ],
+            "platformDimensionsMetres": [
+              0.14,
+              0.1,
+              0.022
+            ],
+            "passiveAxisWorld": [
+              0.9713332641716915,
+              0.23772187512630596,
+              0.0
+            ]
+          }
+        },
+        "fixedGrips": {
+          "near": {
+            "fixedLoopScreen": [
+              [
+                417.0,
+                279.0
+              ],
+              [
+                468.0,
+                256.99999999999994
+              ],
+              [
+                486.0,
+                264.0
+              ],
+              [
+                435.0,
+                286.0
+              ],
+              [
+                417.0,
+                279.0
+              ]
+            ],
+            "seatedSleeve": [
+              [
+                417.0,
+                279.0
+              ],
+              [
+                468.0,
+                256.99999999999994
+              ]
+            ],
+            "standingSleeve": [
+              [
+                486.0,
+                264.0
+              ],
+              [
+                435.0,
+                286.0
+              ]
+            ]
+          },
+          "far": {
+            "fixedLoopScreen": [
+              [
+                428.4736829482044,
+                276.0840033234281
+              ],
+              [
+                477.5721096791659,
+                255.0275107659998
+              ],
+              [
+                494.7788029136706,
+                261.63792404165554
+              ],
+              [
+                445.77069677647114,
+                282.69853166018277
+              ],
+              [
+                428.4736829482044,
+                276.0840033234281
+              ]
+            ],
+            "seatedSleeve": [
+              [
+                428.4736829482044,
+                276.0840033234281
+              ],
+              [
+                477.5721096791659,
+                255.0275107659998
+              ]
+            ],
+            "standingSleeve": [
+              [
+                494.7788029136706,
+                261.63792404165554
+              ],
+              [
+                445.77069677647114,
+                282.69853166018277
+              ]
+            ]
+          }
+        },
+        "meshFaces": 2618,
+        "fixedFloorYMetres": -0.3
+      },
+      "clearMechanismContactDataExact": true
+    },
+    "B": {
+      "sourceExtract": [
+        627,
+        0,
+        1254,
+        600
+      ],
+      "wholeSceneTranslation": [
+        0,
+        0
+      ],
+      "preservedGuardPixels": 39772,
+      "changedGuardPixels": 0,
+      "allSeedPixelsExact": true,
+      "oraIndependentRecompositionExact": true,
+      "geometry": {
+        "contacts": {
+          "far": {
+            "crankPin": [
+              369.29464756657165,
+              501.1805039740683
+            ],
+            "topCorners": [
+              [
+                345.69685244508975,
+                498.5542763932292
+              ],
+              [
+                379.3172960130765,
+                503.634156479181
+              ],
+              [
+                391.1864627675727,
+                491.39171381661384
+              ],
+              [
+                358.51304334807196,
+                486.97716487655055
+              ]
+            ],
+            "worldCrankPin": [
+              0.03765613678830258,
+              -0.165777004925836,
+              0.11
+            ],
+            "worldTopCentre": [
+              0.033803829562438416,
+              -0.14107559344718654,
+              0.11
+            ],
+            "platformDimensionsMetres": [
+              0.14,
+              0.1,
+              0.022
+            ],
+            "passiveAxisWorld": [
+              0.988056459145978,
+              0.15409228903456668,
+              0.0
+            ]
+          },
+          "near": {
+            "crankPin": [
+              320.00399254741757,
+              435.09448638060576
+            ],
+            "topCorners": [
+              [
+                293.2137608244817,
+                430.51221892029776
+              ],
+              [
+                329.50616371167666,
+                435.93065548584144
+              ],
+              [
+                345.392187779634,
+                425.33929722428627
+              ],
+              [
+                310.14098289849045,
+                420.6085289877037
+              ]
+            ],
+            "worldCrankPin": [
+              -0.037656136788302604,
+              0.165777004925836,
+              -0.11
+            ],
+            "worldTopCentre": [
+              -0.039893356789536136,
+              0.19067670064016312,
+              -0.11
+            ],
+            "platformDimensionsMetres": [
+              0.14,
+              0.1,
+              0.022
+            ],
+            "passiveAxisWorld": [
+              0.9959878285730851,
+              0.08948880004934139,
+              0.0
+            ]
+          }
+        },
+        "fixedGrips": {
+          "near": {
+            "fixedLoopScreen": [
+              [
+                417.0,
+                279.0
+              ],
+              [
+                468.0,
+                256.99999999999994
+              ],
+              [
+                486.0,
+                264.0
+              ],
+              [
+                435.0,
+                286.0
+              ],
+              [
+                417.0,
+                279.0
+              ]
+            ],
+            "seatedSleeve": [
+              [
+                417.0,
+                279.0
+              ],
+              [
+                468.0,
+                256.99999999999994
+              ]
+            ],
+            "standingSleeve": [
+              [
+                486.0,
+                264.0
+              ],
+              [
+                435.0,
+                286.0
+              ]
+            ]
+          },
+          "far": {
+            "fixedLoopScreen": [
+              [
+                428.4736829482044,
+                276.0840033234281
+              ],
+              [
+                477.5721096791659,
+                255.0275107659998
+              ],
+              [
+                494.7788029136706,
+                261.63792404165554
+              ],
+              [
+                445.77069677647114,
+                282.69853166018277
+              ],
+              [
+                428.4736829482044,
+                276.0840033234281
+              ]
+            ],
+            "seatedSleeve": [
+              [
+                428.4736829482044,
+                276.0840033234281
+              ],
+              [
+                477.5721096791659,
+                255.0275107659998
+              ]
+            ],
+            "standingSleeve": [
+              [
+                494.7788029136706,
+                261.63792404165554
+              ],
+              [
+                445.77069677647114,
+                282.69853166018277
+              ]
+            ]
+          }
+        },
+        "meshFaces": 2618,
+        "fixedFloorYMetres": -0.3
+      },
+      "clearMechanismContactDataExact": true
+    },
+    "C": {
+      "sourceExtract": [
+        0,
+        600,
+        627,
+        1254
+      ],
+      "wholeSceneTranslation": [
+        6,
+        7
+      ],
+      "preservedGuardPixels": 46511,
+      "changedGuardPixels": 0,
+      "allSeedPixelsExact": true,
+      "oraIndependentRecompositionExact": true,
+      "geometry": {
+        "contacts": {
+          "far": {
+            "crankPin": [
+              355.9046786099308,
+              414.19920175416826
+            ],
+            "topCorners": [
+              [
+                332.19014032039297,
+                408.6263610944389
+              ],
+              [
+                366.6680418606464,
+                415.4893186428801
+              ],
+              [
+                379.4353983250328,
+                406.78591402828533
+              ],
+              [
+                345.9616436455923,
+                400.5299488216939
+              ]
+            ],
+            "worldCrankPin": [
+              -0.02350125032270555,
+              0.16836772622230645,
+              0.11
+            ],
+            "worldTopCentre": [
+              -0.02387189326657776,
+              0.19336497854747525,
+              0.11
+            ],
+            "platformDimensionsMetres": [
+              0.14,
+              0.1,
+              0.022
+            ],
+            "passiveAxisWorld": [
+              0.9998900930067527,
+              0.014825717754888454,
+              0.0
+            ]
+          },
+          "near": {
+            "crankPin": [
+              335.8279406821972,
+              530.0742179111495
+            ],
+            "topCorners": [
+              [
+                309.74033037057893,
+                527.1765293134738
+              ],
+              [
+                345.31273877326237,
+                534.3940859005593
+              ],
+              [
+                359.96495807978727,
+                519.484526665502
+              ],
+              [
+                325.40647823428634,
+                513.1995522007068
+              ]
+            ],
+            "worldCrankPin": [
+              0.02350125032270557,
+              -0.16836772622230645,
+              -0.11
+            ],
+            "worldTopCentre": [
+              0.01985566274154422,
+              -0.14363496068369183,
+              -0.11
+            ],
+            "platformDimensionsMetres": [
+              0.14,
+              0.1,
+              0.022
+            ],
+            "passiveAxisWorld": [
+              0.9893106215445843,
+              0.14582350324645388,
+              0.0
+            ]
+          }
+        },
+        "fixedGrips": {
+          "near": {
+            "fixedLoopScreen": [
+              [
+                417.0,
+                279.0
+              ],
+              [
+                468.0,
+                256.99999999999994
+              ],
+              [
+                486.0,
+                264.0
+              ],
+              [
+                435.0,
+                286.0
+              ],
+              [
+                417.0,
+                279.0
+              ]
+            ],
+            "seatedSleeve": [
+              [
+                417.0,
+                279.0
+              ],
+              [
+                468.0,
+                256.99999999999994
+              ]
+            ],
+            "standingSleeve": [
+              [
+                486.0,
+                264.0
+              ],
+              [
+                435.0,
+                286.0
+              ]
+            ]
+          },
+          "far": {
+            "fixedLoopScreen": [
+              [
+                428.4736829482044,
+                276.0840033234281
+              ],
+              [
+                477.5721096791659,
+                255.0275107659998
+              ],
+              [
+                494.7788029136706,
+                261.63792404165554
+              ],
+              [
+                445.77069677647114,
+                282.69853166018277
+              ],
+              [
+                428.4736829482044,
+                276.0840033234281
+              ]
+            ],
+            "seatedSleeve": [
+              [
+                428.4736829482044,
+                276.0840033234281
+              ],
+              [
+                477.5721096791659,
+                255.0275107659998
+              ]
+            ],
+            "standingSleeve": [
+              [
+                494.7788029136706,
+                261.63792404165554
+              ],
+              [
+                445.77069677647114,
+                282.69853166018277
+              ]
+            ]
+          }
+        },
+        "meshFaces": 2618,
+        "fixedFloorYMetres": -0.3
+      },
+      "clearMechanismContactDataExact": true
+    }
+  },
+  "imageRequests": 0,
+  "strictCertification": false,
+  "releaseApproved": false,
+  "completionCredit": false,
+  "files": {
+    "A-body-preservation-guard.png": "9667dbd8dda106b628b398d63a44f9137d7222ff4da6841d66ca4b24fdc00ec8",
+    "A-editable-draft.ora": "9afa8a768c5b0663f93ddf30da8508c366e2c62b94340b53a119ead4d3ae36aa",
+    "A-equipment-removal.png": "e4124b73018aab6f7aac1dfbebd73226dba9e6eeb6d5fe0d6371f285732f5125",
+    "A-fixed-equipment.png": "8f6d7b0a8df05c3c0f2f295b374655979c069b0d7b93dc91ca0a8f9d709d4c49",
+    "A-native-draft.png": "a790e3443ab83609303e4cda908c012841430788cdee76fb1671fd959e7ac304",
+    "A-retained-original-human.png": "e804758c283f3a6d6126890aa728851970257ca053c0ad39e62a0c940ee36c43",
+    "A-source-base.png": "9cb17d861a84c66d0e59ba5d73ad06caef187f6b618fee5e95566a788619d226",
+    "A-source-colour-seeds.png": "21fbc8903c7d21286e4707aaac35ebd0e5f83a7cb603f937f8b8467d390a4c72",
+    "A-unoccluded-mechanism.png": "c2a270909f226400ec14abc6e357f229fa18390bf130f11481d0e421aadc336e",
+    "B-body-preservation-guard.png": "7f2bf20532e8622899bf2aee151042c34ce54492e04d5b75beeeaa68d7a3279c",
+    "B-editable-draft.ora": "54fa5ba051722cb0c43a88eaab6a3cb30ccc0ade4a55fbfbde644c07bd0bb649",
+    "B-equipment-removal.png": "54ce2aec8544a01b8829f4abfd45d502ec9882a96478809693cbc56cfc5110f4",
+    "B-fixed-equipment.png": "26d9d975c37d3e81569b5be6087f6f3940adcf02af53aea340af150e321d7180",
+    "B-native-draft.png": "171e78a562d58f91dd1d853a545a7d9ada29ec0b0bc3744dfe2be2ce63b25e31",
+    "B-retained-original-human.png": "f10f8bf6d36a12cea711d8228deaee6c11e9a99af451c6d45f1dad32b1db8140",
+    "B-source-base.png": "bb0a1b46b6b286530cec3007d4f55a913730d847ba7e296c07f9804f71dd9bac",
+    "B-source-colour-seeds.png": "550cf88e2ec041ed686890e557f5961fb1cbf7e374889fa8ef0dcbf699df531b",
+    "B-unoccluded-mechanism.png": "a685c96ae162177208de9933ce4afe18eb4157708e39c497eaf358b5c411b8b3",
+    "C-body-preservation-guard.png": "6c473a003887c469cd4b2d7cd2062622a5f82bfc1f6da317f58d83e79bf8c218",
+    "C-editable-draft.ora": "110d4670459c04b03c28ecb89979e861d073d9f626c61ef28375a51fedd62741",
+    "C-equipment-removal.png": "423cac16322907bc1d6b72ecfb3887b277626b561788a4cd19ce579e79fc64fe",
+    "C-fixed-equipment.png": "805b1dbbb56240e3737cf6598240e3a28107f67abfc77070175f050d6cdb76cf",
+    "C-native-draft.png": "c82f28ecacc2784eee588515c2f775c64c35c59b9429fb1b7858601fbe2ea9ba",
+    "C-retained-original-human.png": "2330e96bde783488a529a462527fe4f9022242203ecec7f6b7f1a3d3b289b823",
+    "C-source-base.png": "438f88362a16fa06bd2e494118525aa091ffa8ba8e2900014d46c2c96ca19c31",
+    "C-source-colour-seeds.png": "ae492cadaeb8bb59dbee3ab98d2680369369f60fe3711bfcec6cd9fa877f18e4",
+    "C-unoccluded-mechanism.png": "18655fea8353b61fdab93f1bb34fdf471fb96519603aaa9db3cdf5c569e40ace"
+  },
+  "rendererSha256": "c564fe3f6fed4dafb57d5bfb3db47d1cb09e2cbb75ad2460334b1852007c5e48"
+}

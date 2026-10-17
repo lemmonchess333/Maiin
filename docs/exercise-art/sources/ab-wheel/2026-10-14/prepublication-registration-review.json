@@ -1,0 +1,135 @@
+{
+  "reviewedAt": "2026-10-14T22:39:28.384459+00:00",
+  "reviewer": "other_retained_pose_rescue",
+  "status": "registration-and-seal-script-review-passed; post-registration-integrated-and-publication-gates-pending",
+  "scope": "Read-only script/code and actual saved input/hash review. No registration script execution, tests, image generation/edits, repo mutations, source sealing or publication by reviewer. Local registration was already visible by the factual checkpoint; this report does not claim to precede its execution.",
+  "reviewedScripts": {
+    "register-reviewed.py": "a1bfa89602da6a12af77dd3d5977d481c1b9b428610d9292e6182a2ff7dc5395",
+    "validate-staged.py": "c7b729bddbb48791b522c82ff4c554c749ee64d389d346bfc516a6616909fd22",
+    "seal-source.py": "6fefe65854af341233f758c1d38eb66c9b4b62a1918bae9ebe1e54f2df91444d",
+    "seal-parent-staged-signoff.py": "9b14f826f343a8704fd332f5135dc6126cf4b383f91e2b69df81260ea4c8f1f0"
+  },
+  "syntaxParsePassed": [
+    "register-reviewed.py",
+    "validate-staged.py",
+    "seal-source.py",
+    "seal-parent-staged-signoff.py"
+  ],
+  "actualRepositoryCheckpoint": {
+    "branch": "art/ab-wheel-intact-cycle-20261014",
+    "head": "82d6d829ad20ad3c8924933f736ad615b83054f6",
+    "dirtyPaths": [
+      "M src/lib/formArtCutouts.data.ts",
+      " M src/lib/formArtReleases.data.ts",
+      " M src/lib/releasedFormPlacards.ts",
+      "?? docs/exercise-art/cutout-sources/ab-wheel.json",
+      "?? docs/exercise-art/cutout-sources/ab-wheel.png",
+      "?? docs/exercise-art/releases/2026-10-14/ab-wheel.json",
+      "?? docs/exercise-art/sources/ab-wheel/",
+      "?? masters/ab-wheel/",
+      "?? public/form-art/ab-wheel.webp",
+      "?? public/form-frames/ab-wheel/"
+    ],
+    "targetAbsentFromReviewedBaseGitTree": true,
+    "localRegistrationAlreadyPresent": true,
+    "rerunRegistrationNowPermitted": false
+  },
+  "checks": {
+    "noOldKettlebellFacts": {
+      "passed": true,
+      "evidence": "All target constants, source names, new request count3, pose order[1,2,3,3,2,1], native1448x924 dimensions, crop[48,8,1496,932], ref1, Core/Lats/Shoulders and exact kneeling setup are Ab Wheel facts; no oldKB ref3/glutes/hamstrings/floor-pickup/crop690x1008 reused."
+    },
+    "acceptanceBeforeRepositoryWrites": {
+      "passed": true,
+      "evidence": "register main requires exact target branch/base, clean tree, actual accepted staged report and recomputed input/hash/static/card/native/mobile/control/baseline/preservation gates before first repo write. No output moderation retry, generation or false completion action."
+    },
+    "newTargetAndPriorAssetSafety": {
+      "passed": true,
+      "evidence": "Registration rejects existing target frames/release/master/archive/prepared-source paths and duplicate placard entry; only new Ab Wheel outputs and additive placard entry are written. All903 prior frame/card/canonical-related hash paths remain unchanged at checkpoint. Public card did not exist in baseline Git tree and is now generated from prepared source."
+    },
+    "poseCueMuscleReferenceDimensions": {
+      "passed": true,
+      "evidence": "Six real WebP paths are copied; order/frame hashes bind honest3physical sources. Master equals decoded reference1. Release1448x924/ref1, exact short cue hash, Core primary/Lats-Shoulders secondary and authored kneeling setup match reviewed current data."
+    },
+    "truthfulReviewClaims": {
+      "passed": true,
+      "evidence": "Residual hip flexion, source knee/trainer redraw and10.035% projected axle-tip variation are explicit minor findings; no fully horizontal/perfect straightness, calibrated3D shaft/grip/radius or failed shoe metric pass is invented. Record says registered-path checks/CI/merge still pending."
+    },
+    "cardAlphaAndNormalGenerator": {
+      "passed": true,
+      "evidence": "Prepared source is the hash-reviewed alpha-only frame1RGB, final card hash is pinned and registered card currently matches it. The normal cutout generator runs separately after prepared-source registration; registration does not overwrite source pose pixels."
+    },
+    "baselineNotMisused": {
+      "passed": true,
+      "evidence": "Fresh main82d6d829 baseline is terminal with oldResultDataImportedfalse, input/snapshot preservation, all normal stages and hash-bound log. Its actual exit1/non-green state is explicit in staged and release data. No green baseline or green full branch check is invented; seal requires completed branch ledger and unresolved additional failures empty with raw evidence retained."
+    },
+    "rawReviewVersusFormattedArchive": {
+      "passed": true,
+      "evidence": "register captures accepted review bytes in review-inputs-exact.zip and3original prompt bytes in separate ZIP before any archive formatting. Historical React fixtures become.tsx.txt. Final sourceHashes deliberately cover current post-format archive files, excluding provenance self-hash; .gitattributes preserves committed byte hashes."
+    },
+    "sourceSealOrderAndPendingGates": {
+      "passed": true,
+      "evidence": "seal requires actual registered public hashes/card, integrated390x844both themes/all6+loop/preparation/controls/slower timing, normal branch-check comparison ledger and raw evidence hashes. Integrated evidence copies must exist before sealing. Parent must perform ordinary formatting before seal and avoid formatting sealed input files afterward; commit/CI/current-head merge remain independent."
+    },
+    "stagedAttestationScope": {
+      "passed": true,
+      "evidence": "seal-parent-staged-signoff only records parent observations/hashes; it must not be treated as automated visual proof. Actual parent signoff+native/mobile traces and screenshots already exist and all bound input/proof hashes currently match."
+    }
+  },
+  "currentEvidence": {
+    "priorArtworkHashCount": 903,
+    "priorArtworkMismatches": [],
+    "stagedParentInputAndProofMismatches": [],
+    "baselineHead": "82d6d829ad20ad3c8924933f736ad615b83054f6",
+    "baselineExitCode": 1,
+    "baselineLogHashMatches": true,
+    "registeredFrames": [
+      {
+        "path": "form-frames/ab-wheel/1.webp",
+        "hashMatchesRecord": true,
+        "dimensions": [1448, 924]
+      },
+      {
+        "path": "form-frames/ab-wheel/2.webp",
+        "hashMatchesRecord": true,
+        "dimensions": [1448, 924]
+      },
+      {
+        "path": "form-frames/ab-wheel/3.webp",
+        "hashMatchesRecord": true,
+        "dimensions": [1448, 924]
+      },
+      {
+        "path": "form-frames/ab-wheel/4.webp",
+        "hashMatchesRecord": true,
+        "dimensions": [1448, 924]
+      },
+      {
+        "path": "form-frames/ab-wheel/5.webp",
+        "hashMatchesRecord": true,
+        "dimensions": [1448, 924]
+      },
+      {
+        "path": "form-frames/ab-wheel/6.webp",
+        "hashMatchesRecord": true,
+        "dimensions": [1448, 924]
+      }
+    ],
+    "registeredRecordCueHashMatches": true,
+    "registeredRecordDimensions": [1448, 924],
+    "registeredReference": {
+      "path": "form-frames/ab-wheel/1.webp",
+      "sha256": "1c6adbc52050d867b542229cdd46a2aeb2062197ca354cbf2555c38456a7b9be"
+    },
+    "publicCardMatchesReviewedFinal": true
+  },
+  "blockingFindings": [],
+  "requiredRemainingWork": [
+    "Actual registered-path integrated review and final-card mobile checks",
+    "Normal branch verification and exact fresh-baseline comparison; report non-green Windows results truthfully",
+    "Copy/format any new evidence including this report before source seal",
+    "Source seal after final formatting, then normal hooks/current-head requiredCI and actual merge",
+    "Only after required final audits update completion counters"
+  ],
+  "completionCredit": 0
+}

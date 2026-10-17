@@ -1,0 +1,77 @@
+{
+  "exerciseId": "pendlay-row",
+  "status": "source-preserving-palette-candidate-not-final-acceptance",
+  "sources": {
+    "1": {
+      "path": "originals/1-original.png",
+      "sha256": "c8f6f4906986e99c1e2d44b99d5b5ea6dfe97b781edd9aa83c33aee49c7a6f3d",
+      "historicalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-09-22\\continue-on-with-making-the-6-2\\work\\pendlay-row-production-review\\floor-from-top.png",
+      "nativeDimensions": [
+        1536,
+        1024
+      ],
+      "promptMetadata": {
+        "path": "originals/1-prompt.json",
+        "sha256": "7318fba2c075fd64913b08026530c54c295241a24df0ccacfae8a8a37f5764ae",
+        "generationId": "4a813f6c-4088-46c6-a0b5-ffd1662c67dd",
+        "historicalStatusPreserved": "held: broader grip closer to top, but shoes/hips move upward and shoulder/upper-arm highlight anatomy needs correction"
+      }
+    },
+    "4": {
+      "path": "originals/4-original.png",
+      "sha256": "5d3097bac7a113f68f877643beb8bf6da94db97e42db7719033463a0d93e60cc",
+      "historicalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-09-22\\continue-on-with-making-the-6-2\\work\\pendlay-row-production-review\\top-grip-drift.png",
+      "nativeDimensions": [
+        1536,
+        1024
+      ],
+      "promptMetadata": {
+        "path": "originals/4-prompt.json",
+        "sha256": "bb8ee2d931fee72b8176ad0a07c13e118d2198f49cfdb220f84392a083517087",
+        "generationId": "365f1f80-e2a0-4309-8a05-5c8d9518a1a5",
+        "historicalStatusPreserved": "held: near hand shifts from approximatelyx760 tox813; do not approve grip continuity"
+      }
+    }
+  },
+  "canonicalReviewReference": {
+    "path": "originals/canonical-review-reference.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "role": "Current required FA56 review reference; not recovered historical attachment bytes."
+  },
+  "parentSourceEligibility": {
+    "path": "parent-source-eligibility.json",
+    "sha256": "606cad1560942a9769ef7e5c6c9a2248d66d3ec9e1fb372a8444207a4c3caa41"
+  },
+  "catalogueSource": {
+    "repoPath": "src/lib/exercises.ts",
+    "sha256": "f285d6cf0e76b9354aa0f2e954363ea292d8ea07e2383d1265d22944546d779f",
+    "exportMethod": "Node+tsx direct import, subprocess raw UTF8 JSON"
+  },
+  "paletteRecipeSha256": "c9dbac90473fe0e07129cab9095d065102e66bbe615325eb9bda0ede7c26969d",
+  "wholeSceneTransforms": {
+    "1": [
+      0,
+      32
+    ],
+    "4": [
+      0,
+      0
+    ]
+  },
+  "registeredCanvas": [
+    1536,
+    1056
+  ],
+  "commonCrop": [
+    200,
+    90,
+    1380,
+    982
+  ],
+  "humanLocalTransforms": 0,
+  "equipmentEdits": 0,
+  "newImageRequests": 0,
+  "sourceEligibilityDoesNotGrantFinalPaletteOrRegistrationAcceptance": true,
+  "strictCertified": false,
+  "completionCredit": false
+}

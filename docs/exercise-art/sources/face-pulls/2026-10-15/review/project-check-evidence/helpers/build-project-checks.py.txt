@@ -1,0 +1,158 @@
+"""Record actual non-green full/focused results and copy exact current evidence.
+
+No tests, runtime edits, classification as pre-existing, source seal or credit.
+"""
+from pathlib import Path
+from hashlib import sha256
+from datetime import datetime,timezone
+import json
+import re
+import subprocess
+
+ROOT=Path(__file__).resolve().parent
+WORK=ROOT.parents[1]
+REPO=WORK/'Maiin-burpees'
+CHECKS=WORK/'remaining19-execution-20261015/checks'
+SOURCE=REPO/'docs/exercise-art/sources/face-pulls/2026-10-15'
+TARGET=SOURCE/'review/project-check-evidence'
+NODE=Path(r'C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe')
+BASE='2efdec417e43a868bb2ece7a63baff8de6271db3'
+FINAL='face-pulls-final-cues-2efdec417'
+FOCUS='face-pulls-final-cues-whole-files'
+STAGES=['lint','check:form-art','check:form-drafts','check:cycles','build','check:dist-size','test']
+COMPARISON_SHA='3242bc1b3b8cc9661a59e952bfccc85edcc351c57f192e63590003bc88d576e2'
+TRIAGE_SHA='ce0e78a133e3c11f6c02a888d8fccf44254a5cf8e777d6a06c5fe01a9239d62e'
+DISPOSITION='additional full-run failure; not reproduced in ordinary whole-file cohort'
+
+def h(path):return sha256(path.read_bytes()).hexdigest()
+def read(path):return json.loads(path.read_bytes())
+def normal_format(data,path):
+    package=read(REPO/'node_modules/prettier/package.json')
+    cli=REPO/'node_modules/prettier'/(package['bin']['prettier'] if isinstance(package['bin'],dict) else package['bin'])
+    return subprocess.check_output([str(NODE),str(cli),'--stdin-filepath',str(path)],input=data,cwd=REPO)
+def dump(value):return (json.dumps(value,indent=2,ensure_ascii=False)+'\n').encode('utf-8')
+def verify_run(folder):
+    start=read(folder/'start.json');result=read(folder/'result.json')
+    before=read(folder/'inputs-before.json');after=read(folder/'inputs-after.json')
+    assert result['headBefore']==result['headAfter']==start['head']==BASE
+    assert result['headUnchanged'] and result['statusRestored'] and result['allInputsUnchanged']
+    assert result['statusBefore']==result['statusAfter']==start['status']
+    assert before==after and len(before)==result['inputCount']==2656 and result['changedInputsAfterRestoration']==[]
+    assert start['startedAt']==result['startedAt'] and result['finishedAt']>=result['startedAt']
+    log=folder/result.get('log','test.log')
+    if not log.is_file():log=folder/('verify.log' if result.get('normalCommand')=='npm run verify' else 'test.log')
+    assert h(log)==result['logSha256']
+    for i,name in enumerate(start['snapshotPaths']):
+        capture=folder/f'snapshot-before-{i}.snap';assert capture.is_file()
+        if name in before:assert h(capture)==before[name]
+    for row in result['snapshotRestores']:
+        i=start['snapshotPaths'].index(row['path'])
+        assert row['restoredExact'] and h(folder/f'snapshot-before-{i}.snap')==row['originalSha256']==before[row['path']]
+        assert h(folder/f'snapshot-test-output-{i}.snap')==row['testOutputSha256']
+    return start,result,before,log
+
+assert not read(SOURCE/'provenance.json').get('sourceHashes'),'Do not edit a sealed source'
+comparison_path=CHECKS/f'{FINAL}-failure-comparison-independent.json'
+triage_path=CHECKS/'face-pulls-final-cues-whole-file-disposition-independent.json'
+assert h(comparison_path)==COMPARISON_SHA and h(triage_path)==TRIAGE_SHA
+comparison=read(comparison_path);triage=read(triage_path)
+assert comparison['candidateLabel']==FINAL and comparison['baselineHead']==BASE
+assert comparison['normalStagesObserved']==STAGES and comparison['candidateInputsPreserved']
+assert comparison['counts']=={'added':11,'removed':0,'changedDiagnostics':0,'identicalDiagnostics':82}
+baseline_start,baseline_result,baseline_inputs,baseline_log=verify_run(CHECKS/'baseline-main-2efdec417')
+final_start,final_result,final_inputs,final_log=verify_run(CHECKS/FINAL)
+focus_start,focus_result,focus_inputs,focus_log=verify_run(CHECKS/FOCUS)
+assert final_result['exitCode']==1 and final_result['fullVerificationPassed'] is False
+assert focus_result['exitCode']==1 and focus_result['ordinaryCompleteFileCohortExitZero'] is False
+assert final_inputs==focus_inputs and focus_result['allArtInputsUnchanged'] and focus_result['changedArtInputs']==[]
+assert read(CHECKS/FOCUS/'art-inputs-before.json')==read(CHECKS/FOCUS/'art-inputs-after.json')
+assert focus_result['artInputCount']==13
+for key in ['command','nodeSha256','npmCliSha256','helperSha256','tree']:
+    assert final_start[key]==baseline_start[key],key
+assert focus_start['command'][:2]==final_start['command'][:2]
+assert focus_start['command'][2:4]==['test','--'] and focus_start['command'][4:]==focus_start['completeFiles']
+assert focus_start['testNameFilter'] is None and focus_start['timeoutOverride'] is None and focus_start['concurrencyOverride'] is None and focus_start['retries']==0
+assert len(focus_start['completeFiles'])==10
+assert triage['focusedCohort']['exitCode']==1 and triage['focusedCohort']['tests']['failed']==3 and triage['focusedCohort']['tests']['passed']==542 and triage['focusedCohort']['tests']['total']==545
+assert triage['focusedCohort']['testFiles']['failed']==2 and triage['focusedCohort']['testFiles']['passed']==8
+assert triage['focusedCohort']['tests'].get('skipped',0)==0
+assert triage['runtimeInputCount']==2656 and triage['artInputCount']==13 and triage['runtimeArtHeadStatusAndSnapshotsPreserved']
+assert triage['unresolvedAdditionalFailureIdentities']==[]
+for name,value in triage['focusedCohort']['evidenceHashes'].items():assert h(CHECKS/FOCUS/name)==value
+for name,value in triage['focusedCohort']['snapshotProofHashes'].items():assert h(CHECKS/FOCUS/name)==value
+added={row['canonicalId']:row for row in comparison['added']}
+dispositions={row['canonicalId']:row for row in triage['perAdditionalCase']}
+assert set(added)==set(dispositions) and len(dispositions)==11
+focused_failures={row['canonicalId']:row for row in triage['retainedFocusedFailures']}
+assert len(focused_failures)==3 and not (set(added)&set(focused_failures))
+baseline_index=read(CHECKS/'baseline-main-2efdec417-failure-index-independent.json')
+baseline_ids={row['canonicalId']:row for row in baseline_index['failures']}
+full_bytes=final_log.read_bytes();focus_bytes=focus_log.read_bytes()
+for identity,row in dispositions.items():
+    assert row['disposition']==DISPOSITION and row['ordinaryWholeFileWasIncluded'] is True
+    assert row['presentInCompleteFocusFailureReport'] is False and row['skippedTestsInCohort']==0
+    assert row['file'] in focus_start['completeFiles'] and row['testSourceSha256']==focus_inputs[row['file']]
+    d=row['originalFullRunDiagnostic']
+    assert sha256(full_bytes[d['byteStart']:d['byteEndExclusive']]).hexdigest()==d['rawSha256']==added[identity]['candidate']['diagnostic']['rawSha256']
+for identity,row in focused_failures.items():
+    d=row['diagnostic'];assert sha256(focus_bytes[d['byteStart']:d['byteEndExclusive']]).hexdigest()==d['rawSha256']
+    assert identity in baseline_ids and baseline_ids[identity]['diagnostic']['rawSha256']==d['rawSha256']
+
+# Build the complete exact copy recipe from only this work's bounded folders.
+files={}
+labels=['baseline-main-2efdec417',FINAL,'face-pulls-final-2efdec417','face-pulls-final-sized-2efdec417','face-pulls-cue-fix-whole-files',FOCUS,'face-pulls-cue-correction']
+for label in labels:
+    for path in sorted((CHECKS/label).rglob('*')):
+        if path.is_file():files['checks/'+path.relative_to(CHECKS).as_posix()]=path
+seeds=['baseline-main-2efdec417-failure-index-independent.json','index-fresh-baseline.py','compare-face-pulls-final.py','compare-face-pulls-final-peer-review.json',f'{FINAL}-failure-comparison-independent.json','face-pulls-final-cues-whole-file-disposition-independent.json','face-pulls-final-2efdec417-incomplete-stage-review-independent.json','face-pulls-final-sized-2efdec417-failure-comparison-independent.json','face-pulls-final-sized-2efdec417-failure-triage-independent.json','apply-face-cue-correction.py','run-face-art-whole-files.py','run-face-final-cues-whole-files.py','prepare-final-cues-cohort.py','triage-face-pulls-sized.py']
+for name in seeds:assert (CHECKS/name).is_file();files['checks/'+name]=CHECKS/name
+files['run-normal-verify.py']=WORK/'remaining19-execution-20261015/run-normal-verify.py'
+files['helpers/build-project-checks.py']=Path(__file__).resolve()
+pins={name:h(path) for name,path in sorted(files.items())}
+assert pins['checks/index-fresh-baseline.py']==comparison['baselineParserSha256']
+assert pins['checks/compare-face-pulls-final.py']==comparison['comparisonHelperSha256']
+assert pins['run-normal-verify.py']==baseline_start['helperSha256']==final_start['helperSha256']
+for label,side in [('baseline-main-2efdec417','baseline'),(FINAL,'candidate')]:
+    for field in ['sourceProofHashes','snapshotProofHashes']:
+        for name,value in comparison[side][field].items():assert pins[f'checks/{label}/{name}']==value
+
+ledger={
+    'exerciseId':'face-pulls','recordedAtUtc':datetime.now(timezone.utc).isoformat(),'baselineHead':BASE,'normalCommand':'npm run verify','finalVerifyRunLabel':FINAL,
+    'allNormalVerifyStagesPresent':True,'normalVerifyStages':STAGES,'comparisonComplete':True,'comparisonValid':True,'inputStatePreserved':True,'snapshotPreservedExactly':True,
+    'overallVerifyExitCode':1,'overallGreen':False,'fullWindowsNonGreen':True,'unresolvedAdditionalFailureIdentities':[],
+    'baseline':{'testFiles':comparison['baseline']['testFiles'],'tests':comparison['baseline']['tests'],'failureHeaders':82},
+    'finalFullRun':{'testFiles':comparison['candidate']['testFiles'],'tests':comparison['candidate']['tests'],'failureHeaders':93,'exitCode':1,'logSha256':h(final_log)},
+    'comparisonCounts':comparison['counts'],'identicalDiagnosticIdentities':comparison['presentInBothWithIdenticalDiagnosticBytes'],
+    'additionalFailureDispositions':triage['perAdditionalCase'],
+    'ordinaryWholeFileCohort':{'folder':FOCUS,'normalCommand':focus_result['normalCommand'],'completeFiles':focus_start['completeFiles'],'exitCode':1,'overallGreen':False,'testFiles':triage['focusedCohort']['testFiles'],'tests':triage['focusedCohort']['tests'],'skippedTests':0,'retainedFailures':triage['retainedFocusedFailures'],'sourceRelationshipScope':triage['relationshipScope'],'logSha256':h(focus_log),'preservedRuntimeInputs':2656,'preservedArtInputs':13},
+    'realCueRegressionHistory':{'earlierFullRun':'face-pulls-final-sized-2efdec417','actualFix':'Six cue strings shortened to <=7words; labels/t/setup/images unchanged; actualcuehash and release/plan updated; root repeated actual390x844 review.','normalWholeFileFixValidation':'face-pulls-cue-fix-whole-files','filesPassed':5,'testsPassed':365,'exitCode':0,'historyRetained':True},
+    'earlierSizeGateFailure':{'run':'face-pulls-final-2efdec417','scope':'Retained incomplete-stage failure, not described as a complete unit run or a green result. Original size allowance restored in final actual normal run; raw failed record/log/input evidence retained.'},
+    'classificationLimits':['All82baseline identities and own raw diagnostic bytes are identical in these two measured full runs; no broader pre-existing/cause claim.','Each additional11full-run failure was not reproduced in the actual ordinary complete-file cohort; this is not a code-fix or pre-existing classification.','The focused cohort remains non-green:3failures whose exact identities and own diagnostic bytes match the measured baseline.','The earlier real cue-length regression is separately retained with its actual correction and normal5whole-file365PASS proof.','No full green Windows result, CI, merge, publication or completion is supplied by this ledger.'],
+    'evidenceHashes':pins,'strictVisualCertification':False,'sourceSealPerformed':False,'completionOrPublicationClaim':False,
+}
+formatted=normal_format(dump(ledger),SOURCE/'review/project-checks.json')
+assert json.loads(formatted)==ledger
+(ROOT/'project-checks.json').write_bytes(formatted)
+recipe=[]
+assert not TARGET.exists() or not any(TARGET.iterdir()),'Project evidence target already populated'
+for original,path in sorted(files.items()):
+    assert h(path)==pins[original],original
+    mapped=original+'.txt' if path.suffix in ['.json','.py','.ts','.tsx','.mjs','.mts','.cjs','.js'] else original
+    destination=(TARGET/mapped).resolve();assert destination.is_relative_to(TARGET.resolve())
+    destination.parent.mkdir(parents=True,exist_ok=True);assert not destination.exists()
+    destination.write_bytes(path.read_bytes());assert h(destination)==pins[original]
+    recipe.append({'originalEvidencePath':original,'archivePath':destination.relative_to(SOURCE).as_posix(),'sha256':pins[original]})
+project_path=SOURCE/'review/project-checks.json.txt';assert not project_path.exists();project_path.write_bytes(formatted)
+recipe_document={'status':'exact-current-project-evidence-copy-map-no-green-reclassification','ledgerPath':'review/project-checks.json.txt','ledgerSha256':h(project_path),'rows':recipe}
+(SOURCE/'review/project-evidence-copy-map.json.txt').write_bytes(dump(recipe_document))
+provenance=read(SOURCE/'provenance.json');assert not provenance.get('sourceHashes')
+provenance.setdefault('releaseEvidence',{})['projectChecks']={'path':'review/project-checks.json.txt','sha256':h(project_path)}
+provenance['projectEvidenceCopyMap']={'path':'review/project-evidence-copy-map.json.txt','sha256':h(SOURCE/'review/project-evidence-copy-map.json.txt')}
+provenance['archiveState']='all-actual-cue-revision2-and-nongreen-project-evidence-copied-unsealed'
+(SOURCE/'provenance.json').write_bytes(normal_format(dump(provenance),SOURCE/'provenance.json'))
+readme=SOURCE/'README.md';readme.write_bytes(normal_format(readme.read_bytes(),readme))
+for row in recipe:
+    assert h(files[row['originalEvidencePath']])==row['sha256'] and h(SOURCE/row['archivePath'])==row['sha256']
+proof={'status':'actual-project-ledger-and-raw-source-copy-complete-not-sealed','ledgerSha256':h(ROOT/'project-checks.json'),'archivedLedgerSha256':h(project_path),'evidenceFiles':len(recipe),'exactRawEvidenceMap':recipe,'fullRunExitCode':1,'focusedCohortExitCode':1,'additionalFailuresNotReproduced':11,'focusedFailuresRetained':3,'sourceProvenanceSha256':h(SOURCE/'provenance.json'),'sourceSealed':False,'runtimeReleasePublicNotWritten':True}
+(ROOT/'project-checks-source-copy-proof.json').write_bytes(dump(proof))
+print(json.dumps({'status':proof['status'],'ledgerSha256':proof['ledgerSha256'],'evidenceFiles':len(recipe),'fullRunExitCode':1,'focusExitCode':1,'proofSha256':h(ROOT/'project-checks-source-copy-proof.json')},indent=2),flush=True)

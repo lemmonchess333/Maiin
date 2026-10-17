@@ -1,0 +1,59 @@
+{
+  "images": [
+    {
+      "alt": "Pendlay Row registered normal card",
+      "display": [
+        348,
+        160
+      ],
+      "natural": [
+        480,
+        352
+      ],
+      "src": "/form-art/pendlay-row.webp"
+    },
+    {
+      "alt": "Pendlay Row, Set",
+      "display": [
+        324,
+        360
+      ],
+      "natural": [
+        1180,
+        892
+      ],
+      "src": "/form-frames/pendlay-row/1.webp"
+    },
+    {
+      "alt": "Pendlay Row normal card, 480px long-side limit",
+      "display": [
+        348,
+        255
+      ],
+      "natural": [
+        480,
+        352
+      ],
+      "src": "/form-art/pendlay-row.webp"
+    },
+    {
+      "alt": "Pendlay Row normal card, 160px long-side limit",
+      "display": [
+        160,
+        117
+      ],
+      "natural": [
+        480,
+        352
+      ],
+      "src": "/form-art/pendlay-row.webp"
+    }
+  ],
+  "kind": "pendlay-integrated-initial",
+  "overflow": false,
+  "theme": "dark",
+  "viewport": [
+    390,
+    844
+  ]
+}

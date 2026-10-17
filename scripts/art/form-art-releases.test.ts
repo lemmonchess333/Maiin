@@ -55,7 +55,7 @@ describe("approved artwork releases", () => {
       renderReleasesModule(approvedReleases(readReleaseRecords(ROOT)))
     );
     expect(
-      readFileSync(path, "utf8") === expected,
+      readFileSync(path, "utf8").replace(/\r\n/g, "\n") === expected,
       `${RELEASES_MODULE} is not what the release records say: run npm run art:releases`
     ).toBe(true);
   });

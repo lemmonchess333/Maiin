@@ -1,0 +1,15 @@
+{
+  "scope": "Preview from verbatim current normal cutOut/contentBox definitions; final normal registered export must match",
+  "generator": "scripts/art/cut-out-form-art.ts",
+  "generatorSha256": "a465f712bcb21078a171e6ddfd24f74112a5d379192c7159f133a0fb869f0f2f",
+  "verbatimDefinitionSha256": "198620a3ebd862f490fbf8838999028c0bb48f62d52824d870d8b27c2029f104",
+  "reference": "draft/frames/3.webp",
+  "referenceSha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+  "width": 480,
+  "height": 226,
+  "keyed": true,
+  "sha256": "fafcaa0f236b7309ccd75c57370493e8192e2b786fa9821f37dfee847bcb3c1a",
+  "bytes": 17700,
+  "noThresholdOrAlphaOverride": true,
+  "noRegistryOrPublicMutation": true
+}

@@ -1,0 +1,50 @@
+{
+  "advice": true,
+  "cards": [
+    {
+      "decoded": true,
+      "display": [
+        480,
+        421
+      ],
+      "limit": "480",
+      "natural": [
+        480,
+        421
+      ]
+    },
+    {
+      "decoded": true,
+      "display": [
+        347.9895935058594,
+        305.21875
+      ],
+      "limit": "348",
+      "natural": [
+        480,
+        421
+      ]
+    },
+    {
+      "decoded": true,
+      "display": [
+        160,
+        140.33334350585938
+      ],
+      "limit": "160",
+      "natural": [
+        480,
+        421
+      ]
+    }
+  ],
+  "page": [
+    380,
+    380
+  ],
+  "preparation": true,
+  "viewport": [
+    390,
+    844
+  ]
+}

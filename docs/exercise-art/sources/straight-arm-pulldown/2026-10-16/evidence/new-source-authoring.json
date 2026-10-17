@@ -1,0 +1,27 @@
+{
+  "tool": "built-in image_gen.imagegen",
+  "requests": 3,
+  "selected": 2,
+  "B": {
+    "nativeCrop": [128, 192, 896, 704],
+    "previewZoom": 2,
+    "outputSize": [1536, 1024],
+    "generatedSha256": "5eed2515a85fac652e7c5a39e0b9aa52ca87d0463f2258e2eae8635b1f7787e7",
+    "prompt": "B-forearm-prompt.txt"
+  },
+  "A": {
+    "nativeCrop": [256, 512, 1024, 1024],
+    "previewZoom": 2,
+    "outputSize": [1536, 1024],
+    "generatedSha256": "9b74802c8d88a15471a346734bc76e6953112dd869db8f665fc9dfc644cca554",
+    "prompt": "A-local-repair-prompt.txt"
+  },
+  "rejectedSquare": {
+    "outputSha256": "a2463936ca419385bf13c6d395d0f89070588ab88cd31cc736589f5277d10f5b",
+    "actualSize": [1254, 1254],
+    "requestedSize": [1024, 1024],
+    "inserted": false
+  },
+  "sourceAuthoringScope": "Previously occluded local anatomical surfaces; no new whole-body source, no fitted limbs, no head/shoe graft.",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+}

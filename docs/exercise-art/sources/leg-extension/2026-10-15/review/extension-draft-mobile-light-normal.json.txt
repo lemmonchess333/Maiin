@@ -1,0 +1,157 @@
+{
+  "artifactName": "extension-draft-mobile-light-normal.json",
+  "observations": [
+    {
+      "ms": 391235,
+      "src": "/draft/frames/1.webp",
+      "alt": "Leg Extension, Set",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1319,
+      "naturalHeight": 1056,
+      "display": [
+        334,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "SET 1/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 392441,
+      "src": "/draft/frames/2.webp",
+      "alt": "Leg Extension, Brace",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1319,
+      "naturalHeight": 1056,
+      "display": [
+        334,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "BRACE 2/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 393648,
+      "src": "/draft/frames/3.webp",
+      "alt": "Leg Extension, Squeeze",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1319,
+      "naturalHeight": 1056,
+      "display": [
+        334,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "SQUEEZE 3/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 394854,
+      "src": "/draft/frames/4.webp",
+      "alt": "Leg Extension, Hold",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1319,
+      "naturalHeight": 1056,
+      "display": [
+        334,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "HOLD 4/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 396060,
+      "src": "/draft/frames/5.webp",
+      "alt": "Leg Extension, Return",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1319,
+      "naturalHeight": 1056,
+      "display": [
+        334,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "RETURN 5/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 397266,
+      "src": "/draft/frames/6.webp",
+      "alt": "Leg Extension, Reset",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1319,
+      "naturalHeight": 1056,
+      "display": [
+        334,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "RESET 6/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 398472,
+      "src": "/draft/frames/1.webp",
+      "alt": "Leg Extension, Set",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1319,
+      "naturalHeight": 1056,
+      "display": [
+        334,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "SET 1/6\n\nPause\nNormal"
+    },
+    {
+      "ms": 399678,
+      "src": "/draft/frames/2.webp",
+      "alt": "Leg Extension, Brace",
+      "playing": true,
+      "theme": "light",
+      "documentHidden": false,
+      "naturalWidth": 1319,
+      "naturalHeight": 1056,
+      "display": [
+        334,
+        360
+      ],
+      "viewport": [
+        390,
+        844
+      ],
+      "sectionText": "BRACE 2/6\n\nPause\nNormal"
+    }
+  ]
+}

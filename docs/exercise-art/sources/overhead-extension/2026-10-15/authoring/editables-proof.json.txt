@@ -1,0 +1,66 @@
+{
+  "scope": "Editable integrity only; no visual acceptance inferred",
+  "retainedBottomOra": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\overhead-extension\\standing-master-authoring-v1.ora",
+  "records": {
+    "1-full.ora": {
+      "sha256": "466b68f6199660c26fd846d1a33c7be9eee291aa20dc9fa4188dbf471cef1f7d",
+      "dimensions": [
+        1024,
+        1856
+      ],
+      "layers": [
+        "Existing muscle colours \u2014 approved exact palette",
+        "Intact source \u2014 integer whole-frame placement (-13,+37)"
+      ],
+      "reopenedPixelExact": true
+    },
+    "1-framed.ora": {
+      "sha256": "2f04c9fe84bce7b092d719db198a9c40a49ab672583f1d9b40b24a0594cde714",
+      "dimensions": [
+        461,
+        1547
+      ],
+      "layers": [
+        "Existing muscle colours \u2014 approved exact palette",
+        "Intact source \u2014 integer whole-frame placement (-13,+37)"
+      ],
+      "reopenedPixelExact": true
+    },
+    "4-full.ora": {
+      "sha256": "e5bd63f9fd2b9482adb15f22c2fcb799de04084645841e7959eb354fc6f9032f",
+      "dimensions": [
+        1024,
+        1856
+      ],
+      "layers": [
+        "contours",
+        "near-front-deltoid",
+        "far-front-deltoid",
+        "near-triceps-lower-visible",
+        "near-triceps-main",
+        "far-triceps",
+        "source-base",
+        "extended-black-canvas"
+      ],
+      "reopenedPixelExact": true
+    },
+    "4-framed.ora": {
+      "sha256": "b2ccaa59fcc9d46636d32e9c37ec5fa035699ad4e7737f9249c6c5ec90456313",
+      "dimensions": [
+        461,
+        1547
+      ],
+      "layers": [
+        "contours",
+        "near-front-deltoid",
+        "far-front-deltoid",
+        "near-triceps-lower-visible",
+        "near-triceps-main",
+        "far-triceps",
+        "source-base",
+        "extended-black-canvas"
+      ],
+      "reopenedPixelExact": true
+    }
+  }
+}

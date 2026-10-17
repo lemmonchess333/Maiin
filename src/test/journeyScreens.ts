@@ -86,16 +86,19 @@ export const WORKOUT = {
 } as const;
 
 /** A planned run done on a treadmill, from Home's card to the summary:
- *  Home's run card, the Run page's launch card and its setup
- *  (`RunLaunchCard`, `RunSetupModal`: the run's type, by its name, and the
- *  "On a treadmill" switch, which says where the run is done and leaves
- *  the type alone, Pgm8), the manual distance (`TreadmillMode`, labelled
- *  by `Run`) and the summary (`RunSummary`): the planned session's heading
- *  for a planned run done as planned, its Save, the off-plan prompt's
- *  "Mark scheduled run complete" a run of another type than the plan's is
- *  asked, and Done. */
+ *  Home's run card, whose Start goes straight into the run, and the GPS
+ *  screen it starts on, whose "On a treadmill" moves the run there; the
+ *  Run page's launch card and its setup (`RunLaunchCard`, `RunSetupModal`:
+ *  the run's type, by its name, and the "On a treadmill" switch, which
+ *  says where the run is done and leaves the type alone, Pgm8), the manual
+ *  distance (`TreadmillMode`, labelled by `Run`) and the summary
+ *  (`RunSummary`): the planned session's heading for a planned run done as
+ *  planned, its Save, the off-plan prompt's "Mark scheduled run complete"
+ *  a run of another type than the plan's is asked, and Done. */
 export const RUN = {
   homeStart: "Start run",
+  /** A button on the GPS screen (`Run`). */
+  gpsTreadmill: "On a treadmill",
   customise: "Customise",
   /** The setup's run type, by the type's name ("Easy Run"). */
   runType: (typeName: string) =>
@@ -103,6 +106,7 @@ export const RUN = {
   /** A switch. */
   treadmill: "On a treadmill",
   startTreadmill: "Start on the treadmill",
+  elapsedTime: "Elapsed time",
   distance: "Distance from treadmill",
   saveTreadmill: "Save Treadmill Run",
   /** The summary's heading, by the planned session's name ("Easy 30"). */
@@ -137,6 +141,8 @@ export const TRAIN = {
   lift: "Lift",
   run: "Run",
   runWeek: "Run week",
+  /** A planned day's card opens the run's own card (`ProgrammeRunSection`). */
+  viewRun: "View run",
 } as const;
 
 /** A run's name on Train's run week, from its template: the function

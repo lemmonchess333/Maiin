@@ -327,3 +327,33 @@ describe("activity choices", () => {
     ).toBe(false);
   });
 });
+
+describe("optional nutrition answers", () => {
+  it.each([0.25, 0.5, 0.75] as const)(
+    "round-trips the goal and %s kg weekly pace",
+    (paceKgPerWeek) => {
+      const draft = makeDraft({ goalWeightText: "70.5", paceKgPerWeek });
+      saveOnboardingDraft(UID_A, draft);
+      expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(draft);
+    }
+  );
+
+  it("keeps a partial or invalid goal answer so it can be corrected after reload", () => {
+    const draft = makeDraft({ goalWeightText: "70abc", paceKgPerWeek: 0.25 });
+    saveOnboardingDraft(UID_A, draft);
+    expect(loadOnboardingDraft(UID_A, MAX_STEP)).toEqual(draft);
+  });
+
+  it("keeps older drafts without the optional goal or pace", () => {
+    expect(isValidDraft(makeDraft(), MAX_STEP)).toBe(true);
+  });
+
+  it.each([
+    { goalWeightText: 70 },
+    { paceKgPerWeek: "0.5" },
+    { paceKgPerWeek: 1 },
+    { paceKgPerWeek: NaN },
+  ])("rejects malformed optional nutrition metadata: %j", (updates) => {
+    expect(isValidDraft({ ...makeDraft(), ...updates }, MAX_STEP)).toBe(false);
+  });
+});

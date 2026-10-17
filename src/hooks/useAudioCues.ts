@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { haptic } from "@/lib/haptic";
 import { pickCoachVoice } from "@/lib/speechVoice";
+import { unlockSpeech } from "@/lib/speechUnlock";
 import {
   splitCue,
   timeCue,
@@ -92,11 +93,8 @@ export function useAudioCues(
   }, []);
 
   const prime = useCallback(() => {
-    if (primed.current || !("speechSynthesis" in window)) return;
-    const u = new SpeechSynthesisUtterance("");
-    u.volume = 0;
-    speechSynthesis.speak(u);
-    primed.current = true;
+    if (primed.current) return;
+    primed.current = unlockSpeech();
   }, []);
 
   const speak = useCallback(

@@ -1,0 +1,143 @@
+{
+  "status": "static-finishing-checks-passed-runtime-and-mobile-pending",
+  "scope": "Independent native-resolution static review of three intact retained no-shorts source poses after colour-only finishing. No source edits, generation, registry/public changes or counters by this reviewer. This is not final release acceptance.",
+  "reviewedNativeOrder": [2, 3, 1],
+  "commonCrop": [280, 0, 970, 1008],
+  "poses": [
+    {
+      "sourcePose": 1,
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\1-master.png",
+      "originalSha256": "c48e17588b1c937dc54a49bb28713bfdeb3783cdf20713977a684c719b52c00e",
+      "framed": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\1-framed.png",
+      "framedSha256": "ba27273937d489ffec03ba0357a9f14227cf4d106b67eb26966b5c5458e3b46b",
+      "nativeDimensions": [690, 1008],
+      "changedPixels": 39609,
+      "changedOutsideOriginalColourLayerAlpha": 0,
+      "commonCropMatchesNativeFinished": true,
+      "reopenedOraMatchesFramed": true,
+      "exactPrimaryCorePixels": 22058,
+      "exactSecondaryCorePixels": 7537
+    },
+    {
+      "sourcePose": 2,
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\2-hike-candidate.png",
+      "originalSha256": "5552c7d32578de3a5417e1940ac679580654f78d38df0658ead7ecb04889d2c4",
+      "framed": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\2-framed.png",
+      "framedSha256": "ff8af8b6e6bde9d560945e423e7f61e421d9ba24e5e0a31cdb5a676561f952c6",
+      "nativeDimensions": [690, 1008],
+      "changedPixels": 37699,
+      "changedOutsideOriginalColourLayerAlpha": 0,
+      "commonCropMatchesNativeFinished": true,
+      "reopenedOraMatchesFramed": true,
+      "exactPrimaryCorePixels": 24120,
+      "exactSecondaryCorePixels": 7363
+    },
+    {
+      "sourcePose": 3,
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\3-mid-candidate.png",
+      "originalSha256": "6a0ff5550d20ff24088f1558b0acec3f07a27d6946eb20bf2cf052dda1c9d248",
+      "framed": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\3-framed.png",
+      "framedSha256": "6eabe75af926eaae4497deca36f0be8a3dbb966839b2a71337167a0fc56b75fe",
+      "nativeDimensions": [690, 1008],
+      "changedPixels": 39717,
+      "changedOutsideOriginalColourLayerAlpha": 0,
+      "commonCropMatchesNativeFinished": true,
+      "reopenedOraMatchesFramed": true,
+      "exactPrimaryCorePixels": 25357,
+      "exactSecondaryCorePixels": 6961
+    }
+  ],
+  "staticVisualChecks": {
+    "canonicalIdentityAndQuality": {
+      "passed": true,
+      "evidence": "All three native framed poses retain the recognizable bald faceless white-grey anatomy model, smooth neutral pelvis, no garments, white trainers and detailed neutral anatomical shading. Hinge, drive and extended-hip float retain coherent adult proportions. No replacement seams or new body construction are visible."
+    },
+    "muscleRoleHierarchy": {
+      "passed": true,
+      "primary": "#7B72E9 on inherited glute/hamstring fields",
+      "secondary": "#9590E0 on inherited abdominal/lower-back fields",
+      "evidence": "Primary is visibly stronger than secondary in all three poses. Role boundaries follow the existing muscle fields; near/far thigh fields and trunk panels remain anatomically readable without new ragged threshold strips."
+    },
+    "fineContoursAndNoAddedGradient": {
+      "passed": true,
+      "evidence": "Native visual review shows flat field interiors with fine grey source-derived muscle contours. finish.py uses solid palette RGB with source chroma-derived alpha and median-derived original contour detail; it creates no new spatial gradient. Small pale source edge/highlight transitions remain inherited."
+    },
+    "neutralBodyAndEquipmentPreservation": {
+      "passed": true,
+      "evidence": "Independent pixel comparison finds zero changed RGBA pixels outside the original primary/secondary colour-layer alpha domains for each pose. Head, arms, trainers, floor and neutral ordinary kettlebell remain visually intact. This is preservation evidence, not a substitute for contact/mechanics review."
+    },
+    "staticSupportAndOcclusion": {
+      "passed": true,
+      "evidence": "Both shoe soles rest on the original shared floor in the three native images without visible significant static support drift. Float and Drive retain overlapping two-hand handle grips. In Hike, forearms and handle continue behind the near thigh, and the bell remains opaque behind the legs; no grafted hand or invented skin was introduced. The occluded Hike hand contact cannot independently prove both grips from this frame alone."
+    },
+    "threePhysicalStatesAndHonestReuse": {
+      "passed": true,
+      "evidence": "Hike is the loaded backswing, Drive is the intermediate hip-extension state, and Float is chest-height with hips extended and arms long. Six distinct paths decode exactly to [2,3,1,1,3,2]; duplicates are honestly separate beats, not claimed extra physical poses. Dynamic loop continuity is still pending playback."
+    }
+  },
+  "hikeUnclassifiedStrongPixels": {
+    "count": 198,
+    "nativeOriginalCoordinateEnvelopeInclusive": [330, 565, 399, 618],
+    "framedCoordinateEnvelopeInclusive": [50, 565, 119, 618],
+    "largestComponent": {
+      "count": 158,
+      "nativeInclusiveBox": [345, 604, 361, 618]
+    },
+    "finding": "Native original/framed visual inspection places these pixels on the inherited bell body/one-ring handle metallic highlights behind the near thigh. They are outside the human muscle fields. Leaving these ordinary gear highlights unchanged is consistent with equipment preservation; they are not omitted purple muscle pixels."
+  },
+  "framePaths": [
+    {
+      "beat": 1,
+      "sourcePose": 2,
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\final-frames\\1.webp",
+      "sha256": "7350f03abe14eeee78e95ddabecd12bd886aa7f0c9709bc04081ad398426dc2c",
+      "decodedPixelsMatchFramed": true
+    },
+    {
+      "beat": 2,
+      "sourcePose": 3,
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\final-frames\\2.webp",
+      "sha256": "809cf18e049248f85df9302fae91c90b2e254a5ec945f644c2beda102cd61c27",
+      "decodedPixelsMatchFramed": true
+    },
+    {
+      "beat": 3,
+      "sourcePose": 1,
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\final-frames\\3.webp",
+      "sha256": "b3c25c2b09318c3951294e6d2767f73ffb94a6bc565b45c2d18329b03c5a590b",
+      "decodedPixelsMatchFramed": true
+    },
+    {
+      "beat": 4,
+      "sourcePose": 1,
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\final-frames\\4.webp",
+      "sha256": "b3c25c2b09318c3951294e6d2767f73ffb94a6bc565b45c2d18329b03c5a590b",
+      "decodedPixelsMatchFramed": true
+    },
+    {
+      "beat": 5,
+      "sourcePose": 3,
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\final-frames\\5.webp",
+      "sha256": "809cf18e049248f85df9302fae91c90b2e254a5ec945f644c2beda102cd61c27",
+      "decodedPixelsMatchFramed": true
+    },
+    {
+      "beat": 6,
+      "sourcePose": 2,
+      "path": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\kettlebell-swing\\retained-no-shorts-cycle-20261014\\final-frames\\6.webp",
+      "sha256": "7350f03abe14eeee78e95ddabecd12bd886aa7f0c9709bc04081ad398426dc2c",
+      "decodedPixelsMatchFramed": true
+    }
+  ],
+  "notPerformedAndNotPassed": [
+    "Actual native animation/player playback",
+    "Integrated mobile light and dark review",
+    "Final registry/project checks",
+    "Public registration or merge"
+  ],
+  "limitations": [
+    "Hike handle-hand contact is partly occluded by the near thigh, so visibility of both hands is not claimed.",
+    "Static pose review does not establish perceived loop timing, stationary contact during playback or mobile clarity.",
+    "Initial floor pickup remains written catalogue setup; these three states portray continuous Russian swing repetitions, not an illustrated floor pickup or park."
+  ]
+}

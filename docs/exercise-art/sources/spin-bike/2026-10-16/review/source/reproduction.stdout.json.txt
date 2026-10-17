@@ -1,0 +1,58 @@
+{
+  "candidate": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\spin-bike\\perspective-source-production-20261016\\independent-portable-reproduction-20261016\\reproduced",
+  "manifestSha256": "b56bc499850ea893d4313d28c7de575761a007a69943b9b6b7ace7d31486cbdb",
+  "payloadFiles": 68,
+  "sixOraReadbacks": [
+    {
+      "path": "A-native.ora",
+      "sha256": "fdcf99cc817b3a95195a49b03732f00be921ac2047dfaba1c78a15fc40d55417",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "654bf1e81505311b7100b699ab9b3a56bebf4c1a95b1aa8581bfe66c09271771"
+    },
+    {
+      "path": "A-framed.ora",
+      "sha256": "1222bae413504c58797d51b4c8bfccacdb9bca37ee6868459969590462e0e9ab",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "554401a5f2180b56687ee690366507950b2d2957db865a57b65186c2a6cdeec6"
+    },
+    {
+      "path": "B-native.ora",
+      "sha256": "ec16dcdea36e5a45652c3398cf892ff469188b51de44bd323158b2a358eed9ce",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "55b45207e9d6bc162c0d5206eabb2deae84a35064f2a82094accd7d0536706ba"
+    },
+    {
+      "path": "B-framed.ora",
+      "sha256": "f0d6c8819721b20f8cd55d92c328b61f7b3739f351998796a47f582a2bd790ba",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "72bb6e99cd05a10ec93fd26c66c234986349d2c52f7310aae22f4176bb4af8d9"
+    },
+    {
+      "path": "C-native.ora",
+      "sha256": "dcf4f2705f29b6b5629b9562fc0f016817724d2ae81742b36d84b962efb7c1e2",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "d531a5ee33acc78c12f3b71942f5f308cf0faef23dd9e3c70c353b46e444d7ae"
+    },
+    {
+      "path": "C-framed.ora",
+      "sha256": "75971cd3dccc25aa34f24a7656f7cc2ff2e2f6ecf23dcbb9c7f1755a1589c6b5",
+      "layers": 5,
+      "members": 8,
+      "stackAndMergedRgbaExact": true,
+      "pixelSha256": "89bf0dad8068def058d1468f66acc104d7fe95f20a53c5600db92ad32bec9f5c"
+    }
+  ],
+  "allSixLosslessFrameSlotsExact": true,
+  "repositoryAccess": false,
+  "approval": false
+}

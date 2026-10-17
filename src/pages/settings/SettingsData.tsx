@@ -24,7 +24,7 @@ export default function SettingsData() {
         <SettingsRow
           icon={Trash2}
           label="Recently deleted meals"
-          description="Restore within 24 hours"
+          description="Restore or delete permanently"
           onClick={() => navigate("/settings/recently-deleted-meals")}
         />
       </SettingsGroup>

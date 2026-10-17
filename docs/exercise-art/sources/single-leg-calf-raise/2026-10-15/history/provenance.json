@@ -1,0 +1,45 @@
+{
+  "exerciseId": "single-leg-calf-raise",
+  "status": "partial-rework-required",
+  "canonicalReference": "/workspace/scratch/92115cdb9667/character-reference/athlete-anatomy-v3.png",
+  "prompts": [
+    "Scientific sports anatomy SINGLE LEG CALF RAISE master. Same canonical adult bald faceless grey anatomical mannequin with fine contours and white trainers. Purple working gastrocnemius calf, lighter lilac soleus, all other anatomy grey. Black background, full body in 1024x1536 portrait. Strict side view facing RIGHT with small three-quarter reveal. Standing on LEFT leg at the edge of a low stable grey step: BALL of left foot on step top, heel hanging off the left/back edge and lowered BELOW the step top for stretched start position. Right nonworking knee bent, right foot suspended behind left calf and NOT touching step or floor. Left knee straight but not locked. One hand lightly rests on fixed vertical grey balance rail on the right at waist height, other hand on hip. Hand supports balance only. Entire step and floor rail base visible and fixed. Body upright. Same smooth featureless anatomical mannequin style. No words, arrows, captions or labels.",
+    "Correct composition of exercise master. Image1 identity reference, image2 target. Preserve exact single-leg stance, body proportions, step and rail geometry, hand grip and visible calf muscles. Zoom the entire scene out uniformly by 15 percent and center it, leaving at least 180 pixels of empty black margin above head for upward calf raise. Replace ALL grey halo/glow with perfectly solid black background, retaining anatomy and equipment. Same 1024x1536 canvas. No text. Do not alter pose or equipment relative positioning.",
+    "Scientific exercise pose edit. Image1 canonical identity; image2 SINGLE LEG CALF master. Raise working heel slightly to just level with step top by ankle plantarflexion; body's head rises only about 15 pixels. Ball of working foot remains exactly planted on original step edge, toes fixed. Nonworking leg remains bent off floor. Step and rail are pixel immobile; rail hand keeps same contact while elbow adapts. Keep body proportions and straight working knee, identical trainer shapes and anatomical highlights. Solid black 1024x1536 scene, no camera/scale movement. This is early small upward motion only. No text.",
+    "Correct just scene anchor error in image3 calf raise. Image1 canonical identity; image2 fixed scene MASTER; image3 raised heel target. The athlete in image3 is in a useful raised heel position, preserve its ankle angle/body proportions, BUT the step and rail drifted upward. Restore EXACT step and rail shape/positions from image2: step top y1146, rail top y670, base bottom y1335. Move athlete as needed down 30px so working forefoot contacts same step at x540 y1150, hand contacts same rail. Keep raised heel above step and nonworking foot off floor. Solid black, identical 1024x1536 canvas, no text. Only align whole scene anchors back to master.",
+    "Calf raise higher intermediate. Ref1 identity ref2 master ref3 preceding early raise. Keep step and rail pixel fixed. Increase working ankle plantarflexion so heel rises another 20 pixels while forefoot remains fixed at x540 y1150. Rigid body above ankle MUST rise equal 20pixels, including head, pelvis, knee, and nonworking bent leg; do not shorten shin or thigh. Rail hand remains fixed; elbow adjusts naturally. Full same 1024x1536 frame, two legs only, nonworking foot off floor, canonical colours unchanged, no text."
+  ],
+  "cues": [
+    [
+      "SET UP",
+      "Stand on the ball of one foot with the heel below the step."
+    ],
+    [
+      "BEGIN RISE",
+      "Press through the forefoot without pulling on the rail."
+    ],
+    [
+      "RISE",
+      "Continue raising the heel with the knee straight."
+    ],
+    [
+      "SQUEEZE",
+      "Pause at full comfortable plantarflexion."
+    ],
+    [
+      "LOWER",
+      "Lower the heel slowly."
+    ],
+    [
+      "STRETCH",
+      "Return below the step for a full calf stretch."
+    ]
+  ],
+  "actualFiles": [
+    "masters/1.png",
+    "frames/1.png",
+    "frames/2.png",
+    "frames/3-rejected.png"
+  ],
+  "blocker": "Step and rail move between poses; body rise disproportionate to heel rise despite targeted anchor correction. No complete six-frame sequence."
+}

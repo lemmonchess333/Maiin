@@ -32,7 +32,10 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
-const ci = readFileSync(resolve(repoRoot, ".github/workflows/ci.yml"), "utf8");
+const ci = readFileSync(
+  resolve(repoRoot, ".github/workflows/ci.yml"),
+  "utf8"
+).replace(/\r\n/g, "\n");
 
 /** The job name the ruleset requires, exactly as the API reports it. */
 const REQUIRED_JOB = "unit";

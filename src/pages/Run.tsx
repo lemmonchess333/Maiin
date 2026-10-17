@@ -19,7 +19,7 @@ import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
 import { useAuth } from "../lib/auth";
 import { warmPrivacyZones } from "../hooks/usePrivacyZones";
-import { useGPS, type GPSSignalQuality } from "../hooks/useGPS";
+import { useGPS } from "../hooks/useGPS";
 import { track as trackLifecycleEvent } from "@/lib/lifecycleAnalytics";
 import { useRunTimer } from "../hooks/useRunTimer";
 import { useWakeLock } from "../hooks/useWakeLock";
@@ -57,6 +57,8 @@ import {
 } from "../components/run/runConfigDefaults";
 import RunSetupSkeleton from "../components/run/RunSetupSkeleton";
 import RunResumePrompt from "../components/run/RunResumePrompt";
+import { Banner } from "@/components/ui/Banner";
+import { Button } from "@/components/ui/Button";
 import {
   readStoredRun,
   writeStoredRun,
@@ -64,8 +66,13 @@ import {
   RUN_RESUME_SCHEMA_VERSION,
   type StoredRun,
 } from "../lib/runResumeStorage";
+import type { ManualDistanceDraft } from "@/lib/manualDistanceDraft";
 import { useAudioCues } from "../hooks/useAudioCues";
 import { useSessionPlayer } from "../hooks/useSessionPlayer";
+import {
+  validateSessionPlayerCheckpoint,
+  type SessionDistanceMode,
+} from "@/lib/sessionPlayerCheckpoint";
 import {
   judgesPaceNow,
   livePaceTarget,
@@ -77,14 +84,17 @@ import IntervalStepShell from "../components/run/IntervalStepShell";
 import TreadmillMode from "../components/run/TreadmillMode";
 import PaceZoneBar from "../components/run/PaceZoneBar";
 import RunBottomSheet from "../components/run/RunBottomSheet";
+import { RunControlButton } from "@/components/ui/RunControlButton";
 import BackToStartChip from "../components/run/BackToStartChip";
 import RouteFollowChip from "../components/run/RouteFollowChip";
+import GpsSignalChip from "../components/run/GpsSignalChip";
 import GhostDeltaChip from "../components/run/GhostDeltaChip";
 import RouteSetupSection from "../components/run/RouteSetupSection";
 import type { SavedRouteSource } from "../lib/savedRoutes";
 import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
 import { useHeartRate } from "../hooks/useHeartRate";
 import { THEME } from "../lib/theme";
+import { gpsSignalBars } from "../lib/gpsSignal";
 import { isRunWalkTemplateId, RUN_TEMPLATES } from "../lib/workoutTemplates";
 import {
   isOutdoorGpsRun,
@@ -115,6 +125,11 @@ import {
   runSessionReducer,
   initialRunPhase,
 } from "../features/run/runSessionReducer";
+import {
+  FIRST_RUN_CHECK_MS,
+  START_ON_ARRIVAL_PARAM,
+  startOnArrival,
+} from "../features/run/startOnArrival";
 import { haptic } from "../lib/haptic";
 import { distanceLabel, distanceValue, paceLabel } from "../lib/runLabels";
 import {
@@ -123,11 +138,32 @@ import {
   endRunActivity,
 } from "../lib/runLiveActivity";
 import { toast } from "../lib/toast";
-import { SPLIT_LAP_IS_METRIC, distanceUnitLabel } from "@/lib/distanceUnits";
+import {
+  SPLIT_LAP_IS_METRIC,
+  distanceUnitLabel,
+  type DistanceUnit,
+} from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import GuideHint from "@/components/guide/GuideHint";
 import { useGuideHint } from "@/hooks/useGuideHint";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
+
+function sessionSegmentsFor(
+  config: RunConfig | null,
+  unit: DistanceUnit,
+  seed: number
+) {
+  if (!config) return null;
+  if (config.activityType === "guided") {
+    return config.guidedWorkout
+      ? segmentsFromGuided(config.guidedWorkout)
+      : null;
+  }
+  if (config.segments?.length) return config.segments;
+  return config.activityType === "intervals" && config.intervals
+    ? segmentsFromIntervals(config.intervals, unit, seed)
+    : null;
+}
 
 /* haptic moved to the shared `../lib/haptic` implementation in
    W1f, which routes through the Capacitor Haptics plugin on the
@@ -135,71 +171,10 @@ import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
    inline was a no-op on iOS Safari (the Vibrate API has never
    shipped on iOS), so the iOS path now fires correctly. */
 
-/* Live HUD chip for GPS state during an active run.
- *
- * Phase B2: consumes `signalQuality` from useGPS directly rather
- * than re-deriving thresholds locally. Pre-B2 this component
- * duplicated the bucket logic (<10/<20/<30 vs the hook's 8/15/30)
- * which meant the chip could disagree with the rest of the system
- * about whether the signal was 'good' vs 'fair'. Single source of
- * truth lives in useGPS.getSignalQuality. */
-function GPSIndicator({
-  accuracy,
-  isTracking,
-  pointCount,
-  signalQuality,
-}: {
-  accuracy: number | null;
-  isTracking: boolean;
-  pointCount: number;
-  signalQuality: GPSSignalQuality;
-}) {
-  if (!isTracking) return null;
-  if (pointCount === 0 || signalQuality === "searching") {
-    return (
-      <div className="flex items-center gap-2">
-        <div className="size-2 rounded-full bg-warning motion-safe:animate-pulse" />
-        <span className="text-xs text-warning-strong/90">Acquiring GPS...</span>
-      </div>
-    );
-  }
-  const color =
-    signalQuality === "strong" || signalQuality === "good"
-      ? "bg-success"
-      : signalQuality === "fair"
-        ? "bg-warning"
-        : "bg-destructive";
-  const text =
-    signalQuality === "weak"
-      ? "text-destructive-strong/90"
-      : signalQuality === "fair"
-        ? "text-warning-strong/90"
-        : "text-success-strong/90";
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex items-end gap-0.5 h-3">
-        <div className={`size-1 rounded-sm ${color}`} />
-        <div
-          className={`size-1.5 rounded-sm ${signalQuality !== "weak" ? color : "bg-white/20"}`}
-        />
-        <div
-          className={`w-1 h-2 rounded-sm ${signalQuality === "strong" || signalQuality === "good" ? color : "bg-white/20"}`}
-        />
-        <div
-          className={`w-1 h-3 rounded-sm ${signalQuality === "strong" ? color : "bg-white/20"}`}
-        />
-      </div>
-      <span className={`text-xs font-mono tabular-nums ${text}`}>
-        {accuracy ? `\u00B1${Math.round(accuracy)} m` : ""}
-      </span>
-    </div>
-  );
-}
-
 export default function Run() {
   const unit = useDistanceUnit();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   // Optional route to follow — passed via navigation state from RunDetail's
   // "Re-run this route". Captured once on mount (the polyline of a past run);
@@ -257,10 +232,25 @@ export default function Run() {
     !runHistory.failed &&
     runHistory.runCount === 0;
   const [locked, setLocked] = useState(false);
+  const unlockButtonRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (locked) unlockButtonRef.current?.focus();
+  }, [locked]);
   const [countdown, setCountdown] = useState(3);
   const [autoPaused, setAutoPaused] = useState(false);
   const [runConfig, setRunConfig] = useState<RunConfig | null>(null);
   const [treadmillDistance, setTreadmillDistance] = useState(0);
+  const [manualDistanceDraft, setManualDistanceDraft] =
+    useState<ManualDistanceDraft | null>(null);
+  const manualDistanceDraftRef = useRef<ManualDistanceDraft | null>(null);
+  const replaceManualDistanceDraft = useCallback(
+    (draft: ManualDistanceDraft | null) => {
+      // The immediate checkpoint writer must see the edit before React commits.
+      manualDistanceDraftRef.current = draft;
+      setManualDistanceDraft(draft);
+    },
+    []
+  );
   const [acquiringSeconds, setAcquiringSeconds] = useState(0);
   const autoPauseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Latest timer, held in a ref so the auto-pause effect can call pause/resume
@@ -317,17 +307,44 @@ export default function Run() {
   // (Resume / Start new / Discard) flip it back to null and either
   // rehydrate the run or proceed to the normal setup flow.
   const [resumePrompt, setResumePrompt] = useState<StoredRun | null>(null);
-  // Set on Resume. The snapshot doesn't keep the session player's place,
-  // so a resumed session starts again at its first segment and its
-  // segments no longer line up with what was run: the summary judges
-  // such a run by the whole run, as before work segments were kept.
+  // Legacy/unverifiable work history must never become measured work pace.
   const resumedRef = useRef(false);
+  const [snapshotWriteFailed, setSnapshotWriteFailed] = useState(false);
+  const [continuedWithoutCoaching, setContinuedWithoutCoaching] =
+    useState(false);
+  const recoveryNotice = (
+    <>
+      {snapshotWriteFailed && (
+        <Banner
+          variant="neutral"
+          description="Latest progress couldn't be saved for recovery. Recording continues; keep this run open."
+          className="w-full bg-stage-raised border-stage-muted/20 [&_.text-muted-foreground]:text-stage-muted"
+        />
+      )}
+      {continuedWithoutCoaching && (
+        <Banner
+          variant="neutral"
+          description="Continuing without coaching. Your recorded progress is kept."
+          className="w-full bg-stage-raised border-stage-muted/20 [&_.text-muted-foreground]:text-stage-muted"
+        />
+      )}
+    </>
+  );
   // Fast-launch arc: `forceModal` is the "Customize" / "More options" escape
   // hatch that drops from the launch card / tile picker into the full config
   // modal. `launchShoeId` is the shoe chosen inline on either fast surface.
   // Both reset naturally on each /run mount.
   const [forceModal, setForceModal] = useState(false);
   const [launchShoeId, setLaunchShoeId] = useState<string | null>(null);
+  // Home's run card asks for its run to start as the page opens
+  // (`?start=1`, startOnArrival). "deciding" until the page knows enough
+  // to start or to show itself, "starting" from the start until the GPS
+  // screen takes over, "done" otherwise. The setup surfaces stay hidden
+  // until "done", so the run's own card never flashes up on the way in.
+  const [arrival, setArrival] = useState<"deciding" | "starting" | "done">(
+    () =>
+      searchParams.get(START_ON_ARRIVAL_PARAM) === "1" ? "deciding" : "done"
+  );
   // `startedAtRef` mirrors the timer's original-start epoch for the
   // active run so the periodic write effect can persist it without
   // racing with React state. Set on handleStart and on Resume.
@@ -440,21 +457,41 @@ export default function Run() {
   // canonical segments from the plan prefill, or derived on the spot for a
   // hand-built interval session. Guided runs keep their own player (and
   // overlay) this slice.
-  const sessionSegments = useMemo(() => {
-    if (!runConfig) return null;
-    // STRUCT-SESS-03: guided workouts are segments like everything else.
-    if (runConfig.activityType === "guided") {
-      return runConfig.guidedWorkout
-        ? segmentsFromGuided(runConfig.guidedWorkout)
-        : null;
-    }
-    if (runConfig.segments?.length) return runConfig.segments;
-    if (runConfig.activityType === "intervals" && runConfig.intervals) {
-      return segmentsFromIntervals(runConfig.intervals, unit, cueSeed);
-    }
-    return null;
-  }, [runConfig, unit, cueSeed]);
-  const player = useSessionPlayer(sessionSegments);
+  const sessionSegments = useMemo(
+    () => sessionSegmentsFor(runConfig, unit, cueSeed),
+    [runConfig, unit, cueSeed]
+  );
+  const player = useSessionPlayer(
+    sessionSegments,
+    requiresManualDistance(runConfig) ? "manual" : "gps"
+  );
+  const resumeCoaching = useMemo(() => {
+    if (!resumePrompt) return null;
+    const segments = sessionSegmentsFor(resumePrompt.config, unit, cueSeed);
+    const mode: SessionDistanceMode = requiresManualDistance(
+      resumePrompt.config
+    )
+      ? "manual"
+      : "gps";
+    const distance = mode === "manual" ? 0 : totalDistance(resumePrompt.points);
+    const checkpoint = segments
+      ? validateSessionPlayerCheckpoint(
+          resumePrompt.playerCheckpoint,
+          segments,
+          resumePrompt.accumulatedSeconds,
+          distance,
+          mode
+        )
+      : null;
+    return {
+      segments,
+      mode,
+      distance,
+      checkpoint,
+      fallback: !!segments?.length && !checkpoint,
+    };
+  }, [resumePrompt, unit, cueSeed]);
+  const { start: startSessionPlayer, tick: tickSessionPlayer } = player;
   // The pace bar and the pace alerts judge a tempo or an interval session
   // in its work segments only (`judgesPaceNow`).
   const judgingPace = judgesPaceNow(
@@ -677,6 +714,7 @@ export default function Run() {
   }, [planDecision.metadata.scheduledRunId, programState?.runDays]);
 
   const handleStart = async (config: RunConfig) => {
+    replaceManualDistanceDraft(null);
     audioCues.prime();
     await wakeLock.request();
     // Phase B1: finalise plan metadata against the user's actual
@@ -716,12 +754,90 @@ export default function Run() {
     gps.start();
   };
 
+  // ─── Start on arrival (Home's run card) ──────────────────────────
+  // Home's Start goes straight into the run: the planned run as its card's
+  // Start would begin it, or a free run as the Free tile would. The page
+  // shows itself instead when there is something to see first
+  // (startOnArrival). The flag comes off the address as soon as the page
+  // acts on it, so going Back to this page from the summary, or a reload,
+  // never starts another run.
+  const [firstRunCheckOver, setFirstRunCheckOver] = useState(false);
+  useEffect(() => {
+    if (arrival !== "deciding" || !firstRunHint.owed) return;
+    const t = setTimeout(() => setFirstRunCheckOver(true), FIRST_RUN_CHECK_MS);
+    return () => clearTimeout(t);
+  }, [arrival, firstRunHint.owed]);
+  const startArrivalRun = useEffectEvent((kind: "planned" | "free") => {
+    const audioCuesOn = profile?.audioCues !== false;
+    const config =
+      kind === "planned"
+        ? buildLaunchConfig(planDecision, audioCuesOn, launchShoeId)
+        : buildTileConfig(
+            "freerun",
+            paceTable,
+            planDecision.metadata,
+            audioCuesOn,
+            launchShoeId
+          );
+    handleStart(config).catch((err) => {
+      logger.error("[Run] Start from Home failed", err);
+      setArrival("done");
+    });
+  });
+  const arrivalUid = profile?.uid;
+  const arrivalPlanReady = isFreeformUser || !programLoading;
+  const arrivalFirstRunHint = !firstRunHint.owed
+    ? "not-due"
+    : firstRunMoment
+      ? "due"
+      : runHistory.loading && !firstRunCheckOver
+        ? "checking"
+        : "not-due";
+  const arrivalPlannedRun = launchWorkout !== null;
+  const arrivalRouteToFollow = targetRoute != null;
+  const arrivalState = location.state;
+  useEffect(() => {
+    if (arrival !== "deciding" || phase !== "waiting" || !arrivalUid) return;
+    const decision = startOnArrival({
+      planReady: arrivalPlanReady,
+      // Read here rather than from `resumePrompt`, which the restore
+      // effect sets in this same pass.
+      interruptedRun: readStoredRun(arrivalUid) !== null,
+      routeToFollow: arrivalRouteToFollow,
+      firstRunHint: arrivalFirstRunHint,
+      plannedRun: arrivalPlannedRun,
+    });
+    if (decision === "wait") return;
+    setSearchParams(
+      (params) => {
+        params.delete(START_ON_ARRIVAL_PARAM);
+        return params;
+      },
+      { replace: true, state: arrivalState }
+    );
+    // The decision reads localStorage and the router, outside React.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
+    setArrival(decision === "show" ? "done" : "starting");
+    if (decision !== "show") startArrivalRun(decision);
+  }, [
+    arrival,
+    phase,
+    arrivalUid,
+    arrivalPlanReady,
+    arrivalRouteToFollow,
+    arrivalFirstRunHint,
+    arrivalPlannedRun,
+    arrivalState,
+    setSearchParams,
+  ]);
+
   // ─── Phase B3: persistence write + restore handlers ─────────────
   //
-  // `writeSnapshot` is called from two places:
+  // `writeSnapshot` is called from three places:
   //   1. The periodic-write interval (every 5s while active/paused).
   //   2. The visibilitychange→hidden handler (immediate write before
   //      the OS suspends the page).
+  //   3. Manual-distance edits (synchronous, including while paused).
   //
   // It's a no-op when there's no run in flight (runConfig null, or
   // phase is waiting/acquiring/countdown/finished). The write itself
@@ -742,9 +858,25 @@ export default function Run() {
       points: gps.getPoints(),
       lastWriteAt: Date.now(),
       phase: phase === "paused" ? "paused" : "active",
+      ...(player.checkpoint ? { playerCheckpoint: player.checkpoint } : {}),
+      ...(requiresManualDistance(runConfig) && manualDistanceDraftRef.current
+        ? { manualDistanceDraft: manualDistanceDraftRef.current }
+        : {}),
     };
-    writeStoredRun(uid, snapshot);
-  }, [runConfig, phase, timer, gps, profile?.uid]);
+    const saved = writeStoredRun(uid, snapshot);
+    // A boolean state bails out on repeated failures/successes. Updating a
+    // timestamp here would itself re-render and schedule another write.
+    setSnapshotWriteFailed(!saved);
+  }, [runConfig, phase, timer, gps, profile?.uid, player.checkpoint]);
+
+  const handleManualDistanceDraftChange = useCallback(
+    (draft: ManualDistanceDraft) => {
+      replaceManualDistanceDraft(draft.raw === "" ? null : draft);
+      // Persist the latest keystroke synchronously, including while paused.
+      writeSnapshot();
+    },
+    [replaceManualDistanceDraft, writeSnapshot]
+  );
 
   // Periodic write: every 5s while a run is in flight. The interval
   // re-arms whenever the deps change (e.g. pause flips phase) so the
@@ -784,12 +916,67 @@ export default function Run() {
     if (!resumePrompt) return;
     audioCues.prime();
     await wakeLock.request();
-    resumedRef.current = true;
-    setRunConfig(resumePrompt.config);
+    replaceManualDistanceDraft(
+      requiresManualDistance(resumePrompt.config)
+        ? (resumePrompt.manualDistanceDraft ?? null)
+        : null
+    );
+    const coachingRestored = !!(
+      resumeCoaching?.checkpoint &&
+      resumeCoaching.segments &&
+      player.restore(
+        resumeCoaching.checkpoint,
+        resumeCoaching.segments,
+        resumePrompt.accumulatedSeconds,
+        resumeCoaching.distance,
+        resumeCoaching.mode
+      )
+    );
+    resumedRef.current = !coachingRestored;
+    const fallback = !!resumeCoaching?.segments?.length && !coachingRestored;
+    setContinuedWithoutCoaching(fallback);
+    if (coachingRestored) {
+      // Restored state arrives on mount; it must not replay its step cue or
+      // completion announcement. A subsequent real transition still speaks.
+      segmentIndexRef.current = resumeCoaching!.checkpoint!.index;
+    }
+    if (fallback) {
+      const activityType =
+        requiresManualDistance(resumePrompt.config) &&
+        !isTreadmillRun(resumePrompt.config)
+          ? "manual"
+          : "freerun";
+      setRunConfig({
+        ...resumePrompt.config,
+        activityType,
+        ...(isTreadmillRun(resumePrompt.config)
+          ? { place: "treadmill" as const }
+          : {}),
+        segments: undefined,
+        intervals: undefined,
+        guidedWorkout: undefined,
+        target: { type: "none" },
+        paceAlerts: false,
+        // Preserve the planned slot; the existing boundary records an
+        // uncoached continuation as modified rather than an exact session.
+        planMetadata: finalisePlanMetadata(
+          resumePrompt.config.planMetadata,
+          activityType
+        ),
+      });
+    } else {
+      setRunConfig(resumePrompt.config);
+    }
     startedAtRef.current = resumePrompt.startedAt;
+    // Auto-pause snapshots kept the active screen phase with a stopped
+    // timer. Restore them as explicitly paused so GPS cannot run alone.
+    const restoredPhase =
+      resumePrompt.phase === "paused" || !resumePrompt.isRunning
+        ? "paused"
+        : "active";
     timer.rehydrate({
       accumulatedSeconds: resumePrompt.accumulatedSeconds,
-      isRunning: resumePrompt.isRunning,
+      isRunning: restoredPhase === "active",
     });
     if (resumePrompt.points.length > 0) {
       gps.appendPoints(resumePrompt.points);
@@ -803,9 +990,7 @@ export default function Run() {
          effect below releases the hold once the run is moving. */
       const last = resumePrompt.points[resumePrompt.points.length - 1];
       gps.pause(
-        resumePrompt.phase === "active"
-          ? resumePrompt.lastWriteAt
-          : last.timestamp
+        restoredPhase === "active" ? resumePrompt.lastWriteAt : last.timestamp
       );
     }
     // 5s suppression window: the cold-start GPS chip won't fire its
@@ -813,44 +998,41 @@ export default function Run() {
     // would otherwise display "GPS recovering · last fix Xs ago"
     // using the stale lastFixAt from the restored trail.
     setGapBannerSuppressUntil(Date.now() + 5000);
-    dispatch({ type: "RESUME_SNAPSHOT", phase: resumePrompt.phase });
+    dispatch({ type: "RESUME_SNAPSHOT", phase: restoredPhase });
     setResumePrompt(null);
     // Restart GPS for outdoor runs that were active. Paused runs
     // get GPS back on user-driven Resume (handleResume below); we
     // only re-arm here when the snapshot itself was active.
     // A run stored before Pgm8 as `activityType: "treadmill"` reads as
     // a treadmill run too (`isTreadmillRun`), so it resumes without GPS.
-    if (
-      isOutdoorGpsRun(resumePrompt.config) &&
-      resumePrompt.phase === "active"
-    ) {
+    if (isOutdoorGpsRun(resumePrompt.config) && restoredPhase === "active") {
       gps.start();
     }
     haptic("medium");
-  }, [resumePrompt, timer, gps, audioCues, wakeLock]);
+  }, [
+    resumePrompt,
+    resumeCoaching,
+    player,
+    timer,
+    gps,
+    audioCues,
+    wakeLock,
+    replaceManualDistanceDraft,
+  ]);
 
   const profileUid = profile?.uid;
   const handleStartNewFromPrompt = useCallback(() => {
     if (profileUid) clearStoredRun(profileUid);
+    replaceManualDistanceDraft(null);
     setResumePrompt(null);
-  }, [profileUid]);
+  }, [profileUid, replaceManualDistanceDraft]);
 
   const handleDiscardFromPrompt = useCallback(() => {
     if (profileUid) clearStoredRun(profileUid);
+    replaceManualDistanceDraft(null);
     setResumePrompt(null);
     navigate("/");
-  }, [navigate, profileUid]);
-
-  // Auto-start without GPS if permission denied or geolocation unavailable
-  useEffect(() => {
-    if (phase === "acquiring" && gps.error) {
-      const transition = () => {
-        dispatch({ type: "GPS_FAILED" });
-        setCountdown(3);
-      };
-      transition();
-    }
-  }, [phase, gps.error]);
+  }, [navigate, profileUid, replaceManualDistanceDraft]);
 
   // Count seconds spent in acquiring phase
   useEffect(() => {
@@ -1074,14 +1256,26 @@ export default function Run() {
     else if (clockRunning) releaseTrace();
   }, [clockHeld, clockRunning, holdTrace, releaseTrace]);
 
+  // The player object changes on every render; its callbacks stay stable.
+  // A state update from tick must not trigger another tick on the same totals.
   useEffect(() => {
-    if (phase === "active" && sessionSegments) player.start();
-  }, [phase, sessionSegments, player]);
+    if (phase === "active" && sessionSegments) startSessionPlayer();
+  }, [phase, sessionSegments, startSessionPlayer]);
 
   useEffect(() => {
     if (phase === "active" && sessionSegments)
-      player.tick(timer.elapsed, gps.distance);
-  }, [timer.elapsed, gps.distance, phase, sessionSegments, player]);
+      tickSessionPlayer(
+        timer.elapsed,
+        requiresManualDistance(runConfig) ? 0 : gps.distance
+      );
+  }, [
+    timer.elapsed,
+    gps.distance,
+    phase,
+    sessionSegments,
+    tickSessionPlayer,
+    runConfig,
+  ]);
 
   // STRUCT-SESS-02: the segment announces itself — cue copy is authored by
   // the builders alongside the labels, so tempo blocks and strides speak
@@ -1107,7 +1301,7 @@ export default function Run() {
     wakeLock.release();
     dispatch({ type: "FINISH" });
     const finalDistance = distanceOverride ?? gps.distance;
-    const points = gps.getPoints();
+    const points = requiresManualDistance(runConfig) ? [] : gps.getPoints();
 
     // An outdoor run that never got a usable GPS lock records ≤1 point (the
     // provisional start) and no route/distance. Say so plainly at finish
@@ -1161,10 +1355,12 @@ export default function Run() {
         // What the session's work segments covered, which the summary
         // judges the session by. On the distance the player was ticked
         // with, the run's own, not a hand-entered total; none after a
-        // resume (`resumedRef`).
-        workPortion: resumedRef.current
-          ? null
-          : player.workPortion(timer.elapsed, gps.distance),
+        // unverifiable resume (`resumedRef`) or when only the final whole-run distance
+        // is known. Manual step completion is not a measured work distance.
+        workPortion:
+          resumedRef.current || requiresManualDistance(runConfig)
+            ? null
+            : player.workPortion(timer.elapsed, gps.distance),
       },
     });
   };
@@ -1194,7 +1390,7 @@ export default function Run() {
   };
 
   const handleSwitchToManual = useCallback(() => {
-    /* User waited 15s+ for a GPS lock that never came. Rather than
+    /* GPS failed, or the user waited 15s+ for a lock that never came. Rather than
        start an outdoor run with zero fixes (the canonical 0km bug),
        transition to manual distance entry: stop the geolocation
        watcher, flip the activity type so TreadmillMode mounts on the
@@ -1212,11 +1408,36 @@ export default function Run() {
        originally entered the acquiring phase and don't need to fire
        again. */
     gps.stop();
-    setRunConfig((prev) => (prev ? { ...prev, activityType: "manual" } : prev));
+    replaceManualDistanceDraft(null);
+    setRunConfig((prev) =>
+      prev
+        ? {
+            ...prev,
+            activityType: "manual",
+            // Preserve the displayed ad-hoc/guided structure when its original
+            // activity type no longer selects the segment builder.
+            ...(sessionSegments ? { segments: sessionSegments } : {}),
+          }
+        : prev
+    );
     dispatch({ type: "MANUAL_FALLBACK" });
     timer.start();
     haptic("heavy");
-  }, [gps, timer]);
+  }, [gps, timer, sessionSegments, replaceManualDistanceDraft]);
+
+  const handleMoveToTreadmill = useCallback(() => {
+    /* On a treadmill after all. A run from Home's Start never passes the
+       setup's "On a treadmill" switch (Pgm8), so the GPS screen offers
+       it. Only the place changes, as with the switch: the type, the
+       session and the plan's link stay, and the distance is typed in from
+       the treadmill at the end. */
+    gps.stop();
+    replaceManualDistanceDraft(null);
+    setRunConfig((prev) => (prev ? { ...prev, place: "treadmill" } : prev));
+    dispatch({ type: "MANUAL_FALLBACK" });
+    timer.start();
+    haptic("heavy");
+  }, [gps, timer, replaceManualDistanceDraft]);
 
   if (locked && (phase === "active" || phase === "paused")) {
     return (
@@ -1228,6 +1449,11 @@ export default function Run() {
           haptic("light");
         }}
       >
+        {(snapshotWriteFailed || continuedWithoutCoaching) && (
+          <div className="absolute inset-x-0 top-[calc(var(--safe-top)+0.75rem)] space-y-2 px-4">
+            {recoveryNotice}
+          </div>
+        )}
         <div className="size-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-8">
           <svg
             width="24"
@@ -1259,18 +1485,32 @@ export default function Run() {
           {distanceUnitLabel(unit)}
         </p>
         <div className="mt-12 flex flex-col items-center gap-2">
-          <div className="size-8 rounded-full border border-white/20 flex items-center justify-center">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="rgba(255,255,255,0.4)"
-              strokeWidth="2"
-            >
-              <path d="M4 12h16M12 4v16" />
-            </svg>
-          </div>
+          <RunControlButton
+            ref={unlockButtonRef}
+            size="sm"
+            aria-label="Unlock run controls"
+            onClick={(event) => {
+              // Keyboard and assistive technology activate a button with
+              // detail zero. Pointer taps still need the double-tap above.
+              if (event.detail === 0) {
+                setLocked(false);
+                haptic("light");
+              }
+            }}
+            icon={
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-white"
+              >
+                <path d="M4 12h16M12 4v16" />
+              </svg>
+            }
+          />
           <p className="text-white/40 text-xs motion-safe:animate-pulse">
             Double-tap to unlock
           </p>
@@ -1312,7 +1552,7 @@ export default function Run() {
         id="first-run"
         layer="session"
         placement="top"
-        when={phase === "waiting" && firstRunMoment}
+        when={phase === "waiting" && arrival === "done" && firstRunMoment}
       />
       {phase === "waiting" && (
         <>
@@ -1321,8 +1561,10 @@ export default function Run() {
               real programme prefill on its first render. Freeform
               users skip the wait. Skeleton appears only after a
               100ms threshold (cached useProgram reads return faster
-              than this, so the skeleton flash is rare). */}
-          {!isFreeformUser && programLoading ? (
+              than this, so the skeleton flash is rare). A start from
+              Home waits the same way, with nothing to show until the
+              run starts or the page shows itself. */}
+          {arrival !== "done" || (!isFreeformUser && programLoading) ? (
             showSkeleton ? (
               <RunSetupSkeleton />
             ) : null
@@ -1453,22 +1695,7 @@ export default function Run() {
         (() => {
           const acc = gps.gpsAccuracy;
           const quality = gps.signalQuality;
-          const bars =
-            quality === "strong"
-              ? 4
-              : quality === "good"
-                ? 3
-                : quality === "fair"
-                  ? 2
-                  : quality === "weak"
-                    ? 1
-                    : 0;
-          const barColor =
-            quality === "strong" || quality === "good"
-              ? THEME.semantic.positive
-              : quality === "fair"
-                ? THEME.warning
-                : THEME.semantic.vitals;
+          const { lit: bars, colour: barColor } = gpsSignalBars(quality);
           return (
             <div
               className="flex-1 flex flex-col items-center justify-center px-8"
@@ -1571,7 +1798,7 @@ export default function Run() {
               ) : null}
 
               <div className="mt-8 flex flex-col items-center gap-3 w-full">
-                {acquiringSeconds >= 15 && (
+                {(acquiringSeconds >= 15 || !!gps.error) && (
                   /* Replaces the old "Start without GPS" CTA. That one
                    started an outdoor run with zero GPS fixes \u2014 the
                    canonical 0km production bug. This sends the user
@@ -1597,10 +1824,20 @@ export default function Run() {
                     </p>
                   </div>
                 )}
+                <Button
+                  variant="ghost"
+                  fullWidth
+                  onClick={handleMoveToTreadmill}
+                  className="rounded-2xl bg-stage-raised text-white hover:bg-white/10"
+                >
+                  On a treadmill
+                </Button>
                 <button
                   type="button"
                   onClick={() => {
                     gps.stop();
+                    // Back to the run's own card, where Customise is.
+                    setArrival("done");
                     dispatch({ type: "CANCEL_ACQUIRING" });
                   }}
                   className="text-sm"
@@ -1627,20 +1864,46 @@ export default function Run() {
       {(phase === "active" || phase === "paused") &&
         requiresManualDistance(runConfig) && (
           <div
-            className="flex-1 flex items-center text-white"
+            className="flex-1 min-h-0 overflow-y-auto text-white"
             style={{ backgroundColor: THEME.bg }}
           >
+            {(snapshotWriteFailed || continuedWithoutCoaching) && (
+              <div className="px-4 pt-3 space-y-2">{recoveryNotice}</div>
+            )}
             <TreadmillMode
               mode={isTreadmillRun(runConfig) ? "treadmill" : "manual"}
               elapsed={timer.elapsed}
               formatTime={timer.formatTime}
+              isPaused={phase === "paused"}
+              onPause={handlePause}
+              onResume={handleResume}
+              distanceDraft={manualDistanceDraft}
+              onDistanceDraftChange={handleManualDistanceDraftChange}
+              sessionGuidance={
+                sessionSegments ? (
+                  <IntervalStepShell
+                    player={player}
+                    band={intervalBand}
+                    manualDistance
+                    paused={phase === "paused"}
+                    onSkip={() => {
+                      haptic();
+                      player.skip(timer.elapsed, 0);
+                    }}
+                  />
+                ) : undefined
+              }
               onSave={(distance) => {
                 setTreadmillDistance(distance);
                 haptic("success");
                 finishRun(distance);
               }}
               onDiscard={() => {
+                // A draft reset can render before navigation unmounts Run.
+                // Retire the writer before clearing the discarded checkpoint.
+                startedAtRef.current = null;
                 if (profile?.uid) clearStoredRun(profile.uid);
+                replaceManualDistanceDraft(null);
                 navigate("/");
               }}
             />
@@ -1668,7 +1931,7 @@ export default function Run() {
             }
           >
             <div className="absolute top-[calc(var(--safe-top)+0.75rem)] left-4 z-50">
-              <GPSIndicator
+              <GpsSignalChip
                 accuracy={gps.gpsAccuracy}
                 isTracking={gps.isTracking}
                 pointCount={gps.points.length}
@@ -1734,6 +1997,7 @@ export default function Run() {
                 PaceZoneBar at top-10. When following a route the route
                 guidance supersedes the generic back-to-start aid. */}
             <div className="absolute inset-x-0 top-[calc(var(--safe-top)+0.75rem)] z-50 flex flex-col items-center gap-1.5 px-4">
+              {recoveryNotice}
               {targetRoute ? (
                 <>
                   <RouteFollowChip
@@ -1895,6 +2159,14 @@ export default function Run() {
           distanceMeters={totalDistance(resumePrompt.points)}
           startedAt={resumePrompt.startedAt}
           onResume={handleResumeFromPrompt}
+          recoveryNote={
+            resumeCoaching?.fallback
+              ? "Your recorded progress is kept. Session guidance couldn't be restored. Continue without coaching."
+              : undefined
+          }
+          resumeLabel={
+            resumeCoaching?.fallback ? "Continue without coaching" : undefined
+          }
           onStartNew={handleStartNewFromPrompt}
           onDiscard={handleDiscardFromPrompt}
           onBack={() => navigate("/program?tab=run")}

@@ -1,0 +1,19 @@
+{
+  "sourceGenerationId": "exec744124d3-6471-4519-9b08-4f88e998206b",
+  "sourceSheetSha256": "83ad4e7d901d2f73832b7c5ef51766ccd3105bdbcb73138df9ea98fef6462c3b",
+  "sourcePromptSha256": "03c41f869f8ac8029d654507d69f9814cc426780a99ee18735952fc103308860",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "sourceGenerationDate": "2026-10-15",
+  "newRouteDate": "2026-10-16",
+  "nativeDimensions": [
+    1254,
+    1254
+  ],
+  "nominalCellDimensions": [
+    627,
+    627
+  ],
+  "standingCOverflow": "Actual lower-left figure crown extends above nominal y627origin; use upwardextended cropy600.",
+  "history": "Separate history/initial-source-route-terminal.json truthfully preserves original unresolved artwork and correction service hold. No held output exists or is used. Current independent fixed-equipment construction uses only originally returned source human pixels, no new image requests.",
+  "newImageRequests": 0
+}

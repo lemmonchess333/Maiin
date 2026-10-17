@@ -1,0 +1,38 @@
+[
+  {
+    "pose": 1,
+    "fixedLowerScenePixelExact": true,
+    "headRegionThroughY328PixelExact": true,
+    "neckEdgeColourContourChangedPixels": 0,
+    "lowerSceneSha256": "239d8fc304eea2766f4c5ed1fc8426438ae688a86759633b0bb2a41a75a165ca",
+    "headRegionSha256": "3347996751334c70f4766c537dc514a7020744e22de1a510998cd76ec5c1bcdd",
+    "fixedAxes": [
+      [712, 110],
+      [899, 140]
+    ]
+  },
+  {
+    "pose": 2,
+    "fixedLowerScenePixelExact": true,
+    "headRegionThroughY328PixelExact": true,
+    "neckEdgeColourContourChangedPixels": 3,
+    "lowerSceneSha256": "239d8fc304eea2766f4c5ed1fc8426438ae688a86759633b0bb2a41a75a165ca",
+    "headRegionSha256": "3347996751334c70f4766c537dc514a7020744e22de1a510998cd76ec5c1bcdd",
+    "fixedAxes": [
+      [712, 110],
+      [899, 140]
+    ]
+  },
+  {
+    "pose": 3,
+    "fixedLowerScenePixelExact": true,
+    "headRegionThroughY328PixelExact": true,
+    "neckEdgeColourContourChangedPixels": 3,
+    "lowerSceneSha256": "239d8fc304eea2766f4c5ed1fc8426438ae688a86759633b0bb2a41a75a165ca",
+    "headRegionSha256": "3347996751334c70f4766c537dc514a7020744e22de1a510998cd76ec5c1bcdd",
+    "fixedAxes": [
+      [712, 110],
+      [899, 140]
+    ]
+  }
+]

@@ -1,0 +1,45 @@
+{
+  "status": "actual-recovery-scope-record-not-an-invented-server-log",
+  "reportedCause": "Parent explicitly reported a Windows screenshot watcher lock/dev-server failure; pre-recovery integrated screenshots were stale/failed and do not establish final acceptance.",
+  "causeEvidenceLimit": "No raw server exception log was supplied among these files; do not invent an error code, stack trace or process identity. The cause is attributed to the parent task instruction.",
+  "historicalBeforeRecovery": [
+    {
+      "originalPath": "integrated-before-server-recovery-trace.json",
+      "archivePath": "review/history-before-recovery/integrated-before-server-recovery-trace.json.txt",
+      "sha256": "759984b7181d7e97136f8fb1f1b860eac325cc93624a5b9fbfbb063435219590",
+      "acceptanceEvidence": false
+    },
+    {
+      "originalPath": "integrated-light.png",
+      "archivePath": "review/history-before-recovery/integrated-light.png",
+      "sha256": "c5b206c3a00a3720e33c531e96bdbdf7084caebe0d48d3b5e70f135304b82b60",
+      "acceptanceEvidence": false
+    },
+    {
+      "originalPath": "integrated-dark.png",
+      "archivePath": "review/history-before-recovery/integrated-dark.png",
+      "sha256": "b8331b958b6493470aedee95d63d250a0123e0456794df6e893128138c9e725a",
+      "acceptanceEvidence": false
+    },
+    {
+      "originalPath": "integrated-manual-selection.txt",
+      "archivePath": "review/history-before-recovery/integrated-manual-selection.txt",
+      "sha256": "1365c7bd45630ec7b47ced3677964e697e7cae388fe4ff95beda0d260b272656",
+      "acceptanceEvidence": false
+    },
+    {
+      "originalPath": "integrated-desktop-before-viewport.png",
+      "archivePath": "review/history-before-recovery/integrated-desktop-before-viewport.png",
+      "sha256": "483531d1d18b56be26fd360eeb2daa02cf763c639fd04c66051f79839804e0c2",
+      "acceptanceEvidence": false
+    }
+  ],
+  "acceptedAfterRecovery": [
+    "integrated-playback-after-recovery.json.txt",
+    "integrated-manual-selection-after-recovery.txt",
+    "integrated-light-after-recovery.png",
+    "integrated-dark-after-recovery.png",
+    "integrated-console-after-recovery.json.txt"
+  ],
+  "basis": "The supplied completed parent review reports affected checks were repeated after recovery and binds exact after-recovery bytes. Original source text/observations/findings/hash values were not edited."
+}

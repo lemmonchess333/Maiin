@@ -1,0 +1,89 @@
+{
+  "artifactName": "calf-integrated-manual-light.json",
+  "observations": [
+    {
+      "alt": "Single-Leg Calf Raise, Low",
+      "complete": true,
+      "overflow": false,
+      "src": "/form-frames/single-leg-calf-raise/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Single-Leg Calf Raise, Brace",
+      "complete": true,
+      "overflow": false,
+      "src": "/form-frames/single-leg-calf-raise/2.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Single-Leg Calf Raise, Top",
+      "complete": true,
+      "overflow": false,
+      "src": "/form-frames/single-leg-calf-raise/3.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Single-Leg Calf Raise, Hold",
+      "complete": true,
+      "overflow": false,
+      "src": "/form-frames/single-leg-calf-raise/4.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Single-Leg Calf Raise, Lower",
+      "complete": true,
+      "overflow": false,
+      "src": "/form-frames/single-leg-calf-raise/5.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Single-Leg Calf Raise, Reset",
+      "complete": true,
+      "overflow": false,
+      "src": "/form-frames/single-leg-calf-raise/6.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Single-Leg Calf Raise, Low",
+      "complete": true,
+      "overflow": false,
+      "src": "/form-frames/single-leg-calf-raise/1.webp",
+      "theme": "light",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    }
+  ]
+}

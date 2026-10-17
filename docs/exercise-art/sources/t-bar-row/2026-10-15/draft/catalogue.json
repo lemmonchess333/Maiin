@@ -1,0 +1,14 @@
+{
+  "id": "t-bar-row",
+  "name": "T-Bar Row",
+  "category": "Back",
+  "muscleGroup": "Mid Back",
+  "secondaryMuscles": ["Lats", "Rhomboids", "Biceps"],
+  "equipment": "Barbell",
+  "instructions": [
+    "Straddle the loaded bar or landmine and grip the handles at your shins.",
+    "Hinge forward to about 45\u00b0, chest up, back flat, core braced.",
+    "Row the bar toward your chest, squeezing your mid-back at the top.",
+    "Lower to a full stretch without letting your back round."
+  ]
+}

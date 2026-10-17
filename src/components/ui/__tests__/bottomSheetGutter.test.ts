@@ -1,5 +1,6 @@
+// @vitest-environment node
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve, relative } from "node:path";
 
@@ -31,9 +32,10 @@ const srcRoot = resolve(repoRoot, "src");
 
 function tsxFiles(dir: string): string[] {
   const out: string[] = [];
-  for (const name of readdirSync(dir)) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const name = entry.name;
     const full = resolve(dir, name);
-    if (statSync(full).isDirectory()) {
+    if (entry.isDirectory()) {
       if (name === "__tests__" || name === "node_modules") continue;
       out.push(...tsxFiles(full));
       continue;
@@ -43,6 +45,14 @@ function tsxFiles(dir: string): string[] {
   return out;
 }
 
+// Both assertions inspect the same repository snapshot. Walk once and read
+// each source once; a separate stat + repeated source read per file made a
+// static contract depend on disk latency across thousands of files.
+const callers = tsxFiles(srcRoot).flatMap((file) => {
+  const source = readFileSync(file, "utf8");
+  return source.includes("<BottomSheet") ? [{ file, source }] : [];
+});
+
 /** Horizontal padding, or a reason not to need it. */
 function hasGutter(cls: string): boolean {
   if (/\bp[xl]?-\d/.test(cls)) return true;
@@ -50,23 +60,33 @@ function hasGutter(cls: string): boolean {
   // so a gutter is meaningless — TrainingBlockCard's loading branch.
   if (/\bjustify-center\b/.test(cls)) return true;
   // Content that spans deliberately (a full-bleed list) opts out visibly.
-  if (/\b-mx-\d/.test(cls)) return true;
+  if (/(?:^|\s)-mx-\d/.test(cls)) return true;
   return false;
 }
 
 describe("BottomSheet callers pad their own body", () => {
   it("finds the callers — the fixture this rests on", () => {
-    const callers = tsxFiles(srcRoot).filter((f) =>
-      readFileSync(f, "utf8").includes("<BottomSheet")
-    );
     expect(callers.length).toBeGreaterThanOrEqual(15);
+  });
+
+  it("distinguishes a real horizontal gutter from vertical-only or missing padding", () => {
+    for (const cls of [
+      "px-4 pb-6",
+      "p-4",
+      "pl-5",
+      "flex justify-center",
+      "-mx-4",
+    ]) {
+      expect(hasGutter(cls), cls).toBe(true);
+    }
+    for (const cls of ["", "py-4", "flex flex-col gap-3", "pt-4 pb-6"]) {
+      expect(hasGutter(cls), cls).toBe(false);
+    }
   });
 
   it("every sheet body wrapper carries a horizontal gutter", () => {
     const offenders: string[] = [];
-    for (const f of tsxFiles(srcRoot)) {
-      const src = readFileSync(f, "utf8");
-      if (!src.includes("<BottomSheet")) continue;
+    for (const { file: f, source: src } of callers) {
       const lines = src.split("\n");
       for (let i = 0; i < lines.length; i += 1) {
         if (!lines[i].includes("<BottomSheet")) continue;

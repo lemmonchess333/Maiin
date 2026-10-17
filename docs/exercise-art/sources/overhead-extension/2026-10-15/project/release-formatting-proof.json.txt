@@ -1,0 +1,6 @@
+{
+  "releaseJsonSemanticsUnchanged": true,
+  "onlyFormattingAfterFullRun": true,
+  "releaseBeforeSha256": "75b0654a238c06e2e5f352fd5737fa8d5507022881092fa2d1af329cb76c9fc5",
+  "releaseAfterSha256": "25982df617a2c2c34d962d0e7c44b5204aae73f941946a67fc412e7d471d4ace"
+}

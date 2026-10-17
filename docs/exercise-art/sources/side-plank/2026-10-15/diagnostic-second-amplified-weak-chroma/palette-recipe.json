@@ -1,0 +1,64 @@
+{
+  "status": "one-outside-only-colour-pass-awaiting-native-review",
+  "sourceSha256": "89d0866e0f165831b539839a8c0d7e45b9dc8a77533d916cc4d23a38465d1bc3",
+  "canonicalReferenceSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "palette": {
+    "primaryObliques": "#7B72E9",
+    "secondaryCoreShoulders": "#9590E0"
+  },
+  "sourceColourSupport": "Three existing 8-connected B-min(R,G)>3 source components of at least32 pixels. No expansion, inferred muscle region or neutral anatomy painting.",
+  "sourceComponents": [
+    {
+      "pixels": 6996,
+      "boundsInclusive": [
+        358,
+        223,
+        484,
+        317
+      ]
+    },
+    {
+      "pixels": 51456,
+      "boundsInclusive": [
+        279,
+        344,
+        636,
+        612
+      ]
+    },
+    {
+      "pixels": 9022,
+      "boundsInclusive": [
+        121,
+        449,
+        217,
+        606
+      ]
+    }
+  ],
+  "roleMap": {
+    "sourceAbdomenOwnershipBoxExclusive": [
+      270,
+      335,
+      650,
+      620
+    ],
+    "primaryWeight": "clip(((B-min(R,G))/max(B,1)-0.22)/0.18,0,1) within existing abdominal colour only; elsewhere secondary",
+    "meaning": "Reads the original source saturated oblique fields versus pale rectus/delt fields, retaining continuous original boundary coverage; no new anatomical boundary is drawn."
+  },
+  "colourAlpha": "Continuous clip((source blue excess-3)/18,0,1), restricted to existing source purple components. No faint-field interior is promoted to opaque; the source tint fade remains soft. The5x5 interior mask is diagnostic only.",
+  "valueAnchors": {
+    "primary": 218,
+    "secondary": 244
+  },
+  "shadingAndContours": "Original per-pixel max-channel brightness divided by the fixed role source-value anchor, clamped0..1. The independent black-alpha detail layer retains that in-place source brightness/contour structure on opaque fields; source-colour antialias rims carry the same inherited value in the palette layer. No spatial gradient, blur, new contour stroke or lighting effect is generated.",
+  "layersTopToBottom": [
+    "Inherited source brightness and fine contours — unchanged coordinates",
+    "Exact role palette — existing purple fields only",
+    "Intact generated original — no geometry edits"
+  ],
+  "proof": "draft/pixel-and-editable-proof.json",
+  "portableReproduction": "reproduce.py --source draft/originals/raised-contact-drift.png --out NEW_OUTPUT_DIRECTORY",
+  "notAcceptance": "Source-chroma preservation is not semantic muscle or visual quality approval.",
+  "firstPassHistory": "diagnostic-first-hard-interior-coverage preserves the original colour output/recipe that made very faint upper-shoulder tint opaque and visibly ragged. This one bounded coverage correction changes colour alpha only, with no body/contact edit or generation."
+}

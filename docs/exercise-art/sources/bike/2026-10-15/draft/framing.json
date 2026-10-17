@@ -1,0 +1,13 @@
+{
+  "sourceDimensions": [1024, 1536],
+  "wholeSceneOffsets": [
+    [0, 0],
+    [-1, 16]
+  ],
+  "commonCrop": [48, 32, 977, 1464],
+  "framedDimensions": [929, 1432],
+  "scale": 1,
+  "individualBodyTransforms": false,
+  "visibleSourcePixelsClipped": 0,
+  "upperFarTrainer": "Naturally occluded by original housing, not reconstructed or claimed fully visible."
+}

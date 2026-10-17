@@ -5,6 +5,7 @@ import {
   liftPostRows,
   postedExercises,
   type LiftForPost,
+  liftPostLeadArt,
 } from "../liftPost";
 import type { WorkoutExercise } from "../savedWorkouts";
 import { group } from "@/test/localeGrouping";
@@ -241,3 +242,28 @@ describe("a lift post read in lb", () => {
     );
   });
 });
+
+describe("liftPostLeadArt", () => {
+  it("is the first exercise on the post with a drawing", () => {
+    expect(
+      liftPostLeadArt([
+        { name: "My Own Lift" },
+        { name: "Bench Press", exerciseId: "bench-press" },
+        { name: "Barbell Squat", exerciseId: "squat" },
+      ])?.src
+    ).toBe("form-art/bench-press.webp");
+  });
+
+  it("names an older post's lift from the catalogue", () => {
+    expect(liftPostLeadArt([{ name: "Barbell Squat" }])?.src).toBe(
+      "form-art/squat.webp"
+    );
+  });
+
+  it("is null for a post with no drawn lift, or none at all", () => {
+    expect(liftPostLeadArt([{ name: "My Own Lift" }])).toBeNull();
+    expect(liftPostLeadArt(undefined)).toBeNull();
+    expect(liftPostLeadArt([null, 3, "x"])).toBeNull();
+  });
+});
+

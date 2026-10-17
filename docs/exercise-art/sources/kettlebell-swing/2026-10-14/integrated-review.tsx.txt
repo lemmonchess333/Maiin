@@ -1,0 +1,118 @@
+import { createRoot } from "react-dom/client";
+import { useEffect, useRef, useState } from "react";
+import "../../Maiin-burpees/src/index.css";
+import ExerciseFormContent from "../../Maiin-burpees/src/components/ExerciseFormContent";
+import { Button } from "../../Maiin-burpees/src/components/ui/Button";
+function Review() {
+  const [dark, setDark] = useState(true);
+  const [trace, setTrace] = useState<object[]>([]);
+  const last = useRef("");
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+  }, [dark]);
+  useEffect(() => {
+    const capture = () => {
+      const image = document.querySelector<HTMLImageElement>(
+        'section[aria-label="Kettlebell Swing form guide"] img[aria-hidden="false"]'
+      );
+      if (
+        !image ||
+        !image.complete ||
+        !image.naturalWidth ||
+        image.style.visibility !== "visible"
+      )
+        return;
+      const playing = Array.from(
+        image.closest("section")!.querySelectorAll("button")
+      ).some((b) => b.textContent?.trim() === "Pause");
+      const theme = document.documentElement.classList.contains("dark")
+        ? "dark"
+        : "light";
+      const key = [
+        image.getAttribute("src"),
+        playing,
+        theme,
+        document.hidden,
+      ].join("|");
+      if (key === last.current) return;
+      last.current = key;
+      setTrace((previous) =>
+        [
+          ...previous,
+          {
+            ms: Math.round(performance.now()),
+            src: image.getAttribute("src"),
+            alt: image.alt,
+            playing,
+            theme,
+            documentHidden: document.hidden,
+            naturalWidth: image.naturalWidth,
+            naturalHeight: image.naturalHeight,
+            viewport: [innerWidth, innerHeight],
+          },
+        ].slice(-200)
+      );
+    };
+    const observer = new MutationObserver(capture);
+    observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["aria-hidden", "alt", "src", "style"],
+    });
+    document.addEventListener("load", capture, true);
+    document.addEventListener("visibilitychange", capture);
+    capture();
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("load", capture, true);
+      document.removeEventListener("visibilitychange", capture);
+    };
+  }, []);
+  return (
+    <main className="min-h-screen bg-background text-foreground p-4">
+      <div style={{ maxWidth: 390, margin: "0 auto" }} className="space-y-3">
+        <h1 className="text-h2 font-bold">Kettlebell Swing</h1>
+        <p role="status" className="text-small text-muted-foreground">
+          Registered continuous swing: three intact no-shorts poses
+        </p>
+        <Button variant="outline" onClick={() => setDark((v) => !v)}>
+          {dark ? "Light theme" : "Dark theme"}
+        </Button>
+        <img
+          src="/form-art/kettlebell-swing.webp"
+          alt="Kettlebell Swing card cutout"
+          className="h-40 w-full object-contain"
+        />
+        <ExerciseFormContent exerciseName="Kettlebell Swing" />
+        <details>
+          <summary>Playback evidence</summary>
+          <Button
+            variant="outline"
+            onClick={() => {
+              last.current = "";
+              setTrace([]);
+            }}
+          >
+            Reset playback evidence
+          </Button>
+          <pre
+            data-testid="review-playback-trace"
+            style={{
+              maxHeight: 240,
+              overflow: "auto",
+              whiteSpace: "pre-wrap",
+              overflowWrap: "anywhere",
+            }}
+            className="text-micro"
+          >
+            {JSON.stringify(trace, null, 2)}
+          </pre>
+        </details>
+      </div>
+    </main>
+  );
+}
+const reviewRoot = createRoot(document.getElementById("root")!);
+reviewRoot.render(<Review />);
+if (import.meta.hot) import.meta.hot.dispose(() => reviewRoot.unmount());

@@ -1,0 +1,41 @@
+{
+  "status": "read-only diagnosis; no repository edits or tests executed",
+  "exerciseId": "ab-wheel",
+  "findings": [
+    {
+      "test": "src/lib/__tests__/bodyRig.test.ts:4964 loop closure",
+      "classification": "actual new authored-coordinate defect",
+      "logEvidence": "Ab Wheel return direction: expected -0.19999999999999996 to be greater than0.",
+      "currentT": [0, 0.2, 0.4, 0.6, 0.8, 1],
+      "requiredPhysicalExcursionT": [0, 0.5, 1, 1, 0.5, 0],
+      "reason": "FormBeat.t is the demo's own pose coordinate, not the ordinal phase index. Native source order[1,2,3,3,2,1] moves from Brace outward to Reach/Hold and returns to the same Brace. Existing Ab Wheel rig e0 is the braced folded start and e1 the extended endpoint. last===first closes the authored loop directly. The representative midpoint coordinate is not a claim that generated Roll wheel travel is calibrated to exactly50%."
+    },
+    {
+      "test": "src/lib/__tests__/bodyRig.test.ts:5109 shared canvas",
+      "classification": "5000ms test timeout; no dimension assertion mismatch reported",
+      "logEvidence": "Error: Test timed out in5000ms.",
+      "readOnlyDataEvidence": "All six actual Ab Wheel WebPs decode to1448x924, all six hashes match the registered release and paths. No Ab Wheel canvas mismatch found. The test loops the complete framed catalogue synchronously."
+    },
+    {
+      "test": "src/lib/__tests__/formArtOwnerRelease.test.ts:73 every approved release",
+      "classification": "30000ms test timeout; no review/asset/cue assertion mismatch reported",
+      "logEvidence": "Error: Test timed out in30000ms.",
+      "readOnlyDataEvidence": "Current Ab Wheel cues match cueSha256; all six frame hashes match; reference1 path/hash and1448x924 dimensions match; every saved strict check has passed=true and nonempty evidence; two anchor names and two invariant dimensions remain present. Maximum anchor-axis deviation0.5px; maximum dimension relative drift0.0028409090909090606 (0.2841%). Existing test comments document prior full-suite worker starvation, including32s for negligible measured case work; this is context, not proof of this run's cause."
+    },
+    {
+      "test": "scripts/art/form-art-releases.test.ts:51 generated module",
+      "classification": "5000ms test timeout; no generated-byte assertion mismatch reported",
+      "logEvidence": "Error: Test timed out in5000ms."
+    }
+  ],
+  "minimalCandidateFix": [
+    "After parent releases the frozen verification input, change ONLY the six Ab Wheel t scalars to[0,0.5,1,1,0.5,0] in the new released placard and corresponding external draft/plan metadata.",
+    "Keep all reviewed source/public/frame/card/master pixels, cue wording, setup wording, source order, muscle roles, dimensions, reference and anchor data unchanged.",
+    "Rebind corrected authored metadata/review input hashes truthfully and retain original full-run/accepted raw evidence. Refresh current integrated metadata proof/source sealing before publication; do not silently rewrite historical raw review ZIP bytes as though the previous array had passed loop semantics.",
+    "Run the necessary affected checks only after frozen full verification ends. Retain full-run timeout failures and focused outcomes honestly; do not raise timeouts or declare them fixed by this metadata edit."
+  ],
+  "cueSha256Effect": "None: artworkReviewExpectation hashes only label and cue, deliberately excluding t.",
+  "productionPlayerEffect": "ExerciseRigDemo routes supplied art to ExerciseFormFrames, which steps by frame index and image path. Changing t corrects authored geometry semantics without reordering or retiming the six supplied images; legacy interpolation uses t separately.",
+  "additionalActualReleaseDataRegressionFound": false,
+  "scopeLimit": "This is a bounded read-only source/log/Ab Wheel data diagnosis, not a completed whole-library validator or test pass. No test was rerun concurrently; broader fresh-baseline comparison remains parent-owned."
+}

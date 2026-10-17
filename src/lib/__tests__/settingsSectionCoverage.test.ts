@@ -49,7 +49,7 @@ function walk(dir: string): string[] {
     return out;
   }
   for (const name of entries) {
-    const full = resolve(dir, name);
+    const full = resolve(dir, name).replaceAll("\\", "/");
     if (statSync(full).isDirectory()) {
       out.push(...walk(full));
       continue;

@@ -1,0 +1,70 @@
+[
+  {
+    "image": [
+      {
+        "h": 1075,
+        "src": "/form-frames/pull-ups/1.webp",
+        "w": 800
+      }
+    ],
+    "section": "HANG 1/6\n\nPlay\nNormal"
+  },
+  {
+    "image": [
+      {
+        "h": 1075,
+        "src": "/form-frames/pull-ups/2.webp",
+        "w": 800
+      }
+    ],
+    "section": "GRIP 2/6\n\nPlay\nNormal"
+  },
+  {
+    "image": [
+      {
+        "h": 1075,
+        "src": "/form-frames/pull-ups/3.webp",
+        "w": 800
+      }
+    ],
+    "section": "TOP 3/6\n\nPlay\nNormal"
+  },
+  {
+    "image": [
+      {
+        "h": 1075,
+        "src": "/form-frames/pull-ups/4.webp",
+        "w": 800
+      }
+    ],
+    "section": "HOLD 4/6\n\nPlay\nNormal"
+  },
+  {
+    "image": [
+      {
+        "h": 1075,
+        "src": "/form-frames/pull-ups/5.webp",
+        "w": 800
+      }
+    ],
+    "section": "HANG 5/6\n\nPlay\nNormal"
+  },
+  {
+    "image": [
+      {
+        "h": 1075,
+        "src": "/form-frames/pull-ups/6.webp",
+        "w": 800
+      }
+    ],
+    "section": "RESET 6/6\n\nPlay\nNormal"
+  },
+  {
+    "control": "next-six-to-one",
+    "state": "HANG 1/6\n\nPlay\nNormal"
+  },
+  {
+    "control": "previous-one-to-six",
+    "state": "RESET 6/6\n\nPlay\nNormal"
+  }
+]

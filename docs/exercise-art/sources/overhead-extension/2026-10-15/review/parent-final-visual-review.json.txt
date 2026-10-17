@@ -1,0 +1,56 @@
+{
+  "exerciseId": "overhead-extension",
+  "decision": "stage-owner-with-findings-for-project-gates",
+  "actualRegisteredReviewComplete": true,
+  "strictCertified": false,
+  "findings": [
+    "Residual source head/shoe outlines, proportions and placement differ slightly after integer whole-frame registration; no independent body-part fitting is used.",
+    "Original upper-arm/elbow positions vary between the two endpoints; they remain raised beside the head, but exact fixed-joint mechanics are not certified.",
+    "Original neutral dumbbell head/handle rendering and projected dimensions vary modestly; no calibrated rigid3D equivalence claim.",
+    "Two physical endpoints repeat across six distinct instruction paths; no separately drawn intermediate or continuous trajectory."
+  ],
+  "cueSha256": "c87ec4e1d414a16ed62ea16af0b9bb75f3d6a1b4ed034ad8d0416409fd804fef",
+  "frameHashes": {
+    "form-frames/overhead-extension/1.webp": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+    "form-frames/overhead-extension/2.webp": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+    "form-frames/overhead-extension/3.webp": "a116abf8ca0115651e2f3e4a3cfb1ac600e0848ef5b7e1f39201f8ca2c3a1ce7",
+    "form-frames/overhead-extension/4.webp": "a116abf8ca0115651e2f3e4a3cfb1ac600e0848ef5b7e1f39201f8ca2c3a1ce7",
+    "form-frames/overhead-extension/5.webp": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+    "form-frames/overhead-extension/6.webp": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9"
+  },
+  "card": {
+    "normalCommand": "npm run art:cutouts -- --only=overhead-extension",
+    "previewMatchesRegisteredExact": true,
+    "sha256": "c3453eee07f245f0f4aa117e69364f570b91cb67ff375a6aa13c9b61ccd76e7d",
+    "reference": "form-frames/overhead-extension/3.webp",
+    "width": 163,
+    "height": 480,
+    "bytes": 15320,
+    "generatorSha256": "a465f712bcb21078a171e6ddfd24f74112a5d379192c7159f133a0fb869f0f2f"
+  },
+  "evidence": {
+    "integrated-normal-playback.json": "99d5e406816846ed88422f8d6ccb2708ab17ff51735e867fde78e5c77cb25b42",
+    "integrated-slower-playback.json": "ef2aeb17cfb0e43468d5f4f54ba86fc959332e641333bc0556fc63c911b15a68",
+    "integrated-manual-all-six-dark.json": "367ff848f38debbca0030ec7dc7822505dbe373ac5a20b4f63b5777dfaab3b7a",
+    "integrated-manual-all-six-light.json": "452111c3b22adbddb77d95901169b411ff38db7628a53e22382152a25c061baa",
+    "integrated-dark.jpg": "99c36a5f2c1e26122a3ed11f9ee419c7b65a4da6745bb112465adebad2ea9f77",
+    "integrated-light.jpg": "d8dc870ac99e734b0f2baeb6bd671f976f2836490193e7598134743c0b046336",
+    "integrated-console.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "integrated-review.tsx": "ae1b21081cc28f8dd65ab7b27c843d79c41f6a1081f27648f1648d3ed01a80a0",
+    "integrated-review.html": "d0225d2a77b1dc84e64e9435362233ec0b6e1e938bbe7f41422c2ba85092a571",
+    "registered-card-match.json": "aca6de0d7965be06377a64340f6ad4de81d974024eb6fa8e38f71a9404e01007"
+  },
+  "ownerAuthorization": {
+    "actor": "User through continuing completion/merge request and prior explicit slight-requirements relaxation.",
+    "instruction": "User approved a relaxed-requirements trial, then instructed continuation, preservation of the current model without shorts, and no repeated routine approvals.",
+    "context": "Local integration under the existing owner-with-findings route; all strict checks remain null. Final integrated review, project checks and CI/merge are separate completion gates."
+  },
+  "normalArtWholeFileTests": {
+    "filesPassed": 5,
+    "testsPassed": 367,
+    "exitCode": 0,
+    "normalRunner": true,
+    "scope": "Actual five complete existing artwork/guide files; tool result recorded in this chat, no runner overrides."
+  },
+  "completionCredit": false
+}

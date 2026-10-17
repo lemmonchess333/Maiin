@@ -1,0 +1,125 @@
+{
+  kind: 'pendlay-integrated-dark-normal',
+  overflow: false,
+  trace: [
+    {
+      alt: 'Pendlay Row, Brace',
+      display: [ 324, 360 ],
+      ms: 144874,
+      playing: true,
+      slower: 'false',
+      src: '/form-frames/pendlay-row/2.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Brace',
+      display: [ 324, 360 ],
+      ms: 144878,
+      playing: true,
+      slower: 'false',
+      src: '/form-frames/pendlay-row/2.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Row',
+      display: [ 324, 360 ],
+      ms: 146082,
+      playing: true,
+      slower: 'false',
+      src: '/form-frames/pendlay-row/3.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Row',
+      display: [ 324, 360 ],
+      ms: 146088,
+      playing: true,
+      slower: 'false',
+      src: '/form-frames/pendlay-row/3.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Squeeze',
+      display: [ 324, 360 ],
+      ms: 147288,
+      playing: true,
+      slower: 'false',
+      src: '/form-frames/pendlay-row/4.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Squeeze',
+      display: [ 324, 360 ],
+      ms: 147293,
+      playing: true,
+      slower: 'false',
+      src: '/form-frames/pendlay-row/4.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Lower',
+      display: [ 324, 360 ],
+      ms: 148493,
+      playing: true,
+      slower: 'false',
+      src: '/form-frames/pendlay-row/5.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Lower',
+      display: [ 324, 360 ],
+      ms: 148498,
+      playing: true,
+      slower: 'false',
+      src: '/form-frames/pendlay-row/5.webp',
+      viewport: [ 390, 844 ]
+    }
+  ],
+  viewport: [ 390, 844 ]
+}{
+  kind: 'pendlay-integrated-light-manual',
+  observations: [
+    {
+      alt: 'Pendlay Row, Set',
+      selected: [ 'Show frame 1: Set' ],
+      src: '/form-frames/pendlay-row/1.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Brace',
+      selected: [ 'Show frame 2: Brace' ],
+      src: '/form-frames/pendlay-row/2.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Row',
+      selected: [ 'Show frame 3: Row' ],
+      src: '/form-frames/pendlay-row/3.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Squeeze',
+      selected: [ 'Show frame 4: Squeeze' ],
+      src: '/form-frames/pendlay-row/4.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Lower',
+      selected: [ 'Show frame 5: Lower' ],
+      src: '/form-frames/pendlay-row/5.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Reset',
+      selected: [ 'Show frame 6: Reset' ],
+      src: '/form-frames/pendlay-row/6.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Set',
+      selected: [ 'Show frame 1: Set' ],
+      src: '/form-frames/pendlay-row/1.webp',
+      viewport: [ 390, 844 ]
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "status": "root-source-eligibility-approved-for-colour-and-integration-only",
+  "exerciseId": "pendlay-row",
+  "reviewer": "root",
+  "reviewedAtUtc": "2026-10-15T21:27:59.811Z",
+  "reviewBasis": "Actual native originals, registered1180x892 pair, FA56 identity image and actual browser manual plus automatic two-endpoint preview at324x245.",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "nativeSourceDimensions": [
+    1536,
+    1024
+  ],
+  "registeredCanvas": [
+    1536,
+    1056
+  ],
+  "wholeSceneTranslations": {
+    "floor": [
+      0,
+      32
+    ],
+    "top": [
+      0,
+      0
+    ]
+  },
+  "commonCrop": [
+    200,
+    90,
+    1380,
+    982
+  ],
+  "outputDimensions": [
+    1180,
+    892
+  ],
+  "physicalPoses": 2,
+  "proposedSixBeatSourceOrder": [
+    1,
+    1,
+    4,
+    4,
+    1,
+    1
+  ],
+  "oldBlockerCorrection": "32px sole-boundary difference alone was incorrectly treated as shin elongation. Approximate knee-to-ankle span difference~7px; after single full-scene+32y placement nearsole aligns andfarsolewithin1px. No exactbone or3D calibration claimed.",
+  "nativeObservation": "Recognizable same-style bald faceless white-grey no-shorts athlete with featureless pelvis and complete white trainers. Genuine straight-arm floor and chest-row states, visible supported overhand grips, stable plate count/radii. No material disproportion or planted-foot slide observed in actual registered pair.",
+  "findings": [
+    "Minor original head/neck/upperbody lift and knee/hip variation after ground registration; no strict fixed-torso certification.",
+    "Modest original far-hand/bar grip spacing variation remains; no exact rigid hand placement certification.",
+    "Two physical endpoints repeated across6separatepaths; no authored intermediate or continuous trajectory claim."
+  ],
+  "permittedNextWork": "Canonical primary/secondary colour finishing strictly within original existing colour support, preserving neutral details/contours/equipment and human shape; then actual registered mobile light/dark review and normal publication gates.",
+  "anatomicalWarpOrGraft": false,
+  "independentLimbFitting": false,
+  "sourceServiceRequests": 0,
+  "strictCertified": false,
+  "sourceEligible": true,
+  "finalPaletteReviewed": false,
+  "registeredReviewComplete": false,
+  "publicationApproved": false,
+  "completionCredit": false,
+  "diagnosticEvidenceHashes": {
+    "source-registration-review-inputs.json": "c8282a2cf3b0ed67eb9d148280a9f641b7831b216b55123fa79bfd657ff7f6ac",
+    "fresh-native-registration-review.json": "071e4887bf1258afea8db5d8192338670682cb80a5a8402e93dcba7a8be1e085",
+    "1-framed-diagnostic.png": "9c18f00eabd9848925241be09f8ab69644841510960657020d42050e72d5bae9",
+    "4-framed-diagnostic.png": "9e7398d98a94ac9f62739833952869b1c0cfda1a4f4bf860bf10a79d8de7b74c",
+    "diagnostic.html": "76cd123de5bde47b044dc8370d5b2ea57ebeb8a0973b8f38e4ff5273e353388c"
+  }
+}

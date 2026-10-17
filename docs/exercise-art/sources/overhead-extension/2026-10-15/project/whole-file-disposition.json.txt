@@ -1,0 +1,22 @@
+{
+  "normalWholeFileFollowupCompleted": true,
+  "wholeFileCount": 10,
+  "testsPassed": 470,
+  "failedTestCases": 0,
+  "skippedTestCases": 0,
+  "failedImportSuites": 2,
+  "remainingImportDiagnosticsByteIdenticalToFreshBaseline": {
+    "root-node|scripts/write-functions-env.test.ts|[suite]": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+    "root-node|scripts/ios/asc-signing.test.ts|[suite]": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548"
+  },
+  "fullRunAddedTimeoutCasesCoveredAndPassing": [
+    "node|src/features/program/__tests__/generatorAudit.test.ts|generator audit \u2014 every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+    "node|src/lib/__tests__/bodyRig.test.ts|supplied placard frames > all of a sequence's frames share one canvas",
+    "node|src/lib/__tests__/noDisabledTests.test.ts|no test is switched off outright > finds no unconditional skip in src/ or functions/"
+  ],
+  "allRuntimeInputsUnchanged": true,
+  "rawLogSha256": "bb09cbe0cf1b4adaaecae012370ba1c9adc6c0efd9d27af38b83f67be18dee50",
+  "fullRunResultStillFailed": true,
+  "fullVerificationPassed": false,
+  "disposition": "Three additional full-run failures were5000ms timeouts. All three cases pass in the unchanged normal complete-file cohort, along with every other test case in those10files. Two baseline Windows SyntaxError import suites remain. The baseline programme case also passes in this follow-up; its original full-run failure is retained. No test timeout, worker count, filter, validator, skip, or runtime source was changed. Current-head CI and actual merge remain publication gates."
+}

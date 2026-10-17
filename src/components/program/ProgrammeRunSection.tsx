@@ -78,7 +78,8 @@ import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import StatFigure from "@/components/ui/StatFigure";
 import { Card } from "@/components/ui/Card";
-import { runTemplateIcon } from "@/components/run/runTemplateIcons";
+import { runPoseFor, runPoseUrl } from "@/lib/runPoses";
+import RunFormSheet from "@/components/run/RunFormSheet";
 import { readString, writeString } from "@/lib/localStore";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -90,7 +91,11 @@ import {
   Trophy,
   X,
 } from "lucide-react";
-import { formatDistanceToNowStrict, format } from "date-fns";
+import {
+  differenceInCalendarDays,
+  formatDistanceToNowStrict,
+  format,
+} from "date-fns";
 import { toast } from "sonner";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
@@ -335,6 +340,12 @@ export default function ProgrammeRunSection({
   const raceElapsedDismissKey = `${storageUid}:tropos.dismiss.raceElapsed.${thisWeekKeyForDismissal}`;
   // Run13 (RUN-02): the proactive Adjust-this-week sheet.
   const [adjustOpen, setAdjustOpen] = useState(false);
+  // The running form guide, opened from the runner on the run cards.
+  const [runFormOpen, setRunFormOpen] = useState(false);
+  const openRunForm = () => {
+    haptic();
+    setRunFormOpen(true);
+  };
   // Run14: when the sheet is opened from the ease-week nudge it lands
   // straight on the easier preview; the normal "Adjust this week" entry
   // clears this so it still opens on the intent chooser.
@@ -491,10 +502,16 @@ export default function ProgrammeRunSection({
       : null;
   const recoveryDaysLeft = useMemo(() => {
     if (!inRecovery || !recoveryEndDate) return 0;
-    const end = parseLocalDate(recoveryEndDate);
-    const ms = end.getTime() - new Date().getTime();
-    return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
-  }, [inRecovery, recoveryEndDate]);
+    // Recovery ends on a local date; DST days need not last 24 hours.
+    // The date key also refreshes this count when the app crosses midnight.
+    return Math.max(
+      0,
+      differenceInCalendarDays(
+        parseLocalDate(recoveryEndDate),
+        parseLocalDate(todayKeyDerivation)
+      )
+    );
+  }, [inRecovery, recoveryEndDate, todayKeyDerivation]);
 
   // PR-4: surface the first non-terminal runDay as a promoted
   // "Next planned run" Start card on non-freeform modes. The
@@ -1576,7 +1593,17 @@ export default function ProgrammeRunSection({
               <div className="space-y-2">
                 <SessionCommandCard
                   sport="run"
-                  icon={runTemplateIcon(selectedTemplate?.icon)}
+                  figure={
+                    <img
+                      src={runPoseUrl(runPoseFor(selectedTemplate?.type))}
+                      alt=""
+                      draggable={false}
+                      decoding="async"
+                      className="h-24 w-auto"
+                    />
+                  }
+                  onFigurePress={openRunForm}
+                  figureLabel="Running form"
                   eyebrow={`${selectedEyebrow} · ${selectedDateLabel}`}
                   title={selectedName}
                   /* Run21 (2): the session's one feel line. Its shape
@@ -1628,27 +1655,57 @@ export default function ProgrammeRunSection({
             ) : (
               // No startable run on the selected day: completed, skipped, or
               // nothing scheduled. Calm, date-led, always offers a free run.
-              <div className="rounded-2xl border p-4 card-shadow bg-running/4 border-running/14">
-                <SectionLabel>{selectedDateLabel}</SectionLabel>
-                <p className="text-sm font-bold text-foreground mt-0.5">
-                  {selectedRun.isCompleted
-                    ? `${selectedName} · done`
-                    : selectedRun.status === "skipped"
-                      ? `${selectedName} · skipped`
-                      : "No run scheduled"}
-                </p>
-                <p className="text-micro text-muted-foreground mt-0.5">
-                  {selectedRun.isCompleted
-                    ? "Add another whenever you like."
-                    : selectedRun.status === "skipped"
-                      ? "Marked as skipped. You can still head out."
-                      : selectedDay.scheduleType === "lift"
-                        ? // Run-scope card, but the day is not a rest day:
-                          // Home names it a lift day and this said "Rest
-                          // day" beside it.
-                          "Lift day. Head out for a free run if you like."
-                        : "Rest day. Head out whenever you like."}
-                </p>
+              <div className="@container rounded-2xl border p-4 card-shadow bg-running/4 border-running/14">
+                {/* The runner beside the words, as on the run card, gives
+                    way under 14em of card. */}
+                <div className="flex items-start gap-3">
+                  <div className="min-w-0 flex-1">
+                    <SectionLabel>{selectedDateLabel}</SectionLabel>
+                    <p className="text-sm font-bold text-foreground mt-0.5">
+                      {selectedRun.isCompleted
+                        ? `${selectedName} · done`
+                        : selectedRun.status === "skipped"
+                          ? `${selectedName} · skipped`
+                          : "No run scheduled"}
+                    </p>
+                    <p className="text-micro text-muted-foreground mt-0.5">
+                      {selectedRun.isCompleted
+                        ? "Add another whenever you like."
+                        : selectedRun.status === "skipped"
+                          ? "Marked as skipped. You can still head out."
+                          : selectedDay.scheduleType === "lift"
+                            ? // Run-scope card, but the day is not a rest day:
+                              // Home names it a lift day and this said "Rest
+                              // day" beside it.
+                              "Lift day. Head out for a free run if you like."
+                            : "Rest day. Head out whenever you like."}
+                    </p>
+                    {/* Where the runner gives way, its guide is named in
+                        words, as on the run card. */}
+                    <Button
+                      variant="ghost"
+                      className="-ml-4 mt-1 hidden text-running-strong @max-[14em]:inline-flex"
+                      onClick={openRunForm}
+                    >
+                      Running form
+                    </Button>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    className="-my-1 h-auto shrink-0 p-0 @max-[14em]:hidden"
+                    aria-label="Running form"
+                    onClick={openRunForm}
+                  >
+                    <img
+                      src={runPoseUrl("run-easy")}
+                      alt=""
+                      aria-hidden="true"
+                      draggable={false}
+                      decoding="async"
+                      className="h-20 w-auto"
+                    />
+                  </Button>
+                </div>
                 {selectedRun.isCompleted && selectedSavedRunId && (
                   <Button
                     variant="sport"
@@ -1905,6 +1962,7 @@ export default function ProgrammeRunSection({
           uid={profile.uid}
         />
       )}
+      <RunFormSheet open={runFormOpen} onOpenChange={setRunFormOpen} />
     </section>
   );
 }

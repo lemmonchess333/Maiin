@@ -1,0 +1,146 @@
+[
+  {
+    "file": "master-brace-original.png",
+    "roi": [350, 845, 460, 880],
+    "samples": [
+      {
+        "threshold": 20,
+        "bottomY": 879,
+        "lastRowXRange": [350, 459],
+        "lastRowMidpoint": [404.5, 879]
+      },
+      {
+        "threshold": 25,
+        "bottomY": 879,
+        "lastRowXRange": [350, 447],
+        "lastRowMidpoint": [398.5, 879]
+      },
+      {
+        "threshold": 30,
+        "bottomY": 879,
+        "lastRowXRange": [350, 424],
+        "lastRowMidpoint": [387.0, 879]
+      },
+      {
+        "threshold": 35,
+        "bottomY": 879,
+        "lastRowXRange": [350, 398],
+        "lastRowMidpoint": [374.0, 879]
+      },
+      {
+        "threshold": 40,
+        "bottomY": 863,
+        "lastRowXRange": [372, 394],
+        "lastRowMidpoint": [383.0, 863]
+      },
+      {
+        "threshold": 45,
+        "bottomY": 863,
+        "lastRowXRange": [373, 393],
+        "lastRowMidpoint": [383.0, 863]
+      },
+      {
+        "threshold": 50,
+        "bottomY": 863,
+        "lastRowXRange": [373, 392],
+        "lastRowMidpoint": [382.5, 863]
+      }
+    ]
+  },
+  {
+    "file": "roll-original.png",
+    "roi": [350, 845, 460, 880],
+    "samples": [
+      {
+        "threshold": 20,
+        "bottomY": 879,
+        "lastRowXRange": [350, 459],
+        "lastRowMidpoint": [404.5, 879]
+      },
+      {
+        "threshold": 25,
+        "bottomY": 879,
+        "lastRowXRange": [350, 459],
+        "lastRowMidpoint": [404.5, 879]
+      },
+      {
+        "threshold": 30,
+        "bottomY": 879,
+        "lastRowXRange": [350, 422],
+        "lastRowMidpoint": [386.0, 879]
+      },
+      {
+        "threshold": 35,
+        "bottomY": 864,
+        "lastRowXRange": [383, 383],
+        "lastRowMidpoint": [383.0, 864]
+      },
+      {
+        "threshold": 40,
+        "bottomY": 863,
+        "lastRowXRange": [368, 399],
+        "lastRowMidpoint": [383.5, 863]
+      },
+      {
+        "threshold": 45,
+        "bottomY": 863,
+        "lastRowXRange": [368, 399],
+        "lastRowMidpoint": [383.5, 863]
+      },
+      {
+        "threshold": 50,
+        "bottomY": 863,
+        "lastRowXRange": [369, 398],
+        "lastRowMidpoint": [383.5, 863]
+      }
+    ]
+  },
+  {
+    "file": "reach-original.png",
+    "roi": [350, 845, 460, 880],
+    "samples": [
+      {
+        "threshold": 20,
+        "bottomY": 879,
+        "lastRowXRange": [350, 459],
+        "lastRowMidpoint": [404.5, 879]
+      },
+      {
+        "threshold": 25,
+        "bottomY": 879,
+        "lastRowXRange": [350, 446],
+        "lastRowMidpoint": [398.0, 879]
+      },
+      {
+        "threshold": 30,
+        "bottomY": 879,
+        "lastRowXRange": [350, 422],
+        "lastRowMidpoint": [386.0, 879]
+      },
+      {
+        "threshold": 35,
+        "bottomY": 878,
+        "lastRowXRange": [406, 406],
+        "lastRowMidpoint": [406.0, 878]
+      },
+      {
+        "threshold": 40,
+        "bottomY": 863,
+        "lastRowXRange": [370, 397],
+        "lastRowMidpoint": [383.5, 863]
+      },
+      {
+        "threshold": 45,
+        "bottomY": 863,
+        "lastRowXRange": [370, 396],
+        "lastRowMidpoint": [383.0, 863]
+      },
+      {
+        "threshold": 50,
+        "bottomY": 863,
+        "lastRowXRange": [371, 395],
+        "lastRowMidpoint": [383.0, 863]
+      }
+    ]
+  }
+]

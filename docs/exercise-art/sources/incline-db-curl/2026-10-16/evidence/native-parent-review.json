@@ -1,0 +1,18 @@
+{
+  "reviewedAt": "2026-10-16T18:14:44.103990+00:00",
+  "reviewer": "Codex /root",
+  "reviewed": [
+    "both final native whole frames",
+    "both native contact crops",
+    "intact connected athlete and complete trainers",
+    "source-derived colour regions",
+    "native-coordinate moving-region insertion"
+  ],
+  "outsideMovingMaskRgbExact": true,
+  "outsideMaskPixelCount": 1495858,
+  "sourceSize": [1536, 1024],
+  "sourceScale": 1,
+  "anatomicalTransforms": 0,
+  "strictCertified": false,
+  "completionCredit": false
+}

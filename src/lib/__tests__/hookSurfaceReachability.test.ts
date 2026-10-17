@@ -70,10 +70,12 @@ function stripInert(src: string): string {
      sweep ever scanned its hook. Reordering only moves the hole. In a
      single alternation the scanner consumes whichever token STARTS first,
      whole, so a delimiter inside another token can never open anything. */
-  return src.replace(
-    /\/\*[\s\S]*?\*\/|\/\/[^\n]*|`(?:[^`\\]|\\.)*`|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g,
-    " "
-  );
+  return src
+    .replace(/\r\n/g, "\n")
+    .replace(
+      /\/\*[\s\S]*?\*\/|\/\/[^\n]*|`(?:[^`\\]|\\.)*`|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g,
+      " "
+    );
 }
 
 /**
@@ -113,7 +115,7 @@ function collectReturnedProperties(): HookProp[] {
   const out: HookProp[] = [];
   for (const abs of walk(resolve(repoRoot, "src/hooks"))) {
     if (isTest(abs)) continue;
-    const rel = abs.slice(repoRoot.length + 1);
+    const rel = abs.slice(repoRoot.length + 1).replaceAll("\\", "/");
     if (!/use[A-Z]|Provider/.test(rel)) continue;
     const src = stripInert(readFileSync(abs, "utf8"));
     /* Two shapes of object return. The multi-line form is one property
@@ -144,7 +146,7 @@ const PROPS = collectReturnedProperties();
 const SOURCES = walk(resolve(repoRoot, "src"))
   .filter((p) => !isTest(p))
   .map((p) => ({
-    rel: p.slice(repoRoot.length + 1),
+    rel: p.slice(repoRoot.length + 1).replaceAll("\\", "/"),
     text: stripInert(readFileSync(p, "utf8")),
   }));
 

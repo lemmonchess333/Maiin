@@ -1,0 +1,26 @@
+[
+  {
+    "pose": 1,
+    "outsideColourFieldsExactAfterEquipmentRestoration": true,
+    "lowerBodyPixelExactToMaster": true,
+    "anatomicalTransforms": false,
+    "exactPrimaryPixels": 3002,
+    "exactSecondaryPixels": 13409
+  },
+  {
+    "pose": 2,
+    "outsideColourFieldsExactAfterEquipmentRestoration": true,
+    "lowerBodyPixelExactToMaster": true,
+    "anatomicalTransforms": false,
+    "exactPrimaryPixels": 4267,
+    "exactSecondaryPixels": 13416
+  },
+  {
+    "pose": 3,
+    "outsideColourFieldsExactAfterEquipmentRestoration": true,
+    "lowerBodyPixelExactToMaster": true,
+    "anatomicalTransforms": false,
+    "exactPrimaryPixels": 4820,
+    "exactSecondaryPixels": 11627
+  }
+]

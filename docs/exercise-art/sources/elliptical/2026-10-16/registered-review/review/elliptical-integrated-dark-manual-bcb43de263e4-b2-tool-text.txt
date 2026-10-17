@@ -1,0 +1,107 @@
+{
+  reviewLabel: 'elliptical-integrated-dark-manual',
+  states: [
+    {
+      alt: 'Elliptical, Stride A',
+      cue: 'Stand tall; keep both feet on pedals.',
+      natural: [ 1047, 1072 ],
+      selected: 'Show frame 1: Stride A',
+      src: '/form-frames/elliptical/1.webp'
+    },
+    {
+      alt: 'Elliptical, Hold A',
+      cue: 'Keep both feet planted in the pedals.',
+      natural: [ 1047, 1072 ],
+      selected: 'Show frame 2: Hold A',
+      src: '/form-frames/elliptical/2.webp'
+    },
+    {
+      alt: 'Elliptical, Stride B',
+      cue: 'Coordinate your push and pull with legs.',
+      natural: [ 1047, 1072 ],
+      selected: 'Show frame 3: Stride B',
+      src: '/form-frames/elliptical/3.webp'
+    },
+    {
+      alt: 'Elliptical, Hold B',
+      cue: 'Hold both grips; keep your chest tall.',
+      natural: [ 1047, 1072 ],
+      selected: 'Show frame 4: Hold B',
+      src: '/form-frames/elliptical/4.webp'
+    },
+    {
+      alt: 'Elliptical, Return A',
+      cue: 'Return smoothly to the first shown stride.',
+      natural: [ 1047, 1072 ],
+      selected: 'Show frame 5: Return A',
+      src: '/form-frames/elliptical/5.webp'
+    },
+    {
+      alt: 'Elliptical, Reset',
+      cue: 'Keep your torso tall without leaning forward.',
+      natural: [ 1047, 1072 ],
+      selected: 'Show frame 6: Reset',
+      src: '/form-frames/elliptical/6.webp'
+    },
+    {
+      alt: 'Elliptical, Stride A',
+      cue: 'Stand tall; keep both feet on pedals.',
+      natural: [ 1047, 1072 ],
+      selected: 'Show frame 1: Stride A',
+      src: '/form-frames/elliptical/1.webp'
+    }
+  ]
+}{
+  docWidth: 380,
+  registration: 'Registered owner-released-with-findings: anatomy-v3-2026-10-15-custom-rear-drive-elliptical-v1, 1047×1072.',
+  reviewLabel: 'elliptical-integrated-initial',
+  text: 'Elliptical\n' +
+    'Light theme\n' +
+    '\n' +
+    'Registered owner-released-with-findings: anatomy-v3-2026-10-15-custom-rear-drive-elliptical-v1, 1047×1072.\n' +
+    '\n' +
+    'Cardio\n' +
+    'Machine\n' +
+    '\n' +
+    'STRIDE A 1/6\n' +
+    '\n' +
+    'Play\n' +
+    'Normal\n' +
+    'PRIMARY\n' +
+    'Quads, Glutes\n' +
+    'SECONDARY\n' +
+    'Front Delts, Upper Back, Hamstrings\n' +
+    '\n' +
+    'Instructions\n' +
+    '\n' +
+    'Preparation: Step on the pedals with feet evenly placed, grip the moving handles. Start with a smooth easy pace to find the stride rhythm.\n' +
+    '\n' +
+    '1\n' +
+    '\n' +
+    'Stand tall; keep both feet on pedals.\n' +
+    '\n' +
+    '2\n' +
+    '\n' +
+    'Keep both feet planted in the pedals.\n' +
+    '\n' +
+    '3\n' +
+    '\n' +
+    'Coordinate your push and pull with legs.\n' +
+    '\n' +
+    '4\n' +
+    '\n' +
+    'Hold both grips; keep your chest tall.\n' +
+    '\n' +
+    '5\n' +
+    '\n' +
+    'Return smoothly to the first shown stride.\n' +
+    '\n' +
+    '6\n' +
+    '\n' +
+    'Keep your torso tall without leaning forward.\n' +
+    '\n' +
+    'Normal card preview: native 480px / 348px / 160px long-side limits\n' +
+    'Actual registered asset paths\n' +
+    'Observed playback evidence',
+  viewport: [ 390, 844 ]
+}

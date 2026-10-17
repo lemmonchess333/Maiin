@@ -1,0 +1,32 @@
+[
+  {
+    "t": 0,
+    "label": "Hang",
+    "cue": "Start from a full dead hang."
+  },
+  {
+    "t": 0,
+    "label": "Grip",
+    "cue": "Grip overhand, slightly wider than shoulders."
+  },
+  {
+    "t": 1,
+    "label": "Top",
+    "cue": "Your chin clears the bar."
+  },
+  {
+    "t": 1,
+    "label": "Hold",
+    "cue": "Keep legs straight; avoid swinging."
+  },
+  {
+    "t": 0,
+    "label": "Hang",
+    "cue": "Return to full elbow extension."
+  },
+  {
+    "t": 0,
+    "label": "Reset",
+    "cue": "Finish still in a full hang."
+  }
+]

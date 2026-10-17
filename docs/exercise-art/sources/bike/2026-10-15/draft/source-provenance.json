@@ -1,0 +1,50 @@
+{
+  "exerciseId": "bike",
+  "status": "unregistered retained two-position guide; strict apparatus findings/current native-mobile decision pending",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "retainedSourceCalls": [
+    {
+      "source": "3-lower-direct-original.png",
+      "sourceSha256": "d472dff2a1ecae8c2db250870f37e9611ddf72b3c72fcc1772c55ce0327ec2c8",
+      "historicalImagegenId": "fc36f8fe-9d3a-401d-aa4c-1bfaea3d2409"
+    },
+    {
+      "source": "6-upper-direct-original.png",
+      "sourceSha256": "5ab3dda61201910648ef64c9e894e0e4a301aef5efb1c237ecbb746e6f54bfda",
+      "historicalImagegenId": "9f1ce6ac-989e-4b15-834f-9d2c7f2fb93c"
+    }
+  ],
+  "historicalProvenance": "historical-evidence/provenance.json",
+  "historicalBlockedFrontRequest": "historical-evidence/front-service-rejection.json",
+  "newImageRequests": 0,
+  "serviceRetries": 0,
+  "physicalPoses": 2,
+  "sourcePoseOrder": [1, 1, 2, 2, 1, 1],
+  "wholeSceneOffsets": [
+    [0, 0],
+    [-1, 16]
+  ],
+  "commonCrop": [48, 32, 977, 1464],
+  "framedDimensions": [929, 1432],
+  "reference": 1,
+  "finishingMethod": "Only existing source-colour fields: quadricepsP/hamstringsS with inherited source brightness at fixed per-role anchors; existing calf colour neutralized. Neutral source contours/pixels/alpha, gear, grips, trainers and human geometry preserved. No new positional gradient or equipment/anatomy reconstruction.",
+  "paletteMaskCorrections": "First coarse draft and pre-final calf version retained outside repository. Final far-calf correction changed exactly1565 newly neutral calf pixels; zero changes outside that role-class delta; pose2 unchanged.",
+  "editableSources": ["1-framed.ora", "2-framed.ora"],
+  "preparedCardSource": "prepared-card-source.png",
+  "card": "card-cutout.webp",
+  "scope": "Two opposed seated pedal positions repeated for cue reading. No sampled forward trajectory/smooth revolution/six-unique drawing claim.",
+  "actualHardwareFindings": "hardware-measurements.json; fixed spindle~16.6px and rear-support~4px strict failures must remain explicit.",
+  "productionRegistered": false,
+  "completionCredit": false,
+  "retainedHistoricalEvidenceHashes": {
+    "historical-evidence/front-service-rejection.json": "23d4b1dff835f44d022e66f551fb12859831a8b4e247f7c34772e5f5c4c034e2",
+    "historical-evidence/HOLD.md": "673d082f0db9aa6a9e46d375b65e1ab493be9502bd5da5608ffe30b9d3d1d1d0",
+    "historical-evidence/lower-photo-prompt.txt": "778bfc1d869b0ffb483f41a19b798163017b2594540630d04026222fb59d4bbe",
+    "historical-evidence/pair-playback-trace.json": "c9ca861a832ae00f63308af9ea460bfe3ccc553645a8fcdcb579a223da8e8cf1",
+    "historical-evidence/PAIR-REVIEW.md": "00fd97af0178a05d736c510c70e6299b6875f20235b30ed47026b914226e39c1",
+    "historical-evidence/photographed-source-evidence.json": "2476e1db1c8181115f149c823525a46bcaed7c8292f5540093f8a333cd44c384",
+    "historical-evidence/provenance.json": "3ed2ab9f278143b8e936a0542d97971c45861643a626fb8b0804c14edfd80039",
+    "historical-evidence/static-scene-inspection.json": "10e0bda208ecf12caf5431fdebb1fc88b58c73c34472ccc9903b88a3288e9591",
+    "historical-evidence/upper-photo-prompt.txt": "83e1d95c5ac022dedea6e78fa256f53843a1f6a41ab0fb2052a737b320c5fff6"
+  }
+}

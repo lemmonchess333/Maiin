@@ -12,7 +12,12 @@ import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
 import ExerciseDemoPlayer from "@/components/ExerciseDemoPlayer";
 import ExerciseRigDemo from "@/components/ExerciseRigDemo";
-import { getDemoMuscleKey, getFormBeats } from "@/lib/formGuides";
+import {
+  getDemoMuscleKey,
+  getFormAdvice,
+  getFormBeats,
+  getFormSetup,
+} from "@/lib/formGuides";
 import MuscleKey from "@/components/MuscleKey";
 import { EXERCISES } from "@/lib/exercises";
 import { Button } from "@/components/ui/Button";
@@ -42,6 +47,9 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
     (e) => e.name.toLowerCase() === exerciseName.toLowerCase()
   )?.id;
   const beats = exerciseId ? getFormBeats(exerciseId) : null;
+  const setupInstructions =
+    beats && exerciseId ? getFormSetup(exerciseId) : null;
+  const guideAdvice = beats && exerciseId ? getFormAdvice(exerciseId) : null;
   const [legacyGuide, setLegacyGuide] = useState<string | null>(null);
   const hasLocalGuide =
     beats !== null || (exerciseId !== undefined && legacyGuide === exerciseId);
@@ -150,6 +158,9 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
     );
   }
 
+  const tip = guideAdvice?.tip ?? demo.tip;
+  const commonMistakes = guideAdvice?.commonMistakes ?? demo.commonMistakes;
+
   // One body, not two: when the exercise has a usable demo it IS the hero
   // visual and the muscle worked drops to the Primary/Secondary pills below;
   // when there's no demo (or every frame failed) the muscle diagram is the
@@ -171,8 +182,9 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
      can follow the animation down the list. They replace the
      catalogue's prose steps rather than sitting beside them — two
      numbered lists describing one movement is the duplication the
-     layout exists to remove. The catalogue's tip and common mistakes
-     still render below, unchanged. */
+     layout exists to remove. Authored preparation stays separate from
+     the depicted cycle. The catalogue's tip and common mistakes still
+     render below, unchanged. */
   const steps = beats ? beats.map((b) => b.cue) : demo.instructions;
   const collapsedSteps = beats ? steps.length : COLLAPSED_STEPS;
 
@@ -379,6 +391,12 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
       {steps.length > 0 && (
         <div className="mt-6">
           <p className="text-lg font-bold text-foreground">Instructions</p>
+          {setupInstructions && setupInstructions.length > 0 && (
+            <p className="mt-3 text-body text-foreground/80 leading-relaxed">
+              <span className="font-semibold">Preparation: </span>
+              {setupInstructions.join(" ")}
+            </p>
+          )}
           <div className="flex flex-col gap-4 mt-3">
             {(showInstructions ? steps : steps.slice(0, collapsedSteps)).map(
               (step, i) => {
@@ -448,7 +466,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
               )}
             </button>
           )}
-          {demo.tip && (
+          {tip && (
             <div
               className="mt-4 flex gap-3 rounded-xl p-3"
               style={{ backgroundColor: `${THEME.warning}14` }}
@@ -468,20 +486,20 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                   Watch out
                 </p>
                 <p className="mt-0.5 text-small leading-relaxed text-foreground/80">
-                  {demo.tip}
+                  {tip}
                 </p>
               </div>
             </div>
           )}
           {(beats !== null || showInstructions) &&
-            demo.commonMistakes &&
-            demo.commonMistakes.length > 0 && (
+            commonMistakes &&
+            commonMistakes.length > 0 && (
               <div className="mt-4">
                 <p className="text-caption uppercase tracking-wide text-muted-foreground">
                   Common mistakes
                 </p>
                 <ul className="mt-1.5 space-y-1">
-                  {demo.commonMistakes.map((m) => (
+                  {commonMistakes.map((m) => (
                     <li
                       key={m}
                       className="flex gap-2 text-small leading-relaxed text-foreground/80"

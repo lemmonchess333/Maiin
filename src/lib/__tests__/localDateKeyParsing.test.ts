@@ -116,9 +116,9 @@ function looksLikeDateKey(arg: string): boolean {
 }
 
 function scan(): { site: string; arg: string; file: string }[] {
-  const files = globSync("src/**/*.{ts,tsx}", { cwd: repoRoot }).filter(
-    (f) => !f.includes("__tests__") && !f.includes(".test.")
-  );
+  const files = globSync("src/**/*.{ts,tsx}", { cwd: repoRoot })
+    .map((file) => file.replaceAll("\\", "/"))
+    .filter((f) => !f.includes("__tests__") && !f.includes(".test."));
   const found: { site: string; arg: string; file: string }[] = [];
   for (const rel of files) {
     const src = stripComments(readFileSync(resolve(repoRoot, rel), "utf8"));

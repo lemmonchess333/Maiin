@@ -1,0 +1,17 @@
+{
+  "artifactName": "extension-draft-manual-wrap.json",
+  "observations": [
+    {
+      "alt": "Leg Extension, Set",
+      "section": "Set 1/6PlaySlower"
+    },
+    {
+      "alt": "Leg Extension, Reset",
+      "section": "Reset 6/6PlaySlower"
+    },
+    {
+      "alt": "Leg Extension, Set",
+      "section": "Set 1/6PlaySlower"
+    }
+  ]
+}

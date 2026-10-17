@@ -1,0 +1,21 @@
+{
+  "status": "standard-card-awaiting-root-visual-acceptance",
+  "reference": "form-frames/pull-ups/1.webp",
+  "referenceSha256": "00863978694e4fe2e7c5db349973ed073f80cd6a0240eae6f28ad7b14f1042d5",
+  "algorithm": "Unmodified standard scripts/art/cut-out-form-art.ts core",
+  "preparedSourceCorrection": false,
+  "unscaledKeyedSourceRGBExactToReference": true,
+  "allOriginalBrightPixelsOpaque": true,
+  "brightPixelCount": 143191,
+  "sourceSize": [800, 1075],
+  "cardSize": [371, 480],
+  "cardSha256": "b0f311604f65a1cedb90bfaf3942f34201677f12ecc45d714dfb8493e195768b",
+  "proofs": [
+    "card-light-full-proof.png",
+    "card-dark-full-proof.png",
+    "card-light-160-proof.png",
+    "card-dark-160-proof.png"
+  ],
+  "anatomyRGBEdit": false,
+  "registration": false
+}

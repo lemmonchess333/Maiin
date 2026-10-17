@@ -1,0 +1,129 @@
+{
+  "exerciseId": "spin-bike",
+  "name": "Spin Bike",
+  "version": "anatomy-v3-2026-10-16-custom-perspective-spin-v1",
+  "physicalPoses": 3,
+  "sourcePoseOrder": [
+    "A",
+    "B",
+    "B",
+    "C",
+    "C",
+    "A"
+  ],
+  "positions": [
+    0,
+    1,
+    1,
+    2,
+    2,
+    0
+  ],
+  "registeredCanvas": [
+    700,
+    730
+  ],
+  "sourceEquipmentCanvas": [
+    700,
+    700
+  ],
+  "originalSourceCanvas": [
+    1254,
+    1254
+  ],
+  "nativeSourceNominalCell": [
+    627,
+    627
+  ],
+  "commonPadding": [
+    20,
+    40,
+    0,
+    30
+  ],
+  "commonCrop": [
+    117,
+    4,
+    549,
+    711
+  ],
+  "dimensions": [
+    432,
+    707
+  ],
+  "primary": [
+    "Quads"
+  ],
+  "secondary": [
+    "Core",
+    "Calves",
+    "Hamstrings"
+  ],
+  "catalogueMuscleGroup": "Cardio",
+  "catalogueSecondaryMuscles": [
+    "Quads",
+    "Hamstrings",
+    "Core"
+  ],
+  "equipment": "Machine",
+  "setup": [
+    "Dial in seat and bar height — seat level with the bars for most.",
+    "Clip or strap in, grip the bars with a firm but relaxed hold."
+  ],
+  "beats": [
+    {
+      "t": 0,
+      "label": "Seated drive",
+      "cue": "Stay seated; pedal with controlled resistance."
+    },
+    {
+      "t": 1,
+      "label": "Seated recovery",
+      "cue": "Keep your knees tracking over your feet."
+    },
+    {
+      "t": 1,
+      "label": "Hold seated",
+      "cue": "Keep a relaxed hold on the bars."
+    },
+    {
+      "t": 2,
+      "label": "Standing drive",
+      "cue": "Rise from the saddle; keep pedalling controlled."
+    },
+    {
+      "t": 2,
+      "label": "Hold standing",
+      "cue": "Support yourself through the pedals and bars."
+    },
+    {
+      "t": 0,
+      "label": "Return seated",
+      "cue": "Sit back onto the saddle smoothly."
+    }
+  ],
+  "frameHashes": {
+    "draft/frames/1.webp": "4778b11213b83f0a6574bf61a5084764c406fdbd0e4949edc0c9ee42f81d3bab",
+    "draft/frames/2.webp": "a9d2b4c9fa3fdf3e80696c8be36e56081b7beb31ecc8e81d9bb19d793eef2b3e",
+    "draft/frames/3.webp": "a9d2b4c9fa3fdf3e80696c8be36e56081b7beb31ecc8e81d9bb19d793eef2b3e",
+    "draft/frames/4.webp": "27482f4a10c575bccaeb24a5c54eeec3796696d1a288557e65abee8e7f93e390",
+    "draft/frames/5.webp": "27482f4a10c575bccaeb24a5c54eeec3796696d1a288557e65abee8e7f93e390",
+    "draft/frames/6.webp": "4778b11213b83f0a6574bf61a5084764c406fdbd0e4949edc0c9ee42f81d3bab"
+  },
+  "referenceFrame": 1,
+  "scope": "Three retained actual human states including seatedA/B and true saddle-cleared standingC. Repeated hold slots and return instruction do not assert six different poses, human interpolation or a calibrated continuous revolution.",
+  "equipmentScope": "One fixed custom indoor-cycle with ordinary opposed cranks and a physical perspective camera; native source feet/hands unchanged.",
+  "findings": [
+    "Three actual retained source bodies: seatedA/B and genuine standingC, repeated across six paths. No six-distinct-human or complete continuous calibrated human cycle claim.",
+    "Original sheet is1254x1254 with nominal627cells. C crown extends above nominal lower-panel y627origin; upwardextended y600extract preserves those actual head pixels. WholeC(+6,+7) is relative to nominal origin; all source pixels remain native/unscaled.",
+    "One fixed custom perspective indoor-cycle, ordinary equal170mmopposedcranks,160mmcrankQ,220mmforefootplanes and passive rocking140x100mmpedals; fixed multi-position loopbars support different actual seated/standing grips. No manufacturer replica or recovered source3D/body calibration claim.",
+    "B far pedal support is hidden by the common actual drive cover; no new far shoe or hidden anatomy has been constructed.",
+    "Native source contours/shading and minor pose differences remain. Tiny inherited C silver old-hardware edge at the left calf is retained as a minor contour finding, not repainted.",
+    "Custom shaded apparatus has a more geometric frame than the originally generated equipment. Source627cell quality is preserved; the production crop is not upscaled.",
+    "Existing source anterior-thigh tint is Quads primary. Existing Core, Calves and identifiable posterior-thighHamstrings tint is secondary; neutral source anatomy/trainers are unchanged."
+  ],
+  "finalPaletteReviewed": false,
+  "registeredReviewComplete": false,
+  "strictCertified": false,
+  "completionCredit": false
+}

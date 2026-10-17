@@ -1,0 +1,375 @@
+{
+  "status": "parent-reviewed-normal-full-comparison",
+  "baselineHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+  "baselineLogSha256": "19e900e82a22ab227a5d15c3e1194b301d32166d1d47ca0730563f7f8c7edd24",
+  "prefix": "branch4",
+  "reviewer": "Root actual terminal logs, metadata changes, restored fallback fixtures, native/mobile reviews and Bash environment diagnosis review",
+  "reviewedAt": "2026-10-15T09:35:11+00:00",
+  "reviewedEvidenceHashes": {
+    "baseline/baseline-checkout-setup.json": "f6936a0ea03c7f1e036ce6c71c0959813b6324a01a4fa174405ea2cb342ced8c",
+    "baseline/baseline-checkout-setup.log": "b364a4c13201f58c63d531e7e8e9a7656e7d4dee1572d684c8755b8d9cd6bc70",
+    "baseline/baseline-failure-identities.json": "661c8b78abea3a80b0e13898653d05fdee546f469aae82c5a797a7cb196533a4",
+    "baseline/baseline-final-input-manifest.json": "350ee09a3948e2287b95534270976405d9bae58f572e6f7f278f65689c628405",
+    "baseline/baseline-input-manifest.json": "350ee09a3948e2287b95534270976405d9bae58f572e6f7f278f65689c628405",
+    "baseline/baseline-planSweep-after-run.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "baseline/baseline-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "baseline/baseline-proof-hashes.json": "233555804c565715a51cb43a208e03879be568e17de7e7d2c479e35f7b19ed58",
+    "baseline/baseline-verify-result.json": "c6bb57f6da22b87eab4ac323e24c8050e1d31b45e1d3d5a3d743030b9aa41fcc",
+    "baseline/baseline-verify.log": "19e900e82a22ab227a5d15c3e1194b301d32166d1d47ca0730563f7f8c7edd24",
+    "checks/branch-comparison-summary.md": "caac4a6c70bca37f483557f7a4a72925606aef2ae482af1ee6b80ce6a9b87dbb",
+    "checks/branch-failure-comparison.json": "01dd8b20f650525771e2c9e7a0facd72dfde34be02362800d69a1da96f950b7d",
+    "checks/branch-failure-identities.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "checks/branch-input-manifest.json": "ca7dd055fb027d7a157371437006d4527eed5ee44903e48b232d773876265d0f",
+    "checks/branch-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "checks/branch-verify-result.json": "7b471ed8db2fef3da13808dca4a76a62c1907566aa26c3a49911585b3a2870ff",
+    "checks/branch-verify-tools.py": "f47eedb381738c70b8babd3c151dea659672fbe58cf5af0c85df757cdf036aef",
+    "checks/branch-verify.log": "59d31493a2f8d1123198ace58638bad5c9a01638de0faedd27c8aab238e3c80a",
+    "checks/branch2-comparison-summary.md": "e34e136ccdd33da572e4f7ec33e23ddebae3953aec67b8255be9dd586de949cd",
+    "checks/branch2-failure-comparison.json": "965d6fa5daa9eaafd97e2f3ce7373025db69521d72d305aa8bb02d92a41b465f",
+    "checks/branch2-failure-identities.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "checks/branch2-input-manifest.json": "e968960c374575b38d15d471d38b1f9bfaf4ce6c5ba8fe62ee297044f50e9207",
+    "checks/branch2-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "checks/branch2-verify-result.json": "ebbeee02dc6a2276e338af74d361577681749de98c2c63332440ff040d617be8",
+    "checks/branch2-verify.log": "4940d235745994f51ade45d386b6593c7be409aabc04ae74b16a4837e6fa7b55",
+    "checks/branch3-added-timeout-and-diagnostic-review.json": "b98791b12554b78c958fb22de56aef8e50b03211080caf5f78d4ace4d5c0c6e5",
+    "checks/branch3-comparison-summary.md": "19b922838397fab49413d86357fffb3d249b4e46bc00cad0077bd45726f498e6",
+    "checks/branch3-failure-comparison.json": "99330e812c272b5914b41047e70e2cc2685207440a84e56cb3edea35f8f1037a",
+    "checks/branch3-failure-identities.txt": "c354546b15f2c0930466beaf41f7645bac58a05d006820a4f68dbad982cd33fa",
+    "checks/branch3-input-manifest.json": "93d3fa01ce2e6af801c22475bf8b1059943341ea180ded9a1792af467bc60b12",
+    "checks/branch3-planSweep-after-run.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "checks/branch3-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "checks/branch3-verify-result.json": "1e50366c8b5717c934c78c3aa79ea723982ceec5a87132a415843b16509a81dd",
+    "checks/branch3-verify.log": "03b61570f019d7ac343f255395b1c4cae82e8f824726b4a1dcd793d4699c0d07",
+    "checks/branch4-bash-startup-environment-diagnosis.json": "5305aafd33946e542f4ac6d27e1120d4b5cb6fa833c11b9ff61bad23f4475698",
+    "checks/branch4-comparison-summary.md": "f2a3ba5b5cb163edf7e34e24ab10636145738c00bb2a07e4b9d6cb4382aa644d",
+    "checks/branch4-current-input-manifest-for-decision.json": "09b1ffaa436c5dbed813489024e8633fcf47dc93ae32f0a9cea135082148349e",
+    "checks/branch4-failure-comparison.json": "378756d39d0c5f8e5b3c8b4fb5021747cc7932f7387e90f25d04c42f0795a555",
+    "checks/branch4-failure-identities.txt": "ffef66a5e5c5b2a0db2bcdc0a79a0b06ee51111ceb773b32ccefbd667ebdaf19",
+    "checks/branch4-input-manifest.json": "d69c2197db41d5b1e6a996aa28edd1129a3c28ab3d264f4681c0c87a4dc5ad13",
+    "checks/branch4-planSweep-after-run.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "checks/branch4-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "checks/branch4-verify-result.json": "34677cbede98a05b187e76b1e4c805f2f55b27f4071093b7a36f93ddf28a6268",
+    "checks/branch4-verify.log": "94c9a934d1b49e3c50250c15897e714ba641b04fbf03b716653c0870ee11aac8",
+    "checks/caption-and-fixture-correction-review.json": "6608874771bd92ee206aae8ad54ec6e5608cb958da0cb732addc285d28b6bc31",
+    "checks/caption-chain-current-binding-review.json": "b6c51ae37a4116d0e2cfd8dcc7fbed01af28dfb3583aa74cb3df8fb232119a37",
+    "checks/caption-correction-preparation.json": "268c7b52c422c55f26d58d5bec0ebd04cc8d508236570f94a669ab7d71ca36c6",
+    "checks/card-registry-size-independent-review.json": "3cc5ae515d603fa88564bd37a199b18acad1fd4ac1b33fb239e068766aafb106",
+    "checks/card-registry-size-preflight.log": "a3343f922cdf7f6470877c2525c5d4778176ecc89e1cb1a6121746b286f06964",
+    "checks/card-registry-size-review.json": "01127bc73f5e748ba94724c75f293ff4532bc605ce90f3807c0dd022af92bb87",
+    "checks/correction-after-artwork.ts.txt": "10a80a4a2c374b3487bf5f4aac99fdccabce1314d84d8d46076195e898e9e0eb",
+    "checks/correction-after-body-rig.ts.txt": "ea52132216f747e5a76d810b3e6680c0832e3226b89a1ac88cb71f471afb232b",
+    "checks/correction-after-exercise-row-summary.ts.txt": "d825bdb45b837f05cb2602aa3c19ac19fc69e485252aad32d0782903520f1d28",
+    "checks/correction-after-released-placards.ts.txt": "980f6cafebb60aac5ebf5923abbe99eb47de00a7aa5428e36362b1ae99073d76",
+    "checks/correction-after-t-bar-release.json": "31ac0588db8e3717e5fde743897047948fcc296b73ae6e705723a6c34ea77e62",
+    "checks/correction-before-artwork.ts.txt": "2f536c60f84f71c703a5fd48f5c85c16b2077a09ec693344314c5ed91cc7585b",
+    "checks/correction-before-body-rig.ts.txt": "fbf4d29243cb305b1cd4d6d2d2d98c09b16d6011a5335dfcd6f998ae33bfa132",
+    "checks/correction-before-exercise-row-summary.ts.txt": "27256b1a9c213893ac2cb15c3610ee72521d226ff2e5e871f779fc9cfb96583c",
+    "checks/correction-before-released-placards.ts.txt": "4363d91ae4fb6df081fb5998d7d18d5bb80ce1c6b4653d4c1f75b5077c854843",
+    "checks/correction-before-t-bar-release.json": "bb335dfe7eb16143192de93c372a83bccc9f65d87e21b708cb15341abe7030d7",
+    "checks/focus-branch4-installer-host-input-manifest.json": "d69c2197db41d5b1e6a996aa28edd1129a3c28ab3d264f4681c0c87a4dc5ad13",
+    "checks/focus-branch4-installer-host-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "checks/focus-branch4-installer-host-proof-hashes.json": "729994a3741beedc44ccccc5d13b94fbac66839945f68b4fa52af49086a5a5cb",
+    "checks/focus-branch4-installer-host-result.json": "ca5ec586463e17c6f847cf019e7573af8bae56e6b8e6bdb9747b698f3059c52c",
+    "checks/focus-branch4-installer-host.log": "b7379c6b59bd4cf8c1c54e4dd5a8d997b677473880b26753e8b8a7d01dc68cc6",
+    "checks/focus-branch4-installer-input-manifest.json": "d69c2197db41d5b1e6a996aa28edd1129a3c28ab3d264f4681c0c87a4dc5ad13",
+    "checks/focus-branch4-installer-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "checks/focus-branch4-installer-proof-hashes.json": "8b51c78918c66384f7c7b217d4a2f8436f2639d301a9f9e7acaa9b027784b7a7",
+    "checks/focus-branch4-installer-result.json": "fc37c25d9d64c804deda31f452f12252b65e3c39919990aa15b498e52c5124d1",
+    "checks/focus-branch4-installer.log": "c065d6387eebc5e002e7ed83fa8c0a3d147855954953f59869289890b4c295cc",
+    "checks/form-guides-after-exact.ts.txt": "bf9cc5e00c5aec8f95ec7ec2715249f20365a5f65da98eefac6df355c98ed6ec",
+    "checks/form-guides-before-exact.ts.txt": "87a7a6e8d5a9d2804e953d4161b424f6a5b2a24df7a0a5fc0b0f45733b0df820",
+    "checks/form-guides-exact-removal.patch": "cbd5d5a948bd402d8f54d72016af865a0ad25115ee1b2be823e611f3921e06a2",
+    "checks/form-guides-migration-review.json": "bdb71d26c3870b6081927f6b441447e5979452b20ac265129e1800151c5fd354",
+    "checks/genuine-fix-preflight-final-input-manifest.json": "d69c2197db41d5b1e6a996aa28edd1129a3c28ab3d264f4681c0c87a4dc5ad13",
+    "checks/genuine-fix-preflight-final-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "checks/genuine-fix-preflight-final-proof-hashes.json": "113e8e1a69cdc45ad3bb7ca0e9e3b474041900947a283cba4c96309062033785",
+    "checks/genuine-fix-preflight-final-result.json": "0895271eca627f597af0ab0b48080c366ab2eae8403c76f9e5c168d448fc62f7",
+    "checks/genuine-fix-preflight-final.log": "9a811503894cc43fa5809fdc4a94f757619cf632ecd4c62ff6d1e8cec2ff8780",
+    "checks/genuine-fix-preflight-input-manifest.json": "e5f1dc4923c2fee5d6e0b3fcbdc6e3c6b70ccee0eac554f37a4c189e1263b51c",
+    "checks/genuine-fix-preflight-planSweep-before.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "checks/genuine-fix-preflight-preparation.json": "50a94276c53ede4087ec20688436a8597648402796b29da757d726a43be114a3",
+    "checks/genuine-fix-preflight-proof-hashes.json": "a71a558c5512184efb4b6361d5e46224983aa80b53c25b3c5dc39f6a0f0bbf6a",
+    "checks/genuine-fix-preflight-result.json": "19b252db1171ac306be873665bb29b298b676b62827dfb07355ce3052b1a8229",
+    "checks/genuine-fix-preflight.log": "0fcf8317003167d0b026d566721e30dd85123669eb05a1348e182338d3ce7b7e",
+    "checks/host-focus-existing-contract-review.json": "29f0c4ba3dc8444e2be56817645c6357c339e0e4848b4bbab0d8079cedb75bbb",
+    "checks/immutable-original-format-ignore-review.json": "b873a42ac242d67a3e69968115adae376a59779c15561516c03d5274ec2871db",
+    "checks/immutable-original-prepare-master.cjs.txt": "832f7b0eb9ee5985b602e190fb824ca960ad659c9e4d474858934bd53b7a703a",
+    "checks/legacy-fix-typecheck.log": "9f4556d8a533e1013f8cb97bdb2554a1557b1848182fb4cfa8a061a3d05ca1ef",
+    "checks/prepare-root-final-decision-draft.py": "0398f504eb7d85983eed0332369263bb245c3a2f2fa5b3f453c7b5ad68c3e7f7",
+    "checks/prettierignore-canonical-lf-after.txt": "6bc615ce4711133047790434cc5d12b7657ca216d5fe78f4d432e4d394e7fc0f",
+    "checks/prettierignore-tested-before.txt": "a7da164688cc3f0bff23b603dce296dda8731c60da00867505021a30f5d9a5ec",
+    "checks/pull-up-caption-correction-preparation.json": "d7f5cd259c0ac8e385a1487dbde5099dc1680de44edfb279434b1f54e1e8d3ae",
+    "checks/pull-up-caption-correction-review.json": "e31fa8cd3a08672ad76070fb2d5e46b035bda7d43d3e3d476cfb9aaa954f5018",
+    "checks/pull-ups-corrected-beats.json": "a558dcff8dc4554ba34f2e398523f1209838a92d98f292d7af6401741636c755",
+    "checks/pull-ups-current-placard-proof.json": "83e9fe239f620d413aa6622769cf8d41580b0c52b2286f46f4c5c7336be9d1c2",
+    "checks/pull-ups-return-caption-dark.png": "af90023820befc7ed442b4c7d419aa3508f2c3e669984160b3cee397e947bc89",
+    "checks/pull-ups-return-caption-light.png": "70662e0ad1540d507f6e48e5ba9ab6fd592726bb83ab6685b24a152aaa2f7fb2",
+    "checks/pull-ups-return-caption-observation.json": "f676d29f51b01470671a960e86b505076f8a3d56d002bea6afcab98b0684a8fd",
+    "checks/pullup-correction-after-placards.ts.txt": "5ff95179e89c9c8360570a0aa51911290af2be54c99c7e1eea748eea744b9ea0",
+    "checks/pullup-correction-after-release.json": "039e3c8d3f822be7b05f30f69855100ea806ff45a3f12a5256d9a63ed0d00c8a",
+    "checks/pullup-correction-before-placards.ts.txt": "980f6cafebb60aac5ebf5923abbe99eb47de00a7aa5428e36362b1ae99073d76",
+    "checks/pullup-correction-before-release.json": "9fe13331d4b1a1592c93ea54b46d702da24981189781b712bf045fd76901131d",
+    "checks/record-caption-and-fixture-correction.py": "5ee6a1dbc4056a2bafb9b9e18d02e4958209344c81ab5b391202a37668c4e47b",
+    "checks/record-immutable-format-preservation.py": "906444981183557b11f98abed5ca236530219bc82dc50f1a9259319bafa8a8b1",
+    "checks/record-pull-up-caption-correction.py": "feb316e4b70b7067527abe2323b791e10f39c035f3181245971495969b3068ea",
+    "checks/run-focused-whole-files.py": "0e99398736e98ba892330eb2ea956d939f4fd20c885502133b60708ea4e07408",
+    "checks/run-genuine-fix-preflight.py": "5f7ff22cb051cf8afd11017648b4e713be1ceaabd52dc709e2ec874d2f52dbec",
+    "checks/t-bar-return-caption-dark.png": "e8a899cf3fe878d309d616430668bb6ed9266ec92d0dd66de0e7b2e4e3da27de",
+    "checks/t-bar-return-caption-light.png": "d5b9b33806481f9e10f14277b175f89cd9e31fb882ff2c8645307b0c6204528b",
+    "checks/t-bar-return-caption-observation.json": "fad21862117c9f69c7260d3a205f0ff8d8cc5c6e6bdbdcda44631fcef7d1cea4",
+    "checks/t-bar-row-archive-completion-reproduction-proof.json": "ceb08fe1c6ce8b6da32fa145b6e5c5c0f42a2599ba88a61581b7042f1720a8e6",
+    "checks/t-bar-row-corrected-beats.json": "b34755a7f52ae0559d3e7a5ed4a898a8f6e47fa1847d253a765642e26902715d",
+    "checks/t-bar-row-current-placard-proof.json": "a0852c6e262453704ddcda9868cf6ea2bc8b8decd7fab5390ce124245170788e",
+    "checks/unchanged-gstack-gitlink-proof.json": "ae6535f27eceb3d092e95b51f51627e9e77d3abfb19a8c23b6728aa05b14c3f4",
+    "checks/parent-check-decision-before-gitlink.json": "fd9993dfb634a8bd209267c5aa5ea4564a8a9f4e9300d1cbdb845507171c6cf3"
+  },
+  "additionalFailureDispositions": [
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are Chromium when a job names none",
+      "disposition": "focused-whole-file-pass-reviewed",
+      "focusedResult": "checks/focus-branch4-installer-host-result.json",
+      "focusedLog": "checks/focus-branch4-installer-host.log",
+      "rationale": "The full run and sandbox complete-file reproduction retain this failure. The unchanged normal complete file passes on host (8 passed, 5 platform skips), with exact source/input/snapshot preservation. Direct startup separately shows this sandbox denies the same Git Bash MSYS namespace and the host starts it successfully. This is a reviewed unchanged-code host result; it does not claim a fixed test, a pre-existing case, baseline equivalence or a green full Windows run."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are the ones a job names",
+      "disposition": "focused-whole-file-pass-reviewed",
+      "focusedResult": "checks/focus-branch4-installer-host-result.json",
+      "focusedLog": "checks/focus-branch4-installer-host.log",
+      "rationale": "The full run and sandbox complete-file reproduction retain this failure. The unchanged normal complete file passes on host (8 passed, 5 platform skips), with exact source/input/snapshot preservation. Direct startup separately shows this sandbox denies the same Git Bash MSYS namespace and the host starts it successfully. This is a reviewed unchanged-code host result; it does not claim a fixed test, a pre-existing case, baseline equivalence or a green full Windows run."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"0\"]",
+      "disposition": "focused-whole-file-pass-reviewed",
+      "focusedResult": "checks/focus-branch4-installer-host-result.json",
+      "focusedLog": "checks/focus-branch4-installer-host.log",
+      "rationale": "The full run and sandbox complete-file reproduction retain this failure. The unchanged normal complete file passes on host (8 passed, 5 platform skips), with exact source/input/snapshot preservation. Direct startup separately shows this sandbox denies the same Git Bash MSYS namespace and the host starts it successfully. This is a reviewed unchanged-code host result; it does not claim a fixed test, a pre-existing case, baseline equivalence or a green full Windows run."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+      "disposition": "focused-whole-file-pass-reviewed",
+      "focusedResult": "checks/focus-branch4-installer-host-result.json",
+      "focusedLog": "checks/focus-branch4-installer-host.log",
+      "rationale": "The full run and sandbox complete-file reproduction retain this failure. The unchanged normal complete file passes on host (8 passed, 5 platform skips), with exact source/input/snapshot preservation. Direct startup separately shows this sandbox denies the same Git Bash MSYS namespace and the host starts it successfully. This is a reviewed unchanged-code host result; it does not claim a fixed test, a pre-existing case, baseline equivalence or a green full Windows run."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install-deps\"]",
+      "disposition": "focused-whole-file-pass-reviewed",
+      "focusedResult": "checks/focus-branch4-installer-host-result.json",
+      "focusedLog": "checks/focus-branch4-installer-host.log",
+      "rationale": "The full run and sandbox complete-file reproduction retain this failure. The unchanged normal complete file passes on host (8 passed, 5 platform skips), with exact source/input/snapshot preservation. Direct startup separately shows this sandbox denies the same Git Bash MSYS namespace and the host starts it successfully. This is a reviewed unchanged-code host result; it does not claim a fixed test, a pre-existing case, baseline equivalence or a green full Windows run."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"nope\",\"60\"]",
+      "disposition": "focused-whole-file-pass-reviewed",
+      "focusedResult": "checks/focus-branch4-installer-host-result.json",
+      "focusedLog": "checks/focus-branch4-installer-host.log",
+      "rationale": "The full run and sandbox complete-file reproduction retain this failure. The unchanged normal complete file passes on host (8 passed, 5 platform skips), with exact source/input/snapshot preservation. Direct startup separately shows this sandbox denies the same Git Bash MSYS namespace and the host starts it successfully. This is a reviewed unchanged-code host result; it does not claim a fixed test, a pre-existing case, baseline equivalence or a green full Windows run."
+    }
+  ],
+  "changedDetailReviews": [
+    {
+      "identity": "FAIL  |node| src/lib/__tests__/leaderboard.test.ts > leaderboard weekly cutoff — local vs UTC date string > uses the LOCAL date of `since` under a positive-offset TZ (regression)",
+      "baselineDetailLines": [
+        "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+        "import { localDateString } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\dateHelpers.ts\";",
+        "// pretend \"now\" is Sun 2025-01-05 09:00 local Tokyo"
+      ],
+      "branchDetailLines": [
+        "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+        "import { localDateString } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\dateHelpers.ts\";",
+        "// pretend \"now\" is Sun 2025-01-05 09:00 local Tokyo"
+      ],
+      "classification": "reviewed-existing-diagnostic-change",
+      "rationale": "The displayed command and imports differ only by the isolated baseline checkout versus active repository absolute paths. These exact changed lines are retained; no source fix or resolved failure is inferred."
+    },
+    {
+      "identity": "FAIL  |node| src/lib/__tests__/performanceEngine.test.ts > localWeekKey / weekKeyMinusN — UTC/local drift > localWeekKey keys a late-Sunday-night local time to its local week under a negative-offset TZ",
+      "baselineDetailLines": [
+        "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+        "import { weekKeyMinusN } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\performanceEngine.ts\";",
+        "import { localWeekKey } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\dateHelpers.ts\";"
+      ],
+      "branchDetailLines": [
+        "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+        "import { weekKeyMinusN } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\performanceEngine.ts\";",
+        "import { localWeekKey } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\dateHelpers.ts\";"
+      ],
+      "classification": "reviewed-existing-diagnostic-change",
+      "rationale": "The displayed command and imports differ only by the isolated baseline checkout versus active repository absolute paths. These exact changed lines are retained; no source fix or resolved failure is inferred."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]",
+      "baselineDetailLines": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/94]⎯",
+        "⎯⎯⎯⎯⎯⎯ Failed Tests 83 ⎯⎯⎯⎯⎯⎯⎯"
+      ],
+      "branchDetailLines": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/83]⎯",
+        "FAIL  |node| src/lib/__tests__/iosProjectWiring.test.ts [ src/lib/__tests__/iosProjectWiring.test.ts ]"
+      ],
+      "classification": "reviewed-existing-diagnostic-change",
+      "rationale": "The suite retains the same SyntaxError. The other displayed lines are reporter ordinals and the following section or neighbouring suite, retained as actual changed context; no fix is inferred."
+    },
+    {
+      "identity": "FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]",
+      "baselineDetailLines": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/94]⎯",
+        "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+      ],
+      "branchDetailLines": [
+        "SyntaxError: Invalid or unexpected token",
+        "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/83]⎯",
+        "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+      ],
+      "classification": "reviewed-existing-diagnostic-change",
+      "rationale": "The suite retains the same SyntaxError. The other displayed lines are reporter ordinals and the following section or neighbouring suite, retained as actual changed context; no fix is inferred."
+    }
+  ],
+  "observedFullRun": {
+    "exitCode": 1,
+    "overallGreen": false,
+    "baselineTestFiles": {
+      "failed": 63,
+      "passed": 1106,
+      "skipped": 10,
+      "total": 1179
+    },
+    "baselineTests": {
+      "failed": 83,
+      "passed": 13116,
+      "skipped": 409,
+      "total": 13608
+    },
+    "branchTestFiles": {
+      "failed": 48,
+      "passed": 1121,
+      "skipped": 10,
+      "total": 1179
+    },
+    "branchTests": {
+      "failed": 78,
+      "passed": 13147,
+      "skipped": 409,
+      "total": 13634
+    },
+    "addedFailureIdentities": [
+      "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are Chromium when a job names none",
+      "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are the ones a job names",
+      "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"0\"]",
+      "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+      "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install-deps\"]",
+      "FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"nope\",\"60\"]"
+    ],
+    "baselineFailureIdentitiesAbsentFromFinal": [
+      "FAIL  |dom| src/components/__tests__/FoodCameraModal.photoLock.test.tsx > FoodCameraModal — photo scanning not on the tier > the offer's buttons: Pro hands off to the page, Scan a barcode goes back to Barcode",
+      "FAIL  |dom| src/components/program/__tests__/ExercisePicker.pickOne.test.tsx > ExercisePicker with one exercise to pick > keeps one choice, and the bar says the action",
+      "FAIL  |dom| src/components/run/__tests__/RoutePlannerSheet.roadReset.test.tsx [ src/components/run/__tests__/RoutePlannerSheet.roadReset.test.tsx ]",
+      "FAIL  |dom| src/components/run/__tests__/RoutePlannerSheet.test.tsx [ src/components/run/__tests__/RoutePlannerSheet.test.tsx ]",
+      "FAIL  |dom| src/components/run/__tests__/RunMap.credit.test.tsx [ src/components/run/__tests__/RunMap.credit.test.tsx ]",
+      "FAIL  |dom| src/components/run/__tests__/RunMap.distanceMarkers.test.tsx [ src/components/run/__tests__/RunMap.distanceMarkers.test.tsx ]",
+      "FAIL  |dom| src/components/run/__tests__/RunMap.paceSegments.test.tsx [ src/components/run/__tests__/RunMap.paceSegments.test.tsx ]",
+      "FAIL  |dom| src/components/run/__tests__/RunMap.privacy.test.tsx [ src/components/run/__tests__/RunMap.privacy.test.tsx ]",
+      "FAIL  |dom| src/components/run/__tests__/RunMapLazy.test.tsx > optional run map > still mounts and cleans up a supported map",
+      "FAIL  |node| src/features/program/__tests__/generatorAudit.test.ts > generator audit — every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+      "FAIL  |node| src/features/program/__tests__/racePlanSafetySweep.test.ts > race plans — nothing is scheduled after race day > holds across every distance, race date and weekday",
+      "FAIL  |node| src/features/program/__tests__/useProgramWriters.test.ts > RUN-RESCHEDULE-01 — moveRunDay > refuses to move a race slot (immovable identity)",
+      "FAIL  |node| src/lib/__tests__/deadPathReferences.test.ts > dead file references in production comments > every path cited in a comment names a file that still exists",
+      "FAIL  |node| src/lib/__tests__/leaderboard.test.ts > boardFigure > converts the volume board, and only that one",
+      "FAIL  |root-node| scripts/art/cutout-manifest.test.ts > is exactly what the cut-out generator writes",
+      "FAIL  |root-node| scripts/art/form-art-releases.test.ts > approved artwork releases > are generated from today's release records",
+      "FAIL  |root-node| scripts/release-debug-token.test.ts > release App Check debug-token guard > refuses an environment token without printing its value"
+    ],
+    "changedDetailsForExistingFailures": [
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/leaderboard.test.ts > leaderboard weekly cutoff — local vs UTC date string > uses the LOCAL date of `since` under a positive-offset TZ (regression)",
+        "baseline": [
+          "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+          "import { localDateString } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\dateHelpers.ts\";",
+          "// pretend \"now\" is Sun 2025-01-05 09:00 local Tokyo"
+        ],
+        "branch": [
+          "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+          "import { localDateString } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\dateHelpers.ts\";",
+          "// pretend \"now\" is Sun 2025-01-05 09:00 local Tokyo"
+        ]
+      },
+      {
+        "identity": "FAIL  |node| src/lib/__tests__/performanceEngine.test.ts > localWeekKey / weekKeyMinusN — UTC/local drift > localWeekKey keys a late-Sunday-night local time to its local week under a negative-offset TZ",
+        "baseline": [
+          "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+          "import { weekKeyMinusN } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\performanceEngine.ts\";",
+          "import { localWeekKey } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\retained-endpoint-batch-20261015\\\\baseline-checkout-fbc3e887\\\\src\\\\lib\\\\dateHelpers.ts\";"
+        ],
+        "branch": [
+          "Error: Command failed: C:\\Users\\myles\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe --import tsx --input-type=module --eval",
+          "import { weekKeyMinusN } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\performanceEngine.ts\";",
+          "import { localWeekKey } from \"C:\\\\Users\\\\myles\\\\Documents\\\\Codex\\\\2026-10-04\\\\lg\\\\work\\\\Maiin-burpees\\\\src\\\\lib\\\\dateHelpers.ts\";"
+        ]
+      },
+      {
+        "identity": "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]",
+        "baseline": [
+          "SyntaxError: Invalid or unexpected token",
+          "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/94]⎯",
+          "⎯⎯⎯⎯⎯⎯ Failed Tests 83 ⎯⎯⎯⎯⎯⎯⎯"
+        ],
+        "branch": [
+          "SyntaxError: Invalid or unexpected token",
+          "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/83]⎯",
+          "FAIL  |node| src/lib/__tests__/iosProjectWiring.test.ts [ src/lib/__tests__/iosProjectWiring.test.ts ]"
+        ]
+      },
+      {
+        "identity": "FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]",
+        "baseline": [
+          "SyntaxError: Invalid or unexpected token",
+          "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/94]⎯",
+          "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+        ],
+        "branch": [
+          "SyntaxError: Invalid or unexpected token",
+          "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/83]⎯",
+          "FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]"
+        ]
+      }
+    ]
+  },
+  "automaticFailureDispositions": false,
+  "postVerifyConfigurationChanges": [
+    {
+      "path": ".prettierignore",
+      "testedSha256": "a7da164688cc3f0bff23b603dce296dda8731c60da00867505021a30f5d9a5ec",
+      "currentSha256": "6bc615ce4711133047790434cc5d12b7657ca216d5fe78f4d432e4d394e7fc0f",
+      "scope": "Canonical LF normalization plus exact comment and one immutable original script path; existing rules and all runtime/checker source unchanged.",
+      "ignoredOriginalPath": "docs/exercise-art/sources/t-bar-row/2026-10-15/draft/originals/prepare-master.cjs",
+      "originalSourceSha256": "832f7b0eb9ee5985b602e190fb824ca960ad659c9e4d474858934bd53b7a703a",
+      "meaning": "Normal full-run input preservation remains the historical at-run fact. Current configuration differs only by this explicitly reviewed non-runtime format-preservation delta; normal production/readable-evidence formatting remains required.",
+      "review": "checks/immutable-original-format-ignore-review.json"
+    }
+  ],
+  "currentInputChangesSinceFullRun": [".prettierignore"],
+  "inputStatePreservedMeaning": "Full-run source/HEAD/status/snapshot preservation remains an at-run historical fact. Current inputs differ only by the separately validated non-runtime .prettierignore LF/comment/one-original-path action.",
+  "observedInstallerFocusedEvidence": [
+    {
+      "prefix": "focus-branch4-installer",
+      "exitCode": 1,
+      "failedTests": 6,
+      "meaning": "Original unchanged sandbox reproduction retained."
+    },
+    {
+      "prefix": "focus-branch4-installer-host",
+      "exitCode": 0,
+      "passedTests": 8,
+      "normallySkippedTests": 5,
+      "meaning": "Unchanged complete-file host execution after demonstrated sandbox Bash startup denial; original full result stays non-green."
+    }
+  ],
+  "fullWindowsNonGreen": true,
+  "requiredExactHeadCiAndActualMergeStillRequired": true,
+  "unchangedNonFileGitlinkReview": "Root read baseline/HEAD/index mode160000/OID4a77cc2c34506d9ce57193b3378e48e22b7b9842 and actual empty non-symlink directory. Only this unchanged non-file gitlink has null digest; no missing regular file is admitted.",
+  "sourceEvidenceWriterSha256": "86499bb0f5ccd822558f2123572b5808a1409e7f702ff2d3a928153babd19549"
+}

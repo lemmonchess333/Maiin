@@ -1,0 +1,59 @@
+{
+  "scope": "Diagnostic, not artwork acceptance or strict certification",
+  "sources": {
+    "4-standing-master-v1.png": "41f57a0a2e2532c8601f89116eb7e46c163bd5aa4ac2f752fa976a7999a3f23d",
+    "1-standing-top-format-v1.png": "e053e9e2c54eb7499891e01e736c60ad08133da95b3d2b023478d217e4024dd8"
+  },
+  "canvas": [
+    1024,
+    1856
+  ],
+  "wholeFrameTranslation": [
+    -13,
+    37
+  ],
+  "rescale": false,
+  "anatomicalWarpOrGraft": false,
+  "sourcePixelsCopiedExactly": true,
+  "foregroundAbove14Clipped": false,
+  "placementBasis": "One integer translation maximizing the complete lower-body silhouette overlap",
+  "regions": {
+    "head": {
+      "region": [
+        405,
+        550,
+        560,
+        740
+      ],
+      "silhouetteIoU": 0.9113748351724617
+    },
+    "torso": {
+      "region": [
+        390,
+        810,
+        640,
+        1090
+      ],
+      "silhouetteIoU": 0.9389037565665577
+    },
+    "both-shoes": {
+      "region": [
+        285,
+        1570,
+        720,
+        1800
+      ],
+      "silhouetteIoU": 0.9029515511471555
+    },
+    "lower-body": {
+      "region": [
+        285,
+        1080,
+        720,
+        1800
+      ],
+      "silhouetteIoU": 0.933447138700291
+    }
+  },
+  "outputSha256": "a16851d35b8d8ccbf349b7fffd5e4cea1c27e5bdd8a124d88a20c50d152a3a3a"
+}

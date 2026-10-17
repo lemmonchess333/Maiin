@@ -1,0 +1,20 @@
+{
+  "candidateManifestSha256": "e709ab142ae0434177738d90c071283203a27532cb3ad198ddc5b3b0c278c6c8",
+  "files": {
+    "catalogue.json": "78dd58f1a064fefd125080bdb96d0862fce244d8faa8dd76c4161525bdb9bbc4",
+    "originals/1-original.png": "54976c3327f10fcd229c6fbe20225d7c31af877896d1d0a77fc5424fb912466e",
+    "originals/1-prompt.txt": "788267a7b3344b5c1ff6b35b5de2d7749aa28e3037c2b090ef69f4b43ebe6701",
+    "originals/2-original.png": "c9e9d5359938dfab494dd01d9bbfe6a09d64bd21df669c376fa8bee307579609",
+    "originals/2-prompt.txt": "df195d2272224972ce24093d844844955a6a448c3ae4816c7cc33de485d500a6",
+    "originals/3-original.png": "b325b7dec503c4c1b2541a636ebc3434791214ac4d6c6e6eb2e6f8ea0db0a046",
+    "originals/3-prompt.txt": "9c63c9168d685ba46385054b44de0f972c2de098fa28d4f6a31b5d4477422baf",
+    "originals/canonical-review-reference.png": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "originals/historical-catch-framing.json": "19f0736cfae6df1948b74c2b7590e9d29e9f310adff53a9375f04df119c33c98",
+    "palette-recipe.json": "c40a4e4c40115e6cd8c193104b00c1585ca06dc661cac2b7c95ae9db8eed6c7b",
+    "parent-source-eligibility.json": "535bf7afa540b4d1c0266a699d68b76f6469f164bdaba5c8b44b5e8c33c23351",
+    "reproduce.py": "88c876fb243b0b369d5254e383bb1b3014d43cd54aa847afa75dc59ceb792581",
+    "source-native-review.json": "98ca090e4484753dd67e8765d639fb63219b26fd4f137a4c115114689b63b056",
+    "source-provenance.json": "a74210be3cd60f5e221503bce122a6efbb0211b0d4f983b805e9c9d2b9cc7c57"
+  },
+  "excludedGeneratedDraftAndPlanProofManifest": true
+}

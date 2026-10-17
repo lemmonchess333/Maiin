@@ -1,0 +1,35 @@
+{
+  "scope": "Actual independent final native palette review after the single colour build and one fresh reproduction. No source or artwork edits.",
+  "sourceManifestBeforeCardExtensionSha256": "b56bc499850ea893d4313d28c7de575761a007a69943b9b6b7ace7d31486cbdb",
+  "actualViewedFrames": {
+    "draft/A-framed.png": "9acda365439eff36bb071caf9e05d2aba45cccccd36592577af60210085638e4",
+    "draft/B-framed.png": "ecf9ceceab6f80cb83c53e7d54f1f32a93fad6e95216174df989540139dbdb56",
+    "draft/C-framed.png": "5930d0079ad6b35b62d7819b5986ff5c19cbaec43c9c367167d379197e511f7b"
+  },
+  "nativeFrameDimensions": [
+    432,
+    707
+  ],
+  "paletteRecipeSha256": "2124a2d4fc22cd8fdfeac456fa3635140db897f699d21d22de72c11ddfd17ca8",
+  "actualObservations": [
+    "Viewed all three final framed figures at native size after the approved common crop. Complete head, source hands/trainers and apparatus remain inside the crop.",
+    "Primary anterior quadriceps use the approved purple family while existing Core, Calves and posterior Hamstrings fields use the approved secondary family with inherited tonal variation.",
+    "A tiny upper far-thigh184-pixel component correctly stays primary; actual sampled mask values at canvas325,251 are primary255 and secondary0.",
+    "Reviewed A and C far underside Hamstrings interior anchors at canvas320,294 and344,281 are secondaryHamstrings255, primary0.",
+    "Existing posterior-thigh fields in all A/B/C remain secondary. B neutral shin/calf is not newly painted.",
+    "Inherited neutral anatomy, trainers and contours are unchanged; independent fresh source/layer checks verify exact neutral guard bytes.",
+    "The small C calf-side source hardware edge is retained as the previously disclosed finding, with no extra correction loop."
+  ],
+  "freshReproductionProof": {
+    "path": "independent-portable-reproduction-20261016/independent-reproduction-proof.json",
+    "sha256": "7849ea30980eb5a16a80a51f8e954838e667e7a80bcb08383eb872d4a86e61f0",
+    "payloadsByteExact": "68/68",
+    "manifestByteExact": true
+  },
+  "nativePalettePassed": true,
+  "mobileOrRegisteredReviewPerformedByThisReviewer": false,
+  "strictCertified": false,
+  "productionAccepted": false,
+  "completionCredit": 0,
+  "imageGenerationCalls": 0
+}

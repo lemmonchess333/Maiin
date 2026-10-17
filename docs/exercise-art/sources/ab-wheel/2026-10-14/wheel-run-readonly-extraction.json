@@ -1,0 +1,134 @@
+[
+  {
+    "file": "master-brace-original.png",
+    "topBottomROIs": [
+      [735, 675, 799, 712],
+      [730, 865, 826, 899]
+    ],
+    "samples": [
+      {
+        "threshold": 30,
+        "minimumRun": 5,
+        "topY": 686,
+        "bottomY": 879,
+        "brightContourVerticalSpan": 193
+      },
+      {
+        "threshold": 30,
+        "minimumRun": 10,
+        "topY": 686,
+        "bottomY": 879,
+        "brightContourVerticalSpan": 193
+      },
+      {
+        "threshold": 35,
+        "minimumRun": 5,
+        "topY": 686,
+        "bottomY": 879,
+        "brightContourVerticalSpan": 193
+      },
+      {
+        "threshold": 35,
+        "minimumRun": 10,
+        "topY": 686,
+        "bottomY": 878,
+        "brightContourVerticalSpan": 192
+      },
+      {
+        "threshold": 40,
+        "minimumRun": 5,
+        "topY": 686,
+        "bottomY": 869,
+        "brightContourVerticalSpan": 183
+      },
+      {
+        "threshold": 40,
+        "minimumRun": 10,
+        "topY": 686,
+        "bottomY": 866,
+        "brightContourVerticalSpan": 180
+      }
+    ]
+  },
+  {
+    "file": "roll-original.png",
+    "topBottomROIs": [
+      [1130, 689, 1197, 733],
+      [1130, 880, 1226, 915]
+    ],
+    "samples": [
+      {
+        "threshold": 30,
+        "minimumRun": 5,
+        "topY": 700,
+        "bottomY": 894,
+        "brightContourVerticalSpan": 194
+      },
+      {
+        "threshold": 30,
+        "minimumRun": 10,
+        "topY": 700,
+        "bottomY": 893,
+        "brightContourVerticalSpan": 193
+      },
+      {
+        "threshold": 35,
+        "minimumRun": 5,
+        "topY": 700,
+        "bottomY": 893,
+        "brightContourVerticalSpan": 193
+      },
+      {
+        "threshold": 35,
+        "minimumRun": 10,
+        "topY": 700,
+        "bottomY": 893,
+        "brightContourVerticalSpan": 193
+      },
+      {
+        "threshold": 40,
+        "minimumRun": 5,
+        "topY": 700,
+        "bottomY": 881,
+        "brightContourVerticalSpan": 181
+      }
+    ]
+  },
+  {
+    "file": "reach-original.png",
+    "topBottomROIs": [
+      [1330, 705, 1397, 754],
+      [1310, 900, 1411, 936]
+    ],
+    "samples": [
+      {
+        "threshold": 30,
+        "minimumRun": 5,
+        "topY": 717,
+        "bottomY": 911,
+        "brightContourVerticalSpan": 194
+      },
+      {
+        "threshold": 30,
+        "minimumRun": 10,
+        "topY": 717,
+        "bottomY": 910,
+        "brightContourVerticalSpan": 193
+      },
+      {
+        "threshold": 35,
+        "minimumRun": 5,
+        "topY": 717,
+        "bottomY": 910,
+        "brightContourVerticalSpan": 193
+      },
+      {
+        "threshold": 35,
+        "minimumRun": 10,
+        "topY": 717,
+        "bottomY": 910,
+        "brightContourVerticalSpan": 193
+      }
+    ]
+  }
+]

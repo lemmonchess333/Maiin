@@ -62,7 +62,7 @@ describe("useEffectiveTargets single-source (D11)", () => {
   it("the day-type macro splitter is imported only by the canonical hook", () => {
     const offenders: string[] = [];
     for (const file of sourceFiles(srcRoot)) {
-      const rel = relative(repoRoot, file);
+      const rel = relative(repoRoot, file).replaceAll("\\", "/");
       if (ALLOWED_SPLITTER_IMPORTERS.has(rel)) continue;
       const src = readFileSync(file, "utf8");
       // Match an ES import that pulls in the splitter by name (named import,

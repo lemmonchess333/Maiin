@@ -1,0 +1,28 @@
+{
+  "baselineHead": "26326d712111a3f8cb80fc825d037fef976ee5de",
+  "baselineFullWindows": {
+    "failed": 74,
+    "passed": 13122,
+    "skipped": 409
+  },
+  "branchFullWindows": {
+    "failed": 73,
+    "passed": 13125,
+    "skipped": 409
+  },
+  "lintPassed": true,
+  "artworkAuditPassed": true,
+  "draftAuditPassed": true,
+  "cyclesPassed": true,
+  "buildPassed": true,
+  "distSizePassed": true,
+  "focused": {
+    "files": 6,
+    "passed": 354,
+    "failed": 0
+  },
+  "priorArtworkPreserved": 889,
+  "fullWindowsGreen": false,
+  "comparison": "72 persistent failed tests match the fresh clean26326 baseline. Two baseline generator-byte failures resolved through normal generators. One additional deadPathReferences full-run timeout passed the normal six-file354-test focused run; do not call that timeout pre-existing.",
+  "remaining": "Required Linux CI and actual merge before completion credit."
+}

@@ -22,8 +22,9 @@
  *
  * Meta is written LAST on every save, so a chunk-write failure (quota)
  * leaves meta pointing at the previous consistent state — the read
- * path only ever reconstructs `chunkCount` chunks, so a half-written
- * new chunk is simply ignored until the next successful write.
+ * path reconstructs only the committed `pointCount` prefix. A partial
+ * chunk extended before a later refusal can therefore retain its old
+ * committed points; any new chunk beyond `chunkCount` is ignored.
  *
  * Schema is versioned (`v: 2`); a bump invalidates every existing
  * entry on the next read (v1 was the single-blob layout), so a format
@@ -40,6 +41,14 @@
 
 import type { GPSPoint } from "./gps";
 import { readString, remove, writeJson } from "@/lib/localStore";
+import {
+  parseSessionPlayerCheckpoint,
+  type SessionPlayerCheckpoint,
+} from "./sessionPlayerCheckpoint";
+import {
+  parseManualDistanceDraft,
+  type ManualDistanceDraft,
+} from "./manualDistanceDraft";
 /* RunConfig's canonical home is runConfigDefaults.ts (pure module, no
  * UI imports — RunSetupModal only re-exports it). Importing the pure
  * module keeps storage/auth off the UI layer (2026-07-11 audit batch 3:
@@ -115,6 +124,10 @@ export interface StoredRun {
    *  `waiting` runs aren't worth recovering and `finished` runs
    *  belong in RunSummary, not Resume. */
   phase: "active" | "paused";
+  /** Undefined on legacy snapshots; null means optional coaching was invalid. */
+  playerCheckpoint?: SessionPlayerCheckpoint | null;
+  /** Optional raw manual/treadmill input, in the unit the runner typed. */
+  manualDistanceDraft?: ManualDistanceDraft;
 }
 
 /** The small record stored at the META key — everything in StoredRun
@@ -129,6 +142,8 @@ interface StoredMeta {
   phase: "active" | "paused";
   pointCount: number;
   chunkCount: number;
+  playerCheckpoint?: unknown;
+  manualDistanceDraft?: unknown;
 }
 
 function chunkCountFor(pointCount: number): number {
@@ -210,6 +225,12 @@ export function writeStoredRun(uid: string, snapshot: StoredRun): boolean {
     phase: snapshot.phase,
     pointCount: newCount,
     chunkCount: newChunks,
+    ...(snapshot.playerCheckpoint !== undefined
+      ? { playerCheckpoint: snapshot.playerCheckpoint }
+      : {}),
+    ...(snapshot.manualDistanceDraft !== undefined
+      ? { manualDistanceDraft: snapshot.manualDistanceDraft }
+      : {}),
   };
   return writeJson(runResumeKey(uid), meta);
 }
@@ -273,11 +294,25 @@ export function readStoredRun(
     }
     try {
       const chunk = JSON.parse(chunkRaw) as unknown;
-      if (!Array.isArray(chunk)) {
+      // An append can extend the previous partial chunk before a later
+      // chunk or META write is refused. META still commits the old prefix,
+      // which remains complete: ignore only its uncommitted tail. Every
+      // sealed chunk must still contain all 250 points, and a short or
+      // oversized chunk is corruption rather than an interrupted append.
+      const expectedCount = Math.min(
+        RUN_RESUME_CHUNK_SIZE,
+        parsed.pointCount - points.length
+      );
+      if (
+        !Array.isArray(chunk) ||
+        expectedCount <= 0 ||
+        chunk.length < expectedCount ||
+        chunk.length > RUN_RESUME_CHUNK_SIZE
+      ) {
         clearStoredRun(uid);
         return null;
       }
-      points.push(...(chunk as GPSPoint[]));
+      points.push(...(chunk.slice(0, expectedCount) as GPSPoint[]));
     } catch {
       clearStoredRun(uid);
       return null;
@@ -290,6 +325,10 @@ export function readStoredRun(
     return null;
   }
 
+  const manualDistanceDraft = parseManualDistanceDraft(
+    parsed.manualDistanceDraft
+  );
+
   return {
     v: parsed.v,
     config: parsed.config,
@@ -299,6 +338,14 @@ export function readStoredRun(
     points,
     lastWriteAt: parsed.lastWriteAt,
     phase: parsed.phase,
+    ...(parsed.playerCheckpoint !== undefined
+      ? {
+          playerCheckpoint: parseSessionPlayerCheckpoint(
+            parsed.playerCheckpoint
+          ),
+        }
+      : {}),
+    ...(manualDistanceDraft ? { manualDistanceDraft } : {}),
   };
 }
 

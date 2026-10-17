@@ -1,0 +1,180 @@
+{
+  "exerciseId": "rowing-machine",
+  "version": "anatomy-v3-2026-10-15-retained-whole-trio-rowing-v1",
+  "width": 1416,
+  "height": 830,
+  "decision": "owner-released-with-findings",
+  "reviewer": "/root",
+  "reviewedAt": "2026-10-15T22:50:01.0352675Z",
+  "recordStage": "Actual registered review complete; normal project verification, exact-head CI and merge remain separate gates",
+  "reference": {
+    "path": "form-frames/rowing-machine/3.webp",
+    "sha256": "8c7385705a8396f4068e2ffbf6571509e6764a61efa91a30373d64578cce2aae"
+  },
+  "cueSha256": "2ec87c73d52fa54044118e1264b23883168530dc0717c2e987eec2da14ec49c3",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Root viewed FA56 and all three native originals/framed outputs: same no-shorts athlete, neutral anatomy, trainers, fine contours and proportions retained."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: One native1536x1024 source layout, identical identity placement and common1416x830 crop; common rower camera/rail/flywheel/footrests observed. No per-limb/camera fitting or exact3D calibration claimed."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Intact original human pixels and outlines retained outside permitted source colour fields. Visible residual finish knee flexion and modest-versus-moderate projection uncertainty remain explicit findings; no locked/straight/perfect-leg certification."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Native/mobile views show complete common rower, moving seat, rail, flywheel, foot straps, handle and taut cable. No geometry repair or invented equipment motion."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Native three sources retain wrapped handle grip, both strapped trainers and seated support. Minor original seat/body/leg-contour variation remains disclosed; no calibrated contact invariance claimed."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Real compressed catch progresses to long-leg straight-arm drive then handle-below-ribs/layback; reverse recovery shown with three intact states. Finish knee flexion retained; endpoint cuts and teaching-slot timing are not a calibrated continuous/cadence claim."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Root viewed actual canonical-base palette in all three framed natives: existing quads/upper-back primary and hamstrings/biceps secondary, inherited fine source tones. Neutral core/other fields are not painted; actual Cardio/Back/Legs/Core catalogue snapshot remains unchanged."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Root used all6 actual Show frame controls in both390x844 themes and returned to1. Every settled selected instruction/described cue matched its decoded public path and alt; static catalogue preparation, source activation key,2:1 Reset cue and catalogue Watch out remained readable. Normal automatic selection effects briefly settle after image changes; no zero-lag claim."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual registered component: all6 public paths decoded with6-to1 normal auto wraps in both themes, settled instruction/cue agreement and approximately1206-1216ms periods; light Slower control produced all6 and6-to1 at2405-2421ms. Actual Pause/Play, Previous1-to6 and Next6-to1 passed. Three real whole states and endpoint cuts remain explicit; no calibrated2:1 cadence claim."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual registered ExerciseFormContent at390x844: fullpage image reviewed,1416x830source in324x360stage, document scrollWidth380. Full body/trainers/rower/cable, preparation/key/6cues/tip readable; normal public480x281card matches exact preview. Native480 and actual348/160reviewcard widths preserve whole image; only480review pane scrolls locally."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual dark registered390x844 manualall6paths/selection, normal loop and fullpage reviewed. All body/gear, colours, preparation/key/cues/tip and complete normal cards remain readable without global overflow. Console warnings/errors queried at end returned[]."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/rowing-machine/1.webp",
+      "sha256": "a1fa9793f679c2406885ba5782c111658bed16c0c49bc9482200b579111b15e2",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/rowing-machine/2026-10-15/draft/1-framed.png",
+        "sha256": "78c360366da004a0486c750e4653fe7ee89d9399f3f99dbbf5a7e044800b0f5f"
+      }
+    },
+    {
+      "path": "form-frames/rowing-machine/2.webp",
+      "sha256": "398603466c885d0f28bca0586bb726ef43004c5c9ae43c57ea5f90256a3f2597",
+      "sourcePose": 2,
+      "source": {
+        "path": "docs/exercise-art/sources/rowing-machine/2026-10-15/draft/2-framed.png",
+        "sha256": "3309571b9fa1e444276e4470a1ea6ded776b58d32bdcb18bf21474a24715c2d1"
+      }
+    },
+    {
+      "path": "form-frames/rowing-machine/3.webp",
+      "sha256": "8c7385705a8396f4068e2ffbf6571509e6764a61efa91a30373d64578cce2aae",
+      "sourcePose": 3,
+      "source": {
+        "path": "docs/exercise-art/sources/rowing-machine/2026-10-15/draft/3-framed.png",
+        "sha256": "52b393d6c69ec2291b5659dfcbc2dfd4e58dcba72e453b06c9ecdfcef9a9e578"
+      }
+    },
+    {
+      "path": "form-frames/rowing-machine/4.webp",
+      "sha256": "8c7385705a8396f4068e2ffbf6571509e6764a61efa91a30373d64578cce2aae",
+      "sourcePose": 3,
+      "source": {
+        "path": "docs/exercise-art/sources/rowing-machine/2026-10-15/draft/3-framed.png",
+        "sha256": "52b393d6c69ec2291b5659dfcbc2dfd4e58dcba72e453b06c9ecdfcef9a9e578"
+      }
+    },
+    {
+      "path": "form-frames/rowing-machine/5.webp",
+      "sha256": "398603466c885d0f28bca0586bb726ef43004c5c9ae43c57ea5f90256a3f2597",
+      "sourcePose": 2,
+      "source": {
+        "path": "docs/exercise-art/sources/rowing-machine/2026-10-15/draft/2-framed.png",
+        "sha256": "3309571b9fa1e444276e4470a1ea6ded776b58d32bdcb18bf21474a24715c2d1"
+      }
+    },
+    {
+      "path": "form-frames/rowing-machine/6.webp",
+      "sha256": "a1fa9793f679c2406885ba5782c111658bed16c0c49bc9482200b579111b15e2",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/rowing-machine/2026-10-15/draft/1-framed.png",
+        "sha256": "78c360366da004a0486c750e4653fe7ee89d9399f3f99dbbf5a7e044800b0f5f"
+      }
+    }
+  ],
+  "physicalPoses": 3,
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "positionCoordinates": [0, 0.5, 1, 1, 0.5, 0],
+  "setup": ["Strap in, grip the handle, start compressed with shins vertical."],
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "approval": {
+    "actor": "User, in this session",
+    "instruction": "Continue new conversions using the approved athlete without shorts, allow the agreed limited findings, preserve the model/colours/equipment, finish and merge; stop routine approval questions.",
+    "context": "Existing user authorization covers colour/equipment finishing, intact whole-source reuse, local registration/checks and merge. Root accepts this specific retained three-state draft with finish knee flexion disclosed; no strict certification inferred."
+  },
+  "findings": [
+    "Visible residual knee flexion at the pulled finish is retained. Modest-versus-moderate projection uncertainty remains; no straight/locked/perfect-leg or strict-certification claim.",
+    "Three real whole retained states are reused as catch/drive/finish/finish/drive/catch. Endpoint cuts are explicit; no invented intermediate motion or calibrated continuous stroke.",
+    "Minor original seated body/seat and leg-contour variation remains. Fixed strapped feet/common rower and original whole anatomy are preserved; no body fitting, pose correction, shoe graft or equipment correction."
+  ],
+  "observedQaChecks": {
+    "identity": {
+      "evidence": "Root viewed FA56 and all three native originals/framed outputs: same no-shorts athlete, neutral anatomy, trainers, fine contours and proportions retained.",
+      "observed": true
+    },
+    "camera": {
+      "evidence": "One native1536x1024 source layout, identical identity placement and common1416x830 crop; common rower camera/rail/flywheel/footrests observed. No per-limb/camera fitting or exact3D calibration claimed.",
+      "observed": true
+    },
+    "anatomy": {
+      "evidence": "Intact original human pixels and outlines retained outside permitted source colour fields. Visible residual finish knee flexion and modest-versus-moderate projection uncertainty remain explicit findings; no locked/straight/perfect-leg certification.",
+      "observed": true
+    },
+    "equipment": {
+      "evidence": "Native/mobile views show complete common rower, moving seat, rail, flywheel, foot straps, handle and taut cable. No geometry repair or invented equipment motion.",
+      "observed": true
+    },
+    "contact": {
+      "evidence": "Native three sources retain wrapped handle grip, both strapped trainers and seated support. Minor original seat/body/leg-contour variation remains disclosed; no calibrated contact invariance claimed.",
+      "observed": true
+    },
+    "physics": {
+      "evidence": "Real compressed catch progresses to long-leg straight-arm drive then handle-below-ribs/layback; reverse recovery shown with three intact states. Finish knee flexion retained; endpoint cuts and teaching-slot timing are not a calibrated continuous/cadence claim.",
+      "observed": true
+    },
+    "muscles": {
+      "evidence": "Root viewed actual canonical-base palette in all three framed natives: existing quads/upper-back primary and hamstrings/biceps secondary, inherited fine source tones. Neutral core/other fields are not painted; actual Cardio/Back/Legs/Core catalogue snapshot remains unchanged.",
+      "observed": true
+    },
+    "cueAgreement": {
+      "evidence": "Root used all6 actual Show frame controls in both390x844 themes and returned to1. Every settled selected instruction/described cue matched its decoded public path and alt; static catalogue preparation, source activation key,2:1 Reset cue and catalogue Watch out remained readable. Normal automatic selection effects briefly settle after image changes; no zero-lag claim.",
+      "observed": true
+    },
+    "sequenceAndLoop": {
+      "evidence": "Actual registered component: all6 public paths decoded with6-to1 normal auto wraps in both themes, settled instruction/cue agreement and approximately1206-1216ms periods; light Slower control produced all6 and6-to1 at2405-2421ms. Actual Pause/Play, Previous1-to6 and Next6-to1 passed. Three real whole states and endpoint cuts remain explicit; no calibrated2:1 cadence claim.",
+      "observed": true
+    },
+    "mobileLight": {
+      "evidence": "Actual registered ExerciseFormContent at390x844: fullpage image reviewed,1416x830source in324x360stage, document scrollWidth380. Full body/trainers/rower/cable, preparation/key/6cues/tip readable; normal public480x281card matches exact preview. Native480 and actual348/160reviewcard widths preserve whole image; only480review pane scrolls locally.",
+      "observed": true
+    },
+    "mobileDark": {
+      "evidence": "Actual dark registered390x844 manualall6paths/selection, normal loop and fullpage reviewed. All body/gear, colours, preparation/key/cues/tip and complete normal cards remain readable without global overflow. Console warnings/errors queried at end returned[].",
+      "observed": true
+    }
+  },
+  "integrationValidation": "Actual parent registered guide/card review recorded with exact evidence hashes; eleven strict fields remain null. No project/CI/merge/completion claim.",
+  "publicationGate": "No credit before actual registered review, normal verification disposition, exact-head CI, merge and preservation audit."
+}

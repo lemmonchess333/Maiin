@@ -44,7 +44,9 @@ import { useSocialFeed } from "../useSocialFeed";
 
 describe("useSocialFeed — a copy whose post is gone", () => {
   it("draws the copies it could read the post for, and not the others", async () => {
-    const { result } = renderHook(() => useSocialFeed(false, new Set(), true));
+    // Keep the input stable so each feed state update does not refetch it.
+    const blocked = new Set<string>();
+    const { result } = renderHook(() => useSocialFeed(false, blocked, true));
     await waitFor(() => expect(result.current.loading).toBe(false));
     // Anchored on the live post, so the absence below is not the empty
     // feed of a load that has not landed.

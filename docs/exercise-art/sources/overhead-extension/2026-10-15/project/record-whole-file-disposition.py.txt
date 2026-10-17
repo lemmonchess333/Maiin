@@ -1,0 +1,35 @@
+from pathlib import Path
+import hashlib
+import json
+import re
+
+HERE = Path(__file__).resolve().parent
+OUT = HERE / 'normal-whole-file-check'
+comparison = json.loads((HERE / 'project-comparison.json').read_bytes())
+baseline = json.loads((HERE / 'remaining18-baseline-96fea6f1-index.json').read_bytes())
+result = json.loads((OUT / 'result.json').read_bytes())
+raw = (OUT / 'test.log').read_bytes()
+assert hashlib.sha256(raw).hexdigest() == result['rawLogSha256']
+assert result['normalRunner'] and result['allRuntimeInputsUnchanged']
+assert result['verbatimSummaries'] == ['Test Files  2 failed | 8 passed (10)', 'Tests  470 passed (470)']
+raw_lines = raw.splitlines(keepends=True)
+lines = [line.decode('utf8').rstrip('\r\n') for line in raw_lines]
+headers = [i for i, line in enumerate(lines) if re.match(r'^\s*FAIL\s+', line)]
+failures = {}
+for start in headers:
+    m = re.fullmatch(r'\s*FAIL\s+\|([^|]+)\|\s+(\S+?\.test\.[cm]?[jt]sx?)\s+\[\s*(.*?)\s*\]', lines[start])
+    assert m and m[2] == m[3]
+    end = next(i for i in range(start + 1, len(lines)) if re.fullmatch(r'\s*⎯+\[\d+/\d+\]⎯*\s*', lines[i]))
+    begin = start + 1
+    while not lines[begin].strip(): begin += 1
+    while not lines[end - 1].strip(): end -= 1
+    key = f'{m[1]}|{m[2]}|[suite]'
+    digest = hashlib.sha256(b''.join(raw_lines[begin:end])).hexdigest()
+    assert digest == baseline['failures'][key]['diagnosticSha256']
+    failures[key] = digest
+assert len(failures) == 2
+for key in comparison['addedFailures']:
+    assert key.split('|')[1] in result['wholeFiles']
+report = {'normalWholeFileFollowupCompleted': True, 'wholeFileCount': 10, 'testsPassed': 470, 'failedTestCases': 0, 'skippedTestCases': 0, 'failedImportSuites': 2, 'remainingImportDiagnosticsByteIdenticalToFreshBaseline': failures, 'fullRunAddedTimeoutCasesCoveredAndPassing': comparison['addedFailures'], 'allRuntimeInputsUnchanged': True, 'rawLogSha256': result['rawLogSha256'], 'fullRunResultStillFailed': True, 'fullVerificationPassed': False, 'disposition': 'Three additional full-run failures were5000ms timeouts. All three cases pass in the unchanged normal complete-file cohort, along with every other test case in those10files. Two baseline Windows SyntaxError import suites remain. The baseline programme case also passes in this follow-up; its original full-run failure is retained. No test timeout, worker count, filter, validator, skip, or runtime source was changed. Current-head CI and actual merge remain publication gates.'}
+(HERE / 'whole-file-disposition.json').write_text(json.dumps(report, indent=2) + '\n')
+print(json.dumps(report))

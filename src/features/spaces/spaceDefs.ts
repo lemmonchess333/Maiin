@@ -299,7 +299,7 @@ export const SPACE_DEFS: SpaceDef[] = [
     accent: "running",
     icon: "flag",
     event: {
-      dateKey: "2026-10-04",
+      dateKey: "2027-10-03",
       distance: "half",
       city: "Cardiff",
       countryCode: "GB",

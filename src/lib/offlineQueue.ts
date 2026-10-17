@@ -301,6 +301,21 @@ export function getFailedRunSaveCount(uid: string): number {
   ).size;
 }
 
+/** Count meals, even when more than one queued edit belongs to a meal. */
+export function getFailedMealSaveCount(uid: string): number {
+  return new Set(
+    getQueue()
+      .filter(
+        (item) =>
+          item.uid === uid &&
+          item.collectionPath === `users/${uid}/meals` &&
+          item.durable &&
+          item.failed
+      )
+      .map((item) => item.docId)
+  ).size;
+}
+
 /**
  * Serialises flushes. `AppRoutes` calls `flushQueue` on BOTH the auth-user
  * change and the `online` event, and signing in while already online fires

@@ -1,0 +1,31 @@
+{
+  "status": "prepared-second-caption-correction-not-parent-approval",
+  "baselineHead": "fbc3e8879b43086da0488ed8e387953bdb1af911",
+  "priorRunPrefix": "genuine-fix-preflight",
+  "files": [
+    {
+      "path": "src/lib/releasedFormPlacards.ts",
+      "beforeProof": "checks/pullup-correction-before-placards.ts.txt",
+      "afterProof": "checks/pullup-correction-after-placards.ts.txt",
+      "beforeSha256": "980f6cafebb60aac5ebf5923abbe99eb47de00a7aa5428e36362b1ae99073d76",
+      "afterSha256": "5ff95179e89c9c8360570a0aa51911290af2be54c99c7e1eea748eea744b9ea0"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-15/pull-ups.json",
+      "beforeProof": "checks/pullup-correction-before-release.json",
+      "afterProof": "checks/pullup-correction-after-release.json",
+      "beforeSha256": "9fe13331d4b1a1592c93ea54b46d702da24981189781b712bf045fd76901131d",
+      "afterSha256": "039e3c8d3f822be7b05f30f69855100ea806ff45a3f12a5256d9a63ed0d00c8a"
+    }
+  ],
+  "originalReviewZipSha256": "c3ca494dd36886e83a36556738b97fbe24ab99793188c8d31e295bf4edef9696",
+  "correctedBeatsProof": "checks/pull-ups-corrected-beats.json",
+  "currentPlacardProof": "checks/pull-ups-current-placard-proof.json",
+  "beforeCueSha256": "85c6232b5cd43022e1e72fa634d996a122608012d2a5885c3b16bf376993592c",
+  "afterCueSha256": "b5a7c69b44ea7313a68bac2844cc4e0c490deb1ec0d0a094cd93d22ebf34a2d2",
+  "firstCorrectionReview": "checks/caption-and-fixture-correction-review.json",
+  "firstCorrectionReviewSha256": "6608874771bd92ee206aae8ad54ec6e5608cb958da0cb732addc285d28b6bc31",
+  "originalAcceptanceAndZipUnchanged": true,
+  "newImageRequests": 0,
+  "completionCredit": false
+}

@@ -1,0 +1,7 @@
+{
+  "generator": "scripts/art/cut-out-form-art.ts",
+  "generatorSha256": "a465f712bcb21078a171e6ddfd24f74112a5d379192c7159f133a0fb869f0f2f",
+  "definitionSha256": "f95042479cc61ffb5b292b7da463d4479963f1f76d7b3b98e3175f4d2b12487c",
+  "encodeBlockSha256": "55c1d7a913962aabaff1eb2c506ab5ec7fe308803c13ab07b0ea3dacf69130f7",
+  "purpose": "Prepared Elliptical preview exact normal block pin; not executed; no QA acceptance."
+}

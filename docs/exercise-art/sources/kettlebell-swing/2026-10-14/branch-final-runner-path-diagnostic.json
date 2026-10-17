@@ -1,0 +1,18 @@
+{
+  "fullRun": "branch-final",
+  "originalRunnerSha256": "2b89fac21be4cb871c652a4eb48a9993b33b0a32e66bce7cd79fc2c7d3d6cfe2",
+  "baselinePathPrefixes": [
+    "bundled node/bin",
+    "prepared npm runtime node_modules/.bin",
+    "C:/Program Files/Git/bin"
+  ],
+  "originalBranchPathPrefixes": [
+    "bundled node/bin",
+    "prepared npm runtime node_modules/.bin",
+    "bundled native git/cmd"
+  ],
+  "observedBaselineBash": "C:/Program Files/Git/bin/bash.EXE",
+  "observedOriginalBranchBash": null,
+  "consequence": "Five already-failed install-playwright helper headers had different error details; full run remains non-green and is not relabeled as using identical PATH",
+  "nextCheck": "Once-focused original new failure files plus install-playwright helper under actual baseline PATH, no test/code changes"
+}

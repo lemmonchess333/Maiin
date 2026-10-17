@@ -1,0 +1,122 @@
+[
+  {
+    "bodyWidth": 380,
+    "image": [
+      {
+        "alt": "Overhead Tricep Extension, Top",
+        "complete": true,
+        "natural": [
+          461,
+          1547
+        ],
+        "src": "/form-frames/overhead-extension/1.webp"
+      }
+    ],
+    "text": "Overhead Tricep Extension\nDark theme\nTriceps\nDumbbells\n\nTOP 1/6\n\nPlay\nNormal\nPRIMARY\nTriceps\nSECONDARY\nFront Delts\n\nInstructions\n\nPreparation: Stand or sit, hold one dumbbell with both hands straight overhead. Keep elbows close to your ears and pointed at the ceiling.\n\n1\n\nHold the dumbbell overhead with both hands.\n\n2\n\nKeep your core braced and elbows up.\n\n3\n\nBend elbows; lower the dumbbell behind head.\n\n4\n\nKeep your upper arms beside your head.\n\n5\n\nStraighten your elbows and squeeze your triceps.\n\n6\n\nKeep the dumbbell steady at full extension.\n\nWatch out\n\nElbows flaring wide takes the triceps out of it. Keep them tucked by your ears, pointing up, and move only from the elbow.\n\nCard at 480px and 160px\nObserved playback evidence",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "bodyWidth": 380,
+    "image": [
+      {
+        "alt": "Overhead Tricep Extension, Brace",
+        "complete": true,
+        "natural": [
+          461,
+          1547
+        ],
+        "src": "/form-frames/overhead-extension/2.webp"
+      }
+    ],
+    "text": "Overhead Tricep Extension\nDark theme\nTriceps\nDumbbells\n\nBRACE 2/6\n\nPlay\nNormal\nPRIMARY\nTriceps\nSECONDARY\nFront Delts\n\nInstructions\n\nPreparation: Stand or sit, hold one dumbbell with both hands straight overhead. Keep elbows close to your ears and pointed at the ceiling.\n\n1\n\nHold the dumbbell overhead with both hands.\n\n2\n\nKeep your core braced and elbows up.\n\n3\n\nBend elbows; lower the dumbbell behind head.\n\n4\n\nKeep your upper arms beside your head.\n\n5\n\nStraighten your elbows and squeeze your triceps.\n\n6\n\nKeep the dumbbell steady at full extension.\n\nWatch out\n\nElbows flaring wide takes the triceps out of it. Keep them tucked by your ears, pointing up, and move only from the elbow.\n\nCard at 480px and 160px\nObserved playback evidence",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "bodyWidth": 380,
+    "image": [
+      {
+        "alt": "Overhead Tricep Extension, Lower",
+        "complete": true,
+        "natural": [
+          461,
+          1547
+        ],
+        "src": "/form-frames/overhead-extension/3.webp"
+      }
+    ],
+    "text": "Overhead Tricep Extension\nDark theme\nTriceps\nDumbbells\n\nLOWER 3/6\n\nPlay\nNormal\nPRIMARY\nTriceps\nSECONDARY\nFront Delts\n\nInstructions\n\nPreparation: Stand or sit, hold one dumbbell with both hands straight overhead. Keep elbows close to your ears and pointed at the ceiling.\n\n1\n\nHold the dumbbell overhead with both hands.\n\n2\n\nKeep your core braced and elbows up.\n\n3\n\nBend elbows; lower the dumbbell behind head.\n\n4\n\nKeep your upper arms beside your head.\n\n5\n\nStraighten your elbows and squeeze your triceps.\n\n6\n\nKeep the dumbbell steady at full extension.\n\nWatch out\n\nElbows flaring wide takes the triceps out of it. Keep them tucked by your ears, pointing up, and move only from the elbow.\n\nCard at 480px and 160px\nObserved playback evidence",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "bodyWidth": 380,
+    "image": [
+      {
+        "alt": "Overhead Tricep Extension, Bottom",
+        "complete": true,
+        "natural": [
+          461,
+          1547
+        ],
+        "src": "/form-frames/overhead-extension/4.webp"
+      }
+    ],
+    "text": "Overhead Tricep Extension\nDark theme\nTriceps\nDumbbells\n\nBOTTOM 4/6\n\nPlay\nNormal\nPRIMARY\nTriceps\nSECONDARY\nFront Delts\n\nInstructions\n\nPreparation: Stand or sit, hold one dumbbell with both hands straight overhead. Keep elbows close to your ears and pointed at the ceiling.\n\n1\n\nHold the dumbbell overhead with both hands.\n\n2\n\nKeep your core braced and elbows up.\n\n3\n\nBend elbows; lower the dumbbell behind head.\n\n4\n\nKeep your upper arms beside your head.\n\n5\n\nStraighten your elbows and squeeze your triceps.\n\n6\n\nKeep the dumbbell steady at full extension.\n\nWatch out\n\nElbows flaring wide takes the triceps out of it. Keep them tucked by your ears, pointing up, and move only from the elbow.\n\nCard at 480px and 160px\nObserved playback evidence",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "bodyWidth": 380,
+    "image": [
+      {
+        "alt": "Overhead Tricep Extension, Extend",
+        "complete": true,
+        "natural": [
+          461,
+          1547
+        ],
+        "src": "/form-frames/overhead-extension/5.webp"
+      }
+    ],
+    "text": "Overhead Tricep Extension\nDark theme\nTriceps\nDumbbells\n\nEXTEND 5/6\n\nPlay\nNormal\nPRIMARY\nTriceps\nSECONDARY\nFront Delts\n\nInstructions\n\nPreparation: Stand or sit, hold one dumbbell with both hands straight overhead. Keep elbows close to your ears and pointed at the ceiling.\n\n1\n\nHold the dumbbell overhead with both hands.\n\n2\n\nKeep your core braced and elbows up.\n\n3\n\nBend elbows; lower the dumbbell behind head.\n\n4\n\nKeep your upper arms beside your head.\n\n5\n\nStraighten your elbows and squeeze your triceps.\n\n6\n\nKeep the dumbbell steady at full extension.\n\nWatch out\n\nElbows flaring wide takes the triceps out of it. Keep them tucked by your ears, pointing up, and move only from the elbow.\n\nCard at 480px and 160px\nObserved playback evidence",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "bodyWidth": 380,
+    "image": [
+      {
+        "alt": "Overhead Tricep Extension, Reset",
+        "complete": true,
+        "natural": [
+          461,
+          1547
+        ],
+        "src": "/form-frames/overhead-extension/6.webp"
+      }
+    ],
+    "text": "Overhead Tricep Extension\nDark theme\nTriceps\nDumbbells\n\nRESET 6/6\n\nPlay\nNormal\nPRIMARY\nTriceps\nSECONDARY\nFront Delts\n\nInstructions\n\nPreparation: Stand or sit, hold one dumbbell with both hands straight overhead. Keep elbows close to your ears and pointed at the ceiling.\n\n1\n\nHold the dumbbell overhead with both hands.\n\n2\n\nKeep your core braced and elbows up.\n\n3\n\nBend elbows; lower the dumbbell behind head.\n\n4\n\nKeep your upper arms beside your head.\n\n5\n\nStraighten your elbows and squeeze your triceps.\n\n6\n\nKeep the dumbbell steady at full extension.\n\nWatch out\n\nElbows flaring wide takes the triceps out of it. Keep them tucked by your ears, pointing up, and move only from the elbow.\n\nCard at 480px and 160px\nObserved playback evidence",
+    "theme": "light",
+    "viewport": [
+      390,
+      844
+    ]
+  }
+]

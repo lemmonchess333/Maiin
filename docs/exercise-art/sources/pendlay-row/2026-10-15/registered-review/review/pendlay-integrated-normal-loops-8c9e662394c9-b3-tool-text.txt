@@ -1,0 +1,125 @@
+{
+  dark: [
+    {
+      alt: 'Pendlay Row, Squeeze',
+      display: [ 324, 360 ],
+      ms: 140050,
+      src: '/form-frames/pendlay-row/4.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Lower',
+      display: [ 324, 360 ],
+      ms: 141257,
+      src: '/form-frames/pendlay-row/5.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Reset',
+      display: [ 324, 360 ],
+      ms: 142462,
+      src: '/form-frames/pendlay-row/6.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Set',
+      display: [ 324, 360 ],
+      ms: 143668,
+      src: '/form-frames/pendlay-row/1.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Brace',
+      display: [ 324, 360 ],
+      ms: 144874,
+      src: '/form-frames/pendlay-row/2.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Row',
+      display: [ 324, 360 ],
+      ms: 146082,
+      src: '/form-frames/pendlay-row/3.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Squeeze',
+      display: [ 324, 360 ],
+      ms: 147288,
+      src: '/form-frames/pendlay-row/4.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Lower',
+      display: [ 324, 360 ],
+      ms: 148493,
+      src: '/form-frames/pendlay-row/5.webp',
+      viewport: [ 390, 844 ]
+    }
+  ],
+  kind: 'pendlay-integrated-normal-loops',
+  light: [
+    {
+      alt: 'Pendlay Row, Lower',
+      display: [ 324, 360 ],
+      ms: 185988,
+      src: '/form-frames/pendlay-row/5.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Reset',
+      display: [ 324, 360 ],
+      ms: 187194,
+      src: '/form-frames/pendlay-row/6.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Set',
+      display: [ 324, 360 ],
+      ms: 188401,
+      src: '/form-frames/pendlay-row/1.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Brace',
+      display: [ 324, 360 ],
+      ms: 189603,
+      src: '/form-frames/pendlay-row/2.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Row',
+      display: [ 324, 360 ],
+      ms: 190806,
+      src: '/form-frames/pendlay-row/3.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Squeeze',
+      display: [ 324, 360 ],
+      ms: 192013,
+      src: '/form-frames/pendlay-row/4.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Lower',
+      display: [ 324, 360 ],
+      ms: 193219,
+      src: '/form-frames/pendlay-row/5.webp',
+      viewport: [ 390, 844 ]
+    },
+    {
+      alt: 'Pendlay Row, Reset',
+      display: [ 324, 360 ],
+      ms: 194425,
+      src: '/form-frames/pendlay-row/6.webp',
+      viewport: [ 390, 844 ]
+    }
+  ],
+  overflow: false,
+  viewport: [ 390, 844 ]
+}{
+  kind: 'pendlay-integrated-console',
+  queriedLevels: [ 'error', 'warn' ],
+  logs: []
+}

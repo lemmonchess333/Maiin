@@ -1,0 +1,13 @@
+{
+  "head": "26326d712111a3f8cb80fc825d037fef976ee5de",
+  "fullWindows": {
+    "failed": 74,
+    "passed": 13122,
+    "skipped": 409
+  },
+  "failureHeaders": 79,
+  "snapshotRestoredExact": true,
+  "cleanCheckout": true,
+  "fullSuiteGreen": false,
+  "evidence": "checks/baseline-verify.log"
+}

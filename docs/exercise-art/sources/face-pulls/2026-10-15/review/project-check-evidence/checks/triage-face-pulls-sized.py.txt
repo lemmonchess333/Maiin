@@ -1,0 +1,54 @@
+"""Record the one actual new full-run failure without resolving or rerunning it."""
+from pathlib import Path
+from datetime import datetime, timezone
+import hashlib
+import json
+
+R = Path(__file__).resolve().parent
+OUT = R / 'face-pulls-final-sized-2efdec417-failure-triage-independent.json'
+COMPARISON = R / 'face-pulls-final-sized-2efdec417-failure-comparison-independent.json'
+def h(data): return hashlib.sha256(data).hexdigest()
+def load(path): return json.loads(path.read_bytes())
+assert not OUT.exists()
+c = load(COMPARISON)
+assert h(COMPARISON.read_bytes()) == '4226de7e2b583e7c02eb136347e4fe18df535f4411cd537bf0179e9d63563721'
+assert c['counts'] == {'added': 1, 'removed': 3, 'changedDiagnostics': 0, 'identicalDiagnostics': 79}
+added = c['added'][0]
+assert added['candidate']['file'] == 'src/lib/__tests__/bodyRig.test.ts'
+assert added['candidate']['diagnostic']['firstOwnLine'] == 'AssertionError: face-pulls "Reach": 10 words: expected 10 to be less than or equal to 7'
+plan = load(R.parents[1] / 'face-pulls/ergonomic-rope-production-20261015/sequence-plan.json')
+counts = [{'label': beat['label'], 'cue': beat['cue'], 'whitespaceWords': len(beat['cue'].strip().split()),
+           'withinExistingSevenWordLimit': len(beat['cue'].strip().split()) <= 7} for beat in plan['beats']]
+assert [row['whitespaceWords'] for row in counts] == [10, 9, 10, 9, 6, 8]
+tested = load(R / 'face-pulls-final-sized-2efdec417/inputs-before.json')
+report = {
+    'status': 'actual-new-cue-length-regression-unresolved',
+    'reviewedAt': datetime.now(timezone.utc).isoformat(),
+    'comparisonPath': COMPARISON.name, 'comparisonSha256': h(COMPARISON.read_bytes()),
+    'fullNormalRunStillNonGreen': True, 'normalSevenStagesCompleted': True,
+    'measuredBaseline': {'failedFiles': 52, 'failedTests': 77, 'failureHeaders': 82},
+    'measuredCandidate': {'failedFiles': 50, 'failedTests': 75, 'failureHeaders': 80},
+    'identityComparisonCounts': c['counts'],
+    'additionalFailure': added,
+    'disposition': 'Real authored content regression against the unchanged reading-dwell contract; no timeout, baseline/pre-existing, or focus-nonreproduction classification applies.',
+    'contract': {'source': 'src/lib/exerciseTempo.ts:240', 'name': 'PLACARD_CUE_WORDS', 'value': 7,
+                 'assertion': 'src/lib/__tests__/bodyRig.test.ts:4817',
+                 'reason': 'Animation dwell is derived from the cue width; overlong cues scroll past unread.'},
+    'testedSourceHashes': {name: tested[name] for name in ['src/lib/exerciseTempo.ts', 'src/lib/__tests__/bodyRig.test.ts', 'src/lib/releasedFormPlacards.ts']},
+    'originalAuthoredCueCounts': counts,
+    'requiredFixScope': 'Shorten only overlong Face Pulls cues; preserve existing labels, t coordinates, setup, muscles, images, crop, equipment and model. Update actual cue hash and separately review the exact caption-only evidence chain.',
+    'requiredNormalCompleteFileCohort': [
+        'src/lib/__tests__/bodyRig.test.ts',
+        'src/lib/__tests__/formArtOwnerRelease.test.ts',
+        'src/lib/__tests__/formArtwork.test.ts',
+        'src/lib/__tests__/formArtCutouts.test.ts',
+        'scripts/art/form-art-releases.test.ts',
+    ],
+    'cohortResult': None,
+    'removedFailureIdsOnlyNoFixedClaim': [row['canonicalId'] for row in c['removed']],
+    'otherSharedFailures': '79 exact canonical IDs retain byte-identical own diagnostics in these two measured runs only.',
+    'unresolvedAdditionalFailureIdentities': [added['canonicalId']],
+    'testsRunByReviewer': False, 'sourceOrTestsEdited': False,
+}
+OUT.write_text(json.dumps(report, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')
+print(json.dumps({'path': str(OUT), 'sha256': h(OUT.read_bytes()), 'unresolvedCount': 1}))

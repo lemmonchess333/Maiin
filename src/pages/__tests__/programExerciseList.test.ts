@@ -156,6 +156,31 @@ describe("a bodyweight lift's load reads as weight added to it", () => {
   });
 });
 
+describe("a row's drawing opens the exercise's form guide", () => {
+  /* Owner, 2026-10-16: "click on these on the left hand side to see form
+     pics". The drawing is a button before the row's own (a button cannot
+     hold another), and opens the guide over Train; the row still opens
+     the exercise's page. */
+  it("draws the picture as its own button that opens the guide", () => {
+    const body = dayBody();
+    const thumb = body.indexOf("aria-label={`How to do ${ex.name}`}");
+    expect(thumb).toBeGreaterThan(-1);
+    const rowButton = body.indexOf("/history/exercise/", thumb);
+    expect(rowButton).toBeGreaterThan(thumb);
+    const between = body.slice(thumb, rowButton);
+    expect(between).toContain("<ExerciseThumb");
+    expect(between).toMatch(/setFormGuide\(\{\s*name: ex\.name,\s*open: true/);
+    expect(code).toMatch(/<ExerciseFormSheet\b/);
+  });
+
+  it("is the tappable rows' only picture; the reorder rows keep theirs", () => {
+    const body = dayBody();
+    // One summary leaves its drawing to the button; the other draws its own.
+    expect(body.match(/showThumb=\{false\}/g)).toHaveLength(1);
+    expect(body.match(/<ExerciseRowSummary\b/g)).toHaveLength(2);
+  });
+});
+
 describe("the day cells name the day, not the programme", () => {
   it("labels each cell with its focus", () => {
     expect(code).toMatch(/bottomLabel: dayFocusLabel\(/);

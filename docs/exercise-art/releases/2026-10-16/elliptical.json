@@ -1,0 +1,186 @@
+{
+  "exerciseId": "elliptical",
+  "version": "anatomy-v3-2026-10-15-custom-rear-drive-elliptical-v1",
+  "width": 1047,
+  "height": 1072,
+  "decision": "owner-released-with-findings",
+  "reviewer": "/root",
+  "reviewedAt": "2026-10-15T23:36:29.508101+00:00",
+  "recordStage": "Actual registered review complete; normal project verification, exact-head CI and merge remain separate gates",
+  "reference": {
+    "path": "form-frames/elliptical/1.webp",
+    "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d"
+  },
+  "cueSha256": "3536ad6e961bfdab2d863eccbf78f485a83ff7b9524c7b5feeb5050b6625c7b1",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Root viewed both final native-framed poses, the FA56 canonical reference and retained original pose4. Same no-shorts athlete, trainers, fine contours and neutral tonal anatomy retained; no replacement model or fitted body parts."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: One fixed equipment camera and identical 1536x1120 scene, with unchanged source body coordinates, common96px bottom padding and crop[242,37,1289,1109] to1047x1072. No individual body fitting, rescaling or recovered-source3D calibration claim."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: The intact original bodies and white anatomy boundaries are preserved by source guards outside existing activation remapping. Native source and palette inspection disclosed retained source pose/activation variation; no new anatomical poses, grafts or warps."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Root reviewed the corrected clean common rear-drive four-bar apparatus and final native pair. Fixed renderer supplies shaded charcoal frame, axles, trays and mirrored D grips. The custom apparatus is plausible equipment, with explicit geometry and original-style differences; no E25/95Xi replica claim."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Native full-pair and actual mobile/card inspection show both trainers supported by real trays and both hands wrapped around supported D grip sections. Root previously viewed the actual8x far-hand comparison: five original dark AA edge pixels are a minor source/new-gear finding, not a white-finger gap."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: The equipment construction closes across721 sampled phases using one camera and fixed lengths; the two intact human states visibly retain plausible contacts. This validates the custom equipment construction and two illustrated states only, not anatomical near/far assignment, a continuous human trajectory or a complete calibrated stride."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Root reviewed primaryQuads/Glutes and secondaryFrontDelts/UpperBack/Hamstrings in native outputs against FA56. Pose4 posterior-thigh field is explicitly secondaryHamstrings. Exact approved two-colour remap inherits source tones/chroma; neutral pixels are not painted and no new spatial gradient is authored."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Root selected all six actual Show frame buttons in both390x844 themes, returned to1 and checked previous1to6/next6to1. Public frame src/alt, current-step selection and aria-describedby cue matched each case. Actual registered preparation, Cardio/Machine metadata and source-specific primary/secondary legend were read. Normal loops in both themes and slower light loop also reached matching settled current instructions for every path."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual full ExerciseFormContent registered owner lookup uses six public paths in source order1,1,4,4,1,1. All manual selections/wraps passed. Root observed normal playback in both themes around1.2seconds and slower light around2.4seconds, all6states and6to1 loops. Actual4-11ms image-to-instruction effect transients remain in the proof followed by correct selected instructions; no zero-lag, smooth interpolated human motion or six-distinct-pose claim."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Root reviewed actual registered ExerciseFormContent at390x844: all6manual image/cue/current-step matches, normal+slower complete loops, readable setup/legend/instructions, and full1047x1072source figure with head/trainers/whole custom machine visible in the360px-high contain image. Actual public normal469x480card viewed native and348/160long-side limits plus348x160header contain box; globaldocument380withinviewport390. Intentional native-card horizontal review scroll is local only."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Strict certification remains unverified. Actual scoped observation: Actual registered390x844dark review passed all6manual selections, normal loop, full figure and native/348/160card views. Image/palette/model/equipment remain the exact reviewed source bytes. Actual browser warning/error query returned[]. Temporary viewport reset, agent tab55closed and isolated review server stopped after review."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/elliptical/1.webp",
+      "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/elliptical/2026-10-16/draft/1-framed.png",
+        "sha256": "a3e16b655b56c3b3456dc86c56c8c54a7313189df3995d4f17116870283a2ed1"
+      }
+    },
+    {
+      "path": "form-frames/elliptical/2.webp",
+      "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/elliptical/2026-10-16/draft/1-framed.png",
+        "sha256": "a3e16b655b56c3b3456dc86c56c8c54a7313189df3995d4f17116870283a2ed1"
+      }
+    },
+    {
+      "path": "form-frames/elliptical/3.webp",
+      "sha256": "1b9862601b8c27b6ee101779b325cf9591a1a1175da9b35e18f8d29077864c1f",
+      "sourcePose": 4,
+      "source": {
+        "path": "docs/exercise-art/sources/elliptical/2026-10-16/draft/4-framed.png",
+        "sha256": "68966e2533c26baa2b785bd545cca4c6d85acd783f9b84a38e70bf7f8923c887"
+      }
+    },
+    {
+      "path": "form-frames/elliptical/4.webp",
+      "sha256": "1b9862601b8c27b6ee101779b325cf9591a1a1175da9b35e18f8d29077864c1f",
+      "sourcePose": 4,
+      "source": {
+        "path": "docs/exercise-art/sources/elliptical/2026-10-16/draft/4-framed.png",
+        "sha256": "68966e2533c26baa2b785bd545cca4c6d85acd783f9b84a38e70bf7f8923c887"
+      }
+    },
+    {
+      "path": "form-frames/elliptical/5.webp",
+      "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/elliptical/2026-10-16/draft/1-framed.png",
+        "sha256": "a3e16b655b56c3b3456dc86c56c8c54a7313189df3995d4f17116870283a2ed1"
+      }
+    },
+    {
+      "path": "form-frames/elliptical/6.webp",
+      "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/elliptical/2026-10-16/draft/1-framed.png",
+        "sha256": "a3e16b655b56c3b3456dc86c56c8c54a7313189df3995d4f17116870283a2ed1"
+      }
+    }
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": [1, 1, 4, 4, 1, 1],
+  "positionCoordinates": [0, 0, 1, 1, 0, 0],
+  "setup": [
+    "Step on the pedals with feet evenly placed, grip the moving handles.",
+    "Start with a smooth easy pace to find the stride rhythm."
+  ],
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "approval": {
+    "actor": "User, in this session",
+    "instruction": "Continue new exercises using the approved athlete without shorts, allow the agreed limited findings, preserve colours and plausible equipment, finish and merge; stop routine approval questions.",
+    "context": "Existing session authorization covers intact-source equipment/colour finishing, local registration/checks and merge. Root accepts this specific reviewed custom-equipment two-state draft with findings; no strict certification is inferred."
+  },
+  "findings": [
+    "Custom rear-drive four-bar, passive pitching trays and mirrored offset-bearing D grips; no exact manufacturer-model or recovered source3D claim.",
+    "Near/far locked stem and pedal-bearing settings differ but stay fixed across both poses; dimensions/camera/phase closure are exposed in authoring/fixed-geometry.json.",
+    "Two genuine intact source body states repeated across six distinct paths. No generated human intermediates or continuous human trajectory claim.",
+    "Original source shading/contours and minor source pose/activation differences retained. Pose4posterior-thigh field is secondaryHamstrings, not silently relabelled as primaryQuads.",
+    "Five original dark upper-cylinder antialias pixels near pose4far index edge differ from new hardware. Parent reviewed this as a minor equipment edge finding, not missing white finger anatomy.",
+    "Shaded charcoal custom apparatus differs from original generated machine style and equipment geometry; parent source-construction eligibility is not final palette/mobile or strict acceptance."
+  ],
+  "observedQaChecks": {
+    "identity": {
+      "observed": true,
+      "evidence": "Root viewed both final native-framed poses, the FA56 canonical reference and retained original pose4. Same no-shorts athlete, trainers, fine contours and neutral tonal anatomy retained; no replacement model or fitted body parts."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "One fixed equipment camera and identical 1536x1120 scene, with unchanged source body coordinates, common96px bottom padding and crop[242,37,1289,1109] to1047x1072. No individual body fitting, rescaling or recovered-source3D calibration claim."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "The intact original bodies and white anatomy boundaries are preserved by source guards outside existing activation remapping. Native source and palette inspection disclosed retained source pose/activation variation; no new anatomical poses, grafts or warps."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "Root reviewed the corrected clean common rear-drive four-bar apparatus and final native pair. Fixed renderer supplies shaded charcoal frame, axles, trays and mirrored D grips. The custom apparatus is plausible equipment, with explicit geometry and original-style differences; no E25/95Xi replica claim."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Native full-pair and actual mobile/card inspection show both trainers supported by real trays and both hands wrapped around supported D grip sections. Root previously viewed the actual8x far-hand comparison: five original dark AA edge pixels are a minor source/new-gear finding, not a white-finger gap."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "The equipment construction closes across721 sampled phases using one camera and fixed lengths; the two intact human states visibly retain plausible contacts. This validates the custom equipment construction and two illustrated states only, not anatomical near/far assignment, a continuous human trajectory or a complete calibrated stride."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Root reviewed primaryQuads/Glutes and secondaryFrontDelts/UpperBack/Hamstrings in native outputs against FA56. Pose4 posterior-thigh field is explicitly secondaryHamstrings. Exact approved two-colour remap inherits source tones/chroma; neutral pixels are not painted and no new spatial gradient is authored."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Root selected all six actual Show frame buttons in both390x844 themes, returned to1 and checked previous1to6/next6to1. Public frame src/alt, current-step selection and aria-describedby cue matched each case. Actual registered preparation, Cardio/Machine metadata and source-specific primary/secondary legend were read. Normal loops in both themes and slower light loop also reached matching settled current instructions for every path."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Actual full ExerciseFormContent registered owner lookup uses six public paths in source order1,1,4,4,1,1. All manual selections/wraps passed. Root observed normal playback in both themes around1.2seconds and slower light around2.4seconds, all6states and6to1 loops. Actual4-11ms image-to-instruction effect transients remain in the proof followed by correct selected instructions; no zero-lag, smooth interpolated human motion or six-distinct-pose claim."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Root reviewed actual registered ExerciseFormContent at390x844: all6manual image/cue/current-step matches, normal+slower complete loops, readable setup/legend/instructions, and full1047x1072source figure with head/trainers/whole custom machine visible in the360px-high contain image. Actual public normal469x480card viewed native and348/160long-side limits plus348x160header contain box; globaldocument380withinviewport390. Intentional native-card horizontal review scroll is local only."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Actual registered390x844dark review passed all6manual selections, normal loop, full figure and native/348/160card views. Image/palette/model/equipment remain the exact reviewed source bytes. Actual browser warning/error query returned[]. Temporary viewport reset, agent tab55closed and isolated review server stopped after review."
+    }
+  },
+  "integrationValidation": "Actual parent registered guide/card review recorded with exact evidence hashes; eleven strict fields remain null. No project/CI/merge/completion claim.",
+  "publicationGate": "No credit before actual registered review, normal verification disposition, exact-head CI, merge and preservation audit."
+}

@@ -1,0 +1,159 @@
+{
+  "status": "one-bounded-revision-awaiting-root-native-review",
+  "sourceProposalPath": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\pull-ups\\intact-two-endpoint-production-20261014\\semantic-mask-proposal.json",
+  "sourceProposalSha256": "1115493fad7a3575579e730f7a37c2f835b9b3c5051d1b60328f77852473eb63",
+  "palette": {
+    "primaryLats": "#7B72E9",
+    "secondaryBicepsCore": "#9590E0"
+  },
+  "rootManualReviewInstruction": "Secondary default over all existing core/biceps chroma; neutralize actual pecs; primary complete lat wings; do not cut upper-arm fields at arbitrary ROI edge.",
+  "method": "Inherited source-chroma coverage; semantic pectoral/lat masks from visible source fields; source maximum-channel shading; secondary default then neutral pectorals and primary lat overlay. No new gradient and no colour outside original source-chroma coverage.",
+  "maskAntialiasing": "4x semantic mask rasterization downsampled to original source scale. Pectoral mask includes one source-pixel contour fringe.",
+  "semanticPolygons": {
+    "1": {
+      "neutral-visible-pectorals": [
+        [
+          [299, 956],
+          [310, 947],
+          [327, 962],
+          [341, 972],
+          [342, 991],
+          [334, 1008],
+          [330, 1030],
+          [330, 1042],
+          [322, 1051],
+          [305, 1054],
+          [291, 1050],
+          [279, 1042],
+          [272, 1030],
+          [269, 1010],
+          [271, 991],
+          [279, 975],
+          [289, 965]
+        ],
+        [
+          [341, 980],
+          [356, 967],
+          [379, 964],
+          [399, 953],
+          [412, 960],
+          [429, 977],
+          [435, 994],
+          [431, 1012],
+          [418, 1031],
+          [403, 1042],
+          [383, 1050],
+          [362, 1054],
+          [345, 1050],
+          [334, 1043],
+          [331, 1027],
+          [334, 1007]
+        ]
+      ],
+      "primary-complete-visible-lats": [
+        [
+          [268, 997],
+          [273, 1008],
+          [277, 1030],
+          [277, 1054],
+          [281, 1078],
+          [288, 1111],
+          [274, 1098],
+          [264, 1076],
+          [257, 1054],
+          [255, 1029],
+          [258, 1013]
+        ],
+        [
+          [441, 998],
+          [449, 1012],
+          [465, 1024],
+          [465, 1044],
+          [459, 1065],
+          [449, 1086],
+          [436, 1107],
+          [429, 1117],
+          [432, 1093],
+          [435, 1074],
+          [435, 1052],
+          [436, 1030]
+        ]
+      ]
+    },
+    "2": {
+      "neutral-visible-pectorals": [
+        [
+          [291, 718],
+          [307, 710],
+          [333, 707],
+          [350, 712],
+          [355, 728],
+          [346, 746],
+          [340, 764],
+          [328, 779],
+          [312, 786],
+          [296, 785],
+          [284, 780],
+          [277, 768],
+          [275, 748],
+          [281, 731]
+        ],
+        [
+          [353, 713],
+          [380, 704],
+          [410, 707],
+          [441, 715],
+          [457, 729],
+          [475, 744],
+          [481, 752],
+          [465, 764],
+          [445, 775],
+          [420, 783],
+          [393, 786],
+          [369, 786],
+          [350, 781],
+          [341, 770],
+          [343, 749]
+        ]
+      ],
+      "primary-complete-visible-lats": [
+        [
+          [273, 774],
+          [283, 784],
+          [282, 800],
+          [277, 815],
+          [275, 833],
+          [278, 850],
+          [271, 849],
+          [266, 833],
+          [265, 811],
+          [268, 790]
+        ],
+        [
+          [473, 752],
+          [479, 771],
+          [484, 792],
+          [482, 814],
+          [472, 839],
+          [457, 858],
+          [440, 878],
+          [437, 865],
+          [440, 846],
+          [441, 827],
+          [444, 805],
+          [446, 787],
+          [459, 770]
+        ]
+      ]
+    }
+  },
+  "nativeNeutralRGBOutsideCoverageExact": true,
+  "originalAlphaExact": true,
+  "neutralizationLimit": "Uses source maximum-channel shading; not a claim of exact lost uncoloured chest RGB recovery.",
+  "rearDelts": "Not invented in this anterior view.",
+  "triceps": "No separate triceps field neutralized without independent visible contour proof; root native review identified the retained source upper-arm fields as biceps.",
+  "anatomyWarpsGraftsOrContourEdits": 0,
+  "newGradients": 0,
+  "noNewPose": true,
+  "qualityNotProvedByMetrics": true
+}

@@ -1,0 +1,15 @@
+{
+  "repo/docs/exercise-art/releases/2026-10-15/face-pulls.json": "cab658c522ff6f5d0cfcd536d5f1af962b5e1cd1fa2c0c83194faa64713c843d",
+  "candidate/sequence-plan.json": "c84ab270929558d02c66964c4d114d786debe8b083ace64699707920e56ea64c",
+  "repo/masters/face-pulls/1.png": "c414fc6ea02c66cc063be9ac40d3fe99781ecba3a7cfbc44c0089143165f7c03",
+  "repo/public/form-art/face-pulls.webp": "77675e58c4c89ce7f0f69084eab2668f00cbf1790e1a98ade9a65b8a32d0eb04",
+  "repo/docs/exercise-art/identity/athlete-anatomy-v3.png": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "repo/public/form-frames/face-pulls/1.webp": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+  "repo/public/form-frames/face-pulls/2.webp": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+  "repo/public/form-frames/face-pulls/3.webp": "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65",
+  "repo/public/form-frames/face-pulls/4.webp": "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65",
+  "repo/public/form-frames/face-pulls/5.webp": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+  "repo/public/form-frames/face-pulls/6.webp": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+  "repo/docs/exercise-art/sources/face-pulls/2026-10-15/draft/1-framed.png": "c414fc6ea02c66cc063be9ac40d3fe99781ecba3a7cfbc44c0089143165f7c03",
+  "repo/docs/exercise-art/sources/face-pulls/2026-10-15/draft/4-framed.png": "3bcead266a6ea14aa625bf67630d1604996a55d4e0635765401d89751a69f137"
+}

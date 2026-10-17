@@ -1,0 +1,9 @@
+{
+  "reviewStatus": "reviewed",
+  "image": "swimming.png",
+  "imageSha256": "db95d79b0da8173894ac6299cb8b54b76a2ff47f12201e4586224b0f0309f316",
+  "reference": "form-frames/swimming/2.webp",
+  "referenceSha256": "f63e3fd3e9882676ab137d67d88f77ce2b94a212743b9e094138826dc6162bc0",
+  "method": "Frame 2 keyed out of its black backdrop with the standard five steps (scripts/art/keying.ts), then the thin water line made transparent within 12 rows of row 342: every pixel where the swimmer does not cross the band, and dark bluish pixels where it does. Geometry and colours unchanged; the standard card generator trims and scales it.",
+  "reviewEvidence": "Checked as a card picture on white and dark cards: the dark streak the line left on a white card is gone; one pixel-sized speck remains where the line touches the toes."
+}

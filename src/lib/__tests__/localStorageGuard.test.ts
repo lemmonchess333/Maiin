@@ -68,7 +68,7 @@ function stripCommentsAndStrings(src: string): string {
 const files = [
   ...sourceFiles(resolve(repoRoot, "src"), /\.tsx?$/),
   ...sourceFiles(resolve(repoRoot, "public"), /\.js$/),
-].map((f) => relative(repoRoot, f));
+].map((f) => relative(repoRoot, f).replaceAll("\\", "/"));
 
 describe("single-door enforcement (no raw localStorage outside localStore.ts)", () => {
   it("scans a sane number of files (the walk isn't silently empty)", () => {

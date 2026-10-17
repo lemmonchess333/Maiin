@@ -1,0 +1,187 @@
+{
+  "exerciseId": "face-pulls",
+  "version": "anatomy-v3-2026-10-15-ergonomic-rope-two-endpoint-v1",
+  "width": 982,
+  "height": 1258,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Parent actual native/card and registered component mobile review, with independent source/preservation evidence",
+  "reviewedAt": "2026-10-15T12:42:22.706894+00:00",
+  "recordStage": "reviewed-owner-with-findings; project verification and publication separately recorded",
+  "reference": {
+    "path": "form-frames/face-pulls/1.webp",
+    "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300"
+  },
+  "cueSha256": "465a757d976867ff47bfc9ef01a4a170611124c4a4633dbd071df8358ab068b7",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Owner release retains unverified strict status. Actual scoped observation: Parent viewed both final complete982x1258 native poses, standard480/160cards, and actual registered390x844 light/dark guide. Existing FA56 lean bald faceless no-shorts model, featureless pelvis, trainers and inherited fine contours/shading remain. This is scoped visual observation, not calibrated identity certification."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Owner release retains unverified strict status. Actual scoped observation: Both exact source endpoints use common crop[0,72,982,1330], without scaling. Whole head, trainers and complete tower stay visible in native/player/card. No independent limb fitting or camera change."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Owner release retains unverified strict status. Actual scoped observation: Parent inspected intact reach and high-elbow external-rotation endpoints. Original human RGBA is unchanged by the equipment layer; colour changes remain within existing tinted fields. No anatomical warps, grafts, invented joints or hidden-hand reconstruction."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Owner release retains unverified strict status. Actual scoped observation: Parent reviewed generic ergonomic inner-flange/palm-support grips at native and mobile sizes against actual manufacturer topology. Hands, cable, pulley and stack positions are preserved. Hidden far-start free terminal remains uncertain; minor neutral surface-render variation is disclosed."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Owner release retains unverified strict status. Actual scoped observation: Original closed finger/grip pixels and planted trainers remain intact in both endpoints. Visible hands close around their original grip regions. Occluded far-start terminal support is not visually certified."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Owner release retains unverified strict status. Actual scoped observation: Actual two-endpoint playback moves reach to high-elbow external-rotation finish and back. Projected cable payout79-83px versus stack rise75px is locally consistent, not calibrated3D routing/world-length proof. No continuous path is claimed."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Owner release retains unverified strict status. Actual scoped observation: Actual registered key and prescribed colour fields are Rear Delts primary#7B72E9, Rhomboids/Traps/visible Rotator Cuff secondary#9590E0. Existing fine contours/shading retained. Inherited pale highlight islands remain visible and accepted as a disclosed cosmetic finding."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Owner release retains unverified strict status. Actual scoped observation: Parent selected all six actual registered instruction buttons; correct labels, public URLs and cues observed. Both preparation sentences match the catalogue. Source order[1,1,4,4,1,1], position values[0,0,1,1,0,0]; no illustrated intermediate."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Owner release retains unverified strict status. Actual scoped observation: Actual native and registered player traces show six decoded paths, automatic6-to-1 wraps, pause/manual selection, next6-to-1 and previous1-to-6. Slower cadence approximately2.4s versus normal1.2s. Two physical endpoint drawings are disclosed."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Owner release retains unverified strict status. Actual scoped observation: Parent viewed actual unchanged ExerciseFormContent at verified390x844 light, after final standard card generation. Full athlete/tower, card, primary/secondary key, preparation, all cues and controls readable. Actual browser warnings/errors empty. Screenshot-watcher server failure retained separately and affected checks repeated after recovery."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Owner release retains unverified strict status. Actual scoped observation: Parent viewed actual unchanged ExerciseFormContent at verified390x844 dark, including full athlete/trainers/tower, exact standard card, key, preparation and cues. No horizontal overflow. Actual playback and control evidence retained after server recovery; browser warnings/errors empty."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/face-pulls/1.webp",
+      "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/face-pulls/2026-10-15/draft/1-framed.png",
+        "sha256": "c414fc6ea02c66cc063be9ac40d3fe99781ecba3a7cfbc44c0089143165f7c03"
+      }
+    },
+    {
+      "path": "form-frames/face-pulls/2.webp",
+      "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/face-pulls/2026-10-15/draft/1-framed.png",
+        "sha256": "c414fc6ea02c66cc063be9ac40d3fe99781ecba3a7cfbc44c0089143165f7c03"
+      }
+    },
+    {
+      "path": "form-frames/face-pulls/3.webp",
+      "sha256": "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65",
+      "sourcePose": 4,
+      "source": {
+        "path": "docs/exercise-art/sources/face-pulls/2026-10-15/draft/4-framed.png",
+        "sha256": "3bcead266a6ea14aa625bf67630d1604996a55d4e0635765401d89751a69f137"
+      }
+    },
+    {
+      "path": "form-frames/face-pulls/4.webp",
+      "sha256": "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65",
+      "sourcePose": 4,
+      "source": {
+        "path": "docs/exercise-art/sources/face-pulls/2026-10-15/draft/4-framed.png",
+        "sha256": "3bcead266a6ea14aa625bf67630d1604996a55d4e0635765401d89751a69f137"
+      }
+    },
+    {
+      "path": "form-frames/face-pulls/5.webp",
+      "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/face-pulls/2026-10-15/draft/1-framed.png",
+        "sha256": "c414fc6ea02c66cc063be9ac40d3fe99781ecba3a7cfbc44c0089143165f7c03"
+      }
+    },
+    {
+      "path": "form-frames/face-pulls/6.webp",
+      "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+      "sourcePose": 1,
+      "source": {
+        "path": "docs/exercise-art/sources/face-pulls/2026-10-15/draft/1-framed.png",
+        "sha256": "c414fc6ea02c66cc063be9ac40d3fe99781ecba3a7cfbc44c0089143165f7c03"
+      }
+    }
+  ],
+  "physicalPoses": 2,
+  "sourcePoseOrder": [1, 1, 4, 4, 1, 1],
+  "positionCoordinates": [0, 0, 1, 1, 0, 0],
+  "newImageRequests": 0,
+  "authoredSetupInstructions": [
+    "Set a rope at or slightly above face height and grip the ends with palms down.",
+    "Step back for tension, arms extended straight toward the pulley."
+  ],
+  "scope": "Two complete physical endpoints repeated across six instruction paths; no separately illustrated intermediate or continuous trajectory claimed.",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "approval": {
+    "actor": "User, through the continuing request to finish the remaining exercises and earlier explicit slight-requirements relaxation; parent directs this local integration.",
+    "instruction": "User approved a trial of slightly relaxed strict requirements, then said \"ok do it then and continue wiht the rest\", preserving the current model without shorts and authorizing continued work without repeated approval questions.",
+    "context": "Existing explicit user authorization covers remaining conversions with minor disclosed findings, no-shorts model preservation, routine registration/checks and merge. Parent completed actual native/card/mobile review. This owner-with-findings release does not assert strict visual certification; actual project/CI/merge evidence is recorded separately."
+  },
+  "findings": [
+    "The far-start terminal palm support/free-end ordering is naturally occluded or uncertain in the flat source and is not visually certified.",
+    "The generic ergonomic attachment follows an evidenced real topology but is not an exact branded product replica; minor neutral equipment shading variation remains.",
+    "Projected cable payout approximately79-83px and selected-stack rise approximately75px are consistent local observations, not calibrated3D rope/stack geometry or world-length certification.",
+    "Two physical endpoint drawings repeat across six named instruction paths; no separately illustrated intermediate or continuous trajectory is supplied.",
+    "Fine inherited pale muscle-highlight islands remain visible after prescribed colour remap; parent accepted their native/card/mobile appearance as a minor cosmetic finding."
+  ],
+  "integrationValidation": "Actual native/player/card and registered390x844 light/dark observations complete; raw evidence archived. All11 strict checks intentionally remain null. Project/CI/merge are separate gates.",
+  "completionCredit": false,
+  "observedQaChecks": {
+    "identity": {
+      "observed": true,
+      "evidence": "Parent viewed both final complete982x1258 native poses, standard480/160cards, and actual registered390x844 light/dark guide. Existing FA56 lean bald faceless no-shorts model, featureless pelvis, trainers and inherited fine contours/shading remain. This is scoped visual observation, not calibrated identity certification."
+    },
+    "camera": {
+      "observed": true,
+      "evidence": "Both exact source endpoints use common crop[0,72,982,1330], without scaling. Whole head, trainers and complete tower stay visible in native/player/card. No independent limb fitting or camera change."
+    },
+    "anatomy": {
+      "observed": true,
+      "evidence": "Parent inspected intact reach and high-elbow external-rotation endpoints. Original human RGBA is unchanged by the equipment layer; colour changes remain within existing tinted fields. No anatomical warps, grafts, invented joints or hidden-hand reconstruction."
+    },
+    "equipment": {
+      "observed": true,
+      "evidence": "Parent reviewed generic ergonomic inner-flange/palm-support grips at native and mobile sizes against actual manufacturer topology. Hands, cable, pulley and stack positions are preserved. Hidden far-start free terminal remains uncertain; minor neutral surface-render variation is disclosed."
+    },
+    "contact": {
+      "observed": true,
+      "evidence": "Original closed finger/grip pixels and planted trainers remain intact in both endpoints. Visible hands close around their original grip regions. Occluded far-start terminal support is not visually certified."
+    },
+    "physics": {
+      "observed": true,
+      "evidence": "Actual two-endpoint playback moves reach to high-elbow external-rotation finish and back. Projected cable payout79-83px versus stack rise75px is locally consistent, not calibrated3D routing/world-length proof. No continuous path is claimed."
+    },
+    "muscles": {
+      "observed": true,
+      "evidence": "Actual registered key and prescribed colour fields are Rear Delts primary#7B72E9, Rhomboids/Traps/visible Rotator Cuff secondary#9590E0. Existing fine contours/shading retained. Inherited pale highlight islands remain visible and accepted as a disclosed cosmetic finding."
+    },
+    "cueAgreement": {
+      "observed": true,
+      "evidence": "Parent selected all six actual registered instruction buttons; correct labels, public URLs and cues observed. Both preparation sentences match the catalogue. Source order[1,1,4,4,1,1], position values[0,0,1,1,0,0]; no illustrated intermediate."
+    },
+    "sequenceAndLoop": {
+      "observed": true,
+      "evidence": "Actual native and registered player traces show six decoded paths, automatic6-to-1 wraps, pause/manual selection, next6-to-1 and previous1-to-6. Slower cadence approximately2.4s versus normal1.2s. Two physical endpoint drawings are disclosed."
+    },
+    "mobileLight": {
+      "observed": true,
+      "evidence": "Parent viewed actual unchanged ExerciseFormContent at verified390x844 light, after final standard card generation. Full athlete/tower, card, primary/secondary key, preparation, all cues and controls readable. Actual browser warnings/errors empty. Screenshot-watcher server failure retained separately and affected checks repeated after recovery."
+    },
+    "mobileDark": {
+      "observed": true,
+      "evidence": "Parent viewed actual unchanged ExerciseFormContent at verified390x844 dark, including full athlete/trainers/tower, exact standard card, key, preparation and cues. No horizontal overflow. Actual playback and control evidence retained after server recovery; browser warnings/errors empty."
+    }
+  }
+}

@@ -46,7 +46,6 @@ import { runDoseLine } from "../../src/lib/runDose";
 import { runSessionAbout, runSessionName } from "../../src/lib/runSessionAbout";
 import { RUN_TEMPLATES } from "../../src/lib/workoutTemplates";
 import {
-  RUN,
   RUN_ABOUT,
   TABS,
   TRAIN,
@@ -198,11 +197,11 @@ test("a runner with no benchmark, through every surface that explains a planned 
 
     await expectTrainExplains(page, quality!);
 
-    // The Run page's launch card: the session by name and its one feel line,
-    // where a pace would be with one.
-    await openTab(page, TABS.home);
+    // The Run page's launch card, opened from Train's card (Home's Start
+    // goes straight into the run): the session by name and its one feel
+    // line, where a pace would be with one.
     await page
-      .getByRole("button", { name: RUN.homeStart, exact: true })
+      .getByRole("button", { name: TRAIN.viewRun, exact: true })
       .click();
     await expect(
       page.getByRole("heading", {

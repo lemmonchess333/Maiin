@@ -1,0 +1,31 @@
+{
+  "exerciseId": "incline-db-curl",
+  "states": [
+    {
+      "pose": "A",
+      "sourceSha256": "b7cb2464cc0913d68928ac1ee32dcae4b3b57407693190276c988e28a3076aea",
+      "primaryPixels": 5517,
+      "secondaryPixels": 5679,
+      "mechanics": null,
+      "headAndFixedScene": "All pixels outside the documented B moving region come from A at unchanged coordinates. A itself is the retained native source; no original-master outside-pixel invariance claimed.",
+      "anatomicalTransforms": 0
+    },
+    {
+      "pose": "B",
+      "sourceSha256": "843d7277ca0bda1434814204c96f2fe961df471d9b30d5da8c43a2567d174736",
+      "primaryPixels": 3607,
+      "secondaryPixels": 6150,
+      "mechanics": null,
+      "headAndFixedScene": "All pixels outside the documented B moving region come from A at unchanged coordinates. A itself is the retained native source; no original-master outside-pixel invariance claimed.",
+      "anatomicalTransforms": 0
+    }
+  ],
+  "sourceScale": 1,
+  "commonCrop": [320, 224, 1248, 944],
+  "integerPadding": [32, 32],
+  "dimensions": [992, 784],
+  "anatomicalTransforms": 0,
+  "newImageRequestsInRecipe": 0,
+  "strictCertified": false,
+  "completionCredit": false
+}

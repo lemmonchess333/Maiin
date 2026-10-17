@@ -1,0 +1,10 @@
+{
+  "normalCommand": "npm run art:cutouts -- --only=single-leg-calf-raise",
+  "generatorSha256": "a465f712bcb21078a171e6ddfd24f74112a5d379192c7159f133a0fb869f0f2f",
+  "previewMatchesRegisteredExact": true,
+  "sha256": "bf19def08b9fcbcd4e97243c22fb8fbc2c7d4ac7b98d25c2fb86bd17dfab1298",
+  "reference": "form-frames/single-leg-calf-raise/3.webp",
+  "width": 249,
+  "height": 480,
+  "bytes": 17816
+}

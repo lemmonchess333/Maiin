@@ -1,0 +1,88 @@
+{
+  "status": "first-static-colour-draft-requires-root-native-review",
+  "method": "Default secondary over inherited purple source coverage, primary visible central back compartment, excluding the existing large lat field. Whole source maximum-channel shading retained, no new gradient. Anatomical semantic masks follow visible source domains; brightness/saturation is not used to assign primary versus secondary.",
+  "palette": {
+    "Mid Back": "#7B72E9",
+    "Lats/Rhomboids/Biceps": "#9590E0"
+  },
+  "semanticMasksOriginalSourceCoordinates": {
+    "centralBack": {
+      "1": [
+        [438, 612],
+        [480, 569],
+        [518, 504],
+        [550, 451],
+        [593, 412],
+        [647, 378],
+        [682, 345],
+        [688, 360],
+        [661, 401],
+        [652, 435],
+        [654, 475],
+        [653, 500],
+        [636, 540],
+        [618, 576],
+        [563, 602],
+        [498, 612]
+      ],
+      "2": [
+        [438, 611],
+        [480, 569],
+        [514, 506],
+        [545, 447],
+        [590, 403],
+        [642, 378],
+        [682, 345],
+        [687, 360],
+        [661, 400],
+        [648, 431],
+        [636, 461],
+        [625, 485],
+        [604, 516],
+        [582, 549],
+        [557, 578],
+        [511, 602]
+      ]
+    },
+    "excludedSecondaryLat": {
+      "1": [
+        [467, 597],
+        [492, 581],
+        [516, 565],
+        [539, 542],
+        [558, 519],
+        [582, 496],
+        [600, 482],
+        [615, 477],
+        [629, 487],
+        [643, 499],
+        [640, 526],
+        [626, 555],
+        [606, 576],
+        [567, 588],
+        [527, 596],
+        [489, 599]
+      ],
+      "2": [
+        [477, 597],
+        [501, 578],
+        [525, 553],
+        [543, 529],
+        [561, 507],
+        [579, 490],
+        [594, 478],
+        [610, 482],
+        [602, 504],
+        [582, 532],
+        [572, 555],
+        [557, 577],
+        [531, 591],
+        [502, 597]
+      ]
+    }
+  },
+  "originalNeutralRGBAndAlphaExact": true,
+  "geometryChanges": 0,
+  "newGradients": 0,
+  "qualityNotEstablishedByMetrics": true
+}

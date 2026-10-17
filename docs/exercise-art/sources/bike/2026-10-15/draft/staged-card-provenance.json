@@ -1,0 +1,21 @@
+{
+  "algorithmSource": "scripts/art/cut-out-form-art.ts",
+  "algorithmCoreSha256": "f95042479cc61ffb5b292b7da463d4479963f1f76d7b3b98e3175f4d2b12487c",
+  "reference": "form-frames/bike/1.webp",
+  "sourceSha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+  "preparedSource": "prepared-card-source.png",
+  "preparedSourceSha256": "05a373df81bf9c884afc3eacb269dc0964e8a04a2ff7372005439b7f32ea6551",
+  "referenceKeyed": true,
+  "preparedInputKeyed": false,
+  "width": 311,
+  "height": 480,
+  "contentBox": {
+    "left": 0,
+    "top": 0,
+    "width": 929,
+    "height": 1432
+  },
+  "scale": 0.33519553072625696,
+  "sha256": "7df835345404a62c9d61d915ad68f7962372a18025933e167c0f3526e80f67d7",
+  "customAlphaEdits": false
+}

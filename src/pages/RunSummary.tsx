@@ -8,6 +8,8 @@ import {
   useRef,
   useSyncExternalStore,
   Suspense,
+  Component,
+  type ReactNode,
 } from "react";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
@@ -170,10 +172,30 @@ function RetryBanner({
  * because none of them make sense for sub-50m noise. */
 // An optional detail, loaded on its own: from its own file, so it brings
 // only the card and not the workout finish screen it once shared a file with.
-const WeekPulseView = lazyRetry(() => import("@/components/WeekPulseView"));
+const WeekPulseView = lazyRetry(() => import("@/components/WeekPulseView"), {
+  reloadOnChunkError: false,
+});
 const SavedRunKudos = lazyRetry(
-  () => import("@/components/social/SavedRunKudos")
+  () => import("@/components/social/SavedRunKudos"),
+  { reloadOnChunkError: false }
 );
+
+// Optional panels may disappear, but a failed import/render must never lose
+// the saved receipt or Done action. Lazy rejects are cached, so no dead Retry.
+class OptionalSummaryBoundary extends Component<
+  { children: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
 
 interface InvalidRunReviewProps {
   unit: DistanceUnit;
@@ -805,16 +827,20 @@ export default function RunSummary() {
   // Runna-style plan-vs-actual verdict (running competitive doc P0 #3): how a
   // PLANNED session's pace compared with its target, including the "keep
   // the easy days easy" nudge. `plannedRunVerdict` holds the rules.
-  const paceVerdict = plannedRunVerdict({
-    planMetadata: runConfig?.planMetadata,
-    place: runConfig?.place,
-    avgPaceSeconds,
-    workPaceSeconds: workPaceSeconds(state.workPortion),
-    pinnedPaceSeconds: pinnedWorkPace(runConfig?.segments),
-    distance,
-    runFitness: profile?.runFitness,
-    unit,
-  });
+  // A typed whole-run distance cannot measure the session's work segments
+  // or support a planned pace verdict, including a GPS → manual fallback.
+  const paceVerdict = typedDistance
+    ? null
+    : plannedRunVerdict({
+        planMetadata: runConfig?.planMetadata,
+        place: runConfig?.place,
+        avgPaceSeconds,
+        workPaceSeconds: workPaceSeconds(state.workPortion),
+        pinnedPaceSeconds: pinnedWorkPace(runConfig?.segments),
+        distance,
+        runFitness: profile?.runFitness,
+        unit,
+      });
 
   // The context-aware primary stat, a card above the stats card of four.
   // Intervals get a work-set summary ("N × distance @ pace") instead of
@@ -1370,9 +1396,14 @@ export default function RunSummary() {
               someone the user follows also trained today. Renders nothing
               otherwise; once/day; dismissible. */}
           {saved && (
-            <Suspense fallback={null}>
-              <SavedRunKudos uid={user?.uid} fromName={profile?.displayName} />
-            </Suspense>
+            <OptionalSummaryBoundary>
+              <Suspense fallback={null}>
+                <SavedRunKudos
+                  uid={user?.uid}
+                  fromName={profile?.displayName}
+                />
+              </Suspense>
+            </OptionalSummaryBoundary>
           )}
 
           {/* P3-1: save-time mismatch reconciliation.
@@ -1612,9 +1643,11 @@ export default function RunSummary() {
               handed this run to count; once saved, the id keeps it from
               being counted twice. Null while loading; no jank. */}
           <div className="px-4 mb-4">
-            <Suspense fallback={null}>
-              <WeekPulseView pulse={weekPulse} />
-            </Suspense>
+            <OptionalSummaryBoundary>
+              <Suspense fallback={null}>
+                <WeekPulseView pulse={weekPulse} />
+              </Suspense>
+            </OptionalSummaryBoundary>
           </div>
 
           {/* Pace Trend Badge + Run8-Vocab Adherence chip.

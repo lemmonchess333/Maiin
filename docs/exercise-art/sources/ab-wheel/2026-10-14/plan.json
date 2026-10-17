@@ -1,0 +1,93 @@
+{
+  "exerciseId": "ab-wheel",
+  "status": "Three intact physical sources and native six-beat playback reviewed; field/card/mobile/project gates pending",
+  "method": "New whole-athlete exercise master from canonical FA56, followed by adjacent whole-pose edits anchored to the master. Old clothed sources are not inputs.",
+  "canonical": "C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees/docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "catalogue": "catalogue.json",
+  "variant": "Kneeling two-hand single ab wheel rollout on a knee pad",
+  "camera": "Fixed near-side three-quarter front view, athlete faces right, both wheel handle grips and knees visible, full body and trainers, one landscape canvas with forward rollout space",
+  "muscles": {
+    "primary": ["Core"],
+    "secondary": ["Lats", "Shoulders"],
+    "primaryHex": "#7B72E9",
+    "secondaryHex": "#9590E0",
+    "neutralShading": "Preserve the canonical fine contour and neutral pale-grey shading character; no new broad gradient or inflation"
+  },
+  "equipment": "One compact neutral dark-grey single rubber wheel with constant radius and rigid transverse axle, two closed grips, one thin plain grey knee pad. No bands, extra wheels or machine.",
+  "identity": "Same bald faceless lean white/light-grey anatomical athlete, white trainers, smooth neutral featureless pelvis, no shorts, seams, waistband, underwear outline or genital detail",
+  "sourcePoses": [
+    {
+      "name": "Brace",
+      "physicalState": "Both knees on the fixed pad, shins and trainers resting behind. Wheel directly under shoulders, elbows straight, ribs down, pelvis tucked, spine neutral. Hips above and slightly forward of knees, never resting on heels."
+    },
+    {
+      "name": "Roll",
+      "physicalState": "An advanced intermediate rollout. Knees remain supported; straight arms angle forward, shoulders travel forward/down and hips extend in control. Rib-to-pelvis shape remains braced; no lumbar arch. The actual generated travel is not represented as exactly halfway."
+    },
+    {
+      "name": "Reach",
+      "physicalState": "Longest illustrated controlled reach with residual hip flexion. Knees remain supported, torso braced and neutral, elbows straight, head follows spine and body clear of floor. This is a shorter controlled-range rollout, not claimed perfectly shoulder-hip-knee linear or fully horizontal. No unsupported wheel, sagging waist or collapsed chest."
+    }
+  ],
+  "beats": [
+    {
+      "frame": 1,
+      "label": "Brace",
+      "sourcePose": "Brace",
+      "cue": "Brace your core and tuck your pelvis; keep your back neutral."
+    },
+    {
+      "frame": 2,
+      "label": "Roll",
+      "sourcePose": "Roll",
+      "cue": "Roll forward with straight arms while your knees stay on the pad."
+    },
+    {
+      "frame": 3,
+      "label": "Reach",
+      "sourcePose": "Reach",
+      "cue": "Reach only as far as you can keep your back neutral."
+    },
+    {
+      "frame": 4,
+      "label": "Hold",
+      "sourcePose": "Reach",
+      "cue": "Keep your ribs down and hold the brace without sagging."
+    },
+    {
+      "frame": 5,
+      "label": "Return",
+      "sourcePose": "Roll",
+      "cue": "Pull the wheel back using your abs; keep your elbows straight."
+    },
+    {
+      "frame": 6,
+      "label": "Reset",
+      "sourcePose": "Brace",
+      "cue": "Return the wheel under your shoulders without sitting back on your heels."
+    }
+  ],
+  "authoredSetupInstructions": [
+    "Kneel on a pad holding the ab wheel with both hands under your shoulders."
+  ],
+  "reuse": "Six separate beat file paths from three genuine whole poses, reused only for the correct identical outward/return physical configurations. Not six separately authored poses.",
+  "reference": {
+    "url": "https://www.monash.edu/__data/assets/pdf_file/0010/2562184/Abdominal-Wheel-Rollouts.pdf",
+    "source": "Monash University exercise sheet",
+    "scope": "Straight arms, flat back and trunk tension throughout; catalogue controls exact kneeling variant and return cue",
+    "accessed": "2026-10-14"
+  },
+  "gates": [
+    "Inspect master at native size before any adjacent source",
+    "At most one targeted correction of a significant defect",
+    "Stop on any service refusal without retry or alternate backend",
+    "No body warp, graft or independent limb fitting",
+    "Review all six native frames and actual sequential 6-to-1 playback",
+    "Actual mobile light and dark integrated app review",
+    "Two real fixed anchors and two real invariant dimensions",
+    "Card trainers complete and no floor rectangle",
+    "Normal project checks and current-head required CI before actual merge"
+  ],
+  "completionCredit": 0
+}

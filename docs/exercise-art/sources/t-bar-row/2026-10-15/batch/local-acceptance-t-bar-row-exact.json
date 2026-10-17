@@ -1,0 +1,81 @@
+{
+  "status": "parent-native-card-accepted-for-local-integration",
+  "exercises": {
+    "t-bar-row": {
+      "reviewedAt": "2026-10-15T08:24:05.587703+00:00",
+      "checks": {
+        "nativeManual": {
+          "passed": true,
+          "evidence": "Parent inspected both exact918x1036 final PNGs and actual ExerciseFormFrames full native fixture at1120x1340, manually advancing all six decoded paths. Full head, neutral pelvis without shorts, planted trainers, closed grips, hinge/base and both consistent plates are visible. Actual full player proof saved."
+        },
+        "nativeTimed": {
+          "passed": true,
+          "evidence": "Parent observed actual native component autoplay19foregroundevents covering all six paths and6-to-1, actual displayed/native918x1036, then paused. Raw DOM-backed trace retained and actual console warnings/errors empty."
+        },
+        "canonicalNoShorts": {
+          "passed": true,
+          "evidence": "Same FA56 bald faceless lean white anatomical athlete, smooth unclothed neutral pelvis, original white trainers, source contour/shading. Original intact start/peak reused with no anatomical fitting, scaling individual limbs, head/shoe/limb graft or new image request."
+        },
+        "physicalEndpoints": {
+          "passed": true,
+          "evidence": "Genuine straight-arm hinged bottom and handle-to-lower-chest elbows-back squeeze. Both feet remain planted and torso hinge coherent. Six paths honestly repeat1,1,2,2,1,1,t0,0,1,1,0,0; intermediate travel/continuous motion not supplied."
+        },
+        "visibleGrips": {
+          "passed": true,
+          "evidence": "Original bilateral closed neutral-handle grips retained at start and top; intact connected bar/handle/load/ground hinge. Two plates match both endpoints and depart from later one-plate default only as an explicit pending owner finding."
+        },
+        "colourBoundaries": {
+          "passed": true,
+          "evidence": "Parent viewed full final source fields in both states: existing back fields use established primary MidBack/secondary visibleLats/Rhomboids/Biceps shares with original source brightness. Neutral anatomy/equipment/outlines are retained; no invented new gradient or anatomy."
+        },
+        "cardLight": {
+          "passed": true,
+          "evidence": "Parent visually inspected actual standard425x480 card at full size and160px on white: complete athlete/head/shoes/grips/bothplates/ground pivot, clean silhouette and no floor rectangle."
+        },
+        "cardDark": {
+          "passed": true,
+          "evidence": "Parent visually inspected same exact card full480 and160px on dark: full anatomy/equipment retained, original shading/readability, no floor block; no prepared alpha correction."
+        }
+      },
+      "reviewedInputHashes": {
+        "1-framed.ora": "621530a813d4e6f4622b8a1871e8994be19f9cdb5dcfa45d2728928da6702a80",
+        "1-framed.png": "353e71cb10b0f587123dadb2ff374cc02d7d34dbc69c1ccfc565e7f7f5e49635",
+        "2-framed.ora": "ac4bba3339e9d519f4491c18cc99d45522ce5f320986c2cf3310c321c8c3fab2",
+        "2-framed.png": "0930023d3d5b4ac35969ea5c50471fb33b3c25c1be6e85ce2463d7e166f36e8e",
+        "actual-native-review.html": "9d123d3370b45f4ca016e8b1dca4be9d5b5217a83e95e2b00a878359531c4814",
+        "actual-native-review.tsx": "e9cec4a1eca1430c2edd2f44eac35e814b151b30e5eb70bce835c57afa4e6aaa",
+        "card-cutout.webp": "65ebae4c3a85ac5bb4a2206af5203d10cb9924091bb9614aad4835447d3cda44",
+        "card-dark-160.png": "56d213234bcba93c81e280bbf5344c51ee887f4547631b8751fc255e4ff6bd62",
+        "card-dark-full.png": "9f00ca6668af46bf86102149dd40e058e8f61958324d4bde945312bdeffd036d",
+        "card-light-160.png": "06d8cc0429b56158005b681f0a7825babffe23976aff43c32009b8763c502c9b",
+        "card-light-full.png": "21584aed87e92f16cc9f43e2c6c11d6eca7a5c97798f2acd7b1371b98ad4e8c0",
+        "card-pixel-proof.json": "1136db74ffbd11c2af8fbd4f9e711725cfdefb025a703b7eedf4c6298269ef4b",
+        "card-visual-review.json": "a8d4add59b462be7d8ace98ec56e025c498ffa52633be292e8748bd9d6b9d6b3",
+        "catalogue.json": "2fe1791ff5ac1ba2a6ba75b9c766b48113d658b87d5041f2cd4da210e3e00a1c",
+        "colour-finishing-provenance.json": "2238d58ecc0f8b711ce7b3de58f6dbaf940c8a23bad78fbb6504a6ccca296913",
+        "draft-beats.json": "18ef7c72f1c7dfd0a95cc0daaa751b8361b5b6f0cb3d52a959aef4945abfba71",
+        "editable-reproduction-verification.json": "9959c3a0f9a17c9866295c49d053be12b3a3fa44688354ec4dde46162741e36e",
+        "final-asset-hashes.json": "301b59517a07cad4292b0d4ec3525ccee097210d2b62b9479c8dc7710ac99cbd",
+        "final-frames/1.webp": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+        "final-frames/2.webp": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+        "final-frames/3.webp": "04776e18e6ea03f6772056901fd78840a801572ff940cc74c53eaf59628966e4",
+        "final-frames/4.webp": "04776e18e6ea03f6772056901fd78840a801572ff940cc74c53eaf59628966e4",
+        "final-frames/5.webp": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+        "final-frames/6.webp": "1f2cfb7c7786570d0ed331d355afaca1f46967828d0ee5b910d833c243d20438",
+        "frame-package.json": "00df4656057af3377aed69936ee1c71d410ce3d3e5e963f2e9a2adf4893d31ff",
+        "hardware-measurements.json": "aaf5a1b189f6062851b9c0c31c1ab385999b0abb1a1bdabc8e1869f05f202c74",
+        "native-static-review.json": "6d07b322f4ee4024d041e35a10b96301bc3e160060c7260f4d83dfe3b05a555e",
+        "originals/1-master.png": "423cc79ad773472b9ca0f6b3b7a4ba9a761c5a5f0627467c87082eaf77eafbf7",
+        "originals/4-peak-candidate.png": "9ebd9f1b3562672dddc6927a1156910354108eb1b71510556d662b285276a9c3",
+        "parent-native-manual-trace.json": "0a929556fe20073dc44ad24109ed397681c960b99e88a76b4c1c02d20043f20f",
+        "parent-native-proof.jpg": "85478b495f6c44a6b4687e717943d6b14986abd5bb6e3911489824ff3fc06ba9",
+        "parent-native-timed-trace.json": "37f837ee841427da7f37d836449f4717bb8719fb3df83bf25bc51eb3de081fdc",
+        "reference.png": "353e71cb10b0f587123dadb2ff374cc02d7d34dbc69c1ccfc565e7f7f5e49635",
+        "review-vite.config.mjs": "7b587303a64c33e62eae0e3968211536c483265fde5525a6f27df04c846f4d6e",
+        "source-provenance.json": "76547c6ce4a0025e26195294e8fee63766cf741c50c2013899c3620ed31daf3b",
+        "staged-card-provenance.json": "14168c139fcd309cd04bc4af9448878b1fb35a086656953aa99d86b544c78345"
+      }
+    }
+  },
+  "completionCredit": false
+}

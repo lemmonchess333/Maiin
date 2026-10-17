@@ -148,7 +148,9 @@ interface Site {
 
 function scan(): Site[] {
   const out: Site[] = [];
-  for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot })) {
+  for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot }).map(
+    (file) => file.replaceAll("\\", "/")
+  )) {
     if (rel.includes("__tests__") || rel.includes(".test.")) continue;
     if (rel === DOOR) continue;
     const src = stripComments(readFileSync(resolve(repoRoot, rel), "utf8"));
@@ -195,7 +197,9 @@ describe("localStorage keys are uid-scoped", () => {
        as rm }` would call storage under a name the scan never sees, and every
        key passed that way would go unjudged. */
     const aliased: string[] = [];
-    for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot })) {
+    for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot }).map(
+      (file) => file.replaceAll("\\", "/")
+    )) {
       if (rel.includes("__tests__") || rel.includes(".test.")) continue;
       const src = stripComments(readFileSync(resolve(repoRoot, rel), "utf8"));
       const re = /import\s*\{([^}]*)\}\s*from\s*["'][^"']*\/localStore["']/g;
@@ -261,7 +265,9 @@ describe("localStorage keys are uid-scoped", () => {
       const hook = file.replace(/\.ts$/, "");
       if (hook === "useDismissOnce") continue; // prefixes the uid itself
       let calls = 0;
-      for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot })) {
+      for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot }).map(
+        (file) => file.replaceAll("\\", "/")
+      )) {
         if (rel.includes("__tests__") || rel.includes(".test.")) continue;
         if (rel.endsWith(file)) continue;
         const src = stripComments(readFileSync(resolve(repoRoot, rel), "utf8"));

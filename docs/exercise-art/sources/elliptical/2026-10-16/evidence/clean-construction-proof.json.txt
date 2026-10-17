@@ -1,0 +1,289 @@
+{
+  "scope": "One clean fixed-v2 construction view; no body resampling or redraw. Equipment-only draft, not accepted or registered.",
+  "sourceCanvas": [
+    1536,
+    1024
+  ],
+  "cleanCanvas": [
+    1536,
+    1120
+  ],
+  "commonPadding": [
+    0,
+    0,
+    0,
+    96
+  ],
+  "bodyTransform": "identity; native source pixels stay at identical coordinates",
+  "optimizerCalls": 0,
+  "maskOnlyCorrection": "Prior diagnostic polygons clipped source fields. This separate correction selects the connected original pale/purple athlete component and preserves its existing dark contours. Prior failed masks/drafts remain unchanged; gear-render PNG bytes reused exactly.",
+  "cameraAndKinematicsUnchanged": true,
+  "diagnosticGeometryReference": {
+    "path": "../native-contact-overlay-proof.json",
+    "sha256": "2fcc2fce1cbb680bdc0d3aed4ef450341fbf32d3579aa5de0e5a8bd3eb8452fe"
+  },
+  "equipmentOnlyNewFixedDetails": "Visible cross-axles close the same fixed supports; far-side outboard resistance housing clears both existing trays. These do not change any crank, rocker, coupler, pedal or D-grip geometry.",
+  "poses": {
+    "1": {
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\elliptical\\1-master.png",
+      "sourceSha256": "e40913b14089d9ac1f9032e3d1afb636ee0b6dd3c1777bf9462b5315ca5c6433",
+      "expectedOriginalSourceSha256": "e40913b14089d9ac1f9032e3d1afb636ee0b6dd3c1777bf9462b5315ca5c6433",
+      "preservedOriginalSourcePixels": 100896,
+      "guardPixelsChanged": 0,
+      "allSourceColourSeedsPreserved": true,
+      "equipmentMeshFaces": 2712,
+      "equipmentRenderByteExactToFirstCleanBuild": true,
+      "contactGeometry": {
+        "far": {
+          "bearing": [
+            949.0315088654927,
+            253.0146847011747
+          ],
+          "sleeveCentre": [
+            940.1701080505788,
+            250.84866913489202
+          ],
+          "sleeveEnds": [
+            [
+              922.8930160522773,
+              296.0313399974781
+            ],
+            [
+              957.6890688668751,
+              205.0334682610952
+            ]
+          ],
+          "trayCorners": [
+            [
+              377.39476710982416,
+              690.9811597862499
+            ],
+            [
+              537.743222330544,
+              731.0603008910339
+            ],
+            [
+              555.112906926005,
+              704.4361202821806
+            ],
+            [
+              399.0633358265327,
+              665.6229482906726
+            ]
+          ]
+        },
+        "near": {
+          "bearing": [
+            707.5417407852668,
+            318.1224026751164
+          ],
+          "sleeveCentre": [
+            717.3627166669772,
+            319.75009309119935
+          ],
+          "sleeveEnds": [
+            [
+              703.7509757340081,
+              366.965821045763
+            ],
+            [
+              731.1700004930357,
+              271.85607570334275
+            ]
+          ],
+          "trayCorners": [
+            [
+              661.9228151372188,
+              737.219011120207
+            ],
+            [
+              836.238242141917,
+              761.8622060284206
+            ],
+            [
+              845.8835442054968,
+              732.7916020832677
+            ],
+            [
+              676.5335126991853,
+              709.1274579814071
+            ]
+          ]
+        }
+      },
+      "wrappedContactCoverage": [
+        {
+          "side": "near",
+          "handEnvelope": [
+            681,
+            292,
+            735,
+            345
+          ],
+          "sourceGearDarkPixelsInsideWhiteHandHull": 77,
+          "coveredByNewEquipmentOpacity245": 77,
+          "uncoveredDarkContactPixels": 0,
+          "scope": "Mask diagnosis only; root must visually distinguish anatomy shadows from occluding cylinder pixels."
+        },
+        {
+          "side": "far",
+          "handEnvelope": [
+            909,
+            239,
+            958,
+            283
+          ],
+          "sourceGearDarkPixelsInsideWhiteHandHull": 162,
+          "coveredByNewEquipmentOpacity245": 162,
+          "uncoveredDarkContactPixels": 0,
+          "scope": "Mask diagnosis only; root must visually distinguish anatomy shadows from occluding cylinder pixels."
+        }
+      ],
+      "oraReopenedMergedAndStackExact": true
+    },
+    "4": {
+      "source": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\elliptical\\4-opposite-selected.png",
+      "sourceSha256": "649036cf174307e0d7b091774880d5210196a5707368fde858e6df31aa01e3be",
+      "expectedOriginalSourceSha256": "649036cf174307e0d7b091774880d5210196a5707368fde858e6df31aa01e3be",
+      "preservedOriginalSourcePixels": 99353,
+      "guardPixelsChanged": 0,
+      "allSourceColourSeedsPreserved": true,
+      "equipmentMeshFaces": 2712,
+      "equipmentRenderByteExactToFirstCleanBuild": true,
+      "contactGeometry": {
+        "far": {
+          "bearing": [
+            770.880731467147,
+            311.1563435871311
+          ],
+          "sleeveCentre": [
+            761.3598012097216,
+            311.69802623806265
+          ],
+          "sleeveEnds": [
+            [
+              759.7756788306918,
+              358.7478674228429
+            ],
+            [
+              762.9638071143771,
+              264.05762668779914
+            ]
+          ],
+          "trayCorners": [
+            [
+              693.8637494655109,
+              722.2800475307258
+            ],
+            [
+              862.5282740403347,
+              743.1263670144066
+            ],
+            [
+              871.1008876660451,
+              715.5793592374199
+            ],
+            [
+              707.0795465365574,
+              695.5693973193022
+            ]
+          ]
+        },
+        "near": {
+          "bearing": [
+            943.9741068709558,
+            236.08161184599635
+          ],
+          "sleeveCentre": [
+            953.3397152223217,
+            238.58446681711547
+          ],
+          "sleeveEnds": [
+            [
+              933.975081456446,
+              286.32481479516656
+            ],
+            [
+              972.9933001378051,
+              190.13175688077968
+            ]
+          ],
+          "trayCorners": [
+            [
+              333.8461864673983,
+              698.2519733987612
+            ],
+            [
+              498.70796547565016,
+              745.6221625911816
+            ],
+            [
+              517.8019862601177,
+              717.6504557907828
+            ],
+            [
+              357.5260276162805,
+              671.7834509502325
+            ]
+          ]
+        }
+      },
+      "wrappedContactCoverage": [
+        {
+          "side": "near",
+          "handEnvelope": [
+            913,
+            213,
+            972,
+            260
+          ],
+          "sourceGearDarkPixelsInsideWhiteHandHull": 0,
+          "coveredByNewEquipmentOpacity245": 0,
+          "uncoveredDarkContactPixels": 0,
+          "scope": "Mask diagnosis only; root must visually distinguish anatomy shadows from occluding cylinder pixels."
+        },
+        {
+          "side": "far",
+          "handEnvelope": [
+            742,
+            286,
+            785,
+            334
+          ],
+          "sourceGearDarkPixelsInsideWhiteHandHull": 58,
+          "coveredByNewEquipmentOpacity245": 53,
+          "uncoveredDarkContactPixels": 5,
+          "scope": "Mask diagnosis only; root must visually distinguish anatomy shadows from occluding cylinder pixels."
+        }
+      ],
+      "oraReopenedMergedAndStackExact": true
+    }
+  },
+  "acceptance": false,
+  "strictCertification": false,
+  "productionWrites": 0,
+  "newImageRequests": 0,
+  "files": {
+    "1-clean-whole-frame.ora": "991059f68c0e5a0f4681233575a9d68022550662ae9d1f808ae17b9616b5d16c",
+    "1-clean-whole-frame.png": "05babc1ab49d39b94639ac2c95cf50783147eb181ee744d032e7a33b4154d28f",
+    "1-conservative-human-guard.png": "7870c6872f453a2a0308a10c1890d7eaeea5f914088b2405f3b0a6ced2f7fbd4",
+    "1-equipment-removal-layer.png": "6a7afc191446a6dcbfcfc82eef3ac3debb009e0a499a392b3209abf0e6ff98e4",
+    "1-equipment-render-layer.png": "9522c6383a0d4bddb26fd2494dd7f83bb0695e4d074f31a18588b06d039eb319",
+    "1-full-preservation-guard.png": "147fa8d841e6a0403966115cf57995c740fb66999eca553d106346e9bbd3d134",
+    "1-original-base.png": "6e947b740809c5c47db10e7b5c7a055dc808f79b6e8f0465f61ba41533bafabf",
+    "1-original-human-and-grip-layer.png": "5d2d4a5a2d58e6d657665cf5cff3a990f17abd7ea02e7a3ca29529f8c5a3c5e0",
+    "1-retained-wrapped-grip-mask.png": "0d24a3e68968c8b9a2d7647947771f53f6ce723c085844bb328604b1d3e910a2",
+    "1-source-colour-seeds.png": "b08abde25fccc3be96300f1759fd808c4a40d255b7456dea4ba1d1c76171d5cc",
+    "4-clean-whole-frame.ora": "6348acc50e53ffc72896dcd2d2cdcc45e87134ccad4f8d53e739d3f1526256ac",
+    "4-clean-whole-frame.png": "f50d899dc678c95c3c2f737e05836680c4de14813c9f9e0adb56c2bf8ffd0cbb",
+    "4-conservative-human-guard.png": "a417ced3ddeca92724d3ba6e33086a60c0eb9b2da5985760191e8a0d6bbac947",
+    "4-equipment-removal-layer.png": "cc98a1486f8d61fbac4860c4bde16955166f48a7da7cdcc0e0e53e8430f86af6",
+    "4-equipment-render-layer.png": "dd0e227a019599822c2c14fa805e5c67b42cfb2fc0f62c34db51f76894004bdc",
+    "4-full-preservation-guard.png": "3f6b6491406200da8ac1f52dfdb162013e0b0766a45e68c3c5ab0da1c1d78b5f",
+    "4-original-base.png": "2f486d5d2378cc441de51a7422212408440e99ce2ec9617e939545273b23eada",
+    "4-original-human-and-grip-layer.png": "3287cbc8c99326f1204ab8f4899454670d30dea53e4699e2472724b8470106f1",
+    "4-retained-wrapped-grip-mask.png": "c87ef1ef69624f7c42a9ed5e0e59cf9d4f53659310189a8f1ff5b29cb18e1c68",
+    "4-source-colour-seeds.png": "d995281c0d56d9b3ddffc1441681fdf5f238783b02a7d4f2441ea174738c41c8"
+  },
+  "recipeSha256": "22678670c60f8e176d7aae07822d04bc9702e3251e979e6c299e60d99ed12e2e"
+}

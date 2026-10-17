@@ -1,0 +1,180 @@
+{
+  "scope": "Supplemental data-only parsing from saved exact official text; no new capture, image/source edit or QA assertion.",
+  "originalIndex": {
+    "path": "review/rowing-tool-return-artifact-index-final.json",
+    "sha256": "fd1ba4625e1c19380a88b75d919ba70359198a4c5ba57cea1f2a51d9d0d3a36c"
+  },
+  "literalSplitting": "Full-input balanced bracket/quote scanner, followed by finite JSON/JSON5 data parse without evaluation.",
+  "helperSha256": "bb69ea556b23a9c6ff7cad0508d4ad345cf8ab4b51c18bee3844131aad98ea4b",
+  "archiverSha256": "7258f951eb94f1a81c2b56568af5af2faa066403e99978acc345ff6736882bd7",
+  "artifacts": [
+    {
+      "callId": "call_04711e6c2101454695317688b8ea5082",
+      "callRecordSha256": "22cfba758e5241b21f337655675e2cc07f16b1907b998f1ae62051c75a262765",
+      "outputRecordSha256": "417c38fe5771780db9d7678d9b193b288c71fd1bcd51c43f6faa0e50e556193d",
+      "callByteStart": 5441329376,
+      "callByteEndExclusive": 5441332243,
+      "outputByteStart": 5441401584,
+      "outputByteEndExclusive": 5441544715,
+      "file": "review/rowing-integrated-dark-normal-04711e6c2101-b3-object1-dom.json",
+      "sha256": "5660901140c8ee19fe09299645878104c2bee8f91925f3a5f03aefdf5bc7e300",
+      "bytes": 19204,
+      "kind": "rowing-integrated-dark-normal",
+      "sourceText": "review/rowing-integrated-dark-normal-04711e6c2101-b3-tool-text.txt",
+      "sourceTextSha256": "682de79a6449c436922e2b41b282c2ef201daf1e4d4ce78cd64c2c281bafdfcd",
+      "objectOrdinal": 1,
+      "parsing": "JSON",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    },
+    {
+      "callId": "call_04711e6c2101454695317688b8ea5082",
+      "callRecordSha256": "22cfba758e5241b21f337655675e2cc07f16b1907b998f1ae62051c75a262765",
+      "outputRecordSha256": "417c38fe5771780db9d7678d9b193b288c71fd1bcd51c43f6faa0e50e556193d",
+      "callByteStart": 5441329376,
+      "callByteEndExclusive": 5441332243,
+      "outputByteStart": 5441401584,
+      "outputByteEndExclusive": 5441544715,
+      "file": "review/rowing-integrated-dark-normal-04711e6c2101-b3-object2-dom.json",
+      "sha256": "e2fadac037c1cf6a9069f444c2e80a01d9026422cc84535282e92c3047bcc7f6",
+      "bytes": 1891,
+      "kind": "rowing-integrated-dark-manual-card",
+      "sourceText": "review/rowing-integrated-dark-normal-04711e6c2101-b3-tool-text.txt",
+      "sourceTextSha256": "682de79a6449c436922e2b41b282c2ef201daf1e4d4ce78cd64c2c281bafdfcd",
+      "objectOrdinal": 2,
+      "parsing": "JSON",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [],
+        "containsNon390x844Viewport": false,
+        "classification": "viewport not established",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    },
+    {
+      "callId": "call_13d02e81a0fb4e82a54031f0e4eb0ebf",
+      "callRecordSha256": "bd383b1335f24ee43588bb2cabb13b7d8039f525b9b36a36fe90e4669d26eeb6",
+      "outputRecordSha256": "f202c1edd4d764dd8d820aaeeef53eeea75a6e676ca99e6e6417392f79603f3a",
+      "callByteStart": 5441790680,
+      "callByteEndExclusive": 5441792000,
+      "outputByteStart": 5441859821,
+      "outputByteEndExclusive": 5441869050,
+      "file": "review/rowing-integrated-light-normal-13d02e81a0fb-b3-object1-dom.json",
+      "sha256": "9bbafeff67a0227c0a84f48653a38a3ed83ef9b144eb9e5bc900239105542681",
+      "bytes": 11028,
+      "kind": "rowing-integrated-light-normal",
+      "sourceText": "review/rowing-integrated-light-normal-13d02e81a0fb-b3-tool-text.txt",
+      "sourceTextSha256": "1eb434b7067346e77a2111100bc63d00947fb553a608ddde5943fbdb4f5fdf30",
+      "objectOrdinal": 1,
+      "parsing": "JSON",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    },
+    {
+      "callId": "call_13d02e81a0fb4e82a54031f0e4eb0ebf",
+      "callRecordSha256": "bd383b1335f24ee43588bb2cabb13b7d8039f525b9b36a36fe90e4669d26eeb6",
+      "outputRecordSha256": "f202c1edd4d764dd8d820aaeeef53eeea75a6e676ca99e6e6417392f79603f3a",
+      "callByteStart": 5441790680,
+      "callByteEndExclusive": 5441792000,
+      "outputByteStart": 5441859821,
+      "outputByteEndExclusive": 5441869050,
+      "file": "review/rowing-integrated-light-normal-13d02e81a0fb-b3-object2-dom.json",
+      "sha256": "a0ba8e09cfbfa3fd1ae776e173ae2031320a8e240e9e2dc534fe18a1688b05c6",
+      "bytes": 80,
+      "kind": "rowing-integrated-light-slower-start",
+      "sourceText": "review/rowing-integrated-light-normal-13d02e81a0fb-b3-tool-text.txt",
+      "sourceTextSha256": "1eb434b7067346e77a2111100bc63d00947fb553a608ddde5943fbdb4f5fdf30",
+      "objectOrdinal": 2,
+      "parsing": "JSON",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [],
+        "containsNon390x844Viewport": false,
+        "classification": "viewport not established",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    },
+    {
+      "callId": "call_7caa024869e547f8ba2d7da1b25f0335",
+      "callRecordSha256": "508ad94ea05f2ac70799376b6cb09d4c6e24655762b911e2d50ccd68c9f6d4cf",
+      "outputRecordSha256": "48a438897db8d7ffb1fd93db82bbdfb247e5a0c0c8a70540e4b33b3445d6b2be",
+      "callByteStart": 5441924376,
+      "callByteEndExclusive": 5441926032,
+      "outputByteStart": 5441994189,
+      "outputByteEndExclusive": 5441998317,
+      "file": "review/rowing-integrated-light-slower-7caa024869e5-b3-object1-dom.json",
+      "sha256": "844199a7f82a97c03f26f49a07872d3d9ecd4cb82650ddc16ad0466bbe485b6c",
+      "bytes": 4007,
+      "kind": "rowing-integrated-light-slower",
+      "sourceText": "review/rowing-integrated-light-slower-7caa024869e5-b3-tool-text.txt",
+      "sourceTextSha256": "c6e41c68f44947761dafbf165e31920ea3a5ee8c284e4319eb3f0c46ab5eb79c",
+      "objectOrdinal": 1,
+      "parsing": "JSON",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [
+          [
+            390,
+            844
+          ]
+        ],
+        "containsNon390x844Viewport": false,
+        "classification": "all explicit viewports are390x844; observations still require root review",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    },
+    {
+      "callId": "call_7caa024869e547f8ba2d7da1b25f0335",
+      "callRecordSha256": "508ad94ea05f2ac70799376b6cb09d4c6e24655762b911e2d50ccd68c9f6d4cf",
+      "outputRecordSha256": "48a438897db8d7ffb1fd93db82bbdfb247e5a0c0c8a70540e4b33b3445d6b2be",
+      "callByteStart": 5441924376,
+      "callByteEndExclusive": 5441926032,
+      "outputByteStart": 5441994189,
+      "outputByteEndExclusive": 5441998317,
+      "file": "review/rowing-integrated-light-slower-7caa024869e5-b3-object2-dom.json",
+      "sha256": "18d9c38f2c0e8c21e8b50dddfb0f5c7ccbe7bd8d97859a0a76079b6d9feb280b",
+      "bytes": 156,
+      "kind": "rowing-integrated-final-console",
+      "sourceText": "review/rowing-integrated-light-slower-7caa024869e5-b3-tool-text.txt",
+      "sourceTextSha256": "c6e41c68f44947761dafbf165e31920ea3a5ee8c284e4319eb3f0c46ab5eb79c",
+      "objectOrdinal": 2,
+      "parsing": "JSON",
+      "viewportScope": {
+        "topLevelViewport": null,
+        "explicitViewportPairs": [],
+        "containsNon390x844Viewport": false,
+        "classification": "viewport not established",
+        "qaAcceptance": false
+      },
+      "qaAcceptance": false
+    }
+  ],
+  "unparsedObservations": [],
+  "originalIndexAndSourceTextUnchanged": true,
+  "qaAcceptance": false
+}

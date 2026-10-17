@@ -1,0 +1,282 @@
+{
+  "status": "one-pass-three-whole-source-palette-integrity-not-visual-acceptance",
+  "exerciseId": "rowing-machine",
+  "pillowVersion": "12.3.0",
+  "sourcePoseOrder": [
+    1,
+    2,
+    3,
+    3,
+    2,
+    1
+  ],
+  "sourceNativeDimensions": [
+    1536,
+    1024
+  ],
+  "commonCrop": [
+    60,
+    90,
+    1476,
+    920
+  ],
+  "dimensions": [
+    1416,
+    830
+  ],
+  "poses": [
+    {
+      "pose": 1,
+      "sourceSha256": "54976c3327f10fcd229c6fbe20225d7c31af877896d1d0a77fc5424fb912466e",
+      "nativeSize": [
+        1536,
+        1024
+      ],
+      "wholeSceneTranslation": [
+        0,
+        0
+      ],
+      "wholeSceneScale": 1,
+      "allSourceRgbaOutsideExistingColourSupportExact": true,
+      "sourceAlphaExact": true,
+      "colour": {
+        "sourceColourPixels": 30328,
+        "changedRgbPixels": 30328,
+        "primaryLabelPixelsAboveHalf": 16657,
+        "secondaryLabelPixelsAboveHalf": 13671,
+        "allNeutralAndEquipmentPixelsOutsideSourceChromaRgbaExact": true,
+        "originalAlphaExact": true,
+        "noNewSpatialBodyGradient": true,
+        "noNewBodyMuscleField": true,
+        "primarySourceTonalUniqueRgb": 2431,
+        "sourceTintStrengthDenominators": {
+          "primary": 0.64,
+          "secondary": 0.42
+        },
+        "sourceRoleTraceIsEditableAndRequiresNativeReview": true
+      },
+      "bodyLocalTransforms": 0,
+      "equipmentEdits": 0
+    },
+    {
+      "pose": 2,
+      "sourceSha256": "c9e9d5359938dfab494dd01d9bbfe6a09d64bd21df669c376fa8bee307579609",
+      "nativeSize": [
+        1536,
+        1024
+      ],
+      "wholeSceneTranslation": [
+        0,
+        0
+      ],
+      "wholeSceneScale": 1,
+      "allSourceRgbaOutsideExistingColourSupportExact": true,
+      "sourceAlphaExact": true,
+      "colour": {
+        "sourceColourPixels": 29365,
+        "changedRgbPixels": 29365,
+        "primaryLabelPixelsAboveHalf": 13299,
+        "secondaryLabelPixelsAboveHalf": 16066,
+        "allNeutralAndEquipmentPixelsOutsideSourceChromaRgbaExact": true,
+        "originalAlphaExact": true,
+        "noNewSpatialBodyGradient": true,
+        "noNewBodyMuscleField": true,
+        "primarySourceTonalUniqueRgb": 1283,
+        "sourceTintStrengthDenominators": {
+          "primary": 0.64,
+          "secondary": 0.42
+        },
+        "sourceRoleTraceIsEditableAndRequiresNativeReview": true
+      },
+      "bodyLocalTransforms": 0,
+      "equipmentEdits": 0
+    },
+    {
+      "pose": 3,
+      "sourceSha256": "b325b7dec503c4c1b2541a636ebc3434791214ac4d6c6e6eb2e6f8ea0db0a046",
+      "nativeSize": [
+        1536,
+        1024
+      ],
+      "wholeSceneTranslation": [
+        0,
+        0
+      ],
+      "wholeSceneScale": 1,
+      "allSourceRgbaOutsideExistingColourSupportExact": true,
+      "sourceAlphaExact": true,
+      "colour": {
+        "sourceColourPixels": 22219,
+        "changedRgbPixels": 22219,
+        "primaryLabelPixelsAboveHalf": 11075,
+        "secondaryLabelPixelsAboveHalf": 11144,
+        "allNeutralAndEquipmentPixelsOutsideSourceChromaRgbaExact": true,
+        "originalAlphaExact": true,
+        "noNewSpatialBodyGradient": true,
+        "noNewBodyMuscleField": true,
+        "primarySourceTonalUniqueRgb": 1542,
+        "sourceTintStrengthDenominators": {
+          "primary": 0.64,
+          "secondary": 0.42
+        },
+        "sourceRoleTraceIsEditableAndRequiresNativeReview": true
+      },
+      "bodyLocalTransforms": 0,
+      "equipmentEdits": 0
+    }
+  ],
+  "frames": [
+    {
+      "path": "draft/frames/1.webp",
+      "sourcePose": 1,
+      "sha256": "a1fa9793f679c2406885ba5782c111658bed16c0c49bc9482200b579111b15e2",
+      "decodedRgbaExact": true
+    },
+    {
+      "path": "draft/frames/2.webp",
+      "sourcePose": 2,
+      "sha256": "398603466c885d0f28bca0586bb726ef43004c5c9ae43c57ea5f90256a3f2597",
+      "decodedRgbaExact": true
+    },
+    {
+      "path": "draft/frames/3.webp",
+      "sourcePose": 3,
+      "sha256": "8c7385705a8396f4068e2ffbf6571509e6764a61efa91a30373d64578cce2aae",
+      "decodedRgbaExact": true
+    },
+    {
+      "path": "draft/frames/4.webp",
+      "sourcePose": 3,
+      "sha256": "8c7385705a8396f4068e2ffbf6571509e6764a61efa91a30373d64578cce2aae",
+      "decodedRgbaExact": true
+    },
+    {
+      "path": "draft/frames/5.webp",
+      "sourcePose": 2,
+      "sha256": "398603466c885d0f28bca0586bb726ef43004c5c9ae43c57ea5f90256a3f2597",
+      "decodedRgbaExact": true
+    },
+    {
+      "path": "draft/frames/6.webp",
+      "sourcePose": 1,
+      "sha256": "a1fa9793f679c2406885ba5782c111658bed16c0c49bc9482200b579111b15e2",
+      "decodedRgbaExact": true
+    }
+  ],
+  "openRasterChecks": [
+    {
+      "path": "draft/1-native.ora",
+      "sha256": "0dcb146973ffb445b2cb5747347cbaa8cd1ecbb7b57b07e7fe209fd103bad39b",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "layers": 2,
+      "reopenedRgbaExact": true,
+      "members": {
+        "mimetype": "6ff9869d75bef2c16a4551178dd6a80ab321ac0d2875e42fb29a5d7ae3dfc1f4",
+        "stack.xml": "e8df3c46fa9b78f253edb7d3cbf331735bf97ec6f33b02fe061daa14c34bfa8c",
+        "data/source.png": "a92ac6d02678f9dcd37624c3de1fd3521cc399cdd50f73143728e5f3761b26c5",
+        "data/colour.png": "cd3675837a2edf7813ee94d4b378f4954740b09cddb11413f4caccac6a9da027",
+        "mergedimage.png": "60037bd5e3aa12ba31b8b4935ae37fde3c66a4c99c057be87df0cbeb4f3a0155"
+      }
+    },
+    {
+      "path": "draft/1-framed.ora",
+      "sha256": "cf5ee8ecefd3fc571acccd235444fb22732500fd30d64c3c99ba4ccf8ba836ba",
+      "dimensions": [
+        1416,
+        830
+      ],
+      "layers": 2,
+      "reopenedRgbaExact": true,
+      "members": {
+        "mimetype": "6ff9869d75bef2c16a4551178dd6a80ab321ac0d2875e42fb29a5d7ae3dfc1f4",
+        "stack.xml": "4024d922a6b857db15558c3e9146098888be6a88d9cc55dae39a767ac4cc539c",
+        "data/source.png": "33889caabdb36f553fced7c62498863898060c01974dfe901edfc40abc1a4d6d",
+        "data/colour.png": "61280afaee0385ee9f14da63c5b18cbb8cf16326ed8335203d2ccf857f34e7ef",
+        "mergedimage.png": "78c360366da004a0486c750e4653fe7ee89d9399f3f99dbbf5a7e044800b0f5f"
+      }
+    },
+    {
+      "path": "draft/2-native.ora",
+      "sha256": "dcafaef0128e499d4cb8825d5d655cc1d65871a98d835d2675a69a540c5af8ea",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "layers": 2,
+      "reopenedRgbaExact": true,
+      "members": {
+        "mimetype": "6ff9869d75bef2c16a4551178dd6a80ab321ac0d2875e42fb29a5d7ae3dfc1f4",
+        "stack.xml": "e8df3c46fa9b78f253edb7d3cbf331735bf97ec6f33b02fe061daa14c34bfa8c",
+        "data/source.png": "f0994bc0d48a0a4ecb8db94d528ecccab230beb17d3c3088d487b39bebdd2582",
+        "data/colour.png": "267b3936141700f36baa1413e4f2126644d6117701cb12d0d6cb1602b1b76820",
+        "mergedimage.png": "8b17aabd47b42c023cd9cdca2726d1908f745093661fdf81566cfbb491478a73"
+      }
+    },
+    {
+      "path": "draft/2-framed.ora",
+      "sha256": "131261e0837ccce9de6349a0705500263a1af528f544270fb2ea890852f06883",
+      "dimensions": [
+        1416,
+        830
+      ],
+      "layers": 2,
+      "reopenedRgbaExact": true,
+      "members": {
+        "mimetype": "6ff9869d75bef2c16a4551178dd6a80ab321ac0d2875e42fb29a5d7ae3dfc1f4",
+        "stack.xml": "4024d922a6b857db15558c3e9146098888be6a88d9cc55dae39a767ac4cc539c",
+        "data/source.png": "c2c0293dc6068cd4299f4356a689398a6b8e28321c01c1e949f425fe2a11dc6d",
+        "data/colour.png": "b2fe92c282a73a6dbdcd78759025561c060f059214f111a37c42762d12432c51",
+        "mergedimage.png": "3309571b9fa1e444276e4470a1ea6ded776b58d32bdcb18bf21474a24715c2d1"
+      }
+    },
+    {
+      "path": "draft/3-native.ora",
+      "sha256": "4ad610e1e58e6d0ee7d4e480c26dc9038f53207cb1aa109d492307e0448c5573",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "layers": 2,
+      "reopenedRgbaExact": true,
+      "members": {
+        "mimetype": "6ff9869d75bef2c16a4551178dd6a80ab321ac0d2875e42fb29a5d7ae3dfc1f4",
+        "stack.xml": "e8df3c46fa9b78f253edb7d3cbf331735bf97ec6f33b02fe061daa14c34bfa8c",
+        "data/source.png": "febe9800b081595e9161a223fbd5f4df2a38127be04f74dab6583ce305ef698f",
+        "data/colour.png": "cc0327aa0adf53c25aa0ce9c4802d8c8cfff96470a16e2cd3ac721d3f83cc1e4",
+        "mergedimage.png": "955aee5d733a9cd6fc4f5ad35913a4c1b4043569746845580fcc8ab54c75c407"
+      }
+    },
+    {
+      "path": "draft/3-framed.ora",
+      "sha256": "54d531981be0b142096bad2c2ac883cebe621489387f77012f16be4d02323671",
+      "dimensions": [
+        1416,
+        830
+      ],
+      "layers": 2,
+      "reopenedRgbaExact": true,
+      "members": {
+        "mimetype": "6ff9869d75bef2c16a4551178dd6a80ab321ac0d2875e42fb29a5d7ae3dfc1f4",
+        "stack.xml": "4024d922a6b857db15558c3e9146098888be6a88d9cc55dae39a767ac4cc539c",
+        "data/source.png": "03fbfdb5a562c7358b64b3b985253f06a28b58992b6e78f0b449f42d6183fb43",
+        "data/colour.png": "e9affb60a36f5b877177630b4a2087ea24c27f686938b9b5a4327d980ef76dd1",
+        "mergedimage.png": "52b393d6c69ec2291b5659dfcbc2dfd4e58dcba72e453b06c9ecdfcef9a9e578"
+      }
+    }
+  ],
+  "allSixORAsReopenedRgbaExact": true,
+  "canonicalBases": {
+    "primary": "#7B72E9",
+    "secondary": "#9590E0"
+  },
+  "bodyLocalTransforms": 0,
+  "equipmentEdits": 0,
+  "neutralCoreNotPainted": true,
+  "newImageRequests": 0,
+  "repoChanges": 0,
+  "strictCertified": false,
+  "completionCredit": false
+}

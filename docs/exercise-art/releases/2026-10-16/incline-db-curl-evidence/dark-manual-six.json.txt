@@ -1,0 +1,116 @@
+[
+  {
+    "cue": "Let the near arm hang beside you.",
+    "decoded": true,
+    "natural": [
+      992,
+      784
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 1: Set",
+    "src": "/form-frames/incline-db-curl/1.webp",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Keep your upper arm beside the bench.",
+    "decoded": true,
+    "natural": [
+      992,
+      784
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 2: Brace",
+    "src": "/form-frames/incline-db-curl/2.webp",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Curl toward your shoulder; keep wrist straight.",
+    "decoded": true,
+    "natural": [
+      992,
+      784
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 3: Curl",
+    "src": "/form-frames/incline-db-curl/3.webp",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Pause without swinging your upper arm.",
+    "decoded": true,
+    "natural": [
+      992,
+      784
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 4: Squeeze",
+    "src": "/form-frames/incline-db-curl/4.webp",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Lower the weight under control.",
+    "decoded": true,
+    "natural": [
+      992,
+      784
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 5: Lower",
+    "src": "/form-frames/incline-db-curl/5.webp",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "cue": "Repeat with the opposite arm.",
+    "decoded": true,
+    "natural": [
+      992,
+      784
+    ],
+    "page": [
+      380,
+      380
+    ],
+    "selected": "Show frame 6: Alternate",
+    "src": "/form-frames/incline-db-curl/6.webp",
+    "theme": "dark",
+    "viewport": [
+      390,
+      844
+    ]
+  }
+]

@@ -1,0 +1,70 @@
+[
+  {
+    "image": [
+      {
+        "h": 1036,
+        "src": "/form-frames/t-bar-row/1.webp",
+        "w": 918
+      }
+    ],
+    "section": "STRETCH 1/6\n\nPlay\nNormal"
+  },
+  {
+    "image": [
+      {
+        "h": 1036,
+        "src": "/form-frames/t-bar-row/2.webp",
+        "w": 918
+      }
+    ],
+    "section": "HINGE 2/6\n\nPlay\nNormal"
+  },
+  {
+    "image": [
+      {
+        "h": 1036,
+        "src": "/form-frames/t-bar-row/3.webp",
+        "w": 918
+      }
+    ],
+    "section": "TOP 3/6\n\nPlay\nNormal"
+  },
+  {
+    "image": [
+      {
+        "h": 1036,
+        "src": "/form-frames/t-bar-row/4.webp",
+        "w": 918
+      }
+    ],
+    "section": "SQUEEZE 4/6\n\nPlay\nNormal"
+  },
+  {
+    "image": [
+      {
+        "h": 1036,
+        "src": "/form-frames/t-bar-row/5.webp",
+        "w": 918
+      }
+    ],
+    "section": "STRETCH 5/6\n\nPlay\nNormal"
+  },
+  {
+    "image": [
+      {
+        "h": 1036,
+        "src": "/form-frames/t-bar-row/6.webp",
+        "w": 918
+      }
+    ],
+    "section": "RESET 6/6\n\nPlay\nNormal"
+  },
+  {
+    "control": "next-six-to-one",
+    "state": "STRETCH 1/6\n\nPlay\nNormal"
+  },
+  {
+    "control": "previous-one-to-six",
+    "state": "RESET 6/6\n\nPlay\nNormal"
+  }
+]

@@ -1,6 +1,16 @@
 # Exercise artwork migration
 
-## Current checkpoint — 3 October 2026
+## Current checkpoint — 17 October 2026
+
+Turkish Get-Up and Assault Bike are owner-released with findings ([get-up](releases/2026-10-17/turkish-get-up.json), [bike](releases/2026-10-17/assault-bike.json)), both generated with Gemini through `scripts/art/gemini-image.py`.
+
+- The get-up's six positions were drawn as edits from one another, then set on one scale and one floor. Its second version redraws the kneel and the stand in profile, so the camera stays at the side through all six; the kneel was drawn with the bell in the wrong hand and is flipped.
+- The bike is a straight-on front view and its mirror, because six side-view methods could not draw a second pedal position.
+- Swimming and Stairmaster followed the same day ([swimming](releases/2026-10-17/swimming.json), [stairmaster](releases/2026-10-17/stairmaster.json)): the swimmer's head was edited down into the water, and the stepmill uses the elliptical's two-pose pattern. The swimming card is now cut from a prepared source ([cutout-sources/swimming.png](cutout-sources/swimming.png)) with the water line taken out.
+- Every catalogue exercise now has released art.
+- Running has a form guide of its own ([run-form](run-form/provenance.json)), opened from the runner on Train's run card: a runner coming toward the viewer and its mirror, alternating, because side views overstrode or put both feet down.
+
+## Previous checkpoint — 3 October 2026
 
 The [fifth new-conversion batch](pilots/new-conversions-05-20261003/README.md) adds Ab Wheel Rollout and Kettlebell Swing: twelve native draft frames with measured contact drift and mobile review evidence. The [fourth batch](pilots/new-conversions-04-20261003/REVIEW.md) adds Seated Calf Raise and Farmer’s Carry. All four remain outside production pending their recorded form/contact corrections.
 

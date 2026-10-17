@@ -1,0 +1,89 @@
+{
+  "artifactName": "side-integrated-manual-dark.json",
+  "observations": [
+    {
+      "alt": "Side Plank, Support",
+      "complete": true,
+      "overflow": false,
+      "src": "/form-frames/side-plank/1.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Side Plank, Stack",
+      "complete": true,
+      "overflow": false,
+      "src": "/form-frames/side-plank/2.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Side Plank, Align",
+      "complete": true,
+      "overflow": false,
+      "src": "/form-frames/side-plank/3.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Side Plank, Brace",
+      "complete": true,
+      "overflow": false,
+      "src": "/form-frames/side-plank/4.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Side Plank, Breathe",
+      "complete": true,
+      "overflow": false,
+      "src": "/form-frames/side-plank/5.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Side Plank, Time",
+      "complete": true,
+      "overflow": false,
+      "src": "/form-frames/side-plank/6.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    },
+    {
+      "alt": "Side Plank, Support",
+      "complete": true,
+      "overflow": false,
+      "src": "/form-frames/side-plank/1.webp",
+      "theme": "dark",
+      "viewport": [
+        390,
+        844
+      ],
+      "visible": "visible"
+    }
+  ]
+}

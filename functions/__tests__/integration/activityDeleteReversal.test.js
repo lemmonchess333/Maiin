@@ -66,6 +66,8 @@ const lifetimeMarkerRef = (kind, sourceId) =>
     .collection("lifetime")
     .doc(`applied_${kind}_${sourceId}`);
 
+// Bootstrap the entire functions module separately from the unchanged
+// emulator cleanup and assertion deadlines.
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
   const idx = require("../../index");
@@ -75,7 +77,7 @@ beforeAll(() => {
   onRunDeleted = idx.onRunDeleted;
   admin = require("firebase-admin");
   db = admin.firestore();
-});
+}, 30_000);
 
 async function wipeChallenge(id) {
   const parts = await db

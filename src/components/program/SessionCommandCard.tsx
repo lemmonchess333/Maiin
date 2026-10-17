@@ -18,11 +18,11 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
  * behind the icon corner is gone with the app's other glows. The title is
  * the card's one big line (the H2 step). A lift day passes `figure`, the
  * muscles the day works, which stands at the right. A run passes its
- * type's `icon`, drawn in a tile at the right, the way Home's run card
- * draws it, so the two Today cards and Train's two tabs share one layout.
+ * runner, the one Home's run card draws, so the two Today cards and
+ * Train's two tabs share one layout.
  */
 
-import type { ComponentType, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { MoreHorizontal, Play, Footprints, Dumbbell } from "lucide-react";
 import MetaLine from "@/components/ui/MetaLine";
 import { cn } from "@/lib/utils";
@@ -54,14 +54,18 @@ interface SessionCommandCardProps {
   primaryActionVariant?: ButtonVariant;
   onManage?: () => void;
   /** A picture of the session, drawn at the right of the title in place
-   *  of the sport icon tile. Lift passes the day's muscles. Hidden from
-   *  screen readers like the tile, since the title names the day: the
-   *  muscle figure's own label speaks of muscles trained, which a day not
-   *  yet done has not been. */
+   *  of the sport icon tile. Lift passes the day's muscles, run its
+   *  runner. Hidden from screen readers like the tile, since the title
+   *  names the day: the muscle figure's own label speaks of muscles
+   *  trained, which a day not yet done has not been. */
   figure?: ReactNode;
-  /** The tile's glyph when there is no figure: a run passes its type's
-   *  (`runTemplateIcon`). Defaults to the sport's own icon. */
-  icon?: ComponentType<{ className?: string }>;
+  /** Makes the picture a button that opens a guide to the session, as a
+   *  lift row's drawing opens its form pictures; it is then named for
+   *  screen readers by `figureLabel`. Where the picture gives way, the
+   *  label is shown in words under the meta, so the guide stays in reach
+   *  at the largest text. Run passes the running form guide. */
+  onFigurePress?: () => void;
+  figureLabel?: string;
 }
 
 export default function SessionCommandCard({
@@ -76,10 +80,11 @@ export default function SessionCommandCard({
   primaryActionVariant,
   onManage,
   figure,
-  icon,
+  onFigurePress,
+  figureLabel,
 }: SessionCommandCardProps) {
   const isRun = sport === "run";
-  const Icon = icon ?? (isRun ? Footprints : Dumbbell);
+  const Icon = isRun ? Footprints : Dumbbell;
   // DS1b: sport tint via tokens (both branches are in-scope sport colours).
   const surfaceClass = isRun ? "bg-running/12" : "bg-lifting/12";
   const tileClass = isRun ? "bg-running/12" : "bg-lifting/12";
@@ -117,8 +122,29 @@ export default function SessionCommandCard({
                 <MetaLine items={meta} />
               </div>
             )}
+            {figure && onFigurePress && figureLabel && (
+              <Button
+                variant="ghost"
+                className={cn(
+                  "mt-1 -ml-4 hidden @max-[14em]:inline-flex",
+                  accentText
+                )}
+                onClick={onFigurePress}
+              >
+                {figureLabel}
+              </Button>
+            )}
           </div>
-          {figure ? (
+          {figure && onFigurePress ? (
+            <Button
+              variant="ghost"
+              className="h-auto shrink-0 -my-1 p-0 @max-[14em]:hidden"
+              aria-label={figureLabel}
+              onClick={onFigurePress}
+            >
+              <span aria-hidden="true">{figure}</span>
+            </Button>
+          ) : figure ? (
             <div
               className="shrink-0 -my-1 @max-[14em]:hidden"
               aria-hidden="true"

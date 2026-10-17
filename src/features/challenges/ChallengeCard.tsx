@@ -228,7 +228,7 @@ export function ChallengeCard({
      unmapped icon name degrades gracefully instead of leaking the
      string. */
   const HeroIcon = CHALLENGE_ICON_MAP[challenge.icon] ?? Trophy;
-  const heroPhoto = challengeEditorialImage(challenge.metric);
+  const heroPhoto = challengeEditorialImage(challenge);
 
   return (
     <motion.div

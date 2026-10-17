@@ -97,16 +97,20 @@ describe("race event blocks (Races & Events plan, locked 2026-07-19)", () => {
   });
 
   it("upcomingRaceSpaceDefs hides past races, keeps race day itself (Q2)", () => {
-    const first = raceSpaceDefs()[0].event!.dateKey; // soonest: 2026-10-04
+    const first = raceSpaceDefs()[0].event!.dateKey; // the soonest edition
     // On race day it remains available in the training picker.
     expect(upcomingRaceSpaceDefs(first).map((d) => d.event!.dateKey)).toContain(
       first
     );
     // The day after, only later editions remain in the training picker.
-    const dayAfter = "2026-10-05";
+    const next = new Date(`${first}T12:00:00Z`);
+    next.setUTCDate(next.getUTCDate() + 1);
+    const dayAfter = next.toISOString().slice(0, 10);
     const after = upcomingRaceSpaceDefs(dayAfter).map((d) => d.event!.dateKey);
     expect(after).not.toContain(first);
-    expect(after).toHaveLength(56);
+    expect(after).toHaveLength(
+      raceSpaceDefs().filter((d) => d.event!.dateKey > first).length
+    );
     // Far future: everything hidden, none invented.
     expect(upcomingRaceSpaceDefs("2099-01-01")).toHaveLength(0);
   });

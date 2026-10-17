@@ -1,0 +1,44 @@
+"""Run unchanged complete test files for every observed failure and art contracts."""
+from pathlib import Path
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+import re
+import subprocess
+import time
+
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1] / 'Maiin-burpees'
+OUT = HERE / 'normal-whole-file-check'
+OUT.mkdir(exist_ok=False)
+comparison = json.loads((HERE / 'project-comparison.json').read_bytes())
+index = json.loads((HERE / 'overhead-extension-final-96fea6f1-index.json').read_bytes())
+files = sorted({key.split('|')[1] for key in index['failures']} | {'src/lib/__tests__/bodyRig.test.ts', 'src/lib/__tests__/formArtOwnerRelease.test.ts', 'src/lib/__tests__/formArtwork.test.ts', 'src/lib/__tests__/formArtCutouts.test.ts', 'scripts/art/form-art-releases.test.ts'})
+assert len(files) == 10
+node = Path(r'C:\Users\myles\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe')
+npm = Path(r'C:\Users\myles\Documents\Codex\2026-10-04\lg\work\merge-reviewed-20261012\runtime\node_modules\npm\bin\npm-cli.js')
+sha = lambda data: hashlib.sha256(data).hexdigest()
+inputs = json.loads((HERE.parents[1] / 'remaining19-execution-20261015/checks/overhead-extension-final-96fea6f1/inputs-after.json').read_bytes())
+def freeze():
+    return {path: sha((REPO / path).read_bytes()) for path in inputs}
+before = freeze()
+assert before == inputs
+(OUT / 'inputs-before.json').write_text(json.dumps(before, indent=2) + '\n')
+env = os.environ.copy()
+env['PATH'] = str(npm.parent.parent.parent / '.bin') + ';' + str(node.parent) + r';C:\Program Files\Git\bin;' + env.get('PATH', '')
+command = [str(node), str(npm), 'test', '--', *files]
+started = datetime.now(timezone.utc).isoformat()
+t = time.monotonic()
+with (OUT / 'test.log').open('wb') as log:
+    result = subprocess.run(command, cwd=REPO, env=env, stdout=log, stderr=subprocess.STDOUT)
+after = freeze()
+assert before == after
+(OUT / 'inputs-after.json').write_text(json.dumps(after, indent=2) + '\n')
+raw = (OUT / 'test.log').read_bytes()
+text = raw.decode('utf8')
+headers = [line.strip() for line in text.splitlines() if re.match(r'^\s*FAIL\s+', line)]
+summary = [line.strip() for line in text.splitlines() if re.match(r'^\s*(Test Files|Tests)\s+\d', line)]
+report = {'command': command, 'normalRunner': True, 'wholeFiles': files, 'startedAtUtc': started, 'finishedAtUtc': datetime.now(timezone.utc).isoformat(), 'seconds': time.monotonic() - t, 'exitCode': result.returncode, 'inputCount': len(inputs), 'allRuntimeInputsUnchanged': before == after, 'rawLogSha256': sha(raw), 'failureHeaders': headers, 'verbatimSummaries': summary, 'fullRunFailureRetained': True, 'fullVerificationPassed': False}
+(OUT / 'result.json').write_text(json.dumps(report, indent=2) + '\n')
+print(json.dumps(report))
