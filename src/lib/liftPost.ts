@@ -15,6 +15,7 @@
  * the save code stays out of the Social screen.
  */
 import { EXERCISES } from "@/lib/exercises";
+import { getFormArtCutout, type FormArtCutout } from "@/lib/formArtCutouts";
 import { formatExerciseSummary } from "@/lib/exerciseSummary";
 import { workoutTonnageKg, type WorkoutExercise } from "@/lib/savedWorkouts";
 import type { ActivityPreview, ShareDecision } from "@/lib/shareComposer";
@@ -193,4 +194,27 @@ export function liftPostRows(
     });
   }
   return rows;
+}
+
+/**
+ * The drawing a lift post leads with: the first exercise done that has a
+ * card cut-out, which the post's own order makes the session's lead lift.
+ * Older posts carry no ids, and the catalogue names the lift. Null when
+ * no exercise on the post has a drawing.
+ */
+export function liftPostLeadArt(raw: unknown): FormArtCutout | null {
+  if (!Array.isArray(raw)) return null;
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const ex = item as Record<string, unknown>;
+    const id =
+      typeof ex.exerciseId === "string" && ex.exerciseId
+        ? ex.exerciseId
+        : typeof ex.name === "string"
+          ? EXERCISES.find((e) => e.name === ex.name)?.id
+          : undefined;
+    const cutout = id ? getFormArtCutout(id) : null;
+    if (cutout) return cutout;
+  }
+  return null;
 }
