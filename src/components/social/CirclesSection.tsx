@@ -69,6 +69,7 @@ import {
   containsProfanity,
   OBJECTIONABLE_NAME_MESSAGE,
 } from "@/lib/profanityFilter";
+import { circleTitle } from "@/features/goalSpace/circleTitle";
 
 // weekly_check_in copy is dynamic (checkInTimelineCopy — the focus
 // changes the sentence); the static map covers every other kind.
@@ -815,7 +816,7 @@ export default function CirclesSection({
             className="block w-full min-h-[44px] text-left active:scale-[0.97] transition-transform"
           >
             <p className="text-base font-bold text-foreground truncate">
-              {featured.space.title}
+              {circleTitle(featured.space)}
               {!featured.space.active && (
                 <span className="font-normal text-muted-foreground">
                   {" "}
@@ -939,7 +940,7 @@ export default function CirclesSection({
                   if (!code) return; // narrowing lost across the closure
                   haptic("light");
                   setInviteHandoff({
-                    title: featured.space.title,
+                    title: circleTitle(featured.space),
                     spaceId: featured.space.id,
                     inviteCode: code,
                   });
@@ -979,7 +980,7 @@ export default function CirclesSection({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-foreground truncate">
-                  {c.space.title}
+                  {circleTitle(c.space)}
                   {!c.space.active && (
                     <span className="font-normal text-muted-foreground">
                       {" "}
@@ -1220,7 +1221,7 @@ export default function CirclesSection({
                 void openDetail(existing);
               }}
             >
-              Open {trainTogether.existing.space.title}
+              Open {circleTitle(trainTogether.existing.space)}
             </Button>
             <Button
               variant="secondary"
@@ -1278,7 +1279,7 @@ export default function CirclesSection({
         onOpenChange={(open) => {
           if (!open) setDetailOf(null);
         }}
-        title={detailOf?.space.title ?? ""}
+        title={detailOf ? circleTitle(detailOf.space) : ""}
         description={detailOf ? memberLine(detailOf.space) : undefined}
       >
         {detailOf && (

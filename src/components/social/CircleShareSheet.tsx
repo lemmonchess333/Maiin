@@ -32,6 +32,7 @@ import { GOAL_SPACE_TEXT_MAX } from "@/features/goalSpace/goalSpaceTypes";
 import { useGoalSpaces } from "@/features/goalSpace/useGoalSpaces";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import { containsProfanity } from "@/lib/profanityFilter";
+import { circleTitle } from "@/features/goalSpace/circleTitle";
 import RestrictedNotice from "./RestrictedNotice";
 
 interface CircleShareSheetProps {
@@ -152,7 +153,7 @@ export default function CircleShareSheet({
                   )}
                 >
                   <p className="text-sm font-semibold text-foreground truncate">
-                    {c.space.title}
+                    {circleTitle(c.space)}
                     {!c.space.active && (
                       <span className="font-normal text-muted-foreground">
                         {" "}
