@@ -10,6 +10,23 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## The Firebase key lets the iPhone app and troposfit.com sign in (2026-10-17)
+
+The web API key (`AIzaSyB-…`, in every build) is restricted to listed web
+addresses. On 2026-10-17 it allowed `adaptive-fitness-af8bb.web.app`,
+`adaptive-fitness-af8bb.firebaseapp.com`, `lemmonchess333.github.io/Maiin/`
+and `localhost`. Sign-in requests (identitytoolkit) from `capacitor://localhost`,
+the address the iOS app's web view sends, and from `troposfit.com` came back
+403 "Requests from referer … are blocked".
+
+- [ ] **Add the app's and the site's addresses** (Google Cloud console →
+      APIs & Services → Credentials → the `AIzaSyB-` key → Website
+      restrictions): `capacitor://localhost/*`, `https://troposfit.com/*`,
+      `https://www.troposfit.com/*`. Passing: a sign-in request sent with each
+      of those referrers no longer returns "Requests from referer … are
+      blocked", and the TestFlight build signs in (script step 9). A launch
+      blocker.
+
 ## The food scan's model (Ship1, 2026-10-13)
 
 Affects: `analyzeFood` (a meal photo) and `analyzeFoodText` (a Pro typed
