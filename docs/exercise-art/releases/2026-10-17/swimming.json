@@ -7,8 +7,8 @@
   "reviewer": "Claude Code, session_015b5TWTtYEo43etRFZF8nJr",
   "reviewedAt": "2026-10-17T13:39:01+00:00",
   "reference": {
-    "path": "form-frames/swimming/1.webp",
-    "sha256": "a9b363e9b0549b672343fc07b7461db18696b164d54b8cc7d05b7d2069c9665a"
+    "path": "form-frames/swimming/2.webp",
+    "sha256": "f63e3fd3e9882676ab137d67d88f77ce2b94a212743b9e094138826dc6162bc0"
   },
   "cueSha256": "8518bb27027847fd0425b39f1264ed62ebc84b880771921aab1ad9a0520b2415",
   "checks": {
@@ -135,7 +135,7 @@
     "The head of frames 1, 2, 4, 5 and 6 was edited down into the water in one image edit each (only the head and neck); frame 3 keeps the head up for the breath.",
     "From the side, the two arms' beats look alike: frames 1 and 4, and 2 and 5, differ mainly in which arm is nearer.",
     "The water is one thin line; there is no pool.",
-    "On a white card the water line shows as a dark line through the card picture; on a dark card it is barely visible.",
+    "The card picture is cut from frame 2 with the water line removed (docs/exercise-art/cutout-sources/swimming.json); one pixel-sized speck remains where the line touches the toes.",
     "No contacts or anchors were measured."
   ],
   "provenance": {

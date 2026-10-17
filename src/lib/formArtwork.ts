@@ -126,7 +126,7 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
   },
   swimming: {
     ...existing("swimming", 1264, 848),
-    reference: "form-frames/swimming/1.webp",
+    reference: "form-frames/swimming/2.webp",
     version: "anatomy-v3-2026-10-17-gemini-front-crawl-v1",
     status: "owner-released-with-findings",
     reviewFile: "docs/exercise-art/releases/2026-10-17/swimming.json",
@@ -141,7 +141,7 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
   "turkish-get-up": {
     ...existing("turkish-get-up", 1024, 1024),
     reference: "form-frames/turkish-get-up/1.webp",
-    version: "anatomy-v3-2026-10-17-gemini-get-up-v1",
+    version: "anatomy-v3-2026-10-17-gemini-get-up-v2",
     status: "owner-released-with-findings",
     reviewFile: "docs/exercise-art/releases/2026-10-17/turkish-get-up.json",
   },
