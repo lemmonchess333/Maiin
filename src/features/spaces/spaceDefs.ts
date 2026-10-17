@@ -1173,8 +1173,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       city: "Prague",
       countryCode: "CZ",
       countryFlag: "🇨🇿",
-      websiteUrl:
-        "https://www.runczech.com/en/events/vodafone-prague-marathon-2027",
+      websiteUrl: "https://www.runczech.com/en/events",
       distance: "marathon",
     },
   },

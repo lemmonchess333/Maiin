@@ -1,5 +1,9 @@
 import { createHash } from "node:crypto";
-import { parseOfficialDates, type DateSource } from "./date-parser";
+import {
+  parseOfficialDates,
+  resolveOfficialEventLink,
+  type DateSource,
+} from "./date-parser";
 import { fetchSource } from "./fetch-source";
 
 /** Corroborated partner sources are all mandatory: a failed or disagreeing
@@ -11,7 +15,16 @@ export async function checkDateSource(
   const sources: Array<{ url: string; sha256: string }> = [];
   let dateKeys: string[] | undefined;
   for (const item of [source, ...(source.corroborate ?? [])]) {
-    const { html, url } = await fetcher(item);
+    let fetched = await fetcher(item);
+    if (item.eventPageLink) {
+      const eventUrl = resolveOfficialEventLink(fetched.html, item);
+      fetched = await fetcher({
+        ...item,
+        url: eventUrl,
+        eventPageLink: undefined,
+      });
+    }
+    const { html, url } = fetched;
     const dates = parseOfficialDates(html, item);
     if (dateKeys && JSON.stringify(dates) !== JSON.stringify(dateKeys))
       throw new Error("Independent entry sources disagree on the race date");

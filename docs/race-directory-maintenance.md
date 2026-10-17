@@ -16,7 +16,11 @@ Cape Town completes coverage of the eight announced
 Official date evidence is recorded in
 `scripts/races/verified-marathons-2026-10-17.json`. Every new race has a reviewed
 date adapter in `scripts/races/sources.ts`; expo and shorter-distance dates are
-excluded. Prague explicitly uses day-month-year numeric dates. The Frankfurt
+excluded. Prague explicitly uses day-month-year numeric dates. Its updater
+starts from the permanent RunCzech calendar, follows exactly one reviewed,
+same-origin marathon link, then verifies the actual marathon date on that
+edition's page. It does not infer a date from the festival weekend or a URL's
+year. Missing, ambiguous or external links require review. The Frankfurt
 race-detail page still advertises the upcoming 2026 edition, while the official
 homepage already announces 31 October 2027. Its adapter reads that next-edition
 field after the 2026 date expires. The existing updater skips unexpired races.

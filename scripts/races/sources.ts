@@ -22,6 +22,13 @@ const selectors: Record<string, Partial<DateSource>> = {
     pattern: "^MARATHON RACE \\d{1,2} [A-Za-z]+ 20\\d{2}",
   },
   "prague-marathon": {
+    url: "https://www.runczech.com/en/events",
+    eventPageLink: {
+      selector:
+        ".c-events__item--prague-inter-marathon .c-events__item-headline a",
+      hrefPattern: "^/en/events/vodafone-prague-marathon-20\\d{2}/?$",
+      identity: "Races.*RunCzech",
+    },
     selector: ".c-races__item-title",
     pattern:
       "^Vodafone Prague Marathon Distance: 42\\.195km Date: [A-Za-z]+ \\d{1,2}\\.\\s*\\d{1,2}\\.\\s*20\\d{2}(?: From \\d{1,2}:\\d{2})?$",
