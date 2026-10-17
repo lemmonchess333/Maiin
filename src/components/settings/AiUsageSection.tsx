@@ -6,7 +6,7 @@ import { useScanUsage } from "@/hooks/useScanUsage";
  * F1b lock pin #6 — Settings page daily-usage pill.
  *
  * Shows the user's per-action AI scan counters (text_ai +
- * image_ai). Free users have no AI (#1102), so they see a line saying
+ * image_ai). Free users have no AI, so they see a line saying
  * it is part of Pro instead of counters; the row is tappable and
  * routes to /upgrade. Pro users see both counters with no upgrade CTA.
  *
@@ -61,7 +61,7 @@ export default function AiUsageSection() {
     );
   }
 
-  // Free user: no AI on the free plan (#1102), so there is no counter
+  // Free user: no AI on the free plan, so there is no counter
   // to show. Whole row taps through to /upgrade — F1b lock pin #6 says
   // "tap → upgrade flow for free users".
   return (

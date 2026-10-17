@@ -92,15 +92,15 @@ describe("useScanUsage", () => {
     expect(result.current.action).toBe("image_ai");
   });
 
-  it("Cycle 2: free user + text_ai reports limit=10; used reflects today's count", async () => {
+  it("Cycle 2: free user + text_ai reports limit=0 — no AI on the free plan", async () => {
     seedUsage({ text_ai: { day: todayKey(), count: 4 } });
     const { result } = renderHook(() => useScanUsage("text_ai"));
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
-    expect(result.current.limit).toBe(10);
+    expect(result.current.limit).toBe(0);
     expect(result.current.used).toBe(4);
-    expect(result.current.remaining).toBe(6);
+    expect(result.current.remaining).toBe(0);
     expect(result.current.action).toBe("text_ai");
   });
 
@@ -137,18 +137,20 @@ describe("useScanUsage", () => {
   });
 
   it("Cycle 6: stale day in doc → used=0 (counter resets at local midnight)", async () => {
+    subscriptionMock.mockReturnValue({ isPro: true, isInTrial: false });
     seedUsage({ text_ai: { day: "2020-01-01", count: 99 } });
     const { result } = renderHook(() => useScanUsage("text_ai"));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.used).toBe(0);
-    expect(result.current.remaining).toBe(10);
+    expect(result.current.remaining).toBe(100);
   });
 
   it("Cycle 7: legacy {count, month} doc shape → used=0 (no migration script needed)", async () => {
+    subscriptionMock.mockReturnValue({ isPro: true, isInTrial: false });
     seedUsage({ count: 7, month: "2026-05" });
     const { result } = renderHook(() => useScanUsage("text_ai"));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.used).toBe(0);
-    expect(result.current.remaining).toBe(10);
+    expect(result.current.remaining).toBe(100);
   });
 });

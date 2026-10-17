@@ -9,10 +9,7 @@
  *               |            |           | abuse-protection cap.
  *   image_ai   | 0          | 100       | Image-AI is Pro-only (free=0).
  *
- * The free plan has no AI (owner, 2026-10-17, #1102): Apple's 7-day trial
- * is how someone tries it. Free text_ai was 10 a day, which the app never
- * used (Food.tsx sends a typed meal to AI only on Pro), so it only gave a
- * direct caller free Gemini reads.
+ * The free plan has no AI: Apple's 7-day trial is how someone tries it.
  *
  * Window: 24 h, anchored to the user's LOCAL midnight when a
  * `timezone` field is set on the user doc (IANA name, e.g.
