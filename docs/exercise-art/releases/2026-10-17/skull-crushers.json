@@ -1,0 +1,157 @@
+{
+  "exerciseId": "skull-crushers",
+  "version": "anatomy-v3-2026-10-17-legacy-redraw-v1",
+  "width": 870,
+  "height": 1072,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex native and actual-player review under the user-authorized revised standard",
+  "reviewedAt": "2026-10-17T22:04:51.181521+00:00",
+  "reference": {
+    "path": "form-frames/skull-crushers/3.webp",
+    "sha256": "873cb45c1bf762f9ac06477787ce2ae3080e14ea96e75c1d106800539430553c"
+  },
+  "cueSha256": "097c3bfef70fc221a6e41855c4da9ff39b8daf6f2b548cc18283ed65fec36e4f",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Root actually viewed all four whole native final poses against FA56: consistent supported lean bald faceless adult, no shorts, white trainers."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Native1536x1024 full sources with48px common top pad and crop[240,0,1110,1072] produce870x1072. Master lower scene from native y449 is byte-exact, no anatomy resampling."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "New full-scene master authored the elbow-flexion path above/past the forehead; JM chest-lowering poses are not relabelled. Head/arms are a connected native upper scene, not head grafts."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "One constant illustrative654px grey shaft and450px plate-centre spacing, source closed grips at documented native positions. Custom apparatus is not a calibrated factory3D model."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Strict certification is not asserted. Actual scoped observations and retained findings are recorded separately; integrated review remains a publication gate."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Strict certification is not asserted. Actual scoped observations and retained findings are recorded separately; integrated review remains a publication gate."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Triceps primary and chest/front-deltoid secondary follow existing source fields/contours, matching new solid key. Old forearm-only key deliberately removed."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Exact six physical labels/cues and t values match the actual authored source order. Every cue is seven words or fewer; source reuse is explicit and release cue hash is enforced."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Actual registered six-frame normal light/dark loops and slower dark loop observed, including 6-to-1. Manual frame 6 selection and paused 6-to-1 wraps agree with instruction highlights for all six guides. Native ORA, fresh rebuild and lossless source proofs retained. No anatomical interpolation."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Actual registered ExerciseFormContent at 390x844 in light: all six frames decoded and 6-to-1 observed in normal playback. A separately scrolled viewport screenshot shows the painted player; full-page screenshots are layout context only. Normal 480/348/160/48px cards reviewed. Raw evidence is in the shared archive. This is scoped observation, not strict certification."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Actual registered ExerciseFormContent at 390x844 in dark: all six frames decoded and 6-to-1 observed in normal playback. A separately scrolled viewport screenshot shows the painted player; full-page screenshots are layout context only. Normal 480/348/160/48px cards reviewed. Raw evidence is in the shared archive. This is scoped observation, not strict certification."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/skull-crushers/1.webp",
+      "sha256": "8b05ba21633252a69a239c5050b085d998963176101453094b807ccbd9df71a8",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/skull-crushers/2026-10-17-legacy-redraw/1.png",
+        "sha256": "040f810035d8d6f8eb759cf37148deeec9fd04a67eedb2f3b7f1ac5a1d723226"
+      }
+    },
+    {
+      "path": "form-frames/skull-crushers/2.webp",
+      "sha256": "faf13848361d00a4697e6665a551ee906d5807b57b5f2c558a6a6c3d6301f65a",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/skull-crushers/2026-10-17-legacy-redraw/2.png",
+        "sha256": "18e09fea6cc0e0d33fabb85d8672091ecfdc966cd560e68b0dcf8a976207af3e"
+      }
+    },
+    {
+      "path": "form-frames/skull-crushers/3.webp",
+      "sha256": "873cb45c1bf762f9ac06477787ce2ae3080e14ea96e75c1d106800539430553c",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/skull-crushers/2026-10-17-legacy-redraw/3.png",
+        "sha256": "780d2aa181c6b16813f93129034f43af8c5c0aacca170e018e232a75d8ba9341"
+      }
+    },
+    {
+      "path": "form-frames/skull-crushers/4.webp",
+      "sha256": "bb56814b187072512e61da1f601f3eb13d6bfd2b7f8bc9673b89ed02ffc2b964",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/skull-crushers/2026-10-17-legacy-redraw/4.png",
+        "sha256": "05acf3ae59e36fdbc8a222ef58a2d020264d0f31fd0ee57378f276646cb9f0b9"
+      }
+    },
+    {
+      "path": "form-frames/skull-crushers/5.webp",
+      "sha256": "873cb45c1bf762f9ac06477787ce2ae3080e14ea96e75c1d106800539430553c",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/skull-crushers/2026-10-17-legacy-redraw/5.png",
+        "sha256": "780d2aa181c6b16813f93129034f43af8c5c0aacca170e018e232a75d8ba9341"
+      }
+    },
+    {
+      "path": "form-frames/skull-crushers/6.webp",
+      "sha256": "8b05ba21633252a69a239c5050b085d998963176101453094b807ccbd9df71a8",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/skull-crushers/2026-10-17-legacy-redraw/6.png",
+        "sha256": "040f810035d8d6f8eb759cf37148deeec9fd04a67eedb2f3b7f1ac5a1d723226"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "The human owner in this chat",
+    "instruction": "Redraw the six oldest exercise sets in today's style: bench press, overhead press, barbell row, dips, rope tricep pushdown and skull crushers.",
+    "context": "Standing user instructions authorize local registration, project checks and merging, preserve FA56/no shorts/palette, and allow 3-4 genuine poses reused for returns plus minor nondistracting contour differences under work/REVISED-CONVERSION-STANDARDS-20261009.md. This is authorizing work, not a claim that the human personally certified these candidate pixels."
+  },
+  "findings": [
+    "Four genuine full native source poses play as A/B/C/D/C/A, reusing the same intermediate and lockout on extension. Six phases are not six independently generated bodies.",
+    "The discarded 2x cropped-source family shifted the shoulder girdle relative to the donor. Its masks and joint-guide attempt are retained outside this portable production source, not fitted or registered. The successful route authored a complete native 1536x1024 supported scene first.",
+    "The complete new D source is the fixed master. All native source pixels from y449 downward, including lower body, planted white trainers and lower bench, remain byte-exact across delivered frames. The connected generated upper scene includes natural head/arm occlusion and minor projected shoulder/hand variation; no head/shoe graft, anatomical warp or individual-part fit.",
+    "Source1x anatomy is never rescaled. Common48px black top padding and an empty-margin crop produce870x1072. This allows the constant apparatus to remain complete; the raw lockout source had clipped a generated plate.",
+    "One custom illustrative grey bar/plate set is code-authored with constant654px shaft length,450px plate-centre distance and constant near/far projected plate radii. It follows source closed grips with rigid in-plane orientation. This is not recovered factory geometry or a calibrated3D load model.",
+    "Existing anatomical source-colour fields and their contour gradients select triceps primary#7B72E9 and chest/front-deltoid secondary#9590E0. Other anatomy remains neutral. Secondary key deliberately follows the visible fields and catalogue, replacing the old forearm-only key.",
+    "The projected bar travel is qualitative, approximately0/.3/.8/1/.8/0; it is not calibrated joint angle or activation data. Minor projection/upper-scene variation is retained honestly.",
+    "Native individual source/composite review and pixel reconstruction are local evidence. Actual integrated390x844 light/dark manual and normal/slower playback/card review, source acceptance and project publication checks remain for the parent task."
+  ],
+  "sourcePoseOrder": ["A", "B", "C", "D", "C", "A"],
+  "distinctPhysicalPoses": 4,
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/skull-crushers/2026-10-17-legacy-redraw",
+    "method": "Built-in image_gen with canonical and accepted local sources; native source/layer reuse and exact palette/contour work. No CLI model switch, anatomical fitting, warping or head/shoe grafts.",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/skull-crushers/2026-10-17-legacy-redraw/portable-native-source.zip",
+      "sha256": "0f2005afe4bb69b154c7d6dcbbf25b83008df551ad6fd965d5f27f7d591691d4",
+      "bytes": 24911884
+    }
+  },
+  "recordStage": "Native/source, registered mobile/card/manual/normal/slower reviews complete under revised standard with findings retained. Normal project verification and exact-head CI/merge remain separate publication gates.",
+  "replacementScope": "Six guides and one normal card replace an existing guide; no conversion-count increment.",
+  "integrationEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-17-legacy-six/native-and-mobile-review.zip",
+    "sha256": "0c5a1a92d212aeb9bad9c584132aeb0e3bfb10da812ab4f64c7a31e6bdec69ce",
+    "review": "docs/exercise-art/reviews/2026-10-17-legacy-six/integrated-review-results.json"
+  }
+}

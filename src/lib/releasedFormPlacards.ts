@@ -19,6 +19,113 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "skull-crushers": placard(
+    "skull-crushers",
+    ["Triceps"],
+    ["Chest", "Front deltoids"],
+    [
+      [0, "Start", "Hold bar high; upper arms angled back."],
+      [0.3, "Initiate lower", "Unlock elbows slowly; keep upper arms raised."],
+      [0.8, "Mid lower", "Fold forearms back; keep elbows raised."],
+      [1, "Bottom", "Keep the bar clear of your head."],
+      [0.8, "Extend", "Extend elbows; keep upper arms steady."],
+      [
+        0,
+        "Return to lockout",
+        "Finish with straight elbows and controlled load.",
+      ],
+    ],
+    [
+      "Lie supported on a flat bench with both feet planted.",
+      "Use a narrow overhand grip and angle your upper arms slightly toward your head.",
+      "Bend your elbows to lower the bar past your forehead toward the top of your skull; extend to return.",
+    ]
+  ),
+  dips: placard(
+    "dips",
+    ["Pectorals"],
+    ["Triceps", "Anterior deltoids"],
+    [
+      [0, "Top", "Straight arms; keep shoulders down."],
+      [0.5, "Lower", "Bend elbows; maintain a slight forward lean."],
+      [0.5, "Hold", "Hold this depth; keep both hands fixed."],
+      [1, "Bottom", "Stop around upper arms parallel to floor."],
+      [0.5, "Press", "Push through the bars; keep chest inclined."],
+      [0, "Finish", "Straighten arms without shrugging your shoulders."],
+    ],
+    [
+      "Hold the parallel bars and support your body on straight arms.",
+      "Lean slightly forward and keep your shoes clear of the floor.",
+    ]
+  ),
+  "barbell-row": placard(
+    "barbell-row",
+    ["Lats"],
+    ["Rhomboids", "Rear deltoids", "Biceps"],
+    [
+      [0, "Hang", "Hinge steady; arms hang below shoulders."],
+      [0.25, "Initiate pull", "Bend elbows; keep both wrists straight."],
+      [0.72, "Continue pull", "Drive elbows back beside the torso."],
+      [1, "Top contraction", "Bring the bar to lower ribs."],
+      [0.72, "Lower", "Lower smoothly; maintain the hip hinge."],
+      [0, "Full stretch", "Arms extend; plates stay off floor."],
+    ],
+    [
+      "Hinge at the hips with soft knees and a neutral back.",
+      "Hold the bar overhand outside the knees, with plates clear of the floor.",
+    ]
+  ),
+  "bench-press": placard(
+    "bench-press",
+    ["Pectorals"],
+    ["Triceps", "Anterior deltoids"],
+    [
+      [1, "Set", "Shoulder blades set; feet stay planted."],
+      [0.88, "Lower", "Bend elbows; keep wrists over elbows."],
+      [0.35, "Continue down", "Lower smoothly toward the mid-chest."],
+      [0, "Chest touch", "Touch lightly; keep the neck clear."],
+      [0.35, "Drive", "Press upward and back toward shoulders."],
+      [1, "Lockout", "Straight arms; hips remain on bench."],
+    ],
+    [
+      "Lie on the bench with both feet planted and shoulder blades set.",
+      "Grip the bar just outside shoulders and unrack before the shown cycle.",
+    ]
+  ),
+  "overhead-press": placard(
+    "overhead-press",
+    ["Anterior deltoids"],
+    ["Triceps", "Upper chest", "Core"],
+    [
+      [0, "Set", "Rest bar high; keep elbows underneath."],
+      [0, "Brace", "Brace the core; keep ribs down."],
+      [0.55, "Press", "Press upward; keep wrists over elbows."],
+      [1, "Overhead", "Finish with the bar centred overhead."],
+      [1, "Hold", "Straight arms; keep the trunk braced."],
+      [0.55, "Lower", "Lower the bar slowly toward shoulders."],
+    ],
+    [
+      "Stand with feet planted and the bar on the front shoulders.",
+      "Grip just outside shoulder width, brace and press without leg drive.",
+    ]
+  ),
+  "rope-tricep-pushdown": placard(
+    "rope-tricep-pushdown",
+    ["Triceps"],
+    ["Forearms"],
+    [
+      [0, "Set", "Elbows beside ribs; brace the trunk."],
+      [0.1, "Initiate", "Extend elbows; keep the shoulders still."],
+      [0.4, "Push down", "Press the rope toward your thighs."],
+      [0.7, "Continue", "Keep wrists straight and elbows tucked."],
+      [1, "Extend", "Straighten arms; separate the rope ends."],
+      [0, "Return", "Bend elbows slowly; keep upper arms still."],
+    ],
+    [
+      "Stand facing the high pulley and hold both rope ends.",
+      "Set elbows beside ribs and keep the trunk braced.",
+    ]
+  ),
   "incline-db-curl": placard(
     "incline-db-curl",
     ["Biceps"],

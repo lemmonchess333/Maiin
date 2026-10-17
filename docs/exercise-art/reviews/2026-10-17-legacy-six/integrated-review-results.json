@@ -1,0 +1,246 @@
+{
+  "reviewedAt": "2026-10-17T22:04:51.181521+00:00",
+  "scope": "Six real ExerciseFormContent instances on a local QA host, using actual catalogue, registry, public images/cues and normal cards. No draft substitutions.",
+  "viewport": [390, 844],
+  "strictCertification": false,
+  "allSixNormalLightDarkAndSlowerDarkObserved": true,
+  "manualPauseAnd6to1AllSixObserved": true,
+  "normalCardSizesReviewed": [480, 348, 160, 48],
+  "cardReviewNote": "Native480px card files also inspected directly; phone QA allows horizontal review at480, while348/160/48 fit the content column. No claim that a480px-wide card fits358px without horizontal scrolling.",
+  "observations": [
+    {
+      "exerciseId": "bench-press",
+      "theme": "dark",
+      "slower": false,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-dark-normal-final-trace.json",
+      "rawTraceSha256": "bd0c9d7d85af77962936a6348281476427b907c9adc16643c2ab136060804f34"
+    },
+    {
+      "exerciseId": "overhead-press",
+      "theme": "dark",
+      "slower": false,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-dark-normal-final-trace.json",
+      "rawTraceSha256": "bd0c9d7d85af77962936a6348281476427b907c9adc16643c2ab136060804f34"
+    },
+    {
+      "exerciseId": "barbell-row",
+      "theme": "dark",
+      "slower": false,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-dark-normal-final-trace.json",
+      "rawTraceSha256": "bd0c9d7d85af77962936a6348281476427b907c9adc16643c2ab136060804f34"
+    },
+    {
+      "exerciseId": "dips",
+      "theme": "dark",
+      "slower": false,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-dark-normal-final-trace.json",
+      "rawTraceSha256": "bd0c9d7d85af77962936a6348281476427b907c9adc16643c2ab136060804f34"
+    },
+    {
+      "exerciseId": "rope-tricep-pushdown",
+      "theme": "dark",
+      "slower": false,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-dark-normal-final-trace.json",
+      "rawTraceSha256": "bd0c9d7d85af77962936a6348281476427b907c9adc16643c2ab136060804f34"
+    },
+    {
+      "exerciseId": "skull-crushers",
+      "theme": "dark",
+      "slower": false,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-dark-normal-final-trace.json",
+      "rawTraceSha256": "bd0c9d7d85af77962936a6348281476427b907c9adc16643c2ab136060804f34"
+    },
+    {
+      "exerciseId": "bench-press",
+      "theme": "dark",
+      "slower": true,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-dark-slower-trace.json",
+      "rawTraceSha256": "6d30148aa8407fa456b0f2b20d57a6131751355147c6b996fb1316655c396562"
+    },
+    {
+      "exerciseId": "overhead-press",
+      "theme": "dark",
+      "slower": true,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-dark-slower-trace.json",
+      "rawTraceSha256": "6d30148aa8407fa456b0f2b20d57a6131751355147c6b996fb1316655c396562"
+    },
+    {
+      "exerciseId": "barbell-row",
+      "theme": "dark",
+      "slower": true,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-dark-slower-trace.json",
+      "rawTraceSha256": "6d30148aa8407fa456b0f2b20d57a6131751355147c6b996fb1316655c396562"
+    },
+    {
+      "exerciseId": "dips",
+      "theme": "dark",
+      "slower": true,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-dark-slower-trace.json",
+      "rawTraceSha256": "6d30148aa8407fa456b0f2b20d57a6131751355147c6b996fb1316655c396562"
+    },
+    {
+      "exerciseId": "rope-tricep-pushdown",
+      "theme": "dark",
+      "slower": true,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-dark-slower-trace.json",
+      "rawTraceSha256": "6d30148aa8407fa456b0f2b20d57a6131751355147c6b996fb1316655c396562"
+    },
+    {
+      "exerciseId": "skull-crushers",
+      "theme": "dark",
+      "slower": true,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-dark-slower-trace.json",
+      "rawTraceSha256": "6d30148aa8407fa456b0f2b20d57a6131751355147c6b996fb1316655c396562"
+    },
+    {
+      "exerciseId": "bench-press",
+      "theme": "light",
+      "slower": false,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-light-normal-final-trace.json",
+      "rawTraceSha256": "40e4966060bd34a1b689666fc0a6352f055f6bef2cb8f419a235d830d8aa549e"
+    },
+    {
+      "exerciseId": "overhead-press",
+      "theme": "light",
+      "slower": false,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-light-normal-final-trace.json",
+      "rawTraceSha256": "40e4966060bd34a1b689666fc0a6352f055f6bef2cb8f419a235d830d8aa549e"
+    },
+    {
+      "exerciseId": "barbell-row",
+      "theme": "light",
+      "slower": false,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-light-normal-final-trace.json",
+      "rawTraceSha256": "40e4966060bd34a1b689666fc0a6352f055f6bef2cb8f419a235d830d8aa549e"
+    },
+    {
+      "exerciseId": "dips",
+      "theme": "light",
+      "slower": false,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-light-normal-final-trace.json",
+      "rawTraceSha256": "40e4966060bd34a1b689666fc0a6352f055f6bef2cb8f419a235d830d8aa549e"
+    },
+    {
+      "exerciseId": "rope-tricep-pushdown",
+      "theme": "light",
+      "slower": false,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-light-normal-final-trace.json",
+      "rawTraceSha256": "40e4966060bd34a1b689666fc0a6352f055f6bef2cb8f419a235d830d8aa549e"
+    },
+    {
+      "exerciseId": "skull-crushers",
+      "theme": "light",
+      "slower": false,
+      "frames": [1, 2, 3, 4, 5, 6],
+      "observed6to1": true,
+      "actualViewport": [390, 844],
+      "rawTrace": "all-registered-light-normal-final-trace.json",
+      "rawTraceSha256": "40e4966060bd34a1b689666fc0a6352f055f6bef2cb8f419a235d830d8aa549e"
+    }
+  ],
+  "retainedFindings": {
+    "bench-press": [
+      "Low-middle is an intact whole generated source, with small supported head/chest/bench and planted trainer contour/position differences. Actual playback must establish whether these are nondistracting under the revised standard. No exact fixed-contact claim is made.",
+      "A horizontal y600 native composite was rejected because it created a visible thigh/bench seam. It is preserved only in the diagnostic native-lower-scene-join.png, not in any final frame.",
+      "Early is about12% descent, low-middle about65% descent; t is extension fraction, not frame number.",
+      "Generated drive source was not selected: it moved the whole supported body farther than the low-middle candidate.",
+      "No Smith frame/carriages remain. Free bar grips and path need actual loop review; donor approval is not inherited.",
+      "Current source colours retain inherited neutral contour/shading, with exact primary/secondary base palette; source and fresh reproduction proofs retained. Strict certification is not asserted.",
+      "Root actual390x844 normal loop and manual all-six review retains the low-middle head/bench/trainer position change as a minor visible illustration variation under the revised standard. No exact fixed-support or fixed-camera certification is claimed. A seam-producing lower-body composite remains rejected and is absent from all exports."
+    ],
+    "overhead-press": [
+      "Three source poses are honestly reused as A,A,B,C,C,B. Frame6 is the intermediate on descent; loop to frame1 completes the return. Propose t0,0,0.55,1,1,0.55 so scalar metadata matches actual geometry.",
+      "Whole repaired generated sources retain small contour and shading differences. Core and lower-body bytes are NOT identical to the low master; earlier fixed-scene selection caused hard armpit seams and was rejected.",
+      "At thresholds100 and180, lower-body bounding extents across the three final poses differ by at most1px; all three sole baselines are1388 at threshold100. This is projected image evidence, not camera calibration.",
+      "Muscle tint is qualitative: primary anterior deltoids, secondary upper chest, triceps and core. Curved upper-pec tint edge has1.3px antialias. Forward biceps remain neutral; a slightly straight secondary boundary at the intermediate triceps may remain as a minor cosmetic finding.",
+      "Frontal illustrations cannot certify sagittal bar path over mid-foot. No such claim has been added.",
+      "Actual integrated player/mobile/cards and project checks are publication gates; strict certification is not asserted."
+    ],
+    "barbell-row": [
+      "Four genuine native continuous-hinge row poses, not a relabelled Pendlay floor reset.",
+      "Late middle is about72% projected shaft travel; early about25%; phase values describe the actual images, not equal spacing.",
+      "Small generated shoulder/chest/back/grip contour and width variations retained for native motion review. Whole head and trainers visually steady, not a calibrated3D or exact pixel identity claim.",
+      "Colour masks follow already tinted source fields; visible lat mask is traced per pose, remaining visible rear deltoid/rhomboid/biceps secondary. Anatomical ownership needs native inspection.",
+      "Current source colours retain inherited neutral contour/shading, with exact primary/secondary base palette; source and fresh reproduction proofs retained. Strict certification is not asserted."
+    ],
+    "dips": [
+      "This is a new bodyweight chest-dip source derived from the approved weighted chest-dip motion, not a newly generated entire athlete or an upright triceps dip. Missing anatomy behind belt/chain/plate was newly authored in each actual pose.",
+      "Three genuine poses are reused asA,B,B,C,B,A. Beat2 and3 show the same intermediate at physical progress.5; use t0,.5,.5,1,.5,0 rather than claiming an unshown early.22 pose. Existing initiation/mid-descent/press-up cues remain qualitatively checkable.",
+      "The source chest has inherited fine striation/contour lines and mild specular tone variation; those have not been erased. Primary and secondary are remapped to the exact established hues with inherited light/shade.",
+      "A few seam-adjacent lower torso/thigh contour differences from native occlusion reconstruction may remain, but native review shows coherent pelvis-to-knee/shin chains, no detached surfaces, no shorts and no visible residual accessories.",
+      "The bottom whole-image32px framing registration is measured from three equipment ROIs and applied uniformly before selecting source pixels; no limb/body alignment or source resampling occurs.",
+      "Full880x1088 framing preserves the entire station and all three athletes without per-pose scaling.",
+      "Native source/card/mobile validation does not assert strict anatomical or mechanical certification."
+    ],
+    "rope-tricep-pushdown": [
+      "Some generated upper-arm/elbow/forearm and torso contours vary inside the connected native source window. No exact fixed-joint or calibrated3D anatomy claim.",
+      "Generated rope stubs/stoppers retain small illustrative differences. New upper branches are320px each and the full finite-sheave cable path is conserved.",
+      "Five physical extension states; frame6 reuses the bent start. No anatomical interpolation or invented intermediate source.",
+      "Owner-authorized revised-standard artwork; strict visual certification is not asserted."
+    ],
+    "skull-crushers": [
+      "Four genuine full native source poses play as A/B/C/D/C/A, reusing the same intermediate and lockout on extension. Six phases are not six independently generated bodies.",
+      "The discarded 2x cropped-source family shifted the shoulder girdle relative to the donor. Its masks and joint-guide attempt are retained outside this portable production source, not fitted or registered. The successful route authored a complete native 1536x1024 supported scene first.",
+      "The complete new D source is the fixed master. All native source pixels from y449 downward, including lower body, planted white trainers and lower bench, remain byte-exact across delivered frames. The connected generated upper scene includes natural head/arm occlusion and minor projected shoulder/hand variation; no head/shoe graft, anatomical warp or individual-part fit.",
+      "Source1x anatomy is never rescaled. Common48px black top padding and an empty-margin crop produce870x1072. This allows the constant apparatus to remain complete; the raw lockout source had clipped a generated plate.",
+      "One custom illustrative grey bar/plate set is code-authored with constant654px shaft length,450px plate-centre distance and constant near/far projected plate radii. It follows source closed grips with rigid in-plane orientation. This is not recovered factory geometry or a calibrated3D load model.",
+      "Existing anatomical source-colour fields and their contour gradients select triceps primary#7B72E9 and chest/front-deltoid secondary#9590E0. Other anatomy remains neutral. Secondary key deliberately follows the visible fields and catalogue, replacing the old forearm-only key.",
+      "The projected bar travel is qualitative, approximately0/.3/.8/1/.8/0; it is not calibrated joint angle or activation data. Minor projection/upper-scene variation is retained honestly.",
+      "Native individual source/composite review and pixel reconstruction are local evidence. Actual integrated390x844 light/dark manual and normal/slower playback/card review, source acceptance and project publication checks remain for the parent task."
+    ]
+  },
+  "preservationBoundary": "Exactly36 guides and6 cards; all other public artwork, historical releases and FA56 preserved by independent source audit.",
+  "visibleViewportImagesReviewed": 12,
+  "screenshotLimitations": "Full-page screenshots retain layout context but omit some offscreen image paint. The 12 separately scrolled viewport screenshots show each registered player visibly painted in both themes; use those for visual review. DOM viewport is 390x844; the browser tool returns 380x822 viewport rasters and 380px-wide full-page captures. Each whole player image is inside the captured bounds. No claim that the raster is 390x844."
+}
