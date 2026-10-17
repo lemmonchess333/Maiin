@@ -71,3 +71,33 @@ sizes.
   - the "No run scheduled" card takes `run-easy` beside its words.
 - **Tests:** a test pins which pose each run type gets, and the large-text
   capture spec covers the two cards at 320px and 2× text.
+
+## Released, 17 October 2026
+
+The owner was shown both poses as cut-outs on mock Home (136px) and Train
+(96px) run cards, light and dark, beside the swimming and stairmaster
+drafts, and asked which to release. They chose "Runner on run cards" and
+nothing else, so swimming and stairmaster stay drafts.
+
+- **Made with** `scripts/art/gemini-image.py` (gemini-3-pro-image), one
+  generation per pose, with the canonical athlete and Kettlebell Swing
+  frame 3 attached for identity and finish. The prompts and every input's
+  and output's hash are in `run-poses/provenance.json`.
+- **Sources:** `run-poses/run-easy.jpg` and `run-poses/run-fast.jpg`, kept
+  exactly as the API returned them. It returned JPEG, not PNG.
+- **Cut-outs:** `npm run art:run-poses` keys both with the exercise
+  cut-outs' keying (`scripts/art/keying.ts`) into `public/form-art/` and
+  writes `src/lib/runPoses.data.ts`. `runPoses.test.ts` fails when a source
+  changes without its cut-out.
+- **Status:** an owner release, as the elliptical and spin bike were. The
+  exercise review's measured checks do not apply to a single pose, and
+  none was run.
+- **Findings:**
+  - The easy stride is long for an easy run. It still reads as running at
+    card size, which is what the brief asked of it.
+  - On a white card, the figure's white edge leans on its contour lines,
+    as every exercise cut-out's does.
+- **Wired** as the "Wiring, once released" section above says, with one
+  difference: the large-text capture spec does not reach a run card, and
+  no capture was added for one. The run card uses the lift card's classes,
+  so it gives way under 14em of card in the same way.

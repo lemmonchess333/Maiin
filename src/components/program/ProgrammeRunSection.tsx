@@ -78,7 +78,7 @@ import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import StatFigure from "@/components/ui/StatFigure";
 import { Card } from "@/components/ui/Card";
-import { runTemplateIcon } from "@/components/run/runTemplateIcons";
+import { runPoseFor, runPoseUrl } from "@/lib/runPoses";
 import { readString, writeString } from "@/lib/localStore";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -1586,7 +1586,15 @@ export default function ProgrammeRunSection({
               <div className="space-y-2">
                 <SessionCommandCard
                   sport="run"
-                  icon={runTemplateIcon(selectedTemplate?.icon)}
+                  figure={
+                    <img
+                      src={runPoseUrl(runPoseFor(selectedTemplate?.type))}
+                      alt=""
+                      draggable={false}
+                      decoding="async"
+                      className="h-24 w-auto"
+                    />
+                  }
                   eyebrow={`${selectedEyebrow} · ${selectedDateLabel}`}
                   title={selectedName}
                   /* Run21 (2): the session's one feel line. Its shape
@@ -1638,27 +1646,41 @@ export default function ProgrammeRunSection({
             ) : (
               // No startable run on the selected day: completed, skipped, or
               // nothing scheduled. Calm, date-led, always offers a free run.
-              <div className="rounded-2xl border p-4 card-shadow bg-running/4 border-running/14">
-                <SectionLabel>{selectedDateLabel}</SectionLabel>
-                <p className="text-sm font-bold text-foreground mt-0.5">
-                  {selectedRun.isCompleted
-                    ? `${selectedName} · done`
-                    : selectedRun.status === "skipped"
-                      ? `${selectedName} · skipped`
-                      : "No run scheduled"}
-                </p>
-                <p className="text-micro text-muted-foreground mt-0.5">
-                  {selectedRun.isCompleted
-                    ? "Add another whenever you like."
-                    : selectedRun.status === "skipped"
-                      ? "Marked as skipped. You can still head out."
-                      : selectedDay.scheduleType === "lift"
-                        ? // Run-scope card, but the day is not a rest day:
-                          // Home names it a lift day and this said "Rest
-                          // day" beside it.
-                          "Lift day. Head out for a free run if you like."
-                        : "Rest day. Head out whenever you like."}
-                </p>
+              <div className="@container rounded-2xl border p-4 card-shadow bg-running/4 border-running/14">
+                {/* The runner beside the words, as on the run card, gives
+                    way under 14em of card. */}
+                <div className="flex items-start gap-3">
+                  <div className="min-w-0 flex-1">
+                    <SectionLabel>{selectedDateLabel}</SectionLabel>
+                    <p className="text-sm font-bold text-foreground mt-0.5">
+                      {selectedRun.isCompleted
+                        ? `${selectedName} · done`
+                        : selectedRun.status === "skipped"
+                          ? `${selectedName} · skipped`
+                          : "No run scheduled"}
+                    </p>
+                    <p className="text-micro text-muted-foreground mt-0.5">
+                      {selectedRun.isCompleted
+                        ? "Add another whenever you like."
+                        : selectedRun.status === "skipped"
+                          ? "Marked as skipped. You can still head out."
+                          : selectedDay.scheduleType === "lift"
+                            ? // Run-scope card, but the day is not a rest day:
+                              // Home names it a lift day and this said "Rest
+                              // day" beside it.
+                              "Lift day. Head out for a free run if you like."
+                            : "Rest day. Head out whenever you like."}
+                    </p>
+                  </div>
+                  <img
+                    src={runPoseUrl("run-easy")}
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                    decoding="async"
+                    className="-my-1 h-20 w-auto shrink-0 @max-[14em]:hidden"
+                  />
+                </div>
                 {selectedRun.isCompleted && selectedSavedRunId && (
                   <Button
                     variant="sport"

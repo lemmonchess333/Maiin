@@ -109,12 +109,10 @@ describe("SessionCommandCard", () => {
 });
 
 describe("SessionCommandCard — the picture at the right (DS3)", () => {
-  it("draws a run's type in a tile after the title, as Home's run card does", async () => {
-    const { runTemplateIcon } =
-      await import("@/components/run/runTemplateIcons");
-    const { container } = renderCard({ icon: runTemplateIcon("zap") });
+  it("draws the sport's icon in a tile after the title when there is no figure", () => {
+    const { container } = renderCard();
     const heading = screen.getByRole("heading", { name: "Long 15K" });
-    const tile = container.querySelector("svg.lucide-zap")!;
+    const tile = container.querySelector("svg.lucide-footprints")!;
     expect(tile).not.toBeNull();
     // After the title in reading order: the words lead, the picture follows.
     expect(
