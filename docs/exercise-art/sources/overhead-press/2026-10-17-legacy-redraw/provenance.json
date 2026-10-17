@@ -1,0 +1,98 @@
+{
+  "date": "2026-10-17",
+  "exercise": "overhead-press",
+  "status": "source candidate for root integration review; not registered or certified",
+  "tool": "built-in image_gen.imagegen",
+  "canonicalAthlete": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "generatedDefaultDirectory": "C:/Users/myles/.codex/generated_images/01a14baa-14a3-7b91-b4f0-fd901cf24221",
+  "requests": [
+    {
+      "prompt": "master-prompt.txt",
+      "promptSha256": "beffda71658b2768c84d07abf59beaba6f542e939bbe95bad19ca8fd5f63a1bc",
+      "source": "originals/1-master-native.png",
+      "sourceSha256": "1173bdf4a857b390350fa69f5c1989da432091ccd63d36e292b87583e378e184",
+      "toolOutputName": "exec-d5cd46c3-13fe-4abd-944e-d03f9f524cab.png",
+      "disposition": "selected low master"
+    },
+    {
+      "prompt": "early-prompt.txt",
+      "promptSha256": "103ab6ddbf5d3efe65f614bec2f99ef7498b2bbfdf838f6b2a0be6fb7be6f00a",
+      "source": "originals/3-mid-candidate-native.png",
+      "sourceSha256": "22672e0a5cba5089cada0aadb2917a12b7e238fc5962a923332a9f37f478e857",
+      "toolOutputName": "exec-f24bf684-0964-4136-be96-70780a05fcfa.png",
+      "disposition": "whole frame held: shortened head; arm geometry informed bounded working composite only"
+    },
+    {
+      "prompt": "mid-identity-correction-prompt.txt",
+      "promptSha256": "db77efbbf67774e098c524814b1eb79f8c258cbaad90ae84679198e1b1177856",
+      "source": "originals/3-mid-head-correction-rejected.png",
+      "sourceSha256": "a171681025fd8a2484be4a08b37ab67bff4eee1621c477dd4d639e3b77925aed",
+      "toolOutputName": "exec-a6646513-5da6-4279-8e2e-67709d9c0e83.png",
+      "disposition": "rejected: moved head upward; same whole-frame correction route closed"
+    },
+    {
+      "prompt": "lockout-prompt.txt",
+      "promptSha256": "a136be6fa30ea7a56888704c212ef1d313db4d0ddbdc22b85fcb6d08dd161990",
+      "source": "originals/5-lockout-native.png",
+      "sourceSha256": "bfd854ab6589283d9d6a9b6489533a07367e56ee933695da588466a0229a4ae1",
+      "toolOutputName": "exec-6b16712b-2be7-42dd-af0e-0fc9de1ded96.png",
+      "disposition": "initial extended-arm source; native arms informed working composite"
+    },
+    {
+      "prompt": "high-press-prompt.txt",
+      "promptSha256": "986c45356b6fcd45f7ec6b84d7b4504e046abb2398e03e2eabf0048e19d230b7",
+      "source": "originals/4-high-press-candidate-native.png",
+      "sourceSha256": "d1c39a04cea219ecc4cc02bc47206dcba17d29b6c26e7b6bbb4047c3e2bae3c1",
+      "toolOutputName": "exec-9eca8d27-8bab-4170-b75c-df99bdf2b31a.png",
+      "disposition": "rejected whole frame: lower-body shortening"
+    },
+    {
+      "prompt": "neck-occlusion-repair-prompt.txt",
+      "promptSha256": "b4c650f796b3829eab74ea862e16b0802e3ee51a49b62668433df077fb677121",
+      "source": "originals/neck-occlusion-repair-native.png",
+      "sourceSha256": "f85bd8bc38b80ff728ec4a2230e198fb3b2f7f7a6cc2b3a993aebdd9fa08f2e0",
+      "toolOutputName": "exec-2a297111-5fc5-4fe8-8380-55f281838150.png",
+      "disposition": "native hidden-neck authoring used in working composite; not a final separate head/neck insertion"
+    },
+    {
+      "prompt": "high-fixed-stance-correction-prompt.txt",
+      "promptSha256": "999804956e092527ce27233641225f9695a2ccb928f51d6caf38af13e37f54a2",
+      "source": "originals/4-high-press-stance-corrected-native.png",
+      "sourceSha256": "4f96e38e7a31f03878b6b30988d41bd1a07fed447bbd35bac13ecaf626b11585",
+      "toolOutputName": "exec-c0b3032e-969b-4937-a7aa-5ce962a2db3f.png",
+      "disposition": "held: restored sole height but pelvis/thigh shape still shifted; high-route closed"
+    },
+    {
+      "prompt": "mid-native-join-prompt.txt",
+      "promptSha256": "ee7504146dc77dd1d59ba849668cc482e9ceb9d57f7229d3a21bf9ed555ac825",
+      "source": "originals/3-mid-native-join-repair.png",
+      "sourceSha256": "b486f6ed740f566501d8e62461a874a9f053ba2c2b285fc11e1b6a435db537ec",
+      "toolOutputName": "exec-dfed2ad6-57fc-4988-98e4-a439d277a531.png",
+      "disposition": "selected whole native intermediate source after join authoring"
+    },
+    {
+      "prompt": "lockout-native-join-prompt.txt",
+      "promptSha256": "ffa2e1b477ebfc17e60cab9d4aa437268c6d01932c08f4e67c1b4d04f93ff049",
+      "source": "originals/5-lockout-native-join-repair.png",
+      "sourceSha256": "3af94b8bd9d928266f7a35bc683db679419c3dae3d0ac7f7767c890930865b65",
+      "toolOutputName": "exec-0bbcc7ea-1f86-4c2d-83d8-21ceac0fb5dd.png",
+      "disposition": "native join repaired; one later elbow-extension correction"
+    },
+    {
+      "prompt": "lockout-elbow-extension-correction-prompt.txt",
+      "promptSha256": "f19f8d47701c235de67a042f7fa636d8f771a09e083d0927faa838a29505643d",
+      "source": "originals/5-lockout-elbow-extension-native.png",
+      "sourceSha256": "aaa257019923994eeb66853c20b7ed7bb554072dcfcbf171687030f7e9796e25",
+      "toolOutputName": "exec-ecbf2bce-1daf-4ce9-962e-d8ac70a4023c.png",
+      "disposition": "selected whole native overhead source after bounded extension correction"
+    }
+  ],
+  "finalGeometry": "Three whole generated native1024x1536 sources, not masked head/body composites. No source resampling, scaling, mirroring, anatomical warping or fitted individual limbs. All previous fixed-region experiments are diagnostic only. Shared equipment template and colour layers are code finishing.",
+  "sourceOrder": ["A", "A", "B", "C", "C", "B"],
+  "physicalT": [0, 0, 0.55, 1, 1, 0.55],
+  "genuineAuthoredPoseCount": 3,
+  "newImagesRequested": 10,
+  "serviceHoldsOrRefusals": 0,
+  "equipment": "One native grey barbell template, including two matching single plates and collars. Rigid integer translation0,-188,-344px; native closed hand regions remain foreground. No claim of calibrated real-world dimensions or factory model."
+}

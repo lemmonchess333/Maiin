@@ -1,0 +1,94 @@
+{
+  "exerciseId": "bench-press",
+  "status": "native candidate; full-size loop and mobile review pending",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "sourceDimensions": [1536, 1024],
+  "commonCrop": [264, 0, 1152, 1024],
+  "outputDimensions": [888, 1024],
+  "sourceScale": 1,
+  "anatomicalWarps": 0,
+  "limbFitting": 0,
+  "headOrShoeGrafts": 0,
+  "distinctPhysicalPoses": 4,
+  "sourcePoseOrder": [
+    "top",
+    "early",
+    "lower-middle",
+    "bottom",
+    "lower-middle",
+    "top"
+  ],
+  "frames": [
+    {
+      "frame": 1,
+      "sourcePose": "top",
+      "t": 1,
+      "label": "Set",
+      "cue": "Shoulder blades set; feet stay planted.",
+      "pngSha256": "80c9da845e4e3001878cb6de2de087f4ac5f3932be86d8779bed05d1b9f38732",
+      "webpSha256": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f"
+    },
+    {
+      "frame": 2,
+      "sourcePose": "early",
+      "t": 0.88,
+      "label": "Lower",
+      "cue": "Bend elbows; keep wrists over elbows.",
+      "pngSha256": "c8c5e10928bac4f588c7ea5716699dec1ac49d971c0dad46b3c940fb91b2413c",
+      "webpSha256": "4ab1f8d37c4137bd4ced6b2a9fb85bee29d7b905daab019b99cef7c46b8b014f"
+    },
+    {
+      "frame": 3,
+      "sourcePose": "lower-middle",
+      "t": 0.35,
+      "label": "Continue down",
+      "cue": "Lower smoothly toward the mid-chest.",
+      "pngSha256": "fafcd6a7c398ac2a98f8bb73799a9fbb729bd3c5b0b734c4ee74e7d8a20e764b",
+      "webpSha256": "800f0a64d59cacca772c25f06834ec3b717e27b973780f7cd6627df496294ccf"
+    },
+    {
+      "frame": 4,
+      "sourcePose": "bottom",
+      "t": 0,
+      "label": "Chest touch",
+      "cue": "Touch lightly; keep the neck clear.",
+      "pngSha256": "be2032efb06c08fe3ae0ef442f47f1cf8e4f50609815d2b2c93285128ac90f83",
+      "webpSha256": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd"
+    },
+    {
+      "frame": 5,
+      "sourcePose": "lower-middle",
+      "t": 0.35,
+      "label": "Drive",
+      "cue": "Press upward and back toward shoulders.",
+      "pngSha256": "fafcd6a7c398ac2a98f8bb73799a9fbb729bd3c5b0b734c4ee74e7d8a20e764b",
+      "webpSha256": "800f0a64d59cacca772c25f06834ec3b717e27b973780f7cd6627df496294ccf"
+    },
+    {
+      "frame": 6,
+      "sourcePose": "top",
+      "t": 1,
+      "label": "Lockout",
+      "cue": "Straight arms; hips remain on bench.",
+      "pngSha256": "80c9da845e4e3001878cb6de2de087f4ac5f3932be86d8779bed05d1b9f38732",
+      "webpSha256": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f"
+    }
+  ],
+  "palette": {
+    "primary": "#7B72E9",
+    "primaryMuscles": ["Pectorals"],
+    "secondary": "#9590E0",
+    "secondaryMuscles": ["Triceps", "Anterior deltoids"]
+  },
+  "findings": [
+    "Low-middle is an intact whole generated source, with small supported head/chest/bench and planted trainer contour/position differences. Actual playback must establish whether these are nondistracting under the revised standard. No exact fixed-contact claim is made.",
+    "A horizontal y600 native composite was rejected because it created a visible thigh/bench seam. It is preserved only in the diagnostic native-lower-scene-join.png, not in any final frame.",
+    "Early is about12% descent, low-middle about65% descent; t is extension fraction, not frame number.",
+    "Generated drive source was not selected: it moved the whole supported body farther than the low-middle candidate.",
+    "No Smith frame/carriages remain. Free bar grips and path need actual loop review; donor approval is not inherited."
+  ],
+  "strictCertified": false,
+  "completionCredit": false,
+  "paletteFinish": "Canonical base colours with original source luminance/shading. Three approved donor neutral-contour layers remain byte-exact; lower-middle pectoral ownership uses native curved masks and local highlight repair.",
+  "reproduction": "Run reproduce.py with tone_palette.py beside originals/. ORA layers reopen exactly; lossless WebP decoded RGB matches each PNG."
+}

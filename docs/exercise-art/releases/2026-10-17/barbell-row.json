@@ -1,0 +1,154 @@
+{
+  "exerciseId": "barbell-row",
+  "version": "anatomy-v3-2026-10-17-legacy-redraw-v1",
+  "width": 1140,
+  "height": 1024,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex native and actual-player review under the user-authorized revised standard",
+  "reviewedAt": "2026-10-17T22:04:51.181521+00:00",
+  "reference": {
+    "path": "form-frames/barbell-row/4.webp",
+    "sha256": "89d5812fc5e0168144ae8a5148c99e10a4eeb7579fdbe2cf9d36172f9a3fbb81"
+  },
+  "cueSha256": "21983fa876a9c461eb26ccca60277665ccd4866edec284eb51f43dac6c2a9ef9",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Root and independent palette reviewer actually inspected the current full native states against FA56. Same lean adult bald faceless anatomical athlete, white trainers, neutral pelvis, no shorts."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Strict certification is not asserted. Actual scoped observations and retained findings are recorded separately; integrated review remains a publication gate."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Whole native connected source poses, no code anatomical warp/fit/graft. Small source contour differences retained."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "New continuous-hinge barbell row family with no floor reset, four genuine states. Both grips/constant modest plates viewed; small projected grip/contour variations retained."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Strict certification is not asserted. Actual scoped observations and retained findings are recorded separately; integrated review remains a publication gate."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Strict certification is not asserted. Actual scoped observations and retained findings are recorded separately; integrated review remains a publication gate."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Contour-following native primary/secondary ownership and inherited shading actually inspected across all six, palette-only changes proved bounded to masks."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Exact six physical labels/cues and t values match the actual authored source order. Every cue is seven words or fewer; source reuse is explicit and release cue hash is enforced."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Actual registered six-frame normal light/dark loops and slower dark loop observed, including 6-to-1. Manual frame 6 selection and paused 6-to-1 wraps agree with instruction highlights for all six guides. Native ORA, fresh rebuild and lossless source proofs retained. No anatomical interpolation."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Actual registered ExerciseFormContent at 390x844 in light: all six frames decoded and 6-to-1 observed in normal playback. A separately scrolled viewport screenshot shows the painted player; full-page screenshots are layout context only. Normal 480/348/160/48px cards reviewed. Raw evidence is in the shared archive. This is scoped observation, not strict certification."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Actual registered ExerciseFormContent at 390x844 in dark: all six frames decoded and 6-to-1 observed in normal playback. A separately scrolled viewport screenshot shows the painted player; full-page screenshots are layout context only. Normal 480/348/160/48px cards reviewed. Raw evidence is in the shared archive. This is scoped observation, not strict certification."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/barbell-row/1.webp",
+      "sha256": "3d1708536445f65a0734b51d596830fabbc5824ff904d42128a687aeefe1ecf8",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-row/2026-10-17-legacy-redraw/1.png",
+        "sha256": "6c8c3078bd8c24bda82a6b84f31d91a59f57ff02d46113399cbd5c003609b27e"
+      }
+    },
+    {
+      "path": "form-frames/barbell-row/2.webp",
+      "sha256": "67db4c3c4d4e28ff270af0424c23dd117c9297a7f27bec282b3de10b9b4cb81e",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-row/2026-10-17-legacy-redraw/2.png",
+        "sha256": "c42b35a2bc17e329aa5b424d0d832a4b45741bc0e286f6d941699a696c5c0adc"
+      }
+    },
+    {
+      "path": "form-frames/barbell-row/3.webp",
+      "sha256": "c6252fc48d520586202aac07c1e814f4ebede5deb2eb8cd7b2e897be7daf6c75",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-row/2026-10-17-legacy-redraw/3.png",
+        "sha256": "574a5f414f70f6c6f85453a353e97c22588d7efba40c9ff8f6ac723b4abe294a"
+      }
+    },
+    {
+      "path": "form-frames/barbell-row/4.webp",
+      "sha256": "89d5812fc5e0168144ae8a5148c99e10a4eeb7579fdbe2cf9d36172f9a3fbb81",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-row/2026-10-17-legacy-redraw/4.png",
+        "sha256": "b1ca3d3f82d6e332b86f4c3c9f6bb7a9917e9b3d603835f521b7c3854bea90d3"
+      }
+    },
+    {
+      "path": "form-frames/barbell-row/5.webp",
+      "sha256": "c6252fc48d520586202aac07c1e814f4ebede5deb2eb8cd7b2e897be7daf6c75",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-row/2026-10-17-legacy-redraw/5.png",
+        "sha256": "574a5f414f70f6c6f85453a353e97c22588d7efba40c9ff8f6ac723b4abe294a"
+      }
+    },
+    {
+      "path": "form-frames/barbell-row/6.webp",
+      "sha256": "3d1708536445f65a0734b51d596830fabbc5824ff904d42128a687aeefe1ecf8",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-row/2026-10-17-legacy-redraw/6.png",
+        "sha256": "6c8c3078bd8c24bda82a6b84f31d91a59f57ff02d46113399cbd5c003609b27e"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "The human owner in this chat",
+    "instruction": "Redraw the six oldest exercise sets in today's style: bench press, overhead press, barbell row, dips, rope tricep pushdown and skull crushers.",
+    "context": "Standing user instructions authorize local registration, project checks and merging, preserve FA56/no shorts/palette, and allow 3-4 genuine poses reused for returns plus minor nondistracting contour differences under work/REVISED-CONVERSION-STANDARDS-20261009.md. This is authorizing work, not a claim that the human personally certified these candidate pixels."
+  },
+  "findings": [
+    "Four genuine native continuous-hinge row poses, not a relabelled Pendlay floor reset.",
+    "Late middle is about72% projected shaft travel; early about25%; phase values describe the actual images, not equal spacing.",
+    "Small generated shoulder/chest/back/grip contour and width variations retained for native motion review. Whole head and trainers visually steady, not a calibrated3D or exact pixel identity claim.",
+    "Colour masks follow already tinted source fields; visible lat mask is traced per pose, remaining visible rear deltoid/rhomboid/biceps secondary. Anatomical ownership needs native inspection.",
+    "Current source colours retain inherited neutral contour/shading, with exact primary/secondary base palette; source and fresh reproduction proofs retained. Strict certification is not asserted."
+  ],
+  "sourcePoseOrder": ["hang", "early", "middle", "top", "middle", "hang"],
+  "distinctPhysicalPoses": 4,
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/barbell-row/2026-10-17-legacy-redraw",
+    "method": "Built-in image_gen with canonical and accepted local sources; native source/layer reuse and exact palette/contour work. No CLI model switch, anatomical fitting, warping or head/shoe grafts.",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/barbell-row/2026-10-17-legacy-redraw/portable-native-source.zip",
+      "sha256": "4bf67e27236113871b445253fcf100385b20c50b39ab3e385c23aaf003510523",
+      "bytes": 30169408
+    }
+  },
+  "recordStage": "Native/source, registered mobile/card/manual/normal/slower reviews complete under revised standard with findings retained. Normal project verification and exact-head CI/merge remain separate publication gates.",
+  "replacementScope": "Six guides and one normal card replace an existing guide; no conversion-count increment.",
+  "integrationEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-17-legacy-six/native-and-mobile-review.zip",
+    "sha256": "0c5a1a92d212aeb9bad9c584132aeb0e3bfb10da812ab4f64c7a31e6bdec69ce",
+    "review": "docs/exercise-art/reviews/2026-10-17-legacy-six/integrated-review-results.json"
+  }
+}

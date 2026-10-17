@@ -1,0 +1,153 @@
+{
+  "exerciseId": "rope-tricep-pushdown",
+  "version": "anatomy-v3-2026-10-17-legacy-redraw-v1",
+  "width": 1024,
+  "height": 1600,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex native and actual-player review under the user-authorized revised standard",
+  "reviewedAt": "2026-10-17T22:04:51.181521+00:00",
+  "reference": {
+    "path": "form-frames/rope-tricep-pushdown/1.webp",
+    "sha256": "67b3ab4460e2bcd4240feffe4cf7e27619301cfc9880b326e597243d21ebde69"
+  },
+  "cueSha256": "8144f7c4de20ff5c1b190066059eacc85b521bc0851bc8ea22a143fb2d392f57",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Native six viewed against FA56: lean bald faceless adult, smooth neutral pelvis and white trainers, no shorts. Canonical supplied to every generation; no identity certificate."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Native1024x1536 sources placed whole at(0,64) into1024x1600. No anatomical resampling. Master head/neck and trainers byte-exact; upper connected window retains disclosed contour variation."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "All six native PNGs actually viewed. Five genuine bilateral elbow-extension states, humeri qualitatively beside ribs. No calibrated limb-length claim."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Separate editable tower, high24px-radius sheave, rods, eight fixed plates plus four selected out of twelve. Native stills and actual player reviewed."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Closed generated grips retain rope stubs/stoppers; both new320px branches meet the documented junction. Planted trainer pixels exact across six."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Full attachment/tangent/finite-sheave-arc/vertical cable length conserved to2.3e-13px residual. Selected stack rises monotonically with extension. Numerical routing check does not certify3D anatomy."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Triceps primary base7B72E9; forearms secondary base9590E0. Existing source chroma fields and tonal detail retained, other anatomy neutral. Native ownership reviewed qualitatively."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Six cues match bent/early/middle/late/extended/bent-return sources, each at most7 words. Exact cue hash enforced separately."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Actual registered six-frame normal light/dark loops and slower dark loop observed, including 6-to-1. Manual frame 6 selection and paused 6-to-1 wraps agree with instruction highlights for all six guides. Native ORA, fresh rebuild and lossless source proofs retained. No anatomical interpolation."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Actual registered ExerciseFormContent at 390x844 in light: all six frames decoded and 6-to-1 observed in normal playback. A separately scrolled viewport screenshot shows the painted player; full-page screenshots are layout context only. Normal 480/348/160/48px cards reviewed. Raw evidence is in the shared archive. This is scoped observation, not strict certification."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Actual registered ExerciseFormContent at 390x844 in dark: all six frames decoded and 6-to-1 observed in normal playback. A separately scrolled viewport screenshot shows the painted player; full-page screenshots are layout context only. Normal 480/348/160/48px cards reviewed. Raw evidence is in the shared archive. This is scoped observation, not strict certification."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/rope-tricep-pushdown/1.webp",
+      "sha256": "67b3ab4460e2bcd4240feffe4cf7e27619301cfc9880b326e597243d21ebde69",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-17-legacy-redraw/1.png",
+        "sha256": "a9a1cecb8eecf2c818368536b513eebf96b8a8ecb101d899aa65c4a6c4bb2e0c"
+      }
+    },
+    {
+      "path": "form-frames/rope-tricep-pushdown/2.webp",
+      "sha256": "944d99b432c5f7c2cfdc8415896d0105f8a2da5049d16c5b4080817d1e519c92",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-17-legacy-redraw/2.png",
+        "sha256": "c94921639aa8651de832c716225d6619d8c9ad71885ec4e6731a2799628eef19"
+      }
+    },
+    {
+      "path": "form-frames/rope-tricep-pushdown/3.webp",
+      "sha256": "81651d17870a516b45d0bdbc9f5995d5c1e702689ee0298345bc2be6126859c7",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-17-legacy-redraw/3.png",
+        "sha256": "7b04b5a5d71f776f8a4782086e0ae829ef07b654cb6a033fd68d02584b8a60fe"
+      }
+    },
+    {
+      "path": "form-frames/rope-tricep-pushdown/4.webp",
+      "sha256": "59ada174352e0019f32b040d2e696f46c832594c57d7250ae38d6cc79cd4a938",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-17-legacy-redraw/4.png",
+        "sha256": "a9c23f6c19a1d7c01264beb8e9d8d64e3955e8b1ab353892a59e28b7ece8b7a6"
+      }
+    },
+    {
+      "path": "form-frames/rope-tricep-pushdown/5.webp",
+      "sha256": "5d974624a444d28cdd7b4e3745274d37bef09a9e7a34d43c339b340a430f613d",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-17-legacy-redraw/5.png",
+        "sha256": "d982cb822fa6bc9ab1aba7181bcbf094a13e2da79d4af92db873480d9daef158"
+      }
+    },
+    {
+      "path": "form-frames/rope-tricep-pushdown/6.webp",
+      "sha256": "67b3ab4460e2bcd4240feffe4cf7e27619301cfc9880b326e597243d21ebde69",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-17-legacy-redraw/6.png",
+        "sha256": "a9a1cecb8eecf2c818368536b513eebf96b8a8ecb101d899aa65c4a6c4bb2e0c"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "The human owner in this chat",
+    "instruction": "Redraw the six oldest exercise sets in today's style: bench press, overhead press, barbell row, dips, rope tricep pushdown and skull crushers.",
+    "context": "Standing user instructions authorize local registration, project checks and merging, preserve FA56/no shorts/palette, and allow 3-4 genuine poses reused for returns plus minor nondistracting contour differences under work/REVISED-CONVERSION-STANDARDS-20261009.md. This is authorizing work, not a claim that the human personally certified these candidate pixels."
+  },
+  "findings": [
+    "Some generated upper-arm/elbow/forearm and torso contours vary inside the connected native source window. No exact fixed-joint or calibrated3D anatomy claim.",
+    "Generated rope stubs/stoppers retain small illustrative differences. New upper branches are320px each and the full finite-sheave cable path is conserved.",
+    "Five physical extension states; frame6 reuses the bent start. No anatomical interpolation or invented intermediate source.",
+    "Owner-authorized revised-standard artwork; strict visual certification is not asserted."
+  ],
+  "sourcePoseOrder": [1, 2, 3, 4, 5, 1],
+  "distinctPhysicalPoses": 5,
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-17-legacy-redraw",
+    "method": "Built-in image_gen with canonical and accepted local sources; native source/layer reuse and exact palette/contour work. No CLI model switch, anatomical fitting, warping or head/shoe grafts.",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-17-legacy-redraw/portable-native-source.zip",
+      "sha256": "0364aab1128633f1f767bb653bfa25b647c5cd67df6d57abd027bcecc1242497",
+      "bytes": 31380850
+    }
+  },
+  "recordStage": "Native/source, registered mobile/card/manual/normal/slower reviews complete under revised standard with findings retained. Normal project verification and exact-head CI/merge remain separate publication gates.",
+  "replacementScope": "Six guides and one normal card replace an existing guide; no conversion-count increment.",
+  "integrationEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-17-legacy-six/native-and-mobile-review.zip",
+    "sha256": "0c5a1a92d212aeb9bad9c584132aeb0e3bfb10da812ab4f64c7a31e6bdec69ce",
+    "review": "docs/exercise-art/reviews/2026-10-17-legacy-six/integrated-review-results.json"
+  }
+}

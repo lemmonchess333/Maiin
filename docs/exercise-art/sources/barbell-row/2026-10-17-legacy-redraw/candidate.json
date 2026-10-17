@@ -1,0 +1,187 @@
+{
+  "exerciseId": "barbell-row",
+  "status": "native candidate; native loop and actual mobile review pending",
+  "sourceDimensions": [1536, 1024],
+  "outputDimensions": [1140, 1024],
+  "commonCrop": [180, 0, 1320, 1024],
+  "sourceScale": 1,
+  "anatomicalWarps": 0,
+  "limbFitting": 0,
+  "headOrShoeGrafts": 0,
+  "distinctPhysicalPoses": 4,
+  "sources": [
+    {
+      "pose": "hang",
+      "path": "originals/hang-master-native.png",
+      "sha256": "ee25c5368eaf2a3f6dd07ef613cfb08c8558bb26be8e50f70d7c4dda9eea8554",
+      "dimensions": [1536, 1024],
+      "anatomicalTransforms": 0,
+      "sourceScale": 1,
+      "primaryMaskPolygon": [
+        [
+          [729, 246],
+          [749, 243],
+          [770, 239],
+          [791, 262],
+          [812, 285],
+          [847, 313],
+          [811, 319],
+          [778, 325],
+          [748, 325],
+          [748, 301],
+          [738, 275]
+        ]
+      ]
+    },
+    {
+      "pose": "early",
+      "path": "originals/early-native.png",
+      "sha256": "d1b3209afb07a4a1dce5b46dfc809b1e3b76070ea21b303da8302dcfbc8cee99",
+      "dimensions": [1536, 1024],
+      "anatomicalTransforms": 0,
+      "sourceScale": 1,
+      "primaryMaskPolygon": [
+        [
+          [770, 228],
+          [784, 239],
+          [805, 262],
+          [827, 284],
+          [851, 306],
+          [792, 316],
+          [782, 290],
+          [773, 262]
+        ],
+        [
+          [686, 294],
+          [698, 281],
+          [712, 304],
+          [714, 315],
+          [702, 320],
+          [686, 313]
+        ]
+      ]
+    },
+    {
+      "pose": "middle",
+      "path": "originals/middle-native.png",
+      "sha256": "fbba0f74375b57a9e9fd8e97ca25e06984b934f54ab39fc37ba067a0d95fa954",
+      "dimensions": [1536, 1024],
+      "anatomicalTransforms": 0,
+      "sourceScale": 1,
+      "primaryMaskPolygon": [
+        [
+          [707, 236],
+          [724, 249],
+          [748, 261],
+          [779, 269],
+          [813, 273],
+          [850, 260],
+          [827, 280],
+          [839, 310],
+          [840, 319],
+          [791, 328],
+          [752, 337],
+          [740, 310],
+          [725, 281]
+        ]
+      ]
+    },
+    {
+      "pose": "top",
+      "path": "originals/top-native.png",
+      "sha256": "970bdf70546358c874edfe3e28c18b0664132a8392486bc45ba9fd3897a4c9ce",
+      "dimensions": [1536, 1024],
+      "anatomicalTransforms": 0,
+      "sourceScale": 1,
+      "primaryMaskPolygon": [
+        [
+          [711, 231],
+          [731, 245],
+          [754, 252],
+          [785, 255],
+          [807, 254],
+          [830, 244],
+          [831, 270],
+          [839, 299],
+          [832, 320],
+          [790, 326],
+          [747, 329],
+          [741, 303],
+          [728, 269]
+        ]
+      ]
+    }
+  ],
+  "sourcePoseOrder": ["hang", "early", "middle", "top", "middle", "hang"],
+  "frames": [
+    {
+      "frame": 1,
+      "sourcePose": "hang",
+      "t": 0,
+      "label": "Hang",
+      "cue": "Hinge steady; arms hang below shoulders.",
+      "pngSha256": "6c8c3078bd8c24bda82a6b84f31d91a59f57ff02d46113399cbd5c003609b27e",
+      "webpSha256": "3d1708536445f65a0734b51d596830fabbc5824ff904d42128a687aeefe1ecf8"
+    },
+    {
+      "frame": 2,
+      "sourcePose": "early",
+      "t": 0.25,
+      "label": "Initiate pull",
+      "cue": "Bend elbows; keep both wrists straight.",
+      "pngSha256": "c42b35a2bc17e329aa5b424d0d832a4b45741bc0e286f6d941699a696c5c0adc",
+      "webpSha256": "67db4c3c4d4e28ff270af0424c23dd117c9297a7f27bec282b3de10b9b4cb81e"
+    },
+    {
+      "frame": 3,
+      "sourcePose": "middle",
+      "t": 0.72,
+      "label": "Continue pull",
+      "cue": "Drive elbows back beside the torso.",
+      "pngSha256": "574a5f414f70f6c6f85453a353e97c22588d7efba40c9ff8f6ac723b4abe294a",
+      "webpSha256": "c6252fc48d520586202aac07c1e814f4ebede5deb2eb8cd7b2e897be7daf6c75"
+    },
+    {
+      "frame": 4,
+      "sourcePose": "top",
+      "t": 1,
+      "label": "Top contraction",
+      "cue": "Bring the bar to lower ribs.",
+      "pngSha256": "b1ca3d3f82d6e332b86f4c3c9f6bb7a9917e9b3d603835f521b7c3854bea90d3",
+      "webpSha256": "89d5812fc5e0168144ae8a5148c99e10a4eeb7579fdbe2cf9d36172f9a3fbb81"
+    },
+    {
+      "frame": 5,
+      "sourcePose": "middle",
+      "t": 0.72,
+      "label": "Lower",
+      "cue": "Lower smoothly; maintain the hip hinge.",
+      "pngSha256": "574a5f414f70f6c6f85453a353e97c22588d7efba40c9ff8f6ac723b4abe294a",
+      "webpSha256": "c6252fc48d520586202aac07c1e814f4ebede5deb2eb8cd7b2e897be7daf6c75"
+    },
+    {
+      "frame": 6,
+      "sourcePose": "hang",
+      "t": 0,
+      "label": "Full stretch",
+      "cue": "Arms extend; plates stay off floor.",
+      "pngSha256": "6c8c3078bd8c24bda82a6b84f31d91a59f57ff02d46113399cbd5c003609b27e",
+      "webpSha256": "3d1708536445f65a0734b51d596830fabbc5824ff904d42128a687aeefe1ecf8"
+    }
+  ],
+  "palette": {
+    "primary": "#7B72E9",
+    "primaryMuscles": ["Lats"],
+    "secondary": "#9590E0",
+    "secondaryMuscles": ["Rhomboids", "Rear deltoids", "Biceps"]
+  },
+  "findings": [
+    "Four genuine native continuous-hinge row poses, not a relabelled Pendlay floor reset.",
+    "Late middle is about72% projected shaft travel; early about25%; phase values describe the actual images, not equal spacing.",
+    "Small generated shoulder/chest/back/grip contour and width variations retained for native motion review. Whole head and trainers visually steady, not a calibrated3D or exact pixel identity claim.",
+    "Colour masks follow already tinted source fields; visible lat mask is traced per pose, remaining visible rear deltoid/rhomboid/biceps secondary. Anatomical ownership needs native inspection."
+  ],
+  "strictCertified": false,
+  "completionCredit": false,
+  "paletteFinish": "Only existing source chromatic fields; canonical base+source luminance variation, exact native anatomy/equipment retained. Per-pose lat ownership follows underarm borders; rear deltoids/rhomboids/biceps secondary."
+}

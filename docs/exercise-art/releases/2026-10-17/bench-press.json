@@ -1,0 +1,163 @@
+{
+  "exerciseId": "bench-press",
+  "version": "anatomy-v3-2026-10-17-legacy-redraw-v1",
+  "width": 888,
+  "height": 1024,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex native and actual-player review under the user-authorized revised standard",
+  "reviewedAt": "2026-10-17T22:04:51.181521+00:00",
+  "reference": {
+    "path": "form-frames/bench-press/4.webp",
+    "sha256": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd"
+  },
+  "cueSha256": "bccf45debd6d111fe77549134591d101fea4b4894a0755cc11f0e35dd6fd4c04",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Root and independent palette reviewer actually inspected the current full native states against FA56. Same lean adult bald faceless anatomical athlete, white trainers, neutral pelvis, no shorts."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Strict certification is not asserted. Actual scoped observations and retained findings are recorded separately; integrated review remains a publication gate."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Whole native connected source poses, no code anatomical warp/fit/graft. Small source contour differences retained."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Native approved canonical body/bench/bar donor layers exclude Smith guides/carriages. Whole free-bar sources and full grips reviewed; no inherited Smith motion certification."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Strict certification is not asserted. Actual scoped observations and retained findings are recorded separately; integrated review remains a publication gate."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Strict certification is not asserted. Actual scoped observations and retained findings are recorded separately; integrated review remains a publication gate."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Contour-following native primary/secondary ownership and inherited shading actually inspected across all six, palette-only changes proved bounded to masks."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Exact six physical labels/cues and t values match the actual authored source order. Every cue is seven words or fewer; source reuse is explicit and release cue hash is enforced."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Actual registered six-frame normal light/dark loops and slower dark loop observed, including 6-to-1. Manual frame 6 selection and paused 6-to-1 wraps agree with instruction highlights for all six guides. Native ORA, fresh rebuild and lossless source proofs retained. No anatomical interpolation."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Actual registered ExerciseFormContent at 390x844 in light: all six frames decoded and 6-to-1 observed in normal playback. A separately scrolled viewport screenshot shows the painted player; full-page screenshots are layout context only. Normal 480/348/160/48px cards reviewed. Raw evidence is in the shared archive. This is scoped observation, not strict certification."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Actual registered ExerciseFormContent at 390x844 in dark: all six frames decoded and 6-to-1 observed in normal playback. A separately scrolled viewport screenshot shows the painted player; full-page screenshots are layout context only. Normal 480/348/160/48px cards reviewed. Raw evidence is in the shared archive. This is scoped observation, not strict certification."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/bench-press/1.webp",
+      "sha256": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/bench-press/2026-10-17-legacy-redraw/1.png",
+        "sha256": "80c9da845e4e3001878cb6de2de087f4ac5f3932be86d8779bed05d1b9f38732"
+      }
+    },
+    {
+      "path": "form-frames/bench-press/2.webp",
+      "sha256": "4ab1f8d37c4137bd4ced6b2a9fb85bee29d7b905daab019b99cef7c46b8b014f",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/bench-press/2026-10-17-legacy-redraw/2.png",
+        "sha256": "c8c5e10928bac4f588c7ea5716699dec1ac49d971c0dad46b3c940fb91b2413c"
+      }
+    },
+    {
+      "path": "form-frames/bench-press/3.webp",
+      "sha256": "800f0a64d59cacca772c25f06834ec3b717e27b973780f7cd6627df496294ccf",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/bench-press/2026-10-17-legacy-redraw/3.png",
+        "sha256": "fafcd6a7c398ac2a98f8bb73799a9fbb729bd3c5b0b734c4ee74e7d8a20e764b"
+      }
+    },
+    {
+      "path": "form-frames/bench-press/4.webp",
+      "sha256": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/bench-press/2026-10-17-legacy-redraw/4.png",
+        "sha256": "be2032efb06c08fe3ae0ef442f47f1cf8e4f50609815d2b2c93285128ac90f83"
+      }
+    },
+    {
+      "path": "form-frames/bench-press/5.webp",
+      "sha256": "800f0a64d59cacca772c25f06834ec3b717e27b973780f7cd6627df496294ccf",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/bench-press/2026-10-17-legacy-redraw/5.png",
+        "sha256": "fafcd6a7c398ac2a98f8bb73799a9fbb729bd3c5b0b734c4ee74e7d8a20e764b"
+      }
+    },
+    {
+      "path": "form-frames/bench-press/6.webp",
+      "sha256": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/bench-press/2026-10-17-legacy-redraw/6.png",
+        "sha256": "80c9da845e4e3001878cb6de2de087f4ac5f3932be86d8779bed05d1b9f38732"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "The human owner in this chat",
+    "instruction": "Redraw the six oldest exercise sets in today's style: bench press, overhead press, barbell row, dips, rope tricep pushdown and skull crushers.",
+    "context": "Standing user instructions authorize local registration, project checks and merging, preserve FA56/no shorts/palette, and allow 3-4 genuine poses reused for returns plus minor nondistracting contour differences under work/REVISED-CONVERSION-STANDARDS-20261009.md. This is authorizing work, not a claim that the human personally certified these candidate pixels."
+  },
+  "findings": [
+    "Low-middle is an intact whole generated source, with small supported head/chest/bench and planted trainer contour/position differences. Actual playback must establish whether these are nondistracting under the revised standard. No exact fixed-contact claim is made.",
+    "A horizontal y600 native composite was rejected because it created a visible thigh/bench seam. It is preserved only in the diagnostic native-lower-scene-join.png, not in any final frame.",
+    "Early is about12% descent, low-middle about65% descent; t is extension fraction, not frame number.",
+    "Generated drive source was not selected: it moved the whole supported body farther than the low-middle candidate.",
+    "No Smith frame/carriages remain. Free bar grips and path need actual loop review; donor approval is not inherited.",
+    "Current source colours retain inherited neutral contour/shading, with exact primary/secondary base palette; source and fresh reproduction proofs retained. Strict certification is not asserted.",
+    "Root actual390x844 normal loop and manual all-six review retains the low-middle head/bench/trainer position change as a minor visible illustration variation under the revised standard. No exact fixed-support or fixed-camera certification is claimed. A seam-producing lower-body composite remains rejected and is absent from all exports."
+  ],
+  "sourcePoseOrder": [
+    "top",
+    "early",
+    "lower-middle",
+    "bottom",
+    "lower-middle",
+    "top"
+  ],
+  "distinctPhysicalPoses": 4,
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/bench-press/2026-10-17-legacy-redraw",
+    "method": "Built-in image_gen with canonical and accepted local sources; native source/layer reuse and exact palette/contour work. No CLI model switch, anatomical fitting, warping or head/shoe grafts.",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/bench-press/2026-10-17-legacy-redraw/portable-native-source.zip",
+      "sha256": "e0b452edbb2485f79eacb1fd5eafb71f1d0c165cf296a07af300b4c240eef329",
+      "bytes": 26191327
+    }
+  },
+  "recordStage": "Native/source, registered mobile/card/manual/normal/slower reviews complete under revised standard with findings retained. Normal project verification and exact-head CI/merge remain separate publication gates.",
+  "replacementScope": "Six guides and one normal card replace an existing guide; no conversion-count increment.",
+  "integrationEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-17-legacy-six/native-and-mobile-review.zip",
+    "sha256": "0c5a1a92d212aeb9bad9c584132aeb0e3bfb10da812ab4f64c7a31e6bdec69ce",
+    "review": "docs/exercise-art/reviews/2026-10-17-legacy-six/integrated-review-results.json"
+  }
+}
