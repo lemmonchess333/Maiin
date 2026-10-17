@@ -2168,4 +2168,38 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Reset", "Return low while maintaining both hand supports."],
     ]
   ),
+  "turkish-get-up": placard(
+    "turkish-get-up",
+    ["Shoulders", "Core"],
+    ["Triceps", "Upper Back", "Glutes", "Quads"],
+    [
+      [0, "Press", "Press the bell up; eyes on it."],
+      [0.2, "Elbow", "Roll onto your free elbow, arm locked."],
+      [0.4, "Hand", "Push up onto your free hand."],
+      [0.6, "Bridge", "Lift your hips high off the floor."],
+      [0.8, "Kneel", "Sweep your leg back into a half-kneel."],
+      [1, "Stand", "Stand tall, then reverse each step down."],
+    ],
+    [
+      "Lie on your back with the bell beside your shoulder.",
+      "Press it up with both hands to a locked arm, then free one hand.",
+    ]
+  ),
+  "assault-bike": placard(
+    "assault-bike",
+    ["Quads", "Glutes"],
+    ["Chest", "Front Delts", "Biceps", "Calves"],
+    [
+      [0, "Drive", "Drive down through your whole foot."],
+      [0, "Arms", "Push and pull the handles while pedalling."],
+      [1, "Switch", "Keep both legs turning; no dead spots."],
+      [1, "Tall", "Sit tall; keep your hips seated."],
+      [0, "Breathe", "Breathe in rhythm; never hold your breath."],
+      [0, "Steady", "Hold a pace you can sustain."],
+    ],
+    [
+      "Set the seat so your leg is almost straight at the bottom.",
+      "Hold the moving handles and put both feet on the pedals.",
+    ]
+  ),
 };

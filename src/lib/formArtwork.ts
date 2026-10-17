@@ -124,6 +124,20 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
     status: "owner-released-with-findings",
     reviewFile: "docs/exercise-art/releases/2026-10-16/seated-row.json",
   },
+  "turkish-get-up": {
+    ...existing("turkish-get-up", 1024, 1024),
+    reference: "form-frames/turkish-get-up/1.webp",
+    version: "anatomy-v3-2026-10-17-gemini-get-up-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-17/turkish-get-up.json",
+  },
+  "assault-bike": {
+    ...existing("assault-bike", 1024, 1024),
+    reference: "form-frames/assault-bike/1.webp",
+    version: "anatomy-v3-2026-10-17-gemini-front-air-bike-v1",
+    status: "owner-released-with-findings",
+    reviewFile: "docs/exercise-art/releases/2026-10-17/assault-bike.json",
+  },
   "spin-bike": {
     ...existing("spin-bike", 432, 707),
     reference: "form-frames/spin-bike/1.webp",
