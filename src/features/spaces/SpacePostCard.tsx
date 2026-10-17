@@ -147,6 +147,8 @@ export default function SpacePostCard({
             background: `linear-gradient(150deg, ${THEME.lifting}22 0%, ${THEME.lifting}08 55%, ${THEME.lifting}10 100%)`,
           }}
         >
+          {/* Centred: the volume holds the left corner and the exercise
+              count the right, which a drawing at the right covered. */}
           {leadArt ? (
             <img
               src={formArtCutoutUrl(leadArt)}
@@ -156,7 +158,7 @@ export default function SpacePostCard({
               decoding="async"
               loading="lazy"
               data-lead-drawing=""
-              className="pointer-events-none absolute inset-y-1.5 right-3 h-[calc(100%-0.75rem)] w-[58%] object-contain object-right-bottom"
+              className="pointer-events-none absolute inset-y-1.5 left-1/2 h-[calc(100%-0.75rem)] w-1/3 -translate-x-1/2 object-contain object-bottom"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center py-1.5">
