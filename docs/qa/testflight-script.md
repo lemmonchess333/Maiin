@@ -17,7 +17,20 @@ These need a person signed in to a console. Most unblock later steps.
    `adaptive-fitness-af8bb` → APIs & Services → Enable APIs → "Cloud Vision
    API" → Enable. _Until this is on, every Space photo post and profile photo
    is refused_, because the nudity screen calls it. You should see "API Enabled".
-2. **Set the server's settings as GitHub variables.** GitHub → the repo →
+   _(Owner reports this done, 17 October. It can't be checked from outside the
+   console; confirm by setting a profile photo in Settings → Profile, which
+   should save.)_
+2. **Let the iPhone app use the Firebase key.** Google Cloud console → project
+   `adaptive-fitness-af8bb` → APIs & Services → Credentials → the API key
+   starting `AIzaSyB-` → Website restrictions → Add `capacitor://localhost/*`,
+   then `https://troposfit.com/*` and `https://www.troposfit.com/*` → Save.
+   _Until this is done, sign-in most likely fails in the app_: on 17 October
+   the key refused sign-in requests from `capacitor://localhost` and from
+   troposfit.com ("Requests from referer … are blocked") and allowed only the
+   web.app, firebaseapp.com, GitHub Pages and localhost addresses. Afterwards,
+   signing in on https://troposfit.com should work, and so should step 9 on
+   the phone.
+3. **Set the server's settings as GitHub variables.** GitHub → the repo →
    Settings → Secrets and variables → Actions → **Variables**. Add:
    - `ADMIN_UIDS`: your account's uid. This opens the moderation queue to you.
    - `MODERATION_ALERT_EMAIL`: where report alerts go.
@@ -30,22 +43,22 @@ These need a person signed in to a console. Most unblock later steps.
    functions/.env" step should list those names. Today's deploy logged none of
    them set.
 
-3. **Check Vertex AI keeps no copy of food photos.** Google Cloud console →
+4. **Check Vertex AI keeps no copy of food photos.** Google Cloud console →
    Vertex AI: request-response logging for the Gemini model in us-central1 is
    off. The Privacy Policy (section 7) says Google keeps nothing.
-4. **Let Apple's private relay reach Hide My Email users.** Apple Developer →
+5. **Let Apple's private relay reach Hide My Email users.** Apple Developer →
    Certificates, Identifiers & Profiles → Services → Sign in with Apple for
    Email Communication: register `troposfit.com` and `send.troposfit.com`.
 
 ## 2. The first build
 
-5. **Run "Deploy iOS to TestFlight" once.** Add the five secrets from
+6. **Run "Deploy iOS to TestFlight" once.** Add the five secrets from
    `docs/ios-release.md`, then GitHub → Actions → Deploy iOS to TestFlight → Run
    workflow. It has never run, and every phone step below needs its build. You
    should see the run go green and the build appear in TestFlight. Run it a
    second time: Apple Developer → Certificates should show one Apple
    Distribution certificate, not two.
-6. **No tracking warnings.** After the upload, App Store Connect's build page
+7. **No tracking warnings.** After the upload, App Store Connect's build page
    and Apple's email should show no ITMS-91053 warning and no request for
    NSUserTrackingUsageDescription.
 
@@ -59,86 +72,86 @@ These need a person signed in to a console. Most unblock later steps.
 Do these on the first TestFlight build. Each one, if it fails, means a broken
 core flow, an App Review rejection, or wrong data.
 
-7. **Screens clear the notch.** Open a workout and its finish screen, Social's
+8. **Screens clear the notch.** Open a workout and its finish screen, Social's
    people search, the food camera, run setup, the countdown and live map, the
    run summary, and the Privacy, Terms and Support pages. Each top row (close
    and back buttons, titles) should sit fully below the clock and Dynamic
    Island.
-8. **Email sign-up.** Sign up with a fresh email address you can open on the
+9. **Email sign-up.** Sign up with a fresh email address you can open on the
    phone. Setup should start straight away. The verification email should
    arrive while you answer. Tap its link in Mail, switch back, and Home's
    "Verify your email" notice should be gone.
-9. **The AI question.** On a Pro or trial account that has never been asked,
-   open Food and take a meal photo. "Send food to Google for analysis?" should
-   appear over the scanner. Tap Allow, and that photo is analysed. On a second
-   fresh account, tap Not now, and the photo tabs should say "AI analysis is off".
-10. **Food scan and typed meal.** On a Pro account that said yes, scan a plate,
+10. **The AI question.** On a Pro or trial account that has never been asked,
+    open Food and take a meal photo. "Send food to Google for analysis?" should
+    appear over the scanner. Tap Allow, and that photo is analysed. On a second
+    fresh account, tap Not now, and the photo tabs should say "AI analysis is off".
+11. **Food scan and typed meal.** On a Pro account that said yes, scan a plate,
     then type "2 eggs and toast". Each should return foods and macros within a
     few seconds. If you see "AI service error", note the time; the server log
     has the reason.
-11. **A crowded plate.** Photograph a plate with six or more foods (a full
+12. **A crowded plate.** Photograph a plate with six or more foods (a full
     English). Every component should be listed with calories. The model
     changed on 13 October and its reply now shares a length cap with its own
     reasoning, so a long answer could be cut off.
-12. **Offline food.** Turn on Airplane Mode, open Food → camera, tap the
+13. **Offline food.** Turn on Airplane Mode, open Food → camera, tap the
     shutter. It should say you're offline, with "Type it instead". Type "2 eggs
     and toast" and save. Turn Airplane Mode off and reopen the app: the meal
     should still be there, once.
-13. **Meal photos stay on the phone.** Scan a meal, then check the Files app
+14. **Meal photos stay on the phone.** Scan a meal, then check the Files app
     and Photos: the picture should be in neither. In Settings → [your name] →
     iCloud → Manage Storage → Backups → this iPhone, Tropos's size should not
     grow by the photo.
-14. **The week turns over in the background.** Open Train on Sunday evening and
+15. **The week turns over in the background.** Open Train on Sunday evening and
     leave the app in the background. On Monday morning, open it again. Train
     should show the new week with nothing ticked, and Home should match.
-15. **Locked-phone run.** Start a run outdoors, lock the phone and run 1–2 km,
+16. **Locked-phone run.** Start a run outdoors, lock the phone and run 1–2 km,
     then unlock and finish. The route should have no straight-line jump across
     the locked stretch, and that split's pace should look right.
-16. **Auto-pause.** With auto-pause on, stand still for a minute at a
+17. **Auto-pause.** With auto-pause on, stand still for a minute at a
     crossing. The time should stop and the distance shouldn't creep. Then tap
     Pause while auto-paused, and resume: no time should be counted twice.
-17. **Report and block on a small phone.** On an SE-size phone, open a post's
+18. **Report and block on a small phone.** On an SE-size phone, open a post's
     comments and tap ⋯ on someone else's comment. The options should open
     inside the sheet. Report's form should scroll to Submit, and Block should
     remove their comments.
-18. **The sheet above the keyboard.** Social → Start a circle → tap the name
+19. **The sheet above the keyboard.** Social → Start a circle → tap the name
     field. The sheet's button should sit just above the keyboard. Close the
     keyboard and the sheet should drop back with no gap.
-19. **Report alert email** (after step 2). From a second account, report a
+20. **Report alert email** (after step 3). From a second account, report a
     comment with a note. Within a minute, an email "New report: …" should reach
     the moderation address, with a link that opens the moderation queue.
 
-20. **Race times on the keypad** (fixed in #2870). In Settings → Your running
+21. **Race times on the keypad** (fixed in #2870). In Settings → Your running
     fitness → Finish time, type a 5K time with the keypad that opens, such as
     "22.30". It should save as 22:30. Do the same for the run plan's Goal time.
 
 ### Purchases (on a build with the RevenueCat key)
 
-21. **Sandbox purchase.** Signed in as an account on the sandbox list, with a
+22. **Sandbox purchase.** Signed in as an account on the sandbox list, with a
     sandbox Apple ID: Pro → Start → complete Apple's sheet, then take a food
     photo. The scan should work straight away.
-22. **Trial on the Upgrade page.** With a fresh sandbox Apple ID, start the free
+23. **Trial on the Upgrade page.** With a fresh sandbox Apple ID, start the free
     trial. The Pro card should show "Free trial until …", the last day to
     cancel, and "Remind me before the trial ends".
-23. **Prices in dollars.** Sign into a US sandbox Apple ID, then open Pro and
+24. **Prices in dollars.** Sign into a US sandbox Apple ID, then open Pro and
     the Pro sheet. Every price should be in $, with no £ anywhere, and match
     Apple's sheet.
-24. **Trial only for those who can have it.** With a sandbox ID that has used
+25. **Trial only for those who can have it.** With a sandbox ID that has used
     the intro offer, no "7 days free" should appear. A fresh ID should see it.
     Both should match Apple's sheet.
-25. **iPad.** On an iPad, the app should run in an iPhone-sized window. The Pro
+26. **iPad.** On an iPad, the app should run in an iPhone-sized window. The Pro
     page should show Restore and "Manage or cancel in your Apple Account
     subscriptions", and Start should open Apple's sheet, never a web page.
 
 ## 4. App Store Connect, before submitting
 
-26. **App Review notes:** the moderation paragraph should match
+27. **App Review notes:** the moderation paragraph should match
     `docs/app-store/listing.md` line 284 ("…restricting the account so it can't
     post, comment or follow anyone").
-27. **App Privacy:** enter each data type from
+28. **App Privacy:** enter each data type from
     `ios/App/App/PrivacyInfo.xcprivacy` as linked to the user and not used for
     tracking. The published label should mark nothing "Used to Track You".
-28. **Links:** set the Support URL to https://troposfit.com/support, and the
+29. **Links:** set the Support URL to https://troposfit.com/support, and the
     privacy policy URL and the description's footer links to /privacy and
     /terms. Each should open from the listing preview.
 
