@@ -445,6 +445,32 @@ describe("ProgrammeRunSection — the no-run card names the day it is on", () =>
     expect(screen.queryByText(/^Lift day\./)).toBeNull();
   });
 
+  it("opens the running form guide from the runner", async () => {
+    renderSection(
+      {
+        ...commonProps(),
+        profile: makeProfile({
+          weekSchedule: scheduleWithTodayAs("rest"),
+        } as Partial<UserProfile>),
+      },
+      makeProgramState([])
+    );
+    // The words under the card's lines stand in for the runner where it
+    // gives way.
+    const [words, runner] = screen.getAllByRole("button", {
+      name: "Running form",
+    });
+    expect(runner).toHaveClass("@max-[14em]:hidden");
+    expect(words).toHaveClass("hidden", "@max-[14em]:inline-flex");
+    fireEvent.click(runner);
+    expect(
+      await screen.findByRole("region", { name: "Running form guide" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Land under your hips, not out front.")
+    ).toBeInTheDocument();
+  });
+
   it("draws the easy runner beside the words", () => {
     const { container } = renderSection(
       {

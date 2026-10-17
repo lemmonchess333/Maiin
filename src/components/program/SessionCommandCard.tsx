@@ -59,6 +59,13 @@ interface SessionCommandCardProps {
    *  names the day: the muscle figure's own label speaks of muscles
    *  trained, which a day not yet done has not been. */
   figure?: ReactNode;
+  /** Makes the picture a button that opens a guide to the session, as a
+   *  lift row's drawing opens its form pictures; it is then named for
+   *  screen readers by `figureLabel`. Where the picture gives way, the
+   *  label is shown in words under the meta, so the guide stays in reach
+   *  at the largest text. Run passes the running form guide. */
+  onFigurePress?: () => void;
+  figureLabel?: string;
 }
 
 export default function SessionCommandCard({
@@ -73,6 +80,8 @@ export default function SessionCommandCard({
   primaryActionVariant,
   onManage,
   figure,
+  onFigurePress,
+  figureLabel,
 }: SessionCommandCardProps) {
   const isRun = sport === "run";
   const Icon = isRun ? Footprints : Dumbbell;
@@ -113,8 +122,29 @@ export default function SessionCommandCard({
                 <MetaLine items={meta} />
               </div>
             )}
+            {figure && onFigurePress && figureLabel && (
+              <Button
+                variant="ghost"
+                className={cn(
+                  "mt-1 -ml-4 hidden @max-[14em]:inline-flex",
+                  accentText
+                )}
+                onClick={onFigurePress}
+              >
+                {figureLabel}
+              </Button>
+            )}
           </div>
-          {figure ? (
+          {figure && onFigurePress ? (
+            <Button
+              variant="ghost"
+              className="h-auto shrink-0 -my-1 p-0 @max-[14em]:hidden"
+              aria-label={figureLabel}
+              onClick={onFigurePress}
+            >
+              <span aria-hidden="true">{figure}</span>
+            </Button>
+          ) : figure ? (
             <div
               className="shrink-0 -my-1 @max-[14em]:hidden"
               aria-hidden="true"

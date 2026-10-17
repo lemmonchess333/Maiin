@@ -120,6 +120,33 @@ describe("SessionCommandCard — the picture at the right (DS3)", () => {
     ).toBeTruthy();
   });
 
+  it("makes the picture a named button when it opens a guide", () => {
+    const onFigurePress = vi.fn();
+    renderCard({
+      figure: <span data-testid="runner" />,
+      onFigurePress,
+      figureLabel: "Running form",
+    });
+    // The words under the meta stand in for the picture where it gives
+    // way (jsdom applies no container queries, so both are in the tree).
+    const [words, picture] = screen.getAllByRole("button", {
+      name: "Running form",
+    });
+    expect(picture).toContainElement(screen.getByTestId("runner"));
+    expect(picture).toHaveClass("@max-[14em]:hidden");
+    expect(words).toHaveClass("hidden", "@max-[14em]:inline-flex");
+    fireEvent.click(picture);
+    fireEvent.click(words);
+    expect(onFigurePress).toHaveBeenCalledTimes(2);
+  });
+
+  it("leaves the picture out of the tab order when it opens nothing", () => {
+    renderCard({ figure: <span data-testid="runner" /> });
+    expect(
+      screen.queryByRole("button", { name: "Running form" })
+    ).not.toBeInTheDocument();
+  });
+
   it("lets a figure take the tile's place", () => {
     const { container } = renderCard({
       sport: "lift",
