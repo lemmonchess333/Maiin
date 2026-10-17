@@ -205,14 +205,20 @@ These steps are what's left.
 
 ---
 
-## What Claude still has in flight (no action from you)
+## Open in the repository (as of 2026-10-17)
 
-- #2810: lifting loads in lb, part 3. CI is running and it merges by itself.
-- #2811 (kettlebells in whole lb) and #2814 (challenge distances in your
-  unit): these wait for #2810, then need main merged in and marking ready.
-  The next session can do this in a couple of minutes.
-- #2813 (challenge copy) and #2817 (challenge titles): these merge by
-  themselves.
-- Four Together-page design calls still need your answer: the Join colour,
-  the "Start a circle" style, hiding the weekly card when it's empty, and the
-  page order (challenge → Circles → Spaces).
+Everything listed here on 2026-10-14 has merged: lifting loads in lb with
+kettlebells in whole lb, challenge distances in your unit, and the
+challenge copy and titles. What is still open:
+
+- **#2821**, the lock for your four Together-page answers. A lock PR is
+  yours to merge.
+- **#2673**, a draft that reworks the launch animation. Its last check is
+  on an iPhone (the "launch animation's second pass" rows in
+  `docs/qa/pre-launch-backlog.md`).
+- **#2085**, the Firebase 13 upgrade, held on purpose. The iPhone app's
+  Firebase plugins (8.5.2) still accept only Firebase 12, and Firebase 13
+  needs Node 24.
+- **#2857**, redrawing the six oldest exercise sets. It needs an image key
+  in the environment settings (`OPENAI_API_KEY` or `GEMINI_API_KEY`) and a
+  new session.
