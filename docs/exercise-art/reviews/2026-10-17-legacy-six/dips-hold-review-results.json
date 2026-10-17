@@ -1,0 +1,157 @@
+{
+  "exerciseId": "dips",
+  "reviewedAt": "2026-10-17T22:45:42.166926+00:00",
+  "scope": "Actual registered ExerciseFormContent on existing QA host; DOM viewport390x844, using unchanged public guide/card assets and corrected runtime Hold label/cue.",
+  "strictCertification": false,
+  "caption": {
+    "label": "Hold",
+    "cue": "Hold this depth; keep both hands fixed.",
+    "cueSha256": "46a0fe47d55a81c39adf1a228c93d2bdaa9f16fc2e2f033d6a2306af709cd623"
+  },
+  "unchanged": {
+    "originalSourceArchive": {
+      "path": "docs/exercise-art/sources/dips/2026-10-17-legacy-redraw/portable-native-source.zip",
+      "sha256": "599006f502af95e42d33afae9f4e28500382a8b0894064cbbd6583ff4a988459",
+      "bytes": 45618170
+    },
+    "frames": [
+      {
+        "path": "form-frames/dips/1.webp",
+        "sha256": "6550488aa4409c1fe6e83b86dfe2f5f1003c2d5c4bb29e88b4bfcb18b8bb2cde",
+        "anchors": {},
+        "invariantDimensions": {},
+        "source": {
+          "path": "docs/exercise-art/sources/dips/2026-10-17-legacy-redraw/1.png",
+          "sha256": "472cd6892e380f5d25b12de8ed6c6d573ba635650b303029988eb7315664d9eb"
+        }
+      },
+      {
+        "path": "form-frames/dips/2.webp",
+        "sha256": "9afbd295a1c45ce529510ba4211ade0c635fa2a750e74004b290d7be6af0710a",
+        "anchors": {},
+        "invariantDimensions": {},
+        "source": {
+          "path": "docs/exercise-art/sources/dips/2026-10-17-legacy-redraw/2.png",
+          "sha256": "0aa7c46d69d2ee2c0a7f02c27a9bb8eb9db921ddba481ce776c3516659927a84"
+        }
+      },
+      {
+        "path": "form-frames/dips/3.webp",
+        "sha256": "9afbd295a1c45ce529510ba4211ade0c635fa2a750e74004b290d7be6af0710a",
+        "anchors": {},
+        "invariantDimensions": {},
+        "source": {
+          "path": "docs/exercise-art/sources/dips/2026-10-17-legacy-redraw/3.png",
+          "sha256": "0aa7c46d69d2ee2c0a7f02c27a9bb8eb9db921ddba481ce776c3516659927a84"
+        }
+      },
+      {
+        "path": "form-frames/dips/4.webp",
+        "sha256": "75a13530bf854620789b4dc106f20a12fe3576a5419fda3fa537d40976a44f08",
+        "anchors": {},
+        "invariantDimensions": {},
+        "source": {
+          "path": "docs/exercise-art/sources/dips/2026-10-17-legacy-redraw/4.png",
+          "sha256": "1b10798d67ae376c9756ae4673ce90b239b4ab671e093f14d9be7c6dccc1106b"
+        }
+      },
+      {
+        "path": "form-frames/dips/5.webp",
+        "sha256": "9afbd295a1c45ce529510ba4211ade0c635fa2a750e74004b290d7be6af0710a",
+        "anchors": {},
+        "invariantDimensions": {},
+        "source": {
+          "path": "docs/exercise-art/sources/dips/2026-10-17-legacy-redraw/5.png",
+          "sha256": "0aa7c46d69d2ee2c0a7f02c27a9bb8eb9db921ddba481ce776c3516659927a84"
+        }
+      },
+      {
+        "path": "form-frames/dips/6.webp",
+        "sha256": "6550488aa4409c1fe6e83b86dfe2f5f1003c2d5c4bb29e88b4bfcb18b8bb2cde",
+        "anchors": {},
+        "invariantDimensions": {},
+        "source": {
+          "path": "docs/exercise-art/sources/dips/2026-10-17-legacy-redraw/6.png",
+          "sha256": "472cd6892e380f5d25b12de8ed6c6d573ba635650b303029988eb7315664d9eb"
+        }
+      }
+    ],
+    "card": {
+      "path": "public/form-art/dips.webp",
+      "sha256": "584c5345336e4cce881e0d0e962db0d41422f263043eb4fb6cdb09acd9ba455f"
+    },
+    "sourcePoseOrder": ["A", "B", "B", "C", "B", "A"],
+    "t": [0, 0.5, 0.5, 1, 0.5, 0]
+  },
+  "playback": [
+    {
+      "theme": "dark",
+      "slower": false,
+      "allSixFramesObserved": true,
+      "observed6to1": true,
+      "hold3Alt": "Dips, Hold",
+      "rawTrace": "dark-normal-trace.json",
+      "sha256": "ccf24438149b168acae043b6ecd40a973f08c5188d25cad14337c718a0a905f8"
+    },
+    {
+      "theme": "dark",
+      "slower": true,
+      "allSixFramesObserved": true,
+      "observed6to1": true,
+      "hold3Alt": "Dips, Hold",
+      "rawTrace": "dark-slower-trace.json",
+      "sha256": "257cc489960a92e0b0b28dbc9fa5a0e9984250f45b9b4015e535b6a04e9a767b"
+    },
+    {
+      "theme": "light",
+      "slower": false,
+      "allSixFramesObserved": true,
+      "observed6to1": true,
+      "hold3Alt": "Dips, Hold",
+      "rawTrace": "light-normal-trace.json",
+      "sha256": "5f24d40d25f0e12e8d41ee71188cd73413ee243d34a12455e51c7a336e247781"
+    }
+  ],
+  "manual": [
+    {
+      "action": "hold3",
+      "alt": "Dips, Hold",
+      "cue": "Hold this depth; keep both hands fixed.",
+      "playing": false,
+      "selected": "Show frame 3: Hold",
+      "src": "/form-frames/dips/3.webp",
+      "theme": "dark"
+    },
+    {
+      "action": "manual6to1",
+      "playing": false,
+      "selected": "Show frame 1: Top",
+      "src": "/form-frames/dips/1.webp",
+      "theme": "dark"
+    },
+    {
+      "action": "hold3",
+      "alt": "Dips, Hold",
+      "cue": "Hold this depth; keep both hands fixed.",
+      "playing": false,
+      "selected": "Show frame 3: Hold",
+      "src": "/form-frames/dips/3.webp",
+      "theme": "light"
+    },
+    {
+      "action": "manual6to1",
+      "playing": false,
+      "selected": "Show frame 1: Top",
+      "src": "/form-frames/dips/1.webp",
+      "theme": "light"
+    }
+  ],
+  "screenshots": {
+    "dark-hold-full.png": "6d6719438a22cc762a0d241be5f0c888e5475364e7b9c88ed192d05cb1fd052a",
+    "dark-hold-viewport.png": "4f3645023668c65b67b4324a85a7a5b14fd3a503a6f2a067131cc241135ffcd3",
+    "light-hold-full.png": "01686c656fb98e3d849a246599398900901e98e9bf4625c67bbea0b03bdbccec",
+    "light-hold-viewport.png": "4ec77b9eb9182822f8c6cb7624a987d02b2f9cea779a6fe8e40458881111836b"
+  },
+  "supersedes": "Only frame3 caption binding from the original six-set review. Its native pixel/source and other five sets reviews remain unchanged.",
+  "rasterNote": "Browser capture may exclude scrollbars; screenshot pixel dimensions are not asserted equal to DOM viewport. Both single-guide full-page screenshots show the painted Hold image and its selected instruction."
+}

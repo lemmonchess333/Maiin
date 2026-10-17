@@ -5027,12 +5027,14 @@ describe("form beats — the caption is a claim about the frame", () => {
     // "Arms locked" — the house floor for a lockout is 165°, the same
     // bar the overhead press was held to. At the shipped 0.97 of arm
     // length this read 152.0 and the caption was a lie.
-    const top = beats.find((b) => b.label === "Top position")!;
+    const top = beats.find((b) => b.label === "Top")!;
+    expect(top).toBeDefined();
     expect(elbow(top.t)).toBeGreaterThan(165);
 
     // "Stop when upper arms reach parallel" — the upper arm within 10°
     // of the floor at the bottom.
-    const bottom = beats.find((b) => b.label === "Bottom position")!;
+    const bottom = beats.find((b) => b.label === "Bottom")!;
+    expect(bottom).toBeDefined();
     const p = pose(bottom.t);
     const S = at(SIDE_ANCHORS.shoulder, p.upperArmL);
     const E = at(SIDE_ANCHORS.elbow, p.upperArmL);
@@ -5047,15 +5049,31 @@ describe("form beats — the caption is a claim about the frame", () => {
   });
 
   it("dips: the descent captions run in the direction they describe", () => {
-    // t=0 is the top for this demo, so a descent reads as increasing t
-    // and the press as decreasing — the order the labels claim.
+    // The reviewed native source has three poses: the middle is held
+    // before descending further, then reused on the press. Movement
+    // remains strict in both directions; only byte-identical held or
+    // returned source positions share a phase.
     const beats = getFormBeats("dips")!;
-    const t = (label: string) => beats.find((b) => b.label === label)!.t;
-    expect(t("Top position")).toBeLessThan(t("Initiate descent"));
-    expect(t("Initiate descent")).toBeLessThan(t("Mid descent"));
-    expect(t("Mid descent")).toBeLessThan(t("Bottom position"));
-    expect(t("Press up")).toBeLessThan(t("Bottom position"));
-    expect(t("Return to top")).toBeLessThan(t("Press up"));
+    const beat = (label: string) => {
+      const found = beats.find((b) => b.label === label);
+      expect(found, label).toBeDefined();
+      return found!;
+    };
+    expect(beat("Top").t).toBeLessThan(beat("Lower").t);
+    expect(beat("Lower").t).toBeLessThan(beat("Bottom").t);
+    expect(beat("Press").t).toBeLessThan(beat("Bottom").t);
+    expect(beat("Finish").t).toBeLessThan(beat("Press").t);
+    expect(beat("Hold").t).toBe(beat("Lower").t);
+    expect(beat("Press").t).toBe(beat("Lower").t);
+    expect(beat("Finish").t).toBe(beat("Top").t);
+    const sameNativeFrame = (a: string, b: string) => {
+      const source = (label: string) =>
+        readFileSync(resolve(process.cwd(), "public", beat(label).image!));
+      expect(source(a).equals(source(b)), `${a} / ${b}`).toBe(true);
+    };
+    sameNativeFrame("Lower", "Hold");
+    sameNativeFrame("Lower", "Press");
+    sameNativeFrame("Top", "Finish");
   });
 
   it("the hands never leave the bar across the whole sequence", () => {

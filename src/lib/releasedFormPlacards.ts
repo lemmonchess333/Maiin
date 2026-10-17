@@ -48,7 +48,7 @@ export const RELEASED_FORM_PLACARDS = {
     [
       [0, "Top", "Straight arms; keep shoulders down."],
       [0.5, "Lower", "Bend elbows; maintain a slight forward lean."],
-      [0.5, "Control", "Lower smoothly with both hands fixed."],
+      [0.5, "Hold", "Hold this depth; keep both hands fixed."],
       [1, "Bottom", "Stop around upper arms parallel to floor."],
       [0.5, "Press", "Push through the bars; keep chest inclined."],
       [0, "Finish", "Straighten arms without shrugging your shoulders."],

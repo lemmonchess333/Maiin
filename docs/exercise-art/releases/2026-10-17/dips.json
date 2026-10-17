@@ -5,12 +5,12 @@
   "height": 1088,
   "decision": "owner-released-with-findings",
   "reviewer": "Codex native and actual-player review under the user-authorized revised standard",
-  "reviewedAt": "2026-10-17T22:04:51.181521+00:00",
+  "reviewedAt": "2026-10-17T22:45:42.166926+00:00",
   "reference": {
     "path": "form-frames/dips/4.webp",
     "sha256": "75a13530bf854620789b4dc106f20a12fe3576a5419fda3fa537d40976a44f08"
   },
-  "cueSha256": "6230d1c6d61835cc39e86ce9307f7f8c12e952263b0119fe6bcae13e1a170fa1",
+  "cueSha256": "46a0fe47d55a81c39adf1a228c93d2bdaa9f16fc2e2f033d6a2306af709cd623",
   "checks": {
     "identity": {
       "passed": null,
@@ -42,19 +42,19 @@
     },
     "cueAgreement": {
       "passed": null,
-      "evidence": "Exact six physical labels/cues and t values match the actual authored source order. Every cue is seven words or fewer; source reuse is explicit and release cue hash is enforced."
+      "evidence": "Frame 3 is explicitly Hold with the static seven-word cue: Hold this depth; keep both hands fixed. Its t=.5 and source pixels equal frames 2 and 5. All remaining labels/cues, t values, source order, image/source/card bytes and native archive are unchanged. Current cue hash is enforced; the original source packager retains its historical proposal captions."
     },
     "sequenceAndLoop": {
       "passed": null,
-      "evidence": "Actual registered six-frame normal light/dark loops and slower dark loop observed, including 6-to-1. Manual frame 6 selection and paused 6-to-1 wraps agree with instruction highlights for all six guides. Native ORA, fresh rebuild and lossless source proofs retained. No anatomical interpolation."
+      "evidence": "Actual registered six-frame normal light/dark loops and slower dark loop observed, including 6-to-1. Manual frame 6 selection and paused 6-to-1 wraps agree with instruction highlights for all six guides. Native ORA, fresh rebuild and lossless source proofs retained. No anatomical interpolation. The separate Dips caption amendment review confirms the static Hold at frame3, selected instruction agreement, all six normal light/dark frames, dark slower playback and paused6-to-1 control after the correction."
     },
     "mobileLight": {
       "passed": null,
-      "evidence": "Actual registered ExerciseFormContent at 390x844 in light: all six frames decoded and 6-to-1 observed in normal playback. A separately scrolled viewport screenshot shows the painted player; full-page screenshots are layout context only. Normal 480/348/160/48px cards reviewed. Raw evidence is in the shared archive. This is scoped observation, not strict certification."
+      "evidence": "Actual registered ExerciseFormContent at 390x844 in light: all six frames decoded and 6-to-1 observed in normal playback. A separately scrolled viewport screenshot shows the painted player; full-page screenshots are layout context only. Normal 480/348/160/48px cards reviewed. Raw evidence is in the shared archive. This is scoped observation, not strict certification. The separate Dips caption amendment review confirms the static Hold at frame3, selected instruction agreement, all six normal light/dark frames, dark slower playback and paused6-to-1 control after the correction."
     },
     "mobileDark": {
       "passed": null,
-      "evidence": "Actual registered ExerciseFormContent at 390x844 in dark: all six frames decoded and 6-to-1 observed in normal playback. A separately scrolled viewport screenshot shows the painted player; full-page screenshots are layout context only. Normal 480/348/160/48px cards reviewed. Raw evidence is in the shared archive. This is scoped observation, not strict certification."
+      "evidence": "Actual registered ExerciseFormContent at 390x844 in dark: all six frames decoded and 6-to-1 observed in normal playback. A separately scrolled viewport screenshot shows the painted player; full-page screenshots are layout context only. Normal 480/348/160/48px cards reviewed. Raw evidence is in the shared archive. This is scoped observation, not strict certification. The separate Dips caption amendment review confirms the static Hold at frame3, selected instruction agreement, all six normal light/dark frames, dark slower playback and paused6-to-1 control after the correction."
     }
   },
   "frames": [
@@ -126,7 +126,7 @@
   },
   "findings": [
     "This is a new bodyweight chest-dip source derived from the approved weighted chest-dip motion, not a newly generated entire athlete or an upright triceps dip. Missing anatomy behind belt/chain/plate was newly authored in each actual pose.",
-    "Three genuine poses are reused asA,B,B,C,B,A. Beat2 and3 show the same intermediate at physical progress.5; use t0,.5,.5,1,.5,0 rather than claiming an unshown early.22 pose. Existing initiation/mid-descent/press-up cues remain qualitatively checkable.",
+    "Three genuine poses are reused as A,B,B,C,B,A. Frames 2, 3 and 5 show the identical intermediate at physical progress .5; frame 3 is explicitly a static Hold. The sequence uses t 0,.5,.5,1,.5,0 without claiming an unshown extra descent pose.",
     "The source chest has inherited fine striation/contour lines and mild specular tone variation; those have not been erased. Primary and secondary are remapped to the exact established hues with inherited light/shade.",
     "A few seam-adjacent lower torso/thigh contour differences from native occlusion reconstruction may remain, but native review shows coherent pelvis-to-knee/shin chains, no detached surfaces, no shorts and no visible residual accessories.",
     "The bottom whole-image32px framing registration is measured from three equipment ROIs and applied uniformly before selecting source pixels; no limb/body alignment or source resampling occurs.",
@@ -144,6 +144,10 @@
       "path": "docs/exercise-art/sources/dips/2026-10-17-legacy-redraw/portable-native-source.zip",
       "sha256": "599006f502af95e42d33afae9f4e28500382a8b0894064cbbd6583ff4a988459",
       "bytes": 45618170
+    },
+    "runtimeCaptionAmendment": {
+      "path": "docs/exercise-art/sources/dips/2026-10-17-legacy-redraw/runtime-caption-amendment.json",
+      "sha256": "086c6122433d72ad2d7abfc4af12ebd0f285718fd2389f20fbffa68cacdffb79"
     }
   },
   "recordStage": "Native/source, registered mobile/card/manual/normal/slower reviews complete under revised standard with findings retained. Normal project verification and exact-head CI/merge remain separate publication gates.",
@@ -151,6 +155,11 @@
   "integrationEvidence": {
     "path": "docs/exercise-art/reviews/2026-10-17-legacy-six/native-and-mobile-review.zip",
     "sha256": "0c5a1a92d212aeb9bad9c584132aeb0e3bfb10da812ab4f64c7a31e6bdec69ce",
-    "review": "docs/exercise-art/reviews/2026-10-17-legacy-six/integrated-review-results.json"
+    "review": "docs/exercise-art/reviews/2026-10-17-legacy-six/integrated-review-results.json",
+    "captionAmendment": {
+      "path": "docs/exercise-art/reviews/2026-10-17-legacy-six/dips-hold-caption-review.zip",
+      "sha256": "323041c9aa5d22c7df6dd6cc78b9304e8c1d24661f59a8186a001cd88f7397b0",
+      "review": "docs/exercise-art/reviews/2026-10-17-legacy-six/dips-hold-review-results.json"
+    }
   }
 }
