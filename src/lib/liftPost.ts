@@ -203,6 +203,13 @@ export function liftPostRows(
  * no exercise on the post has a drawing.
  */
 export function liftPostLeadArt(raw: unknown): FormArtCutout | null {
+  const id = liftPostLeadExerciseId(raw);
+  return id ? getFormArtCutout(id) : null;
+}
+
+/** The id of the lift `liftPostLeadArt` draws, for a post that stores the
+ *  lead lift rather than its exercises (a Space post's attached workout). */
+export function liftPostLeadExerciseId(raw: unknown): string | null {
   if (!Array.isArray(raw)) return null;
   for (const item of raw) {
     if (!item || typeof item !== "object") continue;
@@ -213,8 +220,7 @@ export function liftPostLeadArt(raw: unknown): FormArtCutout | null {
         : typeof ex.name === "string"
           ? EXERCISES.find((e) => e.name === ex.name)?.id
           : undefined;
-    const cutout = id ? getFormArtCutout(id) : null;
-    if (cutout) return cutout;
+    if (id && getFormArtCutout(id)) return id;
   }
   return null;
 }

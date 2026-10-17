@@ -153,3 +153,33 @@ describe("retired coach posts", () => {
     expect(server.COACH_AUTHOR_ID).toBe(COACH_AUTHOR_ID);
   });
 });
+
+describe("SpacePostCard — an attached workout's picture", () => {
+  it("draws the lead lift the post names", () => {
+    const { container } = renderCard(
+      makePost({
+        activity: {
+          type: "workout",
+          exerciseCount: 4,
+          muscleGroups: ["quads"],
+          leadExerciseId: "squat",
+        },
+      })
+    );
+    const img = container.querySelector("img[data-lead-drawing]");
+    expect(img?.getAttribute("src")).toMatch(/form-art\/squat\.webp$/);
+  });
+
+  it("keeps the muscle figure on an older post with no lead lift", () => {
+    const { container } = renderCard(
+      makePost({
+        activity: {
+          type: "workout",
+          exerciseCount: 4,
+          muscleGroups: ["quads"],
+        },
+      })
+    );
+    expect(container.querySelector("img[data-lead-drawing]")).toBeNull();
+  });
+});

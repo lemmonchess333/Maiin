@@ -219,6 +219,25 @@ describe("SpacePostComposer — attachLatest", () => {
     expect(screen.queryByText("10.0 km run")).toBeNull();
   });
 
+  it("names the workout's lead lift, so the card can draw it", async () => {
+    renderComposer({ sessions: [WORKOUT], attachLatest: true });
+    fireEvent.change(screen.getByLabelText("Post body"), {
+      target: { value: "Bench day." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Post to space" }));
+    await waitFor(() =>
+      expect(
+        allPaths().some((p) => p.startsWith("spaces/womens-running/posts/"))
+      ).toBe(true)
+    );
+    const path = allPaths().find((p) =>
+      p.startsWith("spaces/womens-running/posts/")
+    )!;
+    expect(readDoc(path)).toMatchObject({
+      activity: { type: "workout", leadExerciseId: "bench-press" },
+    });
+  });
+
   it("attaches nothing when opened as a plain post", () => {
     renderComposer({ sessions: [RUN, WORKOUT] });
     expect(

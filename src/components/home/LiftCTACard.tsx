@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { cardClasses } from "@/components/ui/cardClasses";
-import { formArtCutoutUrl, getFormArtCutout } from "@/lib/formArtCutouts";
+import { formArtCutoutUrl, sessionLeadArt } from "@/lib/formArtCutouts";
 import {
   estimateSessionMinutes,
   type PricedExercise,
@@ -100,13 +100,10 @@ export default function LiftCTACard({
       ? estimateSessionMinutes(priced, rest)
       : null;
   }, [nextWorkout.exercises, count, rest]);
-  const art = useMemo(() => {
-    for (const ex of nextWorkout.exercises) {
-      const cutout = ex.exerciseId ? getFormArtCutout(ex.exerciseId) : null;
-      if (cutout) return cutout;
-    }
-    return null;
-  }, [nextWorkout.exercises]);
+  const art = useMemo(
+    () => sessionLeadArt(nextWorkout.exercises)?.cutout ?? null,
+    [nextWorkout.exercises]
+  );
 
   return (
     <div

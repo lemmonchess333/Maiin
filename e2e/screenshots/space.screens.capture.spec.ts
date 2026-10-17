@@ -71,6 +71,10 @@ test.describe("space page screenshots", () => {
       page.getByRole("button", { name: /^Joined\. Leave/ })
     ).toBeVisible({ timeout: 10000 });
     await expect(page.getByText("6 weeks in!")).toBeVisible({ timeout: 10000 });
+    // A lift post is pictured by its lead lift, drawn.
+    await expect(
+      page.locator('img[data-lead-drawing][src$="form-art/squat.webp"]')
+    ).toBeVisible({ timeout: 10000 });
     await expect(
       page.getByRole("button", { name: "Write a post" })
     ).toBeVisible();

@@ -550,6 +550,30 @@ async function main() {
       commentCount: 1,
       createdAt: hoursAgo(8),
     });
+  // A member's post with a workout attached, so the Space capture shows
+  // a lift post's picture: the lead lift drawn (`leadExerciseId`).
+  await db
+    .collection("spaces")
+    .doc("womens-running")
+    .collection("posts")
+    .doc("seed-leg-day")
+    .set({
+      authorId: feedAuthor.authorId,
+      authorName: feedAuthor.authorName,
+      title: "Leg day before the long run",
+      body: "Squats felt strong today. Keeping it to three sets so Sunday's long run still feels good.",
+      activity: {
+        type: "workout",
+        totalVolume: 4200,
+        exerciseCount: 5,
+        muscleGroups: ["knee_dominant", "hip_dominant", "core"],
+        duration: 3000,
+        leadExerciseId: "squat",
+      },
+      likeCount: 3,
+      commentCount: 0,
+      createdAt: hoursAgo(5),
+    });
 
   console.log(
     `[seed-rich] ${uid}: ${wIdx} workouts, 10 runs, 20 meals, ` +
