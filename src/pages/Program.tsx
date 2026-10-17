@@ -38,6 +38,7 @@ import { useDismissOnce } from "@/hooks/useDismissOnce";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import ExerciseFormSheet from "@/components/program/ExerciseFormSheet";
+import { formArtCutoutUrl, sessionLeadArt } from "@/lib/formArtCutouts";
 import MiniMuscleFigure, {
   hasMuscleFigure,
 } from "@/components/social/MiniMuscleFigure";
@@ -789,10 +790,12 @@ function ProgramInner() {
   /* The session card's words and picture (DS3). "Pull — Lat Focus" set
      whole as a title broke at the dash on a phone, so the category joins
      the day's status in the eyebrow and the focus is the title, as on
-     Home. The picture is the muscles the day works; the rows below carry
-     each exercise's drawing. */
+     Home. The picture is the day's main lift in its drawing, the one
+     Home's Today card shows, and opens that lift's form guide; a day with
+     no drawn lift falls back to the muscles it works. */
   const sessionTitle = liftDayTitle(selectedWorkout?.dayName ?? "");
   const sessionStatusLabel = LIFT_DAY_STATUS_LABEL[status];
+  const sessionArt = sessionLeadArt(selectedWorkout?.exercises ?? []);
   const sessionMuscleCategories = (selectedWorkout?.exercises ?? []).map(
     (ex) => ex.movementCategory
   );
@@ -1263,12 +1266,37 @@ function ProgramInner() {
                           .join(" · ")}
                         title={sessionTitle.title}
                         figure={
-                          hasMuscleFigure(sessionMuscleCategories) ? (
+                          sessionArt ? (
+                            <img
+                              src={formArtCutoutUrl(sessionArt.cutout)}
+                              alt=""
+                              draggable={false}
+                              decoding="async"
+                              data-session-art={sessionArt.exerciseName}
+                              className="h-24 w-28 object-contain object-right"
+                            />
+                          ) : hasMuscleFigure(sessionMuscleCategories) ? (
                             <MiniMuscleFigure
                               categories={sessionMuscleCategories}
                               className="h-24 w-auto"
                             />
                           ) : undefined
+                        }
+                        onFigurePress={
+                          sessionArt
+                            ? () => {
+                                haptic("light");
+                                setFormGuide({
+                                  name: sessionArt.exerciseName,
+                                  open: true,
+                                });
+                              }
+                            : undefined
+                        }
+                        figureLabel={
+                          sessionArt
+                            ? `How to do ${sessionArt.exerciseName}`
+                            : undefined
                         }
                         meta={
                           status === "completed" || missed

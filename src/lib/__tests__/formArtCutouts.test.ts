@@ -15,7 +15,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FORM_ARTWORK, getReleasedFormArtwork } from "../formArtwork";
 import { FORM_ART_CUTOUTS } from "../formArtCutouts.data";
-import { getFormArtCutout } from "../formArtCutouts";
+import { getFormArtCutout, sessionLeadArt } from "../formArtCutouts";
 import { CARD_FRAMES, cardFrameOf } from "../formArtCardFrames";
 
 const sha = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
@@ -122,5 +122,24 @@ describe("card frames", () => {
       .map((f) => f.replace(/\.json$/, ""));
     expect(prepared).toContain("ab-wheel");
     for (const id of prepared) expect(CARD_FRAMES[id]).toBeUndefined();
+  });
+});
+
+describe("sessionLeadArt", () => {
+  it("pictures a lift day with its first drawn exercise, the squat at the bottom", () => {
+    const art = sessionLeadArt([
+      { name: "Custom finisher" },
+      { exerciseId: "not-in-the-library", name: "Mystery lift" },
+      { exerciseId: "squat", name: "Barbell Squat" },
+      { exerciseId: "hack-squat", name: "Hack Squat" },
+    ]);
+    expect(art?.exerciseName).toBe("Barbell Squat");
+    expect(art?.cutout).toBe(getFormArtCutout("squat"));
+    expect(art?.cutout.source).toBe("form-frames/squat/4.webp");
+  });
+
+  it("is null for a day with no drawn exercise", () => {
+    expect(sessionLeadArt([{ name: "Custom finisher" }])).toBeNull();
+    expect(sessionLeadArt([])).toBeNull();
   });
 });

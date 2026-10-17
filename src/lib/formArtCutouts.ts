@@ -39,3 +39,19 @@ export function formArtCutoutUrl(cutout: FormArtCutout): string {
   const base = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
   return `${base}/${cutout.src.replace(/^\//, "")}`;
 }
+
+/**
+ * The drawing that pictures a lift day: its first exercise with released
+ * art, which is the day's main lift wherever that one has a drawing. Home's
+ * Today card and Train's session card both show it, so the two pictures of
+ * one day agree. Null when no exercise in the day has art.
+ */
+export function sessionLeadArt(
+  exercises: readonly { exerciseId?: string; name: string }[]
+): { cutout: FormArtCutout; exerciseName: string } | null {
+  for (const ex of exercises) {
+    const cutout = ex.exerciseId ? getFormArtCutout(ex.exerciseId) : null;
+    if (cutout) return { cutout, exerciseName: ex.name };
+  }
+  return null;
+}
