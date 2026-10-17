@@ -224,10 +224,10 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
      strip below — no double-printing). Lifts: the drawing of the
      session's lead lift, its working muscles tinted in the drawing, with
      the volume numeral and PR chip overlaid the same way; a post with no
-     drawn lift keeps the anatomy figure with its muscles tinted (owner,
-     2026-10-16: "Why is it just the muscle groups worked? It looks
-     silly"). Hybrid cards keep the route scene only — two hero panels on
-     one card would fight. */
+     drawn lift keeps the anatomy figure with its muscles tinted (the
+     owner, on the figure alone: "Why is it just the muscle groups worked?
+     It looks silly"). Hybrid cards keep the route scene only — two hero
+     panels on one card would fight. */
   const routePreview =
     activity?.routePreview &&
     (activity.routePreview as { lat: number; lon: number }[]).length > 1
