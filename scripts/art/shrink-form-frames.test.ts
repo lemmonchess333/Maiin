@@ -1,7 +1,8 @@
 /**
  * The build's re-save of the exercise pictures (Ship1): a lossless frame
- * ships as lossy WebP on the same canvas, a lossy one ships as it is, and
- * the cache hands back the same bytes without saving again.
+ * ships as lossy WebP, a frame bigger than its box is fitted inside it, a
+ * lossy one that fits ships as it is, and the cache hands back the same
+ * bytes without saving again.
  */
 import { describe, expect, it } from "vitest";
 import sharp from "sharp";
@@ -14,7 +15,10 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
+  FORM_FRAME_BOX_POINTS,
+  FORM_FRAME_MAX_SIDE,
   isLosslessWebp,
   shrinkFormFrames,
   shrunkFormFrame,
@@ -23,9 +27,11 @@ import { webpSize } from "./webp-size";
 
 /** A painted-looking frame: soft gradients and fine grain, which is what
  *  makes the reviewed frames large when saved lossless. */
-async function frame(lossless: boolean): Promise<Buffer> {
-  const width = 384;
-  const height = 256;
+async function frame(
+  lossless: boolean,
+  width = 384,
+  height = 256
+): Promise<Buffer> {
   const pixels = Buffer.alloc(width * height * 3);
   let seed = 7;
   const grain = () => {
@@ -35,7 +41,8 @@ async function frame(lossless: boolean): Promise<Buffer> {
   for (let y = 0; y < height; y++)
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 3;
-      const inside = (x - 190) ** 2 + (y - 128) ** 2 < 90 ** 2;
+      const inside =
+        (x - width / 2) ** 2 + (y - height / 2) ** 2 < (height / 3) ** 2;
       pixels[i] = (inside ? 190 : 40 + (x >> 2)) + grain();
       pixels[i + 1] = (inside ? 140 : 60 + (y >> 2)) + grain();
       pixels[i + 2] = (inside ? 110 : 90) + grain();
@@ -63,8 +70,33 @@ describe("shrunkFormFrame", () => {
     expect(webpSize(shipped!)).toEqual(webpSize(source));
   });
 
-  it("leaves a lossy frame as it is", async () => {
+  it("leaves a lossy frame that fits its box as it is", async () => {
     expect(await shrunkFormFrame(await frame(false))).toBeNull();
+  });
+
+  it("fits a frame bigger than its box inside it, keeping its shape", async () => {
+    for (const lossless of [true, false]) {
+      const shipped = await shrunkFormFrame(await frame(lossless, 1600, 800));
+      expect(shipped, lossless ? "lossless" : "lossy").not.toBeNull();
+      expect(webpSize(shipped!)).toEqual([
+        FORM_FRAME_MAX_SIDE,
+        FORM_FRAME_MAX_SIDE / 2,
+      ]);
+    }
+  });
+});
+
+describe("the box a frame is fitted to", () => {
+  it("is the one the form guide draws a frame in, at 3x", () => {
+    const component = readFileSync(
+      fileURLToPath(
+        new URL("../../src/components/ExerciseFormFrames.tsx", import.meta.url)
+      ),
+      "utf8"
+    );
+    const box = `h-[${FORM_FRAME_BOX_POINTS}px] max-w-[${FORM_FRAME_BOX_POINTS}px]`;
+    expect(component).toContain(box);
+    expect(FORM_FRAME_MAX_SIDE).toBe(FORM_FRAME_BOX_POINTS * 3);
   });
 });
 
