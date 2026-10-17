@@ -8,7 +8,14 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { flightBetween, isAutomated, settled } from "../launchSplash";
+import {
+  flightBetween,
+  flightFrames,
+  hexagonClipPath,
+  isAutomated,
+  settled,
+  springOut,
+} from "../launchSplash";
 import {
   LAUNCH_MARK_SHARE,
   MARK_CORNER,
@@ -26,6 +33,89 @@ describe("flightBetween", () => {
     expect(f.x).toBeCloseTo(18 + 6.75 - (150 + 45));
     expect(f.y).toBeCloseTo(97 + 8 - (370 + 52));
     expect(f.scale).toBeCloseTo(16 / 104);
+  });
+});
+
+describe("springOut", () => {
+  it("starts from standstill, ends exactly on 1, and never turns back", () => {
+    expect(springOut(0)).toBe(0);
+    expect(springOut(1)).toBe(1);
+    // From rest: the first hundredth covers almost nothing.
+    expect(springOut(0.01)).toBeLessThan(0.005);
+    let prev = 0;
+    for (let i = 1; i <= 100; i += 1) {
+      const p = springOut(i / 100);
+      expect(p).toBeGreaterThanOrEqual(prev);
+      expect(p).toBeLessThanOrEqual(1);
+      prev = p;
+    }
+  });
+
+  it("is under way at once and slows into the target", () => {
+    // An ease-in-out idles for its first tenth; this is well started.
+    expect(springOut(0.1)).toBeGreaterThan(0.1);
+    // Most of the way by mid-flight, the rest a soft landing.
+    expect(springOut(0.5)).toBeGreaterThan(0.8);
+    expect(springOut(0.9) - springOut(0.8)).toBeLessThan(0.05);
+  });
+});
+
+describe("flightFrames", () => {
+  const from = { left: 150, top: 370, width: 90, height: 104 };
+  const to = { left: 18, top: 97, width: 13.5, height: 16 };
+  const flight = flightBetween(from, to);
+  const frames = flightFrames(flight);
+  const parse = (frame: string) => {
+    const m =
+      /^translate\((-?[\d.]+)px, (-?[\d.]+)px\) scale\(([\d.]+)\)$/.exec(frame);
+    expect(m).not.toBeNull();
+    return { x: Number(m![1]), y: Number(m![2]), s: Number(m![3]) };
+  };
+  const points = frames.map(parse);
+
+  it("starts where the mark is and lands exactly on the target", () => {
+    expect(points[0]).toEqual({ x: 0, y: 0, s: 1 });
+    const last = points[points.length - 1];
+    expect(last.x).toBeCloseTo(flight.x, 1);
+    expect(last.y).toBeCloseTo(flight.y, 1);
+    expect(last.s).toBeCloseTo(flight.scale, 4);
+  });
+
+  it("shrinks by the same ratio for the same progress", () => {
+    // Geometric, not linear: at each frame the scale is the target scale
+    // raised to how far along the spring is.
+    frames.forEach((_, i) => {
+      const p = springOut(i / (frames.length - 1));
+      expect(points[i].s).toBeCloseTo(flight.scale ** p, 3);
+    });
+  });
+
+  it("leaves upward and bows away from the straight line", () => {
+    // The first step is mostly a climb, as the chevron's was.
+    expect(Math.abs(points[1].y)).toBeGreaterThan(Math.abs(points[1].x) * 2);
+    // Halfway, the centre is above the straight line from start to target
+    // (y on the line at that x, in screen terms, is larger).
+    const mid = points[Math.floor(points.length / 2)];
+    const lineY = (mid.x / flight.x) * flight.y;
+    expect(mid.y).toBeLessThan(lineY);
+  });
+});
+
+describe("hexagonClipPath", () => {
+  it("is brandMark.ts's inset hexagon, in the mark's box", () => {
+    const [vx, vy, vw, vh] = MARK_VIEWBOX.split(" ").map(Number);
+    const points = /^polygon\((.*)\)$/
+      .exec(hexagonClipPath())![1]
+      .split(", ")
+      .map((pair) => pair.split(" ").map((v) => parseFloat(v) / 100));
+    const hexagon = MARK_HEXAGON.split(" ").map((pair) =>
+      pair.split(",").map(Number)
+    );
+    expect(points).toHaveLength(hexagon.length);
+    points.forEach(([px, py], i) => {
+      expect(vx + px * vw).toBeCloseTo(hexagon[i][0], 1);
+      expect(vy + py * vh).toBeCloseTo(hexagon[i][1], 1);
+    });
   });
 });
 

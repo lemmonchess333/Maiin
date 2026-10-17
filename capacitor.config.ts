@@ -14,7 +14,11 @@ const config: CapacitorConfig = {
       // 2000ms → 500ms. The full-opaque splash should be gone as
       // soon as the web layer has something to paint. A 2s hard
       // wait made the app feel sluggish on cold start — iOS users
-      // expect apps to feel instantly alive.
+      // expect apps to feel instantly alive. The launch animation
+      // (LaunchSplash, via src/lib/nativeLaunchImage.ts) hides it as
+      // soon as the web layer is drawing the same frame, so its rise
+      // starts in view; this timer is only the net for a web layer that
+      // never mounts.
       launchShowDuration: 500,
       launchAutoHide: true,
       // The app's dark page background, not the brand purple. The splash
