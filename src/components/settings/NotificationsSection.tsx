@@ -530,7 +530,7 @@ export default function NotificationsSection({
                   [
                     "challenges",
                     "Monthly challenges",
-                    "One alert near the start of each month, around 9 am in your time zone. Tap it to see the new challenges.",
+                    "One alert near the start of each month, around 09:00 in your time zone. Tap it to see the new challenges.",
                   ],
                 ] as const
               ).map(([type, label, description]) => (

@@ -72,11 +72,15 @@ describe("LiftReturnSheet — what it offers", () => {
     });
     const { onClose } = setup({ onEaseBack });
     fireEvent.click(screen.getByRole("button", { name: /ease back in/i }));
-    await waitFor(() => expect(onEaseBack).toHaveBeenCalled());
+    // The writer being invoked does not mean its rejection has reached the
+    // sheet's catch yet. Wait for the actual retry affordance to be restored.
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /ease back in/i })
+      ).not.toBeDisabled()
+    );
+    expect(onEaseBack).toHaveBeenCalledTimes(1);
     expect(onClose).not.toHaveBeenCalled();
-    expect(
-      screen.getByRole("button", { name: /ease back in/i })
-    ).not.toBeDisabled();
   });
 
   it("puts easing back first from three weeks, and keeping first before", () => {
