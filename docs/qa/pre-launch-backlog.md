@@ -2011,7 +2011,7 @@ shared (pinned by the "profile:" cases in `firestore.rules.test.ts`).
       filters" from no matches.
 - [ ] **Share your week** from the recap's first card exports a card with
       last week's numbers.
-- [ ] **Comments with no signal:** open a post's comments in airplane
+- [x] _(Proven 2026-10-18: on the real Firestore SDK with the backend unreachable, getComments resolved an empty page from the cache instead of failing, so the sheet said "No comments yet". It now treats an empty answer from the cache as a failed read: `src/lib/__tests__/socialApi.test.ts` 'fails when there is no connection and nothing cached, rather than reading as empty' (red before the fix), and CommentSheet.test.tsx 'says a failed read failed, and Try again reads again' shows the rejection as "Couldn't load comments". A thread read before still shows its cached comments.)_ **Comments with no signal:** open a post's comments in airplane
       mode. It says "Couldn't load comments" with Try again, never "No
       comments yet" (which it also used to show while comments loaded).
 

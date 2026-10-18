@@ -103,7 +103,16 @@ export async function getDocFromServer(ref: DocRef) {
 
 export async function getDocs(ref: CollectionRef) {
   firestoreFake.failIfArmed("getDocs", ref.path);
-  return firestoreFake.maybeDefer(ref.path, firestoreFake.querySnap(ref));
+  /* Offline, the SDK answers getDocs from the device's cache rather than
+     failing, and says so in `metadata.fromCache`. A test models that with
+     `setSnapshotMetadata`, as it does for a listener. */
+  const snapshot = Object.assign(firestoreFake.querySnap(ref), {
+    metadata: firestoreFake.snapshotMetadata.get(ref.path) ?? {
+      fromCache: false,
+      hasPendingWrites: false,
+    },
+  });
+  return firestoreFake.maybeDefer(ref.path, snapshot);
 }
 
 /** Server-only query read, the collection twin of `getDocFromServer`: the
