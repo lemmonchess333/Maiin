@@ -1,0 +1,54 @@
+{
+  "verifiedOn": "2026-10-17",
+  "note": "Official marathon race days; excludes expo, trail, 5K and relay days. No date is inferred from a previous edition.",
+  "races": [
+    {
+      "id": "cape-town-marathon",
+      "name": "Cape Town Marathon",
+      "dateKey": "2027-05-23",
+      "sourceUrl": "https://capetownmarathon.com/FAQ/"
+    },
+    {
+      "id": "rome-marathon",
+      "name": "Rome Marathon",
+      "dateKey": "2027-03-14",
+      "sourceUrl": "https://www.runromethemarathon.com/en/home-2025-en-2/marathon/"
+    },
+    {
+      "id": "athens-marathon",
+      "name": "Athens Authentic Marathon",
+      "dateKey": "2026-11-08",
+      "sourceUrl": "https://www.athensauthenticmarathon.gr/en?lang=en%2F"
+    },
+    {
+      "id": "prague-marathon",
+      "name": "Prague Marathon",
+      "dateKey": "2027-05-02",
+      "sourceUrl": "https://www.runczech.com/en/events/vodafone-prague-marathon-2027"
+    },
+    {
+      "id": "vienna-marathon",
+      "name": "Vienna City Marathon",
+      "dateKey": "2027-04-18",
+      "sourceUrl": "https://www.vienna-marathon.com/index.html?go=marathon&lang=en"
+    },
+    {
+      "id": "frankfurt-marathon",
+      "name": "Frankfurt Marathon",
+      "dateKey": "2026-10-25",
+      "sourceUrl": "https://www.frankfurt-marathon.com/en/your-run/marathon/"
+    },
+    {
+      "id": "honolulu-marathon",
+      "name": "Honolulu Marathon",
+      "dateKey": "2026-12-13",
+      "sourceUrl": "https://www.honolulumarathon.org/key-information"
+    },
+    {
+      "id": "los-angeles-marathon",
+      "name": "Los Angeles Marathon",
+      "dateKey": "2027-03-07",
+      "sourceUrl": "https://www.mccourtfoundation.org/event/los-angeles-marathon/"
+    }
+  ]
+}

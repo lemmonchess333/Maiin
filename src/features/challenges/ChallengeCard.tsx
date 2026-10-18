@@ -12,6 +12,8 @@ import {
   Sun,
   Leaf,
   Snowflake,
+  Dumbbell,
+  CalendarDays,
 } from "lucide-react";
 import type {
   Challenge,
@@ -71,6 +73,8 @@ const METRIC_ACCENT: Record<string, string> = {
   total_volume: THEME.lifting,
   workout_count: THEME.lifting,
   hybrid_score: THEME.brand,
+  active_days: THEME.brand,
+  training_minutes: THEME.brand,
 };
 
 /* Icon map for challenge cards. The seed definitions in
@@ -93,6 +97,9 @@ const CHALLENGE_ICON_MAP: Record<
   sun: Sun,
   leaf: Leaf,
   snowflake: Snowflake,
+  dumbbell: Dumbbell,
+  "calendar-days": CalendarDays,
+  clock: Clock,
 };
 
 function TierMarker({
@@ -247,7 +254,7 @@ export function ChallengeCard({
           ghosted-icon band renders — the designed fallback, not a
           degraded state. */}
       <div
-        className={`relative overflow-hidden border-b border-border/50 ${heroPhoto ? "h-28" : "h-24"}`}
+        className={`relative overflow-hidden border-b border-border/50 ${heroPhoto ? "h-40" : "h-24"}`}
         style={
           heroPhoto
             ? undefined
@@ -263,6 +270,14 @@ export function ChallengeCard({
               alt=""
               aria-hidden
               className="absolute inset-0 size-full object-cover"
+              style={
+                challenge.type === "seasonal" ||
+                challenge.id.startsWith("strength-monthly-")
+                  ? { objectPosition: "center 20%" }
+                  : undefined
+              }
+              loading="lazy"
+              decoding="async"
             />
             {/* Sport duotone wash — ties mismatched stock into the
                 closed palette so the photo reads owned, not pasted. */}

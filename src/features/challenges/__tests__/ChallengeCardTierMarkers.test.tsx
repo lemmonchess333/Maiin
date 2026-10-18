@@ -112,6 +112,48 @@ describe("fastest_effort tier markers", () => {
   });
 });
 
+describe("featured monthly progress units", () => {
+  it("labels day goals and personal progress as days", () => {
+    renderJoined(
+      {
+        ...makeChallenge("active_days", { bronze: 6, silver: 12, gold: 20 }),
+        name: "January Active Days",
+        icon: "calendar-days",
+      },
+      5
+    );
+    expect(screen.getByText("6 days")).toBeInTheDocument();
+    expect(screen.getByText("12 days")).toBeInTheDocument();
+    expect(screen.getByText("20 days")).toBeInTheDocument();
+    expect(screen.getByText("5 days")).toBeInTheDocument();
+    expect(screen.getByText(/You're at/)).toHaveTextContent(
+      "You're at 5 days — Bronze at 6 days"
+    );
+  });
+
+  it("labels minute goals and floors fractional personal progress", () => {
+    renderJoined(
+      {
+        ...makeChallenge("training_minutes", {
+          bronze: 150,
+          silver: 300,
+          gold: 600,
+        }),
+        name: "February Training Minutes",
+        icon: "clock",
+      },
+      149.99
+    );
+    expect(screen.getByText("150 min")).toBeInTheDocument();
+    expect(screen.getByText("300 min")).toBeInTheDocument();
+    expect(screen.getByText("600 min")).toBeInTheDocument();
+    expect(screen.getByText("149 min")).toBeInTheDocument();
+    expect(screen.getByText(/You're at/)).toHaveTextContent(
+      "You're at 149 min — Bronze at 150 min"
+    );
+  });
+});
+
 /**
  * Edge labels must stay inside the bar.
  *

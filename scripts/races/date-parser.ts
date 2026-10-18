@@ -9,6 +9,12 @@ const { JSDOM } = createRequire(import.meta.url)("jsdom") as {
 
 export interface DateSource {
   url: string;
+  /** A reviewed organiser calendar links to an edition-specific event page. */
+  eventPageLink?: {
+    selector: string;
+    hrefPattern: string;
+    identity: string;
+  };
   /** Reviewed race identity, checked against the page title or structured event. */
   identity: string;
   /** Only the organiser's dedicated date element; never scan the whole page. */
@@ -26,6 +32,42 @@ export interface DateSource {
   excludeIdentity?: string;
   /** Explicitly reviewed redirects (e.g. an organiser changes its domain). */
   allowedHosts?: string[];
+}
+
+/** Follow one reviewed, same-origin calendar link; never infer its race day. */
+export function resolveOfficialEventLink(
+  html: string,
+  source: DateSource
+): string {
+  const link = source.eventPageLink;
+  if (!link) throw new Error("No event-page link configured");
+  const dom = new JSDOM(html);
+  try {
+    const doc = dom.window.document;
+    if (!new RegExp(link.identity, "i").test(doc.title))
+      throw new Error("Calendar identity changed");
+    const base = new URL(source.url);
+    const urls = new Set<string>();
+    for (const node of doc.querySelectorAll(link.selector)) {
+      const href = node.getAttribute("href");
+      if (!href) continue;
+      const target = new URL(href, base);
+      if (!new RegExp(link.hrefPattern).test(target.pathname)) continue;
+      if (
+        target.protocol !== "https:" ||
+        target.origin !== base.origin ||
+        target.username ||
+        target.password
+      )
+        throw new Error("Unreviewed event-page link");
+      urls.add(target.href);
+    }
+    if (urls.size !== 1)
+      throw new Error("No single official event-page link found");
+    return [...urls][0];
+  } finally {
+    dom.window.close();
+  }
 }
 
 const months = [
@@ -178,7 +220,7 @@ export function parseOfficialDates(html: string, source: DateSource): string[] {
         const normalized =
           source.dateFormat === "dmy"
             ? text.replace(
-                /\b(\d{1,2})[/-](\d{1,2})[/-](20\d{2})\b/g,
+                /\b(\d{1,2})\s*[./-]\s*(\d{1,2})\s*[./-]\s*(20\d{2})\b/g,
                 (_match, d, m, y) =>
                   `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`
               )

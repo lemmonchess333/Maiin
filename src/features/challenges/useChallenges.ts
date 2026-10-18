@@ -1,5 +1,5 @@
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   collection,
   query,
@@ -17,6 +17,7 @@ import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { toast } from "@/lib/toast";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { showRestrictedToast } from "@/lib/accountRestriction";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
@@ -25,7 +26,8 @@ import {
   isTierAchieved,
   type ChallengeTier,
 } from "./challengeTiers";
-import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
+import { parseLocalDate } from "@/lib/dateHelpers";
+import { useLiveParticipationProgress } from "./useLiveParticipationProgress";
 
 // Re-exported so existing importers (ChallengeCard, tests) keep one import site.
 // The tier logic lives in ./challengeTiers (mirrored server-side).
@@ -210,6 +212,7 @@ async function readMyProgress(
 
 export function useChallenges() {
   const uid = useUid();
+  const todayKey = useLocalDateKey();
   // A restricted account can leave a challenge but not join one (S4e).
   const { isRestricted } = useRestrictedStatus(uid ?? undefined);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
@@ -219,14 +222,56 @@ export function useChallenges() {
      no result, no closure. These feed the finale card in ChallengeList;
      progress + leaderboards load for them too. */
   const [endedChallenges, setEndedChallenges] = useState<Challenge[]>([]);
-  const [myProgress, setMyProgress] = useState<
-    Record<string, ChallengeParticipant>
-  >({});
+  const [progressState, setProgressState] = useState<{
+    uid: string;
+    values: Record<string, ChallengeParticipant>;
+  } | null>(null);
+  const sessionRef = useRef<{ uid: string | null; active: boolean } | null>(
+    null
+  );
+  useEffect(() => {
+    const session = { uid, active: true };
+    sessionRef.current = session;
+    return () => {
+      session.active = false;
+    };
+  }, [uid]);
+  const setMyProgress = useCallback(
+    (
+      update: (
+        previous: Record<string, ChallengeParticipant>
+      ) => Record<string, ChallengeParticipant>
+    ) => {
+      const session = sessionRef.current;
+      if (!uid || !session?.active || session.uid !== uid) return;
+      setProgressState((previous) => ({
+        uid,
+        values: update(previous?.uid === uid ? previous.values : {}),
+      }));
+    },
+    [uid]
+  );
+  const liveProgress = useLiveParticipationProgress<ChallengeParticipant>(uid, [
+    ...challenges,
+    ...endedChallenges,
+  ]);
+  const myProgress = useMemo(() => {
+    const combined = {
+      ...(progressState?.uid === uid ? progressState.values : {}),
+    };
+    for (const [id, value] of Object.entries(liveProgress)) {
+      if (value === null) delete combined[id];
+      else combined[id] = value;
+    }
+    return combined;
+  }, [uid, progressState, liveProgress]);
   const [leaderboards, setLeaderboards] = useState<
     Record<string, ChallengeParticipant[]>
   >({});
   const [loading, setLoading] = useState(true);
 
+  // Upcoming definitions may not change at midnight. The day dependency also
+  // re-reads the cached snapshot on app resume, without needing a server write.
   useEffect(() => {
     /* Read-only subscription, gated on `user` so it runs after Firebase
        auth resolves. Challenge definitions are SERVER-OWNED: the
@@ -241,13 +286,16 @@ export function useChallenges() {
        stable for the session so this doesn't re-run gratuitously. */
     if (!uid) return;
 
-    const timeout = setTimeout(() => setLoading(false), 3000);
+    let subscribed = true;
+    const timeout = setTimeout(() => {
+      if (subscribed) setLoading(false);
+    }, 3000);
     const unsub = onSnapshot(
       collection(db, "challenges"),
       (snap) => {
+        if (!subscribed) return;
         clearTimeout(timeout);
         const now = new Date();
-        const todayKey = localDateString(now);
         const all = snap.docs.map(
           (d) => ({ id: d.id, ...d.data() }) as Challenge
         );
@@ -274,28 +322,33 @@ export function useChallenges() {
         setLoading(false);
       },
       () => {
+        if (!subscribed) return;
         clearTimeout(timeout);
         setChallenges([]);
         setLoading(false);
       }
     );
     return () => {
+      subscribed = false;
       clearTimeout(timeout);
       unsub();
     };
-  }, [uid]);
+  }, [uid, todayKey]);
 
-  /* Extracted so pull-to-refresh can re-run it on demand (SOC-P1d): the
-     challenge DOCS are a live subscription above, but per-user progress
-     and (via the myProgress dep on the boards effect below) the
-     leaderboards are one-shot reads that previously only refreshed when
-     the challenge list itself changed. */
+  /* Pull-to-refresh still reloads every goal (SOC-P1d). Participation goals
+     additionally receive live server backfill/edit results; those snapshots
+     override this one-shot read, including observed membership deletions. */
   const loadMyProgress = useCallback((): Promise<void> => {
     const tracked = [...challenges, ...endedChallenges];
-    if (!uid || tracked.length === 0) return Promise.resolve();
+    const session = sessionRef.current;
+    if (!uid || !session?.active || session.uid !== uid || tracked.length === 0)
+      return Promise.resolve();
     // State is set in the continuation, once every read has landed, so
     // the effect below that starts the reads sets nothing synchronously.
-    return readMyProgress(uid, tracked).then(setMyProgress);
+    return readMyProgress(uid, tracked).then((values) => {
+      if (session.active && sessionRef.current === session)
+        setProgressState({ uid, values });
+    });
   }, [uid, challenges, endedChallenges]);
 
   useEffect(() => {
@@ -304,7 +357,8 @@ export function useChallenges() {
 
   useEffect(() => {
     const tracked = [...challenges, ...endedChallenges];
-    if (tracked.length === 0) return;
+    if (!uid || tracked.length === 0) return;
+    let active = true;
     const load = async () => {
       const boards: Record<string, ChallengeParticipant[]> = {};
       for (const ch of tracked) {
@@ -338,14 +392,18 @@ export function useChallenges() {
           (d) => ({ uid: d.id, ...d.data() }) as ChallengeParticipant
         );
       }
-      setLeaderboards(boards);
+      if (active) setLeaderboards(boards);
     };
     load();
-  }, [challenges, endedChallenges, myProgress]);
+    return () => {
+      active = false;
+    };
+  }, [uid, challenges, endedChallenges, myProgress]);
 
   const joinChallenge = useCallback(
     async (challengeId: string) => {
-      if (!uid) return;
+      const session = sessionRef.current;
+      if (!uid || !session?.active || session.uid !== uid) return;
       if (isRestricted) {
         showRestrictedToast();
         return;
@@ -364,6 +422,7 @@ export function useChallenges() {
         // rejoin would be wrong anyway. Just resync local state.
         const existingSnap = await getDoc(participantRef);
         if (existingSnap.exists()) {
+          if (!session.active || sessionRef.current !== session) return;
           const data = existingSnap.data();
           setMyProgress((prev) => ({
             ...prev,
@@ -382,6 +441,7 @@ export function useChallenges() {
         const photoURL = profileSnap.exists()
           ? ((profileSnap.data().photoURL as string | null | undefined) ?? null)
           : null;
+        if (!session.active || sessionRef.current !== session) return;
         await setDocGuarded(participantRef, {
           currentValue: 0,
           tierAchieved: null,
@@ -389,6 +449,7 @@ export function useChallenges() {
           displayName: name,
           ...(photoURL ? { photoURL } : {}),
         });
+        if (!session.active || sessionRef.current !== session) return;
         // participantCount is maintained server-side by the
         // onChallengeParticipantCreated/Deleted triggers — the parent
         // challenge doc is server-owned (rules deny client writes). The old
@@ -405,20 +466,23 @@ export function useChallenges() {
         }));
         trackSocialEvent("challenge_joined", { challengeId });
       } catch (error) {
+        if (!session.active || sessionRef.current !== session) return;
         logger.error("[Challenges] Join failed:", error);
         toast.error("Couldn't join the challenge. Try again.");
       }
     },
-    [uid, isRestricted]
+    [uid, isRestricted, setMyProgress]
   );
 
   const leaveChallenge = useCallback(
     async (challengeId: string) => {
-      if (!uid) return;
+      const session = sessionRef.current;
+      if (!uid || !session?.active || session.uid !== uid) return;
       try {
         await deleteDocGuarded(
           doc(db, "challenges", challengeId, "participants", uid)
         );
+        if (!session.active || sessionRef.current !== session) return;
         // participantCount recomputed server-side by the participant-delete
         // trigger (see joinChallenge note).
         setMyProgress((prev) => {
@@ -427,11 +491,12 @@ export function useChallenges() {
           return n;
         });
       } catch (error) {
+        if (!session.active || sessionRef.current !== session) return;
         logger.error("[Challenges] Leave failed:", error);
         toast.error("Couldn't leave the challenge. Try again.");
       }
     },
-    [uid]
+    [uid, setMyProgress]
   );
 
   /* 2026-06-07 audit (HIGH): challenge progress is SERVER-OWNED.
@@ -463,8 +528,8 @@ export function useChallenges() {
     loading,
     joinChallenge,
     leaveChallenge,
-    /** SOC-P1d: on-demand progress refetch (cascades the leaderboards
-     *  via the myProgress dependency) — the pull-to-refresh handle. */
+    /** SOC-P1d: on-demand progress refetch, preserving newer live participation
+     *  snapshots and cascading leaderboard reads — the pull-to-refresh handle. */
     refreshProgress: loadMyProgress,
     restricted: isRestricted,
   };

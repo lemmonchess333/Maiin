@@ -69,6 +69,33 @@ describe("challenge photos", () => {
       challengeEditorialStem({ id: "custom-3", metric: "some_future_metric" })
     ).toBe("challenge-hybrid-hero");
   });
+
+  it("follows the featured month's metric instead of reusing a core goal's photo", () => {
+    const id = "featured-monthly-2027-01-01";
+    expect(challengeEditorialStem({ id, metric: "active_days" })).toBe(
+      "challenge-active-days"
+    );
+    expect(challengeEditorialStem({ id, metric: "training_minutes" })).toBe(
+      "challenge-training-minutes"
+    );
+  });
+
+  it("finds both new metric photos for custom challenges too", () => {
+    expect(
+      challengeEditorialStem({ id: "custom-days", metric: "active_days" })
+    ).toBe("challenge-active-days");
+    expect(
+      challengeEditorialStem({ id: "custom-time", metric: "training_minutes" })
+    ).toBe("challenge-training-minutes");
+  });
+
+  it("has a distinct licensed photo for each featured metric", () => {
+    const photos = ["active_days", "training_minutes"].map((metric) =>
+      challengeEditorialImage({ id: "featured-monthly-2027-01-01", metric })
+    );
+    expect(photos).toEqual([expect.any(String), expect.any(String)]);
+    expect(new Set(photos).size).toBe(2);
+  });
 });
 
 describe("the editorial set", () => {

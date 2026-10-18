@@ -194,7 +194,11 @@ describe("Home session actions and metadata", () => {
   it("splits a day the person named into its category and title", () => {
     render(
       <LiftCTACard
-        nextWorkout={{ dayName: "Arms — Pump", dayType: "upper", exercises: [] }}
+        nextWorkout={{
+          dayName: "Arms — Pump",
+          dayType: "upper",
+          exercises: [],
+        }}
         dayLabel="Arms · Pump"
         navigate={vi.fn()}
       />

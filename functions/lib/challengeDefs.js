@@ -60,6 +60,31 @@ const MONTH_NAMES = [
   "December",
 ];
 
+/** A fixed yearly calendar: one featured goal, renewed every month.
+ * Odd-numbered months favour training days, even-numbered months logged
+ * training time. These metrics use current-source reconciliation rather than
+ * per-activity SUM increments, so edits and same-day sessions stay correct. */
+function featuredMonthlyFor(now) {
+  const monthName = MONTH_NAMES[now.getUTCMonth()];
+  if (now.getUTCMonth() % 2 === 0) {
+    return {
+      name: `${monthName} Active Days`,
+      description:
+        "Log a lift or a run. Each date counts once, with room for rest days.",
+      metric: "active_days",
+      icon: "calendar-days",
+      tiers: { bronze: 8, silver: 12, gold: 20 },
+    };
+  }
+  return {
+    name: `${monthName} Training Minutes`,
+    description: "Your logged running and lifting minutes this month add up.",
+    metric: "training_minutes",
+    icon: "clock",
+    tiers: { bronze: 120, silver: 300, gold: 600 },
+  };
+}
+
 /** Quarter-based season definition (mirrors the retired client logic). */
 function seasonFor(now) {
   const month = now.getUTCMonth();
@@ -67,19 +92,19 @@ function seasonFor(now) {
     return {
       name: "Spring Reset",
       description:
-        "Log something every day you can. Your longest run of days counts.",
-      metric: "streak_days",
+        "Your logged lifting sessions this season count. Rest days are welcome.",
+      metric: "workout_count",
       icon: "sprout",
-      tiers: { bronze: 5, silver: 14, gold: 30 },
+      tiers: { bronze: 8, silver: 20, gold: 36 },
     };
   }
   if (month >= 5 && month <= 7) {
     return {
       name: "Summer Shred",
-      description: "Every workout and every run counts.",
-      metric: "combined_score",
+      description: "Running and lifting both count. Train however you like.",
+      metric: "hybrid_score",
       icon: "sun",
-      tiers: { bronze: 20, silver: 50, gold: 100 },
+      tiers: { bronze: 500, silver: 2000, gold: 5000 },
     };
   }
   if (month >= 8 && month <= 10) {
@@ -139,6 +164,7 @@ function buildCurrentChallenges(now = new Date()) {
   const seasonEnd = seasonEndUTC(now);
   const season = seasonFor(now);
   const monthName = MONTH_NAMES[now.getUTCMonth()];
+  const featured = featuredMonthlyFor(now);
 
   return [
     {
@@ -160,6 +186,24 @@ function buildCurrentChallenges(now = new Date()) {
       metric: "total_km",
       icon: "footprints",
       tiers: { bronze: 10, silver: 25, gold: 50 },
+      startDate: monthStart,
+      endDate: monthEnd,
+    },
+    {
+      id: `strength-monthly-${ymd(monthStart)}`,
+      name: `${monthName} Strength Builder`,
+      description: "Your logged lifting volume this month. Follow your usual plan.",
+      type: "monthly",
+      metric: "total_volume",
+      icon: "dumbbell",
+      tiers: { bronze: 5000, silver: 15000, gold: 30000 },
+      startDate: monthStart,
+      endDate: monthEnd,
+    },
+    {
+      id: `featured-monthly-${ymd(monthStart)}`,
+      ...featured,
+      type: "monthly",
       startDate: monthStart,
       endDate: monthEnd,
     },
@@ -270,4 +314,5 @@ module.exports = {
   seasonStartUTC,
   seasonEndUTC,
   seasonFor,
+  featuredMonthlyFor,
 };

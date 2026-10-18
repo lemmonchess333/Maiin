@@ -182,3 +182,111 @@ describe("a restricted account (S4e)", () => {
     );
   });
 });
+
+describe("the featured monthly challenge", () => {
+  const FEATURED_ID = "featured-monthly-2026-09-01";
+  const CORE_ID = "monthly-2026-09-01";
+  const STRENGTH_ID = "strength-monthly-2026-09-01";
+  const participantPath = (id: string) =>
+    `challenges/${id}/participants/weekly-member`;
+
+  beforeEach(() => {
+    const dates = {
+      type: "monthly",
+      startDate: Timestamp.fromDate(new Date("2026-09-01T00:00:00Z")),
+      endDate: Timestamp.fromDate(new Date("2026-10-01T00:00:00Z")),
+      participantCount: 0,
+    };
+    seedFirestore({
+      [`challenges/${CORE_ID}`]: {
+        ...dates,
+        name: "September Mileage",
+        description: "Every run adds up",
+        metric: "total_km",
+        icon: "footprints",
+        tiers: { bronze: 10, silver: 25, gold: 50 },
+      },
+      [`challenges/${STRENGTH_ID}`]: {
+        ...dates,
+        name: "September Strength Builder",
+        description: "Your logged lifting volume",
+        metric: "total_volume",
+        icon: "dumbbell",
+        tiers: { bronze: 5000, silver: 15000, gold: 30000 },
+      },
+      [`challenges/${FEATURED_ID}`]: {
+        ...dates,
+        name: "September Active Days",
+        description: "Run or lift on different days. Rest days are welcome.",
+        metric: "active_days",
+        icon: "calendar-days",
+        tiers: { bronze: 8, silver: 12, gold: 20 },
+      },
+    });
+  });
+
+  it("shows the featured invitation while the other available goals stay collapsed", async () => {
+    await openList();
+    expect(
+      await screen.findByText("September Active Days")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Featured this month")).toBeInTheDocument();
+    expect(screen.queryByText("September Mileage")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("September Strength Builder")
+    ).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: /See 2 more challenges/ })
+    );
+    expect(await screen.findByText("September Mileage")).toBeInTheDocument();
+    expect(screen.getAllByText("September Active Days")).toHaveLength(1);
+  });
+
+  it("puts a joined featured goal first and leaves other memberships intact", async () => {
+    const progress = {
+      currentValue: 0,
+      tierAchieved: null,
+      joinedAt: Timestamp.fromDate(new Date("2026-09-08T09:00:00Z")),
+      displayName: "Test member",
+    };
+    seedFirestore({
+      [participantPath(CORE_ID)]: progress,
+      [participantPath(STRENGTH_ID)]: progress,
+      [participantPath(FEATURED_ID)]: progress,
+    });
+    await openList();
+    await waitFor(() =>
+      expect(screen.getByText("Your challenges")).toBeInTheDocument()
+    );
+    const names = screen
+      .getAllByText(/^September /)
+      .map((el) => el.textContent);
+    expect(names[0]).toBe("September Active Days");
+    expect(screen.queryByText("Featured this month")).not.toBeInTheDocument();
+    expect(readDoc(participantPath(CORE_ID))).toMatchObject(progress);
+    expect(readDoc(participantPath(STRENGTH_ID))).toMatchObject(progress);
+  });
+
+  it("moves the featured goal between available and joined without enrolling in core goals", async () => {
+    await openList();
+    await screen.findByText("September Active Days");
+    expect(readDoc(participantPath(FEATURED_ID))).toBeUndefined();
+    fireEvent.click(screen.getByRole("button", { name: "Join challenge" }));
+    await screen.findByText("Your challenges");
+    expect(readDoc(participantPath(FEATURED_ID))).toMatchObject({
+      currentValue: 0,
+    });
+    expect(screen.queryByText("Featured this month")).not.toBeInTheDocument();
+    expect(screen.getByText("Bronze at 8 days")).toBeInTheDocument();
+    expect(readDoc(participantPath(CORE_ID))).toBeUndefined();
+    expect(readDoc(participantPath(STRENGTH_ID))).toBeUndefined();
+    expect(readDoc(PATH)).toBeUndefined();
+    fireEvent.click(screen.getByRole("button", { name: "Leave challenge" }));
+    await screen.findByText("Featured this month");
+    expect(readDoc(participantPath(FEATURED_ID))).toBeUndefined();
+    expect(
+      screen.getByRole("button", { name: /See 2 more challenges/ })
+    ).toBeInTheDocument();
+    expect(screen.queryByText("September Mileage")).not.toBeInTheDocument();
+  });
+});

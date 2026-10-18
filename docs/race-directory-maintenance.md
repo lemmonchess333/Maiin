@@ -1,13 +1,41 @@
 # Race directory and automatic dates
 
-Updated 4 October 2026. This implements the owner's request to keep recurring
+Updated 17 October 2026. This implements the owner's request to keep recurring
 races visible and refresh organiser dates without repeatedly using ChatGPT.
 It supersedes the hidden-card and manual-only date-update rules in the older
 race proposals.
 
+## Destination additions, 17 October 2026
+
+The directory adds Cape Town (23 May 2027), Rome (14 March 2027), Athens
+(8 November 2026), Prague (2 May 2027), Vienna (18 April 2027), Frankfurt
+(25 October 2026), Honolulu (13 December 2026) and Los Angeles (7 March 2027).
+Cape Town completes coverage of the eight announced
+[Abbott World Marathon Majors](https://www.worldmarathonmajors.com/cape-town-major).
+
+Official date evidence is recorded in
+`scripts/races/verified-marathons-2026-10-17.json`. Every new race has a reviewed
+date adapter in `scripts/races/sources.ts`; expo and shorter-distance dates are
+excluded. Prague explicitly uses day-month-year numeric dates. Its updater
+starts from the permanent RunCzech calendar, follows exactly one reviewed,
+same-origin marathon link, then verifies the actual marathon date on that
+edition's page. It does not infer a date from the festival weekend or a URL's
+year. Missing, ambiguous or external links require review. The Frankfurt
+race-detail page still advertises the upcoming 2026 edition, while the official
+homepage already announces 31 October 2027. Its adapter reads that next-edition
+field after the 2026 date expires. The existing updater skips unexpired races.
+
+New memberships and account-deletion paths are included in both server and
+Firestore allowlists. Every addition has its own licensed destination photo,
+with provenance in `src/assets/editorial/sources-marathons-challenges-2026-10-17.json`.
+
+The eight catalogue records intentionally raise the `spaceDefs` bundle baseline
+from 19,963 to 22,654 bytes and `spaceTypes` from 16,020 to 18,635 bytes. Only
+these two chunk budgets change; the total budget and tolerance stay fixed.
+
 ## What ships
 
-The catalogue contains 57 races: 27 marathons, 12 half marathons, 10 10Ks,
+The catalogue contains 65 races: 35 marathons, 12 half marathons, 10 10Ks,
 5 5Ks and 3 ultras. The first expansion added Sydney, Amsterdam, Rotterdam and Copenhagen marathons;
 Oxford Half; Great Bristol Run 10K; Edinburgh Marathon Festival 5K; River Ness
 5K. Australia, the Netherlands and Denmark join the country filter.
@@ -24,7 +52,7 @@ Amsterdam's 18 October 2026 date is also stated in the organiser's
 [FAQ](https://www.tcsamsterdammarathon.eu/frequently-asked-questions).
 Keep imminent editions until they pass, even if a later year is announced.
 
-All 57 races have a shipped destination photograph. The first 16 added photographs
+All 65 races have a shipped destination photograph. The first 16 added photographs
 and their licences, photographers, source links, hashes and processing details
 are recorded in `src/assets/editorial/sources-race-expansion-2026-10-04.json`.
 These are location photographs, not official event images or course promises.
@@ -141,7 +169,7 @@ scripts, images or inconsistent markup. Those need an occasional adapter fix or
 manually verified catalogue date. The fallback keeps races visible throughout;
 this does not promise that every organiser can be scraped forever.
 
-The source adapters cover all 57 races. Amsterdam, Houston, Seville and Paris
+The source adapters cover all 65 races. Amsterdam, Houston, Seville and Paris
 use dedicated organiser FAQ statements. Chester and New York use a fresh
 anonymous Chromium browser to read their rendered event pages. The browser
 does not solve access challenges; an inaccessible event page stays in review.

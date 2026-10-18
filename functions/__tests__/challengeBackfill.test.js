@@ -24,6 +24,11 @@ import {
   workoutChallengeIncrements,
   runChallengeIncrements,
 } from "../lib/challengeBackfill";
+import { buildCurrentChallenges } from "../lib/challengeDefs";
+import {
+  isParticipationMetric,
+  participationValue,
+} from "../lib/challengeParticipationProgress";
 
 const JULY = {
   startDate: new Date("2026-07-01T00:00:00Z"),
@@ -48,6 +53,57 @@ describe("metric routing", () => {
     expect(metricNeedsWorkouts(undefined)).toBe(false);
     expect(metricNeedsRuns("group_goal")).toBe(false);
   });
+});
+
+describe("canonical challenge crediting throughout the year", () => {
+  it.each(
+    Array.from({ length: 12 }, (_, month) => ({ month, label: month + 1 }))
+  )(
+    "every challenge in month $label has an activity that can earn progress",
+    ({ month }) => {
+      // Use saved activity shapes, rather than a second list of supported
+      // metric strings. A definition can render correctly while neither the
+      // live trigger nor join-time backfill ever produces its metric.
+      const lift = {
+        date: `2027-${String(month + 1).padStart(2, "0")}-15`,
+        durationMinutes: 30,
+        exercises: [{ sets: [{ weightKg: 40, reps: 10 }] }],
+      };
+      const run = { date: lift.date, distance: 5000, duration: 1800 };
+      const challenges = buildCurrentChallenges(
+        new Date(Date.UTC(2027, month, 15))
+      );
+
+      for (const challenge of challenges) {
+        if (isParticipationMetric(challenge.metric)) {
+          expect(
+            participationValue(challenge, [lift], [run]),
+            `${challenge.id} must project saved activity credit`
+          ).toBeGreaterThan(0);
+          continue;
+        }
+        const increments = [
+          ...(metricNeedsWorkouts(challenge.metric)
+            ? workoutChallengeIncrements(lift)
+            : []),
+          ...(metricNeedsRuns(challenge.metric)
+            ? runChallengeIncrements(run)
+            : []),
+        ].filter((increment) => increment.metric === challenge.metric);
+
+        expect(
+          increments.some((increment) =>
+            challenge.metric === "fastest_effort"
+              ? challenge.targetDistance > 0 &&
+                increment.meters >= challenge.targetDistance &&
+                increment.seconds > 0
+              : increment.value > 0
+          ),
+          `${challenge.id} (${challenge.metric}) must receive activity credit`
+        ).toBe(true);
+      }
+    }
+  );
 });
 
 describe("backfillQueryWindow", () => {

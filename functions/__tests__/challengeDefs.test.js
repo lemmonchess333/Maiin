@@ -20,15 +20,17 @@ import { challengeContainsActivityDate } from "../lib/challengeActivityWindow";
 const MON_JUN_1 = new Date(Date.UTC(2026, 5, 1, 12, 0, 0));
 
 describe("buildCurrentChallenges", () => {
-  it("returns the six canonical challenges with prefixed, dated IDs", () => {
+  it("returns the eight canonical challenges with prefixed, dated IDs", () => {
     const defs = buildCurrentChallenges(MON_JUN_1);
     const ids = defs.map((d) => d.id).sort();
     expect(ids).toEqual([
       "fastest-5k-2026-06-01",
+      "featured-monthly-2026-06-01",
       "global-monthly-2026-06-01", // SOCIAL S4 global hybrid challenge
       "group-goal-2026-06-01",
       "monthly-2026-06-01",
       "seasonal-2026-06-01",
+      "strength-monthly-2026-06-01",
       "weekly-2026-06-01",
     ]);
   });
@@ -93,6 +95,31 @@ describe("buildCurrentChallenges", () => {
     expect(jul.find((d) => d.id.startsWith("group-goal-")).id).toBe(
       "group-goal-2026-07-01"
     );
+    expect(jul.find((d) => d.id.startsWith("strength-monthly-")).id).toBe(
+      "strength-monthly-2026-07-01"
+    );
+  });
+
+  it("refreshes monthly strength in November while Autumn keeps its window", () => {
+    const october = buildCurrentChallenges(new Date(Date.UTC(2026, 9, 31, 12)));
+    const november = buildCurrentChallenges(
+      new Date(Date.UTC(2026, 10, 1, 12))
+    );
+    const strength = november.find((d) => d.id.startsWith("strength-monthly-"));
+    expect(strength).toMatchObject({
+      id: "strength-monthly-2026-11-01",
+      name: "November Strength Builder",
+      metric: "total_volume",
+      tiers: { bronze: 5000, silver: 15000, gold: 30000 },
+      startDate: new Date("2026-11-01T00:00:00Z"),
+      endDate: new Date("2026-12-01T00:00:00Z"),
+    });
+    expect(november.find((d) => d.type === "seasonal")).toEqual(
+      october.find((d) => d.type === "seasonal")
+    );
+    expect(
+      buildUpcomingChallenges(new Date("2026-10-31T00:05:00Z"))
+    ).toContainEqual(strength);
   });
 
   it("selects the season by UTC month", () => {
@@ -142,10 +169,10 @@ describe("seasonFor", () => {
     const cases = [
       [0, "Winter Bulk", "total_volume"], // Jan
       [1, "Winter Bulk", "total_volume"], // Feb
-      [2, "Spring Reset", "streak_days"], // Mar (spring starts)
-      [4, "Spring Reset", "streak_days"], // May (spring ends)
-      [5, "Summer Shred", "combined_score"], // Jun (summer starts)
-      [7, "Summer Shred", "combined_score"], // Aug (summer ends)
+      [2, "Spring Reset", "workout_count"], // Mar (spring starts)
+      [4, "Spring Reset", "workout_count"], // May (spring ends)
+      [5, "Summer Shred", "hybrid_score"], // Jun (summer starts)
+      [7, "Summer Shred", "hybrid_score"], // Aug (summer ends)
       [8, "Autumn Push", "hybrid_score"], // Sep (autumn starts)
       [10, "Autumn Push", "hybrid_score"], // Nov (autumn ends)
       [11, "Winter Bulk", "total_volume"], // Dec (winter starts)
@@ -154,6 +181,66 @@ describe("seasonFor", () => {
       const s = seasonFor(at(2026, month));
       expect(s.name, `month ${month}`).toBe(name);
       expect(s.metric, `month ${month}`).toBe(metric);
+    }
+  });
+
+  it("gives Spring lifting-session targets and Summer supported hybrid targets", () => {
+    expect(seasonFor(at(2027, 2))).toMatchObject({
+      metric: "workout_count",
+      description:
+        "Your logged lifting sessions this season count. Rest days are welcome.",
+      tiers: { bronze: 8, silver: 20, gold: 36 },
+    });
+    expect(seasonFor(at(2027, 5))).toMatchObject({
+      metric: "hybrid_score",
+      description: "Running and lifting both count. Train however you like.",
+      tiers: { bronze: 500, silver: 2000, gold: 5000 },
+    });
+  });
+});
+
+describe("automatic featured monthly rotation", () => {
+  it.each(Array.from({ length: 12 }, (_, month) => [month]))(
+    "creates exactly one featured goal with the correct window in month %i",
+    (month) => {
+      const now = new Date(Date.UTC(2027, month, 15));
+      const featured = buildCurrentChallenges(now).filter((d) =>
+        d.id.startsWith("featured-monthly-")
+      );
+      expect(featured).toHaveLength(1);
+      const activeDays = month % 2 === 0;
+      expect(featured[0]).toMatchObject({
+        id: `featured-monthly-2027-${String(month + 1).padStart(2, "0")}-01`,
+        type: "monthly",
+        metric: activeDays ? "active_days" : "training_minutes",
+        icon: activeDays ? "calendar-days" : "clock",
+        tiers: activeDays
+          ? { bronze: 8, silver: 12, gold: 20 }
+          : { bronze: 120, silver: 300, gold: 600 },
+        startDate: new Date(Date.UTC(2027, month, 1)),
+        endDate: new Date(Date.UTC(2027, month + 1, 1)),
+      });
+    }
+  );
+
+  it("materialises the next goal early without accepting outgoing-month activity", () => {
+    for (const [lastDay, outgoingMetric, incomingMetric] of [
+      ["2026-10-31", "training_minutes", "active_days"],
+      ["2026-12-31", "training_minutes", "active_days"],
+      ["2028-02-29", "training_minutes", "active_days"],
+    ]) {
+      const now = new Date(`${lastDay}T00:05:00Z`);
+      const tomorrow = new Date(now.getTime() + 86400000);
+      const nextKey = tomorrow.toISOString().slice(0, 10);
+      const featured = buildUpcomingChallenges(now).filter((d) =>
+        d.id.startsWith("featured-monthly-")
+      );
+      expect(featured).toHaveLength(2);
+      expect(featured[0].metric).toBe(outgoingMetric);
+      const next = featured.find((d) => d.id.endsWith(nextKey));
+      expect(next.metric).toBe(incomingMetric);
+      expect(challengeContainsActivityDate(next, lastDay)).toBe(false);
+      expect(challengeContainsActivityDate(next, nextKey)).toBe(true);
     }
   });
 });

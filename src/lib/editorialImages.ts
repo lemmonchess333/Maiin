@@ -39,6 +39,7 @@ function byStem(stem: string): string | null {
    the definition that measures the same thing. */
 const CHALLENGE_STEM_BY_PREFIX: readonly (readonly [string, string])[] = [
   ["weekly-", "challenge-weekly"],
+  ["strength-monthly-", "challenge-strength"],
   ["global-monthly-", "challenge-hybrid-hero"],
   ["monthly-", "challenge-mileage"],
   ["fastest-5k-", "challenge-fastest-5k"],
@@ -47,12 +48,18 @@ const CHALLENGE_STEM_BY_PREFIX: readonly (readonly [string, string])[] = [
 
 const SEASONS = ["spring", "summer", "autumn", "winter"] as const;
 
+const FEATURED_CHALLENGE_STEM_BY_METRIC: Record<string, string> = {
+  active_days: "challenge-active-days",
+  training_minutes: "challenge-training-minutes",
+};
+
 const CHALLENGE_STEM_BY_METRIC: Record<string, string> = {
   total_km: "challenge-mileage",
   fastest_effort: "challenge-fastest-5k",
   total_volume: "challenge-weekly",
   workout_count: "challenge-weekly",
   hybrid_score: "challenge-hybrid-hero",
+  ...FEATURED_CHALLENGE_STEM_BY_METRIC,
 };
 
 export interface EditorialChallenge {
@@ -63,6 +70,10 @@ export interface EditorialChallenge {
 
 /** The asset stem of a challenge's photo. */
 export function challengeEditorialStem(challenge: EditorialChallenge): string {
+  if (challenge.id.startsWith("featured-monthly-")) {
+    const featured = FEATURED_CHALLENGE_STEM_BY_METRIC[challenge.metric];
+    if (featured) return featured;
+  }
   if (challenge.id.startsWith("seasonal-")) {
     const name = (challenge.name ?? "").toLowerCase();
     const season = SEASONS.find((s) => name.includes(s));

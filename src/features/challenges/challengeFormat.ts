@@ -18,6 +18,9 @@ import {
  * total_volume: kilograms, shown in the reader's lifting unit (Lift18;
  * "28,307 lb"). Units are SPACED ("5.2 km", "12,840 kg") — the app's one
  * unit treatment.
+ * active_days: distinct activity dates, with a day unit. training_minutes:
+ * cumulative minutes (including fractions), floored so the display never
+ * promises a minute that has not yet been completed.
  */
 export function formatChallengeValue(
   metric: string,
@@ -37,5 +40,11 @@ export function formatChallengeValue(
   }
   if (metric === "total_volume")
     return `${Math.round(liftVolumeIn(value, liftUnit)).toLocaleString()} ${liftUnitLabel(liftUnit)}`;
+  if (metric === "active_days") {
+    const days = Math.max(0, Math.floor(value));
+    return `${days.toLocaleString()} ${days === 1 ? "day" : "days"}`;
+  }
+  if (metric === "training_minutes")
+    return `${Math.max(0, Math.floor(value)).toLocaleString()} min`;
   return Math.round(value).toLocaleString();
 }

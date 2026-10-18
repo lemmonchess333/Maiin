@@ -4,6 +4,47 @@ import type { DateSource } from "./date-parser";
 // Dedicated date elements inspected on 2026-10-04. No whole-page date scraping:
 // news, entry deadlines and other distances frequently appear on these pages.
 const selectors: Record<string, Partial<DateSource>> = {
+  "cape-town-marathon": {
+    url: "https://capetownmarathon.com/FAQ/",
+    identity: "Cape Town Marathon",
+    selector: "p.p1",
+    pattern: "^The 42\\.2km Sanlam Cape Town Marathon \\([^)]+\\)",
+  },
+  "rome-marathon": {
+    url: "https://www.runromethemarathon.com/en/home-2025-en-2/marathon/",
+    identity: "Rome.*Marathon|Marathon.*Rome",
+    selector: "span.red",
+    pattern: "^\\d{1,2} [A-Za-z]+ 20\\d{2} is your day",
+  },
+  "athens-marathon": {
+    identity: "Athens.*Marathon",
+    selector: ".race_box",
+    pattern: "^MARATHON RACE \\d{1,2} [A-Za-z]+ 20\\d{2}",
+  },
+  "prague-marathon": {
+    url: "https://www.runczech.com/en/events",
+    eventPageLink: {
+      selector:
+        ".c-events__item--prague-inter-marathon .c-events__item-headline a",
+      hrefPattern: "^/en/events/vodafone-prague-marathon-20\\d{2}/?$",
+      identity: "Races.*RunCzech",
+    },
+    selector: ".c-races__item-title",
+    pattern:
+      "^Vodafone Prague Marathon Distance: 42\\.195km Date: [A-Za-z]+ \\d{1,2}\\.\\s*\\d{1,2}\\.\\s*20\\d{2}(?: From \\d{1,2}:\\d{2})?$",
+    dateFormat: "dmy",
+  },
+  "vienna-marathon": {
+    url: "https://www.vienna-marathon.com/index.html?go=marathon&lang=en",
+    selector: ".vcm-eventinfo-box > div:first-child",
+    pattern: "^Date: [A-Za-z]+, \\d{1,2} [A-Za-z]+ 20\\d{2}",
+  },
+  "frankfurt-marathon": {
+    selector: "h3",
+    pattern: "^\\d{1,2}(?:st|nd|rd|th)? [A-Za-z]+ 20\\d{2}$",
+  },
+  "honolulu-marathon": { selector: "header .header__date" },
+  "los-angeles-marathon": { selector: ".hero-panel.single-event h4" },
   "edinburgh-half": { selector: "title", identity: "Edinburgh Half Marathon" },
   "bournemouth-half": {
     selector: "title",

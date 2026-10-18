@@ -22,6 +22,21 @@ describe("formatChallengeValue", () => {
     expect(formatChallengeValue("fastest_effort", 1530, "lbs")).toBe("25:30");
     expect(formatChallengeValue("workout_count", 12, "lbs")).toBe("12");
   });
+
+  it("names distinct activity days, including the singular and zero", () => {
+    expect(formatChallengeValue("active_days", 0)).toBe("0 days");
+    expect(formatChallengeValue("active_days", 1)).toBe("1 day");
+    expect(formatChallengeValue("active_days", 8, "lbs", "mi")).toBe("8 days");
+  });
+
+  it("shows only completed training minutes without rounding up", () => {
+    expect(formatChallengeValue("training_minutes", 0)).toBe("0 min");
+    expect(formatChallengeValue("training_minutes", 59.999)).toBe("59 min");
+    expect(formatChallengeValue("training_minutes", 60)).toBe("60 min");
+    expect(formatChallengeValue("training_minutes", 1200.5, "lbs", "mi")).toBe(
+      `${group(1200)} min`
+    );
+  });
 });
 
 /* Together pass: a distance challenge reads in the reader's distance unit,
