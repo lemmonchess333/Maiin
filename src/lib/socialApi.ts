@@ -397,6 +397,14 @@ export async function getComments(
     );
   }
   const snap = await getDocs(q);
+  /* With no connection getDocs answers from the device's cache instead of
+     failing, and for a thread never opened on this phone the cache is
+     empty: the sheet would say "No comments yet" when the truth is that
+     nothing could be read. An empty answer from the cache is a failed
+     read; a thread read before still shows what the cache holds. */
+  if (snap.empty && snap.metadata.fromCache) {
+    throw new Error("Comments could not be read: no connection");
+  }
   return {
     comments: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
     lastDoc: snap.docs[snap.docs.length - 1] as DocumentSnapshot | undefined,

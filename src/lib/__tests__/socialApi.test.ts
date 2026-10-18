@@ -6,6 +6,7 @@ import {
   allPaths,
   writeLog,
   failNextFirestore,
+  setSnapshotMetadata,
 } from "@/test/firestoreHarness";
 
 // Mock Firebase modules before importing socialApi
@@ -63,6 +64,7 @@ import {
   isBlocked,
   getBlockedUsers,
   reportContent,
+  getComments,
 } from "../socialApi";
 
 beforeEach(() => {
@@ -362,5 +364,38 @@ describe("getBlockedUsers", () => {
     });
     const result = await getBlockedUsers("user1");
     expect(result.sort()).toEqual(["blocked1", "blocked2"]);
+  });
+});
+
+/* Offline, getDocs answers from the device's cache and does not fail. The
+   comment sheet says "Couldn't load comments" only when getComments
+   rejects, so an empty answer from the cache has to reject, or a thread
+   never opened on this phone reads as "No comments yet". */
+describe("getComments", () => {
+  it("reads the thread newest first", async () => {
+    seedFirestore({
+      "comments/a1/items/c1": { text: "First", createdAt: 1 },
+      "comments/a1/items/c2": { text: "Second", createdAt: 2 },
+    });
+    const result = await getComments("a1");
+    expect(result.comments.map((c) => c.id)).toEqual(["c2", "c1"]);
+    expect(result.hasMore).toBe(false);
+  });
+
+  it("says an empty thread is empty when the server answered", async () => {
+    const result = await getComments("a1");
+    expect(result.comments).toEqual([]);
+  });
+
+  it("fails when there is no connection and nothing cached, rather than reading as empty", async () => {
+    setSnapshotMetadata("comments/a1/items", { fromCache: true });
+    await expect(getComments("a1")).rejects.toThrow();
+  });
+
+  it("shows what the cache holds for a thread read before", async () => {
+    seedFirestore({ "comments/a1/items/c1": { text: "Cached", createdAt: 1 } });
+    setSnapshotMetadata("comments/a1/items", { fromCache: true });
+    const result = await getComments("a1");
+    expect(result.comments.map((c) => c.id)).toEqual(["c1"]);
   });
 });
