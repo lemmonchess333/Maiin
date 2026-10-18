@@ -173,13 +173,6 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1024,
     reference: 1,
   },
-  "calf-raise": {
-    folder: "2026-10-03",
-    version: "anatomy-v3-upright-reference-2026-10-03",
-    width: 1024,
-    height: 1536,
-    reference: 3,
-  },
   "chest-press-machine": {
     folder: "2026-09-24",
     version: "anatomy-v3-2026-09-24",
@@ -767,13 +760,6 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     width: 1536,
     height: 1024,
     reference: 1,
-  },
-  "standing-calf-raise": {
-    folder: "2026-10-03",
-    version: "anatomy-v3-upright-reference-2026-10-03",
-    width: 1024,
-    height: 1536,
-    reference: 3,
   },
   "sumo-deadlift": {
     folder: "2026-10-11",

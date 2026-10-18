@@ -1,0 +1,159 @@
+{
+  "scope": "Independent visual and source review of the frozen local registered bench press and two calf guides. This report covers the actual 18 public guide frames and three normal cards, with the earlier independent native/source proof. Root actual mobile playback and controls, project checks, publication and merge remain separate gates.",
+  "decision": "No remaining blocking finding for the requested bench continuity and calf model/palette corrections. The retained source and display limitations below are explicit; this is not strict anatomical or mechanical certification.",
+  "remaining_blocking_findings": [],
+  "retained_display_limitations": [
+    "At 48 px on the light background, the white athlete and fine grey anatomy lines become faint. The grey apparatus and weight silhouettes remain identifiable. The cards are complete, but this small display cannot convey detailed anatomy or grip instruction.",
+    "The normal card previews preserve aspect ratio and use maximum dimensions of 480, 348, 160 and 48 px. They are file previews on the recorded backgrounds, rather than screenshots of every actual app card placement."
+  ],
+  "retained_source_findings": [
+    "Bench press uses three genuine states in the order top, early, bottom, bottom, early, top. The repeated bottom state is intentional. The early-to-bottom movement is a large discrete step; no new interpolated anatomy is claimed.",
+    "Bench sources retain minor inherited contour differences. The former 19-pixel head/support scene jump has been removed, but pixel-exact invariance of every scene pixel is not claimed.",
+    "The calf sources retain a small heel change from pose 1 to pose 2 while the upper body and shoulder load appear fixed. Most body and load rise occurs at pose 3. The existing movement and contact regions are preserved, with this approximation disclosed.",
+    "All three replacement releases are owner-released-with-findings and retain 11 null strict review flags. This review does not inherit the old calf strict approvals."
+  ],
+  "actual_registered_review": {
+    "public_input_manifest": "peer-bench-calf-visual-inputs.json",
+    "public_input_manifest_sha256": "14776709b123f52c75ac876639dd7088e023ab8c700a1101f56bcdb8cf7a8c06",
+    "public_asset_count": 21,
+    "all_21_hashes_stable_after_review": true,
+    "guide_frames_viewed_in_playing_order": {
+      "bench-press": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "calf-raise": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "standing-calf-raise": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    "all_18_public_frames_match_reviewed_frozen_candidates": true,
+    "normal_cards": {
+      "bench-press": {
+        "dimensions": [
+          480,
+          445
+        ],
+        "reference_frame": 4,
+        "byte_exact_to_measured_baseline_card": true,
+        "visual_observation": "The intact bench, athlete, trainers, bar shaft and both plates remain complete. Grips remain aligned with the shaft. The card matches the supported chest-touch reference pose and has no new clipping or background rectangle."
+      },
+      "calf-raise": {
+        "dimensions": [
+          320,
+          480
+        ],
+        "reference_frame": 3,
+        "visual_observation": "The whole machine and athlete, including neutral exposed hips and upper thighs, highlighted calves, raised heels and support block, remain complete. No clothing remnant, hard hip seam, cropped apparatus or alpha hole was found."
+      },
+      "standing-calf-raise": {
+        "dimensions": [
+          320,
+          480
+        ],
+        "reference_frame": 3,
+        "byte_exact_to_calf_raise_card": true,
+        "visual_observation": "This normal exported card is identical to the calf-raise card and represents the same machine variant. It was separately viewed at all four sizes on both backgrounds."
+      }
+    },
+    "card_max_dimensions_px": [
+      480,
+      348,
+      160,
+      48
+    ],
+    "card_backgrounds": {
+      "dark": "#17171b",
+      "light": "#faf9f6"
+    },
+    "normal_card_preview_paths": [
+      "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\bench-calf-quality-fix-20261018\\review-evidence\\peer-bench-press-normal-card-dark.png",
+      "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\bench-calf-quality-fix-20261018\\review-evidence\\peer-bench-press-normal-card-light.png",
+      "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\bench-calf-quality-fix-20261018\\review-evidence\\peer-calf-raise-normal-card-dark.png",
+      "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\bench-calf-quality-fix-20261018\\review-evidence\\peer-calf-raise-normal-card-light.png",
+      "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\bench-calf-quality-fix-20261018\\review-evidence\\peer-standing-calf-raise-normal-card-dark.png",
+      "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\bench-calf-quality-fix-20261018\\review-evidence\\peer-standing-calf-raise-normal-card-light.png"
+    ],
+    "registered_six_frame_contact_paths": [
+      "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\bench-calf-quality-fix-20261018\\review-evidence\\peer-bench-press-registered-six.png",
+      "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\bench-calf-quality-fix-20261018\\review-evidence\\peer-calf-raise-registered-six.png",
+      "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\bench-calf-quality-fix-20261018\\review-evidence\\peer-standing-calf-raise-registered-six.png"
+    ],
+    "evidence_sha256": {
+      "review-evidence\\peer-bench-press-normal-card-dark.png": "b3fbd5d45792f9b065eaf9dccde494d06c39647e5a23fca9124859764c0d2526",
+      "review-evidence\\peer-bench-press-normal-card-light.png": "bebb9a0f6cb0c5e4031fdd31a9c83214772e5e56445f28a7ff9bb841cd779335",
+      "review-evidence\\peer-calf-raise-normal-card-dark.png": "d5773c680c9e55610965d92f29dfba072582ef494679fa9934ae54ef85a42070",
+      "review-evidence\\peer-calf-raise-normal-card-light.png": "ce9b8c534e1df32d3a1fe40db1668909ce8c194bdc880f7f2c058e485375169d",
+      "review-evidence\\peer-standing-calf-raise-normal-card-dark.png": "d5773c680c9e55610965d92f29dfba072582ef494679fa9934ae54ef85a42070",
+      "review-evidence\\peer-standing-calf-raise-normal-card-light.png": "ce9b8c534e1df32d3a1fe40db1668909ce8c194bdc880f7f2c058e485375169d",
+      "review-evidence\\peer-bench-press-registered-six.png": "12f39e445da5b7430bb24140a8532a441941a5d577af66c29fdffdcdd2b94479",
+      "review-evidence\\peer-calf-raise-registered-six.png": "1f658f47d125b3527ef07765b5923ae3b1c0772c42aba4b0dc4c622d6b4fb2b3",
+      "review-evidence\\peer-standing-calf-raise-registered-six.png": "3016f451c15428a232ef6d756e094feec087488ff86824b25e9a752b886fe5d4"
+    }
+  },
+  "native_source_review": {
+    "path": "peer-native-bench-calf-review.json",
+    "sha256": "4fbeca5e1e595d36c750b73b201d9c8b17395ac2a45fd8ab64f0e44baa1c65ee",
+    "all_frozen_native_and_archive_hashes_still_exact": true,
+    "scope": "Three distinct bench states, three distinct calf states, six-state native sequences, FA56 style comparison, protected-pixel comparisons, ORA recomposition and source archive readback. See the polished native report for the scoped observations for all 11 calf review dimensions."
+  },
+  "current_release_records": {
+    "bench-press": {
+      "path": "docs/exercise-art/releases/2026-10-18/bench-press.json",
+      "sha256": "21070a90c1f9e7df285b1f8fe1dcac0bb5dd358ff1f0530a24fa3a43635c9fc9",
+      "decision": "owner-released-with-findings",
+      "strict_check_count": 11,
+      "all_strict_flags_null": true,
+      "reference": {
+        "path": "form-frames/bench-press/4.webp",
+        "sha256": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd"
+      }
+    },
+    "calf-raise": {
+      "path": "docs/exercise-art/releases/2026-10-18/calf-raise.json",
+      "sha256": "8ae6d8dc36cbf553333e9417bc5105b3a4fffe9c2af8b0a4454bbb195fc26ffb",
+      "decision": "owner-released-with-findings",
+      "strict_check_count": 11,
+      "all_strict_flags_null": true,
+      "reference": {
+        "path": "form-frames/calf-raise/3.webp",
+        "sha256": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490"
+      }
+    },
+    "standing-calf-raise": {
+      "path": "docs/exercise-art/releases/2026-10-18/standing-calf-raise.json",
+      "sha256": "7816d394c7211b84c5cdd7fd0e3ee23e9972bd8e4f8d394356b45decc65528d4",
+      "decision": "owner-released-with-findings",
+      "strict_check_count": 11,
+      "all_strict_flags_null": true,
+      "reference": {
+        "path": "form-frames/standing-calf-raise/3.webp",
+        "sha256": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490"
+      }
+    }
+  },
+  "not_performed_by_this_peer": [
+    "Actual registered mobile normal/slower light/dark playback and frame-wrap controls",
+    "Repository application tests, build or project verification",
+    "Repository edits, source authoring, image generation, Git mutation, publication or merge"
+  ],
+  "repo_edits": false,
+  "app_tests_run": false,
+  "strict_certified": false
+}

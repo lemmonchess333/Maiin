@@ -294,8 +294,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/calf-raise/3.webp",
     sourceSha256:
-      "aca1db8fc393638d52ede1f7204f8aac667a011fe82b86432866d74951d02de8",
-    sha256: "b3929dbabf02f5518263a155e1a0bf817351972fd54717d065a9b6d4b70684af",
+      "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+    sha256: "958760eb6cb7366f9ede91aff451921841e3b7812022c220ba360a16e749ad71",
   },
   "chest-press-machine": {
     src: "form-art/chest-press-machine.webp",
@@ -1354,8 +1354,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/standing-calf-raise/3.webp",
     sourceSha256:
-      "aca1db8fc393638d52ede1f7204f8aac667a011fe82b86432866d74951d02de8",
-    sha256: "b3929dbabf02f5518263a155e1a0bf817351972fd54717d065a9b6d4b70684af",
+      "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+    sha256: "958760eb6cb7366f9ede91aff451921841e3b7812022c220ba360a16e749ad71",
   },
   "straight-arm-pulldown": {
     src: "form-art/straight-arm-pulldown.webp",

@@ -77,6 +77,18 @@ const equipmentCorrected = (
   reviewFile: `docs/exercise-art/releases/2026-10-18/${id}.json`,
 });
 
+const continuityCorrected = (
+  id: string,
+  width: number,
+  height: number,
+  reference: number,
+  version: string
+): HandListedFormArtwork => ({
+  ...legacyRedrawn(id, width, height, reference),
+  version: `anatomy-v3-2026-10-18-${version}-v1`,
+  reviewFile: `docs/exercise-art/releases/2026-10-18/${id}.json`,
+});
+
 /**
  * A set approved by strict review. Every fact here comes from its release
  * record, through APPROVED_FORM_ART_RELEASES, which `npm run art:releases`
@@ -97,7 +109,7 @@ const approved = (
 });
 
 /**
- * The sets listed by hand: thirty owner-authorized guides with findings
+ * The sets listed by hand: thirty-two owner-authorized guides with findings
  * retained, including the six legacy sets redrawn in the current style.
  * They do not claim strict visual certification. An approved set never belongs
  * here: it comes from its record, and formArtwork.test.ts fails if an ID
@@ -254,7 +266,27 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
   squat: ownerReleased("squat", 1024, 1536),
   "barbell-curl": ownerReleased("barbell-curl", 1024, 1536),
   "barbell-row": legacyRedrawn("barbell-row", 1140, 1024, 4),
-  "bench-press": legacyRedrawn("bench-press", 888, 1024, 4),
+  "bench-press": continuityCorrected(
+    "bench-press",
+    888,
+    1024,
+    4,
+    "supported-continuity"
+  ),
+  "calf-raise": continuityCorrected(
+    "calf-raise",
+    1024,
+    1536,
+    3,
+    "calf-model-correction"
+  ),
+  "standing-calf-raise": continuityCorrected(
+    "standing-calf-raise",
+    1024,
+    1536,
+    3,
+    "calf-model-correction"
+  ),
   dips: legacyRedrawn("dips", 880, 1088, 4),
   "overhead-press": legacyRedrawn("overhead-press", 1024, 1536, 4),
   "rope-tricep-pushdown": equipmentCorrected(

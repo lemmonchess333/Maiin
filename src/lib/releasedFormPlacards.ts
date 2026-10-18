@@ -82,9 +82,9 @@ export const RELEASED_FORM_PLACARDS = {
     [
       [1, "Set", "Shoulder blades set; feet stay planted."],
       [0.88, "Lower", "Bend elbows; keep wrists over elbows."],
-      [0.35, "Continue down", "Lower smoothly toward the mid-chest."],
+      [0, "Continue down", "Lower smoothly toward the mid-chest."],
       [0, "Chest touch", "Touch lightly; keep the neck clear."],
-      [0.35, "Drive", "Press upward and back toward shoulders."],
+      [0.88, "Drive", "Press upward and back toward shoulders."],
       [1, "Lockout", "Straight arms; hips remain on bench."],
     ],
     [

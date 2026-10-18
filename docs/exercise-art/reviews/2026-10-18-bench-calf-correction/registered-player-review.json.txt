@@ -1,0 +1,592 @@
+{
+  "reviewedAt": "2026-10-18T09:19:22.379567+00:00",
+  "scope": "Actual registered ExerciseFormContent and public assets. Native/source review and strict release decisions are separately evidenced.",
+  "viewport": [
+    390,
+    844
+  ],
+  "captureLimitations": "Screenshot raster dimensions are recorded separately from the DOM viewport. A first bench dark screenshot captured a transient unpainted frame; it is retained separately as bench-registered-dark-transient-black.png and excluded from visual acceptance. Initial calf dark and light screenshots clipped player content and are retained separately as calf-registered-dark-clipped-attempt.png and calf-registered-light-clipped-attempt.png; neither is accepted. Accepted captures were taken after readback and positioning of the complete player, without changing source inputs. Only separately inspected full-player viewport captures are used as visual acceptance. Source/native review is separate; raw traces remain unmodified, with only identical observations deduplicated for mode validation.",
+  "manifestSha256": "3a4f2203b7f0e7f9ad2c5d16452dbef3814e371c802c7388d66655bbb467f320",
+  "guides": [
+    {
+      "exerciseId": "bench-press",
+      "registration": {
+        "version": "anatomy-v3-2026-10-18-supported-continuity-v1",
+        "status": "owner-released-with-findings",
+        "width": 888,
+        "height": 1024,
+        "frames": [
+          "form-frames/bench-press/1.webp",
+          "form-frames/bench-press/2.webp",
+          "form-frames/bench-press/3.webp",
+          "form-frames/bench-press/4.webp",
+          "form-frames/bench-press/5.webp",
+          "form-frames/bench-press/6.webp"
+        ],
+        "reference": "form-frames/bench-press/4.webp",
+        "reviewFile": "docs/exercise-art/releases/2026-10-18/bench-press.json"
+      },
+      "modes": [
+        {
+          "theme": "dark",
+          "slower": false,
+          "allSixDecodedFramesObserved": true,
+          "naturalSixToOneLoopObserved": true,
+          "frameTransitions": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            6
+          ]
+        },
+        {
+          "theme": "dark",
+          "slower": true,
+          "allSixDecodedFramesObserved": true,
+          "naturalSixToOneLoopObserved": true,
+          "frameTransitions": [
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        {
+          "theme": "light",
+          "slower": false,
+          "allSixDecodedFramesObserved": true,
+          "naturalSixToOneLoopObserved": true,
+          "frameTransitions": [
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      ],
+      "pausedManualSixToOne": {
+        "before": {
+          "instruction": "6Straight arms; hips remain on bench.",
+          "paused": true,
+          "selected": "Show frame 6: Lockout",
+          "src": "/form-frames/bench-press/6.webp"
+        },
+        "after": {
+          "instruction": "1Shoulder blades set; feet stay planted.",
+          "paused": true,
+          "selected": "Show frame 1: Set",
+          "src": "/form-frames/bench-press/1.webp"
+        }
+      },
+      "traceFiles": {
+        "bench-registered-dark-trace.json": "8ef4236d7a81bd0b6048efa7f55065751ba515810c17ecba44a07b6c87c982f4",
+        "bench-registered-slower-trace.json": "a48bf7670af820c4c65f5aadf7820643aabf0611184b08bfee883f2433aebc65",
+        "bench-registered-light-trace.json": "7aebb746d68df0d4d3e3f919ffdfba3f988ec924d2892dc1a1fa3385a4c760e9"
+      },
+      "observedInputsSha256": "478bc06dda4af49a5a3017d0386816eafbebb9294191d19f2f434ce5517f5753",
+      "manualSha256": "ca95022fd5b655cedbcb798087b5f04f0071cfcc22ccab5280b7dd8debfba31a",
+      "screenshots": [
+        {
+          "file": "bench-registered-dark-full-player.png",
+          "sha256": "b04ff0ec1d1f9f48f0101b376a52d1ae4707a81270e5295d5af914f9203f3e0f",
+          "rasterDimensions": [
+            380,
+            822
+          ],
+          "rootVisuallyInspected": true
+        },
+        {
+          "file": "bench-registered-light-full-player.png",
+          "sha256": "9739be0ceb0b5a5302682aab46710fe8cf6cfe4ac8f812f9320997f9eced8e1e",
+          "rasterDimensions": [
+            380,
+            822
+          ],
+          "rootVisuallyInspected": true
+        }
+      ],
+      "registeredAssets": {
+        "public/form-frames/bench-press/1.webp": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f",
+        "public/form-frames/bench-press/2.webp": "4ab1f8d37c4137bd4ced6b2a9fb85bee29d7b905daab019b99cef7c46b8b014f",
+        "public/form-frames/bench-press/3.webp": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd",
+        "public/form-frames/bench-press/4.webp": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd",
+        "public/form-frames/bench-press/5.webp": "4ab1f8d37c4137bd4ced6b2a9fb85bee29d7b905daab019b99cef7c46b8b014f",
+        "public/form-frames/bench-press/6.webp": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f",
+        "public/form-art/bench-press.webp": "91224a73d156bb63a49fd2c5e441123d0aed251f45f2dfaa62ba0c99e0a28121"
+      }
+    },
+    {
+      "exerciseId": "calf-raise",
+      "registration": {
+        "version": "anatomy-v3-2026-10-18-calf-model-correction-v1",
+        "status": "owner-released-with-findings",
+        "width": 1024,
+        "height": 1536,
+        "frames": [
+          "form-frames/calf-raise/1.webp",
+          "form-frames/calf-raise/2.webp",
+          "form-frames/calf-raise/3.webp",
+          "form-frames/calf-raise/4.webp",
+          "form-frames/calf-raise/5.webp",
+          "form-frames/calf-raise/6.webp"
+        ],
+        "reference": "form-frames/calf-raise/3.webp",
+        "reviewFile": "docs/exercise-art/releases/2026-10-18/calf-raise.json"
+      },
+      "modes": [
+        {
+          "theme": "dark",
+          "slower": false,
+          "allSixDecodedFramesObserved": true,
+          "naturalSixToOneLoopObserved": true,
+          "frameTransitions": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            5
+          ]
+        },
+        {
+          "theme": "dark",
+          "slower": true,
+          "allSixDecodedFramesObserved": true,
+          "naturalSixToOneLoopObserved": true,
+          "frameTransitions": [
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "theme": "light",
+          "slower": false,
+          "allSixDecodedFramesObserved": true,
+          "naturalSixToOneLoopObserved": true,
+          "frameTransitions": [
+            1,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3
+          ]
+        }
+      ],
+      "pausedManualSixToOne": {
+        "before": {
+          "instruction": "6Let heels sink below the step gently.",
+          "paused": true,
+          "selected": "Show frame 6: Return to stretch",
+          "src": "/form-frames/calf-raise/6.webp"
+        },
+        "after": {
+          "instruction": "1Stand tall; lower heels below the step.",
+          "paused": true,
+          "selected": "Show frame 1: Set your stretch",
+          "src": "/form-frames/calf-raise/1.webp"
+        }
+      },
+      "traceFiles": {
+        "calf-registered-dark-trace.json": "15f6369a024e5c32e9d2c975785e4cf1338fd7f24b7c8bb1cf1d851222d43507",
+        "calf-registered-slower-trace.json": "cc77e9155adfe7408c4c94ce3ec98233c17c0591d7c15e09247692eb29c07aa6",
+        "calf-registered-light-trace.json": "c5ef50900c310af463f314c1474d189f41764783a57b36ef23a1f211ee0fac73"
+      },
+      "observedInputsSha256": "89e681401f3736e6f720c498eca1e1585adb1ee1aa3c65ba2d30c3db22d5103b",
+      "manualSha256": "ef494e084ede3ba1a1484d5036d3bd37ac6d54c673bb88ff26d5caa2745a0c4b",
+      "screenshots": [
+        {
+          "file": "calf-registered-dark-full-player.png",
+          "sha256": "c8da46c5458f018be88170b3f9f5e7621faf3378732bbe5c58bddbe503f6d741",
+          "rasterDimensions": [
+            380,
+            822
+          ],
+          "rootVisuallyInspected": true
+        },
+        {
+          "file": "calf-registered-light-full-player.png",
+          "sha256": "6073563a4125f975872d248a0d363ae4b1d3d22e465c417718c156cbd13e6af5",
+          "rasterDimensions": [
+            380,
+            822
+          ],
+          "rootVisuallyInspected": true
+        }
+      ],
+      "registeredAssets": {
+        "public/form-frames/calf-raise/1.webp": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+        "public/form-frames/calf-raise/2.webp": "bcff77dec526efa9ace5b83bb50eeb190df259f446b4da53c0454ed0e8e944c3",
+        "public/form-frames/calf-raise/3.webp": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+        "public/form-frames/calf-raise/4.webp": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+        "public/form-frames/calf-raise/5.webp": "bcff77dec526efa9ace5b83bb50eeb190df259f446b4da53c0454ed0e8e944c3",
+        "public/form-frames/calf-raise/6.webp": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+        "public/form-art/calf-raise.webp": "958760eb6cb7366f9ede91aff451921841e3b7812022c220ba360a16e749ad71"
+      }
+    },
+    {
+      "exerciseId": "standing-calf-raise",
+      "registration": {
+        "version": "anatomy-v3-2026-10-18-calf-model-correction-v1",
+        "status": "owner-released-with-findings",
+        "width": 1024,
+        "height": 1536,
+        "frames": [
+          "form-frames/standing-calf-raise/1.webp",
+          "form-frames/standing-calf-raise/2.webp",
+          "form-frames/standing-calf-raise/3.webp",
+          "form-frames/standing-calf-raise/4.webp",
+          "form-frames/standing-calf-raise/5.webp",
+          "form-frames/standing-calf-raise/6.webp"
+        ],
+        "reference": "form-frames/standing-calf-raise/3.webp",
+        "reviewFile": "docs/exercise-art/releases/2026-10-18/standing-calf-raise.json"
+      },
+      "modes": [
+        {
+          "theme": "dark",
+          "slower": false,
+          "allSixDecodedFramesObserved": true,
+          "naturalSixToOneLoopObserved": true,
+          "frameTransitions": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            5
+          ]
+        },
+        {
+          "theme": "dark",
+          "slower": true,
+          "allSixDecodedFramesObserved": true,
+          "naturalSixToOneLoopObserved": true,
+          "frameTransitions": [
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "theme": "light",
+          "slower": false,
+          "allSixDecodedFramesObserved": true,
+          "naturalSixToOneLoopObserved": true,
+          "frameTransitions": [
+            1,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1
+          ]
+        }
+      ],
+      "pausedManualSixToOne": {
+        "before": {
+          "instruction": "6Let heels sink below the step gently.",
+          "paused": true,
+          "selected": "Show frame 6: Return to stretch",
+          "src": "/form-frames/standing-calf-raise/6.webp"
+        },
+        "after": {
+          "instruction": "1Stand tall; lower heels below the step.",
+          "paused": true,
+          "selected": "Show frame 1: Set your stretch",
+          "src": "/form-frames/standing-calf-raise/1.webp"
+        }
+      },
+      "traceFiles": {
+        "standing-registered-dark-trace.json": "637616ca8afc1a7b8d609eae4a22e87b295c7c1c46d530f0e86f29926ebf4814",
+        "standing-registered-slower-trace.json": "483cc4ba3c847774fdb0b9acc3d14d2fa3d0ab4613c50ec99df90d7afa836082",
+        "standing-registered-light-trace.json": "d3282d3fd574f87303c8aa6ec71645bfb7ff608ad429d47fd1af96d727652d73"
+      },
+      "observedInputsSha256": "794db5a7cbf17dcad349f7c42148466119d3d41dbbda61dff3c99a64c66f44e1",
+      "manualSha256": "45ff12c6164c432eefde88baf0bf279756fa1b1a81414b0b561983575a0494cd",
+      "screenshots": [
+        {
+          "file": "standing-registered-dark-full-player.png",
+          "sha256": "f0df9f0f87bb48e338e718e5bcee267d5198830d4ea6869119b60f30cb080792",
+          "rasterDimensions": [
+            380,
+            822
+          ],
+          "rootVisuallyInspected": true
+        },
+        {
+          "file": "standing-registered-light-full-player.png",
+          "sha256": "8c94032f6324b8219a1cb9658eb0acb129610a031e8fda7d808a36afc1011d1f",
+          "rasterDimensions": [
+            380,
+            822
+          ],
+          "rootVisuallyInspected": true
+        }
+      ],
+      "registeredAssets": {
+        "public/form-frames/standing-calf-raise/1.webp": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+        "public/form-frames/standing-calf-raise/2.webp": "bcff77dec526efa9ace5b83bb50eeb190df259f446b4da53c0454ed0e8e944c3",
+        "public/form-frames/standing-calf-raise/3.webp": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+        "public/form-frames/standing-calf-raise/4.webp": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+        "public/form-frames/standing-calf-raise/5.webp": "bcff77dec526efa9ace5b83bb50eeb190df259f446b4da53c0454ed0e8e944c3",
+        "public/form-frames/standing-calf-raise/6.webp": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+        "public/form-art/standing-calf-raise.webp": "958760eb6cb7366f9ede91aff451921841e3b7812022c220ba360a16e749ad71"
+      }
+    }
+  ],
+  "allNineModesAndThreeManualWrapsPassed": true,
+  "browserErrors": [],
+  "cards": {
+    "peerReportSha256": "61d70c29a9ab0cb9bb84fa587b3e9778b571c17444d2c1d25f7a79ea423f5c3d",
+    "peerInputsSha256": "14776709b123f52c75ac876639dd7088e023ab8c700a1101f56bcdb8cf7a8c06",
+    "threeCardsFourSizesTwoThemesReviewed": true,
+    "rootInspectedAllSixCardSizePreviews": true,
+    "retainedDisplayLimitations": [
+      "At 48 px on the light background, the white athlete and fine grey anatomy lines become faint. The grey apparatus and weight silhouettes remain identifiable. The cards are complete, but this small display cannot convey detailed anatomy or grip instruction.",
+      "The normal card previews preserve aspect ratio and use maximum dimensions of 480, 348, 160 and 48 px. They are file previews on the recorded backgrounds, rather than screenshots of every actual app card placement."
+    ]
+  }
+}

@@ -59,21 +59,52 @@ export function readReleaseRecords(root: string): ReleaseRecordFile[] {
 }
 
 /**
- * The release in force for each approved set: its newest approved record
- * by review date, keyed and sorted by exercise ID. Throws on a record the
- * registry could not be built from, rather than leaving that set out.
+ * The strict release in force for each set, keyed and sorted by exercise ID.
+ * An explicit owner decision can withdraw its latest prior approval; a later
+ * strict approval restores the row. Ordinary owner records do not withdraw
+ * approval. Every historical approval is validated, including withdrawn ones.
  */
 export function approvedReleases(
   records: readonly ReleaseRecordFile[]
 ): Record<string, ApprovedFormArtRelease> {
-  const newest = new Map<
+  type ApprovedDecision = {
+    reviewedAt: number;
+    where: string;
+    release: ApprovedFormArtRelease;
+  };
+  const newest = new Map<string, ApprovedDecision>();
+  const approvedByPath = new Map<string, { id: string; reviewedAt: number }>();
+  const approvedById = new Map<
     string,
-    { reviewedAt: number; release: ApprovedFormArtRelease }
+    { where: string; reviewedAt: number }[]
   >();
+  const eligibleDates = new Map<string, Map<number, string>>();
+  const seenPaths = new Set<string>();
+  const markDecision = (id: string, reviewedAt: number, where: string) => {
+    const dates = eligibleDates.get(id) ?? new Map<number, string>();
+    if (dates.has(reviewedAt))
+      throw new Error(
+        `${where}: two release decisions for ${id} share a review date`
+      );
+    dates.set(reviewedAt, where);
+    eligibleDates.set(id, dates);
+  };
+
+  // Validate every historical approval, even if a later decision withdraws it.
   for (const { folder, name, record } of records) {
     const where = `${RELEASES_DIR}/${folder}/${name}.json`;
+    if (seenPaths.has(where))
+      throw new Error(`${where}: repeated release path`);
+    seenPaths.add(where);
     if (record.exerciseId !== name)
       throw new Error(`${where}: a release record is named for its exerciseId`);
+    if (
+      Object.hasOwn(record, "supersedesApprovedRelease") &&
+      record.decision !== "owner-released-with-findings"
+    )
+      throw new Error(
+        `${where}: only an explicit owner decision may supersede an approval`
+      );
     if (record.decision !== "approved") continue;
     const reviewedAt = Date.parse(String(record.reviewedAt));
     if (!Number.isFinite(reviewedAt))
@@ -106,16 +137,62 @@ export function approvedReleases(
       height <= 0
     )
       throw new Error(`${where}: the version, width and height are required`);
+    markDecision(name, reviewedAt, where);
+    approvedByPath.set(where, { id: name, reviewedAt });
+    const prior = approvedById.get(name) ?? [];
+    prior.push({ where, reviewedAt });
+    approvedById.set(name, prior);
     const current = newest.get(name);
-    if (current?.reviewedAt === reviewedAt)
-      throw new Error(
-        `${where}: two approved records for ${name} share a review date`
-      );
     if (!current || reviewedAt > current.reviewedAt)
       newest.set(name, {
         reviewedAt,
+        where,
         release: { folder, version, width, height, reference },
       });
+  }
+
+  // Plain owner records never withdraw strict approval. A newer explicit
+  // decision must identify the latest approval at that owner's review date.
+  // A later genuine approval can therefore restore the strict output row.
+  for (const { folder, name, record } of records) {
+    if (!Object.hasOwn(record, "supersedesApprovedRelease")) continue;
+    const where = `${RELEASES_DIR}/${folder}/${name}.json`;
+    const targetPath = record.supersedesApprovedRelease;
+    if (typeof targetPath !== "string" || !targetPath.trim())
+      throw new Error(
+        `${where}: supersedesApprovedRelease must name a prior approved record`
+      );
+    if (typeof record.reviewedAt !== "string" || !record.reviewedAt.trim())
+      throw new Error(
+        `${where}: an explicit owner decision needs its review date`
+      );
+    const reviewedAt = Date.parse(record.reviewedAt);
+    if (!Number.isFinite(reviewedAt))
+      throw new Error(
+        `${where}: an explicit owner decision needs its review date`
+      );
+    markDecision(name, reviewedAt, where);
+    const target = approvedByPath.get(targetPath);
+    if (!target || target.id !== name)
+      throw new Error(
+        `${where}: supersession must name an existing approved record for the same exercise`
+      );
+    if (reviewedAt <= target.reviewedAt)
+      throw new Error(
+        `${where}: an owner supersession must be newer than its approved target`
+      );
+    const preceding = (approvedById.get(name) ?? []).reduce<
+      { where: string; reviewedAt: number } | undefined
+    >((latest, fact) => {
+      if (fact.reviewedAt >= reviewedAt) return latest;
+      return !latest || fact.reviewedAt > latest.reviewedAt ? fact : latest;
+    }, undefined);
+    if (preceding?.where !== targetPath)
+      throw new Error(
+        `${where}: supersession must name the latest approved record at the owner review date`
+      );
+    const current = newest.get(name);
+    if (current && reviewedAt > current.reviewedAt) newest.delete(name);
   }
   return Object.fromEntries(
     [...newest.keys()].sort().map((id) => [id, newest.get(id)!.release])

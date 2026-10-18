@@ -12,3 +12,13 @@
 /docs/exercise-art/reviews/2026-10-18-equipment-correction/*.md text eol=lf
 /docs/exercise-art/reviews/2026-10-18-equipment-correction/*.py text eol=lf
 /docs/exercise-art/reviews/2026-10-18-equipment-correction/registered-player-review.json.txt -text
+/docs/exercise-art/releases/2026-10-18/bench-press.json text eol=lf
+/docs/exercise-art/releases/2026-10-18/calf-raise.json text eol=lf
+/docs/exercise-art/releases/2026-10-18/standing-calf-raise.json text eol=lf
+/docs/exercise-art/sources/bench-press/2026-10-18-supported-continuity/*.json text eol=lf
+/docs/exercise-art/sources/bench-press/2026-10-18-supported-continuity/*.md text eol=lf
+/docs/exercise-art/sources/calf-raise/2026-10-18-model-correction/*.json text eol=lf
+/docs/exercise-art/sources/calf-raise/2026-10-18-model-correction/*.md text eol=lf
+/docs/exercise-art/reviews/2026-10-18-bench-calf-correction/*.json text eol=lf
+/docs/exercise-art/reviews/2026-10-18-bench-calf-correction/*.md text eol=lf
+/docs/exercise-art/reviews/2026-10-18-bench-calf-correction/*.json.txt -text

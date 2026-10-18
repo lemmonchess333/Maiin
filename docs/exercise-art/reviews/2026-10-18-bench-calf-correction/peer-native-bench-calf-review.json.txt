@@ -1,0 +1,170 @@
+{
+  "scope": "Read-only independent native and source review. Actual registered public assets, normal cards and player review are separate pending gates.",
+  "measured_base": "f161a521a602ec3ab51fbc0ea7aea366fad5e178",
+  "native_hashes": {
+    "bench-press\\candidate\\source\\1.png": "80c9da845e4e3001878cb6de2de087f4ac5f3932be86d8779bed05d1b9f38732",
+    "bench-press\\candidate\\frames\\1.webp": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f",
+    "bench-press\\candidate\\source\\2.png": "c8c5e10928bac4f588c7ea5716699dec1ac49d971c0dad46b3c940fb91b2413c",
+    "bench-press\\candidate\\frames\\2.webp": "4ab1f8d37c4137bd4ced6b2a9fb85bee29d7b905daab019b99cef7c46b8b014f",
+    "bench-press\\candidate\\source\\3.png": "be2032efb06c08fe3ae0ef442f47f1cf8e4f50609815d2b2c93285128ac90f83",
+    "bench-press\\candidate\\frames\\3.webp": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd",
+    "bench-press\\candidate\\source\\4.png": "be2032efb06c08fe3ae0ef442f47f1cf8e4f50609815d2b2c93285128ac90f83",
+    "bench-press\\candidate\\frames\\4.webp": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd",
+    "bench-press\\candidate\\source\\5.png": "c8c5e10928bac4f588c7ea5716699dec1ac49d971c0dad46b3c940fb91b2413c",
+    "bench-press\\candidate\\frames\\5.webp": "4ab1f8d37c4137bd4ced6b2a9fb85bee29d7b905daab019b99cef7c46b8b014f",
+    "bench-press\\candidate\\source\\6.png": "80c9da845e4e3001878cb6de2de087f4ac5f3932be86d8779bed05d1b9f38732",
+    "bench-press\\candidate\\frames\\6.webp": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f",
+    "bench-press\\inputs\\editables\\top-native.ora": "fb214ea6a9baefca1e7ea8d2f1c963f088f5b8456fe12b8d09c23423c610f22d",
+    "bench-press\\inputs\\editables\\early-native.ora": "ab5938f1fee6daa6dd7c8c173ba0dcdd1de8c9af5dc1dd4fb4803f33cc70adfe",
+    "bench-press\\inputs\\editables\\bottom-native.ora": "4b6f176e364879bb45f2576e5abe65bee5c9e88b5ad78daa5b0ff562b6f285aa",
+    "calf-raises\\inputs\\1-original.png": "749ea229ad1ddc8aebf82ead0cec205218f92d5cebe089adbb3bdb557269de74",
+    "calf-raises\\candidate\\source\\1.png": "198f8c656dd0cde3696fbcd648d7657674b2369b44b2891cbfdc7022dc1b949d",
+    "calf-raises\\candidate\\layers\\1-hip-mask.png": "c2c7ebfc01bffc6e59ba9ee6361ab2dbacd333563c677d4c2de6af3015af5742",
+    "calf-raises\\candidate\\layers\\1-colour-support.png": "835ac92875ddc575adea47685ba43c33af258df128b194d49f54b64e8c737ec9",
+    "calf-raises\\inputs\\2-original.png": "23cbcf0e88e2efd7db9ba1e690fa9a20faf78f46dc19f56e6f5eba693f61dd27",
+    "calf-raises\\candidate\\source\\2.png": "506270a1db0146f4e59b66db0c6bf00be6be15bfd46bbbba64ce9b091fd44f46",
+    "calf-raises\\candidate\\layers\\2-hip-mask.png": "2b5da8f73571879aa9c9b05764dbe3f0ff1209ede187ba8ab9187885c04ab02c",
+    "calf-raises\\candidate\\layers\\2-colour-support.png": "6a59ed2c37c518236b935bca77dea4bf421ad2f418486f69d87dce7a8b792b48",
+    "calf-raises\\inputs\\3-original.png": "959e1493733e96683d754d28ee3597ccd9a24671130225fcdc354d1d0cfaa76f",
+    "calf-raises\\candidate\\source\\3.png": "2c218bd31827e951e335f66816912a79a510b963661db7a91a71b8c8ce3035c3",
+    "calf-raises\\candidate\\layers\\3-hip-mask.png": "f3bb06ea511a29d36c474543d1ca8f1770964d472bbc89e042a359427f917881",
+    "calf-raises\\candidate\\layers\\3-colour-support.png": "37c8f7d2a4aeb7dd3bf63ead201032afdc5a715d24f1d847e27d9e89cc704905",
+    "calf-raises\\candidate\\editables\\1.ora": "51b6862d4ebff03f8fe7e95a3b9a482ddcf8b7d9e72536767485be5e7f5306d1",
+    "calf-raises\\candidate\\editables\\2.ora": "98d4dc3c02a8c3330d9cf3303d5f02991796f525a0bfb582086e3436e9dbc75f",
+    "calf-raises\\candidate\\editables\\3.ora": "b7c1a6f8ab0809b898bdbb2d4f4c037e6c096a7d04004011ae2ccce5c230c447",
+    "calf-raises\\candidate\\frames\\1.webp": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+    "calf-raises\\candidate\\frames\\2.webp": "bcff77dec526efa9ace5b83bb50eeb190df259f446b4da53c0454ed0e8e944c3",
+    "calf-raises\\candidate\\frames\\3.webp": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+    "calf-raises\\candidate\\source\\4.png": "2c218bd31827e951e335f66816912a79a510b963661db7a91a71b8c8ce3035c3",
+    "calf-raises\\candidate\\frames\\4.webp": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+    "calf-raises\\candidate\\source\\5.png": "506270a1db0146f4e59b66db0c6bf00be6be15bfd46bbbba64ce9b091fd44f46",
+    "calf-raises\\candidate\\frames\\5.webp": "bcff77dec526efa9ace5b83bb50eeb190df259f446b4da53c0454ed0e8e944c3",
+    "calf-raises\\candidate\\source\\6.png": "198f8c656dd0cde3696fbcd648d7657674b2369b44b2891cbfdc7022dc1b949d",
+    "calf-raises\\candidate\\frames\\6.webp": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+    "bench-press\\portable-native-continuity-source.zip": "f2858b4f9340522364199e10f0946f134be51a26a45ebc3f574749e2f13952a4",
+    "calf-raises\\portable-calf-model-source.zip": "31dbf3ac960be1a0b0eea49584632add7ad4167607f128596cc1c3982c541dc1"
+  },
+  "bench": {
+    "read_only_source_checks": [
+      {
+        "pose": "top",
+        "oraLayers": 6,
+        "allNativeLayersRecomposeExact": true,
+        "nativeMergedCommonCropEqualsSource": true
+      },
+      {
+        "pose": "early",
+        "oraLayers": 6,
+        "allNativeLayersRecomposeExact": true,
+        "nativeMergedCommonCropEqualsSource": true
+      },
+      {
+        "pose": "bottom",
+        "oraLayers": 6,
+        "allNativeLayersRecomposeExact": true,
+        "nativeMergedCommonCropEqualsSource": true
+      }
+    ],
+    "visual_observations": [
+      "Viewed all three distinct native states and all six frames in playing order. The supported head, bench and trainers no longer show the former 19-pixel scene jump.",
+      "The bar shaft, matched plates and closed grips remain visually coherent in each state.",
+      "The sequence is top, early, bottom, bottom, early, top. Frames 3 and 4 deliberately dwell at the bottom; the cues describe arriving at the bottom and touching the chest.",
+      "No new athlete pixels, source scaling or anatomical transformation are proposed. The independent ORA recomposition and common-crop checks above are exact.",
+      "Minor inherited contour differences and the large movement from the early state to the bottom remain. This is not strict anatomical or continuous-motion certification."
+    ]
+  },
+  "calves": {
+    "read_only_pixel_checks": [
+      {
+        "pose": 1,
+        "changedPixels": 119583,
+        "outsideHipAndExistingColourSupportExact": true,
+        "headUpperTorsoHandsAboveY494Exact": true,
+        "apparatusLeftX530AndRightX846Exact": true,
+        "trainersAndContactBelowY1170Exact": true
+      },
+      {
+        "pose": 2,
+        "changedPixels": 118586,
+        "outsideHipAndExistingColourSupportExact": true,
+        "headUpperTorsoHandsAboveY494Exact": true,
+        "apparatusLeftX530AndRightX846Exact": true,
+        "trainersAndContactBelowY1170Exact": true
+      },
+      {
+        "pose": 3,
+        "changedPixels": 115803,
+        "outsideHipAndExistingColourSupportExact": true,
+        "headUpperTorsoHandsAboveY494Exact": true,
+        "apparatusLeftX530AndRightX846Exact": true,
+        "trainersAndContactBelowY1170Exact": true
+      }
+    ],
+    "visual_observations": [
+      "Viewed all three full native source states, hip boundary closeups and feet/support closeups against the actual FA56 canonical image.",
+      "The neutral pelvis, gluteal and upper-thigh contours fit the existing fine grey lines and soft white shading. No visible shorts remnants, colour seams, replacement of the head or torso, or abrupt hip contour changes were found.",
+      "The broad primary gastrocnemius fields and the secondary soleus fields remain inside the original calf shapes and retain the original source shading.",
+      "Hands close around the grips and the shoulder pads contact the athlete. Knees stay softly straight, heels rise over supported forefeet, and the selected weights rise through the ascending sequence.",
+      "From pose 1 to pose 2, the original source shows a small heel change while the upper body and shoulder load appear fixed. Most visible body and load rise occurs at pose 3. This is an inherited approximation in the discrete poses, rather than a new hip edit."
+    ],
+    "strict_check_observations": {
+      "identity": "Compared the actual FA56 canonical image with all three final poses. They show the same adult bald, faceless, lean anatomical athlete, a neutral white-grey pelvis, white trainers and no shorts. The original head and upper body are preserved exactly.",
+      "camera": "All states use the same 1024 x 1536 canvas and viewpoint. The original head and upper-body pixels are preserved per pose, with no scaling or warping. This does not establish a calibrated 3D camera.",
+      "anatomy": "Viewed all three hip and thigh interfaces at native resolution. Contours are connected, hip proportions fit the original athlete, and no hard seams are visible. The original ankle and calf anatomy remain. Pixel inspection alone cannot certify ideal biomechanics.",
+      "equipment": "The original grey machine, rods and base remain pixel-exact outside the hip window. The selected stack gap grows as the calf raise ascends. No new apparatus pixels are introduced.",
+      "contact": "Reviewed native shoe and support closeups for all three poses. Forefeet remain supported on the block, heel rise is clear, and grip and shoulder-pad contacts remain continuous. The original contact regions are pixel-exact.",
+      "physics": "The stack and body rise visibly at the top. In the first two poses, the heels change slightly while the upper load appears fixed. Exact continuous movement of the whole loaded system is not certified.",
+      "muscles": "Reviewed the native calf shading and the primary and secondary muscle fields. Hips and other unselected muscles remain neutral. The author and publisher retain responsibility for binding the exact palette-role traces.",
+      "cueAgreement": "Read the existing six catalogue cues. The order 1, 2, 3, 3, 2, 1 matches stretch, rise, top squeeze, top hold, lower and return to stretch. Binding to the actual registered cues is still pending.",
+      "sequenceAndLoop": "Viewed the six-frame native contact sheet. The repeated top state and the return sequence are visually coherent. Actual registered playback and frame-6-to-frame-1 controls remain a root review gate.",
+      "mobile": "The peer has not performed the actual mobile review. Root owns normal, slower, light-mode and dark-mode player review.",
+      "source": "The frozen originals, generated images, masks and final PNGs use unchanged coordinates. Protected regions were independently compared above. The three ORAs independently recompose to the native final sources. All six WebPs decode to their source PNGs exactly. The frozen source manifest and both source archives were independently read back; fresh isolated reproduction remains separate author evidence."
+    },
+    "read_only_ora_checks": [
+      {
+        "pose": 1,
+        "layerCount": 3,
+        "layersRecomposeExact": true,
+        "mergedImageEqualsNativeSource": true
+      },
+      {
+        "pose": 2,
+        "layerCount": 3,
+        "layersRecomposeExact": true,
+        "mergedImageEqualsNativeSource": true
+      },
+      {
+        "pose": 3,
+        "layerCount": 3,
+        "layersRecomposeExact": true,
+        "mergedImageEqualsNativeSource": true
+      }
+    ],
+    "source_file_manifest_files_exact": 61
+  },
+  "pending": [
+    "Three normal registered cards at 480, 348, 160 and 48 px on light and dark backgrounds",
+    "Final 21 public-asset SHA-256 bindings",
+    "Root actual registered mobile player and control review"
+  ],
+  "source_archives": [
+    {
+      "source": "bench-press",
+      "path": "bench-press\\portable-native-continuity-source.zip",
+      "sha256": "f2858b4f9340522364199e10f0946f134be51a26a45ebc3f574749e2f13952a4",
+      "bytes": 14239648,
+      "members": 33,
+      "allMembersCrcReadable": true,
+      "membersComparedByteExactToFrozenSources": 33
+    },
+    {
+      "source": "calf-raises",
+      "path": "calf-raises\\portable-calf-model-source.zip",
+      "sha256": "31dbf3ac960be1a0b0eea49584632add7ad4167607f128596cc1c3982c541dc1",
+      "bytes": 52051777,
+      "members": 62,
+      "allMembersCrcReadable": true,
+      "membersComparedByteExactToFrozenSources": 62
+    }
+  ]
+}
