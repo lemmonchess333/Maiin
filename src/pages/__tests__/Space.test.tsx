@@ -32,11 +32,12 @@ vi.mock("@/lib/toast", () => ({
 }));
 const h = vi.hoisted(() => ({
   sessions: [] as unknown[],
+  raceGoal: null as Record<string, unknown> | null,
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: { uid: "viewer" },
-    profile: { displayName: "Sam", uid: "viewer" },
+    profile: { displayName: "Sam", uid: "viewer", raceGoal: h.raceGoal },
   }),
   useUid: () => "viewer",
 }));
@@ -130,6 +131,7 @@ beforeEach(() => {
   vi.setSystemTime(NOW);
   resetFirestore();
   h.sessions = [];
+  h.raceGoal = null;
 });
 
 afterEach(() => {
@@ -336,5 +338,71 @@ describe("a restricted account (S4e)", () => {
     );
     expect(screen.getByRole("button", { name: "Join" })).toBeInTheDocument();
     expect(readDoc(MEMBER_DOC)).toBeUndefined();
+  });
+});
+
+describe("race identity (SOC-P2f)", () => {
+  const PUBLIC_PROFILE = "users/viewer/public/profile";
+  const renderRace = (spaceId: string) =>
+    render(
+      <MemoryRouter initialEntries={[`/space/${spaceId}`]}>
+        <Routes>
+          <Route path="/space/:spaceId" element={<Space />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  const raceSwitch = () =>
+    screen.queryByRole("switch", {
+      name: "Show your race on your public profile",
+    });
+
+  beforeEach(() => {
+    // A goal set from the race catalogue carries its race space's id.
+    h.raceGoal = {
+      distance: "marathon",
+      targetDate: "2027-04-25",
+      eventName: "London Marathon",
+      eventSpaceId: "london-marathon",
+    };
+    seedFirestore({ [PUBLIC_PROFILE]: { displayName: "Sam" } });
+  });
+
+  it("offers the switch on your race's space and on no other race", async () => {
+    renderRace("manchester-marathon");
+    // Once the page's own reads have answered, the switch would be up.
+    await screen.findByText("No posts from members yet");
+    expect(
+      screen.getByRole("button", { name: "Train for this race" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Show on your profile")).toBeNull();
+    expect(raceSwitch()).toBeNull();
+    cleanup();
+
+    renderRace("london-marathon");
+    expect(await screen.findByText("Show on your profile")).toBeInTheDocument();
+    expect(raceSwitch()).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("switching it on puts the race on your public profile, and off takes it away", async () => {
+    renderRace("london-marathon");
+    await screen.findByText("Show on your profile");
+    const toggle = raceSwitch()!;
+
+    fireEvent.click(toggle);
+    await waitFor(() =>
+      expect(readDoc(PUBLIC_PROFILE)?.trainingForSpaceId).toBe(
+        "london-marathon"
+      )
+    );
+    expect(toggle).toHaveAttribute("aria-checked", "true");
+    // A merge: the rest of the public profile stays.
+    expect(readDoc(PUBLIC_PROFILE)?.displayName).toBe("Sam");
+
+    await waitFor(() => expect(toggle).toBeEnabled());
+    fireEvent.click(toggle);
+    await waitFor(() =>
+      expect(readDoc(PUBLIC_PROFILE)?.trainingForSpaceId).toBeNull()
+    );
+    expect(toggle).toHaveAttribute("aria-checked", "false");
   });
 });

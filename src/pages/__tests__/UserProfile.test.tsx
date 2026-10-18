@@ -50,7 +50,13 @@ vi.mock("@/components/social/FollowButton", () => ({
 vi.mock("@/features/partnerStreak/PartnerStreakCard", () => ({
   default: () => null,
 }));
-vi.mock("@/features/spaces/TrainingForChip", () => ({ default: () => null }));
+// The chip's own display gate (a race space, its day not passed) is
+// pinned in TrainingForChip.test.tsx; here it says which race it was given.
+vi.mock("@/features/spaces/TrainingForChip", () => ({
+  default: ({ spaceId }: { spaceId: string }) => (
+    <span data-testid="training-for">{spaceId}</span>
+  ),
+}));
 vi.mock("@/components/social/ActivityCard", () => ({
   default: ({ feedItem }: { feedItem: FeedItem }) => (
     <article aria-label={`Post ${feedItem.id}`}>
@@ -222,6 +228,27 @@ describe("someone else's profile", () => {
     expect(await countsLine()).toHaveTextContent("1 follower · 0 following");
     fireEvent.click(screen.getByRole("button", { name: "Follow" }));
     expect(await countsLine()).toHaveTextContent("2 followers · 0 following");
+  });
+
+  it("shows the race they chose to show on their profile, and none otherwise", async () => {
+    // RaceIdentityToggle writes trainingForSpaceId onto the public profile.
+    seedFirestore({
+      "users/alice/public/profile": {
+        displayName: "Alice",
+        trainingForSpaceId: "london-marathon",
+      },
+      "users/bob/public/profile": {
+        displayName: "Bob",
+        trainingForSpaceId: null,
+      },
+    });
+    renderAt("/user/alice");
+    expect(await screen.findByTestId("training-for")).toHaveTextContent(
+      "london-marathon"
+    );
+    fireEvent.click(screen.getByRole("link", { name: "Open Bob" }));
+    await screen.findByRole("heading", { level: 1, name: "Bob" });
+    expect(screen.queryByTestId("training-for")).toBeNull();
   });
 
   it("asks for followers-only posts in a query of their own", () => {
