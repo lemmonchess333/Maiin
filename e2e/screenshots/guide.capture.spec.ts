@@ -9,8 +9,8 @@ import { GUIDE_UNDER_AUTOMATION_KEY } from "../../src/lib/firstGuide";
 /**
  * The first-visit guide (FV1), on a brand-new account from sign-up: setup,
  * the offer's "Continue with Free" landing on Home, the three-stop walk,
- * a first-week row opening its step, and the hints on Food, Train and the
- * first set of the first workout.
+ * a first-week row opening its step, and the hints on Food, Train, the
+ * first set of the first workout and the run screen before a first run.
  *
  * The guide never shows under automation, so no other spec meets it; this
  * one turns it on with its localStorage switch before the app loads. The
@@ -214,4 +214,44 @@ test("a new account meets the guide: the walk, a first-week row and the hints", 
     timeout: 10_000,
   });
   await shoot(page, "hint-first-set");
+
+  // The run screen before a first run, pointing at what starts one. The
+  // position given is too rough to start on, so the run waits at "Acquiring
+  // GPS..." with its Cancel rather than starting to record.
+  await page.context().grantPermissions(["geolocation"]);
+  await page
+    .context()
+    .setGeolocation({ latitude: 51.5074, longitude: -0.1657, accuracy: 500 });
+  await page.goto("run");
+  const firstRun = guideTitle(page, "Your first run");
+  await expect(firstRun).toBeVisible({ timeout: 15_000 });
+  await shoot(page, "hint-first-run");
+  // Tapping the thing it points at closes it and starts the run.
+  const startsRun = page.locator('[data-guide-anchor="first-run"]');
+  const isButton = await startsRun.evaluate((el) => el.tagName === "BUTTON");
+  await (isButton ? startsRun : startsRun.getByRole("button").first()).click();
+  await expect(firstRun).toHaveCount(0);
+  await expect(page.getByText("Acquiring GPS...")).toBeVisible({
+    timeout: 10_000,
+  });
+  await expect(startsRun).toHaveCount(0);
+  // Once seen, it is not shown again: back on this screen after Cancel, or
+  // on a later visit. The seen mark is read first, so the waits below are
+  // waiting on a hint that has been told not to come.
+  const seen = await page.evaluate(() =>
+    Object.keys(localStorage).some(
+      (k) =>
+        k.endsWith(":tropos-guide-hint:first-run") &&
+        localStorage.getItem(k) === "1"
+    )
+  );
+  expect(seen).toBe(true);
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(startsRun).toBeVisible({ timeout: 10_000 });
+  await page.waitForTimeout(3_500);
+  await expect(firstRun).toHaveCount(0);
+  await page.goto("run");
+  await expect(startsRun).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(3_500);
+  await expect(firstRun).toHaveCount(0);
 });

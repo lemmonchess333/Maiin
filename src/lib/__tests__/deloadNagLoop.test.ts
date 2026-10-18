@@ -56,6 +56,8 @@
  */
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
+import { scorePerformance as scoreTs } from "../performanceEngine";
+import type { WeeklyAggregates, Baseline } from "../performanceTypes";
 
 const require = createRequire(import.meta.url);
 const { scorePerformance } = require("../../../functions/lib/perfScoring") as {
@@ -259,3 +261,180 @@ describe("deload trigger — steady progression is told once, not weekly", () =>
     expect(r.deloadRecommended).toBe(true);
   });
 });
+
+/**
+ * The same question for a run-only athlete, where the deload is asked against
+ * `deloadIndex` rather than the composite PI.
+ *
+ * A single-discipline week caps the composite at 68 (recomp), so before
+ * `deloadIndex` the sustained branch could never fire for this athlete; after
+ * it, the branch fires on a figure the transition guard has to see in the
+ * SAME units for the two prior weeks. `functions/performanceEngine.js` reads
+ * both priors through `priorDeloadIndex` (pinned at source level in
+ * functions/__tests__/performanceEngine.test.js), falling back to
+ * `performanceIndex` on docs written before the field existed. `priorReading`
+ * below is that fallback, and the harness carries each week's doc forward
+ * through it exactly as the engine reads the perf docs at −1 and −2 windows.
+ *
+ * Measured with this fixture (4 runs, one of them quality, perfect recovery
+ * and adherence), the deload index sits at 88 / 91 / 94 for 3 / 5 / 8% weekly
+ * growth while the displayed PI stays at 62 / 63 / 65: in the band every week
+ * of the block, which is exactly the state the transition guard exists for.
+ */
+const ENGINES: [string, typeof scoreTs][] = [
+  ["server (authoritative)", scorePerformance as unknown as typeof scoreTs],
+  ["client (@oracle)", scoreTs],
+];
+
+const RUN_PROFILE = {
+  goal: "recomp",
+  weeklyWorkoutsTarget: 4,
+  targetCalories: 2500,
+  targetProtein: 160,
+};
+
+/** A run-only week at a `level` of the athlete's starting volume. */
+const runOnlyWeek = (level: number): WeeklyAggregates => ({
+  weekKey: "2026-05-17",
+  liftTonnage: 0,
+  liftHardSets: 0,
+  liftSessions: 0,
+  runKm: 30 * level,
+  runLongKm: 12 * level,
+  runQualityCount: 1,
+  runSessions: 4,
+  mealDaysLogged: 6,
+  avgDailyCalories: 2500,
+  avgDailyProtein: 160,
+  bwCurrent7dAvg: 80,
+  bwPrevious7dAvg: 80,
+});
+
+/** The four weeks before, averaged, as the rolling baseline. */
+const runBaseline = (levels: number[]): Baseline => {
+  const mean = levels.reduce((a, b) => a + b, 0) / levels.length;
+  return {
+    liftTonnage: 0,
+    liftHardSets: 0,
+    runKm: 30 * mean,
+    runLongKm: 12 * mean,
+    weeksUsed: 4,
+  };
+};
+
+type PerfDocLike = { performanceIndex: number; deloadIndex?: number };
+
+/** `priorDeloadIndex` in functions/performanceEngine.js, on a stored doc. */
+const priorReading = (doc: PerfDocLike | undefined) =>
+  doc == null
+    ? undefined
+    : typeof doc.deloadIndex === "number"
+      ? doc.deloadIndex
+      : doc.performanceIndex;
+
+/** Compounding growth from a level of 1. */
+const growing = (growth: number, weeks = 30) =>
+  Array.from({ length: weeks }, (_, w) => Math.pow(1 + growth, w));
+
+/**
+ * Scores weeks 4..end of `levels` and returns the weeks a deload was offered.
+ * `legacyDocs` stores the first N docs without `deloadIndex`, as a user whose
+ * history predates the field has them.
+ */
+function offeredWeeks(score: typeof scoreTs, levels: number[], legacyDocs = 0) {
+  const docs: PerfDocLike[] = [];
+  const offered: number[] = [];
+  for (let w = 4; w < levels.length; w++) {
+    const s = score(
+      runOnlyWeek(levels[w]),
+      runBaseline(levels.slice(w - 4, w)),
+      RUN_PROFILE,
+      priorReading(docs[docs.length - 1]),
+      priorReading(docs[docs.length - 2])
+    );
+    if (s.deloadRecommended) offered.push(w);
+    docs.push(
+      docs.length < legacyDocs
+        ? { performanceIndex: s.performanceIndex }
+        : { performanceIndex: s.performanceIndex, deloadIndex: s.deloadIndex }
+    );
+  }
+  return offered;
+}
+
+describe.each(ENGINES)(
+  "deload trigger — a run-only athlete is told on the transition [%s]",
+  (_label, score) => {
+    it.each([0.03, 0.05, 0.08])(
+      "%s per week for 26 weeks → one offer, on entering the band",
+      (growth) => {
+        const levels = growing(growth);
+        // The block is sustained: every week of it is in the band, and the
+        // displayed PI never is (the single-discipline cap).
+        for (let w = 4; w < levels.length; w++) {
+          const s = score(
+            runOnlyWeek(levels[w]),
+            runBaseline(levels.slice(w - 4, w)),
+            RUN_PROFILE
+          );
+          expect(s.deloadIndex, `week ${w}`).toBeGreaterThanOrEqual(85);
+          expect(s.performanceIndex, `week ${w}`).toBeLessThan(85);
+        }
+        /* Week 5 is the first with a previous reading (week 4 is the first
+           scored), so it is the earliest the branch can fire. */
+        expect(offeredWeeks(score, levels)).toEqual([5]);
+      }
+    );
+
+    it("a history of legacy docs is offered once, after the first new doc", () => {
+      /* The deploy-day case. The first three docs have no `deloadIndex`, so
+         the priors fall back to the composite PI (63), which is under the
+         band. The first offer comes when the previous doc is a new one and
+         the one before it is not; after that the guard sees two in-band
+         readings and stays quiet. */
+      expect(offeredWeeks(score, growing(0.05), 3)).toEqual([8]);
+    });
+
+    it("re-arms for a second block after an easy fortnight", () => {
+      /* At most once per sustained block, not once ever: two easy weeks at
+         60% drop the index out of the band, and the next climb back into it
+         is announced. */
+      const levels: number[] = [];
+      let level = 1;
+      for (let w = 0; w < 30; w++) {
+        if (w === 14 || w === 15) {
+          levels.push(level * 0.6);
+          continue;
+        }
+        levels.push(level);
+        level *= 1.05;
+      }
+      expect(offeredWeeks(score, levels)).toEqual([5, 17]);
+    });
+
+    it("would nag every week if the two priors were read in mixed units", () => {
+      /* Why both priors must go through the same reader. With the previous
+         week in deload units and the one before in composite units, the guard
+         never sees the athlete already in the band, so the offer repeats every
+         week from the second on: the #1955 nag, on this trigger. */
+      const levels = growing(0.05);
+      const docs: PerfDocLike[] = [];
+      let offers = 0;
+      for (let w = 4; w < levels.length; w++) {
+        const s = score(
+          runOnlyWeek(levels[w]),
+          runBaseline(levels.slice(w - 4, w)),
+          RUN_PROFILE,
+          docs[docs.length - 1]?.deloadIndex,
+          docs[docs.length - 2]?.performanceIndex
+        );
+        if (s.deloadRecommended) offers++;
+        docs.push({
+          performanceIndex: s.performanceIndex,
+          deloadIndex: s.deloadIndex,
+        });
+      }
+      expect(offers).toBe(25);
+    });
+  }
+);
