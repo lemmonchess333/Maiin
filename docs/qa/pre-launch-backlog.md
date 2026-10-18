@@ -415,7 +415,7 @@ need a phone and a deploy.
       says nothing. On a slow connection a "Workouts export ready" toast
       may come instead: its Share opens the sheet. Export GPX on the
       finish screen and on a saved run opens the sheet with a .gpx.
-- [ ] **Open Food Facts credit** under a barcode result, the search
+- [x] _(Proven 2026-10-18, after a fix: `e2e/offCreditSmallPhone.auth.spec.ts` at 375x667 found ServingSizeDrawer capped at half the screen with no scroll, so the credit ran off the bottom and, for a per-100 g food, Log food sat out of reach. The cap is gone (the sheet takes BottomSheet's default 85vh) and the spec passes for both kinds of food.)_ **Open Food Facts credit** under a barcode result, the search
       results and the portion sheet, which still fits on an SE.
 
 ## Photos other people see are screened for nudity (Ship1, 2026-10-13)
