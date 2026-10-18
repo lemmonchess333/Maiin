@@ -5,13 +5,15 @@
  *   - advances each bond the user is a member of, inside a transaction;
  *   - is idempotent on a same-day re-log (no second write);
  *   - skips a no-op bank (member already logged that day);
- *   - resolves the local day from the activity date or the user timezone.
+ *   - resolves the local day from the activity date or the user timezone;
+ *   - is called by onRunCreated only for a run that counts.
  *
  * The engine correctness itself (counting / freeze / DST) is pinned by the
  * cross-check test in src; here we pin the Firestore orchestration.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
 
 const require = createRequire(import.meta.url);
 const {
@@ -177,5 +179,52 @@ describe("resolvePartnerActivityDay", () => {
   it("returns null when no date and no timezone (no UTC fallback)", async () => {
     const fs = makeFirestoreStub({ users: { a: {} } });
     expect(await resolvePartnerActivityDay(fs, "a", undefined)).toBeNull();
+  });
+});
+
+/** The `{ … }` block whose opening brace is at `open`, through its closing
+ *  brace. Braces in strings and comments are not counted. */
+function blockAt(src, open) {
+  let depth = 0;
+  for (let i = open; i < src.length; i++) {
+    const c = src[i];
+    if (c === "/" && src[i + 1] === "/") i = src.indexOf("\n", i);
+    else if (c === "/" && src[i + 1] === "*") i = src.indexOf("*/", i) + 1;
+    else if (c === '"' || c === "'" || c === "`") {
+      for (i++; src[i] !== c; i++) if (src[i] === "\\") i++;
+    } else if (c === "{") depth++;
+    else if (c === "}" && --depth === 0) return src.slice(open, i + 1);
+  }
+  throw new Error("unclosed block");
+}
+
+/**
+ * The trigger side. Every test above drives applyPartnerActivity itself, so
+ * all of them stay green if onRunCreated calls it outside its eligibility
+ * gate, and an isInvalid, savedAnyway or sub-threshold run would then keep a
+ * streak alive. Source-level, as performanceEngine.test.js pins its call
+ * sites: the trigger needs the Admin SDK and a database to run.
+ */
+describe("onRunCreated — an ineligible run does not count", () => {
+  const INDEX = readFileSync(new URL("../index.js", import.meta.url), "utf8");
+  const start = INDEX.indexOf("exports.onRunCreated = functions");
+  const TRIGGER = INDEX.slice(start, INDEX.indexOf("\nexports.", start + 1));
+
+  it("decides with the shared volume-eligibility predicate", () => {
+    expect(start).toBeGreaterThan(-1);
+    expect(INDEX).toContain(
+      'const { isVolumeEligibleRun } = require("./lib/runEligibility");'
+    );
+    expect(TRIGGER).toContain("const isCountable = isVolumeEligibleRun(data);");
+  });
+
+  it("advances the bond once, inside the isCountable block", () => {
+    expect(TRIGGER.match(/applyPartnerActivity\(/g)).toHaveLength(1);
+    const gate = TRIGGER.indexOf("if (isCountable) {");
+    expect(gate).toBeGreaterThan(-1);
+    const counted = blockAt(TRIGGER, TRIGGER.indexOf("{", gate));
+    expect(counted).toContain(
+      "await applyPartnerActivity(db, uid, runStreakDay);"
+    );
   });
 });
