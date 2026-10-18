@@ -27,11 +27,17 @@ import {
   PROFILE_BADGES_SHOWN,
 } from "../useUserProfileData";
 import {
+  deferReads,
   failNextFirestore,
+  pendingReads,
+  rejectRead,
+  releaseAllReads,
   resetFirestore,
+  resumeReads,
   seedFirestore,
   unfiredFailures,
 } from "@/test/firestoreHarness";
+import { logger } from "@/lib/logger";
 
 const post = (
   id: string,
@@ -115,6 +121,31 @@ describe("useUserProfileData — someone else's profile", () => {
 
   it("asks for public and followers-only posts in separate queries", () => {
     expect(profilePostVisibilities(false)).toEqual(["public", "followers"]);
+  });
+
+  it("lists the public posts when the rules refuse a non-follower the followers-only query", async () => {
+    seedFirestore({
+      "users/alice/public/profile": { displayName: "Alice" },
+      ...post("pub", 2),
+      ...post("fol", 3, "followers"),
+    });
+    vi.mocked(logger.warn).mockClear();
+    deferReads();
+    const { result } = renderHook(() => useUserProfileData("alice", "viewer"));
+    await waitFor(() =>
+      expect(pendingReads().filter((p) => p === "activities")).toHaveLength(2)
+    );
+    // The followers-only query is the second; firestore.rules refuses it
+    // to anyone who doesn't follow her (the "profile:" rules cases).
+    expect(
+      rejectRead(pendingReads().lastIndexOf("activities"), "permission-denied")
+    ).toBe(true);
+    resumeReads();
+    releaseAllReads();
+    await waitFor(() => expect(result.current.postsLoading).toBe(false));
+    expect(result.current.status).toBe("ready");
+    expect(result.current.posts.map((p) => p.id)).toEqual(["pub"]);
+    expect(vi.mocked(logger.warn)).not.toHaveBeenCalled();
   });
 });
 

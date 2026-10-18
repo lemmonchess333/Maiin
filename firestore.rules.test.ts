@@ -33,6 +33,7 @@ import {
   setDoc,
   deleteDoc,
   serverTimestamp,
+  Timestamp,
   writeBatch,
   query,
   where,
@@ -1760,6 +1761,35 @@ suite("firestore.rules — /activities visibility-aware reads (audit #1)", () =>
     const followerDb = env.authenticatedContext(FOLLOWER_UID).firestore();
     await assertSucceeds(postsBy(followerDb, "followers"));
     await assertSucceeds(postsBy(followerDb, ["public", "followers"]));
+  });
+
+  it("profile: a stranger sees the public post, follows, and on reopening sees the followers-only one too", async () => {
+    /* One visit from Explore, in the page's order: the two queries
+       profilePostVisibilities(false) names, the follow written as
+       followUser writes it, then the same two queries again. */
+    await seed({ activityId: "pub-v", visibility: "public" });
+    await seed({ activityId: "fol-v", visibility: "followers" });
+    const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+    const shown = async (visibility: string) =>
+      (await postsBy(strangerDb, visibility)).docs.map((d) => d.id);
+
+    expect(await shown("public")).toEqual(["pub-v"]);
+    await assertFails(postsBy(strangerDb, "followers"));
+
+    const followedAt = Timestamp.now();
+    await assertSucceeds(
+      setDoc(doc(strangerDb, "following", STRANGER_UID, "users", OWNER_UID), {
+        followedAt,
+      })
+    );
+    await assertSucceeds(
+      setDoc(doc(strangerDb, "followers", OWNER_UID, "users", STRANGER_UID), {
+        followedAt,
+      })
+    );
+
+    expect(await shown("public")).toEqual(["pub-v"]);
+    expect(await shown("followers")).toEqual(["fol-v"]);
   });
 });
 

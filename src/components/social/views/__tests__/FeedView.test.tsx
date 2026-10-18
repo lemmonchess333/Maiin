@@ -50,12 +50,15 @@ vi.mock("@/lib/auth", () => ({
 /* SOC-P3a — communities source: directory + feed hooks are mocked so
    the sub-tab's composition can be pinned without Firestore. */
 const mockCommunitiesFeed = vi.fn();
+/** Runners joined, Lifters not; a test may change it before rendering. */
+const JOINED_RUNNERS = [
+  { def: { id: "runners" }, joined: true, memberCount: 3 },
+  { def: { id: "lifters" }, joined: false, memberCount: 2 },
+];
+const directory = vi.hoisted(() => ({ entries: [] as unknown[] }));
 vi.mock("@/features/spaces/useSpacesDirectory", () => ({
   useSpacesDirectory: () => ({
-    entries: [
-      { def: { id: "runners" }, joined: true, memberCount: 3 },
-      { def: { id: "lifters" }, joined: false, memberCount: 2 },
-    ],
+    entries: directory.entries,
     refresh: vi.fn(),
     ready: true,
   }),
@@ -127,6 +130,7 @@ afterEach(() => cleanup());
 beforeEach(() => {
   vi.clearAllMocks();
   feedItems = [];
+  directory.entries = JOINED_RUNNERS;
   social.restricted = false;
   social.people = [];
   social.suggestionsActive = [];
@@ -181,7 +185,7 @@ function setup(overrides: FeedViewProps = {}) {
   const view = render(element());
   /** Re-render with the same props plus `more`. */
   const rerender = (more: FeedViewProps) => view.rerender(element(more));
-  return { selectFeedSubTab, openTogether, rerender };
+  return { selectFeedSubTab, openTogether, rerender, refreshRef };
 }
 
 describe("FeedView — compact source menu", () => {
@@ -480,6 +484,33 @@ describe("FeedView — My communities source (SOC-P3a)", () => {
     expect(
       screen.getByText(/your spaces are quiet right now/i)
     ).toBeInTheDocument();
+  });
+
+  it("with no space joined, the empty stream asks you to join one", () => {
+    directory.entries = [
+      { def: { id: "runners" }, joined: false, memberCount: 3 },
+    ];
+    const { openTogether } = setup({ feedSubTab: "communities" });
+    expect(
+      screen.getByText("Join a space to fill this feed")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/your spaces are quiet right now/i)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Browse Spaces" }));
+    expect(openTogether).toHaveBeenCalled();
+  });
+
+  it("pull-to-refresh refreshes My communities while it is the source shown", () => {
+    const communitiesRefresh = vi.fn(async () => {});
+    mockCommunitiesFeed.mockReturnValue({
+      items: [],
+      loading: false,
+      refresh: communitiesRefresh,
+      remove: vi.fn(),
+    });
+    const { refreshRef, rerender } = setup({ feedSubTab: "communities" });
+    expect(refreshRef.current).toBe(communitiesRefresh);
+    rerender({ feedSubTab: "explore" });
+    expect(refreshRef.current).toBe(emptyFeed.refresh);
   });
 });
 
