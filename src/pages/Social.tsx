@@ -109,17 +109,23 @@ export default function Social() {
     [setSearchParams]
   );
 
-  // Explicit source selection always wins. Otherwise the live follow count
-  // chooses the useful default, including immediately after the first follow.
+  // Explicit source selection always wins. Otherwise a visit opens on
+  // Following once the person follows anyone, Explore before that, and
+  // stays there. A follow made during the visit doesn't move them: the
+  // Following feed fills only with posts made after a follow, so switching
+  // on the first one emptied the screen under the tap. The next visit
+  // opens on Following.
   const feedFromUrl = searchParams.get("feed");
+  const [openedOn, setOpenedOn] = useState<FeedSubTab | null>(null);
+  if (openedOn === null && followingCount !== null) {
+    setOpenedOn(followingCount > 0 ? "following" : "explore");
+  }
   const feedSubTab: FeedSubTab =
     feedFromUrl === "following" ||
     feedFromUrl === "explore" ||
     feedFromUrl === "communities"
       ? feedFromUrl
-      : (followingCount ?? 0) > 0
-        ? "following"
-        : "explore";
+      : (openedOn ?? "explore");
   const selectFeedSubTab = useCallback(
     (next: FeedSubTab) => {
       setSearchParams(

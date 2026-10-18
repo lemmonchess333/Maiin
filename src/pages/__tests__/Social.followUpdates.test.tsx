@@ -102,7 +102,8 @@ it("updates the Social shell after following and unfollowing the first person", 
   await screen.findByRole("button", { name: "Unfollow user" });
   expect(readDoc("following/audit/users/friend")).toBeDefined();
   fireEvent.click(screen.getByRole("button", { name: "Close people search" }));
-  expect(screen.getByTestId("feed-state")).toHaveTextContent("1:following");
+  // The count moves; the feed stays on the source the visit opened on.
+  expect(screen.getByTestId("feed-state")).toHaveTextContent("1:explore");
   fireEvent.click(screen.getByRole("button", { name: "Find people" }));
   fireEvent.click(await screen.findByRole("button", { name: "Unfollow user" }));
   await screen.findByRole("button", { name: "Follow user" });
@@ -142,4 +143,30 @@ it("keeps a chosen default source after the first follow arrives", async () => {
   seedFirestore({ "following/audit/users/friend": { followedAt: 1 } });
   await flushSnapshots();
   expect(screen.getByTestId("feed-state")).toHaveTextContent("1:explore");
+});
+
+it("stays on Explore when the first follow arrives during the visit", async () => {
+  render(
+    <MemoryRouter initialEntries={["/social?tab=feed"]}>
+      <Social />
+    </MemoryRouter>
+  );
+  await waitFor(() =>
+    expect(screen.getByTestId("feed-state")).toHaveTextContent("0:explore")
+  );
+  seedFirestore({ "following/audit/users/friend": { followedAt: 1 } });
+  await flushSnapshots();
+  expect(screen.getByTestId("feed-state")).toHaveTextContent("1:explore");
+});
+
+it("opens on Following for someone who already follows people", async () => {
+  seedFirestore({ "following/audit/users/friend": { followedAt: 1 } });
+  render(
+    <MemoryRouter initialEntries={["/social?tab=feed"]}>
+      <Social />
+    </MemoryRouter>
+  );
+  await waitFor(() =>
+    expect(screen.getByTestId("feed-state")).toHaveTextContent("1:following")
+  );
 });
