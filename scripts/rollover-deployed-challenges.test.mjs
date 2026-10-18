@@ -7,6 +7,7 @@ import {
   selectRolloverJob,
   runRolloverAndVerify,
   releaseFailureMessage,
+  schedulerJobs,
 } from "./rollover-deployed-challenges.mjs";
 
 const requireFunctions = createRequire(
@@ -210,7 +211,7 @@ test("API refusals and unexpected SDK errors do not leak response bodies or cred
   await assert.rejects(runRolloverAndVerify(actual), (error) => {
     assert.equal(
       releaseFailureMessage(error),
-      "Challenge release API refused the request (HTTP 403)"
+      "Function metadata request refused (HTTP 403)"
     );
     return true;
   });
@@ -223,6 +224,293 @@ test("API refusals and unexpected SDK errors do not leak response bodies or cred
       new Error("Current challenge definitions private-token")
     ),
     "Challenge release verification failed"
+  );
+});
+
+const location = (id) => ({
+  name: `projects/adaptive-fitness-af8bb/locations/${id}`,
+  locationId: id,
+});
+const firstLocation = location("us-east1");
+const targetLocation = location("europe-west2");
+
+test("default production discovery paginates locations and every explicit region with ADC REST", async () => {
+  const calls = [];
+  const locationToken = "locations/+?=opaque";
+  const jobsToken = "jobs/+?=opaque";
+  let readbacks = 0;
+  const actual = options({
+    request: async (input, token, request) => {
+      const url = new URL(input);
+      calls.push({ url, token, request });
+      if (url.hostname === "cloudfunctions.googleapis.com") return metadata;
+      if (request?.method === "POST") return { name: job.name };
+      if (url.pathname.endsWith("/locations")) {
+        assert.equal(url.searchParams.get("pageSize"), "100");
+        if (!url.searchParams.has("pageToken"))
+          return { locations: [firstLocation], nextPageToken: locationToken };
+        assert.equal(url.searchParams.get("pageToken"), locationToken);
+        return { locations: [targetLocation] };
+      }
+      assert.equal(url.searchParams.get("pageSize"), "500");
+      if (url.pathname === `/v1/${firstLocation.name}/jobs`) {
+        if (!url.searchParams.has("pageToken"))
+          return {
+            jobs: [
+              {
+                ...job,
+                name: `${firstLocation.name}/jobs/unrelated`,
+                pubsubTarget: { topicName: "other" },
+              },
+            ],
+            nextPageToken: jobsToken,
+          };
+        assert.equal(url.searchParams.get("pageToken"), jobsToken);
+        return {};
+      }
+      assert.equal(url.pathname, `/v1/${targetLocation.name}/jobs`);
+      return { jobs: [job] };
+    },
+    readDefinitions: async () => {
+      readbacks++;
+      return documents();
+    },
+  });
+  // Exercise the production default, not a test-only discovery replacement.
+  delete actual.listJobs;
+  await runRolloverAndVerify(actual);
+  assert.equal(calls.length, 7);
+  assert.equal(
+    calls.filter(({ request }) => request?.method === "POST").length,
+    1
+  );
+  assert.ok(calls.every(({ token }) => token === actual.token));
+  assert.ok(calls.every(({ url }) => !url.pathname.includes("/locations/-")));
+  assert.equal(readbacks, 1);
+  const source = readFileSync(
+    new URL("./rollover-deployed-challenges.mjs", import.meta.url),
+    "utf8"
+  );
+  assert.doesNotMatch(source, /node:child_process|execFileSync|"gcloud"/);
+});
+
+test("default REST discovery detects an ambiguous match in a later region before dispatch", async () => {
+  let dispatches = 0;
+  const actual = options({
+    request: async (input, _token, request) => {
+      const url = new URL(input);
+      if (url.hostname === "cloudfunctions.googleapis.com") return metadata;
+      if (request?.method === "POST") {
+        dispatches++;
+        return { name: job.name };
+      }
+      if (url.pathname.endsWith("/locations"))
+        return { locations: [firstLocation, targetLocation] };
+      const parent = url.pathname.slice(4, -5);
+      return { jobs: [{ ...job, name: `${parent}/jobs/also-matches` }] };
+    },
+  });
+  delete actual.listJobs;
+  await assert.rejects(
+    runRolloverAndVerify(actual),
+    /exactly one Scheduler job/
+  );
+  assert.equal(dispatches, 0);
+});
+
+test("default REST discovery rejects missing jobs without assuming any region", async () => {
+  const actual = options({
+    request: async (input) =>
+      new URL(input).hostname === "cloudfunctions.googleapis.com"
+        ? metadata
+        : new URL(input).pathname.endsWith("/locations")
+          ? { locations: [targetLocation] }
+          : {},
+  });
+  delete actual.listJobs;
+  await assert.rejects(
+    runRolloverAndVerify(actual),
+    /exactly one Scheduler job/
+  );
+});
+
+for (const operation of ["locations", "jobs"]) {
+  test(`default REST ${operation} discovery reports safe HTTP status on ADC refusal`, async (context) => {
+    context.mock.method(globalThis, "fetch", async (input) => {
+      const url = new URL(input);
+      const refused =
+        operation === "locations"
+          ? url.pathname.endsWith("/locations")
+          : url.pathname.endsWith("/jobs");
+      return {
+        ok: !refused,
+        status: refused ? 403 : 200,
+        json: async () => {
+          if (refused) throw new Error("private response body and token");
+          return url.hostname === "cloudfunctions.googleapis.com"
+            ? metadata
+            : { locations: [targetLocation] };
+        },
+      };
+    });
+    const actual = options();
+    delete actual.request;
+    delete actual.listJobs;
+    await assert.rejects(runRolloverAndVerify(actual), (error) => {
+      const expectedOperation =
+        operation === "locations"
+          ? "Scheduler locations list"
+          : "Scheduler jobs list (europe-west2)";
+      assert.equal(
+        releaseFailureMessage(error),
+        `${expectedOperation} request refused (HTTP 403)`
+      );
+      assert.doesNotMatch(
+        releaseFailureMessage(error),
+        /private|token|projects\//
+      );
+      return true;
+    });
+  });
+}
+
+test("canonical location ids ignore variable names and always query the fixed project", async () => {
+  for (const description of [
+    { ...targetLocation, name: "projects/123456789/locations/europe-west2" },
+    { ...targetLocation, name: "implementation-specific-location" },
+    { ...targetLocation, name: "https://elsewhere.invalid/steal-token" },
+    { locationId: targetLocation.locationId },
+  ]) {
+    const visited = [];
+    const actual = options({
+      request: async (input, _token, request) => {
+        const url = new URL(input);
+        visited.push(url);
+        if (url.hostname === "cloudfunctions.googleapis.com") return metadata;
+        assert.equal(url.hostname, "cloudscheduler.googleapis.com");
+        if (request?.method === "POST") return { name: job.name };
+        if (url.pathname.endsWith("/locations"))
+          return { locations: [description] };
+        assert.equal(url.pathname, `/v1/${targetLocation.name}/jobs`);
+        return { jobs: [job] };
+      },
+    });
+    delete actual.listJobs;
+    await runRolloverAndVerify(actual);
+    assert.equal(visited.length, 4);
+    assert.ok(
+      visited.every((url) =>
+        url.pathname.includes("projects/adaptive-fitness-af8bb/")
+      )
+    );
+  }
+});
+
+test("malformed and duplicate canonical location ids fail discovery", async () => {
+  for (const response of [
+    null,
+    [],
+    { locations: {} },
+    { locations: [null] },
+    ...[undefined, null, 7, "", "-", "../elsewhere", "region?extra=1"].map(
+      (locationId) => ({
+        locations: [{ ...targetLocation, locationId }],
+      })
+    ),
+    { locations: [targetLocation, targetLocation] },
+    {
+      locations: [
+        targetLocation,
+        { ...targetLocation, name: "different-implementation-name" },
+      ],
+    },
+    { error: { message: "private server error" } },
+  ]) {
+    await assert.rejects(
+      schedulerJobs({ token: "not-logged", request: async () => response }),
+      /Scheduler locations list returned an invalid/
+    );
+  }
+});
+
+test("malformed, foreign-region and duplicate job resources fail discovery", async () => {
+  for (const response of [
+    { jobs: {} },
+    { jobs: [null] },
+    { jobs: [{ ...job, name: `${firstLocation.name}/jobs/foreign-region` }] },
+    { jobs: [{ ...job, name: `${targetLocation.name}/jobs/../escape` }] },
+    { jobs: [job, job] },
+  ]) {
+    await assert.rejects(
+      schedulerJobs({
+        token: "not-logged",
+        request: async (input) =>
+          new URL(input).pathname.endsWith("/locations")
+            ? { locations: [targetLocation] }
+            : response,
+      }),
+      /Scheduler jobs list.*returned an invalid/
+    );
+  }
+});
+
+test("both list endpoints reject malformed and cyclic opaque page tokens", async () => {
+  for (const target of ["locations", "jobs"]) {
+    for (const invalid of [null, 7, " ", "line\nbreak", "x".repeat(4097)]) {
+      await assert.rejects(
+        schedulerJobs({
+          token: "not-logged",
+          request: async (input) =>
+            target === "jobs" && new URL(input).pathname.endsWith("/locations")
+              ? { locations: [targetLocation] }
+              : { nextPageToken: invalid },
+        }),
+        /returned invalid pagination/
+      );
+    }
+    let pages = 0;
+    await assert.rejects(
+      schedulerJobs({
+        token: "not-logged",
+        request: async (input) => {
+          if (
+            target === "jobs" &&
+            new URL(input).pathname.endsWith("/locations")
+          )
+            return { locations: [targetLocation] };
+          pages++;
+          return { nextPageToken: "repeated" };
+        },
+      }),
+      /returned invalid pagination/
+    );
+    assert.equal(pages, 2);
+  }
+});
+
+test("discovery bounds otherwise unique pagination and excessive locations", async () => {
+  let requests = 0;
+  await assert.rejects(
+    schedulerJobs({
+      token: "not-logged",
+      request: async () => {
+        if (++requests > 300) throw new Error("unguarded traversal");
+        return { nextPageToken: `unique-${requests}` };
+      },
+    }),
+    /exceeded its page limit/
+  );
+  assert.ok(requests > 1 && requests < 300);
+  await assert.rejects(
+    schedulerJobs({
+      token: "not-logged",
+      request: async () => ({
+        locations: Array.from({ length: 101 }, (_, i) =>
+          location(`test-region${i}`)
+        ),
+      }),
+    }),
+    /exceeded its location limit/
   );
 });
 
