@@ -6,7 +6,8 @@
  * sends only when the global kill-switch AND that type's flag are both on.
  * Global defaults OFF (explicit opt-in — no cold sends); a per-type flag
  * that is ABSENT counts as on, so older docs written before a type existed
- * get the standard set rather than silently going dark.
+ * get the standard set rather than silently going dark. Monthly challenge
+ * announcements are separate: they require explicit `challenges: true`.
  *
  * WHY IT LIVES HERE (2026-07-27). It used to be inlined in `index.js` under
  * a comment reading "Mirrors src/lib/pushConsent.mayTargetUser" — while the
@@ -30,14 +31,18 @@
  * net. It pins the copy that runs, which is the point (ADR-0008).
  */
 
-/** @typedef {"streak" | "recap" | "badge"} PushType */
+/** @typedef {"streak" | "recap" | "badge" | "challenges"} PushType */
 
 /**
- * @param {{enabled?: boolean, streak?: boolean, recap?: boolean, badge?: boolean} | null | undefined} consent
+ * @param {{enabled?: boolean, streak?: boolean, recap?: boolean, badge?: boolean, challenges?: boolean} | null | undefined} consent
  * @param {PushType} type
  * @returns {boolean}
  */
 function mayTargetUserConsent(consent, type) {
+  // Monthly announcements are a new, separate opt-in. Never enrol an older
+  // globally enabled account merely because this flag did not exist yet.
+  if (type === "challenges")
+    return consent?.enabled === true && consent.challenges === true;
   if (!consent || !consent.enabled) return false;
   return consent[type] !== false;
 }

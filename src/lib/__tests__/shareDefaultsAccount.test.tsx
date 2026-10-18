@@ -57,6 +57,8 @@ vi.mock("../firebaseApp", () => ({
   firebaseConfig: {},
 }));
 vi.mock("@/lib/pushNotifications", () => ({
+  withPushTokenLifecycleTransition: (operation: () => Promise<unknown>) =>
+    operation(),
   invalidatePushTokenLifecycle: vi.fn(),
   stopListeningForForegroundPush: vi.fn(),
   unregisterDeviceToken: vi.fn().mockResolvedValue(undefined),

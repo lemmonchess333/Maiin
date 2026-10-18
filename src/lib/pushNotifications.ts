@@ -1,5 +1,5 @@
 /**
- * FCM Web push — client token lifecycle (packets 17 + 19).
+ * FCM web/native push — fenced client token lifecycle (packets 17 + 19).
  *
  * The client NO LONGER writes users/{uid}/devices directly. Registration and
  * revocation go through server callables (claimPushDeviceToken /
@@ -11,10 +11,9 @@
  * Firebase Auth changed between the client-side check and the SDK attaching
  * credentials.
  *
- * All entry points are guarded: no-op when push is unsupported, the VAPID key
- * is absent, or permission isn't granted. Every getToken() call receives the
- * canonical service-worker registration (register-sw.ts) — never Firebase's
- * implicit default-worker lookup.
+ * Web uses the canonical service worker and VAPID configuration. iPhone uses
+ * the installed native Firebase Messaging plugin's FCM token. Neither refresh
+ * path requests notification permission.
  */
 import {
   deleteToken,
@@ -42,6 +41,12 @@ import { readJson, remove, writeJson } from "@/lib/localStore";
 import { DEFAULT_PUSH_CONSENT, type PushConsent } from "@/lib/pushConsent";
 import { getAppServiceWorkerRegistration } from "@/lib/register-sw";
 import { isNativePlatform } from "@/lib/platform";
+import {
+  isNativePushAvailable,
+  nativePushPermission,
+  getNativePushToken,
+  deleteNativePushToken,
+} from "./nativePush";
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY ?? "";
 const NOTIFICATION_ICON = `${import.meta.env.BASE_URL}icons/icon-192x192.png`;
@@ -50,6 +55,8 @@ const NOTIFICATION_ICON = `${import.meta.env.BASE_URL}icons/icon-192x192.png`;
 // Bumped on every account transition; async continuations captured under an
 // old generation abort rather than writing under a new account.
 let tokenLifecycleGeneration = 0;
+let activeCredentialTransitions = 0;
+const lifecycleReadyListeners = new Set<() => void>();
 let foregroundUnsub: (() => void) | null = null;
 
 function isCurrentUser(uid: string, generation?: number): boolean {
@@ -63,27 +70,65 @@ export function invalidatePushTokenLifecycle(): void {
   tokenLifecycleGeneration += 1;
 }
 
+export function getPushTokenLifecycleGeneration(): number {
+  return tokenLifecycleGeneration;
+}
+
+export function onPushTokenLifecycleReady(listener: () => void): () => void {
+  lifecycleReadyListeners.add(listener);
+  return () => {
+    lifecycleReadyListeners.delete(listener);
+  };
+}
+
+/** Suspend new claims through revoke AND the credential replacement. A failed
+ * release, cancelled sign-in or failed sign-out resumes the same account. */
+export async function withPushTokenLifecycleTransition<T>(
+  operation: () => Promise<T>
+): Promise<T> {
+  const outgoingUid = auth.currentUser?.uid;
+  activeCredentialTransitions += 1;
+  invalidatePushTokenLifecycle();
+  try {
+    return await operation();
+  } finally {
+    activeCredentialTransitions -= 1;
+    invalidatePushTokenLifecycle();
+    const notify = () => {
+      if (activeCredentialTransitions !== 0) return;
+      for (const listener of lifecycleReadyListeners) {
+        try {
+          listener();
+        } catch (error) {
+          logger.warn("[push] lifecycle-ready callback failed", error);
+        }
+      }
+    };
+    const pending = outgoingUid
+      ? pendingRegistrations.get(outgoingUid)
+      : undefined;
+    if (pending) void pending.then(notify, notify);
+    else notify();
+  }
+}
+
+function isRegistrationCurrent(uid: string, generation?: number): boolean {
+  return activeCredentialTransitions === 0 && isCurrentUser(uid, generation);
+}
+
 /**
  * Whether this build offers remote push at all.
  *
- * Remote push here is FCM web push: a service worker and the browser's
- * Push API. The native shells have neither. iOS's WKWebView runs no
- * service worker, and the app has no APNs registration and no push
- * plugin, so on iPhone the switch could only fail ("Couldn't register for
- * push (unsupported)"). Settings offers no push switch there, and nothing
- * on native promises a phone notification; the web keeps its switch. The
- * local reminders (src/lib/notifications.ts) are a different channel and
- * work on both.
- *
- * When native push lands (APNs through a push plugin), this is the seam:
- * answer true there and register the native token below.
+ * Older installed iPhone binaries remain unsupported until their native
+ * Messaging plugin is available. Local reminders are a separate channel.
  */
 export function isRemotePushOffered(): boolean {
-  return !isNativePlatform();
+  return !isNativePlatform() || isNativePushAvailable();
 }
 
 export async function isPushSupported(): Promise<boolean> {
   if (!isRemotePushOffered()) return false;
+  if (isNativePlatform()) return isNativePushAvailable();
   if (!VAPID_KEY) return false;
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
     return false;
@@ -93,6 +138,45 @@ export async function isPushSupported(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/** Called only by an explicit settings gesture; refresh never prompts. */
+export async function requestRemotePushPermission(): Promise<boolean> {
+  try {
+    if (isNativePlatform()) return await nativePushPermission(true);
+    if (!VAPID_KEY || typeof Notification === "undefined") return false;
+    return (await Notification.requestPermission()) === "granted";
+  } catch (error) {
+    logger.warn("[push] notification permission request failed", error);
+    return false;
+  }
+}
+
+async function hasRemotePushPermission(): Promise<boolean> {
+  try {
+    if (isNativePlatform()) return await nativePushPermission();
+    return (
+      typeof Notification !== "undefined" &&
+      Notification.permission === "granted"
+    );
+  } catch (error) {
+    logger.warn("[push] notification permission check failed", error);
+    return false;
+  }
+}
+
+async function getDevicePushToken(): Promise<string | null> {
+  if (isNativePlatform()) return getNativePushToken();
+  const registration = await getAppServiceWorkerRegistration();
+  return getToken(getMessaging(app), {
+    vapidKey: VAPID_KEY,
+    serviceWorkerRegistration: registration,
+  });
+}
+
+async function deleteDevicePushToken(): Promise<void> {
+  if (isNativePlatform()) await deleteNativePushToken();
+  else await deleteToken(getMessaging(app));
 }
 
 export type PushRegisterResult =
@@ -112,12 +196,14 @@ export type PushRegisterResult =
 type StoredDeviceBinding = {
   token: string;
   bindingId: string;
+  /** Absent on existing v2 web bindings. */
+  platform?: "web" | "ios";
 };
 
 type PushTokenCallableInput = {
   ownerUid: string;
   token: string;
-  platform: "web";
+  platform: "web" | "ios";
   bindingId: string;
 };
 
@@ -143,7 +229,10 @@ function isStoredDeviceBinding(value: unknown): value is StoredDeviceBinding {
     typeof (value as StoredDeviceBinding).token === "string" &&
     (value as StoredDeviceBinding).token.length > 0 &&
     typeof (value as StoredDeviceBinding).bindingId === "string" &&
-    /^[A-Za-z0-9_-]{16,128}$/.test((value as StoredDeviceBinding).bindingId)
+    /^[A-Za-z0-9_-]{16,128}$/.test((value as StoredDeviceBinding).bindingId) &&
+    ((value as StoredDeviceBinding).platform === undefined ||
+      (value as StoredDeviceBinding).platform === "web" ||
+      (value as StoredDeviceBinding).platform === "ios")
   );
 }
 
@@ -203,7 +292,7 @@ function claimBinding(
   return claimPushDeviceToken({
     ownerUid: uid,
     token: binding.token,
-    platform: "web",
+    platform: binding.platform ?? "web",
     bindingId: binding.bindingId,
   }).then(() => undefined);
 }
@@ -215,7 +304,7 @@ function releaseBinding(
   return releasePushDeviceToken({
     ownerUid: uid,
     token: binding.token,
-    platform: "web",
+    platform: binding.platform ?? "web",
     bindingId: binding.bindingId,
   }).then(() => undefined);
 }
@@ -276,29 +365,22 @@ async function registerDeviceTokenInternal(
 ): Promise<PushRegisterResult> {
   if (!uid) return { ok: false, reason: "no-uid" };
   const generation = tokenLifecycleGeneration;
-  if (!isCurrentUser(uid, generation)) {
+  if (!isRegistrationCurrent(uid, generation)) {
     return { ok: false, reason: "account-changed" };
   }
   if (!(await isPushSupported())) {
     return { ok: false, reason: "unsupported" };
   }
-  if (
-    typeof Notification === "undefined" ||
-    Notification.permission !== "granted"
-  ) {
+  if (!(await hasRemotePushPermission())) {
     return { ok: false, reason: "no-permission" };
   }
 
   try {
-    const registration = await getAppServiceWorkerRegistration();
-    const token = await getToken(getMessaging(app), {
-      vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: registration,
-    });
+    const token = await getDevicePushToken();
     if (!token) {
       return { ok: false, reason: "token-failed", detail: "empty token" };
     }
-    if (!isCurrentUser(uid, generation)) {
+    if (!isRegistrationCurrent(uid, generation)) {
       return { ok: false, reason: "account-changed" };
     }
 
@@ -308,12 +390,16 @@ async function registerDeviceTokenInternal(
       // before a new binding can replace it.
       await releaseBinding(uid, previous);
       removeBindingIfStillCurrent(uid, previous, generation);
-      if (!isCurrentUser(uid, generation)) {
+      if (!isRegistrationCurrent(uid, generation)) {
         return { ok: false, reason: "account-changed" };
       }
     }
 
-    const binding: StoredDeviceBinding = { token, bindingId: newBindingId() };
+    const binding: StoredDeviceBinding = {
+      token,
+      bindingId: newBindingId(),
+      platform: isNativePlatform() ? "ios" : "web",
+    };
     const latest = readStoredDeviceBindings();
     latest[uid] = binding;
     // Persist the intent BEFORE the callable. Auth pre-revoke can now fence a
@@ -321,7 +407,7 @@ async function registerDeviceTokenInternal(
     writeStoredDeviceBindings(latest);
 
     await claimBinding(uid, binding);
-    if (!isCurrentUser(uid, generation)) {
+    if (!isRegistrationCurrent(uid, generation)) {
       return { ok: false, reason: "account-changed" };
     }
     return { ok: true, token };
@@ -351,19 +437,19 @@ export async function unregisterDeviceToken(uid: string): Promise<void> {
     return;
   }
 
-  let messaging: ReturnType<typeof getMessaging> | null = null;
+  let canDeleteLocalToken = false;
   let binding = readStoredDeviceBindings()[uid];
   try {
     if (await isPushSupported()) {
-      messaging = getMessaging(app);
+      canDeleteLocalToken = true;
       if (!binding && isCurrentUser(uid, generation)) {
-        const registration = await getAppServiceWorkerRegistration();
-        const token = await getToken(messaging, {
-          vapidKey: VAPID_KEY,
-          serviceWorkerRegistration: registration,
-        }).catch(() => null);
+        const token = await getDevicePushToken().catch(() => null);
         if (token && isCurrentUser(uid, generation)) {
-          binding = { token, bindingId: newBindingId() };
+          binding = {
+            token,
+            bindingId: newBindingId(),
+            platform: isNativePlatform() ? "ios" : "web",
+          };
           const latest = readStoredDeviceBindings();
           latest[uid] = binding;
           writeStoredDeviceBindings(latest);
@@ -399,9 +485,9 @@ export async function unregisterDeviceToken(uid: string): Promise<void> {
   // Server release is the Auth safety barrier. Once it has succeeded, a
   // browser-local deleteToken failure must not strand the user on the old
   // account; the canonical server binding is already gone.
-  if (messaging && isCurrentUser(uid, generation)) {
+  if (canDeleteLocalToken && isCurrentUser(uid, generation)) {
     try {
-      await deleteToken(messaging);
+      await deleteDevicePushToken();
     } catch (error) {
       logger.warn(
         "[push] local FCM token deletion failed after release",
@@ -424,7 +510,7 @@ export async function discardDeletedAccountPushState(
   // fallback claim/release attempt against that tombstone.
   try {
     if (await isPushSupported()) {
-      await deleteToken(getMessaging(app));
+      await deleteDevicePushToken();
     }
   } catch (error) {
     logger.warn("[push] deleted-account local token cleanup failed", error);
@@ -436,13 +522,15 @@ export async function discardDeletedAccountPushState(
  * enabled AND browser permission is already granted (never prompts).
  */
 export async function refreshDeviceTokenForCurrentUser(
-  uid: string
+  uid: string,
+  generation?: number
 ): Promise<void> {
-  if (!uid || !isCurrentUser(uid)) return;
+  const attemptGeneration = generation ?? getPushTokenLifecycleGeneration();
+  if (!uid || !isRegistrationCurrent(uid, attemptGeneration)) return;
   try {
     const { doc, getDoc, db } = await firestore();
     const snapshot = await getDoc(doc(db, "users", uid, "settings", "push"));
-    if (!isCurrentUser(uid)) return;
+    if (!isRegistrationCurrent(uid, attemptGeneration)) return;
 
     const consent: PushConsent = {
       ...DEFAULT_PUSH_CONSENT,
@@ -456,6 +544,8 @@ export async function refreshDeviceTokenForCurrentUser(
 }
 
 export async function listenForForegroundPush(): Promise<() => void> {
+  // The native plugin presents its own iOS banner; never duplicate it via web.
+  if (isNativePlatform()) return () => {};
   if (foregroundUnsub) {
     return () => stopListeningForForegroundPush();
   }

@@ -16,14 +16,13 @@ native bundle.
 ```bash
 git pull origin main
 npm install
-npm run build          # produces dist/ (verified green in CI)
-npx cap sync ios       # copies dist/ into the iOS project
+npm run build:ios      # builds from the native asset root and runs cap sync ios
 open ios/App/App.xcodeproj   # SPM project — there is no .xcworkspace
 # Xcode → select your device → Run, or Product → Archive → Distribute → TestFlight
 ```
 
-`npm run build` and `npx cap sync ios` are both verified to succeed against
-`main`; only the Xcode step needs a Mac.
+`npm run build:ios` uses the native asset root and copies the web bundle into
+the iOS project; only the Xcode step needs a Mac.
 
 ### B. Automated (`deploy-ios.yml`) — push-button after one-time setup, no Mac needed
 
@@ -62,6 +61,8 @@ an App Store provisioning profile. The workflow gets them one of two ways:
 
 Either way the run checks the certificate and the profile against the team,
 the bundle id and the app's entitlements before it archives.
+It also requires production APNs in that profile, then verifies the actual
+signed archive and exported IPA before uploading the verified artifact.
 
 #### First: the App ID's capabilities
 
@@ -73,6 +74,9 @@ run, open Apple Developer → Identifiers → `com.tropos.app` and turn on:
 - **App Attest**: the native App Check provider.
 - **HealthKit**: steps, through `capacitor-health`.
 - **Sign in with Apple**: native Apple sign-in. On since 2026-07.
+- **Push Notifications**: native remote notifications. The TestFlight profile
+  must permit production APNs; see [iPhone push setup](ios-push-notifications.md)
+  for the separate Firebase APNs key setup and device acceptance check.
 
 Turning a capability on later means making the profile again. A run that
 signs from the API key makes a new profile each time, so for that, run the

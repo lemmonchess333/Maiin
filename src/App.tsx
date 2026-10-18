@@ -12,6 +12,7 @@ import { MotionConfig } from "framer-motion";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { LiftUnitProvider } from "@/hooks/useLiftUnit";
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
+import { useNativePushNavigation } from "@/hooks/useNativePushNavigation";
 import { RevenueCatIdentity } from "@/hooks/useRevenueCatIdentity";
 import { ToastProvider } from "@/components/ToastProvider";
 import { NotificationBubbleProvider } from "@/components/NotificationBubble";
@@ -361,6 +362,7 @@ function AppRoutes() {
   useEmailVerificationGate(user, true);
   // Packet 17 — non-prompting FCM token refresh on sign-in + foreground.
   usePushTokenRefresh();
+  useNativePushNavigation(uid, !loading && !!user);
 
   useEffect(() => {
     if (!uid) return;

@@ -3,9 +3,49 @@
  * The prune-on-send-error decision (Q4) over a multicast response.
  */
 import { describe, it, expect } from "vitest";
-import { tokensToPrune } from "../lib/pushSend";
+import { tokensToPrune, withNativePushAlert } from "../lib/pushSend";
 
 const tokens = ["t0", "t1", "t2"];
+
+describe("withNativePushAlert", () => {
+  it("keeps web data-only delivery and adds a native alert, sound and owner fence", () => {
+    const source = {
+      data: { title: "Tropos", body: "Hello", type: "test", route: "/" },
+    };
+    const message = withNativePushAlert(source, "current-owner");
+    expect(message.notification).toBeUndefined();
+    expect(message.data).toEqual({ ...source.data, ownerUid: "current-owner" });
+    expect(message.apns).toEqual({
+      headers: { "apns-push-type": "alert", "apns-priority": "10" },
+      payload: {
+        aps: { alert: { title: "Tropos", body: "Hello" }, sound: "default" },
+      },
+    });
+    expect(source).not.toHaveProperty("apns");
+    expect(source.data).not.toHaveProperty("ownerUid");
+  });
+
+  it("preserves delivery expiry, collapse identifiers and APNs fields", () => {
+    const message = withNativePushAlert(
+      {
+        data: { title: "Title", body: "Body" },
+        apns: {
+          headers: { "apns-expiration": "123", "apns-collapse-id": "month" },
+          payload: { aps: { category: "challenge" }, custom: "field" },
+        },
+      },
+      "owner"
+    );
+    expect(message.apns.headers).toMatchObject({
+      "apns-expiration": "123",
+      "apns-collapse-id": "month",
+    });
+    expect(message.apns.payload).toMatchObject({
+      custom: "field",
+      aps: { category: "challenge", sound: "default" },
+    });
+  });
+});
 
 describe("tokensToPrune", () => {
   it("prunes nothing when every send succeeded", () => {

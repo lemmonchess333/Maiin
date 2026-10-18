@@ -65,6 +65,7 @@ const U2 = "users/u2/settings/push";
 beforeEach(() => {
   resetFirestore();
   vi.clearAllMocks();
+  setDocGuardedMock.mockReset().mockResolvedValue(undefined);
   currentUid = "u1";
   // Deliberately OPPOSITE values, so "whose read won" is readable off the
   // result rather than inferred.
@@ -118,6 +119,72 @@ describe("usePushSettings — uid safety", () => {
     const { result } = renderHook(() => usePushSettings());
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.consent.enabled).toBe(true);
+    expect(result.current.consent.challenges).toBe(false);
+  });
+
+  it("patches only the chosen switch and confirms the write before enabling it", async () => {
+    let finish!: () => void;
+    setDocGuardedMock.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        })
+    );
+    const { result } = renderHook(() => usePushSettings());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    let saving!: Promise<boolean>;
+    act(() => {
+      saving = result.current.update({ challenges: true });
+    });
+    expect(result.current.consent.challenges).toBe(false);
+    expect(setDocGuardedMock).toHaveBeenCalledWith(
+      expect.anything(),
+      { challenges: true },
+      { merge: true }
+    );
+    await act(async () => {
+      finish();
+      expect(await saving).toBe(true);
+    });
+    expect(result.current.consent.challenges).toBe(true);
+    expect(result.current.consent.enabled).toBe(true);
+  });
+
+  it("surfaces a rejected write and keeps the saved consent", async () => {
+    const { result } = renderHook(() => usePushSettings());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    setDocGuardedMock.mockRejectedValueOnce(new Error("offline"));
+    await act(async () => {
+      await expect(result.current.update({ challenges: true })).rejects.toThrow(
+        "offline"
+      );
+    });
+    expect(result.current.consent.challenges).toBe(false);
+  });
+
+  it("does not confirm an old account's in-flight update under the next account", async () => {
+    let finish!: () => void;
+    const { result, rerender } = renderHook(() => usePushSettings());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    setDocGuardedMock.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        })
+    );
+    let saving!: Promise<boolean>;
+    act(() => {
+      saving = result.current.update({ challenges: true });
+    });
+    currentUid = "u2";
+    rerender();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => {
+      finish();
+      expect(await saving).toBe(false);
+    });
+    expect(result.current.consent.challenges).toBe(false);
+    expect(result.current.consent.enabled).toBe(false);
   });
 
   it("update refuses to write when auth.currentUser no longer matches", async () => {

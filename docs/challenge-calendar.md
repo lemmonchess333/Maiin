@@ -55,25 +55,40 @@ Leave/rejoin and retried or delayed events recalculate current facts rather
 than applying the same activity twice. New-goal progress is a live subscription
 while the challenge is visible, including the recent finale window.
 
-## Notifications today
+## Monthly challenge notifications
 
-There is no sender for new monthly or seasonal challenge announcements.
-Rollover creates challenge documents; it does not send a push or an inbox item.
-No announcement notification was added in this change.
+Settings → Notifications → Push notifications has a separate **Monthly
+challenges** switch. It defaults off, including for people who already allow
+other push notifications. Both the global push switch and Monthly challenges
+must be enabled, and the device must have notification permission and a
+registered token. The app never prompts for permission just because it opened.
 
-The current native Capacitor iPhone build has local reminders but no APNs
-remote-push registration. `isRemotePushOffered()` deliberately returns false
-for native. The browser app has FCM web-push registration and existing nudge
-senders, subject to consent. iPhone web push requires a supported Home Screen
-web app and permission; an ordinary browser tab is not that installation.
-See [Apple's Web Push documentation](https://developer.apple.com/documentation/usernotifications/sending-web-push-notifications-in-web-apps-and-browsers).
+`hourlyChallengeAnnouncements` checks for the current month's published
+featured challenge and sends one announcement around 9 am in the person's
+stored time zone. It tries on the first three local days of the month, allowing
+for a delayed calendar publication or failed delivery. Unknown time zones are
+skipped. Early lookahead publication never announces next month's edition.
+The notification opens Social's Together tab, where the featured challenge is
+shown. Joining a challenge is still a separate choice.
 
-For new-challenge alerts, the next useful addition would be one optional
-monthly announcement linking to Social, with an explicit Challenges switch,
-quiet hours, per-account/period deduplication, and native APNs delivery as well
-as the existing web channel. A local repeating reminder can announce the
-calendar date, but cannot verify that new server content was successfully
-published while the app is closed. Those are separate delivery guarantees.
+The server claims one account/month before sending, preventing overlapping
+scheduler runs from sending duplicate announcements. Multiple registered
+devices may each display that one announcement. A confirmed zero-delivery
+result can be retried during the three-day window. An ambiguous transport
+failure or crash after the claim is consumed rather than risking duplicates;
+push delivery is best effort, not an exactly-once transport guarantee. No
+separate seasonal announcement or in-app inbox item is sent.
+
+The iPhone native integration uses Firebase Messaging and APNs. It requires a
+new signed native build, Apple Push capability/provisioning, and an APNs key
+uploaded to Firebase. An older native binary without the plugin continues to
+offer its existing local reminders only. A web deployment cannot add a native
+plugin to an installed TestFlight app. See [native push setup](ios-push-notifications.md).
+
+The browser channel uses the existing FCM web registration. On iPhone, open a
+supported Home Screen web app and allow notifications; an ordinary browser tab
+is insufficient. See [Apple's Web Push documentation](https://developer.apple.com/documentation/usernotifications/sending-web-push-notifications-in-web-apps-and-browsers).
+Neither channel needs a ChatGPT session or a computer left running.
 
 ## Publishing this change
 

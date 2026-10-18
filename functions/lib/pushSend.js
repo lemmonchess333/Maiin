@@ -37,6 +37,32 @@ function tokensToPrune(batch, tokens) {
   return dead;
 }
 
+/** APNs-specific alert leaves the web's data-only service-worker path intact.
+ * Native clients receive FCM registration tokens, never raw APNs tokens. */
+function withNativePushAlert(message, ownerUid) {
+  const data = { ...message.data, ownerUid };
+  return {
+    ...message,
+    data,
+    apns: {
+      ...message.apns,
+      headers: {
+        "apns-push-type": "alert",
+        "apns-priority": "10",
+        ...message.apns?.headers,
+      },
+      payload: {
+        ...message.apns?.payload,
+        aps: {
+          alert: { title: data.title, body: data.body },
+          sound: "default",
+          ...message.apns?.payload?.aps,
+        },
+      },
+    },
+  };
+}
+
 /**
  * The streak-nudge FCM message. DATA-ONLY (no top-level `notification`): the
  * SW's onBackgroundMessage only fires reliably on iOS PWAs for data messages,
@@ -139,6 +165,7 @@ function buildFellBehindRecapMessage() {
 }
 
 module.exports = {
+  withNativePushAlert,
   tokensToPrune,
   PRUNE_ERROR_CODES,
   buildStreakNudgeMessage,

@@ -25,12 +25,16 @@ describe("DEFAULT_PUSH_CONSENT", () => {
     expect(DEFAULT_PUSH_CONSENT.enabled).toBe(false);
   });
 
-  it("has every per-type flag ON, so opting in enables the standard set", () => {
+  it("keeps the existing standard set on", () => {
     // Q6's model: one deliberate opt-in gets the normal notifications, which
     // the user then pares back — rather than opting in and still hearing
     // nothing until they find three more toggles.
     expect(DEFAULT_PUSH_CONSENT.streak).toBe(true);
     expect(DEFAULT_PUSH_CONSENT.recap).toBe(true);
     expect(DEFAULT_PUSH_CONSENT.badge).toBe(true);
+  });
+
+  it("requires a separate opt-in for monthly challenge announcements", () => {
+    expect(DEFAULT_PUSH_CONSENT.challenges).toBe(false);
   });
 });

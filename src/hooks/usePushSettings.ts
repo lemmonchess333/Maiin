@@ -70,18 +70,32 @@ export function usePushSettings() {
 
   const update = useCallback(
     async (updates: Partial<PushConsent>) => {
-      if (!uid || auth.currentUser?.uid !== uid) return;
-      const current = state.uid === uid ? state.consent : DEFAULT_PUSH_CONSENT;
-      const next = { ...current, ...updates };
-      setState({ uid, consent: next, loading: false });
+      if (!uid || auth.currentUser?.uid !== uid || loading) return false;
 
       try {
-        await setDocGuarded(doc(db, "users", uid, "settings", "push"), next);
+        // Patch only the chosen switches, preserving changes from another
+        // device. Confirm the server write before the UI reports success or
+        // token registration starts; failed consent must never look saved.
+        await setDocGuarded(
+          doc(db, "users", uid, "settings", "push"),
+          updates,
+          {
+            merge: true,
+          }
+        );
+        if (auth.currentUser?.uid !== uid) return false;
+        setState((previous) =>
+          previous.uid === uid
+            ? { ...previous, consent: { ...previous.consent, ...updates } }
+            : previous
+        );
+        return true;
       } catch (error) {
         logger.error("[push] settings save failed", error);
+        throw error;
       }
     },
-    [state, uid]
+    [loading, uid]
   );
 
   return { consent, update, loading };

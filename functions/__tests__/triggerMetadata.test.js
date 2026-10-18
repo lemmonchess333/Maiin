@@ -210,6 +210,13 @@ const EXPECTED = {
     schedule: "0 * * * *",
     timeoutSeconds: 540,
   },
+  hourlyChallengeAnnouncements: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    schedule: "0 * * * *",
+    timeoutSeconds: 540,
+  },
   sendTestPush: {
     kind: "callable",
     maxInstances: 100,
@@ -555,5 +562,11 @@ describe("functions trigger metadata snapshot", () => {
     for (const [name, meta] of Object.entries(actual)) {
       expect({ [name]: meta.maxInstances }).not.toEqual({ [name]: null });
     }
+  });
+
+  it("monthly announcements keep a UTC hourly schedule", () => {
+    expect(
+      fns.hourlyChallengeAnnouncements.__endpoint.scheduleTrigger.timeZone
+    ).toBe("Etc/UTC");
   });
 });

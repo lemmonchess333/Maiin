@@ -37,6 +37,8 @@ const H = vi.hoisted(() => ({
   authCb: null as ((u: { uid: string } | null) => void) | null,
   signUp: null as null | ((email: string, password: string) => Promise<void>),
   sendInitial: vi.fn(async (_uid: string) => {}),
+  signOutAction: null as null | (() => Promise<void>),
+  transition: vi.fn(async (operation: () => Promise<unknown>) => operation()),
 }));
 const mockAuth = H.mockAuth;
 
@@ -58,6 +60,8 @@ vi.mock("../firebaseApp", () => ({
   firebaseConfig: {},
 }));
 vi.mock("@/lib/pushNotifications", () => ({
+  withPushTokenLifecycleTransition: (operation: () => Promise<unknown>) =>
+    H.transition(operation),
   invalidatePushTokenLifecycle: vi.fn(),
   stopListeningForForegroundPush: vi.fn(),
   unregisterDeviceToken: vi.fn().mockResolvedValue(undefined),
@@ -120,7 +124,8 @@ function Probe() {
   // Hand the sign-up action to the test that drives it.
   useEffect(() => {
     H.signUp = auth.signUp;
-  }, [auth.signUp]);
+    H.signOutAction = auth.signOut;
+  }, [auth.signUp, auth.signOut]);
   const { user, profile, loading } = auth;
   return (
     <div
@@ -261,5 +266,20 @@ describe("AuthProvider — email sign-up", () => {
       await H.signUp!("n@example.com", "secret-123");
     });
     await waitFor(() => expect(H.sendInitial).toHaveBeenCalledWith("N"));
+  });
+});
+
+describe("AuthProvider — push transition barrier", () => {
+  it("keeps a failed Firebase sign-out inside the transition wrapper and preserves the current account", async () => {
+    await emit("A");
+    await waitFor(() => expect(state().p).toBe("A"));
+    const { signOut } = await import("firebase/auth");
+    vi.mocked(signOut).mockRejectedValueOnce(new Error("sign-out unavailable"));
+    H.transition.mockClear();
+    await act(async () => {
+      await expect(H.signOutAction!()).rejects.toThrow("sign-out unavailable");
+    });
+    expect(H.transition).toHaveBeenCalledOnce();
+    expect(state().u).toBe("A");
   });
 });

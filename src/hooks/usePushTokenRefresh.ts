@@ -1,6 +1,12 @@
 import { useEffect } from "react";
 import { useUid } from "@/lib/auth";
-import { refreshDeviceTokenForCurrentUser } from "@/lib/pushNotifications";
+import {
+  refreshDeviceTokenForCurrentUser,
+  getPushTokenLifecycleGeneration,
+  onPushTokenLifecycleReady,
+} from "@/lib/pushNotifications";
+import { listenForNativePushRefresh } from "@/lib/nativePush";
+import { logger } from "@/lib/logger";
 
 /**
  * Non-prompting FCM token refresh (packet 17). Refreshes a rotated token on
@@ -15,13 +21,27 @@ export function usePushTokenRefresh(): void {
   useEffect(() => {
     if (!uid) return;
     let cancelled = false;
+    let stopNative = () => {};
 
     const refresh = () => {
       if (cancelled) return;
-      void refreshDeviceTokenForCurrentUser(uid);
+      void refreshDeviceTokenForCurrentUser(
+        uid,
+        getPushTokenLifecycleGeneration()
+      );
     };
 
     refresh();
+    const stopLifecycle = onPushTokenLifecycleReady(refresh);
+    void listenForNativePushRefresh(refresh)
+      .then((stop) => {
+        if (cancelled) stop();
+        else stopNative = stop;
+      })
+      .catch((error) => {
+        if (!cancelled)
+          logger.warn("[push] native token refresh listener failed", error);
+      });
     const onVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         refresh();
@@ -31,6 +51,8 @@ export function usePushTokenRefresh(): void {
 
     return () => {
       cancelled = true;
+      stopNative();
+      stopLifecycle();
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [uid]);
