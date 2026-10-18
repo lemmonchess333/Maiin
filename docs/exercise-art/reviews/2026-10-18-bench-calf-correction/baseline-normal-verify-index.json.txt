@@ -1,0 +1,1527 @@
+{
+  "schemaVersion": 1,
+  "scope": "Measured completed-run evidence, not failure disposition or release approval",
+  "folder": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining19-execution-20261015\\checks\\bench-calf-baseline-f161a521",
+  "result": {
+    "startedAt": "2026-10-18T08:38:54.320373+00:00",
+    "finishedAt": "2026-10-18T08:56:40.385600+00:00",
+    "normalCommand": "npm run verify",
+    "exitCode": 1,
+    "durationSeconds": 1060.5929999999935,
+    "headBefore": "f161a521a602ec3ab51fbc0ea7aea366fad5e178",
+    "headAfter": "f161a521a602ec3ab51fbc0ea7aea366fad5e178",
+    "headUnchanged": true,
+    "statusBefore": "",
+    "statusAfterTestBeforeSnapshotRestore": " M src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap\n",
+    "statusAfter": "",
+    "statusRestored": true,
+    "snapshotRestores": [
+      {
+        "path": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+        "originalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "testOutputSha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "restoredExact": true
+      }
+    ],
+    "inputCount": 2732,
+    "changedInputsAfterRestoration": [],
+    "allInputsUnchanged": true,
+    "log": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining19-execution-20261015\\checks\\bench-calf-baseline-f161a521\\verify.log",
+    "logSha256": "923b9c8f8416539985803e35754a042f3b17a94c79f18ab11c88e1976aeded5d",
+    "fullVerificationPassed": false
+  },
+  "sourceProofHashes": {
+    "result.json": "1a6a0ceb0f259280bb1607c2aa9999109357d7dbeb2802b6c9b883a258b53831",
+    "verify.log": "923b9c8f8416539985803e35754a042f3b17a94c79f18ab11c88e1976aeded5d",
+    "inputs-before.json": "f269cb8277f0898103888ea7207838836266f7f3ba6e244066bc1af929475fbe",
+    "inputs-after.json": "f269cb8277f0898103888ea7207838836266f7f3ba6e244066bc1af929475fbe",
+    "start.json": "049abbb528d245c0f64d5aa20c09c841a4edfbcbd94c90939c6c0fd1aa4a4fd7"
+  },
+  "snapshotProofHashes": {
+    "snapshot-before-0.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-1.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-2.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-3.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-4.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-5.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-6.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-7.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-8.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-9.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-10.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-11.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-12.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-13.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-14.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-15.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-16.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-17.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-18.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-19.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-20.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-21.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-22.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-23.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-24.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-25.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-26.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-27.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-28.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-29.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-30.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-31.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-32.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-33.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-34.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-35.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-36.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-37.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-38.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-39.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-40.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-41.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-42.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-test-output-42.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f"
+  },
+  "capturedSnapshots": [
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-0.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-1.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-2.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-3.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/checks/branch-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-4.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/checks/branch-planSweep-before.snap",
+      "capturedFile": "snapshot-before-5.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-6.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-7.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+      "capturedFile": "snapshot-before-8.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+      "capturedFile": "snapshot-before-9.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-10.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+      "capturedFile": "snapshot-before-11.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-12.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+      "capturedFile": "snapshot-before-13.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+      "capturedFile": "snapshot-before-14.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+      "capturedFile": "snapshot-before-15.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+      "capturedFile": "snapshot-before-16.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+      "capturedFile": "snapshot-before-17.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-18.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-19.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+      "capturedFile": "snapshot-before-20.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+      "capturedFile": "snapshot-before-21.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-22.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+      "capturedFile": "snapshot-before-23.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-24.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+      "capturedFile": "snapshot-before-25.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+      "capturedFile": "snapshot-before-26.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+      "capturedFile": "snapshot-before-27.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+      "capturedFile": "snapshot-before-28.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+      "capturedFile": "snapshot-before-29.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-30.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-31.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+      "capturedFile": "snapshot-before-32.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+      "capturedFile": "snapshot-before-33.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-34.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+      "capturedFile": "snapshot-before-35.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-36.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+      "capturedFile": "snapshot-before-37.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+      "capturedFile": "snapshot-before-38.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+      "capturedFile": "snapshot-before-39.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+      "capturedFile": "snapshot-before-40.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+      "capturedFile": "snapshot-before-41.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+      "capturedFile": "snapshot-before-42.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": true
+    }
+  ],
+  "inputCount": 2732,
+  "inputBytesPreserved": true,
+  "overallGreen": false,
+  "diagnosticHashMethod": "Exact UTF8 raw byte range after last grouped FAIL header and before separator, trimming blank padding only; header, padding and separator also separately hash-pinned. No diagnostic is borrowed from a later unrelated failure.",
+  "allNormalVerifyStagesPresent": true,
+  "normalStages": [
+    {
+      "name": "lint",
+      "proof": {
+        "startLine": 6,
+        "endLineInclusive": 6,
+        "byteStart": 179,
+        "byteEndExclusive": 199,
+        "rawSha256": "a4f8b2c8d32b2439915ecf707c8d49fd71ce6fd6760ee2d53a796f1982f9c4ea",
+        "byteLength": 20
+      }
+    },
+    {
+      "name": "check:form-art",
+      "proof": {
+        "startLine": 10,
+        "endLineInclusive": 10,
+        "byteStart": 229,
+        "byteEndExclusive": 259,
+        "rawSha256": "ba7411a844c779a0015926b5c9fd8bf0a41b02dff43a0f199ba0726701c8e78e",
+        "byteLength": 30
+      }
+    },
+    {
+      "name": "check:form-drafts",
+      "proof": {
+        "startLine": 23,
+        "endLineInclusive": 23,
+        "byteStart": 474,
+        "byteEndExclusive": 507,
+        "rawSha256": "bad0a19101177e5e2d4acd32919d491f1e36c5d8bacfc6087d049463aab2ce17",
+        "byteLength": 33
+      }
+    },
+    {
+      "name": "check:cycles",
+      "proof": {
+        "startLine": 35,
+        "endLineInclusive": 35,
+        "byteStart": 699,
+        "byteEndExclusive": 727,
+        "rawSha256": "56262e88261c728e32576536d83f3052f363020ecf2a01b320e6d2d0adbedc98",
+        "byteLength": 28
+      }
+    },
+    {
+      "name": "build",
+      "proof": {
+        "startLine": 44,
+        "endLineInclusive": 44,
+        "byteStart": 896,
+        "byteEndExclusive": 917,
+        "rawSha256": "deb23f2fda5594fe5e10eb8cf5665853fe255092698f42d7e7ca1172206d4e1f",
+        "byteLength": 21
+      }
+    },
+    {
+      "name": "check:dist-size",
+      "proof": {
+        "startLine": 553,
+        "endLineInclusive": 553,
+        "byteStart": 53636,
+        "byteEndExclusive": 53667,
+        "rawSha256": "4dd3ee7775ae72deb97c38996d78fe403165c1a6ec767a9b9e3654a200148256",
+        "byteLength": 31
+      }
+    },
+    {
+      "name": "test",
+      "proof": {
+        "startLine": 571,
+        "endLineInclusive": 571,
+        "byteStart": 54385,
+        "byteEndExclusive": 54405,
+        "rawSha256": "d6b835dac15e4af35a81a747c41de8d6cd16b9c84642bafc5ec35c7015702dc8",
+        "byteLength": 20
+      }
+    }
+  ],
+  "testFiles": {
+    "failed": 10,
+    "passed": 1187,
+    "skipped": 10,
+    "total": 1207,
+    "verbatim": "Test Files  10 failed | 1187 passed | 10 skipped (1207)",
+    "proof": {
+      "startLine": 812,
+      "endLineInclusive": 812,
+      "byteStart": 66668,
+      "byteEndExclusive": 66725,
+      "rawSha256": "c6f987616897c698e16273a62ccb7fe07dae5de6cab2a89ec5844c8e860ac677",
+      "byteLength": 57
+    }
+  },
+  "tests": {
+    "failed": 13,
+    "passed": 13787,
+    "skipped": 409,
+    "total": 14209,
+    "verbatim": "Tests  13 failed | 13787 passed | 409 skipped (14209)",
+    "proof": {
+      "startLine": 813,
+      "endLineInclusive": 813,
+      "byteStart": 66725,
+      "byteEndExclusive": 66785,
+      "rawSha256": "3cad2993645ae928a6b497e9fdd92683c66e8246ba493f947bc6f6f635da2520",
+      "byteLength": 60
+    }
+  },
+  "unitSummaryComplete": true,
+  "failureHeaderCount": 15,
+  "testFailureHeaders": 13,
+  "suiteFailureHeaders": 2,
+  "diagnosticGroupCount": 12,
+  "sharedDiagnosticGroups": 1,
+  "failureAccountingComplete": true,
+  "unhandledErrorMarkers": [],
+  "indexComplete": true,
+  "groups": [
+    {
+      "id": "diagnostic-group-1",
+      "headerCount": 1,
+      "identities": [
+        "root-node|scripts/write-functions-env.test.ts|[suite]"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 632,
+        "endLineInclusive": 633,
+        "byteStart": 58271,
+        "byteEndExclusive": 58407,
+        "rawSha256": "908fb6ccd481f5a4c45f51bcbae30d88ef97750732b895a54b23e878de84f676",
+        "byteLength": 136
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 633,
+        "endLineInclusive": 633,
+        "byteStart": 58366,
+        "byteEndExclusive": 58407,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41
+      },
+      "diagnostic": {
+        "startLine": 633,
+        "endLineInclusive": 633,
+        "byteStart": 58366,
+        "byteEndExclusive": 58407,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": [
+          "SyntaxError: Invalid or unexpected token"
+        ]
+      },
+      "separator": {
+        "startLine": 634,
+        "endLineInclusive": 634,
+        "byteStart": 58407,
+        "byteEndExclusive": 58486,
+        "rawSha256": "27c41e005fc9d1a70d70dd8dbc8f47867aff7d3fb1b07f30164a62f2ce2cb35f",
+        "byteLength": 79,
+        "reportedOrdinal": 1,
+        "reportedTotal": 15
+      }
+    },
+    {
+      "id": "diagnostic-group-2",
+      "headerCount": 1,
+      "identities": [
+        "root-node|scripts/ios/asc-signing.test.ts|[suite]"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 636,
+        "endLineInclusive": 637,
+        "byteStart": 58487,
+        "byteEndExclusive": 58615,
+        "rawSha256": "102e6df0abebb61e0eb4bbec996e397b962dba23442ab197a7aa12bbafbf17a0",
+        "byteLength": 128
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 637,
+        "endLineInclusive": 637,
+        "byteStart": 58574,
+        "byteEndExclusive": 58615,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41
+      },
+      "diagnostic": {
+        "startLine": 637,
+        "endLineInclusive": 637,
+        "byteStart": 58574,
+        "byteEndExclusive": 58615,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": [
+          "SyntaxError: Invalid or unexpected token"
+        ]
+      },
+      "separator": {
+        "startLine": 638,
+        "endLineInclusive": 638,
+        "byteStart": 58615,
+        "byteEndExclusive": 58694,
+        "rawSha256": "c1ccfe93563580099e75321cc0068c7d7b1a0d868238fa408a84c88751c73f65",
+        "byteLength": 79,
+        "reportedOrdinal": 2,
+        "reportedTotal": 15
+      }
+    },
+    {
+      "id": "diagnostic-group-3",
+      "headerCount": 4,
+      "identities": [
+        "root-node|scripts/ci/install-playwright-chromium.test.ts|usage > refuses [\"nope\",\"60\"]",
+        "root-node|scripts/ci/install-playwright-chromium.test.ts|usage > refuses [\"install-deps\"]",
+        "root-node|scripts/ci/install-playwright-chromium.test.ts|usage > refuses [\"install\",\"0\"]",
+        "root-node|scripts/ci/install-playwright-chromium.test.ts|usage > refuses [\"install\",\"60\",\"safari\"]"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 643,
+        "endLineInclusive": 662,
+        "byteStart": 58754,
+        "byteEndExclusive": 59568,
+        "rawSha256": "0651ce3bdc555fe8e513e84f0c356c6a7c228416a2857293c39a2e4d75094893",
+        "byteLength": 814
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 647,
+        "endLineInclusive": 662,
+        "byteStart": 59163,
+        "byteEndExclusive": 59568,
+        "rawSha256": "9274777ba8226cf90937ea1aa2c229c0472fba834228452991f07a43963bbbf1",
+        "byteLength": 405
+      },
+      "diagnostic": {
+        "startLine": 647,
+        "endLineInclusive": 661,
+        "byteStart": 59163,
+        "byteEndExclusive": 59567,
+        "rawSha256": "000a12aed7997c6b973601058b2d80a893f3cbc43a1350457f4bf72757895328",
+        "byteLength": 404,
+        "firstOwnLine": "AssertionError: expected 3221225794 to be 2 // Object.is equality",
+        "firstThreeLines": [
+          "AssertionError: expected 3221225794 to be 2 // Object.is equality",
+          "",
+          "- Expected"
+        ]
+      },
+      "separator": {
+        "startLine": 663,
+        "endLineInclusive": 663,
+        "byteStart": 59568,
+        "byteEndExclusive": 59647,
+        "rawSha256": "6cb0feb92eaf078e677d278c55598dfe6a09a39c88d4754d8664851ae689edb9",
+        "byteLength": 79,
+        "reportedOrdinal": 3,
+        "reportedTotal": 15
+      }
+    },
+    {
+      "id": "diagnostic-group-4",
+      "headerCount": 1,
+      "identities": [
+        "root-node|scripts/ci/install-playwright-chromium.test.ts|browsers > are Chromium when a job names none"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 665,
+        "endLineInclusive": 681,
+        "byteStart": 59648,
+        "byteEndExclusive": 60252,
+        "rawSha256": "cb40e241a6d122a634742b8b609e97a40867d6f249cc7d4fd5711f6fe2fd3406",
+        "byteLength": 604
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 666,
+        "endLineInclusive": 681,
+        "byteStart": 59762,
+        "byteEndExclusive": 60252,
+        "rawSha256": "a47c9ccce7f3acc13ebf3c9960c41db287c82e876dc677a845558611a891c8c5",
+        "byteLength": 490
+      },
+      "diagnostic": {
+        "startLine": 666,
+        "endLineInclusive": 680,
+        "byteStart": 59762,
+        "byteEndExclusive": 60251,
+        "rawSha256": "f5d60d7c2e372ad6d0af3919f8109d0abf97ffecd3af6a7c7e4ee01345b3f58f",
+        "byteLength": 489,
+        "firstOwnLine": "AssertionError: expected '' to be 'npx playwright install --with-deps ch…' // Object.is equality",
+        "firstThreeLines": [
+          "AssertionError: expected '' to be 'npx playwright install --with-deps ch…' // Object.is equality",
+          "",
+          "- Expected"
+        ]
+      },
+      "separator": {
+        "startLine": 682,
+        "endLineInclusive": 682,
+        "byteStart": 60252,
+        "byteEndExclusive": 60331,
+        "rawSha256": "0c5c4e39e205e00d711807f6660adb439470b86a3a3fbf18a3100df45fc5cb17",
+        "byteLength": 79,
+        "reportedOrdinal": 4,
+        "reportedTotal": 15
+      }
+    },
+    {
+      "id": "diagnostic-group-5",
+      "headerCount": 1,
+      "identities": [
+        "root-node|scripts/ci/install-playwright-chromium.test.ts|browsers > are the ones a job names"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 684,
+        "endLineInclusive": 700,
+        "byteStart": 60332,
+        "byteEndExclusive": 60974,
+        "rawSha256": "a892dabb04e610440abfc0725bb2406a66eadda00a39aedf3f8373cacc78244a",
+        "byteLength": 642
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 685,
+        "endLineInclusive": 700,
+        "byteStart": 60436,
+        "byteEndExclusive": 60974,
+        "rawSha256": "7ea98084e50a5d977785b27f953319552769b2366b9baf4bebc88ff52b3ab039",
+        "byteLength": 538
+      },
+      "diagnostic": {
+        "startLine": 685,
+        "endLineInclusive": 699,
+        "byteStart": 60436,
+        "byteEndExclusive": 60973,
+        "rawSha256": "e007d44f3b4c595332a0e02e5cd673688df4b8ff177cb4a7b3149879fa7de47a",
+        "byteLength": 537,
+        "firstOwnLine": "AssertionError: expected '' to be 'npx playwright install --with-deps ch…' // Object.is equality",
+        "firstThreeLines": [
+          "AssertionError: expected '' to be 'npx playwright install --with-deps ch…' // Object.is equality",
+          "",
+          "- Expected"
+        ]
+      },
+      "separator": {
+        "startLine": 701,
+        "endLineInclusive": 701,
+        "byteStart": 60974,
+        "byteEndExclusive": 61053,
+        "rawSha256": "d775474ccef5239d6966e1e6b667dcff44805d59ae8c33db6439e08c9a5364dd",
+        "byteLength": 79,
+        "reportedOrdinal": 5,
+        "reportedTotal": 15
+      }
+    },
+    {
+      "id": "diagnostic-group-6",
+      "headerCount": 1,
+      "identities": [
+        "dom|src/components/__tests__/FoodCameraModal.photoLock.test.tsx|FoodCameraModal — photo scanning not on the tier > names the offer the way the Pro line under the composer does once the trial is used"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 703,
+        "endLineInclusive": 713,
+        "byteStart": 61054,
+        "byteEndExclusive": 61723,
+        "rawSha256": "50684f359ce7e59c2a3ecd62c7c530a41992f15f36a3cd0ce730bead67bcdf1a",
+        "byteLength": 669
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 704,
+        "endLineInclusive": 713,
+        "byteStart": 61266,
+        "byteEndExclusive": 61723,
+        "rawSha256": "7501d6b6d54c29aefad8dcf4a1e5f0dfbafb3495c58d35162e8ef3fc54080a0d",
+        "byteLength": 457
+      },
+      "diagnostic": {
+        "startLine": 704,
+        "endLineInclusive": 712,
+        "byteStart": 61266,
+        "byteEndExclusive": 61722,
+        "rawSha256": "2990d90ace885773c296209e5cf3a1cb860f218eeb30b7a72beb2dc2d6d21c52",
+        "byteLength": 456,
+        "firstOwnLine": "Error: Hook timed out in 10000ms.",
+        "firstThreeLines": [
+          "Error: Hook timed out in 10000ms.",
+          "If this is a long-running hook, pass a timeout value as the last argument or configure it globally with \"hookTimeout\".",
+          " ❯ src/test/setup.ts:41:3"
+        ]
+      },
+      "separator": {
+        "startLine": 714,
+        "endLineInclusive": 714,
+        "byteStart": 61723,
+        "byteEndExclusive": 61802,
+        "rawSha256": "3fb693aea703324266c70891ee20ee99d56361816f941c833a8601c885c0acaa",
+        "byteLength": 79,
+        "reportedOrdinal": 6,
+        "reportedTotal": 15
+      }
+    },
+    {
+      "id": "diagnostic-group-7",
+      "headerCount": 1,
+      "identities": [
+        "node|src/lib/__tests__/bodyRig.test.ts|supplied placard frames > all of a sequence's frames share one canvas"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 716,
+        "endLineInclusive": 726,
+        "byteStart": 61803,
+        "byteEndExclusive": 62395,
+        "rawSha256": "153193a2181436c17f61e5fd50f354638726d422b994d5cbe246c80e4d26a082",
+        "byteLength": 592
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 717,
+        "endLineInclusive": 726,
+        "byteStart": 61923,
+        "byteEndExclusive": 62395,
+        "rawSha256": "2ea5bd3c469f288105b6505d074d77ce724e709eda58abb3edaf31a15f71bdf7",
+        "byteLength": 472
+      },
+      "diagnostic": {
+        "startLine": 717,
+        "endLineInclusive": 725,
+        "byteStart": 61923,
+        "byteEndExclusive": 62394,
+        "rawSha256": "d3845ec614d4671acf63ed6eb99bc0528bee519f001c175d7daf6c458e3fdbf4",
+        "byteLength": 471,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/lib/__tests__/bodyRig.test.ts:5160:3"
+        ]
+      },
+      "separator": {
+        "startLine": 727,
+        "endLineInclusive": 727,
+        "byteStart": 62395,
+        "byteEndExclusive": 62474,
+        "rawSha256": "7e82caf926332a72744a3743e29ddbbeb7e62bfb3274ba5f0289d39c620ff3c3",
+        "byteLength": 79,
+        "reportedOrdinal": 7,
+        "reportedTotal": 15
+      }
+    },
+    {
+      "id": "diagnostic-group-8",
+      "headerCount": 1,
+      "identities": [
+        "node|src/lib/__tests__/leaderboard.test.ts|boardFigure > converts the volume board, and only that one"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 729,
+        "endLineInclusive": 739,
+        "byteStart": 62475,
+        "byteEndExclusive": 63140,
+        "rawSha256": "312c3703b1f7056309b8c27fc2dd10776fa186aee1179592624a1cc9b9a067b5",
+        "byteLength": 665
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 730,
+        "endLineInclusive": 739,
+        "byteStart": 62588,
+        "byteEndExclusive": 63140,
+        "rawSha256": "c49adc0d7b1231448c93c3a7dc6275a73cfc0ed0e652aaf0a8c90daf5890bf7d",
+        "byteLength": 552
+      },
+      "diagnostic": {
+        "startLine": 730,
+        "endLineInclusive": 738,
+        "byteStart": 62588,
+        "byteEndExclusive": 63139,
+        "rawSha256": "50eeed1323c7562de37f86af1374d568211f695cdfb22aa9c0b3d521857c4c06",
+        "byteLength": 551,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/lib/__tests__/leaderboard.test.ts:68:3"
+        ]
+      },
+      "separator": {
+        "startLine": 740,
+        "endLineInclusive": 740,
+        "byteStart": 63140,
+        "byteEndExclusive": 63219,
+        "rawSha256": "50556ad176a8609df99849da577ad286ee21caff93dab5bc49f11064994986d2",
+        "byteLength": 79,
+        "reportedOrdinal": 8,
+        "reportedTotal": 15
+      }
+    },
+    {
+      "id": "diagnostic-group-9",
+      "headerCount": 1,
+      "identities": [
+        "node|src/lib/__tests__/noDisabledTests.test.ts|no test is switched off outright > finds no unconditional skip in src/ or functions/"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 742,
+        "endLineInclusive": 752,
+        "byteStart": 63220,
+        "byteEndExclusive": 63827,
+        "rawSha256": "b67faaf63063abdace6945638117759f09b313950acdb5109de6b459d5d9f763",
+        "byteLength": 607
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 743,
+        "endLineInclusive": 752,
+        "byteStart": 63363,
+        "byteEndExclusive": 63827,
+        "rawSha256": "28094b5121aca76cb9030e81ddca1a84877eb136d531a7a994a67d46e81b68b3",
+        "byteLength": 464
+      },
+      "diagnostic": {
+        "startLine": 743,
+        "endLineInclusive": 751,
+        "byteStart": 63363,
+        "byteEndExclusive": 63826,
+        "rawSha256": "661366c2c55a6f5d11ec18de3ca7ada9f2db570e7d3131479bfd87951fbfad3e",
+        "byteLength": 463,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/lib/__tests__/noDisabledTests.test.ts:65:3"
+        ]
+      },
+      "separator": {
+        "startLine": 753,
+        "endLineInclusive": 753,
+        "byteStart": 63827,
+        "byteEndExclusive": 63906,
+        "rawSha256": "57bfef6109da607ffefceb74239e1ce21e43164d33d8d4b09faadcb1856c517e",
+        "byteLength": 79,
+        "reportedOrdinal": 9,
+        "reportedTotal": 15
+      }
+    },
+    {
+      "id": "diagnostic-group-10",
+      "headerCount": 1,
+      "identities": [
+        "node|src/lib/__tests__/themeContract.test.ts|Sprint 0 theme contract — no source uses undefined var(--text-muted) > no .ts / .tsx / .css file in src/ references var(--text-muted)"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 755,
+        "endLineInclusive": 765,
+        "byteStart": 63907,
+        "byteEndExclusive": 64624,
+        "rawSha256": "bc6496090b1836b6bdd506ec2efb69bf1e561449825666970ad597ba2e8d3c43",
+        "byteLength": 717
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 756,
+        "endLineInclusive": 765,
+        "byteStart": 64099,
+        "byteEndExclusive": 64624,
+        "rawSha256": "458438a093b166c4bcaa4ba5d2f5b2eec3d436259b2420914ab332826c51610e",
+        "byteLength": 525
+      },
+      "diagnostic": {
+        "startLine": 756,
+        "endLineInclusive": 764,
+        "byteStart": 64099,
+        "byteEndExclusive": 64623,
+        "rawSha256": "75a6af15e03c366ff84907bdade96a631650a0e9acd6688016da87e80c7ec56d",
+        "byteLength": 524,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/lib/__tests__/themeContract.test.ts:360:3"
+        ]
+      },
+      "separator": {
+        "startLine": 766,
+        "endLineInclusive": 766,
+        "byteStart": 64624,
+        "byteEndExclusive": 64701,
+        "rawSha256": "877b27e75ffc75afc3151987fe686db97e38fe0ec9b9139ee59a8817bc97469d",
+        "byteLength": 77,
+        "reportedOrdinal": 10,
+        "reportedTotal": 15
+      }
+    },
+    {
+      "id": "diagnostic-group-11",
+      "headerCount": 1,
+      "identities": [
+        "node|src/features/program/__tests__/generatorAudit.test.ts|generator audit — every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 768,
+        "endLineInclusive": 778,
+        "byteStart": 64702,
+        "byteEndExclusive": 65442,
+        "rawSha256": "e5d3504dc7c842700278d512cd97795f3194bcd37d0c2ab615325b392c9ed99b",
+        "byteLength": 740
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 769,
+        "endLineInclusive": 778,
+        "byteStart": 64894,
+        "byteEndExclusive": 65442,
+        "rawSha256": "4497a4d8e5de883ab002281f6449826f9f96a7f0b50b53662b793277b808d562",
+        "byteLength": 548
+      },
+      "diagnostic": {
+        "startLine": 769,
+        "endLineInclusive": 777,
+        "byteStart": 64894,
+        "byteEndExclusive": 65441,
+        "rawSha256": "b23bfc7d5409dfeef7a855c216093984474602f74a0222dfe237771e08735b4f",
+        "byteLength": 547,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/features/program/__tests__/generatorAudit.test.ts:147:3"
+        ]
+      },
+      "separator": {
+        "startLine": 779,
+        "endLineInclusive": 779,
+        "byteStart": 65442,
+        "byteEndExclusive": 65519,
+        "rawSha256": "175e58da0a5b8361d69a2e9b684fe66119228defaf242ac943d22330d45ee366",
+        "byteLength": 77,
+        "reportedOrdinal": 11,
+        "reportedTotal": 15
+      }
+    },
+    {
+      "id": "diagnostic-group-12",
+      "headerCount": 1,
+      "identities": [
+        "node|src/features/program/__tests__/useProgramWriters.test.ts|RUN-RESCHEDULE-01 — moveRunDay > refuses to move a race slot (immovable identity)"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 781,
+        "endLineInclusive": 808,
+        "byteStart": 65520,
+        "byteEndExclusive": 66589,
+        "rawSha256": "dfee8bff37e30837577076f3685b45ecc37126e47758b1fd85a0ea01fdd742cb",
+        "byteLength": 1069
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 782,
+        "endLineInclusive": 808,
+        "byteStart": 65677,
+        "byteEndExclusive": 66589,
+        "rawSha256": "156a7449535762b2cc2937657fb4b7f14fe1f54688490bf549d868ff9c655cb3",
+        "byteLength": 912
+      },
+      "diagnostic": {
+        "startLine": 782,
+        "endLineInclusive": 807,
+        "byteStart": 65677,
+        "byteEndExclusive": 66588,
+        "rawSha256": "63ef6b308cff2ebc724df224077c89898af25dcf3be3c3cb031063af155a087a",
+        "byteLength": 911,
+        "firstOwnLine": "AssertionError: expected true to be false // Object.is equality",
+        "firstThreeLines": [
+          "AssertionError: expected true to be false // Object.is equality",
+          "",
+          "Ignored nodes: comments, script, style"
+        ]
+      },
+      "separator": {
+        "startLine": 809,
+        "endLineInclusive": 809,
+        "byteStart": 66589,
+        "byteEndExclusive": 66666,
+        "rawSha256": "e8841238106c8386254911025243d34398d0aa7de8f92acbd633d6ef45c7e23a",
+        "byteLength": 77,
+        "reportedOrdinal": 12,
+        "reportedTotal": 15
+      }
+    }
+  ],
+  "failures": [
+    {
+      "canonicalId": "root-node|scripts/write-functions-env.test.ts|[suite]",
+      "project": "root-node",
+      "file": "scripts/write-functions-env.test.ts",
+      "kind": "suite",
+      "case": null,
+      "headerLine": 632,
+      "headerVerbatim": " FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]",
+      "header": {
+        "startLine": 632,
+        "endLineInclusive": 632,
+        "byteStart": 58271,
+        "byteEndExclusive": 58366,
+        "rawSha256": "106d0a219ee689c698953dc2b9e6acf09062b42c7f63335d24834d628db3254b",
+        "byteLength": 95
+      },
+      "diagnosticGroupId": "diagnostic-group-1",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 633,
+        "endLineInclusive": 633,
+        "byteStart": 58366,
+        "byteEndExclusive": 58407,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": [
+          "SyntaxError: Invalid or unexpected token"
+        ]
+      }
+    },
+    {
+      "canonicalId": "root-node|scripts/ios/asc-signing.test.ts|[suite]",
+      "project": "root-node",
+      "file": "scripts/ios/asc-signing.test.ts",
+      "kind": "suite",
+      "case": null,
+      "headerLine": 636,
+      "headerVerbatim": " FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]",
+      "header": {
+        "startLine": 636,
+        "endLineInclusive": 636,
+        "byteStart": 58487,
+        "byteEndExclusive": 58574,
+        "rawSha256": "e0a80464cefd95fa376b838268c66668b45caacf35a16a4ac1f7a17466737263",
+        "byteLength": 87
+      },
+      "diagnosticGroupId": "diagnostic-group-2",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 637,
+        "endLineInclusive": 637,
+        "byteStart": 58574,
+        "byteEndExclusive": 58615,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": [
+          "SyntaxError: Invalid or unexpected token"
+        ]
+      }
+    },
+    {
+      "canonicalId": "root-node|scripts/ci/install-playwright-chromium.test.ts|usage > refuses [\"nope\",\"60\"]",
+      "project": "root-node",
+      "file": "scripts/ci/install-playwright-chromium.test.ts",
+      "kind": "test",
+      "case": "usage > refuses [\"nope\",\"60\"]",
+      "headerLine": 643,
+      "headerVerbatim": " FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"nope\",\"60\"]",
+      "header": {
+        "startLine": 643,
+        "endLineInclusive": 643,
+        "byteStart": 58754,
+        "byteEndExclusive": 58852,
+        "rawSha256": "27e995b7360e41d7425a16df049005402bbddf90039850965b40e38d75fa71f1",
+        "byteLength": 98
+      },
+      "diagnosticGroupId": "diagnostic-group-3",
+      "sharedDiagnosticHeaderCount": 4,
+      "diagnostic": {
+        "startLine": 647,
+        "endLineInclusive": 661,
+        "byteStart": 59163,
+        "byteEndExclusive": 59567,
+        "rawSha256": "000a12aed7997c6b973601058b2d80a893f3cbc43a1350457f4bf72757895328",
+        "byteLength": 404,
+        "firstOwnLine": "AssertionError: expected 3221225794 to be 2 // Object.is equality",
+        "firstThreeLines": [
+          "AssertionError: expected 3221225794 to be 2 // Object.is equality",
+          "",
+          "- Expected"
+        ]
+      }
+    },
+    {
+      "canonicalId": "root-node|scripts/ci/install-playwright-chromium.test.ts|usage > refuses [\"install-deps\"]",
+      "project": "root-node",
+      "file": "scripts/ci/install-playwright-chromium.test.ts",
+      "kind": "test",
+      "case": "usage > refuses [\"install-deps\"]",
+      "headerLine": 644,
+      "headerVerbatim": " FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install-deps\"]",
+      "header": {
+        "startLine": 644,
+        "endLineInclusive": 644,
+        "byteStart": 58852,
+        "byteEndExclusive": 58953,
+        "rawSha256": "b9d7167b30b290e5ef06d3c102092042a18f8fbb7c4d91751210da6190c4536c",
+        "byteLength": 101
+      },
+      "diagnosticGroupId": "diagnostic-group-3",
+      "sharedDiagnosticHeaderCount": 4,
+      "diagnostic": {
+        "startLine": 647,
+        "endLineInclusive": 661,
+        "byteStart": 59163,
+        "byteEndExclusive": 59567,
+        "rawSha256": "000a12aed7997c6b973601058b2d80a893f3cbc43a1350457f4bf72757895328",
+        "byteLength": 404,
+        "firstOwnLine": "AssertionError: expected 3221225794 to be 2 // Object.is equality",
+        "firstThreeLines": [
+          "AssertionError: expected 3221225794 to be 2 // Object.is equality",
+          "",
+          "- Expected"
+        ]
+      }
+    },
+    {
+      "canonicalId": "root-node|scripts/ci/install-playwright-chromium.test.ts|usage > refuses [\"install\",\"0\"]",
+      "project": "root-node",
+      "file": "scripts/ci/install-playwright-chromium.test.ts",
+      "kind": "test",
+      "case": "usage > refuses [\"install\",\"0\"]",
+      "headerLine": 645,
+      "headerVerbatim": " FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"0\"]",
+      "header": {
+        "startLine": 645,
+        "endLineInclusive": 645,
+        "byteStart": 58953,
+        "byteEndExclusive": 59053,
+        "rawSha256": "b42b2ef9a7ca6dc66df92fc2318c83faf3b0943c8b01d696ea31b975f28a5b78",
+        "byteLength": 100
+      },
+      "diagnosticGroupId": "diagnostic-group-3",
+      "sharedDiagnosticHeaderCount": 4,
+      "diagnostic": {
+        "startLine": 647,
+        "endLineInclusive": 661,
+        "byteStart": 59163,
+        "byteEndExclusive": 59567,
+        "rawSha256": "000a12aed7997c6b973601058b2d80a893f3cbc43a1350457f4bf72757895328",
+        "byteLength": 404,
+        "firstOwnLine": "AssertionError: expected 3221225794 to be 2 // Object.is equality",
+        "firstThreeLines": [
+          "AssertionError: expected 3221225794 to be 2 // Object.is equality",
+          "",
+          "- Expected"
+        ]
+      }
+    },
+    {
+      "canonicalId": "root-node|scripts/ci/install-playwright-chromium.test.ts|usage > refuses [\"install\",\"60\",\"safari\"]",
+      "project": "root-node",
+      "file": "scripts/ci/install-playwright-chromium.test.ts",
+      "kind": "test",
+      "case": "usage > refuses [\"install\",\"60\",\"safari\"]",
+      "headerLine": 646,
+      "headerVerbatim": " FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > usage > refuses [\"install\",\"60\",\"safari\"]",
+      "header": {
+        "startLine": 646,
+        "endLineInclusive": 646,
+        "byteStart": 59053,
+        "byteEndExclusive": 59163,
+        "rawSha256": "e7be300d0442148018ae2e74e512bd4314f8de359f0de80057e9232e10b45766",
+        "byteLength": 110
+      },
+      "diagnosticGroupId": "diagnostic-group-3",
+      "sharedDiagnosticHeaderCount": 4,
+      "diagnostic": {
+        "startLine": 647,
+        "endLineInclusive": 661,
+        "byteStart": 59163,
+        "byteEndExclusive": 59567,
+        "rawSha256": "000a12aed7997c6b973601058b2d80a893f3cbc43a1350457f4bf72757895328",
+        "byteLength": 404,
+        "firstOwnLine": "AssertionError: expected 3221225794 to be 2 // Object.is equality",
+        "firstThreeLines": [
+          "AssertionError: expected 3221225794 to be 2 // Object.is equality",
+          "",
+          "- Expected"
+        ]
+      }
+    },
+    {
+      "canonicalId": "root-node|scripts/ci/install-playwright-chromium.test.ts|browsers > are Chromium when a job names none",
+      "project": "root-node",
+      "file": "scripts/ci/install-playwright-chromium.test.ts",
+      "kind": "test",
+      "case": "browsers > are Chromium when a job names none",
+      "headerLine": 665,
+      "headerVerbatim": " FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are Chromium when a job names none",
+      "header": {
+        "startLine": 665,
+        "endLineInclusive": 665,
+        "byteStart": 59648,
+        "byteEndExclusive": 59762,
+        "rawSha256": "42ee8f61823d0f6ee7570f57a5f959a5ca8cd1bfe846a6768531d94fbddd7602",
+        "byteLength": 114
+      },
+      "diagnosticGroupId": "diagnostic-group-4",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 666,
+        "endLineInclusive": 680,
+        "byteStart": 59762,
+        "byteEndExclusive": 60251,
+        "rawSha256": "f5d60d7c2e372ad6d0af3919f8109d0abf97ffecd3af6a7c7e4ee01345b3f58f",
+        "byteLength": 489,
+        "firstOwnLine": "AssertionError: expected '' to be 'npx playwright install --with-deps ch…' // Object.is equality",
+        "firstThreeLines": [
+          "AssertionError: expected '' to be 'npx playwright install --with-deps ch…' // Object.is equality",
+          "",
+          "- Expected"
+        ]
+      }
+    },
+    {
+      "canonicalId": "root-node|scripts/ci/install-playwright-chromium.test.ts|browsers > are the ones a job names",
+      "project": "root-node",
+      "file": "scripts/ci/install-playwright-chromium.test.ts",
+      "kind": "test",
+      "case": "browsers > are the ones a job names",
+      "headerLine": 684,
+      "headerVerbatim": " FAIL  |root-node| scripts/ci/install-playwright-chromium.test.ts > browsers > are the ones a job names",
+      "header": {
+        "startLine": 684,
+        "endLineInclusive": 684,
+        "byteStart": 60332,
+        "byteEndExclusive": 60436,
+        "rawSha256": "a166139f2c35a07128e00134cb07b7433587e8bac33f786b7c9103eb93cbce21",
+        "byteLength": 104
+      },
+      "diagnosticGroupId": "diagnostic-group-5",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 685,
+        "endLineInclusive": 699,
+        "byteStart": 60436,
+        "byteEndExclusive": 60973,
+        "rawSha256": "e007d44f3b4c595332a0e02e5cd673688df4b8ff177cb4a7b3149879fa7de47a",
+        "byteLength": 537,
+        "firstOwnLine": "AssertionError: expected '' to be 'npx playwright install --with-deps ch…' // Object.is equality",
+        "firstThreeLines": [
+          "AssertionError: expected '' to be 'npx playwright install --with-deps ch…' // Object.is equality",
+          "",
+          "- Expected"
+        ]
+      }
+    },
+    {
+      "canonicalId": "dom|src/components/__tests__/FoodCameraModal.photoLock.test.tsx|FoodCameraModal — photo scanning not on the tier > names the offer the way the Pro line under the composer does once the trial is used",
+      "project": "dom",
+      "file": "src/components/__tests__/FoodCameraModal.photoLock.test.tsx",
+      "kind": "test",
+      "case": "FoodCameraModal — photo scanning not on the tier > names the offer the way the Pro line under the composer does once the trial is used",
+      "headerLine": 703,
+      "headerVerbatim": " FAIL  |dom| src/components/__tests__/FoodCameraModal.photoLock.test.tsx > FoodCameraModal — photo scanning not on the tier > names the offer the way the Pro line under the composer does once the trial is used",
+      "header": {
+        "startLine": 703,
+        "endLineInclusive": 703,
+        "byteStart": 61054,
+        "byteEndExclusive": 61266,
+        "rawSha256": "88bf9c5e01fdac6866262882daaa66cab379b492200a1989b613fb5458ab195e",
+        "byteLength": 212
+      },
+      "diagnosticGroupId": "diagnostic-group-6",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 704,
+        "endLineInclusive": 712,
+        "byteStart": 61266,
+        "byteEndExclusive": 61722,
+        "rawSha256": "2990d90ace885773c296209e5cf3a1cb860f218eeb30b7a72beb2dc2d6d21c52",
+        "byteLength": 456,
+        "firstOwnLine": "Error: Hook timed out in 10000ms.",
+        "firstThreeLines": [
+          "Error: Hook timed out in 10000ms.",
+          "If this is a long-running hook, pass a timeout value as the last argument or configure it globally with \"hookTimeout\".",
+          " ❯ src/test/setup.ts:41:3"
+        ]
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/bodyRig.test.ts|supplied placard frames > all of a sequence's frames share one canvas",
+      "project": "node",
+      "file": "src/lib/__tests__/bodyRig.test.ts",
+      "kind": "test",
+      "case": "supplied placard frames > all of a sequence's frames share one canvas",
+      "headerLine": 716,
+      "headerVerbatim": " FAIL  |node| src/lib/__tests__/bodyRig.test.ts > supplied placard frames > all of a sequence's frames share one canvas",
+      "header": {
+        "startLine": 716,
+        "endLineInclusive": 716,
+        "byteStart": 61803,
+        "byteEndExclusive": 61923,
+        "rawSha256": "5d6ee5cf13ec2d43cf48cb88d85341f7fcc4cb96c882f53e8ab2356cad899f0e",
+        "byteLength": 120
+      },
+      "diagnosticGroupId": "diagnostic-group-7",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 717,
+        "endLineInclusive": 725,
+        "byteStart": 61923,
+        "byteEndExclusive": 62394,
+        "rawSha256": "d3845ec614d4671acf63ed6eb99bc0528bee519f001c175d7daf6c458e3fdbf4",
+        "byteLength": 471,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/lib/__tests__/bodyRig.test.ts:5160:3"
+        ]
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/leaderboard.test.ts|boardFigure > converts the volume board, and only that one",
+      "project": "node",
+      "file": "src/lib/__tests__/leaderboard.test.ts",
+      "kind": "test",
+      "case": "boardFigure > converts the volume board, and only that one",
+      "headerLine": 729,
+      "headerVerbatim": " FAIL  |node| src/lib/__tests__/leaderboard.test.ts > boardFigure > converts the volume board, and only that one",
+      "header": {
+        "startLine": 729,
+        "endLineInclusive": 729,
+        "byteStart": 62475,
+        "byteEndExclusive": 62588,
+        "rawSha256": "21988df78ea8cfed60fd58d92cbbac01a1d47d20a094385daa7be9583f98d5c1",
+        "byteLength": 113
+      },
+      "diagnosticGroupId": "diagnostic-group-8",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 730,
+        "endLineInclusive": 738,
+        "byteStart": 62588,
+        "byteEndExclusive": 63139,
+        "rawSha256": "50eeed1323c7562de37f86af1374d568211f695cdfb22aa9c0b3d521857c4c06",
+        "byteLength": 551,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/lib/__tests__/leaderboard.test.ts:68:3"
+        ]
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/noDisabledTests.test.ts|no test is switched off outright > finds no unconditional skip in src/ or functions/",
+      "project": "node",
+      "file": "src/lib/__tests__/noDisabledTests.test.ts",
+      "kind": "test",
+      "case": "no test is switched off outright > finds no unconditional skip in src/ or functions/",
+      "headerLine": 742,
+      "headerVerbatim": " FAIL  |node| src/lib/__tests__/noDisabledTests.test.ts > no test is switched off outright > finds no unconditional skip in src/ or functions/",
+      "header": {
+        "startLine": 742,
+        "endLineInclusive": 742,
+        "byteStart": 63220,
+        "byteEndExclusive": 63363,
+        "rawSha256": "2f54ab7134e1e7dda5b8a5e73539e51f24ecd153022f888a0014f01db1042e8c",
+        "byteLength": 143
+      },
+      "diagnosticGroupId": "diagnostic-group-9",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 743,
+        "endLineInclusive": 751,
+        "byteStart": 63363,
+        "byteEndExclusive": 63826,
+        "rawSha256": "661366c2c55a6f5d11ec18de3ca7ada9f2db570e7d3131479bfd87951fbfad3e",
+        "byteLength": 463,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/lib/__tests__/noDisabledTests.test.ts:65:3"
+        ]
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/themeContract.test.ts|Sprint 0 theme contract — no source uses undefined var(--text-muted) > no .ts / .tsx / .css file in src/ references var(--text-muted)",
+      "project": "node",
+      "file": "src/lib/__tests__/themeContract.test.ts",
+      "kind": "test",
+      "case": "Sprint 0 theme contract — no source uses undefined var(--text-muted) > no .ts / .tsx / .css file in src/ references var(--text-muted)",
+      "headerLine": 755,
+      "headerVerbatim": " FAIL  |node| src/lib/__tests__/themeContract.test.ts > Sprint 0 theme contract — no source uses undefined var(--text-muted) > no .ts / .tsx / .css file in src/ references var(--text-muted)",
+      "header": {
+        "startLine": 755,
+        "endLineInclusive": 755,
+        "byteStart": 63907,
+        "byteEndExclusive": 64099,
+        "rawSha256": "28a9c9d300ed904a2ccb6c9de57278b3dbb4fdf33b574deea31aa3d42253f175",
+        "byteLength": 192
+      },
+      "diagnosticGroupId": "diagnostic-group-10",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 756,
+        "endLineInclusive": 764,
+        "byteStart": 64099,
+        "byteEndExclusive": 64623,
+        "rawSha256": "75a6af15e03c366ff84907bdade96a631650a0e9acd6688016da87e80c7ec56d",
+        "byteLength": 524,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/lib/__tests__/themeContract.test.ts:360:3"
+        ]
+      }
+    },
+    {
+      "canonicalId": "node|src/features/program/__tests__/generatorAudit.test.ts|generator audit — every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+      "project": "node",
+      "file": "src/features/program/__tests__/generatorAudit.test.ts",
+      "kind": "test",
+      "case": "generator audit — every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+      "headerLine": 768,
+      "headerVerbatim": " FAIL  |node| src/features/program/__tests__/generatorAudit.test.ts > generator audit — every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+      "header": {
+        "startLine": 768,
+        "endLineInclusive": 768,
+        "byteStart": 64702,
+        "byteEndExclusive": 64894,
+        "rawSha256": "b013654d3017765c18fde88fd5183f35b7802a00f30b2a54c4cf3899d6927092",
+        "byteLength": 192
+      },
+      "diagnosticGroupId": "diagnostic-group-11",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 769,
+        "endLineInclusive": 777,
+        "byteStart": 64894,
+        "byteEndExclusive": 65441,
+        "rawSha256": "b23bfc7d5409dfeef7a855c216093984474602f74a0222dfe237771e08735b4f",
+        "byteLength": 547,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/features/program/__tests__/generatorAudit.test.ts:147:3"
+        ]
+      }
+    },
+    {
+      "canonicalId": "node|src/features/program/__tests__/useProgramWriters.test.ts|RUN-RESCHEDULE-01 — moveRunDay > refuses to move a race slot (immovable identity)",
+      "project": "node",
+      "file": "src/features/program/__tests__/useProgramWriters.test.ts",
+      "kind": "test",
+      "case": "RUN-RESCHEDULE-01 — moveRunDay > refuses to move a race slot (immovable identity)",
+      "headerLine": 781,
+      "headerVerbatim": " FAIL  |node| src/features/program/__tests__/useProgramWriters.test.ts > RUN-RESCHEDULE-01 — moveRunDay > refuses to move a race slot (immovable identity)",
+      "header": {
+        "startLine": 781,
+        "endLineInclusive": 781,
+        "byteStart": 65520,
+        "byteEndExclusive": 65677,
+        "rawSha256": "74d6c67efb75c35374aafe36ba35c8b0e6aad2a378dd1dedb7d07ef037ee198d",
+        "byteLength": 157
+      },
+      "diagnosticGroupId": "diagnostic-group-12",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 782,
+        "endLineInclusive": 807,
+        "byteStart": 65677,
+        "byteEndExclusive": 66588,
+        "rawSha256": "63ef6b308cff2ebc724df224077c89898af25dcf3be3c3cb031063af155a087a",
+        "byteLength": 911,
+        "firstOwnLine": "AssertionError: expected true to be false // Object.is equality",
+        "firstThreeLines": [
+          "AssertionError: expected true to be false // Object.is equality",
+          "",
+          "Ignored nodes: comments, script, style"
+        ]
+      }
+    }
+  ]
+}

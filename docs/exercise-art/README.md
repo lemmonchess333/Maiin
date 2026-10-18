@@ -134,6 +134,17 @@ When a set has more than one approved record, the newest review wins. Sets
 released without a strict review (the older shipped sets and the owner
 releases) are still listed by hand in `formArtwork.ts`; no new set joins them.
 
+An existing strict release can be replaced by an explicitly reviewed owner
+release with outstanding findings. That owner record must name the exact
+previous approval in `supersedesApprovedRelease`, use the same exercise ID,
+and have a strictly later `reviewedAt`. It must target the latest approval
+before its own review date. An ordinary owner record without this field
+cannot withdraw approval. Equal eligible decision timestamps are rejected.
+Every historical approval is still validated and preserved. A later genuine
+strict approval restores the generated row; remove its obsolete hand entry
+then, as the existing no-overlap registry guard requires. Owner authorization
+does not certify any of the eleven strict review checks.
+
 ## Production commands
 
 ```sh

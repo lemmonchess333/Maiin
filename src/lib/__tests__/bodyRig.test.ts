@@ -5188,6 +5188,21 @@ describe("supplied placard frames", () => {
     }
   });
 
+  it("bench press reuses the supported chest-touch and early-return sources truthfully", () => {
+    const beats = getAuthoredBeats("bench-press")!;
+    expect(beats.map(({ t }) => t)).toEqual([1, 0.88, 0, 0, 0.88, 1]);
+    const frames = beats.map(({ image }) =>
+      readFileSync(resolve(process.cwd(), "public", image!))
+    );
+    // Reintroducing the drifting whole-scene source into either middle beat
+    // would break the supported dwell or its genuine early return.
+    expect(frames[2].equals(frames[3])).toBe(true);
+    expect(frames[1].equals(frames[4])).toBe(true);
+    expect(frames[0].equals(frames[5])).toBe(true);
+    expect(frames[0].equals(frames[1])).toBe(false);
+    expect(frames[1].equals(frames[2])).toBe(false);
+  });
+
   it("leaves no orphan frames in the directory", () => {
     // A renamed beat that leaves its old picture behind ships dead
     // weight in the bundle and reads as a frame that is still in use.

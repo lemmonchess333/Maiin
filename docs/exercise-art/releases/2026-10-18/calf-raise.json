@@ -1,0 +1,164 @@
+{
+  "exerciseId": "calf-raise",
+  "version": "anatomy-v3-2026-10-18-calf-model-correction-v1",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex native source and scoped continuity/model correction review",
+  "reviewedAt": "2026-10-18T09:19:22.379567+00:00",
+  "reference": {
+    "path": "form-frames/calf-raise/3.webp",
+    "sha256": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490"
+  },
+  "cueSha256": "2f242605e505975db3cd60a9d9dd8bac4f336397481a008f3ba2438c0fae8f21",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "The approved FA56 white-grey educational athlete, white trainers and no-shorts model are retained. Three native image-generation edits replace only the old shorts region; authored hip/support masks and original-pixel preservation proofs are archived."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Unchanged delivered canvas and original camera; no anatomical fitting, warping, mirroring or resampling. Native and delivered canvas remains1024x1536."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Native source, layer, palette and contact review passed with inherited contour limitations retained. Strict anatomical certification is not asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "All original machine, load, guide, shoulder-pad and shoe pixels outside the hip/palette fields remain exact. Existing discrete-pose travel limitation is retained."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Original forefoot/step and shoulder-pad contacts remain. In the inherited first rise, heels move slightly before shoulders/pad/body/lever visibly rise; no strict fixed-contact certification is claimed."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Three genuine poses use1/2/3/3/2/1. Inherited pose1-to2 heel rise is not accompanied by equal upper-body/pad/lever travel; full rise appears at3. This remains an explicit visual finding, not a passed mechanics review."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Existing calf primary fields are mapped to the canonical approved palette with original shading/contours retained; catalogue muscle key and setup remain unchanged."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Original six labels/cues/order/setup/player duration and reference choice remain unchanged. All original qualitative t values remain unchanged."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Actual registered ExerciseFormContent at390x844: all six public images decoded and natural6-to1 loops observed in normal dark, slower dark and normal light. Instruction6 selection and paused Next1 preserved cue/highlight/pause. Immutable review archive binds raw traces; strict certification remains null."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Actual390x844 registered normal light full-player screenshot inspected, all six public frames/loop observed and manual6-to1 verified. All three normal cards reviewed at480/348/160/48px in both themes. Scoped review passed with source/display findings retained; strict certification remains null."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Actual390x844 registered normal/slower dark playback observed all six decoded frames and natural loops; full-player screenshot inspected. Native/public/card peer review is bound by exact hashes. Strict certification remains null."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/calf-raise/1.webp",
+      "sha256": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/calf-raise/2026-10-18-model-correction/1.png",
+        "sha256": "198f8c656dd0cde3696fbcd648d7657674b2369b44b2891cbfdc7022dc1b949d"
+      }
+    },
+    {
+      "path": "form-frames/calf-raise/2.webp",
+      "sha256": "bcff77dec526efa9ace5b83bb50eeb190df259f446b4da53c0454ed0e8e944c3",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/calf-raise/2026-10-18-model-correction/2.png",
+        "sha256": "506270a1db0146f4e59b66db0c6bf00be6be15bfd46bbbba64ce9b091fd44f46"
+      }
+    },
+    {
+      "path": "form-frames/calf-raise/3.webp",
+      "sha256": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/calf-raise/2026-10-18-model-correction/3.png",
+        "sha256": "2c218bd31827e951e335f66816912a79a510b963661db7a91a71b8c8ce3035c3"
+      }
+    },
+    {
+      "path": "form-frames/calf-raise/4.webp",
+      "sha256": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/calf-raise/2026-10-18-model-correction/4.png",
+        "sha256": "2c218bd31827e951e335f66816912a79a510b963661db7a91a71b8c8ce3035c3"
+      }
+    },
+    {
+      "path": "form-frames/calf-raise/5.webp",
+      "sha256": "bcff77dec526efa9ace5b83bb50eeb190df259f446b4da53c0454ed0e8e944c3",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/calf-raise/2026-10-18-model-correction/5.png",
+        "sha256": "506270a1db0146f4e59b66db0c6bf00be6be15bfd46bbbba64ce9b091fd44f46"
+      }
+    },
+    {
+      "path": "form-frames/calf-raise/6.webp",
+      "sha256": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/calf-raise/2026-10-18-model-correction/6.png",
+        "sha256": "198f8c656dd0cde3696fbcd648d7657674b2369b44b2891cbfdc7022dc1b949d"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "The human owner in this chat",
+    "instruction": "Fix the bench-press jump and both calf-raise sets, retaining our model and colours without shorts, and get them merged.",
+    "context": "Standing human authorization covers native corrections, local registration, normal checks and normal merging without routine approval questions. This is owner authorization, not strict visual certification."
+  },
+  "findings": [
+    "The old charcoal shorts are replaced by the approved educational no-shorts mannequin model; the muscle palette is corrected with the native hip/palette support and preservation proofs retained.",
+    "Inherited discrete-motion limitation: pose1-to2 heels rise slightly while shoulders, shoulder pad, body and lever remain visually unchanged; full upper-body/lever rise appears at pose3. This source is owner-released with findings and does not inherit the old strict approval.",
+    "Original modest below-step heel stretch and inherited small contour/contact differences remain unchanged.",
+    "Three physical poses repeated honestly across six delivery paths. No continuous trajectory or strict identity/mechanics certification claimed."
+  ],
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "distinctPhysicalPoses": 3,
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/calf-raise/2026-10-18-model-correction",
+    "method": "Three built-in image-generation native hip edits replace the charcoal shorts with the canonical educational no-shorts mannequin; exact existing-field palette mapping and native support masks preserve all other source pixels.",
+    "newImageGeneration": true,
+    "newImageGenerationCalls": 3,
+    "generationFailures": 0,
+    "anatomicalTransforms": [],
+    "priorRelease": "docs/exercise-art/releases/2026-10-03/calf-raise.json",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/calf-raise/2026-10-18-model-correction/portable-calf-model-source.zip",
+      "sha256": "31dbf3ac960be1a0b0eea49584632add7ad4167607f128596cc1c3982c541dc1",
+      "bytes": 52051777,
+      "members": 62
+    }
+  },
+  "recordStage": "Native/source, actual registered mobile/manual/normal/slower playback and normal-card reviews complete with findings retained. Normal project verification and exact-head CI/merge remain separate publication gates.",
+  "replacementScope": "Correction of an existing six-frame guide; no conversion-count increment.",
+  "integrationEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-18-bench-calf-correction/registered-player-review.zip",
+    "sha256": "23c3d491e84994c54b0d39eb8696400e1ad7f243451f7ca575220bbcec78bc29",
+    "bytes": 2306482,
+    "members": 52,
+    "review": "docs/exercise-art/reviews/2026-10-18-bench-calf-correction/registered-player-review.json.txt",
+    "reviewSha256": "8509762b8d1be2319243f78c37f329a9e768e708788abba63e38a775263b3afd",
+    "envelope": "docs/exercise-art/reviews/2026-10-18-bench-calf-correction/registered-review-envelope.json"
+  },
+  "supersedesApprovedRelease": "docs/exercise-art/releases/2026-10-03/calf-raise.json"
+}

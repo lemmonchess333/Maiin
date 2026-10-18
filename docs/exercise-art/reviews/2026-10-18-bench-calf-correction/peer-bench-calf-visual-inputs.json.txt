@@ -1,0 +1,52 @@
+{
+  "scope": "Actual registered public guide frames and normal cards. The known measured base is f161a521a602ec3ab51fbc0ea7aea366fad5e178; these hashes bind the frozen local registered assets rather than assuming their bytes equal that base.",
+  "sha256": {
+    "public/form-frames/bench-press/1.webp": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f",
+    "public/form-frames/bench-press/2.webp": "4ab1f8d37c4137bd4ced6b2a9fb85bee29d7b905daab019b99cef7c46b8b014f",
+    "public/form-frames/bench-press/3.webp": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd",
+    "public/form-frames/bench-press/4.webp": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd",
+    "public/form-frames/bench-press/5.webp": "4ab1f8d37c4137bd4ced6b2a9fb85bee29d7b905daab019b99cef7c46b8b014f",
+    "public/form-frames/bench-press/6.webp": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f",
+    "public/form-art/bench-press.webp": "91224a73d156bb63a49fd2c5e441123d0aed251f45f2dfaa62ba0c99e0a28121",
+    "public/form-frames/calf-raise/1.webp": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+    "public/form-frames/calf-raise/2.webp": "bcff77dec526efa9ace5b83bb50eeb190df259f446b4da53c0454ed0e8e944c3",
+    "public/form-frames/calf-raise/3.webp": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+    "public/form-frames/calf-raise/4.webp": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+    "public/form-frames/calf-raise/5.webp": "bcff77dec526efa9ace5b83bb50eeb190df259f446b4da53c0454ed0e8e944c3",
+    "public/form-frames/calf-raise/6.webp": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+    "public/form-art/calf-raise.webp": "958760eb6cb7366f9ede91aff451921841e3b7812022c220ba360a16e749ad71",
+    "public/form-frames/standing-calf-raise/1.webp": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+    "public/form-frames/standing-calf-raise/2.webp": "bcff77dec526efa9ace5b83bb50eeb190df259f446b4da53c0454ed0e8e944c3",
+    "public/form-frames/standing-calf-raise/3.webp": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+    "public/form-frames/standing-calf-raise/4.webp": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+    "public/form-frames/standing-calf-raise/5.webp": "bcff77dec526efa9ace5b83bb50eeb190df259f446b4da53c0454ed0e8e944c3",
+    "public/form-frames/standing-calf-raise/6.webp": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+    "public/form-art/standing-calf-raise.webp": "958760eb6cb7366f9ede91aff451921841e3b7812022c220ba360a16e749ad71"
+  },
+  "bench_card_unchanged_from_measured_base": true,
+  "normal_card_dimensions": {
+    "bench-press": [
+      480,
+      445
+    ],
+    "calf-raise": [
+      320,
+      480
+    ],
+    "standing-calf-raise": [
+      320,
+      480
+    ]
+  },
+  "source_candidates_match_all_18_public_frames": true,
+  "display_max_dimensions": [
+    480,
+    348,
+    160,
+    48
+  ],
+  "backgrounds": {
+    "dark": "#17171b",
+    "light": "#faf9f6"
+  }
+}

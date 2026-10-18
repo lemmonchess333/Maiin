@@ -169,4 +169,150 @@ describe("approved artwork releases", () => {
     for (const [records, error] of cases)
       expect(() => approvedReleases(records), String(error)).toThrow(error);
   });
+
+  it("withdraws only an explicitly named prior approval and permits later strict reapproval", () => {
+    const first = record("db-curl", "2026-09-29");
+    const owner = record("db-curl", "2026-10-01", {
+      decision: "owner-released-with-findings",
+      supersedesApprovedRelease:
+        "docs/exercise-art/releases/2026-09-29/db-curl.json",
+    });
+    const ordinary = record("db-curl", "2026-10-02", {
+      decision: "owner-released-with-findings",
+    });
+    const later = record("db-curl", "2026-10-03");
+    const latestOwner = record("db-curl", "2026-10-04", {
+      decision: "owner-released-with-findings",
+      supersedesApprovedRelease:
+        "docs/exercise-art/releases/2026-10-03/db-curl.json",
+    });
+    expect(approvedReleases([first, ordinary])).toEqual(
+      approvedReleases([first])
+    );
+    for (const records of [
+      [first, owner],
+      [owner, first],
+    ])
+      expect(approvedReleases(records)).toEqual({});
+    for (const records of [
+      [first, owner, ordinary, later],
+      [later, ordinary, owner, first],
+    ])
+      expect(approvedReleases(records)).toEqual(approvedReleases([later]));
+    expect(approvedReleases([latestOwner, first, later, owner])).toEqual({});
+    // Supersession never hides malformed historical approved evidence.
+    expect(() =>
+      approvedReleases([
+        { ...first, record: { ...first.record, frames: [] } },
+        owner,
+      ])
+    ).toThrow(/frames/);
+  });
+
+  it("rejects stale or malformed explicit supersession without depending on input order", () => {
+    const first = record("db-curl", "2026-09-29");
+    const newer = record("db-curl", "2026-09-30");
+    const target = "docs/exercise-art/releases/2026-09-29/db-curl.json";
+    const owner = (changes: Record<string, unknown> = {}) =>
+      record("db-curl", "2026-10-01", {
+        decision: "owner-released-with-findings",
+        supersedesApprovedRelease: target,
+        ...changes,
+      });
+    const cases: [ReleaseRecordFile[], RegExp][] = [
+      [
+        [first, newer, owner()],
+        /latest approved record at the owner review date/,
+      ],
+      [
+        [first, owner({ reviewedAt: "2026-09-28T12:00:00Z" })],
+        /newer than its approved target/,
+      ],
+      [
+        [first, owner({ reviewedAt: first.record.reviewedAt })],
+        /share a review date/,
+      ],
+      [
+        [
+          first,
+          owner({
+            supersedesApprovedRelease:
+              "docs/exercise-art/releases/missing/db-curl.json",
+          }),
+        ],
+        /existing approved record for the same exercise/,
+      ],
+      [
+        [
+          first,
+          record("squat", "2026-09-29"),
+          owner({
+            supersedesApprovedRelease:
+              "docs/exercise-art/releases/2026-09-29/squat.json",
+          }),
+        ],
+        /existing approved record for the same exercise/,
+      ],
+      [
+        [
+          record("db-curl", "2026-09-29", {
+            decision: "owner-released-with-findings",
+          }),
+          owner(),
+        ],
+        /existing approved record for the same exercise/,
+      ],
+      [
+        [first, owner({ decision: "draft" })],
+        /only an explicit owner decision/,
+      ],
+      [
+        [first, owner({ decision: "approved" })],
+        /only an explicit owner decision/,
+      ],
+      ...[null, "", " ", 1, []].map((value): [ReleaseRecordFile[], RegExp] => [
+        [first, owner({ supersedesApprovedRelease: value })],
+        /must name a prior approved record/,
+      ]),
+      ...[undefined, null, "", " ", "invalid", 1, []].map(
+        (value): [ReleaseRecordFile[], RegExp] => [
+          [first, owner({ reviewedAt: value })],
+          /explicit owner decision needs its review date/,
+        ]
+      ),
+    ];
+    for (const [records, error] of cases) {
+      expect(() => approvedReleases(records), String(error)).toThrow(error);
+      expect(
+        () => approvedReleases([...records].reverse()),
+        String(error)
+      ).toThrow(error);
+    }
+  });
+
+  it("rejects normalized per-set date ties, including older decisions below a newer approval", () => {
+    const first = record("db-curl", "2026-09-29");
+    const sameInstant = record("db-curl", "2026-09-30", {
+      reviewedAt: "2026-09-29T13:00:00+01:00",
+    });
+    const newest = record("db-curl", "2026-10-03");
+    for (const records of [
+      [newest, first, sameInstant],
+      [sameInstant, newest, first],
+    ])
+      expect(() => approvedReleases(records)).toThrow(/share a review date/);
+    const owner = record("db-curl", "2026-10-01", {
+      decision: "owner-released-with-findings",
+      supersedesApprovedRelease:
+        "docs/exercise-art/releases/2026-09-29/db-curl.json",
+    });
+    const duplicateOwner = { ...owner, folder: "2026-10-02" };
+    expect(() =>
+      approvedReleases([newest, duplicateOwner, owner, first])
+    ).toThrow(/share a review date/);
+    // Equal dates in different exercise IDs are independent decisions.
+    expect(
+      Object.keys(approvedReleases([first, record("squat", "2026-09-29")]))
+    ).toEqual(["db-curl", "squat"]);
+  });
 });

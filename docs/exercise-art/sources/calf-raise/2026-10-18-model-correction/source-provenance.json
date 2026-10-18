@@ -1,0 +1,44 @@
+{
+  "ids": ["calf-raise", "standing-calf-raise"],
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "dimensions": [1024, 1536],
+  "archive": {
+    "path": "portable-calf-model-source.zip",
+    "sha256": "31dbf3ac960be1a0b0eea49584632add7ad4167607f128596cc1c3982c541dc1",
+    "bytes": 52051777,
+    "members": 62
+  },
+  "sourcePngs": [
+    {
+      "path": "1.png",
+      "sha256": "198f8c656dd0cde3696fbcd648d7657674b2369b44b2891cbfdc7022dc1b949d"
+    },
+    {
+      "path": "2.png",
+      "sha256": "506270a1db0146f4e59b66db0c6bf00be6be15bfd46bbbba64ce9b091fd44f46"
+    },
+    {
+      "path": "3.png",
+      "sha256": "2c218bd31827e951e335f66816912a79a510b963661db7a91a71b8c8ce3035c3"
+    },
+    {
+      "path": "4.png",
+      "sha256": "2c218bd31827e951e335f66816912a79a510b963661db7a91a71b8c8ce3035c3"
+    },
+    {
+      "path": "5.png",
+      "sha256": "506270a1db0146f4e59b66db0c6bf00be6be15bfd46bbbba64ce9b091fd44f46"
+    },
+    {
+      "path": "6.png",
+      "sha256": "198f8c656dd0cde3696fbcd648d7657674b2369b44b2891cbfdc7022dc1b949d"
+    }
+  ],
+  "strictCertified": false,
+  "findings": [
+    "The old charcoal shorts are replaced by the approved educational no-shorts mannequin model; the muscle palette is corrected with the native hip/palette support and preservation proofs retained.",
+    "Inherited discrete-motion limitation: pose1-to2 heels rise slightly while shoulders, shoulder pad, body and lever remain visually unchanged; full upper-body/lever rise appears at pose3. This source is owner-released with findings and does not inherit the old strict approval.",
+    "Original modest below-step heel stretch and inherited small contour/contact differences remain unchanged.",
+    "Three physical poses repeated honestly across six delivery paths. No continuous trajectory or strict identity/mechanics certification claimed."
+  ]
+}

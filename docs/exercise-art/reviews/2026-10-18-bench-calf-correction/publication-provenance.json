@@ -1,0 +1,60 @@
+{
+  "baselineHead": "f161a521a602ec3ab51fbc0ea7aea366fad5e178",
+  "baselineNormalVerification": {
+    "label": "bench-calf-baseline-f161a521",
+    "exitCode": 1,
+    "testFiles": {
+      "failed": 10,
+      "passed": 1187,
+      "skipped": 10,
+      "total": 1207,
+      "verbatim": "Test Files  10 failed | 1187 passed | 10 skipped (1207)",
+      "proof": {
+        "startLine": 812,
+        "endLineInclusive": 812,
+        "byteStart": 66668,
+        "byteEndExclusive": 66725,
+        "rawSha256": "c6f987616897c698e16273a62ccb7fe07dae5de6cab2a89ec5844c8e860ac677",
+        "byteLength": 57
+      }
+    },
+    "tests": {
+      "failed": 13,
+      "passed": 13787,
+      "skipped": 409,
+      "total": 14209,
+      "verbatim": "Tests  13 failed | 13787 passed | 409 skipped (14209)",
+      "proof": {
+        "startLine": 813,
+        "endLineInclusive": 813,
+        "byteStart": 66725,
+        "byteEndExclusive": 66785,
+        "rawSha256": "3cad2993645ae928a6b497e9fdd92683c66e8246ba493f947bc6f6f635da2520",
+        "byteLength": 60
+      }
+    },
+    "logSha256": "923b9c8f8416539985803e35754a042f3b17a94c79f18ab11c88e1976aeded5d",
+    "inputsPreserved": true
+  },
+  "scope": {
+    "publicReplacements": 16,
+    "historicalReleaseRecordsPreserved": 276,
+    "guides": 152,
+    "strictApproved": 120,
+    "ownerReleasedWithFindings": 32
+  },
+  "rawEvidenceFiles": {
+    "root-native-staged-review.json.txt": "94eaffed118df50b45f81c954a5a2194e9ffe56a03819d679ed9d3ab86ad12cf",
+    "peer-native-bench-calf-review.json.txt": "4fbeca5e1e595d36c750b73b201d9c8b17395ac2a45fd8ab64f0e44baa1c65ee",
+    "peer-bench-calf-visual-review.json.txt": "61d70c29a9ab0cb9bb84fa587b3e9778b571c17444d2c1d25f7a79ea423f5c3d",
+    "peer-bench-calf-visual-inputs.json.txt": "14776709b123f52c75ac876639dd7088e023ab8c700a1101f56bcdb8cf7a8c06",
+    "baseline-normal-verify-index.json.txt": "6ffb6964c706b4afa2524b865f93fd9fec8c8f8b68b5ff2d370582a85fbe4425"
+  },
+  "nativeReview": "root-native-staged-review.json.txt",
+  "sourceArchives": [
+    "../../sources/bench-press/2026-10-18-supported-continuity/portable-native-continuity-source.zip",
+    "../../sources/calf-raise/2026-10-18-model-correction/portable-calf-model-source.zip"
+  ],
+  "strictCertification": false,
+  "noConversionCountIncrement": true
+}

@@ -1,0 +1,167 @@
+{
+  "exerciseId": "bench-press",
+  "version": "anatomy-v3-2026-10-18-supported-continuity-v1",
+  "width": 888,
+  "height": 1024,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex native source and scoped continuity/model correction review",
+  "reviewedAt": "2026-10-18T09:19:22.379567+00:00",
+  "reference": {
+    "path": "form-frames/bench-press/4.webp",
+    "sha256": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd"
+  },
+  "cueSha256": "bccf45debd6d111fe77549134591d101fea4b4894a0755cc11f0e35dd6fd4c04",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "The approved FA56 white-grey educational athlete, white trainers and no-shorts model are retained. All selected original native athlete layers are unchanged."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Unchanged delivered canvas and original camera; no anatomical fitting, warping, mirroring or resampling. The original1536x1024 source uses common crop[264,0,1152,1024] at scale1."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Native source, layer, palette and contact review passed with inherited contour limitations retained. Strict anatomical certification is not asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Existing bench, bar and supported native source states are reused intact."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Remove the whole-scene lower-middle source. All six selected states have head-top275 in the fixed diagnostic region; prior19px jump is absent. Minor inherited contour differences remain."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Three genuine supported poses use extension fractions1/.88/0/0/.88/1, with an intentional chest-touch dwell. No interpolated anatomy or continuous trajectory is invented."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Pectorals primary and triceps/anterior-deltoid secondary remain unchanged with the existing solid key."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Original six labels/cues/order/setup/player duration and reference choice remain unchanged. Only qualitative t3=.35 to0 and t5=.35 to.88 change to describe the actual native source states."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Actual registered ExerciseFormContent at390x844: all six public images decoded and natural6-to1 loops observed in normal dark, slower dark and normal light. Instruction6 selection and paused Next1 preserved cue/highlight/pause. Immutable review archive binds raw traces; strict certification remains null."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Actual390x844 registered normal light full-player screenshot inspected, all six public frames/loop observed and manual6-to1 verified. All three normal cards reviewed at480/348/160/48px in both themes. Scoped review passed with source/display findings retained; strict certification remains null."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Actual390x844 registered normal/slower dark playback observed all six decoded frames and natural loops; full-player screenshot inspected. Native/public/card peer review is bound by exact hashes. Strict certification remains null."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/bench-press/1.webp",
+      "sha256": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/bench-press/2026-10-18-supported-continuity/1.png",
+        "sha256": "80c9da845e4e3001878cb6de2de087f4ac5f3932be86d8779bed05d1b9f38732"
+      }
+    },
+    {
+      "path": "form-frames/bench-press/2.webp",
+      "sha256": "4ab1f8d37c4137bd4ced6b2a9fb85bee29d7b905daab019b99cef7c46b8b014f",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/bench-press/2026-10-18-supported-continuity/2.png",
+        "sha256": "c8c5e10928bac4f588c7ea5716699dec1ac49d971c0dad46b3c940fb91b2413c"
+      }
+    },
+    {
+      "path": "form-frames/bench-press/3.webp",
+      "sha256": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/bench-press/2026-10-18-supported-continuity/3.png",
+        "sha256": "be2032efb06c08fe3ae0ef442f47f1cf8e4f50609815d2b2c93285128ac90f83"
+      }
+    },
+    {
+      "path": "form-frames/bench-press/4.webp",
+      "sha256": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/bench-press/2026-10-18-supported-continuity/4.png",
+        "sha256": "be2032efb06c08fe3ae0ef442f47f1cf8e4f50609815d2b2c93285128ac90f83"
+      }
+    },
+    {
+      "path": "form-frames/bench-press/5.webp",
+      "sha256": "4ab1f8d37c4137bd4ced6b2a9fb85bee29d7b905daab019b99cef7c46b8b014f",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/bench-press/2026-10-18-supported-continuity/5.png",
+        "sha256": "c8c5e10928bac4f588c7ea5716699dec1ac49d971c0dad46b3c940fb91b2413c"
+      }
+    },
+    {
+      "path": "form-frames/bench-press/6.webp",
+      "sha256": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/bench-press/2026-10-18-supported-continuity/6.png",
+        "sha256": "80c9da845e4e3001878cb6de2de087f4ac5f3932be86d8779bed05d1b9f38732"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "The human owner in this chat",
+    "instruction": "Fix the bench-press jump and both calf-raise sets, retaining our model and colours without shorts, and get them merged.",
+    "context": "Standing human authorization covers native corrections, local registration, normal checks and normal merging without routine approval questions. This is owner authorization, not strict visual certification."
+  },
+  "findings": [
+    "Three genuine physical poses reused across six guide paths. Frames 3 and 4 intentionally share the supported chest-touch pose; frame 5 returns through the existing early state.",
+    "Native supported sources retain minor pre-existing illustration contour differences; no pixel-exact invariant-scene certification is asserted.",
+    "Early state remains about 12% descent. No new anatomical interpolation or intermediate source is invented."
+  ],
+  "sourcePoseOrder": ["top", "early", "bottom", "bottom", "early", "top"],
+  "distinctPhysicalPoses": 3,
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/bench-press/2026-10-18-supported-continuity",
+    "method": "Remove the independently generated whole-scene lower-middle state; reuse intact unchanged native top/early/bottom composites, never graft or transform anatomy.",
+    "newImageGeneration": false,
+    "newImageGenerationCalls": 0,
+    "generationFailures": 0,
+    "anatomicalTransforms": [],
+    "priorRelease": "docs/exercise-art/releases/2026-10-17/bench-press.json",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/bench-press/2026-10-18-supported-continuity/portable-native-continuity-source.zip",
+      "sha256": "f2858b4f9340522364199e10f0946f134be51a26a45ebc3f574749e2f13952a4",
+      "bytes": 14239648,
+      "members": 33
+    },
+    "nativeSourceCanvas": [1536, 1024],
+    "deliveredCrop": [264, 0, 1152, 1024],
+    "sourceScale": 1,
+    "changedPublicGuideFrames": [3, 5],
+    "normalCardSourceUnchanged": true
+  },
+  "recordStage": "Native/source, actual registered mobile/manual/normal/slower playback and normal-card reviews complete with findings retained. Normal project verification and exact-head CI/merge remain separate publication gates.",
+  "replacementScope": "Correction of an existing six-frame guide; no conversion-count increment.",
+  "integrationEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-18-bench-calf-correction/registered-player-review.zip",
+    "sha256": "23c3d491e84994c54b0d39eb8696400e1ad7f243451f7ca575220bbcec78bc29",
+    "bytes": 2306482,
+    "members": 52,
+    "review": "docs/exercise-art/reviews/2026-10-18-bench-calf-correction/registered-player-review.json.txt",
+    "reviewSha256": "8509762b8d1be2319243f78c37f329a9e768e708788abba63e38a775263b3afd",
+    "envelope": "docs/exercise-art/reviews/2026-10-18-bench-calf-correction/registered-review-envelope.json"
+  }
+}

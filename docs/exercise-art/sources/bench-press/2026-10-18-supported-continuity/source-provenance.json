@@ -1,0 +1,43 @@
+{
+  "ids": ["bench-press"],
+  "sourcePoseOrder": ["top", "early", "bottom", "bottom", "early", "top"],
+  "dimensions": [888, 1024],
+  "archive": {
+    "path": "portable-native-continuity-source.zip",
+    "sha256": "f2858b4f9340522364199e10f0946f134be51a26a45ebc3f574749e2f13952a4",
+    "bytes": 14239648,
+    "members": 33
+  },
+  "sourcePngs": [
+    {
+      "path": "1.png",
+      "sha256": "80c9da845e4e3001878cb6de2de087f4ac5f3932be86d8779bed05d1b9f38732"
+    },
+    {
+      "path": "2.png",
+      "sha256": "c8c5e10928bac4f588c7ea5716699dec1ac49d971c0dad46b3c940fb91b2413c"
+    },
+    {
+      "path": "3.png",
+      "sha256": "be2032efb06c08fe3ae0ef442f47f1cf8e4f50609815d2b2c93285128ac90f83"
+    },
+    {
+      "path": "4.png",
+      "sha256": "be2032efb06c08fe3ae0ef442f47f1cf8e4f50609815d2b2c93285128ac90f83"
+    },
+    {
+      "path": "5.png",
+      "sha256": "c8c5e10928bac4f588c7ea5716699dec1ac49d971c0dad46b3c940fb91b2413c"
+    },
+    {
+      "path": "6.png",
+      "sha256": "80c9da845e4e3001878cb6de2de087f4ac5f3932be86d8779bed05d1b9f38732"
+    }
+  ],
+  "strictCertified": false,
+  "findings": [
+    "Three genuine physical poses reused across six guide paths. Frames 3 and 4 intentionally share the supported chest-touch pose; frame 5 returns through the existing early state.",
+    "Native supported sources retain minor pre-existing illustration contour differences; no pixel-exact invariant-scene certification is asserted.",
+    "Early state remains about 12% descent. No new anatomical interpolation or intermediate source is invented."
+  ]
+}
