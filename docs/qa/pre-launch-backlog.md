@@ -489,7 +489,7 @@ how the sheets feel on a phone, need the real thing.
 - [ ] **A Space post that trips the filter is removed.** A clean post edited
       to objectionable text with a direct SDK write is gone from the space
       within seconds (the app itself refuses the text first).
-- [ ] **The Terms line on sign-in and sign-up** wraps cleanly on a small
+- [x] _(Proven 2026-10-18: e2e/legal-pages.spec.ts, "Login's agreement line on a small phone" (4 tests, signed out at 320x568 on the chromium project that CI's signed-out job runs): on sign-in and on sign-up the line, its text and both links sit inside the screen with no sideways scroll, and Terms and Privacy Policy each open their page (h1 Terms of Service / Privacy Policy) with no login form. A no-wrap style on the line fails the wrap tests. Also e2e/screenshots/largeText.capture.spec.ts 'sign-up, setup and Pro' at 393 and 320 px, 1.35x and 2x text, 2 passed with no findings on sign-in or sign-up; scripts/legal-pages.test.ts 6/6, so terms.html still matches TermsOfService.tsx.)_ **The Terms line on sign-in and sign-up** wraps cleanly on a small
       phone, and its two links open the Terms and the Privacy Policy while
       signed out. `public/legal/terms.html` carries the same October 2026
       Terms as `TermsOfService.tsx`.
@@ -607,7 +607,7 @@ moves need a phone.
 - [ ] **VoiceOver** reads each stop's title and words as the walk moves
       on, and focus starts on Next and stays there.
 - [ ] **Reduce Motion:** no flight, the cards fade.
-- [ ] **The hints**, each once: Train's lift tab, the first set of the
+- [x] _(Proven 2026-10-18: e2e/screenshots/guide.capture.spec.ts 'a new account meets the guide: the walk, a first-week row and the hints' now goes on to /run on the same new account: "Your first run" shows over the run tiles; tapping a tile closes it and starts the run ("Acquiring GPS..."); the seen mark is stored; and it does not come back after Cancel or on a fresh visit to /run. 1 passed on the emulator rig, and a build that ignores the seen mark fails it on the revisit. The Food, Train and first-set hints were already asserted there, and GuideHint.test.tsx pins 'shows once' and the tap-through.)_ **The hints**, each once: Train's lift tab, the first set of the
       first workout (it sits above the workout screen), Food's composer,
       the run screen before a first run. Tapping the thing a hint points
       at closes it and still does what it does.
@@ -783,7 +783,7 @@ three mutations checked). What follows is the half no suite in this repo
 can reach — the same device-only residue the Storage implementation had,
 plus two new ones the platform change introduces.
 
-- [ ] **The ≤1280px downscale.** `toStorableJpeg` needs `<img>` + canvas;
+- [x] _(Proven 2026-10-18: a one-off Playwright script, `node a6-downscale.mjs http://localhost:5199`, imported the real `toStorableJpeg` from src/lib/foodPhotoStore.ts through the Vite dev server into Chromium 141 and decoded what it returned: 4000x3000 in → 1280x960 out, 3000x4000 → 960x1280, 800x600 and 1280x960 unchanged, each bare base64 (exit 0). Not a committed spec: CI's projects run the built bundle, which exposes no module to import. `saveFoodPhoto` writes exactly that output (foodPhotoStore.ts:154), and WKWebView runs the same `<img>` + canvas APIs.)_ **The ≤1280px downscale.** `toStorableJpeg` needs `<img>` + canvas;
       jsdom has neither. Scan a meal on a device and confirm the stored
       file is ≤1280px on its longest edge. (Inherited unchanged from the
       Storage implementation — it was never covered there either.)
@@ -851,7 +851,7 @@ uploaded successfully`, then explicitly
       with Type it instead as the PRIMARY action — and typing must work
       end-to-end offline (local NL parse + queued write). Same for the
       Barcode tab: honest copy, never a raw "Failed to fetch".
-- [ ] **Slow-scan escape.** Start a scan on weak signal and tap the X during
+- [x] _(Proven 2026-10-18: e2e/slowScanEscape.auth.spec.ts 'the X closes the scanner mid-sweep, and a late failure is not kept for the next scan' (emulator rig, Chromium's fake camera, a Pro account, the analyzeFood request held unanswered): with the sweep up, Playwright's click reaches the X within 1 s and the scanner is gone within 1 s; the held request then fails with a 500, the page shows no "Couldn't identify food." card, and the next Scan opens on the live viewfinder (frames playing, Capture enabled) with no failure beat. The top bar put back at z-10 fails the click ("subtree intercepts pointer events"), and removing FoodAnalyzer's closed-scanner guard fails the page check.)_ **Slow-scan escape.** Start a scan on weak signal and tap the X during
       the sweep — it must close immediately (pre-fix the X sat under the
       overlay and iOS users were trapped until the request resolved), and
       the abandoned scan must NOT park a failure the next session opens onto.
@@ -1147,7 +1147,7 @@ What is genuinely left is operator-only — there is no code change pending:
       records to **DNS-only (grey cloud), not proxied** — Cloudflare's proxy
       intercepts the ACME challenge and Firebase's certificate provisioning
       stalls. You can re-enable proxying after the cert is issued if wanted.
-- [ ] **Confirm all three URLs load signed-out in a private window** before
+- [x] _(Proven 2026-10-18: curl: https://troposfit.com/privacy, /terms and /support each 200 text/html, and the same on adaptive-fitness-af8bb.web.app and adaptive-fitness-af8bb.firebaseapp.com. Rendered in Chromium 141 by Playwright, each URL in a fresh context with no sign-in: all nine show their own h1 (Privacy Policy, Terms of Service, Support, the last with support@troposfit.com), stay on their path, and show no welcome or sign-in screen; the same check finds "Get started" on the signed-out root.)_ **Confirm all three URLs load signed-out in a private window** before
       touching App Store Connect. `src/lib/__tests__/publicLegalRoutes.test.ts`
       pins that the ROUTES exist in the signed-out set; it cannot pin DNS.
 - [ ] **Then update App Store Connect** to the real URLs: the two links in
@@ -1792,7 +1792,7 @@ deliberately unchanged.
 - [x] _(Proven 2026-10-17: src/lib/**tests**/singleDisciplineWeek.test.ts 'changes nothing for a week that trained both, or neither' runs on the server perfScoring.js and the client copy. functions/**tests**/performanceEngine.test.js 'persists deloadIndex so next week can compare like with like' pins deloadIndex in perfDoc. Deployed (run 39063239262).)_ **New docs carry the field.** After the next rollup, a perf doc has
       `deloadIndex`. For a both-disciplines week it must EQUAL
       `performanceIndex`; only a single-discipline week may differ.
-- [ ] **No new nag.** The sustained trigger compares against the prior two
+- [x] _(Proven 2026-10-18: src/lib/**tests**/deloadNagLoop.test.ts, 'deload trigger — a run-only athlete is told on the transition', on both engines: 26 run-only weeks at 3, 5 and 8% growth, each week's deloadIndex carried forward as the priors the way priorDeloadIndex reads them, are offered a deload once (week 5), while the deload index sits at 88-94 every week and the displayed PI at 62-65. A history of legacy docs is offered once, after the first new doc; a second block after an easy fortnight is offered once more; priors read in mixed units would offer it 25 weeks of 26. Removing the server's transition guard, or asking the client's question against the PI, fails it.)_ **No new nag.** The sustained trigger compares against the prior two
       weeks' `deloadIndex`, falling back to `performanceIndex` on legacy docs.
       Watch a single-discipline user for 2-3 weeks: a deload should be offered
       on the transition, NOT every week. (The #1955 nag-loop defect, on the
@@ -2097,7 +2097,7 @@ user. The plan's start weight was overwritten.
       after signing out, the same phone opens on Sign in.
 - [ ] **A Google sign-up's photo** is still on their profile, seen from a
       second account, after onboarding.
-- [ ] **Lose fat with a goal weight:** the plan's target is below
+- [x] _(Proven 2026-10-18: e2e/loseFatGoalWeight.auth.spec.ts 'the plan's target is under maintenance, and Nutrition shows the goal and pace' (emulator rig, Start my plan answered by the real completeOnboarding handler): sign up, Lose fat, 80 kg with a goal of 70 kg at 0.25 kg a week. The review shows 2,470 kcal; the saved profile has goalWeightKg 70 and weeklyRateKg -0.25; Settings → Nutrition shows 70.0 kg, Relaxed, "Losing → Cut", Base TDEE 2,740 and Daily target 2,470 cal (the review's figure), with the Cut offset the difference.)_ **Lose fat with a goal weight:** the plan's target is below
       maintenance, and Settings → Nutrition shows the goal and pace.
 - [ ] **The funnel in GA4 DebugView:** `auth_screen_viewed` for the welcome
       screen and each form, `email_verified` after tapping the link, and

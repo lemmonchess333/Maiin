@@ -80,7 +80,6 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
       onOpenChange={(o) => !o && onClose()}
       title={food.name}
       hideHeader
-      maxHeight="max-h-[50vh]"
       className="border-t border-border"
     >
       <div className="px-5 pt-4 pb-6">
