@@ -1,0 +1,171 @@
+{
+  "exerciseId": "rope-tricep-pushdown",
+  "version": "anatomy-v3-2026-10-18-equipment-correction-v1",
+  "width": 1024,
+  "height": 1600,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex native equipment-only correction and scoped integrated review",
+  "reference": {
+    "path": "form-frames/rope-tricep-pushdown/1.webp",
+    "sha256": "9d0ea51b2f4229adcb63eb5d736d88bf3b45b52bc4242d5e78fdf65f31d2258e"
+  },
+  "cueSha256": "8144f7c4de20ff5c1b190066059eacc85b521bc0851bc8ea22a143fb2d392f57",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "All existing FA56 athlete, muscle palette and trainer layers are retained as exact decoded pixels; no new image generation, no shorts."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Unchanged1024x1600 source canvas, scene and camera; only existing native equipment layers are replaced."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Every source pixel left of x704, covering the entire athlete and rope contacts, and all anatomical layers remain exact. Existing qualitative source contours are retained without fitting or resampling."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Native apparatus-only correction adds wider shaded plates, coherent oblique faces, continuous guide bores, moving selector stem, seated selector pin and supported pulley bracket."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "All athlete, hand, rope grip, rope branch and cable pixels remain exact; only the two equipment layers change."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Existing finite24px-radius pulley routing, constant cable length,320px branches, selected4/resting8 plate counts and0-227.988px selected-stack rise are retained, with corrected guide/stem occlusion."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Triceps primary base7B72E9; forearms secondary base9590E0. Existing source chroma fields and tonal detail retained, other anatomy neutral. Native ownership reviewed qualitatively."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Six cues match bent/early/middle/late/extended/bent-return sources, each at most7 words. Exact cue hash enforced separately."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Actual registered ExerciseFormContent at390x844: all six public images decoded and natural6-to-1 loops observed in normal dark, slower dark and normal light modes. Instruction6/manual Next1 preserved pause, highlight and cue. See immutable registered-player review; strict certification remains null."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Actual registered390x844 normal light full-player screenshot inspected; all six public frames and natural loop observed, with manual6-to-1 pause/cue/highlight review. Both normal cards reviewed at480/348/160/48px in both themes. Faint white contours at48px light remain a documented display limitation. Strict certification remains null."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Actual registered390x844 normal and slower dark playback observed all six decoded public frames and natural loops; full-player screenshot inspected. Native equipment and normal-card visual peer review completed with source hashes bound. Strict certification remains null."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/rope-tricep-pushdown/1.webp",
+      "sha256": "9d0ea51b2f4229adcb63eb5d736d88bf3b45b52bc4242d5e78fdf65f31d2258e",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-18-equipment-correction/1.png",
+        "sha256": "5aa70630ba88c71b4038800532307eff303c4373a2d14c65c3cc4b609c1104c9"
+      }
+    },
+    {
+      "path": "form-frames/rope-tricep-pushdown/2.webp",
+      "sha256": "67820b245285700597e51394bc9423f0c465bbca1f15f3776f45ad3a21efad46",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-18-equipment-correction/2.png",
+        "sha256": "451bba9a6220cbe301991963eaf28e383ee4c1dee02448d4a294d95ad83ce1bb"
+      }
+    },
+    {
+      "path": "form-frames/rope-tricep-pushdown/3.webp",
+      "sha256": "a398a340fc3bfe428a84b57e4eedae720ea4f38f9ad7b3a1e58cde8f009adaa9",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-18-equipment-correction/3.png",
+        "sha256": "e28a0060f6890dcf653a18acc71d0620fa1ba2da97951575a431b1876e93b05e"
+      }
+    },
+    {
+      "path": "form-frames/rope-tricep-pushdown/4.webp",
+      "sha256": "cd3d5475d2e54b0a55b7578b690312b38d5536a79dd441e9dd8bb87d1cc58778",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-18-equipment-correction/4.png",
+        "sha256": "9a01b15f89b2714100c94f2518112692b21f79d6682feae0193b79c49dba7b59"
+      }
+    },
+    {
+      "path": "form-frames/rope-tricep-pushdown/5.webp",
+      "sha256": "eee2e2c13f44b600e784f6401623935f77f93143e5ced23d68af4e10df116c60",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-18-equipment-correction/5.png",
+        "sha256": "1301717f48794acd1c029c472f12a959f726801c7467dd6827fa8fdec6b7f89f"
+      }
+    },
+    {
+      "path": "form-frames/rope-tricep-pushdown/6.webp",
+      "sha256": "9d0ea51b2f4229adcb63eb5d736d88bf3b45b52bc4242d5e78fdf65f31d2258e",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-18-equipment-correction/6.png",
+        "sha256": "5aa70630ba88c71b4038800532307eff303c4373a2d14c65c3cc4b609c1104c9"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "The human owner in this chat",
+    "instruction": "Correct the weights and equipment in skull crushers and rope tricep pushdown, and inspect the other exercise sets.",
+    "context": "Standing human authorization covers correction, registration, project checks and normal merging without routine approval questions. Preserve the current FA56 athlete, anatomy, muscle palette, white trainers and no shorts. This is equipment-only native source authoring; no new image generation or anatomical fitting."
+  },
+  "findings": [
+    "Equipment-only correction replaces the thin poorly articulated stack with wider shaded solid plates, coherent oblique top/side faces, guide bores, a visible moving selector stem, seated fourth-plate selector pin and supported pulley bracket.",
+    "Only the two native equipment layers change. All athlete, muscle palette, trainers, rope grips/branches, cable and background layers remain exact decoded pixels. Every pixel left of x704, covering the entire athlete and rope contacts, is identical to the merged original.",
+    "Existing five physical poses and six-frame1/2/3/4/5/1 order, cues, setup,1024x1600 canvas, reference/card frame1,320px rope branches, finite24px-radius pulley path and constant cable length remain unchanged.",
+    "Selected4/resting8 plate counts and0-227.988px selected-stack rise remain. The selector stem is hidden behind resting plate fronts rather than showing through them.",
+    "Original illustrative upper-arm/elbow/forearm contour and generated rope-stub variations remain unchanged. This is an illustrative2D machine, not calibrated engineering or anatomical geometry.",
+    "Strict certification is not claimed. Scoped native source, actual registered390x844 light/dark normal/slower playback, manual wrap and normal-card reviews passed. Small48px light cards retain faint white athlete contours; equipment silhouettes remain identifiable. Original source/anatomical findings remain."
+  ],
+  "sourcePoseOrder": [1, 2, 3, 4, 5, 1],
+  "distinctPhysicalPoses": 5,
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-18-equipment-correction",
+    "method": "Native equipment-layer substitution using the accepted 2026-10-17 editable sources and exact decoded source pixels. No new image generation, anatomy fitting, resampling, mirroring or head/shoe grafts.",
+    "newImageGeneration": false,
+    "anatomicalTransforms": [],
+    "priorRelease": "docs/exercise-art/releases/2026-10-17/rope-tricep-pushdown.json",
+    "priorSourceArchive": {
+      "path": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-17-legacy-redraw/portable-native-source.zip",
+      "sha256": "0364aab1128633f1f767bb653bfa25b647c5cd67df6d57abd027bcecc1242497",
+      "bytes": 31380850
+    },
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-18-equipment-correction/portable-equipment-source.zip",
+      "sha256": "7858ac6437574d8caefbfcc1d143075267b259cf8080cef11a6e7db0ef6e8d1c",
+      "bytes": 6043672,
+      "members": 29
+    },
+    "nativeProofArchiveMember": "candidate/preservation-and-mechanics.json",
+    "nativeCanvas": [1024, 1600]
+  },
+  "recordStage": "Native equipment-only source, registered mobile/manual/normal/slower playback and normal-card reviews complete with findings retained. Normal project verification and exact-head CI/merge remain separate publication gates.",
+  "replacementScope": "Equipment-only replacement of six existing guides and one normal card; no conversion-count increment.",
+  "integrationEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-18-equipment-correction/registered-player-review.zip",
+    "sha256": "704623e0cd18d36cd80214f9f3f9f7994d5306c7267e69ecd735951eb019b2be",
+    "bytes": 1758367,
+    "members": 40,
+    "review": "docs/exercise-art/reviews/2026-10-18-equipment-correction/registered-player-review.json.txt",
+    "reviewSha256": "8c7a8e1cfa02a8f996b2f83af781655e75f2217311740e72d0744a55a97a3e43",
+    "envelope": "docs/exercise-art/reviews/2026-10-18-equipment-correction/registered-review-envelope.json"
+  },
+  "preparedForReviewAt": "2026-10-18",
+  "reviewedAt": "2026-10-18T00:10:24.809038+00:00"
+}

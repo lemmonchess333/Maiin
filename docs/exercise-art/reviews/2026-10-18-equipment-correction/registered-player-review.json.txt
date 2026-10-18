@@ -1,0 +1,395 @@
+{
+  "reviewedAt": "2026-10-18T00:10:24.809038+00:00",
+  "scope": "Actual registered ExerciseFormContent and public assets in the candidate working tree; no strict certification",
+  "viewport": [
+    390,
+    844
+  ],
+  "captureLimitations": "Browser screenshot raster dimensions differ from DOM viewport; full-player viewport captures were separately inspected. Native source/contact-sheet review is separate. A formatting-triggered HMR reset interrupted the last skull light attempt; that raw attempt is archived but excluded from acceptance. Only the deficient light/manual capture was repeated; prior valid captures remain source-bound.",
+  "manifestSha256": "f7ca7a7187c592bbafb16e605e93a890d8d9d5837ad3755cb683ca62e4b441a8",
+  "guides": [
+    {
+      "exerciseId": "rope-tricep-pushdown",
+      "registrationText": "Actual registered 1024\u00c3\u20141600, anatomy-v3-2026-10-18-equipment-correction-v1",
+      "modes": [
+        {
+          "theme": "dark",
+          "slower": false,
+          "allSixDecodedFramesObserved": true,
+          "naturalSixToOneLoopObserved": true,
+          "frameTransitions": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "theme": "dark",
+          "slower": true,
+          "allSixDecodedFramesObserved": true,
+          "naturalSixToOneLoopObserved": true,
+          "frameTransitions": [
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "theme": "light",
+          "slower": false,
+          "allSixDecodedFramesObserved": true,
+          "naturalSixToOneLoopObserved": true,
+          "frameTransitions": [
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2
+          ]
+        }
+      ],
+      "pausedManualSixToOne": {
+        "before": {
+          "instruction": "6Bend elbows slowly; keep upper arms still.",
+          "paused": true,
+          "selected": "Show frame 6: Return",
+          "src": "/form-frames/rope-tricep-pushdown/6.webp"
+        },
+        "after": {
+          "instruction": "1Elbows beside ribs; brace the trunk.",
+          "paused": true,
+          "selected": "Show frame 1: Set",
+          "src": "/form-frames/rope-tricep-pushdown/1.webp"
+        }
+      },
+      "traceFiles": {
+        "rope-registered-dark-trace.json": "cef5be71adf8e137bb5d9a1781ffe7f79b258508ea6078d497d4a94974868a2a",
+        "rope-registered-slower-trace.json": "f1b2782d034c899db8fe1dc6df6a0cceb728b4b47d12a0c46c5d9ffe723eee2e",
+        "rope-registered-light-trace.json": "6e3ad1f6964957e574ccf259daef2b73cfe85c540be65a31d6aaee80169b9f1e"
+      },
+      "manualSha256": "a86e038593ed8e6acdd52ec1db99b9897cbf02e7b443d388192dbd0f8794add6",
+      "screenshots": [
+        {
+          "file": "rope-registered-dark-full-player.png",
+          "sha256": "ab84da8ff3b07d434fb495a5e0c3015e6d005c0fbbdbc82b7cf24b393d748b7e",
+          "rasterDimensions": [
+            380,
+            822
+          ],
+          "rootVisuallyInspected": true
+        },
+        {
+          "file": "rope-registered-light-full-player.png",
+          "sha256": "dc713a920f87ff2a1a6c7d62d1d359ffb7db00278d3267a898af8d07152538a1",
+          "rasterDimensions": [
+            380,
+            822
+          ],
+          "rootVisuallyInspected": true
+        }
+      ],
+      "registeredAssets": {
+        "public/form-frames/rope-tricep-pushdown/1.webp": "9d0ea51b2f4229adcb63eb5d736d88bf3b45b52bc4242d5e78fdf65f31d2258e",
+        "public/form-frames/rope-tricep-pushdown/2.webp": "67820b245285700597e51394bc9423f0c465bbca1f15f3776f45ad3a21efad46",
+        "public/form-frames/rope-tricep-pushdown/3.webp": "a398a340fc3bfe428a84b57e4eedae720ea4f38f9ad7b3a1e58cde8f009adaa9",
+        "public/form-frames/rope-tricep-pushdown/4.webp": "cd3d5475d2e54b0a55b7578b690312b38d5536a79dd441e9dd8bb87d1cc58778",
+        "public/form-frames/rope-tricep-pushdown/5.webp": "eee2e2c13f44b600e784f6401623935f77f93143e5ced23d68af4e10df116c60",
+        "public/form-frames/rope-tricep-pushdown/6.webp": "9d0ea51b2f4229adcb63eb5d736d88bf3b45b52bc4242d5e78fdf65f31d2258e",
+        "public/form-art/rope-tricep-pushdown.webp": "3c5764b0e8ede7f51458d35a444db8637ff61fc17070cb3678851b81c1086f16"
+      }
+    },
+    {
+      "exerciseId": "skull-crushers",
+      "registrationText": "Actual registered 870\u00c3\u20141072, anatomy-v3-2026-10-18-equipment-correction-v1",
+      "modes": [
+        {
+          "theme": "dark",
+          "slower": false,
+          "allSixDecodedFramesObserved": true,
+          "naturalSixToOneLoopObserved": true,
+          "frameTransitions": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            1
+          ]
+        },
+        {
+          "theme": "dark",
+          "slower": true,
+          "allSixDecodedFramesObserved": true,
+          "naturalSixToOneLoopObserved": true,
+          "frameTransitions": [
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        {
+          "theme": "light",
+          "slower": false,
+          "allSixDecodedFramesObserved": true,
+          "naturalSixToOneLoopObserved": true,
+          "frameTransitions": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "pausedManualSixToOne": {
+        "before": {
+          "instruction": "6Finish with straight elbows and controlled load.",
+          "paused": true,
+          "selected": "Show frame 6: Return to lockout",
+          "src": "/form-frames/skull-crushers/6.webp"
+        },
+        "after": {
+          "instruction": "1Hold bar high; upper arms angled back.",
+          "paused": true,
+          "selected": "Show frame 1: Start",
+          "src": "/form-frames/skull-crushers/1.webp"
+        }
+      },
+      "traceFiles": {
+        "skull-registered-dark-trace.json": "15b96fea5eebd6aba2099b0a909f890135a1fc40ae70783aa03b7d4a67fcc57b",
+        "skull-registered-slower-trace.json": "54f475a834fb213fd168b1ff0998cb1c34d43533a7b97995eef7854a43934d6d",
+        "skull-registered-light-trace.json": "9bd6185df44ec579e71d3852dd0dd30b05ef17b890131f216fe7515da0124f68"
+      },
+      "manualSha256": "97a67f7ca47e3d29ca7fcae3e6ba8d1a633f4ae581d358aa982e030cedd77440",
+      "screenshots": [
+        {
+          "file": "skull-registered-dark-full-player.png",
+          "sha256": "95776ac77e986c96dd7e4d98849af86323ef3aba14fdb573c2cc1f7fd57db897",
+          "rasterDimensions": [
+            380,
+            822
+          ],
+          "rootVisuallyInspected": true
+        },
+        {
+          "file": "skull-registered-light-full-player.png",
+          "sha256": "8c9ea64c26ea0a43f2c5bc49ba9af447d9117bbd9e1bb0220288f0c9c0cc0c8f",
+          "rasterDimensions": [
+            380,
+            822
+          ],
+          "rootVisuallyInspected": true
+        }
+      ],
+      "registeredAssets": {
+        "public/form-frames/skull-crushers/1.webp": "ccfccc28762088232fceca143df55b9c02b0e54813ece16df9cb7a562bd1e093",
+        "public/form-frames/skull-crushers/2.webp": "02c6af1f80944dd6ba1aef18b4a62b65b94fba83831c221d5543718366b87323",
+        "public/form-frames/skull-crushers/3.webp": "606a2b6ca2a5b1643568826cd815770237bcc2fa8640bf73e99261f8a995f0fc",
+        "public/form-frames/skull-crushers/4.webp": "50833f00e3cddb12597589b010ce83ac0f11e114727d78abf3ec8091280cc739",
+        "public/form-frames/skull-crushers/5.webp": "606a2b6ca2a5b1643568826cd815770237bcc2fa8640bf73e99261f8a995f0fc",
+        "public/form-frames/skull-crushers/6.webp": "ccfccc28762088232fceca143df55b9c02b0e54813ece16df9cb7a562bd1e093",
+        "public/form-art/skull-crushers.webp": "10c437df9a6b78857948c38d9eb785c400d664c86bac73f129895542e486b19b"
+      }
+    }
+  ],
+  "allSixModesAndTwoManualWrapsPassed": true,
+  "cards": {
+    "peerReportSha256": "cd5ca5bace699fe41f1ab3ec485a642f5fea76d236d2b6d16377580b11891392",
+    "peerInputsSha256": "acca04b81ef226c749b0cb506d5bcbe0bdd07b8eecd002e0f2854bef8d567602",
+    "bothCardsFourSizesTwoThemesReviewed": true,
+    "rootInspectedAllFourCardSizePreviews": true,
+    "retainedDisplayLimitations": [
+      "At48px on the light background, white athlete contours become faint; the plate/bench or tower/stack silhouettes remain identifiable. This is a small-card display limitation, not a newly introduced weight geometry defect.",
+      "Source style remains illustrative rather than a dimensionally calibrated equipment model. No load in kilograms is claimed."
+    ]
+  }
+}

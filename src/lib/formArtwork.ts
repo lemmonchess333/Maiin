@@ -66,6 +66,17 @@ const legacyRedrawn = (
   reviewFile: `docs/exercise-art/releases/2026-10-17/${id}.json`,
 });
 
+const equipmentCorrected = (
+  id: string,
+  width: number,
+  height: number,
+  reference: number
+): HandListedFormArtwork => ({
+  ...legacyRedrawn(id, width, height, reference),
+  version: "anatomy-v3-2026-10-18-equipment-correction-v1",
+  reviewFile: `docs/exercise-art/releases/2026-10-18/${id}.json`,
+});
+
 /**
  * A set approved by strict review. Every fact here comes from its release
  * record, through APPROVED_FORM_ART_RELEASES, which `npm run art:releases`
@@ -246,8 +257,13 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
   "bench-press": legacyRedrawn("bench-press", 888, 1024, 4),
   dips: legacyRedrawn("dips", 880, 1088, 4),
   "overhead-press": legacyRedrawn("overhead-press", 1024, 1536, 4),
-  "rope-tricep-pushdown": legacyRedrawn("rope-tricep-pushdown", 1024, 1600, 1),
-  "skull-crushers": legacyRedrawn("skull-crushers", 870, 1072, 3),
+  "rope-tricep-pushdown": equipmentCorrected(
+    "rope-tricep-pushdown",
+    1024,
+    1600,
+    1
+  ),
+  "skull-crushers": equipmentCorrected("skull-crushers", 870, 1072, 3),
 };
 
 export const FORM_ARTWORK: Record<string, FormArtwork> = {

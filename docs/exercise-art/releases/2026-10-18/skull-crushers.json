@@ -1,0 +1,173 @@
+{
+  "exerciseId": "skull-crushers",
+  "version": "anatomy-v3-2026-10-18-equipment-correction-v1",
+  "width": 870,
+  "height": 1072,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex native equipment-only correction and scoped integrated review",
+  "reference": {
+    "path": "form-frames/skull-crushers/3.webp",
+    "sha256": "606a2b6ca2a5b1643568826cd815770237bcc2fa8640bf73e99261f8a995f0fc"
+  },
+  "cueSha256": "097c3bfef70fc221a6e41855c4da9ff39b8daf6f2b548cc18283ed65fec36e4f",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Existing FA56 athlete source and all neutral/muscle foreground pixels retained; no new image generation, no shorts and unchanged white trainers."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Existing1536x1072 padded native canvas and crop[240,0,1110,1072] produce the unchanged870x1072 delivered source; no anatomical resampling."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "All non-equipment editable layers and final hand/arm/muscle/neutral-athlete foreground pixels are byte-exact to the accepted source. Original source pose limitations remain."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Native apparatus-only correction uses one490px shaft,390px plate spacing,110/104px cast-disc projected heights and compact collars/sleeves. Isolated poseB old-plate remnant cleanup is disclosed and masked."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Existing closed-grip line and all native hand/arm foreground pixels remain byte-exact; corrected rigid apparatus follows the same grip line."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Rigid apparatus dimensions and qualitative phase coordinates remain constant; no calibrated3D or anatomical certification is claimed."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Triceps primary and chest/front-deltoid secondary follow existing source fields/contours, matching new solid key. Old forearm-only key deliberately removed."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Exact six physical labels/cues and t values match the actual authored source order. Every cue is seven words or fewer; source reuse is explicit and release cue hash is enforced."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Actual registered ExerciseFormContent at390x844: all six public images decoded and natural6-to-1 loops observed in normal dark, slower dark and normal light modes. Instruction6/manual Next1 preserved pause, highlight and cue. See immutable registered-player review; strict certification remains null."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Actual registered390x844 normal light full-player screenshot inspected; all six public frames and natural loop observed, with manual6-to-1 pause/cue/highlight review. Both normal cards reviewed at480/348/160/48px in both themes. Faint white contours at48px light remain a documented display limitation. Strict certification remains null."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Actual registered390x844 normal and slower dark playback observed all six decoded public frames and natural loops; full-player screenshot inspected. Native equipment and normal-card visual peer review completed with source hashes bound. Strict certification remains null."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/skull-crushers/1.webp",
+      "sha256": "ccfccc28762088232fceca143df55b9c02b0e54813ece16df9cb7a562bd1e093",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/skull-crushers/2026-10-18-equipment-correction/1.png",
+        "sha256": "ff1a7963d0d1c77d35ec5dd9cf6242479e7000bed3fc66183dc3a2721c263bf9"
+      }
+    },
+    {
+      "path": "form-frames/skull-crushers/2.webp",
+      "sha256": "02c6af1f80944dd6ba1aef18b4a62b65b94fba83831c221d5543718366b87323",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/skull-crushers/2026-10-18-equipment-correction/2.png",
+        "sha256": "69a9037648fdf1e24e3873ff39379872a76deb0775f6a69c5b46d8e62ec0d3f5"
+      }
+    },
+    {
+      "path": "form-frames/skull-crushers/3.webp",
+      "sha256": "606a2b6ca2a5b1643568826cd815770237bcc2fa8640bf73e99261f8a995f0fc",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/skull-crushers/2026-10-18-equipment-correction/3.png",
+        "sha256": "90b4f1d30935c800dd95de6abbcc7d7e97037b5ec790e09fb40358ba14835aba"
+      }
+    },
+    {
+      "path": "form-frames/skull-crushers/4.webp",
+      "sha256": "50833f00e3cddb12597589b010ce83ac0f11e114727d78abf3ec8091280cc739",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/skull-crushers/2026-10-18-equipment-correction/4.png",
+        "sha256": "52e0470dc96dcb06f67fea262d5a5658376b2080f3091e018d56f896e9fe043c"
+      }
+    },
+    {
+      "path": "form-frames/skull-crushers/5.webp",
+      "sha256": "606a2b6ca2a5b1643568826cd815770237bcc2fa8640bf73e99261f8a995f0fc",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/skull-crushers/2026-10-18-equipment-correction/5.png",
+        "sha256": "90b4f1d30935c800dd95de6abbcc7d7e97037b5ec790e09fb40358ba14835aba"
+      }
+    },
+    {
+      "path": "form-frames/skull-crushers/6.webp",
+      "sha256": "ccfccc28762088232fceca143df55b9c02b0e54813ece16df9cb7a562bd1e093",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/skull-crushers/2026-10-18-equipment-correction/6.png",
+        "sha256": "ff1a7963d0d1c77d35ec5dd9cf6242479e7000bed3fc66183dc3a2721c263bf9"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "The human owner in this chat",
+    "instruction": "Correct the weights and equipment in skull crushers and rope tricep pushdown, and inspect the other exercise sets.",
+    "context": "Standing human authorization covers correction, registration, project checks and normal merging without routine approval questions. Preserve the current FA56 athlete, anatomy, muscle palette, white trainers and no shorts. This is equipment-only native source authoring; no new image generation or anatomical fitting."
+  },
+  "findings": [
+    "Equipment-only correction: compact grey cast-disc plates, compact collars and sleeves replace the previous oversized flat plates and long sleeves. Constant490px shaft length and390px plate spacing, with110/104px projected plate heights, retain one coherent camera depth and the unchanged grip line.",
+    "All original non-equipment OpenRaster layers and all final native hand/arm, muscle-palette and visible neutral-athlete foreground pixels remain byte-exact. Native proof binds every changed pixel to the equipment replacement plus one isolated old-equipment remnant cleanup.",
+    "PoseB's detached old plate remnant is removed only within native rectangle[330,105,405,127]. No anatomical generation, fitting, warping, resampling or head/shoe grafts.",
+    "The existing four physical poses and A/B/C/D/C/A order, qualitative0/.3/.8/1/.8/0 coordinates, cues, setup,870x1072 delivered crop, triceps primary and chest/front-deltoid secondary remain unchanged.",
+    "Original supported-scene head/arm occlusion and minor projected upper-scene variation remain; the lower scene, planted white trainers and fixed bench are retained. This is an illustrative2D load, not calibrated factory or anatomical geometry.",
+    "Strict certification is not claimed. Scoped native source, actual registered390x844 light/dark normal/slower playback, manual wrap and normal-card reviews passed. Small48px light cards retain faint white athlete contours; equipment silhouettes remain identifiable. Original source/anatomical findings remain."
+  ],
+  "sourcePoseOrder": ["A", "B", "C", "D", "C", "A"],
+  "distinctPhysicalPoses": 4,
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/skull-crushers/2026-10-18-equipment-correction",
+    "method": "Native equipment-layer substitution using the accepted 2026-10-17 editable sources and exact decoded source pixels. No new image generation, anatomy fitting, resampling, mirroring or head/shoe grafts.",
+    "newImageGeneration": false,
+    "anatomicalTransforms": [],
+    "priorRelease": "docs/exercise-art/releases/2026-10-17/skull-crushers.json",
+    "priorSourceArchive": {
+      "path": "docs/exercise-art/sources/skull-crushers/2026-10-17-legacy-redraw/portable-native-source.zip",
+      "sha256": "0f2005afe4bb69b154c7d6dcbbf25b83008df551ad6fd965d5f27f7d591691d4",
+      "bytes": 24911884
+    },
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/skull-crushers/2026-10-18-equipment-correction/portable-equipment-source.zip",
+      "sha256": "9190902c215aab061f956d3b4fcc3ce4cd32a1eb95eb6e1242db10faff21ce2d",
+      "bytes": 38467377,
+      "members": 67
+    },
+    "nativeProofArchiveMember": "proof.json",
+    "nativePaddedCanvas": [1536, 1072],
+    "deliveredCrop": [240, 0, 1110, 1072],
+    "deliveredSourcePngsAreCropped": true
+  },
+  "recordStage": "Native equipment-only source, registered mobile/manual/normal/slower playback and normal-card reviews complete with findings retained. Normal project verification and exact-head CI/merge remain separate publication gates.",
+  "replacementScope": "Equipment-only replacement of six existing guides and one normal card; no conversion-count increment.",
+  "integrationEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-18-equipment-correction/registered-player-review.zip",
+    "sha256": "704623e0cd18d36cd80214f9f3f9f7994d5306c7267e69ecd735951eb019b2be",
+    "bytes": 1758367,
+    "members": 40,
+    "review": "docs/exercise-art/reviews/2026-10-18-equipment-correction/registered-player-review.json.txt",
+    "reviewSha256": "8c7a8e1cfa02a8f996b2f83af781655e75f2217311740e72d0744a55a97a3e43",
+    "envelope": "docs/exercise-art/reviews/2026-10-18-equipment-correction/registered-review-envelope.json"
+  },
+  "preparedForReviewAt": "2026-10-18",
+  "reviewedAt": "2026-10-18T00:10:24.809038+00:00"
+}

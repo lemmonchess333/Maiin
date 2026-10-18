@@ -1124,8 +1124,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/rope-tricep-pushdown/1.webp",
     sourceSha256:
-      "67b3ab4460e2bcd4240feffe4cf7e27619301cfc9880b326e597243d21ebde69",
-    sha256: "7fc9c18f351cb961dd79be6f5944430a22d96c42e30a5d174c648552eae48885",
+      "9d0ea51b2f4229adcb63eb5d736d88bf3b45b52bc4242d5e78fdf65f31d2258e",
+    sha256: "3c5764b0e8ede7f51458d35a444db8637ff61fc17070cb3678851b81c1086f16",
   },
   "rowing-machine": {
     src: "form-art/rowing-machine.webp",
@@ -1259,13 +1259,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   "skull-crushers": {
     src: "form-art/skull-crushers.webp",
-    width: 418,
+    width: 388,
     height: 480,
     keyed: true,
     source: "form-frames/skull-crushers/3.webp",
     sourceSha256:
-      "873cb45c1bf762f9ac06477787ce2ae3080e14ea96e75c1d106800539430553c",
-    sha256: "b3945f6aa74a51f92addf6a89b219993c59eab92f96af979f477bd79b752625d",
+      "606a2b6ca2a5b1643568826cd815770237bcc2fa8640bf73e99261f8a995f0fc",
+    sha256: "10c437df9a6b78857948c38d9eb785c400d664c86bac73f129895542e486b19b",
   },
   "sled-push-pull": {
     src: "form-art/sled-push-pull.webp",

@@ -1,0 +1,101 @@
+{
+  "sourceHead": "5dabd5e45fb83e8a0dc57d2d0933102fe5bcf926",
+  "screeningScope": {
+    "guides": 152,
+    "guideFrames": 912,
+    "physicalCards": 154,
+    "publicAssets": 1066
+  },
+  "strictCertification": false,
+  "includedFindingImages": [
+    "retained-bench-support-shift.png",
+    "confirmed-calf-model-standard-finding.png"
+  ],
+  "externalContactSheets": {
+    "included": false,
+    "guideSheets": 26,
+    "catalogueSheets": 7,
+    "originalLocation": "work/equipment-quality-fix-20261018/audit"
+  },
+  "assetHashManifest": "screened-public-assets.json",
+  "preservationBaseline": "preservation-baseline.json",
+  "originalReplacedAssetsAndPriorRecords": {
+    "path": "original-twelve-guides-two-cards.zip",
+    "sha256": "f5d23690657adc3469df12c68f7ca6bf3a1e96bd2d126a3a17a25a383ad7a25a",
+    "bytes": 3774310,
+    "members": [
+      "public/form-frames/skull-crushers/1.webp",
+      "public/form-frames/skull-crushers/2.webp",
+      "public/form-frames/skull-crushers/3.webp",
+      "public/form-frames/skull-crushers/4.webp",
+      "public/form-frames/skull-crushers/5.webp",
+      "public/form-frames/skull-crushers/6.webp",
+      "public/form-art/skull-crushers.webp",
+      "docs/exercise-art/releases/2026-10-17/skull-crushers.json",
+      "public/form-frames/rope-tricep-pushdown/1.webp",
+      "public/form-frames/rope-tricep-pushdown/2.webp",
+      "public/form-frames/rope-tricep-pushdown/3.webp",
+      "public/form-frames/rope-tricep-pushdown/4.webp",
+      "public/form-frames/rope-tricep-pushdown/5.webp",
+      "public/form-frames/rope-tricep-pushdown/6.webp",
+      "public/form-art/rope-tricep-pushdown.webp",
+      "docs/exercise-art/releases/2026-10-17/rope-tricep-pushdown.json"
+    ]
+  },
+  "displayOnlyReproductionTools": [
+    {
+      "path": "make-all-guide-sheets.py",
+      "originalScriptSha256": "84d01dcb3fef8a83f02dcb6635b9ed871079ca4925d235e026ab1cd8414371af",
+      "adaptation": "Replace only hardcoded input/output paths with required CLI arguments and an exact source-head guard; image display algorithm retained."
+    },
+    {
+      "path": "make-contact-sheets.py",
+      "originalScriptSha256": "c37672db1ce9904d7b080688dd30e10928f6b028a4ef52e9372d32c6ace7b791",
+      "adaptation": "Replace only hardcoded input/output paths with required CLI arguments and an exact source-head guard; image display algorithm retained."
+    },
+    {
+      "path": "make-suspect-sheets.py",
+      "originalScriptSha256": "3e052796b8dd322cbbf37e5045148055ad92b4c9450eaa75d6bc92cff561b794",
+      "adaptation": "Replace only hardcoded input/output paths with required CLI arguments and an exact source-head guard; image display algorithm retained."
+    }
+  ],
+  "baselineNormalVerify": {
+    "head": "5dabd5e45fb83e8a0dc57d2d0933102fe5bcf926",
+    "label": "equipment-quality-baseline-5dabd5e4",
+    "exitCode": 1,
+    "inputCount": 2704,
+    "inputsPreserved": true,
+    "testFiles": {
+      "failed": 7,
+      "passed": 1184,
+      "skipped": 10,
+      "total": 1201,
+      "verbatim": "Test Files  7 failed | 1184 passed | 10 skipped (1201)",
+      "proof": {
+        "startLine": 752,
+        "endLineInclusive": 752,
+        "byteStart": 61617,
+        "byteEndExclusive": 61673,
+        "rawSha256": "5f0457e8750cbf9beb7d792c7dbd4127a55d5f7f3de6a93d8ac60b80f113de6b",
+        "byteLength": 56
+      }
+    },
+    "tests": {
+      "failed": 10,
+      "passed": 13748,
+      "skipped": 409,
+      "total": 14167,
+      "verbatim": "Tests  10 failed | 13748 passed | 409 skipped (14167)",
+      "proof": {
+        "startLine": 753,
+        "endLineInclusive": 753,
+        "byteStart": 61673,
+        "byteEndExclusive": 61733,
+        "rawSha256": "7d6153b9c13baae26c13789fea76046146259ad4e708853dac1faf4887927cf7",
+        "byteLength": 60
+      }
+    },
+    "indexComplete": true,
+    "rawLogSha256": "94d547f529778430ddf02a55617a0e05cc47286b38e8e636bbf7269c798cbeea"
+  }
+}
