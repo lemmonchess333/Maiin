@@ -82,11 +82,12 @@ const continuityCorrected = (
   width: number,
   height: number,
   reference: number,
-  version: string
+  version: string,
+  reviewFolder = "2026-10-18"
 ): HandListedFormArtwork => ({
   ...legacyRedrawn(id, width, height, reference),
   version: `anatomy-v3-2026-10-18-${version}-v1`,
-  reviewFile: `docs/exercise-art/releases/2026-10-18/${id}.json`,
+  reviewFile: `docs/exercise-art/releases/${reviewFolder}/${id}.json`,
 });
 
 /**
@@ -278,14 +279,16 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
     1024,
     1536,
     3,
-    "calf-model-correction"
+    "calf-timing-correction",
+    "2026-10-18-calf-timing"
   ),
   "standing-calf-raise": continuityCorrected(
     "standing-calf-raise",
     1024,
     1536,
     3,
-    "calf-model-correction"
+    "calf-timing-correction",
+    "2026-10-18-calf-timing"
   ),
   dips: legacyRedrawn("dips", 880, 1088, 4),
   "overhead-press": legacyRedrawn("overhead-press", 1024, 1536, 4),

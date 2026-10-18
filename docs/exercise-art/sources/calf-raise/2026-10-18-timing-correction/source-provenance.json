@@ -1,0 +1,16 @@
+{
+  "archive": {
+    "path": "portable-calf-timing-source.zip",
+    "sha256": "b12b606b9a014a57b73cb78592484d82585809a5920daa3e6ed60e078958ba25",
+    "bytes": 27639675,
+    "members": 37
+  },
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "dimensions": [1024, 1536],
+  "physicalPoses": 3,
+  "newImageGenerationCalls": 1,
+  "generationFailures": 0,
+  "anatomicalTransforms": [],
+  "allMembersReadBackExact": true,
+  "strictCertified": false
+}

@@ -1,0 +1,143 @@
+{
+  "reviewedAt": "2026-10-18T11:41:51.215299+00:00",
+  "reviewer": "Root Codex native/source/registered visual review; no independent peer claimed",
+  "scope": "Actual registered mobile playback/cue/manual acceptance with exact native/public/source bindings, not all11 strict certification",
+  "rootRegisteredPlayerAccepted": true,
+  "rootNativeAndFourRegisteredMiddleScreenshotsPersonallyViewed": true,
+  "noShortsApprovedModelColoursWhiteTrainersGreyApparatus": true,
+  "viewport": [
+    390,
+    844
+  ],
+  "screenshots": "Full-page screenshots at390px DOM width; screenshot raster dimensions are retained in the files, not relabelled as viewport crops.",
+  "modes": [
+    {
+      "exerciseId": "calf-raise",
+      "mode": "dark",
+      "theme": "dark",
+      "slower": false,
+      "naturalOrderedFullCycleAndWrap": true,
+      "path": "review-evidence/calf-registered-dark-trace.json",
+      "sha256": "b4ceff145c33b69fb2f6cb04f692229ee3e248c93550a240806b927b1f90956e",
+      "validRows": 51
+    },
+    {
+      "exerciseId": "calf-raise",
+      "mode": "slower",
+      "theme": "dark",
+      "slower": true,
+      "naturalOrderedFullCycleAndWrap": true,
+      "path": "review-evidence/calf-registered-slower-trace.json",
+      "sha256": "f955c44217261124f29d0515acc2015bfd71ed694abdb7107db89f10b3a2cab9",
+      "validRows": 19
+    },
+    {
+      "exerciseId": "calf-raise",
+      "mode": "light",
+      "theme": "light",
+      "slower": false,
+      "naturalOrderedFullCycleAndWrap": true,
+      "path": "review-evidence/calf-registered-light-trace.json",
+      "sha256": "709995336f2cfeafbd4b89a4cf397f1e222ac1d315f8a4191a955d366867d180",
+      "validRows": 57
+    },
+    {
+      "exerciseId": "standing-calf-raise",
+      "mode": "dark",
+      "theme": "dark",
+      "slower": false,
+      "naturalOrderedFullCycleAndWrap": true,
+      "path": "review-evidence/standing-registered-dark-trace.json",
+      "sha256": "3ac1c6acc93fbcce954bdb2a4e4025485992f4d5b2ee4cf2ffab671f30e2d426",
+      "validRows": 75
+    },
+    {
+      "exerciseId": "standing-calf-raise",
+      "mode": "slower",
+      "theme": "dark",
+      "slower": true,
+      "naturalOrderedFullCycleAndWrap": true,
+      "path": "review-evidence/standing-registered-slower-trace.json",
+      "sha256": "ab117df55a10b2c7c1813f65d3c4b0683a79f60af8bfee3ac565ff715bbfc563",
+      "validRows": 29
+    },
+    {
+      "exerciseId": "standing-calf-raise",
+      "mode": "light",
+      "theme": "light",
+      "slower": false,
+      "naturalOrderedFullCycleAndWrap": true,
+      "path": "review-evidence/standing-registered-light-trace.json",
+      "sha256": "7af00b371128e7386c214828109821a7be940a2476e837f30c4b3ab09500217f",
+      "validRows": 51
+    }
+  ],
+  "manualWraps": 2,
+  "publicBindings": {
+    "public/form-frames/calf-raise/1.webp": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+    "public/form-frames/calf-raise/2.webp": "f62196c455ae718790a76f014c79de10bfbcd33cfac329eb97b4156962375b2b",
+    "public/form-frames/calf-raise/3.webp": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+    "public/form-frames/calf-raise/4.webp": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+    "public/form-frames/calf-raise/5.webp": "f62196c455ae718790a76f014c79de10bfbcd33cfac329eb97b4156962375b2b",
+    "public/form-frames/calf-raise/6.webp": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+    "public/form-art/calf-raise.webp": "958760eb6cb7366f9ede91aff451921841e3b7812022c220ba360a16e749ad71",
+    "public/form-frames/standing-calf-raise/1.webp": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+    "public/form-frames/standing-calf-raise/2.webp": "f62196c455ae718790a76f014c79de10bfbcd33cfac329eb97b4156962375b2b",
+    "public/form-frames/standing-calf-raise/3.webp": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+    "public/form-frames/standing-calf-raise/4.webp": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+    "public/form-frames/standing-calf-raise/5.webp": "f62196c455ae718790a76f014c79de10bfbcd33cfac329eb97b4156962375b2b",
+    "public/form-frames/standing-calf-raise/6.webp": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+    "public/form-art/standing-calf-raise.webp": "958760eb6cb7366f9ede91aff451921841e3b7812022c220ba360a16e749ad71"
+  },
+  "evidenceFiles": {
+    "review-evidence/browser-console-log-snapshot.json": "ba0ec3684000dcc3f938bdf1736fd93bc08082c7bffa1629f05b0126c8c6e963",
+    "review-evidence/browser-errors.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "review-evidence/calf-registered-dark-middle.png": "6348df98837aa07b1aa03f7a70c8a8d0bb9e856f39b984a5f76774088d988b93",
+    "review-evidence/calf-registered-dark-trace-invalid-hmr-attempt.json": "621b4efaa0fa418f1947a0139923830bd19e244bf0a236c70763623dad74c9c7",
+    "review-evidence/calf-registered-dark-trace.json": "b4ceff145c33b69fb2f6cb04f692229ee3e248c93550a240806b927b1f90956e",
+    "review-evidence/calf-registered-inputs-invalid-hmr-attempt.json": "b981acbd4616f72eb8bd99fbd88b2bdb84fa7a6960042a0bfb47e17f58360483",
+    "review-evidence/calf-registered-inputs.json": "b981acbd4616f72eb8bd99fbd88b2bdb84fa7a6960042a0bfb47e17f58360483",
+    "review-evidence/calf-registered-light-middle.png": "0f8e4c9bae36686917d1b98d41d7e6eb2b0177c4dcb007eed0ead1f1e4793bb6",
+    "review-evidence/calf-registered-light-trace.json": "709995336f2cfeafbd4b89a4cf397f1e222ac1d315f8a4191a955d366867d180",
+    "review-evidence/calf-registered-manual-wrap.json": "080fe264702e03b0f6301cde181bef31c89262f2cc2e68b9c36058c677eebfda",
+    "review-evidence/calf-registered-slower-trace.json": "f955c44217261124f29d0515acc2015bfd71ed694abdb7107db89f10b3a2cab9",
+    "review-evidence/staged-dark-trace.json": "3928ac61eff24316a2217b856b0ba7d45deb5070e898e90a3ee859edcd726124",
+    "review-evidence/staged-light-middle.png": "e7318bbf78063fe2696bee9e62e194bc5a9a6a4c1e93dd6c66f74ef41143e4d9",
+    "review-evidence/staged-light-trace.json": "4bb108d007163c993ca25e225b9427e97937ab511b3ec07819ec8a755eb79b49",
+    "review-evidence/standing-registered-dark-middle.png": "efd5618ed02655eb1999aca3baab8397cc8695aa8e3c5f911d7f6b4aa00c5045",
+    "review-evidence/standing-registered-dark-trace.json": "3ac1c6acc93fbcce954bdb2a4e4025485992f4d5b2ee4cf2ffab671f30e2d426",
+    "review-evidence/standing-registered-inputs.json": "14790355b08ff939b6435332251e81c6e7a871a21e615bcf6c723cd8f69dfa9d",
+    "review-evidence/standing-registered-light-middle.png": "c0e9e7170bfd9c0d1fa63922876722e603206208e03f2fd6a3262355c153e4ed",
+    "review-evidence/standing-registered-light-trace.json": "7af00b371128e7386c214828109821a7be940a2476e837f30c4b3ab09500217f",
+    "review-evidence/standing-registered-manual-wrap.json": "d480c1ab8d88c0de38cff5efacd2a1fb76fc9486a9aa906bafae16b4e8e530c4",
+    "review-evidence/standing-registered-slower-trace.json": "ab117df55a10b2c7c1813f65d3c4b0683a79f60af8bfee3ac565ff715bbfc563"
+  },
+  "rootNativeSourceReview": {
+    "path": "audit/native-review.json",
+    "sha256": "13ef3186bc50d5f2f5c6a4c8b4d3b559b46beca84cbdb0f42c0e114325697190"
+  },
+  "sourceArchive": {
+    "path": "portable-calf-timing-source.zip",
+    "sha256": "b12b606b9a014a57b73cb78592484d82585809a5920daa3e6ed60e078958ba25",
+    "bytes": 27639675,
+    "members": 37
+  },
+  "sourcePoseOrder": [
+    1,
+    2,
+    3,
+    3,
+    2,
+    1
+  ],
+  "timingFindingResolved": "The delivered middle/return pose now raises heels and body/shoulder-load together; the previous heel-only early pose is absent.",
+  "retainedFindings": [
+    "Three discrete physical poses with minor inherited contour/contact differences; no continuous or exact biomechanical certification.",
+    "Existing tiny-card fine-outline visibility remains unchanged because cards are untouched."
+  ],
+  "discardedHarnessAttempts": [
+    "One initial sandboxed loopback server could not accept browser connections. The correctly authorized local-only server accepted the review tab.",
+    "A source-module HMR reset the first registered review attempt to staged mode. Its two raw JSON files are retained as invalid-hmr-attempt and excluded from accepted modes. No artwork changed."
+  ],
+  "strictFlagsRemainNull": true
+}
