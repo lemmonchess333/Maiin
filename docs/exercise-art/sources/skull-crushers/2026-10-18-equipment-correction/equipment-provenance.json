@@ -1,0 +1,40 @@
+{
+  "exerciseId": "skull-crushers",
+  "version": "anatomy-v3-2026-10-18-equipment-correction-v1",
+  "sourceFolder": "docs/exercise-art/sources/skull-crushers/2026-10-18-equipment-correction",
+  "archiveSource": "portable-equipment-source.zip",
+  "archiveSha256": "9190902c215aab061f956d3b4fcc3ce4cd32a1eb95eb6e1242db10faff21ce2d",
+  "archiveBytes": 38467377,
+  "archiveMembers": 67,
+  "sourcePngs": ["1.png", "2.png", "3.png", "4.png", "5.png", "6.png"],
+  "sourceWebps": [
+    "../../../../../public/form-frames/skull-crushers/1.webp",
+    "../../../../../public/form-frames/skull-crushers/2.webp",
+    "../../../../../public/form-frames/skull-crushers/3.webp",
+    "../../../../../public/form-frames/skull-crushers/4.webp",
+    "../../../../../public/form-frames/skull-crushers/5.webp",
+    "../../../../../public/form-frames/skull-crushers/6.webp"
+  ],
+  "frameSourceSha256": [
+    "ff1a7963d0d1c77d35ec5dd9cf6242479e7000bed3fc66183dc3a2721c263bf9",
+    "69a9037648fdf1e24e3873ff39379872a76deb0775f6a69c5b46d8e62ec0d3f5",
+    "90b4f1d30935c800dd95de6abbcc7d7e97037b5ec790e09fb40358ba14835aba",
+    "52e0470dc96dcb06f67fea262d5a5658376b2080f3091e018d56f896e9fe043c",
+    "90b4f1d30935c800dd95de6abbcc7d7e97037b5ec790e09fb40358ba14835aba",
+    "ff1a7963d0d1c77d35ec5dd9cf6242479e7000bed3fc66183dc3a2721c263bf9"
+  ],
+  "frameSha256": [
+    "ccfccc28762088232fceca143df55b9c02b0e54813ece16df9cb7a562bd1e093",
+    "02c6af1f80944dd6ba1aef18b4a62b65b94fba83831c221d5543718366b87323",
+    "606a2b6ca2a5b1643568826cd815770237bcc2fa8640bf73e99261f8a995f0fc",
+    "50833f00e3cddb12597589b010ce83ac0f11e114727d78abf3ec8091280cc739",
+    "606a2b6ca2a5b1643568826cd815770237bcc2fa8640bf73e99261f8a995f0fc",
+    "ccfccc28762088232fceca143df55b9c02b0e54813ece16df9cb7a562bd1e093"
+  ],
+  "normalCardFrame": 3,
+  "cueSha256Unchanged": "097c3bfef70fc221a6e41855c4da9ff39b8daf6f2b548cc18283ed65fec36e4f",
+  "noNewImageGeneration": true,
+  "sourceDimensions": [870, 1072],
+  "nativeSourceCrop": [240, 0, 1110, 1072],
+  "allElevenStrictFieldsRemainNull": true
+}

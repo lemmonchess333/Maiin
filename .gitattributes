@@ -2,3 +2,13 @@
 /scripts/ios/asc-signing.mjs text eol=lf
 /docs/exercise-art/sources/dips/2026-10-17-legacy-redraw/runtime-caption-amendment.json text eol=lf
 /docs/exercise-art/reviews/2026-10-17-legacy-six/dips-hold-review-results.json text eol=lf
+/docs/exercise-art/releases/2026-10-18/skull-crushers.json text eol=lf
+/docs/exercise-art/releases/2026-10-18/rope-tricep-pushdown.json text eol=lf
+/docs/exercise-art/sources/skull-crushers/2026-10-18-equipment-correction/*.json text eol=lf
+/docs/exercise-art/sources/skull-crushers/2026-10-18-equipment-correction/*.md text eol=lf
+/docs/exercise-art/sources/rope-tricep-pushdown/2026-10-18-equipment-correction/*.json text eol=lf
+/docs/exercise-art/sources/rope-tricep-pushdown/2026-10-18-equipment-correction/*.md text eol=lf
+/docs/exercise-art/reviews/2026-10-18-equipment-correction/*.json text eol=lf
+/docs/exercise-art/reviews/2026-10-18-equipment-correction/*.md text eol=lf
+/docs/exercise-art/reviews/2026-10-18-equipment-correction/*.py text eol=lf
+/docs/exercise-art/reviews/2026-10-18-equipment-correction/registered-player-review.json.txt -text

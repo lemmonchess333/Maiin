@@ -1,0 +1,89 @@
+{
+  "head": "5dabd5e45fb83e8a0dc57d2d0933102fe5bcf926",
+  "scope": {
+    "public_guide_sets": 152,
+    "guide_frames_screened": 912,
+    "physical_cards_screened": 154,
+    "all_six_focused_contacts": [
+      "bench-press",
+      "overhead-press",
+      "barbell-row",
+      "dips",
+      "seated-row",
+      "reverse-grip-cable-pushdown",
+      "calf-raise",
+      "standing-calf-raise",
+      "cable-curl",
+      "cable-crunch",
+      "lat-pulldown",
+      "single-arm-cable-pushdown",
+      "single-arm-lat-pulldown",
+      "overhead-cable-tricep-extension",
+      "leg-press",
+      "hip-thrust",
+      "seated-calf-raise",
+      "shoulder-press-machine",
+      "incline-bench",
+      "smith-bench-press",
+      "smith-shoulder-press",
+      "front-squat",
+      "clean-and-press",
+      "thrusters"
+    ],
+    "additional_native_frames": [
+      "barbell-row/1",
+      "barbell-row/4",
+      "assault-bike/1",
+      "assault-bike/3",
+      "overhead-extension/1",
+      "cable-woodchopper/4",
+      "bench-press/3",
+      "bench-press/4"
+    ]
+  },
+  "confirmed_other_equipment_failures": [],
+  "retained_continuity_findings": [
+    {
+      "exercise": "bench-press",
+      "frames": [3, 5],
+      "comparison_frame": 4,
+      "finding": "Native frame3/5 headtop sits at abouty256 vs frame4 at abouty276, with head support and lower scene also moving; visible small scene jump. This was already documented at publication, not a newly discovered plate mechanism failure.",
+      "evidence": "retained-bench-support-shift.png",
+      "action": "Keep as documented follow-up; avoid athlete redraw in targeted skull/rope fix."
+    }
+  ],
+  "confirmed_separate_model_standard_findings": [
+    {
+      "exercises": ["calf-raise", "standing-calf-raise"],
+      "frames": [1, 2, 3, 4, 5, 6],
+      "cards": true,
+      "finding": "Black workout shorts conflict with current no-shorts model specification. These are separate legacy athlete/spec work, not a confirmed equipment mechanics failure.",
+      "evidence": "confirmed-calf-model-standard-finding.png",
+      "action": "Record separately; leave out of current targeted equipment patch."
+    }
+  ],
+  "retracted_initial_suspicions": [
+    {
+      "exercise": "seated-row",
+      "reason": "Cable turns at the low return and lifted selection responds; U-shaped routing alone is not evidence of a mechanism defect."
+    },
+    {
+      "exercise": "reverse-grip-cable-pushdown",
+      "reason": "Solid lower casing can enclose the stack; lack of visible plates alone does not prove a defective machine."
+    },
+    {
+      "exercise": "cable-woodchopper",
+      "reason": "High output sheave is fixed; the lower moving pulley travels with selected weight. It is not an output-height slider changing midrep."
+    },
+    {
+      "exercise": "assault-bike",
+      "reason": "Native1/3 show reciprocal handlebars and opposing pedal positions."
+    }
+  ],
+  "limitations": [
+    "This is contact-sheet visual screening of every current frame, not native-resolution certification of all912frames or playback review for all152sets.",
+    "Native-resolution focused checks were used to confirm or retract suspects, but subtle grip occlusion, precise3Dcalibration and all cue agreement remain outside this screen.",
+    "No source/native archives, repo files, settings or tests changed. No replacement athlete was proposed.",
+    "Skullcrushers and ropepushdowns are being independently repaired by two other agents; their final revised equipment still needs root review."
+  ]
+}

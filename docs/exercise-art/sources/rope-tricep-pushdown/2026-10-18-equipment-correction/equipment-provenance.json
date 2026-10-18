@@ -1,0 +1,40 @@
+{
+  "exerciseId": "rope-tricep-pushdown",
+  "version": "anatomy-v3-2026-10-18-equipment-correction-v1",
+  "sourceFolder": "docs/exercise-art/sources/rope-tricep-pushdown/2026-10-18-equipment-correction",
+  "archiveSource": "portable-equipment-source.zip",
+  "archiveSha256": "7858ac6437574d8caefbfcc1d143075267b259cf8080cef11a6e7db0ef6e8d1c",
+  "archiveBytes": 6043672,
+  "archiveMembers": 29,
+  "sourcePngs": ["1.png", "2.png", "3.png", "4.png", "5.png", "6.png"],
+  "sourceWebps": [
+    "../../../../../public/form-frames/rope-tricep-pushdown/1.webp",
+    "../../../../../public/form-frames/rope-tricep-pushdown/2.webp",
+    "../../../../../public/form-frames/rope-tricep-pushdown/3.webp",
+    "../../../../../public/form-frames/rope-tricep-pushdown/4.webp",
+    "../../../../../public/form-frames/rope-tricep-pushdown/5.webp",
+    "../../../../../public/form-frames/rope-tricep-pushdown/6.webp"
+  ],
+  "frameSourceSha256": [
+    "5aa70630ba88c71b4038800532307eff303c4373a2d14c65c3cc4b609c1104c9",
+    "451bba9a6220cbe301991963eaf28e383ee4c1dee02448d4a294d95ad83ce1bb",
+    "e28a0060f6890dcf653a18acc71d0620fa1ba2da97951575a431b1876e93b05e",
+    "9a01b15f89b2714100c94f2518112692b21f79d6682feae0193b79c49dba7b59",
+    "1301717f48794acd1c029c472f12a959f726801c7467dd6827fa8fdec6b7f89f",
+    "5aa70630ba88c71b4038800532307eff303c4373a2d14c65c3cc4b609c1104c9"
+  ],
+  "frameSha256": [
+    "9d0ea51b2f4229adcb63eb5d736d88bf3b45b52bc4242d5e78fdf65f31d2258e",
+    "67820b245285700597e51394bc9423f0c465bbca1f15f3776f45ad3a21efad46",
+    "a398a340fc3bfe428a84b57e4eedae720ea4f38f9ad7b3a1e58cde8f009adaa9",
+    "cd3d5475d2e54b0a55b7578b690312b38d5536a79dd441e9dd8bb87d1cc58778",
+    "eee2e2c13f44b600e784f6401623935f77f93143e5ced23d68af4e10df116c60",
+    "9d0ea51b2f4229adcb63eb5d736d88bf3b45b52bc4242d5e78fdf65f31d2258e"
+  ],
+  "normalCardFrame": 1,
+  "cueSha256Unchanged": "8144f7c4de20ff5c1b190066059eacc85b521bc0851bc8ea22a143fb2d392f57",
+  "noNewImageGeneration": true,
+  "sourceDimensions": [1024, 1600],
+  "nativeSourceCrop": null,
+  "allElevenStrictFieldsRemainNull": true
+}
