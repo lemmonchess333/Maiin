@@ -22,3 +22,9 @@
 /docs/exercise-art/reviews/2026-10-18-bench-calf-correction/*.json text eol=lf
 /docs/exercise-art/reviews/2026-10-18-bench-calf-correction/*.md text eol=lf
 /docs/exercise-art/reviews/2026-10-18-bench-calf-correction/*.json.txt -text
+/docs/exercise-art/releases/2026-10-18-calf-timing/*.json text eol=lf
+/docs/exercise-art/sources/calf-raise/2026-10-18-timing-correction/*.json text eol=lf
+/docs/exercise-art/sources/calf-raise/2026-10-18-timing-correction/*.md text eol=lf
+/docs/exercise-art/reviews/2026-10-18-calf-timing/*.json text eol=lf
+/docs/exercise-art/reviews/2026-10-18-calf-timing/*.md text eol=lf
+/docs/exercise-art/reviews/2026-10-18-calf-timing/*.json.txt -text

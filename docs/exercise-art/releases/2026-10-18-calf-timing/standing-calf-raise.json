@@ -1,0 +1,164 @@
+{
+  "exerciseId": "standing-calf-raise",
+  "version": "anatomy-v3-2026-10-18-calf-timing-correction-v1",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Codex scoped native timing, identity and registered-player review",
+  "reviewedAt": "2026-10-18T11:33:08.170822+00:00",
+  "reference": {
+    "path": "form-frames/standing-calf-raise/3.webp",
+    "sha256": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490"
+  },
+  "cueSha256": "2f242605e505975db3cd60a9d9dd8bac4f336397481a008f3ba2438c0fae8f21",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Same FA56 adult white/light-grey anatomical mannequin without shorts, approved purple fields, white trainers and grey apparatus. One built-in middle-pose edit uses the exact current athlete and canonical/master/endpoint references; endpoints are unchanged."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Same1024x1536 native canvas, camera and scale. Generated source pixels remain at unchanged coordinates. No anatomical transforms, mirroring, fitting, or resampling."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Root native full-scene, head/hip, calf/heel and contour review accepted. Minor inherited discrete source contour differences remain; exact anatomical certification is not asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Fixed machine frame/base/step pixels outside documented moving and revealed-background support remain exact. Pads, lever and selected plate group move in the corrected middle beat; native apparatus/stack review accepted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Forefoot/step and shoulder-pad/hand contacts reviewed across start/middle/top and reverse. The old heel-only early rise is removed; minor inherited contact differences remain."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Head, shoulder/lever edge, calf field, rear heel and selected plate indicators all rise on both outward transitions in the same1/2/3/3/2/1 sequence. This resolves the timing finding; continuous trajectory and exact biomechanics are not certified."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Existing generated calf chroma is mapped to canonical#7B72E9/#9590E0 while retaining source luminance/shading. Catalogue Gastrocnemius/Soleus roles and all unchanged endpoint colours remain exact."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "All six labels, cues, qualitative phases, order, setup, duration, exact reference3 and both normal cards remain unchanged."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Both actual registered IDs observed all six decoded frames and ordered natural6-to1 loops at normal dark, slower dark and normal light. Paused manual6-to1 wrap preserves first cue selection and source URL. All strict certification flags remain null."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Actual390x844 registered normal-light full-page middle screenshot personally inspected; all six natural frames and full loop observed. The unchanged normal cards remain bound to byte-identical reference3. All strict certification flags remain null."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Actual390x844 registered normal/slower dark loops observed and full-page corrected-middle screenshot inspected for eachID. Native/source/pixel/preservation proofs bind the same approved artwork. All strict certification flags remain null."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/standing-calf-raise/1.webp",
+      "sha256": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/calf-raise/2026-10-18-timing-correction/1.png",
+        "sha256": "198f8c656dd0cde3696fbcd648d7657674b2369b44b2891cbfdc7022dc1b949d"
+      }
+    },
+    {
+      "path": "form-frames/standing-calf-raise/2.webp",
+      "sha256": "f62196c455ae718790a76f014c79de10bfbcd33cfac329eb97b4156962375b2b",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/calf-raise/2026-10-18-timing-correction/2.png",
+        "sha256": "f584e62f496ed8d22af99c4909881c420cf40cc85dbdb2a7aee6b2fb9c5c7418"
+      }
+    },
+    {
+      "path": "form-frames/standing-calf-raise/3.webp",
+      "sha256": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/calf-raise/2026-10-18-timing-correction/3.png",
+        "sha256": "2c218bd31827e951e335f66816912a79a510b963661db7a91a71b8c8ce3035c3"
+      }
+    },
+    {
+      "path": "form-frames/standing-calf-raise/4.webp",
+      "sha256": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/calf-raise/2026-10-18-timing-correction/4.png",
+        "sha256": "2c218bd31827e951e335f66816912a79a510b963661db7a91a71b8c8ce3035c3"
+      }
+    },
+    {
+      "path": "form-frames/standing-calf-raise/5.webp",
+      "sha256": "f62196c455ae718790a76f014c79de10bfbcd33cfac329eb97b4156962375b2b",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/calf-raise/2026-10-18-timing-correction/5.png",
+        "sha256": "f584e62f496ed8d22af99c4909881c420cf40cc85dbdb2a7aee6b2fb9c5c7418"
+      }
+    },
+    {
+      "path": "form-frames/standing-calf-raise/6.webp",
+      "sha256": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/calf-raise/2026-10-18-timing-correction/6.png",
+        "sha256": "198f8c656dd0cde3696fbcd648d7657674b2369b44b2891cbfdc7022dc1b949d"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "The human owner in this chat",
+    "instruction": "Fix the calf timing delay too so the heels and body rise together, same model and colours, no shorts, and get it merged.",
+    "context": "Explicit authorization for the correction, local registration, verification and normal merge; this is not strict visual certification."
+  },
+  "findings": [
+    "The prior early heel/body timing mismatch is corrected in the shared middle pose: heels, legs/hips, torso/head and shoulder load begin rising together.",
+    "Three genuine discrete poses1/2/3/3/2/1 remain; no continuous trajectory or exact biomechanical certification is claimed.",
+    "Minor inherited endpoint contour/contact differences and modest below-step heel stretch remain."
+  ],
+  "sourcePoseOrder": [1, 2, 3, 3, 2, 1],
+  "distinctPhysicalPoses": 3,
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/calf-raise/2026-10-18-timing-correction",
+    "method": "One successful built-in native middle-pose edit; same-coordinate generated moving-body/pad/lever/selected-stack composite with fixed scene restoration and existing-field canonical hue mapping. Starting/top poses unchanged.",
+    "newImageGeneration": true,
+    "newImageGenerationCalls": 1,
+    "generationFailures": 0,
+    "anatomicalTransforms": [],
+    "priorRelease": "docs/exercise-art/releases/2026-10-18/standing-calf-raise.json",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/calf-raise/2026-10-18-timing-correction/portable-calf-timing-source.zip",
+      "sha256": "b12b606b9a014a57b73cb78592484d82585809a5920daa3e6ed60e078958ba25",
+      "bytes": 27639675,
+      "members": 37
+    },
+    "changedPublicGuideFrames": [2, 5],
+    "referenceAndNormalCardUnchanged": true
+  },
+  "recordStage": "Native/source and actual registered normal/slower mobile light/dark/manual review complete. Full normal verification and exact-head CI/normal merge remain separate publication gates.",
+  "replacementScope": "Correction of an existing six-frame guide; no conversion-count increment.",
+  "integrationEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-18-calf-timing/registered-player-review.zip",
+    "sha256": "f24fa0fa9fe6fd7fdf6b881a49303ad882028fa58d9bcd373137c04d203d0776",
+    "bytes": 311630,
+    "members": 27,
+    "review": "docs/exercise-art/reviews/2026-10-18-calf-timing/registered-player-review.json.txt",
+    "reviewSha256": "2b80955f1a4d1729dda229d3ae5b0949c2cd652e524bf90151ecaec51145e65e"
+  },
+  "supersedesApprovedRelease": "docs/exercise-art/releases/2026-10-03/standing-calf-raise.json"
+}
