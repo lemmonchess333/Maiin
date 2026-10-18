@@ -2004,7 +2004,7 @@ shared (pinned by the "profile:" cases in `firestore.rules.test.ts`).
       loading. It never did in production after 14 September.
 - [ ] **A profile you don't follow** shows its public sessions; follow
       them and reopen it: followers-only sessions appear too.
-- [ ] **Follow from a post** on Explore: the link turns to "Following",
+- [x] _(Proven 2026-10-18: a person following nobody opens on Explore by default, and the first follow used to switch the screen to Following, which fills only with posts made after a follow, so the posts vanished under the tap. A visit now stays on the source it opened on: `src/pages/__tests__/Social.followUpdates.test.tsx` 'stays on Explore when the first follow arrives during the visit' (red before the fix). The card side is `src/pages/__tests__/Social.feed.test.tsx` 'the link says Following, Bea's other post loses its link, and the line counts the follow' (#2882).)_ **Follow from a post** on Explore: the link turns to "Following",
       the line over the feed counts the follow, and the person's other
       posts lose their Follow link at the same moment.
 - [x] _(Proven 2026-10-17: src/features/spaces/**tests**/SpacesDirectory.test.tsx "keeps filters visible through no matches and recovers across countries" on main. It opens the Country sheet, picks Germany, checks the sheet closes, picks the Half distance chip, reaches "No matching races" and then "Clear filters" restores both races.)_ **Race chips:** the country sheet, the distance chips, and "Clear
