@@ -6,13 +6,16 @@
  * Use Scheduler's supported run API. The gen1 functions.call API is documented
  * for testing/debugging only, so it is not part of the production release path.
  */
-import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { isDeepStrictEqual } from "node:util";
 import { pathToFileURL } from "node:url";
 
 const PROJECT = "adaptive-fitness-af8bb";
 const FUNCTION = "rolloverChallenges";
+const SCHEDULER_API = "https://cloudscheduler.googleapis.com/v1";
+const MAX_DISCOVERY_PAGES = 256;
+const MAX_DISCOVERY_LOCATIONS = 100;
+const MAX_DISCOVERY_JOBS = 50_000;
 const requireFunctions = createRequire(
   new URL("../functions/package.json", import.meta.url)
 );
@@ -96,7 +99,17 @@ export function selectRolloverJob(metadata, jobs) {
   return job;
 }
 
+function requestOperation(url) {
+  const path = new URL(url).pathname;
+  if (path.endsWith("/locations")) return "Scheduler locations list";
+  const jobs = path.match(/\/locations\/([a-z0-9-]+)\/jobs$/);
+  if (jobs) return `Scheduler jobs list (${jobs[1]})`;
+  if (path.endsWith(":run")) return "Scheduler dispatch";
+  return "Function metadata";
+}
+
 async function jsonRequest(url, token, options = {}) {
+  const operation = requestOperation(url);
   let response;
   try {
     response = await fetch(url, {
@@ -106,52 +119,132 @@ async function jsonRequest(url, token, options = {}) {
       signal: AbortSignal.timeout(30_000),
     });
   } catch {
-    throw new ChallengeReleaseError(
-      "Challenge release API request did not complete"
-    );
+    throw new ChallengeReleaseError(`${operation} request did not complete`);
   }
   if (!response.ok)
     throw new ChallengeReleaseError(
-      `Challenge release API refused the request (HTTP ${response.status})`
+      `${operation} request refused (HTTP ${response.status})`
     );
   try {
     return await response.json();
   } catch {
-    throw new ChallengeReleaseError(
-      "Challenge release API returned invalid JSON"
-    );
+    throw new ChallengeReleaseError(`${operation} returned invalid JSON`);
   }
 }
 
-function schedulerJobs() {
-  // Firebase gen1 scheduled jobs use the App Engine location. gcloud discovers
-  // that location when --location is absent; do not assume the function region.
-  // Capture stdout/stderr so job metadata or CLI authentication errors do not
-  // print tokens, headers or configuration into release logs.
-  try {
-    return JSON.parse(
-      execFileSync(
-        "gcloud",
-        [
-          "scheduler",
-          "jobs",
-          "list",
-          `--project=${PROJECT}`,
-          "--format=json",
-          "--quiet",
-        ],
-        {
-          encoding: "utf8",
-          stdio: ["ignore", "pipe", "pipe"],
-          timeout: 60_000,
-        }
+function nextPageToken(page, seen, operation) {
+  if (page.nextPageToken === undefined || page.nextPageToken === "") return "";
+  const token = page.nextPageToken;
+  if (
+    typeof token !== "string" ||
+    token.length > 4096 ||
+    !token.trim() ||
+    /[\u0000-\u001f\u007f]/.test(token) ||
+    seen.has(token)
+  )
+    throw new ChallengeReleaseError(`${operation} returned invalid pagination`);
+  seen.add(token);
+  return token;
+}
+
+/** Explicit regional REST discovery needs neither gcloud nor an App Engine
+ * application. Do not infer a Scheduler region from the function's region.
+ * Both lists are paginated; opaque page tokens are encoded as query values.
+ * Any failed region aborts discovery, since it could hide another match. */
+export async function schedulerJobs({ token, request = jsonRequest }) {
+  let pages = 0;
+  async function listPages(resource, field, pageSize, validate) {
+    const operation = requestOperation(`${SCHEDULER_API}/${resource}`);
+    const seenTokens = new Set();
+    const results = [];
+    let pageToken = "";
+    do {
+      if (++pages > MAX_DISCOVERY_PAGES)
+        throw new ChallengeReleaseError(
+          "Scheduler discovery exceeded its page limit"
+        );
+      const url = new URL(`${SCHEDULER_API}/${resource}`);
+      url.searchParams.set("pageSize", String(pageSize));
+      if (pageToken) url.searchParams.set("pageToken", pageToken);
+      let page;
+      try {
+        page = await request(url.href, token);
+      } catch (error) {
+        if (error instanceof ChallengeReleaseError) throw error;
+        // Never expose arbitrary SDK/network errors, tokens or response bodies.
+        throw new ChallengeReleaseError(
+          `${operation} request did not complete`
+        );
+      }
+      if (
+        !page ||
+        typeof page !== "object" ||
+        Array.isArray(page) ||
+        page.error !== undefined ||
+        (page[field] !== undefined && !Array.isArray(page[field]))
       )
-    );
-  } catch {
-    throw new ChallengeReleaseError(
-      "Could not discover the existing challenge Scheduler job"
+        throw new ChallengeReleaseError(
+          `${operation} returned an invalid response`
+        );
+      for (const item of page[field] || []) {
+        validate(item);
+        results.push(item);
+      }
+      pageToken = nextPageToken(page, seenTokens, operation);
+    } while (pageToken);
+    return results;
+  }
+
+  const locationIds = new Set();
+  const locations = await listPages(
+    `projects/${PROJECT}/locations`,
+    "locations",
+    100,
+    (location) => {
+      const id = location?.locationId;
+      if (
+        typeof id !== "string" ||
+        !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(id) ||
+        locationIds.has(id)
+      )
+        throw new ChallengeReleaseError(
+          "Scheduler locations list returned an invalid resource"
+        );
+      locationIds.add(id);
+      if (locationIds.size > MAX_DISCOVERY_LOCATIONS)
+        throw new ChallengeReleaseError(
+          "Scheduler discovery exceeded its location limit"
+        );
+    }
+  );
+
+  const jobs = [];
+  const jobNames = new Set();
+  for (const location of locations) {
+    // Location.name is implementation-defined. Only the validated canonical
+    // id selects a region; every request remains scoped to our fixed project.
+    const resource = `projects/${PROJECT}/locations/${location.locationId}/jobs`;
+    const prefix = `${resource}/`;
+    jobs.push(
+      ...(await listPages(resource, "jobs", 500, (job) => {
+        if (
+          typeof job?.name !== "string" ||
+          !job.name.startsWith(prefix) ||
+          !/^[A-Za-z0-9_-]+$/.test(job.name.slice(prefix.length)) ||
+          jobNames.has(job.name)
+        )
+          throw new ChallengeReleaseError(
+            "Scheduler jobs list returned an invalid resource"
+          );
+        jobNames.add(job.name);
+        if (jobNames.size > MAX_DISCOVERY_JOBS)
+          throw new ChallengeReleaseError(
+            "Scheduler discovery exceeded its job limit"
+          );
+      }))
     );
   }
+  return jobs;
 }
 
 export async function runRolloverAndVerify({
@@ -169,7 +262,7 @@ export async function runRolloverAndVerify({
     `https://cloudfunctions.googleapis.com/v1/projects/${PROJECT}/locations/us-central1/functions/${FUNCTION}`,
     token
   );
-  const job = selectRolloverJob(metadata, await listJobs());
+  const job = selectRolloverJob(metadata, await listJobs({ token, request }));
   const response = await request(
     `https://cloudscheduler.googleapis.com/v1/${job.name}:run`,
     token,
