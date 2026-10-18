@@ -18,7 +18,8 @@
  *     fields (totalWeeks) through the write.
  *   - The newer-future-race case writes the runPlan but NO profile clear
  *     (profilePayload null) — the successor race survives a real write.
- *   - L1 race_no_show status flips on the persisted runDay.
+ *   - L1 race_no_show status flips on the persisted runDay, and does not
+ *     when the race-day run, saved as the app saves it, went the distance.
  *   - Idempotency against the post-write state (second sweep no-ops).
  *   - The orphaned race goal: a PROFILE-only write (no programState
  *     payload), for a race-prep profile whose plan is gone.
@@ -98,6 +99,8 @@ async function readRunDays() {
 }
 
 async function clearUser() {
+  const runs = await userRef().collection("runs").get();
+  await Promise.all(runs.docs.map((d) => d.ref.delete()));
   await programRef()
     .delete()
     .catch(() => {});
@@ -208,6 +211,81 @@ suite("_runDailyRaceReconciliationForUser — emulator integration", () => {
 
     const runDays = await readRunDays();
     expect(runDays[0].status).toBe("race_no_show");
+  });
+
+  it("L1 leaves a race the runner finished: the app's saved run on race day clears it", async () => {
+    // The run as `runDocument` (src/lib/runCompletion.ts) saves a race
+    // started from Start Run rather than from the plan's slot: the plan
+    // block is `freeformPlanMetadata`, so `actualTemplateId` is null, and
+    // `date` is the local day it started. The sweep finds it through its
+    // real `date == raceDate` query; 9,960 m is over 95% of a 10K.
+    const raceDate = daysAgo(10);
+    const raceGoal = { distance: "10k", targetDate: raceDate };
+    await seed({
+      profile: { runMode: "race_prep", raceGoal },
+      programState: {
+        runDays: [
+          {
+            id: `runday_race_${raceDate}`,
+            dayIndex: 6,
+            templateId: "10k_race",
+            type: "race",
+            status: "planned",
+            date: raceDate,
+          },
+        ],
+        runPlan: { mode: "race_prep", raceGoal },
+      },
+    });
+    const startedAt = new Date(`${raceDate}T09:00:00Z`);
+    const { Timestamp } = admin.firestore;
+    await userRef()
+      .collection("runs")
+      .doc("race-run")
+      .set({
+        distance: 9960,
+        duration: 2950,
+        avgPace: 296,
+        calories: 640,
+        elevationGain: 42,
+        points: [],
+        splits: [],
+        bestEfforts: [],
+        startedAt: Timestamp.fromDate(startedAt),
+        completedAt: Timestamp.fromDate(new Date(startedAt.getTime() + 2950e3)),
+        date: raceDate,
+        notes: "",
+        relativeEffort: null,
+        paceVerdictTone: null,
+        visibility: "followers",
+        type: "run",
+        activityType: "freerun",
+        place: null,
+        shoeId: null,
+        isInvalid: false,
+        invalidReason: null,
+        savedAnyway: false,
+        routeQuality: null,
+        workPortion: null,
+        planMode: "race_prep",
+        planSource: "manual",
+        plannedRunDayIndex: null,
+        plannedTemplateId: null,
+        plannedTemplateType: null,
+        actualTemplateId: null,
+        matchedPlanExact: null,
+        matchedPlanType: null,
+        offPlan: false,
+        planWeekIndex: null,
+        planTotalWeeks: null,
+        scheduledRunId: null,
+      });
+
+    const result = await _runDailyRaceReconciliationForUser(UID);
+    expect(result.noShowWritten).toBe(false);
+
+    const runDays = await readRunDays();
+    expect(runDays[0].status).toBe("planned");
   });
 
   it("is idempotent — a second sweep over the post-write state writes nothing", async () => {
