@@ -83,6 +83,7 @@ const {
 } = require("./lib/pushSchedule");
 const { activeDateKeysFromLogs } = require("./lib/activeDates");
 const {
+  withNativePushAlert,
   tokensToPrune,
   buildStreakNudgeMessage,
   buildFirstWeekNudgeMessage,
@@ -92,6 +93,7 @@ const {
 } = require("./lib/pushSend");
 // Packet 19 — server-owned FCM token ownership (claim/release + send leases).
 const pushTokenOwnership = require("./lib/pushTokenOwnership");
+const challengeAnnouncements = require("./lib/challengeAnnouncements");
 const routePlanning = require("./lib/routePlanning");
 const { pushableBadgeIds } = require("./lib/badgeNudge");
 
@@ -2766,7 +2768,7 @@ exports.claimPushDeviceToken = functions
       throw new functions.https.HttpsError("unauthenticated", "Auth required.");
     }
     const input = pushTokenInput(data);
-    if (input.platform !== "web") {
+    if (input.platform !== "web" && input.platform !== "ios") {
       throw new functions.https.HttpsError(
         "invalid-argument",
         "Invalid token."
@@ -2811,7 +2813,7 @@ exports.releasePushDeviceToken = functions
       throw new functions.https.HttpsError("unauthenticated", "Auth required.");
     }
     const input = pushTokenInput(data);
-    if (input.platform !== "web") {
+    if (input.platform !== "web" && input.platform !== "ios") {
       throw new functions.https.HttpsError(
         "invalid-argument",
         "Invalid token."
@@ -3009,7 +3011,7 @@ async function maybeSendStreakNudge(uid, now) {
   try {
     batch = await admin
       .messaging()
-      .sendEachForMulticast({ tokens, ...message });
+      .sendEachForMulticast({ tokens, ...withNativePushAlert(message, uid) });
   } finally {
     // Release send leases before pruning (prune uses releaseTokenIfOwned,
     // which must not contend with an unexpired lease of its own).
@@ -3072,9 +3074,10 @@ async function maybeSendBadgeNudge(uid, now) {
 
   let batch;
   try {
-    batch = await admin
-      .messaging()
-      .sendEachForMulticast({ tokens, ...buildBadgeNudgeMessage() });
+    batch = await admin.messaging().sendEachForMulticast({
+      tokens,
+      ...withNativePushAlert(buildBadgeNudgeMessage(), uid),
+    });
   } finally {
     await releaseClaimedPushSendLeases(uid, registrations);
   }
@@ -3180,7 +3183,7 @@ async function maybeSendWeeklyRecap(uid, now) {
   try {
     batch = await admin
       .messaging()
-      .sendEachForMulticast({ tokens, ...message });
+      .sendEachForMulticast({ tokens, ...withNativePushAlert(message, uid) });
   } finally {
     await releaseClaimedPushSendLeases(uid, registrations);
   }
@@ -3308,6 +3311,61 @@ exports._maybeSendBadgeNudge = maybeSendBadgeNudge;
 exports._awardMilestoneBadges = awardMilestoneBadges;
 exports._maybeSendWeeklyRecap = maybeSendWeeklyRecap;
 
+async function maybeSendChallengeAnnouncement(uid, now, profile) {
+  return challengeAnnouncements.maybeSendAnnouncement({
+    db,
+    uid,
+    now,
+    profile,
+    serverTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+    leaseRegistrations: leaseClaimedPushRegistrations,
+    releaseRegistrations: releaseClaimedPushSendLeases,
+    send: (message) => admin.messaging().sendEachForMulticast(message),
+    prune: pruneDeadPushTokens,
+  });
+}
+
+// Announce only the current local edition at ~09:00 on days1–3. This is
+// separate from rollover (which creates tomorrow's definitions in advance).
+// Failed work is eligible for a later scheduled catchup sweep. Atomic
+// per-month claims prevent duplicate banners if a sweep is repeated.
+exports.hourlyChallengeAnnouncements = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("0 * * * *")
+  .timeZone("Etc/UTC")
+  .onRun(async () => {
+    const now = new Date();
+    await challengeAnnouncements.sweepAnnouncementUsers({
+      db,
+      now,
+      documentId: admin.firestore.FieldPath.documentId(),
+      perUser: async (uid, profile) => {
+        // The all-users pass is needed for opted-in lapsed accounts. Avoid
+        // deletion-ledger reads for the other local-hour buckets.
+        if (
+          !isLocalSendHour(
+            now,
+            profile?.timezone,
+            challengeAnnouncements.LOCAL_HOUR
+          )
+        )
+          return;
+        if (
+          await accountDeletionLocks.shouldSystemWriteProceed(
+            db,
+            uid,
+            "hourlyChallengeAnnouncements"
+          )
+        ) {
+          await maybeSendChallengeAnnouncement(uid, now, profile);
+        }
+      },
+    });
+    return null;
+  });
+
+exports._maybeSendChallengeAnnouncement = maybeSendChallengeAnnouncement;
+
 // Push #961 / #965 — on-demand test push (the device tracer). Sends a generic
 // FCM message to the caller's own registered tokens so a user can confirm
 // end-to-end delivery from Settings. Prunes dead tokens like the senders do.
@@ -3340,12 +3398,17 @@ exports.sendTestPush = functions
         // Title/body travel in `data`.
         batch = await admin.messaging().sendEachForMulticast({
           tokens,
-          data: {
-            type: "test",
-            route: "/",
-            title: "Tropos 🔔",
-            body: "Push notifications are working — you're all set.",
-          },
+          ...withNativePushAlert(
+            {
+              data: {
+                type: "test",
+                route: "/",
+                title: "Tropos 🔔",
+                body: "Push notifications are working — you're all set.",
+              },
+            },
+            uid
+          ),
         });
       } catch (err) {
         console.error("sendTestPush: FCM send threw", {

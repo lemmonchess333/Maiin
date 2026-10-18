@@ -1,7 +1,8 @@
 /**
  * Run the existing Scheduler job after source verification, then read back the
- * current canonical definitions. Only rolloverChallenges writes challenge docs;
- * this release script never writes Firestore or participant progress.
+ * current canonical definitions. Also verify the automatic announcements job
+ * read-only, without dispatching notifications. Only rolloverChallenges writes
+ * challenge docs; this script never writes Firestore or participant progress.
  *
  * Use Scheduler's supported run API. The gen1 functions.call API is documented
  * for testing/debugging only, so it is not part of the production release path.
@@ -12,6 +13,7 @@ import { pathToFileURL } from "node:url";
 
 const PROJECT = "adaptive-fitness-af8bb";
 const FUNCTION = "rolloverChallenges";
+const ANNOUNCEMENTS_FUNCTION = "hourlyChallengeAnnouncements";
 const SCHEDULER_API = "https://cloudscheduler.googleapis.com/v1";
 const MAX_DISCOVERY_PAGES = 256;
 const MAX_DISCOVERY_LOCATIONS = 100;
@@ -64,17 +66,17 @@ export function definitionProblems(definitions, documents) {
   return problems;
 }
 
-export function selectRolloverJob(metadata, jobs) {
+function selectScheduledJob(metadata, jobs, functionName) {
   const topic = metadata?.eventTrigger?.resource;
   if (
     metadata?.status !== "ACTIVE" ||
-    metadata?.entryPoint !== FUNCTION ||
+    metadata?.entryPoint !== functionName ||
     typeof topic !== "string" ||
     !topic.startsWith(`projects/${PROJECT}/topics/`) ||
     !metadata?.eventTrigger?.eventType?.includes("pubsub")
   ) {
     throw new ChallengeReleaseError(
-      "rolloverChallenges is not an active Pub/Sub function"
+      `${functionName} is not an active Pub/Sub function`
     );
   }
   if (!Array.isArray(jobs))
@@ -82,7 +84,7 @@ export function selectRolloverJob(metadata, jobs) {
   const matches = jobs.filter((job) => job?.pubsubTarget?.topicName === topic);
   if (matches.length !== 1)
     throw new ChallengeReleaseError(
-      "Expected exactly one Scheduler job for rolloverChallenges"
+      `Expected exactly one Scheduler job for ${functionName}`
     );
   const job = matches[0];
   const prefix = `projects/${PROJECT}/locations/`;
@@ -93,9 +95,22 @@ export function selectRolloverJob(metadata, jobs) {
     job.state !== "ENABLED"
   ) {
     throw new ChallengeReleaseError(
-      "rolloverChallenges Scheduler job is invalid or disabled"
+      `${functionName} Scheduler job is invalid or disabled`
     );
   }
+  return job;
+}
+
+export function selectRolloverJob(metadata, jobs) {
+  return selectScheduledJob(metadata, jobs, FUNCTION);
+}
+
+export function selectAnnouncementsJob(metadata, jobs) {
+  const job = selectScheduledJob(metadata, jobs, ANNOUNCEMENTS_FUNCTION);
+  if (job.schedule !== "0 * * * *" || job.timeZone !== "Etc/UTC")
+    throw new ChallengeReleaseError(
+      "hourlyChallengeAnnouncements Scheduler cadence differs from the release schedule"
+    );
   return job;
 }
 
@@ -262,7 +277,18 @@ export async function runRolloverAndVerify({
     `https://cloudfunctions.googleapis.com/v1/projects/${PROJECT}/locations/us-central1/functions/${FUNCTION}`,
     token
   );
-  const job = selectRolloverJob(metadata, await listJobs({ token, request }));
+  const announcementsMetadata = await request(
+    `https://cloudfunctions.googleapis.com/v1/projects/${PROJECT}/locations/us-central1/functions/${ANNOUNCEMENTS_FUNCTION}`,
+    token
+  );
+  const jobs = await listJobs({ token, request });
+  const job = selectRolloverJob(metadata, jobs);
+  // Read-only proof that automatic delivery is configured. Never dispatch the
+  // announcements job during a release: that could send real notifications.
+  selectAnnouncementsJob(announcementsMetadata, jobs);
+  log(
+    "Verified hourly challenge announcements Scheduler is enabled (0 * * * *, Etc/UTC)"
+  );
   const response = await request(
     `https://cloudscheduler.googleapis.com/v1/${job.name}:run`,
     token,

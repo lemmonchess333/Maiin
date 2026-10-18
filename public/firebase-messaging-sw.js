@@ -22,16 +22,40 @@ const ICON = BASE_PATH + "icons/icon-192x192.png";
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+  const requestedRoute = event.notification.data?.route;
+  // Keep this retained worker's routing identical to the canonical worker.
   const route =
-    (event.notification.data && event.notification.data.route) || "/";
-  // BASE_PATH keeps the trailing slash; route is leading-slash, so trim one.
-  const target = BASE_PATH.replace(/\/$/, "") + route;
+    requestedRoute === "/social" || requestedRoute === "/social?tab=together"
+      ? "/social?tab=together"
+      : requestedRoute === "/program"
+        ? "/program"
+        : "/";
+  const target = new URL(
+    BASE_PATH.replace(/\/$/, "") + route,
+    self.location.origin
+  ).href;
   event.waitUntil(
     clients
       .matchAll({ type: "window", includeUncontrolled: true })
-      .then((wins) => {
-        for (const w of wins) {
-          if ("focus" in w && w.url.includes(BASE_PATH)) return w.focus();
+      .then(async (windows) => {
+        for (const client of windows) {
+          const url = new URL(client.url);
+          if (
+            url.origin !== self.location.origin ||
+            !url.pathname.startsWith(BASE_PATH)
+          )
+            continue;
+          if (
+            typeof client.navigate !== "function" ||
+            typeof client.focus !== "function"
+          )
+            continue;
+          try {
+            const navigated = await client.navigate(target);
+            return await (navigated || client).focus();
+          } catch {
+            // A closing window may reject navigation; open the destination below.
+          }
         }
         if (clients.openWindow) return clients.openWindow(target);
       })
@@ -64,7 +88,7 @@ messaging.onBackgroundMessage((payload) => {
   const d = payload.data || {};
   const n = payload.notification || {};
   const title = d.title || n.title || "Tropos";
-  self.registration.showNotification(title, {
+  return self.registration.showNotification(title, {
     body: d.body || n.body || "",
     icon: ICON,
     badge: ICON,

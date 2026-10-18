@@ -239,7 +239,7 @@ async function claimToken({
   assertUid(uid);
   const normalizedToken = assertToken(token);
   const normalizedBindingId = assertBindingId(bindingId);
-  if (platform !== "web") fail("invalid-push-platform");
+  if (platform !== "web" && platform !== "ios") fail("invalid-push-platform");
   if (!serverTimestamp) throw new TypeError("serverTimestamp is required");
 
   const hash = tokenHash(normalizedToken);

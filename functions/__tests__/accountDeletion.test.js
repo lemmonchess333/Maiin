@@ -490,6 +490,40 @@ describe("deleteAccount — failure semantics", () => {
 });
 
 describe("deleteAccount — coverage of cleanup targets", () => {
+  it("erases server monthly announcement ledgers with the settings collection before Auth", async () => {
+    const paths = [
+      "challengeAnnouncement-2026-10",
+      "challengeAnnouncement-2026-11",
+      "push",
+    ].map((id) => `users/${TEST_UID}/settings/${id}`);
+    const stubs = makeStubs({
+      userSubSnap: (sub) =>
+        sub === "settings"
+          ? { empty: false, docs: paths.map((path) => ({ ref: { path } })) }
+          : { empty: true, docs: [] },
+    });
+    const pending = new Set(paths);
+    stubs.firestore.batch = () => {
+      const deletes = [];
+      return {
+        delete: (ref) => {
+          deletes.push(ref.path);
+        },
+        commit: async () => {
+          deletes.forEach((path) => {
+            pending.delete(path);
+            stubs.calls.push(`erase:${path}`);
+          });
+        },
+      };
+    };
+    await deleteAccount({ ...stubs, uid: TEST_UID });
+    expect(pending.size).toBe(0);
+    const authIndex = stubs.calls.indexOf(`auth.deleteUser(${TEST_UID})`);
+    for (const path of paths)
+      expect(stubs.calls.indexOf(`erase:${path}`)).toBeLessThan(authIndex);
+  });
+
   it("iterates every known user subcollection", async () => {
     // Guards against silent drift between USER_SUBCOLLECTIONS and
     // the handler body — if a sub is added to the constant but the

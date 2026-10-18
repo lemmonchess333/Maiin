@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from "@capacitor/cli";
+import type {} from "@capacitor-firebase/messaging";
 
 const config: CapacitorConfig = {
   // WARNING: Changing appId requires updating APPLE_PRODUCT_IDS in
@@ -10,6 +11,7 @@ const config: CapacitorConfig = {
     androidScheme: "https",
   },
   plugins: {
+    FirebaseMessaging: { presentationOptions: ["alert", "sound"] },
     SplashScreen: {
       // 2000ms → 500ms. The full-opaque splash should be gone as
       // soon as the web layer has something to paint. A 2s hard
@@ -54,7 +56,10 @@ const config: CapacitorConfig = {
         swiftToolsVersion: "6.1",
         // Capacitor 8.4+ avoids the App Check Swift package identity
         // collision.
-        packageOptions: { "@capacitor-firebase/app-check": { symlink: true } },
+        packageOptions: {
+          "@capacitor-firebase/app-check": { symlink: true },
+          "@capacitor-firebase/messaging": { symlink: true },
+        },
         // Nothing here tracks, so nothing links what tracking needs.
         // Analytics builds without Google's advertising-ID support, and
         // Authentication with the Google Sign-In SDK only: the Facebook SDK

@@ -60,5 +60,7 @@
 	<string>Tropos only reads step counts and never writes to Health.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+    <key>FirebaseMessagingAutoInitEnabled</key>
+    <false/>
 </dict>
 </plist>

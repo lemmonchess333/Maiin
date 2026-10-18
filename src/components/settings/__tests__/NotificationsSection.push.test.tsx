@@ -1,24 +1,41 @@
-/**
- * Settings > Notifications offers the push switch only where remote push
- * exists. The iPhone app has none (no APNs, no push plugin, no service
- * worker in WKWebView), and its switch could only fail with "Couldn't
- * register for push (unsupported)". The local reminders stay on both; the
- * web keeps everything it had.
- */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 
-const platform = vi.hoisted(() => ({ native: false }));
+const state = vi.hoisted(() => ({
+  offered: true,
+  loading: false,
+  consent: {
+    enabled: true,
+    streak: true,
+    recap: true,
+    badge: true,
+    challenges: false,
+  },
+  update: vi.fn(async (_patch: unknown) => true),
+  request: vi.fn(async () => true),
+  register: vi.fn(async () => ({ ok: true as const, token: "token" })),
+  unregister: vi.fn(async () => {}),
+  error: vi.fn(),
+  success: vi.fn(),
+}));
 vi.mock("@/lib/pushNotifications", () => ({
-  isRemotePushOffered: () => !platform.native,
-  registerDeviceToken: vi.fn(),
-  unregisterDeviceToken: vi.fn(),
+  isRemotePushOffered: () => state.offered,
+  requestRemotePushPermission: state.request,
+  registerDeviceToken: state.register,
+  unregisterDeviceToken: state.unregister,
 }));
 vi.mock("@/lib/auth", () => ({ useUid: () => "runner" }));
 vi.mock("@/hooks/usePushSettings", () => ({
   usePushSettings: () => ({
-    consent: { enabled: true, streak: true, recap: true, badge: true },
-    update: vi.fn(),
+    consent: state.consent,
+    update: state.update,
+    loading: state.loading,
   }),
 }));
 vi.mock("@/lib/notifications", () => ({
@@ -31,6 +48,9 @@ vi.mock("@/lib/firebase", () => ({ functions: {} }));
 vi.mock("firebase/functions", () => ({ httpsCallable: vi.fn() }));
 vi.mock("@/lib/settingsAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+vi.mock("@/lib/toast", () => ({
+  toast: { error: state.error, success: state.success },
+}));
 
 import NotificationsSection from "../NotificationsSection";
 
@@ -68,34 +88,103 @@ const PUSH_SWITCHES = [
   "Toggle Streak nudges push",
   "Toggle Weekly recap push",
   "Toggle Badge unlocked push",
+  "Toggle Monthly challenges push",
 ];
 
 beforeEach(() => {
-  platform.native = false;
+  vi.clearAllMocks();
+  state.offered = true;
+  state.loading = false;
+  state.consent = {
+    enabled: true,
+    streak: true,
+    recap: true,
+    badge: true,
+    challenges: false,
+  };
+  state.update.mockReset().mockResolvedValue(true);
+  state.request.mockReset().mockResolvedValue(true);
 });
-afterEach(() => {
-  cleanup();
-});
+afterEach(cleanup);
 
-describe("NotificationsSection — push where it exists", () => {
-  it("offers the push switches and the test push on the web", () => {
+describe("NotificationsSection — monthly challenge push", () => {
+  it("offers a separate challenge opt-in without asking permission on mount", () => {
     renderSection();
-    for (const name of [...REMINDER_SWITCHES, ...PUSH_SWITCHES]) {
+    for (const name of [...REMINDER_SWITCHES, ...PUSH_SWITCHES])
       expect(screen.getByRole("switch", { name })).toBeInTheDocument();
-    }
-    expect(screen.getByText("Send a test push")).toBeInTheDocument();
+    expect(
+      screen.getByRole("switch", { name: "Toggle Monthly challenges push" })
+    ).toHaveAttribute("aria-checked", "false");
+    expect(
+      screen.getByText(/One alert near the start of each month/)
+    ).toBeInTheDocument();
+    expect(state.request).not.toHaveBeenCalled();
   });
 
-  it("keeps the reminders on the native app and offers no push there", () => {
-    platform.native = true;
+  it("hides remote push on an old native binary without the messaging plugin", () => {
+    state.offered = false;
     renderSection();
-    for (const name of REMINDER_SWITCHES) {
+    for (const name of REMINDER_SWITCHES)
       expect(screen.getByRole("switch", { name })).toBeInTheDocument();
-    }
-    for (const name of PUSH_SWITCHES) {
+    for (const name of PUSH_SWITCHES)
       expect(screen.queryByRole("switch", { name })).not.toBeInTheDocument();
-    }
-    const text = document.body.textContent ?? "";
-    expect(text).not.toMatch(/push|even when the app is closed/i);
+  });
+
+  it("saves only the explicitly chosen challenge flag", async () => {
+    renderSection();
+    fireEvent.click(
+      screen.getByRole("switch", { name: "Toggle Monthly challenges push" })
+    );
+    await waitFor(() =>
+      expect(state.update).toHaveBeenCalledWith({ challenges: true })
+    );
+    expect(state.request).not.toHaveBeenCalled();
+    expect(state.register).not.toHaveBeenCalled();
+  });
+
+  it("does not enroll challenge alerts when enabling remote push", async () => {
+    state.consent.enabled = false;
+    renderSection();
+    fireEvent.click(
+      screen.getByRole("switch", { name: "Toggle push notifications" })
+    );
+    await waitFor(() => expect(state.register).toHaveBeenCalledWith("runner"));
+    expect(state.request).toHaveBeenCalledOnce();
+    expect(state.update).toHaveBeenCalledExactlyOnceWith({ enabled: true });
+  });
+
+  it("does not register a token when permission is denied", async () => {
+    state.consent.enabled = false;
+    state.request.mockResolvedValueOnce(false);
+    renderSection();
+    fireEvent.click(
+      screen.getByRole("switch", { name: "Toggle push notifications" })
+    );
+    await waitFor(() => expect(state.error).toHaveBeenCalled());
+    expect(state.update).not.toHaveBeenCalled();
+    expect(state.register).not.toHaveBeenCalled();
+  });
+
+  it("shows a failed save and never registers or reports success", async () => {
+    state.consent.enabled = false;
+    state.update.mockRejectedValueOnce(new Error("offline"));
+    renderSection();
+    fireEvent.click(
+      screen.getByRole("switch", { name: "Toggle push notifications" })
+    );
+    await waitFor(() =>
+      expect(state.error).toHaveBeenCalledWith(
+        expect.stringContaining("Couldn't save")
+      )
+    );
+    expect(state.register).not.toHaveBeenCalled();
+    expect(state.success).not.toHaveBeenCalled();
+  });
+
+  it("keeps switches disabled until the account's settings are loaded", () => {
+    state.loading = true;
+    renderSection();
+    for (const name of PUSH_SWITCHES)
+      expect(screen.getByRole("switch", { name })).toBeDisabled();
   });
 });

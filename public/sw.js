@@ -22,16 +22,25 @@ const ICON = BASE_PATH + "icons/icon-192x192.png";
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const route =
-    (event.notification.data && event.notification.data.route) || "/";
-  const target = BASE_PATH.replace(/\/$/, "") + route;
+  const requestedRoute = event.notification.data?.route;
+  // Only destinations used by our senders may navigate an app window.
+  const route = requestedRoute === "/social" || requestedRoute === "/social?tab=together"
+    ? "/social?tab=together"
+    : requestedRoute === "/program" ? "/program" : "/";
+  const target = new URL(BASE_PATH.replace(/\/$/, "") + route, self.location.origin).href;
   event.waitUntil(
     clients
       .matchAll({ type: "window", includeUncontrolled: true })
-      .then((windows) => {
+      .then(async (windows) => {
         for (const client of windows) {
-          if ("focus" in client && client.url.includes(BASE_PATH)) {
-            return client.focus();
+          const url = new URL(client.url);
+          if (url.origin !== self.location.origin || !url.pathname.startsWith(BASE_PATH)) continue;
+          if (typeof client.navigate !== "function" || typeof client.focus !== "function") continue;
+          try {
+            const navigated = await client.navigate(target);
+            return await (navigated || client).focus();
+          } catch {
+            // A closing window may reject navigation; open the destination below.
           }
         }
         if (clients.openWindow) return clients.openWindow(target);
@@ -67,7 +76,7 @@ if (
       const data = payload.data || {};
       const notification = payload.notification || {};
       const title = data.title || notification.title || "Tropos";
-      self.registration.showNotification(title, {
+      return self.registration.showNotification(title, {
         body: data.body || notification.body || "",
         icon: ICON,
         badge: ICON,

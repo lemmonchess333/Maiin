@@ -47,4 +47,38 @@ describe("push-token callables — auth precedence", () => {
       )
     ).rejects.toMatchObject({ code: "permission-denied" });
   });
+
+  it.each([claimPushDeviceToken, releasePushDeviceToken])(
+    "allows ios through platform validation but still enforces account intent",
+    async (callable) => {
+      await expect(
+        callable.run(
+          {
+            ownerUid: "other",
+            token: "native-fcm-token-abcdefghijklmnop",
+            platform: "ios",
+            bindingId: "b".repeat(20),
+          },
+          { auth: { uid: "u1" } }
+        )
+      ).rejects.toMatchObject({ code: "permission-denied" });
+    }
+  );
+
+  it.each([claimPushDeviceToken, releasePushDeviceToken])(
+    "refuses an unsupported token platform",
+    async (callable) => {
+      await expect(
+        callable.run(
+          {
+            ownerUid: "u1",
+            token: "native-fcm-token-abcdefghijklmnop",
+            platform: "raw-apns",
+            bindingId: "b".repeat(20),
+          },
+          { auth: { uid: "u1" } }
+        )
+      ).rejects.toMatchObject({ code: "invalid-argument" });
+    }
+  );
 });

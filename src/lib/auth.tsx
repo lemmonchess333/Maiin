@@ -40,6 +40,7 @@ import {
   stopListeningForForegroundPush,
   unregisterDeviceToken,
   waitForPendingPushRegistration,
+  withPushTokenLifecycleTransition,
 } from "@/lib/pushNotifications";
 import { clearStoredRun } from "@/lib/runResumeStorage";
 import { clearWorkoutDraft } from "@/hooks/useWorkoutDraft";
@@ -1559,18 +1560,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // get a fresh reference on every AuthProvider render, forcing the
   // whole app subtree to re-render even when nothing observable
   // changed. The deps cover every field the value object exposes.
+  // All public credential changes share the push barrier, including a failed
+  // sign-out or cancelled sign-in that leaves the same uid signed in.
+  const credentialActions = useMemo(
+    () => ({
+      signIn: (email: string, password: string) =>
+        withPushTokenLifecycleTransition(() => signIn(email, password)),
+      signUp: (email: string, password: string) =>
+        withPushTokenLifecycleTransition(() => signUp(email, password)),
+      signInWithGoogle: () =>
+        withPushTokenLifecycleTransition(signInWithGoogle),
+      signInWithApple: () => withPushTokenLifecycleTransition(signInWithApple),
+      signOut: () => withPushTokenLifecycleTransition(signOutUser),
+    }),
+    [signIn, signUp, signInWithGoogle, signInWithApple, signOutUser]
+  );
+
   const value = useMemo(
     () => ({
       user,
       profile,
       loading,
-      signIn,
-      signUp,
-      signInWithGoogle,
-      signInWithApple,
+      ...credentialActions,
       resetPassword,
       fetchSignInMethods,
-      signOut: signOutUser,
       updateProfile,
       updateShareDefaults,
       refreshProfile,
@@ -1579,13 +1592,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       profile,
       loading,
-      signIn,
-      signUp,
-      signInWithGoogle,
-      signInWithApple,
+      credentialActions,
       resetPassword,
       fetchSignInMethods,
-      signOutUser,
       updateProfile,
       updateShareDefaults,
       refreshProfile,

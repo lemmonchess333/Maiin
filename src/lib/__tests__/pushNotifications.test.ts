@@ -20,6 +20,11 @@ const h = vi.hoisted(() => {
     releaseFn: vi.fn(async () => ({ data: { released: true } })),
     getToken: vi.fn(async () => "tok123" as string | null),
     deleteToken: vi.fn(async () => true),
+    nativeToken: vi.fn(async () => "native-fcm-token"),
+    deleteNativeToken: vi.fn(async () => {}),
+    nativeAvailable: false,
+    nativeGranted: true,
+    requestNative: vi.fn(async () => true),
     getReg: vi.fn(async () => ({ id: "canonical-reg" })),
     authMock: {
       get currentUser() {
@@ -58,6 +63,13 @@ const platform = vi.hoisted(() => ({ native: false }));
 vi.mock("@/lib/platform", () => ({
   isNativePlatform: () => platform.native,
 }));
+vi.mock("@/lib/nativePush", () => ({
+  isNativePushAvailable: () => h.nativeAvailable,
+  nativePushPermission: (request?: boolean) =>
+    request ? h.requestNative() : Promise.resolve(h.nativeGranted),
+  getNativePushToken: () => h.nativeToken(),
+  deleteNativePushToken: () => h.deleteNativeToken(),
+}));
 
 import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
 
@@ -65,6 +77,9 @@ beforeEach(() => {
   resetFirestore();
   vi.clearAllMocks();
   platform.native = false;
+  h.nativeAvailable = false;
+  h.nativeGranted = true;
+  h.nativeToken.mockResolvedValue("native-fcm-token");
   h.setUid("u1");
   h.getToken.mockResolvedValue("tok123");
   localStorage.clear();
@@ -88,14 +103,103 @@ async function load() {
 const PUSH_SETTINGS = "users/u1/settings/push";
 
 describe("remote push on the native app", () => {
-  /* The iPhone app has no remote push: no APNs registration, no push
-     plugin, and WKWebView runs no service worker. Its switch could only
-     fail with "Couldn't register for push (unsupported)". */
-  it("is offered on the web and not on the native app", async () => {
+  it("is offered on the web and hidden on older native binaries without the plugin", async () => {
     const { isRemotePushOffered } = await load();
     expect(isRemotePushOffered()).toBe(true);
     platform.native = true;
     expect(isRemotePushOffered()).toBe(false);
+  });
+
+  it("claims an iPhone FCM token without browser APIs or prompting", async () => {
+    platform.native = true;
+    h.nativeAvailable = true;
+    Object.defineProperty(globalThis, "Notification", {
+      value: undefined,
+      configurable: true,
+    });
+    const mod = await load();
+    expect(mod.isRemotePushOffered()).toBe(true);
+    expect(await mod.registerDeviceToken("u1")).toEqual({
+      ok: true,
+      token: "native-fcm-token",
+    });
+    expect(h.claimFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token: "native-fcm-token",
+        platform: "ios",
+        ownerUid: "u1",
+      })
+    );
+    expect(h.getReg).not.toHaveBeenCalled();
+    expect(h.getToken).not.toHaveBeenCalled();
+    expect(h.requestNative).not.toHaveBeenCalled();
+  });
+
+  it("requests native permission only through the explicit permission entry point", async () => {
+    platform.native = true;
+    h.nativeAvailable = true;
+    h.nativeGranted = false;
+    const mod = await load();
+    expect(await mod.registerDeviceToken("u1")).toMatchObject({
+      ok: false,
+      reason: "no-permission",
+    });
+    expect(h.requestNative).not.toHaveBeenCalled();
+    expect(await mod.requestRemotePushPermission()).toBe(true);
+    expect(h.requestNative).toHaveBeenCalledOnce();
+  });
+
+  it("preserves fenced ios release and deletes the local native token only after server success", async () => {
+    platform.native = true;
+    h.nativeAvailable = true;
+    const mod = await load();
+    await mod.registerDeviceToken("u1");
+    h.releaseFn.mockRejectedValueOnce(new Error("release unavailable"));
+    await expect(mod.unregisterDeviceToken("u1")).rejects.toThrow(
+      "release unavailable"
+    );
+    expect(h.deleteNativeToken).not.toHaveBeenCalled();
+    await mod.unregisterDeviceToken("u1");
+    expect(h.releaseFn).toHaveBeenLastCalledWith(
+      expect.objectContaining({ platform: "ios", token: "native-fcm-token" })
+    );
+    expect(h.deleteNativeToken).toHaveBeenCalledOnce();
+    expect(h.deleteToken).not.toHaveBeenCalled();
+  });
+
+  it("releases a legacy v2 binding with no platform as web", async () => {
+    localStorage.setItem(
+      "tropos_fcm_device_tokens:v2",
+      JSON.stringify({
+        u1: {
+          token: "legacy-web-token",
+          bindingId: "0123456789abcdef0123456789abcdef",
+        },
+      })
+    );
+    const mod = await load();
+    await mod.unregisterDeviceToken("u1");
+    expect(h.releaseFn).toHaveBeenCalledWith(
+      expect.objectContaining({ platform: "web", token: "legacy-web-token" })
+    );
+  });
+
+  it("lets the iOS plugin present foreground banners without duplicating web notifications", async () => {
+    platform.native = true;
+    h.nativeAvailable = true;
+    const mod = await load();
+    const stop = await mod.listenForForegroundPush();
+    stop();
+    expect(h.getReg).not.toHaveBeenCalled();
+  });
+
+  it("ignores a resume/token refresh captured before outgoing-account revocation", async () => {
+    seedFirestore({ [PUSH_SETTINGS]: { enabled: true } });
+    const mod = await load();
+    const generation = mod.getPushTokenLifecycleGeneration();
+    mod.invalidatePushTokenLifecycle();
+    await mod.refreshDeviceTokenForCurrentUser("u1", generation);
+    expect(h.claimFn).not.toHaveBeenCalled();
   });
 
   it("registers on the web; on the native app it never asks for a token", async () => {
@@ -305,6 +409,66 @@ describe("confirmed-deletion sign-out", () => {
     await unregisterDeviceToken("u-deleted");
     await unregisterDeviceToken("u-deleted");
     expect(h.releaseFn).not.toHaveBeenCalled();
+    expect(h.claimFn).not.toHaveBeenCalled();
+  });
+});
+
+describe("credential transition registration fencing", () => {
+  it.each(["sign-out failed", "sign-in cancelled"])(
+    "blocks late native events during transition and resumes after %s",
+    async (message) => {
+      seedFirestore({ [PUSH_SETTINGS]: { enabled: true } });
+      platform.native = true;
+      h.nativeAvailable = true;
+      const mod = await load();
+      let rejectTransition!: (error: Error) => void;
+      const operation = new Promise<void>((_resolve, reject) => {
+        rejectTransition = reject;
+      });
+      const transitioning = mod.withPushTokenLifecycleTransition(
+        () => operation
+      );
+      const stopped = expect(transitioning).rejects.toThrow(message);
+      const ready = vi.fn(() => {
+        void mod.refreshDeviceTokenForCurrentUser("u1");
+      });
+      const unsubscribe = mod.onPushTokenLifecycleReady(ready);
+      await mod.refreshDeviceTokenForCurrentUser("u1");
+      expect(await mod.registerDeviceToken("u1")).toMatchObject({
+        ok: false,
+        reason: "account-changed",
+      });
+      expect(h.claimFn).not.toHaveBeenCalled();
+      rejectTransition(new Error(message));
+      await stopped;
+      await vi.waitFor(() => expect(h.claimFn).toHaveBeenCalledOnce());
+      await mod.waitForPendingPushRegistration("u1");
+      expect(ready).toHaveBeenCalledOnce();
+      // Completing token registration itself never re-emits lifecycle-ready.
+      await Promise.resolve();
+      expect(h.claimFn).toHaveBeenCalledOnce();
+      unsubscribe();
+    }
+  );
+
+  it("fences a token read started before a transition and refreshes the account that actually remains", async () => {
+    const mod = await load();
+    let finishToken!: (token: string) => void;
+    h.nativeAvailable = true;
+    platform.native = true;
+    h.nativeToken.mockReturnValueOnce(
+      new Promise<string>((resolve) => {
+        finishToken = resolve;
+      })
+    );
+    const registering = mod.registerDeviceToken("u1");
+    await vi.waitFor(() => expect(h.nativeToken).toHaveBeenCalledOnce());
+    await mod.withPushTokenLifecycleTransition(async () => {});
+    finishToken("old-fcm-token");
+    expect(await registering).toMatchObject({
+      ok: false,
+      reason: "account-changed",
+    });
     expect(h.claimFn).not.toHaveBeenCalled();
   });
 });

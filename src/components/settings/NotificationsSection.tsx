@@ -23,11 +23,13 @@ import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
 import {
   isRemotePushOffered,
+  requestRemotePushPermission,
   registerDeviceToken,
   unregisterDeviceToken,
 } from "@/lib/pushNotifications";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import { isNativePlatform } from "@/lib/platform";
 
 /* A row's control (switch, time field, button) drops under its label,
    at the right, once the label would be narrower than 8em: at double
@@ -61,12 +63,59 @@ export default function NotificationsSection({
   // reminders above: this is the global kill-switch + per-type consent the
   // server senders read, plus token register/revoke on the global toggle.
   const uid = useUid();
-  const { consent: pushConsent, update: updatePushConsent } = usePushSettings();
-  /* No remote push on the native app (no APNs, no push plugin, no service
-     worker in WKWebView): the switch could only fail there, so it and
-     everything under it is not offered. The reminders above are local and
-     stay. See isRemotePushOffered. */
+  const {
+    consent: pushConsent,
+    update: updatePushConsent,
+    loading: pushLoading,
+  } = usePushSettings();
+  const [pushBusy, setPushBusy] = useState(false);
+  // Old native binaries without FirebaseMessaging keep local reminders;
+  // remote permission is offered only when the delivery channel exists.
   const pushOffered = isRemotePushOffered();
+
+  const handleTogglePush = async () => {
+    if (pushBusy || pushLoading || !uid) return;
+    haptic("light");
+    setPushBusy(true);
+    const next = !pushConsent.enabled;
+    try {
+      if (next && !(await requestRemotePushPermission())) {
+        refreshPermission();
+        toast.error(
+          "Allow notifications in your device or browser settings to turn this on."
+        );
+        return;
+      }
+      refreshPermission();
+      if (!(await updatePushConsent({ enabled: next }))) return;
+      trackSettingsEvent("settings_toggle_changed", {
+        toggle: "push_notifications",
+        value: next,
+      });
+      if (next) {
+        const result = await registerDeviceToken(uid);
+        if (result.ok) {
+          toast.success("Push on. This device is registered.");
+        } else if (result.reason !== "account-changed") {
+          toast.error(
+            `Couldn't register for push (${result.reason}${result.detail ? `: ${result.detail}` : ""}).`
+          );
+        }
+      } else {
+        try {
+          await unregisterDeviceToken(uid);
+        } catch {
+          toast.error(
+            "Push was turned off, but this device could not be unregistered. Toggle it on and off once you are online to retry."
+          );
+        }
+      }
+    } catch {
+      toast.error("Couldn't save push settings. Try again when you're online.");
+    } finally {
+      setPushBusy(false);
+    }
+  };
 
   // #965 — fire a server→device test push to this user's registered tokens.
   const handleTestPush = async () => {
@@ -446,93 +495,78 @@ export default function NotificationsSection({
             global toggle requests OS permission + registers/revokes this
             device's FCM token; per-type toggles gate which senders may target
             the user (each sender checks the flag via the server-side
-            mayTargetUserConsent in functions/lib/pushConsent.js). Web only:
-            see pushOffered above. */}
+            mayTargetUserConsent in functions/lib/pushConsent.js). */}
         {pushOffered && (
           <>
             <div className={ROW}>
               <div className={LABEL}>
                 <p className="text-sm text-foreground">Push notifications</p>
                 <p className="text-xs text-muted-foreground">
-                  Get nudges and recaps even when the app is closed
+                  Get reminders and challenge alerts when the app is closed
                 </p>
               </div>
               <Toggle
                 className="ml-auto"
                 checked={pushConsent.enabled}
                 label="Toggle push notifications"
-                onChange={async () => {
-                  haptic("light");
-                  const next = !pushConsent.enabled;
-                  trackSettingsEvent("settings_toggle_changed", {
-                    toggle: "push_notifications",
-                    value: next,
-                  });
-                  if (next) {
-                    const granted = await requestNotificationPermission();
-                    refreshPermission();
-                    if (!granted) {
-                      toast.error(
-                        "Allow notifications in your browser settings to turn this on."
-                      );
-                      return;
-                    }
-                    await updatePushConsent({ enabled: true });
-                    if (uid) {
-                      const result = await registerDeviceToken(uid);
-                      if (result.ok) {
-                        toast.success("Push on. This device is registered.");
-                      } else {
-                        // Surface the exact failure (iOS web push fails quietly).
-                        toast.error(
-                          `Couldn't register for push (${result.reason}${
-                            result.detail ? `: ${result.detail}` : ""
-                          }).`
-                        );
-                      }
-                    }
-                  } else {
-                    await updatePushConsent({ enabled: false });
-                    if (uid) {
-                      try {
-                        await unregisterDeviceToken(uid);
-                      } catch {
-                        // Server consent is already off, so no sender targets the
-                        // account while the user retries device cleanup online.
-                        toast.error(
-                          "Push was turned off, but this device could not be unregistered. Toggle it on and off once you are online to retry."
-                        );
-                      }
-                    }
-                  }
-                }}
+                disabled={pushLoading || pushBusy}
+                onChange={() => void handleTogglePush()}
               />
             </div>
+
+            {!isNativePlatform() && (
+              <p className="px-1 text-xs text-muted-foreground">
+                On iPhone, add Tropos to your Home Screen in Safari, then open
+                it from that icon to enable push notifications.
+              </p>
+            )}
 
             {pushConsent.enabled &&
               (
                 [
-                  ["streak", "Streak nudges"],
-                  ["recap", "Weekly recap"],
-                  ["badge", "Badge unlocked"],
+                  ["streak", "Streak nudges", null],
+                  ["recap", "Weekly recap", null],
+                  ["badge", "Badge unlocked", null],
+                  [
+                    "challenges",
+                    "Monthly challenges",
+                    "One alert near the start of each month, around 09:00 in your time zone. Tap it to see the new challenges.",
+                  ],
                 ] as const
-              ).map(([type, label]) => (
+              ).map(([type, label, description]) => (
                 <div key={type} className={ROW}>
-                  <span className={cn(LABEL, "text-sm text-foreground")}>
-                    {label}
-                  </span>
+                  <div className={LABEL}>
+                    <p className="text-sm text-foreground">{label}</p>
+                    {description && (
+                      <p className="text-xs text-muted-foreground">
+                        {description}
+                      </p>
+                    )}
+                  </div>
                   <Toggle
                     className="ml-auto"
                     checked={pushConsent[type]}
                     label={`Toggle ${label} push`}
-                    onChange={() => {
+                    disabled={pushLoading || pushBusy}
+                    onChange={async () => {
+                      if (pushBusy || pushLoading) return;
                       haptic("light");
+                      setPushBusy(true);
                       const next = !pushConsent[type];
-                      trackSettingsEvent("settings_toggle_changed", {
-                        toggle: `push_${type}`,
-                        value: next,
-                      });
-                      void updatePushConsent({ [type]: next });
+                      try {
+                        if (await updatePushConsent({ [type]: next })) {
+                          trackSettingsEvent("settings_toggle_changed", {
+                            toggle: `push_${type}`,
+                            value: next,
+                          });
+                        }
+                      } catch {
+                        toast.error(
+                          "Couldn't save push settings. Try again when you're online."
+                        );
+                      } finally {
+                        setPushBusy(false);
+                      }
                     }}
                   />
                 </div>

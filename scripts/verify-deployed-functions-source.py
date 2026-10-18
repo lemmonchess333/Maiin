@@ -6,6 +6,7 @@ configuration. Requires the existing deploy identity's sourceCodeGet access.
 import io
 import json
 import pathlib
+import re
 import subprocess
 import time
 import urllib.error
@@ -22,6 +23,13 @@ RETRY_REQUIRED = frozenset({
     "onChallengeParticipantCreated", "onWorkoutCreated", "onRunCreated",
     "onWorkoutUpdated", "onRunUpdated", "onWorkoutDeleted", "onRunDeleted",
 })
+PUSH_RUNTIME_LIMITS = {
+    "claimPushDeviceToken": (100, None),
+    "releasePushDeviceToken": (100, None),
+    "sendTestPush": (100, None),
+    "hourlyStreakNudge": (1, "540s"),
+    "hourlyChallengeAnnouncements": (1, "540s"),
+}
 
 
 def read(request, timeout, opener=urllib.request.urlopen, sleep=time.sleep):
@@ -60,6 +68,11 @@ def source_targets():
                        "lib/challengeTiers.js", "lib/challengeMarkers.js",
                        "lib/challengeParticipationProgress.js", "lib/runEligibility.js",
                        "lib/workoutVolume.js"]
+    token_paths = ["index.js", "package-lock.json", "lib/pushTokenOwnership.js",
+                   "lib/accountDeletionLedger.js", "lib/accountDeletionStatus.js",
+                   "lib/deletedAccountsTombstone.js"]
+    push_paths = token_paths + ["lib/pushConsent.js", "lib/pushSend.js",
+                                "lib/pushSchedule.js", "lib/accountDeletionLocks.js"]
     return {
         "deleteMyAccount": deletion_paths,
         "resumeAccountDeletions": deletion_paths,
@@ -101,6 +114,16 @@ def source_targets():
         # The daily race sweep: a no-show, the end of recovery, a finished race with no plan.
         "dailyRaceReconciliationSweep": ["index.js", "lib/raceReconciliation.js",
                                          "lib/raceDayCompletion.js", "lib/runModeResolution.js", "lib/dateUtils.js"],
+        # Native APNs alerts share the existing send/ownership path. Every
+        # executing sender and callable must have the new source, not only
+        # the newly introduced monthly schedule.
+        "claimPushDeviceToken": token_paths,
+        "releasePushDeviceToken": token_paths,
+        "sendTestPush": push_paths,
+        "hourlyStreakNudge": push_paths + ["lib/streakNudge.js", "lib/activeDates.js", "lib/badgeNudge.js"],
+        "hourlyChallengeAnnouncements": push_paths + ["lib/challengeAnnouncements.js",
+                                                      "lib/challengeDefs.js", "lib/challengeActivityWindow.js", "lib/dateUtils.js",
+                                                      "lib/streakNudge.js"],
     }
 
 
@@ -113,6 +136,17 @@ def verify_function_source(name, paths, root, token):
     metadata = json.loads(read(urllib.request.Request(endpoint, headers=headers), 30))
     if metadata.get("status") != "ACTIVE":
         raise RuntimeError(f"{name}: deployed function is not ACTIVE")
+    if name in PUSH_RUNTIME_LIMITS:
+        instances, timeout = PUSH_RUNTIME_LIMITS[name]
+        if type(metadata.get("maxInstances")) is not int or metadata["maxInstances"] != instances:
+            raise RuntimeError(f"{name}: deployed instance cap differs from the release limit")
+        # Protobuf Duration permits equivalent fractional-zero spellings.
+        deployed_timeout = metadata.get("timeout")
+        if timeout is not None and (
+            not isinstance(deployed_timeout, str)
+            or not re.fullmatch(re.escape(timeout[:-1]) + r"(?:\.0{1,9})?s", deployed_timeout)
+        ):
+            raise RuntimeError(f"{name}: deployed timeout differs from the release limit")
     if name in RETRY_REQUIRED:
         policy = metadata.get("eventTrigger", {}).get("failurePolicy", {})
         # The v1 API represents enabled retries as {"retry": {}}; testing

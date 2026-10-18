@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   definitionProblems,
   selectRolloverJob,
+  selectAnnouncementsJob,
   runRolloverAndVerify,
   releaseFailureMessage,
   schedulerJobs,
@@ -28,6 +29,24 @@ const job = {
   state: "ENABLED",
   pubsubTarget: { topicName: topic },
 };
+const announcementsTopic =
+  "projects/adaptive-fitness-af8bb/topics/firebase-schedule-hourlyChallengeAnnouncements-us-central1";
+const announcementsMetadata = {
+  ...metadata,
+  entryPoint: "hourlyChallengeAnnouncements",
+  eventTrigger: { ...metadata.eventTrigger, resource: announcementsTopic },
+};
+const announcementsJob = {
+  ...job,
+  name: "projects/adaptive-fitness-af8bb/locations/europe-west2/jobs/existing-announcements",
+  pubsubTarget: { topicName: announcementsTopic },
+  schedule: "0 * * * *",
+  timeZone: "Etc/UTC",
+};
+const functionMetadata = (input) =>
+  new URL(input).pathname.endsWith("/hourlyChallengeAnnouncements")
+    ? announcementsMetadata
+    : metadata;
 
 function documents() {
   return new Map(
@@ -49,7 +68,7 @@ function options(overrides = {}) {
   return {
     calls,
     token: "not-logged",
-    listJobs: async () => [job],
+    listJobs: async () => [job, announcementsJob],
     now: () => instant,
     readDefinitions: async () => documents(),
     log: () => {},
@@ -57,7 +76,9 @@ function options(overrides = {}) {
     attempts: 2,
     request: async (url, token, request) => {
       calls.push({ url, token, request });
-      return request?.method === "POST" ? { name: job.name } : metadata;
+      return request?.method === "POST"
+        ? { name: job.name }
+        : functionMetadata(url);
     },
     ...overrides,
   };
@@ -121,9 +142,125 @@ test("missing, ambiguous, disabled, foreign and non-Pub/Sub jobs fail closed", (
   }
 });
 
+test("announcements require the exact active Pub/Sub target and an enabled hourly UTC job", () => {
+  assert.equal(
+    selectAnnouncementsJob(announcementsMetadata, [job, announcementsJob]),
+    announcementsJob
+  );
+  for (const actual of [
+    { ...announcementsMetadata, status: "OFFLINE" },
+    { ...announcementsMetadata, entryPoint: "other" },
+    {
+      ...announcementsMetadata,
+      eventTrigger: { resource: announcementsTopic, eventType: "http" },
+    },
+    {
+      ...announcementsMetadata,
+      eventTrigger: {
+        ...announcementsMetadata.eventTrigger,
+        resource: "projects/other/topics/foreign",
+      },
+    },
+  ])
+    assert.throws(
+      () => selectAnnouncementsJob(actual, [announcementsJob]),
+      /not an active Pub\/Sub function/
+    );
+  for (const jobs of [
+    [job],
+    [job, announcementsJob, announcementsJob],
+    [job, { ...announcementsJob, state: "PAUSED" }],
+    [
+      job,
+      {
+        ...announcementsJob,
+        name: "projects/other/locations/europe-west2/jobs/foreign",
+      },
+    ],
+    [
+      job,
+      {
+        ...announcementsJob,
+        pubsubTarget: { topicName: `${announcementsTopic}-similar` },
+      },
+    ],
+  ])
+    assert.throws(() => selectAnnouncementsJob(announcementsMetadata, jobs));
+});
+
+test("missing or stale announcement cron/timezone fields fail closed", () => {
+  for (const patch of [
+    { schedule: undefined },
+    { schedule: "0 0 * * *" },
+    { schedule: "5 * * * *" },
+    { timeZone: undefined },
+    { timeZone: "Europe/London" },
+  ]) {
+    assert.throws(
+      () =>
+        selectAnnouncementsJob(announcementsMetadata, [
+          { ...announcementsJob, ...patch },
+        ]),
+      /cadence differs/
+    );
+  }
+});
+
+test("missing or misconfigured announcements block release before rollover or readback", async () => {
+  for (const jobs of [
+    [job],
+    [job, announcementsJob, announcementsJob],
+    [job, { ...announcementsJob, state: "PAUSED" }],
+    [job, { ...announcementsJob, schedule: "0 0 * * *" }],
+    [job, { ...announcementsJob, timeZone: "Europe/London" }],
+  ]) {
+    let reads = 0;
+    const actual = options({
+      listJobs: async () => jobs,
+      readDefinitions: async () => {
+        reads++;
+        return documents();
+      },
+    });
+    await assert.rejects(
+      runRolloverAndVerify(actual),
+      /hourlyChallengeAnnouncements/
+    );
+    assert.equal(
+      actual.calls.filter(({ request }) => request?.method === "POST").length,
+      0
+    );
+    assert.equal(reads, 0);
+  }
+});
+
+test("announcement metadata readback is required and never replaced with source-only proof", async () => {
+  const actual = options();
+  const request = actual.request;
+  actual.request = async (url, token, method) =>
+    new URL(url).pathname.endsWith("/hourlyChallengeAnnouncements")
+      ? { ...announcementsMetadata, status: "DEPLOY_IN_PROGRESS" }
+      : request(url, token, method);
+  await assert.rejects(
+    runRolloverAndVerify(actual),
+    /hourlyChallengeAnnouncements is not an active/
+  );
+  assert.equal(
+    actual.calls.filter(({ request }) => request?.method === "POST").length,
+    0
+  );
+});
+
 test("requests one existing Scheduler run, then verifies every canonical current challenge", async () => {
   const actual = options();
   let checked;
+  let discoveries = 0;
+  const logs = [];
+  actual.log = (line) => logs.push(line);
+  actual.listJobs = async () => {
+    discoveries++;
+    return [job, announcementsJob];
+  };
   actual.readDefinitions = async (current) => {
     checked = current;
     return documents();
@@ -133,12 +270,25 @@ test("requests one existing Scheduler run, then verifies every canonical current
     checked.map(({ id }) => id),
     definitions.map(({ id }) => id)
   );
-  assert.equal(actual.calls.length, 2);
+  assert.equal(actual.calls.length, 3);
   assert.equal(
-    actual.calls[1].url,
+    actual.calls[2].url,
     `https://cloudscheduler.googleapis.com/v1/${job.name}:run`
   );
-  assert.deepEqual(actual.calls[1].request, { method: "POST" });
+  assert.deepEqual(actual.calls[2].request, { method: "POST" });
+  assert.equal(discoveries, 1);
+  assert.ok(
+    actual.calls[1].url.endsWith("/functions/hourlyChallengeAnnouncements")
+  );
+  assert.equal(actual.calls[1].request, undefined);
+  assert.ok(
+    logs[0].includes("announcements Scheduler is enabled (0 * * * *, Etc/UTC)")
+  );
+  assert.ok(
+    !actual.calls.some(({ url }) =>
+      url.endsWith(`${announcementsJob.name}:run`)
+    )
+  );
 });
 
 test("allows asynchronous materialization without issuing a second run or writing docs", async () => {
@@ -180,8 +330,8 @@ test("failed or malformed Scheduler responses never pass on existing docs", asyn
         reads++;
         return documents();
       },
-      request: async (_url, _token, request) =>
-        request?.method === "POST" ? response : metadata,
+      request: async (url, _token, request) =>
+        request?.method === "POST" ? response : functionMetadata(url),
     });
     await assert.rejects(runRolloverAndVerify(actual), /did not confirm/);
     assert.equal(reads, 0);
@@ -190,9 +340,9 @@ test("failed or malformed Scheduler responses never pass on existing docs", asyn
 
 test("Scheduler dispatch errors abort rather than treating readback as an implicit success", async () => {
   const actual = options({
-    request: async (_url, _token, request) => {
+    request: async (url, _token, request) => {
       if (request?.method === "POST") throw new Error("HTTP 403");
-      return metadata;
+      return functionMetadata(url);
     },
   });
   await assert.rejects(runRolloverAndVerify(actual), /HTTP 403/);
@@ -243,7 +393,8 @@ test("default production discovery paginates locations and every explicit region
     request: async (input, token, request) => {
       const url = new URL(input);
       calls.push({ url, token, request });
-      if (url.hostname === "cloudfunctions.googleapis.com") return metadata;
+      if (url.hostname === "cloudfunctions.googleapis.com")
+        return functionMetadata(url);
       if (request?.method === "POST") return { name: job.name };
       if (url.pathname.endsWith("/locations")) {
         assert.equal(url.searchParams.get("pageSize"), "100");
@@ -266,7 +417,14 @@ test("default production discovery paginates locations and every explicit region
             nextPageToken: jobsToken,
           };
         assert.equal(url.searchParams.get("pageToken"), jobsToken);
-        return {};
+        return {
+          jobs: [
+            {
+              ...announcementsJob,
+              name: `${firstLocation.name}/jobs/announcements`,
+            },
+          ],
+        };
       }
       assert.equal(url.pathname, `/v1/${targetLocation.name}/jobs`);
       return { jobs: [job] };
@@ -279,10 +437,22 @@ test("default production discovery paginates locations and every explicit region
   // Exercise the production default, not a test-only discovery replacement.
   delete actual.listJobs;
   await runRolloverAndVerify(actual);
-  assert.equal(calls.length, 7);
+  assert.equal(calls.length, 8);
   assert.equal(
     calls.filter(({ request }) => request?.method === "POST").length,
     1
+  );
+  assert.ok(
+    calls.some(
+      ({ url, request }) =>
+        url.pathname.endsWith("/functions/hourlyChallengeAnnouncements") &&
+        !request?.method
+    )
+  );
+  assert.ok(
+    calls
+      .filter(({ request }) => request?.method === "POST")
+      .every(({ url }) => url.pathname === `/v1/${job.name}:run`)
   );
   assert.ok(calls.every(({ token }) => token === actual.token));
   assert.ok(calls.every(({ url }) => !url.pathname.includes("/locations/-")));
@@ -294,12 +464,75 @@ test("default production discovery paginates locations and every explicit region
   assert.doesNotMatch(source, /node:child_process|execFileSync|"gcloud"/);
 });
 
+test("default HTTP path verifies announcement schedule but only POSTs the rollover job", async (context) => {
+  const calls = [];
+  context.mock.method(globalThis, "fetch", async (input, request) => {
+    const url = new URL(input);
+    calls.push({ url, request });
+    let body;
+    if (url.hostname === "cloudfunctions.googleapis.com") {
+      assert.equal(request.method, undefined);
+      body = functionMetadata(url);
+    } else if (request.method === "POST") {
+      assert.equal(url.pathname, `/v1/${job.name}:run`);
+      body = { name: job.name };
+    } else if (url.pathname.endsWith("/locations")) {
+      body = { locations: [targetLocation] };
+    } else {
+      assert.equal(url.pathname, `/v1/${targetLocation.name}/jobs`);
+      body = { jobs: [job, announcementsJob] };
+    }
+    return { ok: true, status: 200, json: async () => body };
+  });
+  const actual = options();
+  delete actual.request;
+  delete actual.listJobs;
+  await runRolloverAndVerify(actual);
+  assert.equal(calls.length, 5);
+  assert.equal(
+    calls.filter(({ request }) => request.method === "POST").length,
+    1
+  );
+  assert.ok(calls.every(({ request }) => request.redirect === "error"));
+});
+
+test("announcement metadata API refusal fails closed without dispatch or leaking its response", async (context) => {
+  let calls = 0;
+  context.mock.method(globalThis, "fetch", async (input, request) => {
+    calls++;
+    assert.equal(request.method, undefined);
+    const refused = new URL(input).pathname.endsWith(
+      "/hourlyChallengeAnnouncements"
+    );
+    return {
+      ok: !refused,
+      status: refused ? 403 : 200,
+      json: async () => {
+        if (refused) throw new Error("private response and token");
+        return metadata;
+      },
+    };
+  });
+  const actual = options();
+  delete actual.request;
+  delete actual.listJobs;
+  await assert.rejects(runRolloverAndVerify(actual), (error) => {
+    assert.equal(
+      releaseFailureMessage(error),
+      "Function metadata request refused (HTTP 403)"
+    );
+    return true;
+  });
+  assert.equal(calls, 2);
+});
+
 test("default REST discovery detects an ambiguous match in a later region before dispatch", async () => {
   let dispatches = 0;
   const actual = options({
     request: async (input, _token, request) => {
       const url = new URL(input);
-      if (url.hostname === "cloudfunctions.googleapis.com") return metadata;
+      if (url.hostname === "cloudfunctions.googleapis.com")
+        return functionMetadata(url);
       if (request?.method === "POST") {
         dispatches++;
         return { name: job.name };
@@ -322,7 +555,7 @@ test("default REST discovery rejects missing jobs without assuming any region", 
   const actual = options({
     request: async (input) =>
       new URL(input).hostname === "cloudfunctions.googleapis.com"
-        ? metadata
+        ? functionMetadata(input)
         : new URL(input).pathname.endsWith("/locations")
           ? { locations: [targetLocation] }
           : {},
@@ -348,7 +581,7 @@ for (const operation of ["locations", "jobs"]) {
         json: async () => {
           if (refused) throw new Error("private response body and token");
           return url.hostname === "cloudfunctions.googleapis.com"
-            ? metadata
+            ? functionMetadata(input)
             : { locations: [targetLocation] };
         },
       };
@@ -386,18 +619,19 @@ test("canonical location ids ignore variable names and always query the fixed pr
       request: async (input, _token, request) => {
         const url = new URL(input);
         visited.push(url);
-        if (url.hostname === "cloudfunctions.googleapis.com") return metadata;
+        if (url.hostname === "cloudfunctions.googleapis.com")
+          return functionMetadata(url);
         assert.equal(url.hostname, "cloudscheduler.googleapis.com");
         if (request?.method === "POST") return { name: job.name };
         if (url.pathname.endsWith("/locations"))
           return { locations: [description] };
         assert.equal(url.pathname, `/v1/${targetLocation.name}/jobs`);
-        return { jobs: [job] };
+        return { jobs: [job, announcementsJob] };
       },
     });
     delete actual.listJobs;
     await runRolloverAndVerify(actual);
-    assert.equal(visited.length, 4);
+    assert.equal(visited.length, 5);
     assert.ok(
       visited.every((url) =>
         url.pathname.includes("projects/adaptive-fitness-af8bb/")

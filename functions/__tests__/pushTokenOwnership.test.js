@@ -164,6 +164,69 @@ describe("pushTokenOwnership — validation helpers", () => {
 describe("pushTokenOwnership.claimToken", () => {
   const hash = hashOf(TOKEN);
 
+  it("fences a native FCM token through claim, transfer, sending and release", async () => {
+    const fs = makeFirestore();
+    const claim = (uid, bindingId) =>
+      own.claimToken({
+        firestore: fs,
+        uid,
+        token: TOKEN,
+        platform: "ios",
+        bindingId,
+        serverTimestamp: SERVER_TS,
+      });
+    await claim("A", BIND_A);
+    expect(fs.__store.get(`users/A/devices/${hash}`).platform).toBe("ios");
+    await claim("B", BIND_B);
+    expect(fs.__store.has(`users/A/devices/${hash}`)).toBe(false);
+    expect(
+      await own.loadClaimedRegistrations({ firestore: fs, uid: "A" })
+    ).toEqual([]);
+    const registrations = await own.loadClaimedRegistrations({
+      firestore: fs,
+      uid: "B",
+    });
+    expect(registrations).toHaveLength(1);
+    expect(registrations[0].token).toBe(TOKEN);
+    await own.releaseTokenIfOwned({
+      firestore: fs,
+      uid: "A",
+      token: TOKEN,
+      bindingId: BIND_A,
+      serverTimestamp: SERVER_TS,
+      revocationExpiresAt: REVOKE_EXP,
+    });
+    expect(
+      await own.loadClaimedRegistrations({ firestore: fs, uid: "B" })
+    ).toHaveLength(1);
+    await own.releaseTokenIfOwned({
+      firestore: fs,
+      uid: "B",
+      token: TOKEN,
+      bindingId: BIND_B,
+      serverTimestamp: SERVER_TS,
+      revocationExpiresAt: REVOKE_EXP,
+    });
+    expect(
+      await own.loadClaimedRegistrations({ firestore: fs, uid: "B" })
+    ).toEqual([]);
+  });
+
+  it("rejects non-FCM platform contracts before writing a claim", async () => {
+    const fs = makeFirestore();
+    await expect(
+      own.claimToken({
+        firestore: fs,
+        uid: "A",
+        token: TOKEN,
+        platform: "raw-apns",
+        bindingId: BIND_A,
+        serverTimestamp: SERVER_TS,
+      })
+    ).rejects.toThrow();
+    expect(fs.__store.size).toBe(0);
+  });
+
   it("transfers ownership A→B: retires A's device, leaves only B's hash-keyed doc + claim", async () => {
     const fs = makeFirestore({
       [`fcmTokenClaims/${hash}`]: claimed("A", BIND_A),

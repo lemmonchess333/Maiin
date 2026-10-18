@@ -347,10 +347,11 @@ describe("SDKs — nothing that tracks is built in", () => {
       "@capacitor-firebase/analytics": ["AnalyticsWithoutAdIdSupport"],
       [AUTH]: ["Google"],
     });
-    // Traits need Swift tools 6.1; the App Check entry stays.
+    // Traits need Swift tools 6.1; Firebase plugins keep distinct SPM identities.
     expect(spm?.swiftToolsVersion).toBe("6.1");
     expect(spm?.packageOptions).toEqual({
       "@capacitor-firebase/app-check": { symlink: true },
+      "@capacitor-firebase/messaging": { symlink: true },
     });
   });
 
