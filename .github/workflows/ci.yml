@@ -132,10 +132,12 @@ jobs:
   # Both signs are run because their failures were not the same set: an
   # eastern offset moves a fixture forward across local midnight, a
   # western one moves it back, and a test can be wrong in one direction
-  # only. The suite is ~2 minutes, so this costs two parallel runs.
+  # only. Each zone is a full run of both suites, in parallel.
   unit-timezone:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # As the unit job: the suites ran 11–15 minutes in these jobs on
+    # 19 October, and Kiritimati was cancelled at 15 with its tests passing.
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -212,7 +214,8 @@ jobs:
   # assertions not quietly pinning whichever locale CI resolves.
   unit-locale:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 25, as the unit job and unit-timezone: the suites run 11–15 minutes.
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -300,7 +303,8 @@ jobs:
   # warning with slack rather than a morning surprise.
   unit-future:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 25, as the unit job and unit-timezone: the suites run 11–15 minutes.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
@@ -411,7 +415,8 @@ jobs:
   # caught all three alone.
   unit-shuffle:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 25, as the unit job and unit-timezone: the suites run 11–15 minutes.
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
