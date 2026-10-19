@@ -5876,6 +5876,15 @@ exports.screenPhoto = functions
         "Which photo? Send the path of one you uploaded."
       );
     }
+    // Every call is a paid Cloud Vision request, and the same photo can be
+    // sent again and again. Thirty in ten minutes is far past any real
+    // upload pace; the upload trigger screens every file either way.
+    if (await isRateLimited(context.auth.uid, "screenPhoto", 30, 600_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many photos checked at once. Wait a few minutes and try again."
+      );
+    }
     try {
       const accessToken = await admin.credential
         .applicationDefault()
