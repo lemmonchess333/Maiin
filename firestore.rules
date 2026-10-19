@@ -741,10 +741,15 @@ service cloud.firestore {
         resource.data.visibility == 'public'
         // Owner — always
         || resource.data.authorId == request.auth.uid
-        // Followers-only — read iff caller is a follower of the author
+        // Followers-only — read iff caller is a follower of the author,
+        // and neither has blocked the other. A follow edge can outlive a
+        // block (blockUser could not remove the blocked person's side
+        // until the two delete clauses below), so the edge alone is not
+        // enough.
         || (
           resource.data.visibility == 'followers'
           && exists(/databases/$(database)/documents/followers/$(resource.data.authorId)/users/$(request.auth.uid))
+          && !blockExistsBetween(resource.data.authorId, request.auth.uid)
         )
       );
 
@@ -1465,8 +1470,18 @@ service cloud.firestore {
       // be writable.
       // Delete stays unconditional — unfollowing must ALWAYS work, including
       // unwinding an edge that predates a block.
-      allow delete: if isOwnerAndNotDeleting(uid)
-        && !isWriteFrozen(targetUid);
+      allow delete: if (
+          isOwnerAndNotDeleting(uid)
+          && !isWriteFrozen(targetUid)
+        )
+        // The person followed may remove the follow of someone they have
+        // blocked: blocking severs both directions.
+        || (
+          request.auth != null
+          && request.auth.uid == targetUid
+          && exists(/databases/$(database)/documents/blocks/$(targetUid)/users/$(uid))
+          && !isWriteFrozen(targetUid)
+        );
       allow create: if isOwnerAndNotDeleting(uid)
         && !isWriteFrozen(targetUid)
         && !blockExistsBetween(uid, targetUid)
@@ -1478,10 +1493,21 @@ service cloud.firestore {
       // Follower doc is written by the person doing the following.
       // R1A-Deletion: writer (followerUid) and recipient (uid) both
       // must be writable.
-      allow delete: if request.auth != null
-        && request.auth.uid == followerUid
-        && !isWriteFrozen(followerUid)
-        && !isWriteFrozen(uid);
+      allow delete: if (
+          request.auth != null
+          && request.auth.uid == followerUid
+          && !isWriteFrozen(followerUid)
+          && !isWriteFrozen(uid)
+        )
+        // The person followed may remove a follower they have blocked:
+        // this is the edge that lets the follower read followers-only
+        // posts.
+        || (
+          request.auth != null
+          && request.auth.uid == uid
+          && exists(/databases/$(database)/documents/blocks/$(uid)/users/$(followerUid))
+          && !isWriteFrozen(uid)
+        );
       allow create: if request.auth != null
         && request.auth.uid == followerUid
         && !isWriteFrozen(followerUid)

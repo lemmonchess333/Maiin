@@ -863,19 +863,31 @@ export async function blockUser(currentUid: string, targetUid: string) {
   await setDocGuarded(doc(db, "blocks", currentUid, "users", targetUid), {
     blockedAt: serverTimestamp(),
   });
-  // Also unfollow in both directions
-  await deleteDocGuarded(
-    doc(db, "following", currentUid, "users", targetUid)
-  ).catch(() => {});
-  await deleteDocGuarded(
-    doc(db, "followers", currentUid, "users", targetUid)
-  ).catch(() => {});
-  await deleteDocGuarded(
-    doc(db, "following", targetUid, "users", currentUid)
-  ).catch(() => {});
-  await deleteDocGuarded(
-    doc(db, "followers", targetUid, "users", currentUid)
-  ).catch(() => {});
+  // Unfollow in both directions. The other person's side of their follow
+  // is theirs, and the rules let the blocker remove it once the block
+  // above exists. The rules refuse followers-only posts across a block
+  // whatever is left, so the block stands if a delete fails; the failure
+  // is logged rather than swallowed.
+  const edges = [
+    doc(db, "following", currentUid, "users", targetUid),
+    doc(db, "followers", currentUid, "users", targetUid),
+    doc(db, "following", targetUid, "users", currentUid),
+    doc(db, "followers", targetUid, "users", currentUid),
+  ];
+  const results = await Promise.allSettled(
+    edges.map((ref) => deleteDocGuarded(ref))
+  );
+  results.forEach((result, i) => {
+    if (result.status === "rejected") {
+      captureError(
+        result.reason instanceof Error
+          ? result.reason
+          : new Error(String(result.reason)),
+        "network",
+        { action: "blockUser", path: edges[i].path }
+      );
+    }
+  });
 }
 
 export async function unblockUser(currentUid: string, targetUid: string) {
