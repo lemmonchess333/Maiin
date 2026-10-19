@@ -104,6 +104,7 @@ import {
 import {
   commitLiftRecords,
   loadLiftRecords,
+  markLiftRecordsStale,
   type LiftRecords,
 } from "@/lib/liftRecordsStore";
 import { effortCueFor, rpeReserveWords } from "@/features/program/effortCue";
@@ -1517,8 +1518,19 @@ export default function WorkoutSession({
               })),
               date: localDateString(),
             });
-          } catch {
-            // Non-critical — map can be rebuilt from history
+          } catch (err) {
+            // The workout is saved; its records are not. The map would
+            // stay complete at the revision the next session loads, which
+            // would build on it without this session's sets, so it is
+            // marked stale and rebuilt from the whole history instead.
+            logger.warn("[WorkoutSession] lift records not saved", err);
+            if (auth.currentUser?.uid !== user.uid) return;
+            await markLiftRecordsStale(user.uid).catch((staleErr) =>
+              logger.warn(
+                "[WorkoutSession] lift records not marked stale",
+                staleErr
+              )
+            );
           }
         })();
       }

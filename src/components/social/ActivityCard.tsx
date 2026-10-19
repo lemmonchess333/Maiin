@@ -183,6 +183,9 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
       haptic("error");
       // A restriction that landed after the feed loaded.
       if (isRestrictedRefusal(err)) showRestrictedToast();
+      // The haptic alone says nothing on the web, where the count just
+      // drops back.
+      else toast.error("Couldn't give props. Try again.");
     }
   };
 

@@ -483,6 +483,23 @@ describe("ProgrammeSettings — overview (the Programme page)", () => {
     fireEvent.click(screen.getByRole("button", { name: /^reset$/i }));
     expect(regenerateProgram).toHaveBeenCalledTimes(1);
   });
+
+  it("a reset that fails says so, rather than nothing", async () => {
+    const { regenerateProgram } = setup({}, "overview");
+    regenerateProgram.mockRejectedValueOnce(
+      Object.assign(new Error("Missing or insufficient permissions."), {
+        code: "permission-denied",
+      })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /reset programme/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^reset$/i }));
+    await vi.waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't reset your programme. Try again."
+      )
+    );
+    expect(toast.success).not.toHaveBeenCalledWith("Programme reset");
+  });
 });
 
 describe("ProgrammeSettings — waits for the programme it is built on", () => {

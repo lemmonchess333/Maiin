@@ -195,8 +195,16 @@ export default function PeopleView({
         /* user cancelled */
       }
     } else {
-      await navigator.clipboard.writeText(text + " " + window.location.origin);
-      toast.success("Invite link copied");
+      // The clipboard can refuse (no permission, an insecure context), and
+      // a promise that rejected here said nothing at all.
+      try {
+        await navigator.clipboard.writeText(
+          text + " " + window.location.origin
+        );
+        toast.success("Invite link copied");
+      } catch {
+        toast.error("Couldn't copy the invite link. Try again.");
+      }
     }
   };
 

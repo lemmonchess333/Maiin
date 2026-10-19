@@ -36,6 +36,7 @@
  * ScheduleLayoutSheet — both views link to it.
  */
 import {
+  appErrorMessage,
   describeRejection,
   isRateLimitedRejection,
   PLAN_SAVES_TOO_OFTEN,
@@ -793,8 +794,15 @@ export default function ProgrammeSettings({
     // from no programme at all.
     if (readiness !== "ready") return;
     setConfirmReset(false);
-    await regenerateProgram();
-    toast.success("Programme reset");
+    try {
+      await regenerateProgram();
+      toast.success("Programme reset");
+    } catch (err) {
+      logger.error("[ProgrammeSettings] reset failed:", err);
+      toast.error(
+        appErrorMessage(err, "Couldn't reset your programme. Try again.")
+      );
+    }
   }
 
   /* The commit buttons (Save changes, and the dialog's Save and Reset) wait

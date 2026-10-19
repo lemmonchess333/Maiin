@@ -10,6 +10,7 @@ import {
 } from "react-router-dom";
 import { MotionConfig } from "framer-motion";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 import { LiftUnitProvider } from "@/hooks/useLiftUnit";
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
 import { useNativePushNavigation } from "@/hooks/useNativePushNavigation";
@@ -370,27 +371,36 @@ function AppRoutes() {
     let stopForegroundPush = () => {};
     const tryFlush = () => {
       if (!navigator.onLine) return;
-      // Lazy-load so this only ships when the user is signed in.
-      void import("@/lib/weightQueue").then(({ flushQueuedWeights }) =>
-        flushQueuedWeights(uid)
-      );
-      import("@/lib/offlineQueue").then(({ flushQueue }) => {
-        import("@/lib/firebase").then(({ db }) => {
-          flushQueue(db, uid).catch(() => {});
-        });
-      });
-      import("@/lib/waterActions").then(({ flushWater }) => {
-        if (!cancelled) void flushWater(uid);
-      });
+      // Lazy-load so this only ships when the user is signed in. Each
+      // queue keeps what it could not send, so a chunk that failed to load
+      // (offline, a stale deploy) leaves it for the next flush; it is
+      // logged rather than left as an unhandled rejection.
+      const skipped = (queue: string) => (err: unknown) =>
+        logger.warn(`[App] ${queue} flush skipped`, err);
+      void import("@/lib/weightQueue")
+        .then(({ flushQueuedWeights }) => flushQueuedWeights(uid))
+        .catch(skipped("weight"));
+      import("@/lib/offlineQueue")
+        .then(({ flushQueue }) =>
+          import("@/lib/firebase").then(({ db }) => {
+            flushQueue(db, uid).catch(() => {});
+          })
+        )
+        .catch(skipped("write"));
+      import("@/lib/waterActions")
+        .then(({ flushWater }) => {
+          if (!cancelled) void flushWater(uid);
+        })
+        .catch(skipped("water"));
       // P6 — programme COMMANDS are a separate queue from the Firestore write
       // queue above, and cannot share it: that one replays `setDoc` calls,
       // while these are callable invocations. Replay is safe because the
       // server dedupes on `commandId` inside its transaction.
-      import("@/features/program/programCommandClient").then(
-        ({ flushProgramCommands }) => {
+      import("@/features/program/programCommandClient")
+        .then(({ flushProgramCommands }) => {
           flushProgramCommands(uid).catch(() => {});
-        }
-      );
+        })
+        .catch(skipped("programme command"));
     };
     // Initial flush on sign-in (covers the resumed-session case
     // where writes were queued in a prior tab / session).
