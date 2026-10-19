@@ -44,12 +44,16 @@ export default function Routine() {
   const [loadFailed, setLoadFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
+  // The uid, not the user object: a new object for the same account is not
+  // a reason to read again, and each read re-renders.
+  const uid = user?.uid;
+
   useEffect(() => {
-    if (!user || !routineId) return;
+    if (!uid || !routineId) return;
     let cancelled = false;
     void (async () => {
       try {
-        const r = await getSavedRoutine(user.uid, routineId);
+        const r = await getSavedRoutine(uid, routineId);
         if (cancelled) return;
         setRoutine(r);
         setLoadFailed(false);
@@ -64,7 +68,7 @@ export default function Routine() {
     return () => {
       cancelled = true;
     };
-  }, [user, routineId, attempt]);
+  }, [uid, routineId, attempt]);
 
   /* Synthetic workout day from the routine. Built once routine loads. */
   const synthDay = useMemo(() => {

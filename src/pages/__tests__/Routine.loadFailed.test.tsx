@@ -8,10 +8,17 @@
  * Firestore fake.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import {
   failNextFirestore,
+  readsAt,
   resetFirestore,
   seedFirestore,
   unfiredFailures,
@@ -67,7 +74,19 @@ describe("Routine's load states", () => {
     expect(unfiredFailures()).toEqual([]);
     expect(screen.queryByText("Routine not found")).toBeNull();
 
+    /* Only Try again reads it again. The mocked useAuth hands back a new
+       user object on every render, as an auth refresh can, and the page
+       read the routine again on each one: the failure showed for a frame
+       and then the next read replaced it. (The fake logs a read that
+       answers; the failed one threw before it.) */
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(readsAt(ROUTINE)).toHaveLength(0);
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("Routine session")).toBeInTheDocument();
+    expect(readsAt(ROUTINE)).toHaveLength(1);
   });
 });
