@@ -21,7 +21,7 @@ import {
 } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { group } from "@/test/localeGrouping";
+import { groupText } from "@/test/localeGrouping";
 
 const h = vi.hoisted(() => ({
   profile: null as any,
@@ -385,7 +385,7 @@ describe("the first-visit walk on Home", () => {
     await screen.findByRole("dialog", { name: "Food" });
     // And today's target, as Home's food card shows it.
     expect(screen.getByRole("dialog")).toHaveTextContent(
-      `Today’s target is ${group(2200)} kcal`
+      `Today’s target is ${groupText(2200)} kcal`
     );
     await press("Done");
 
