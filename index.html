@@ -115,8 +115,9 @@
     <link rel="icon" type="image/svg+xml" href="%BASE_URL%icons/icon.svg" />
     <link rel="apple-touch-icon" href="%BASE_URL%icons/icon-192x192.png" />
 
-    <!-- Preconnect for performance -->
-    <link rel="preconnect" href="https://firebaseio.com" crossorigin />
+    <!-- Resolve Firestore's host early. No preconnect to firebaseio.com:
+         that is the Realtime Database, which the app does not use
+         (indexPreconnect.test.ts), so it only cost a connection. -->
     <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
 
     <!-- Plus Jakarta Sans (text) + Archivo (numbers — replaced JetBrains Mono

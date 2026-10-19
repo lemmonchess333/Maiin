@@ -173,6 +173,68 @@ describe("eager import graph — what Login pays for", () => {
   }
 });
 
+/**
+ * Packages the eager graph imports statically, each mapped to the first
+ * app module that does. The walk above stops at node_modules; this asks
+ * the files it reached what they pull in.
+ */
+function eagerPackages(graph: Map<string, string[]>): Map<string, string> {
+  const packages = new Map<string, string>();
+  for (const file of graph.keys()) {
+    let src: string;
+    try {
+      src = readFileSync(file, "utf8");
+    } catch {
+      continue;
+    }
+    const staticOnly = src.replace(/\bimport\s*\(/g, "DYNAMIC_IMPORT(");
+    STATIC_IMPORT.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = STATIC_IMPORT.exec(staticOnly))) {
+      const spec = m[1];
+      if (spec.startsWith("@/") || spec.startsWith(".")) continue;
+      if (!packages.has(spec)) packages.set(spec, relative(ROOT, file));
+    }
+  }
+  return packages;
+}
+
+/** Packages that must stay off the pre-paint path, and why. */
+const DEFERRED_PACKAGES: { spec: string; why: string }[] = [
+  {
+    spec: "firebase/messaging",
+    why:
+      "the web push SDK. Only a web push gesture and the signed-in " +
+      "foreground listener use it, and the iPhone app never does (its push " +
+      "is the native plugin); load it with import() where it is used",
+  },
+  {
+    spec: "firebase/analytics",
+    why:
+      "the web analytics SDK. analyticsProvider starts it once the app " +
+      "has, on the web only; nothing waits on it to draw",
+  },
+];
+
+describe("eager import graph — packages Login pays for", () => {
+  const packages = eagerPackages(eagerGraph());
+
+  it("sees packages at all, so an empty result cannot pass this file", () => {
+    expect(packages.has("react")).toBe(true);
+    expect(packages.has("firebase/auth")).toBe(true);
+  });
+
+  for (const { spec, why } of DEFERRED_PACKAGES) {
+    it(`does not eagerly import ${spec}`, () => {
+      expect(
+        packages.get(spec) ?? null,
+        `${spec} is statically imported by an eagerly reachable module, ` +
+          `so it loads on every cold start. It is ${why}.`
+      ).toBeNull();
+    });
+  }
+});
+
 describe("Home programme loading", () => {
   it("reads the current plan without importing its editor or the race generator", () => {
     const graph = eagerGraph(resolve(SRC, "pages/Home.tsx"));

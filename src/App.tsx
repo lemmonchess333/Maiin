@@ -53,18 +53,42 @@ import MinVersionGate from "@/components/MinVersionGate";
 const OneTimeMaintenance = lazyRetry(
   () => import("@/components/OneTimeMaintenance")
 );
+/* The signed-in shell, outermost first: three providers, the layout, Home.
+   They nest, and React starts a lazy component's import only when it
+   renders, so left to that, each would wait for the one above it to
+   load: five round trips in series before Home paints. `prefetchSignedInShell`
+   starts all five once the session is known, and the module map hands
+   each lazy() below the same promise. */
+const loadStreaks = () => import("@/features/streaks/useStreaks");
+const loadReminders = () => import("@/hooks/RemindersProvider");
+const loadDailyLogs = () => import("@/hooks/DailyLogsProvider");
+const loadLayout = () => import("@/components/Layout");
+const loadHome = () => import("@/pages/Home");
+
+function prefetchSignedInShell(): void {
+  // A failed prefetch is the lazy import's to retry when it renders.
+  for (const load of [
+    loadStreaks,
+    loadReminders,
+    loadDailyLogs,
+    loadLayout,
+    loadHome,
+  ])
+    void load().catch(() => {});
+}
+
 const StreaksProvider = lazyRetry(() =>
-  import("@/features/streaks/useStreaks").then((m) => ({
+  loadStreaks().then((m) => ({
     default: m.StreaksProvider,
   }))
 );
 const RemindersProvider = lazyRetry(() =>
-  import("@/hooks/RemindersProvider").then((m) => ({
+  loadReminders().then((m) => ({
     default: m.RemindersProvider,
   }))
 );
 const DailyLogsProvider = lazyRetry(() =>
-  import("@/hooks/DailyLogsProvider").then((m) => ({
+  loadDailyLogs().then((m) => ({
     default: m.DailyLogsProvider,
   }))
 );
@@ -79,14 +103,14 @@ const DailyNutritionSnapshot = lazyRetry(() =>
   }))
 );
 
-const Layout = lazyRetry(() => import("@/components/Layout"));
+const Layout = lazyRetry(loadLayout);
 const Login = lazyRetry(() => import("@/pages/Login"));
 const Onboarding = lazyRetry(() => import("@/pages/Onboarding"));
 const PrivacyPolicy = lazyRetry(() => import("@/pages/PrivacyPolicy"));
 const TermsOfService = lazyRetry(() => import("@/pages/TermsOfService"));
 const Support = lazyRetry(() => import("@/pages/Support"));
 const WeeklyReviewPage = lazyRetry(() => import("@/pages/WeeklyReview"));
-const Home = lazyRetry(() => import("@/pages/Home"));
+const Home = lazyRetry(loadHome);
 const Food = lazyRetry(() => import("@/pages/Food"));
 const History = lazyRetry(() => import("@/pages/History"));
 const SettingsIndex = lazyRetry(() => import("@/pages/SettingsIndex"));
@@ -364,6 +388,12 @@ function AppRoutes() {
   // Packet 17 — non-prompting FCM token refresh on sign-in + foreground.
   usePushTokenRefresh();
   useNativePushNavigation(uid, !loading && !!user);
+  // Signed in: fetch the shell's chunks side by side, while the profile
+  // loads, instead of one after another as each layer renders. Never at
+  // module load, which would pull Firestore for a signed-out visitor.
+  useEffect(() => {
+    if (uid) prefetchSignedInShell();
+  }, [uid]);
 
   useEffect(() => {
     if (!uid) return;
