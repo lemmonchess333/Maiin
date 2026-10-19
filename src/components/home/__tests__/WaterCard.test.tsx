@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
+import { restoreRealTimers } from "@/test/fakeTimers";
 import WaterCard from "../WaterCard";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
@@ -221,7 +222,7 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
     expect(onRemoveDrink).toHaveBeenCalledWith("newest");
   });
 
-  it("the line goes back to naming the step, and the tile never changes height", () => {
+  it("the line goes back to naming the step, and the tile never changes height", async () => {
     /* Only ever one of the two lines renders, both text-micro with the
        same mt-1, so the swap cannot resize the tile — the grid stretches
        the weight tile beside it, and a jump there on the most repeated
@@ -251,7 +252,7 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
       expect(screen.getByText("Tap + for 250 ml")).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /^Undo/ })).toBeNull();
     } finally {
-      vi.useRealTimers();
+      await restoreRealTimers();
     }
   });
 

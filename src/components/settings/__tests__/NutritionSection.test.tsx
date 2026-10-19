@@ -10,6 +10,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { describe, it, expect, vi, afterEach } from "vitest";
+import { restoreRealTimers } from "@/test/fakeTimers";
 import {
   render,
   screen,
@@ -737,7 +738,7 @@ describe("NutritionSection — the calorie-target deep-link target", () => {
     expect(anchor!.textContent).toContain("Daily target");
   });
 
-  it("scrolls the chain into view when arrived at via the hash", () => {
+  it("scrolls the chain into view when arrived at via the hash", async () => {
     const scrollIntoView = vi.fn();
     window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
     vi.useFakeTimers();
@@ -749,12 +750,12 @@ describe("NutritionSection — the calorie-target deep-link target", () => {
       });
       expect(scrollIntoView).toHaveBeenCalledTimes(1);
     } finally {
-      vi.useRealTimers();
+      await restoreRealTimers();
       window.location.hash = "";
     }
   });
 
-  it("does NOT scroll on an ordinary visit to the page", () => {
+  it("does NOT scroll on an ordinary visit to the page", async () => {
     /* The page is reachable from the settings list too, and hijacking
        the scroll position of someone who came to edit their goal weight
        would be its own bug. Anchored by the positive case above: this
@@ -771,7 +772,7 @@ describe("NutritionSection — the calorie-target deep-link target", () => {
       });
       expect(scrollIntoView).not.toHaveBeenCalled();
     } finally {
-      vi.useRealTimers();
+      await restoreRealTimers();
     }
   });
 });

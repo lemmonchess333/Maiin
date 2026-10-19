@@ -10,6 +10,7 @@
  * over an auto-pause does not stop the timer a second time.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { restoreRealTimers } from "@/test/fakeTimers";
 import {
   act,
   cleanup,
@@ -324,9 +325,9 @@ beforeEach(() => {
   h.timeCue.mockReset();
   h.speak.mockReset();
 });
-afterEach(() => {
+afterEach(async () => {
+  await restoreRealTimers();
   cleanup();
-  vi.useRealTimers();
   localStorage.clear();
 });
 

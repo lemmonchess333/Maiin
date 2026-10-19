@@ -9,6 +9,7 @@ import {
 import { MemoryRouter } from "react-router-dom";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { restoreRealTimers } from "@/test/fakeTimers";
 
 const api = vi.hoisted(() => ({
   createMealEntry: vi.fn(),
@@ -117,10 +118,10 @@ beforeEach(() => {
   api.saveLog.mockResolvedValue(undefined);
   api.mealsState = { error: null, loading: false };
 });
-afterEach(() => {
+afterEach(async () => {
+  await restoreRealTimers();
   cleanup();
   vi.unstubAllGlobals();
-  vi.useRealTimers();
 });
 
 function startAnalysis() {

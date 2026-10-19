@@ -360,7 +360,8 @@ animation-frame counter AND motion-dom's batcher shut, so later
 module registry runs once per FILE, so its 0-then-1 was true only when
 it ran first. A suite that fakes timers must settle framer's frame loop
 while the fake clock is still installed — `src/test/setup.ts` cannot do
-it for you, and its header says why.
+it for you, and its header says why. Restore the clock with
+`restoreRealTimers()` from `src/test/fakeTimers.ts`, which does both.
 
 The seeds are FIXED, which pins the ORDER and nothing else. **The job
 is not deterministic.** Seed 23 went red

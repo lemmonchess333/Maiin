@@ -52,7 +52,8 @@ if (typeof document !== "undefined") {
      * an afterEach, which Vitest's `stack` sequencing runs BEFORE this
      * hook, or from a `finally` inside the test, which is earlier still.
      * By the time control reaches here the clock is already real and the
-     * damage is done, so the settle belongs in the suite that faked it. */
+     * damage is done, so the settle belongs in the suite that faked it:
+     * `restoreRealTimers()` in `src/test/fakeTimers.ts`. */
     if (vi.isFakeTimers()) return;
     await new Promise((resolve) => setTimeout(resolve, 0));
   });

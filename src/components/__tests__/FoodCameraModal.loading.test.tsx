@@ -27,6 +27,7 @@
  * FileReader — no camera needed.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { restoreRealTimers } from "@/test/fakeTimers";
 import {
   render,
   renderHook,
@@ -76,10 +77,10 @@ function stubReducedMotion(reduced: boolean) {
 
 beforeEach(() => stubCamera("pending"));
 
-afterEach(() => {
+afterEach(async () => {
+  await restoreRealTimers();
   cleanup();
   window.matchMedia = realMatchMedia;
-  vi.useRealTimers();
   vi.clearAllMocks();
 });
 

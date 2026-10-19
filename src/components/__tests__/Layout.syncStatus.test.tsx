@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { restoreRealTimers } from "@/test/fakeTimers";
 import {
   act,
   render,
@@ -85,9 +86,9 @@ beforeEach(() => {
     value: true,
   });
 });
-afterEach(() => {
+afterEach(async () => {
+  await restoreRealTimers();
   cleanup();
-  vi.useRealTimers();
 });
 
 describe("Layout pending changes", () => {
