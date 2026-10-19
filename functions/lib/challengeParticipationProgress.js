@@ -9,6 +9,7 @@ const {
 const { backfillQueryWindow } = require("./challengeBackfill");
 const { resolveTier } = require("./challengeTiers");
 const { isVolumeEligibleRun } = require("./runEligibility");
+const { creditableSessionSeconds } = require("./sharedCreditBounds");
 
 function isParticipationMetric(metric) {
   return metric === "active_days" || metric === "training_minutes";
@@ -41,7 +42,7 @@ function participationValue(challenge, workouts, runs) {
     const day = sourceActivityDateKey(data);
     if (!challengeContainsActivityDate(challenge, day)) continue;
     days.add(day);
-    seconds += storedSeconds(data.durationMinutes, 60);
+    seconds += creditableSessionSeconds(storedSeconds(data.durationMinutes, 60));
   }
   for (const data of runs) {
     // The eligibility predicate also serves older, loosely shaped records.
@@ -57,7 +58,7 @@ function participationValue(challenge, workouts, runs) {
     const day = sourceActivityDateKey(data);
     if (!challengeContainsActivityDate(challenge, day)) continue;
     days.add(day);
-    seconds += storedSeconds(data.duration);
+    seconds += creditableSessionSeconds(storedSeconds(data.duration));
   }
   return challenge.metric === "active_days" ? days.size : seconds / 60;
 }

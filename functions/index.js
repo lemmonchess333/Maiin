@@ -5455,7 +5455,7 @@ exports.recreditMyLiftVolume = functions
     for (const docSnap of workoutsSnap.docs) {
       scanned++;
       const workout = docSnap.data();
-      const volume = workoutVolume.workoutVolumeKg(workout);
+      const volume = lifetimeAccrual.liftVolumeKgFor(workout);
       if (!(volume > 0)) continue;
       withVolume++;
       lifetimeKg += volume;
