@@ -148,6 +148,7 @@ const {
   sourceActivityDateKey,
   challengeContainsActivityDate,
   openOnDayBound,
+  isValidDateKey,
 } = require("./lib/challengeActivityWindow");
 // Source-doc → challenge-increment mapping, shared by the live activity
 // triggers and the join-time backfill so the crediting VALUES have one
@@ -1346,6 +1347,25 @@ exports.analyzeFood = functions
           return;
         }
 
+        // The request is checked BEFORE the quota, because the quota check
+        // spends a scan (checkDailyAiQuota increments as it checks), and a
+        // malformed request would otherwise cost one of the day's scans and
+        // then be refused.
+        const { imageBase64 } = req.body || {};
+        if (!imageBase64) {
+          res.status(400).json({ error: "No image provided" });
+          return;
+        }
+        // Cap input size to prevent token-cost inflation. A normal
+        // compressed food photo is well under this ceiling; the limit
+        // blocks padding the payload toward the 10MB request size purely
+        // to inflate Vertex token cost within an otherwise-legitimate
+        // quota.
+        if (typeof imageBase64 !== "string" || imageBase64.length > 5000000) {
+          res.status(400).json({ error: "Image too large" });
+          return;
+        }
+
         // F1b — daily AI scan quota with per-action counters.
         // Image-AI is Pro-only (free=0/day, pro=100/day).
         // Fail-closed via `error: "quota-check-failed"`; the client
@@ -1373,23 +1393,6 @@ exports.analyzeFood = functions
             remaining: 0,
             limit: quota.limit,
           });
-          return;
-        }
-
-        const { imageBase64 } = req.body;
-        if (!imageBase64) {
-          res.status(400).json({ error: "No image provided" });
-          return;
-        }
-        // Cap input size to prevent token-cost inflation. (This used to
-        // read "mirrors the askGeminiText prompt cap"; that endpoint was
-        // retired — the cap stands on its own reasoning below.) A normal
-        // compressed food photo is
-        // well under this ceiling; the limit blocks padding the payload
-        // toward the 10MB request size purely to inflate Vertex token
-        // cost within an otherwise-legitimate quota.
-        if (typeof imageBase64 !== "string" || imageBase64.length > 5000000) {
-          res.status(400).json({ error: "Image too large" });
           return;
         }
 
@@ -1570,6 +1573,23 @@ exports.analyzeFoodText = functions
           return;
         }
 
+        // Checked before the quota, which spends a scan; see analyzeFood.
+        // The type check comes first: `text.trim()` on a number throws,
+        // which would answer 500 instead of 400.
+        const { text } = req.body || {};
+        if (typeof text !== "string" || !text.trim()) {
+          res.status(400).json({ error: "No text provided" });
+          return;
+        }
+        // Input cap — the reasoning lives with the constant in
+        // lib/foodTextRequest.js.
+        if (text.length > FOOD_TEXT_MAX_CHARS) {
+          res.status(400).json({
+            error: `Text too long (max ${FOOD_TEXT_MAX_CHARS} characters)`,
+          });
+          return;
+        }
+
         // F1b — daily text-AI scan quota. Independent of image_ai
         // (lock pin #7). Free=0 (no AI on the free plan),
         // Pro=100/day server-side cap.
@@ -1590,20 +1610,6 @@ exports.analyzeFoodText = functions
             error: "Daily text-AI limit reached. Upgrade to Pro for more.",
             remaining: 0,
             limit: quota.limit,
-          });
-          return;
-        }
-
-        const { text } = req.body;
-        if (!text || !text.trim()) {
-          res.status(400).json({ error: "No text provided" });
-          return;
-        }
-        // Input cap — the reasoning lives with the constant in
-        // lib/foodTextRequest.js.
-        if (typeof text !== "string" || text.length > FOOD_TEXT_MAX_CHARS) {
-          res.status(400).json({
-            error: `Text too long (max ${FOOD_TEXT_MAX_CHARS} characters)`,
           });
           return;
         }
@@ -2432,7 +2438,15 @@ exports.computePerformanceWeek = functions
       );
     }
 
-    const weekKey = data.weekKey || null;
+    // `weekKey` becomes the id of the performance document this writes, so
+    // it has to be a real day (and `data` may be absent altogether).
+    const weekKey = (data && data.weekKey) || null;
+    if (weekKey !== null && !isValidDateKey(weekKey)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "weekKey must be a YYYY-MM-DD date."
+      );
+    }
 
     try {
       const result = await computeAndWritePerformanceForUser(uid, weekKey);
@@ -6510,9 +6524,10 @@ exports.toggleKudosCallable = functions
           // re-read (which would also re-expose a now-private activity).
           const activityAuthorId = result && result.activityAuthorId;
           if (activityAuthorId && activityAuthorId !== context.auth.uid) {
-            const fromName =
-              (data && typeof data.fromName === "string" && data.fromName) ||
-              "Someone";
+            const fromName = await socialFanout.senderDisplayName(
+              admin.firestore(),
+              context.auth.uid
+            );
             await socialFanout.createNotification({
               firestore: admin.firestore(),
               fromUid: context.auth.uid,
@@ -6630,9 +6645,10 @@ exports.toggleSpacePostLikeCallable = functions
             postAuthorId !== context.auth.uid &&
             postAuthorId !== spacePostEngagement.COACH_AUTHOR_ID
           ) {
-            const fromName =
-              (data && typeof data.fromName === "string" && data.fromName) ||
-              "Someone";
+            const fromName = await socialFanout.senderDisplayName(
+              admin.firestore(),
+              context.auth.uid
+            );
             await socialFanout.createNotification({
               firestore: admin.firestore(),
               fromUid: context.auth.uid,

@@ -148,11 +148,11 @@ export async function toggleKudos(
 ): Promise<boolean> {
   const authedUid = getAuthUid();
   if (userId !== authedUid) throw new Error("Identity mismatch");
-  // `fromName` is forwarded to
-  // the callable so the server-side notification carries the
-  // sender's display name. The CF sanitises and length-caps it; the
-  // recipient uid is read server-side from the activity doc (no
-  // client trust on target).
+  // `fromName` is still sent, and the callable ignores it: the
+  // notification names the sender from their public profile, read
+  // server-side (socialFanout.senderDisplayName), so no caller can
+  // put text of their choosing in someone else's tray. The recipient
+  // uid is read server-side from the activity doc too.
   const fn = httpsCallable<
     { activityId: string; fromName?: string },
     { kudosed: boolean }

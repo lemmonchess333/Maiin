@@ -170,8 +170,8 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
       // 2026-05-26 audit PR 3 (finding #6) — kudos notification is
       // now written server-side inside `toggleKudosCallable`, so the
       // client no longer makes a separate /notifications/* write.
-      // The CF receives the `fromName` from this call's payload via
-      // `giveHighFive` (which forwards it through the callable).
+      // The `fromName` sent here is ignored: the callable names the
+      // sender from their public profile, server-side.
       await giveHighFive(feedItem.activityId, user.uid, {
         fromName: profile?.displayName || "Someone",
       });

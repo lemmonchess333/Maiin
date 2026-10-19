@@ -91,8 +91,8 @@ function runChallengeIncrements(data) {
   /* One figure for every run metric, and the lifetime total's: metres as
      runMetersFor reads them, `distance` (the field isVolumeEligibleRun
      checks) before the legacy `distanceKm`, and zero past the shared-credit
-     bounds. `distanceKm` used to come first here, so a run that passed the
-     gate on a 50 m `distance` credited whatever `distanceKm` it carried. */
+     bounds. Read the other way round, a run that passed the gate on a 50 m
+     `distance` would credit whatever `distanceKm` it carried. */
   const meters = runMetersFor(data);
   if (meters > 0) {
     const km = meters / 1000;
