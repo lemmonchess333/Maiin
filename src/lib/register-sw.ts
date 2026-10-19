@@ -20,17 +20,6 @@ import {
 
 const wiredRegistrations = new WeakSet<ServiceWorkerRegistration>();
 
-export async function clearSWCaches(): Promise<void> {
-  if (!("caches" in window)) return;
-  try {
-    const names = await caches.keys();
-    await Promise.all(names.map((name) => caches.delete(name)));
-    logger.log("SW caches cleared");
-  } catch {
-    // Best-effort cache recovery must never block a reload.
-  }
-}
-
 function wireRegistration(registration: ServiceWorkerRegistration): void {
   if (wiredRegistrations.has(registration)) return;
   wiredRegistrations.add(registration);
@@ -48,7 +37,10 @@ function wireRegistration(registration: ServiceWorkerRegistration): void {
     if (!worker) return;
     worker.addEventListener("statechange", () => {
       if (worker.state !== "activated" || !isUpdate) return;
-      void clearSWCaches();
+      // Nothing is cleared here. The new worker's activate step already
+      // deleted every older deploy's cache (each is named by its build),
+      // and clearing here would also delete the shell the new worker has
+      // just installed, the offline fallback for every route.
       toast("New version available", {
         action: {
           label: "Refresh",

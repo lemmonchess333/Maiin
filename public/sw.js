@@ -1,11 +1,13 @@
-const CACHE_NAME = "tropos-v13";
 // Per-deploy build stamp — scripts/stamp-sw.mjs replaces the placeholder at
 // build time so EVERY deploy changes this file's bytes. Browsers only run the
 // SW update cycle (→ the "New version available" refresh toast) when sw.js
 // changes; before this stamp, only manual CACHE_NAME bumps triggered it and
 // most deploys shipped silently to long-lived sessions.
 const BUILD_STAMP = "__TROPOS_BUILD__";
-void BUILD_STAMP;
+// The shell cache is one deploy's, named by its build: activate deletes
+// every other name, so a deploy's chunks go with it rather than piling up
+// beside the next one's, to be cut by the size trim in arbitrary order.
+const CACHE_NAME = `tropos-v14-${BUILD_STAMP}`;
 // Derived from the SW's own URL so the one file works whether it's served at
 // /Maiin/sw.js (GitHub Pages) or /sw.js (Firebase Hosting, served at root —
 // which is what makes OAuth same-origin with the auth handler on iOS Safari).
@@ -211,6 +213,11 @@ self.addEventListener("fetch", (event) => {
     url.hostname.includes("openfoodfacts.org") ||
     url.hostname.includes("stripe.com") ||
     url.hostname.includes("generativelanguage") ||
+    // The basemap (src/lib/basemap.ts's BASEMAP_ORIGIN): its styles, tiles
+    // and glyphs carry long-lived HTTP caching of their own. Taken by the
+    // network-first rule below, each would be fetched no-store, past
+    // that caching, and kept here: hundreds of tiles for one run's map.
+    url.hostname === "tiles.openfreemap.org" ||
     // Firebase EMULATOR suite (auth 9099 / firestore 8080 / storage
     // 9199): a loopback origin that is NOT the app's own origin. The
     // production skip-list above matches production hostnames only, so
@@ -233,22 +240,10 @@ self.addEventListener("fetch", (event) => {
   // browser's own HTTP cache handles repeat visits.
   if (url.pathname.match(/\.(mp4|webm)$/)) return;
 
-  // Stale-while-revalidate for fonts and images
-  if (url.pathname.match(/\.(woff2?|ttf|otf|png|jpe?g|gif|svg|webp|ico|avif)$/)) {
-    event.respondWith(
-      caches.open(CACHE_NAME).then(async (cache) => {
-        const cached = await cache.match(event.request);
-        const fetchPromise = fetch(event.request).then((response) => {
-          if (response.status === 200) cache.put(event.request, response.clone());
-          return response;
-        }).catch(() => cached);
-        return cached || fetchPromise;
-      })
-    );
-    return;
-  }
-
-  // Cache-first for Vite-hashed assets (immutable — URL changes when content changes)
+  // Cache-first for Vite-hashed assets (immutable — URL changes when content
+  // changes). Before the image and font rule below: the hashed fonts and
+  // images under assets/ are as immutable as the scripts, and that rule
+  // would refetch each one on every visit.
   if (url.pathname.startsWith(BASE_PATH + "assets/")) {
     event.respondWith(
       caches.match(event.request).then((cached) => {
@@ -267,6 +262,21 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Stale-while-revalidate for fonts and images
+  if (url.pathname.match(/\.(woff2?|ttf|otf|png|jpe?g|gif|svg|webp|ico|avif)$/)) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(event.request);
+        const fetchPromise = fetch(event.request).then((response) => {
+          if (response.status === 200) cache.put(event.request, response.clone());
+          return response;
+        }).catch(() => cached);
+        return cached || fetchPromise;
+      })
+    );
+    return;
+  }
+
   // Network-first for everything else (HTML navigations included). Use
   // `cache: "no-store"` so the browser HTTP cache can NEVER hand back a
   // stale index.html: a stale index references Vite asset hashes that the
@@ -280,8 +290,18 @@ self.addEventListener("fetch", (event) => {
       .then((response) => {
         if (response.status === 200) {
           const responseClone = response.clone();
+          // A route of the app is the shell itself (Hosting answers every
+          // one with index.html), so it is kept as the shell the offline
+          // fallback below reads, not once per route visited. That also
+          // puts the shell back after anything cleared the cache. A real
+          // page (legal/*.html) is kept under its own address.
+          const isShell =
+            event.request.mode === "navigate" &&
+            !url.pathname.endsWith(".html") &&
+            url.origin === self.location.origin &&
+            (response.headers.get("content-type") || "").includes("text/html");
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
+            cache.put(isShell ? BASE_PATH + "index.html" : event.request, responseClone);
           });
         }
         return response;
@@ -304,9 +324,3 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-// Handle messages from clients
-self.addEventListener("message", (event) => {
-  if (event.data === "skipWaiting") {
-    self.skipWaiting();
-  }
-});
