@@ -353,8 +353,12 @@ describe("newRunnerRaceNote", () => {
         targetDate: weeksOut(12),
         newRunnerUntil: newRunner,
       });
-    expect(plan(until).newRunnerNote).toBe(note("half", weeksOut(12)));
-    expect(plan(until).newRunnerNote).not.toBeNull();
+    // Six run-walk weeks end at 20 minutes non-stop; five more a week from
+    // 13 July makes 50 by the week of 17 August, the one before race week.
+    // The half at 7:00 /km is 21.0975 × 7 ≈ 148 min, more than twice 50.
+    expect(plan(until).newRunnerNote).toBe(
+      "Your plan builds to about 50 min of running by then, and a half marathon takes about 2 h 30 min. You can run-walk it, or choose a later date."
+    );
     expect(plan(null).newRunnerNote).toBeNull();
     expect(getRaceGoalPlannerState(base).newRunnerNote).toBeNull();
   });

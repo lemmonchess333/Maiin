@@ -37,7 +37,6 @@ import {
   type FinishedRun,
 } from "../runCompletion";
 import { pendingDocumentWrites } from "../offlineQueue";
-import { sampleRoute } from "../routeSegments";
 
 /* Started at 23:50 the night before last, finished after midnight. */
 const START = new Date(Date.now() - 2 * 86_400_000);
@@ -179,8 +178,17 @@ describe("runDocument", () => {
 
   it("thins the trace, trims the notes and names the shoe", () => {
     const saved = runDocument(run(), FINISH);
-    expect(saved.points).toEqual(sampleRoute(trace(600), 500));
-    expect(saved.points.length).toBeLessThanOrEqual(500);
+    // 600 points a second apart, thinned to 500: both ends kept, in order,
+    // evenly spread. 599 s over 499 gaps is 399 gaps of 1 s and 100 of 2 s.
+    const seconds = saved.points.map(
+      (p) => (p.timestamp - START.getTime()) / 1000
+    );
+    expect(seconds).toHaveLength(500);
+    expect(seconds[0]).toBe(0);
+    expect(seconds.at(-1)).toBe(599);
+    const gaps = seconds.slice(1).map((s, i) => s - seconds[i]);
+    expect(gaps.filter((g) => g === 1)).toHaveLength(399);
+    expect(gaps.filter((g) => g === 2)).toHaveLength(100);
     expect(saved.notes).toBe("Windy on the bridge");
     expect(saved.shoeId).toBe("shoe-1");
     expect(saved).toMatchObject({
