@@ -48,6 +48,7 @@ import {
   pendingWrites,
   readDoc,
   readLog,
+  rejectWrite,
   releaseAllWrites,
   releaseRead,
   resetFirestore,
@@ -169,10 +170,7 @@ describe("useSpaceMembership — what the page shows", () => {
       { initialProps: { id: SPACE } }
     );
     rerender({ id: OTHER_SPACE });
-    expect(pendingReads()).toEqual([
-      MINE,
-      `spaces/${OTHER_SPACE}/members/me`,
-    ]);
+    expect(pendingReads()).toEqual([MINE, `spaces/${OTHER_SPACE}/members/me`]);
 
     await act(async () => {
       expect(releaseRead(1)).toBe(true);
@@ -186,6 +184,27 @@ describe("useSpaceMembership — what the page shows", () => {
     });
     await flushSnapshots();
     expect(result.current.joined).toBe(false);
+    expect(result.current.memberCount).toBe(1);
+  });
+
+  it("shows another space as unknown until its own reads answer", async () => {
+    /* The page is not remounted between spaces, so the last space's
+       answers stood in for the next one's: a member of three, here,
+       until the new space's reads landed. */
+    seedMembers(SPACE, ["me", "a", "b"]);
+    seedMembers(OTHER_SPACE, ["c"]);
+    const { result, rerender } = await rendered();
+    expect(result.current.joined).toBe(true);
+
+    deferReads();
+    rerender({ id: OTHER_SPACE });
+    expect(result.current.joined).toBeNull();
+    expect(result.current.memberCount).toBeNull();
+
+    await act(async () => {
+      expect(releaseRead(0)).toBe(true);
+    });
+    await waitFor(() => expect(result.current.joined).toBe(false));
     expect(result.current.memberCount).toBe(1);
   });
 });
@@ -305,6 +324,40 @@ describe("useSpaceMembership — joining", () => {
     expect(result.current.memberCount).toBe(2);
     expect(readDoc(MINE)).toBeUndefined();
     expect(writeLog()).toHaveLength(0);
+  });
+});
+
+describe("useSpaceMembership — a tap that settles after the page moves on", () => {
+  it("drops a refused join for a space the page has left", async () => {
+    /* A join on the first space was refused once the page was on the
+       second, and the revert landed there: the second space, which this
+       account is a member of, read as not joined, one member short, and
+       a Join tap would have written its member document again. */
+    seedMembers(SPACE, ["a", "b"]);
+    seedMembers(OTHER_SPACE, ["me", "c", "d"]);
+    const { result, rerender } = await rendered();
+
+    deferWrites();
+    let joining!: Promise<void>;
+    act(() => {
+      joining = result.current.join();
+    });
+    expect(pendingWrites()).toEqual([MINE]);
+
+    rerender({ id: OTHER_SPACE });
+    await waitFor(() => expect(result.current.joined).toBe(true));
+    expect(result.current.memberCount).toBe(3);
+
+    await act(async () => {
+      expect(rejectWrite(0, "permission-denied")).toBe(true);
+      await joining;
+    });
+    expect(result.current.joined).toBe(true);
+    expect(result.current.memberCount).toBe(3);
+    // The tap still says it failed: it did.
+    expect(H.toastError).toHaveBeenCalledWith(
+      "Couldn't join the space. Try again."
+    );
   });
 });
 
