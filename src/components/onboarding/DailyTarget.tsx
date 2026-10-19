@@ -1,4 +1,5 @@
 import SectionLabel from "@/components/ui/SectionLabel";
+import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 
 /**
  * The daily calorie target setup works out, with its macros and what it is
@@ -29,9 +30,9 @@ export default function DailyTarget({
         Your daily target
       </SectionLabel>
       <p className="text-3xl font-mono tabular-nums font-extrabold">
-        {Math.round(calories).toLocaleString()}{" "}
+        {formatCalories(calories)}{" "}
         <span className="text-base font-sans font-semibold text-muted-foreground">
-          kcal
+          {CALORIE_UNIT}
         </span>
       </p>
       <p className="text-sm text-muted-foreground">
