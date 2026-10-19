@@ -532,6 +532,11 @@ export default function NotificationsSection({
                     "Monthly challenges",
                     "One alert near the start of each month, around 09:00 in your time zone. Tap it to see the new challenges.",
                   ],
+                  [
+                    "challengeReminders",
+                    "Monthly challenge reminders",
+                    "One reminder in the final three days, around 09:00 in your time zone, for joined monthly goals still in progress.",
+                  ],
                 ] as const
               ).map(([type, label, description]) => (
                 <div key={type} className={ROW}>

@@ -36,5 +36,6 @@ describe("DEFAULT_PUSH_CONSENT", () => {
 
   it("requires a separate opt-in for monthly challenge announcements", () => {
     expect(DEFAULT_PUSH_CONSENT.challenges).toBe(false);
+    expect(DEFAULT_PUSH_CONSENT.challengeReminders).toBe(false);
   });
 });

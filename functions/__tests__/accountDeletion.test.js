@@ -494,6 +494,8 @@ describe("deleteAccount — coverage of cleanup targets", () => {
     const paths = [
       "challengeAnnouncement-2026-10",
       "challengeAnnouncement-2026-11",
+      "challengeReminder-2026-10",
+      "challengeReminder-2026-11",
       "push",
     ].map((id) => `users/${TEST_UID}/settings/${id}`);
     const stubs = makeStubs({

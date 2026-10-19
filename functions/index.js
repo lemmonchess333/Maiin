@@ -3311,8 +3311,8 @@ exports._maybeSendBadgeNudge = maybeSendBadgeNudge;
 exports._awardMilestoneBadges = awardMilestoneBadges;
 exports._maybeSendWeeklyRecap = maybeSendWeeklyRecap;
 
-async function maybeSendChallengeAnnouncement(uid, now, profile) {
-  return challengeAnnouncements.maybeSendAnnouncement({
+function challengeNotificationOptions(uid, now, profile) {
+  return {
     db,
     uid,
     now,
@@ -3322,10 +3322,24 @@ async function maybeSendChallengeAnnouncement(uid, now, profile) {
     releaseRegistrations: releaseClaimedPushSendLeases,
     send: (message) => admin.messaging().sendEachForMulticast(message),
     prune: pruneDeadPushTokens,
-  });
+  };
 }
 
-// Announce only the current local edition at ~09:00 on days1–3. This is
+async function maybeSendChallengeAnnouncement(uid, now, profile) {
+  return challengeAnnouncements.maybeSendAnnouncement(
+    challengeNotificationOptions(uid, now, profile)
+  );
+}
+
+async function maybeSendChallengeReminder(uid, now, profile) {
+  return challengeAnnouncements.maybeSendReminder(
+    challengeNotificationOptions(uid, now, profile)
+  );
+}
+
+// Announce only the current local edition at ~09:00 on days1–3, and remind
+// opted-in members once in the final three days if a joined goal has a next tier.
+// Each campaign has an independent account/month claim. This is
 // separate from rollover (which creates tomorrow's definitions in advance).
 // Failed work is eligible for a later scheduled catchup sweep. Atomic
 // per-month claims prevent duplicate banners if a sweep is repeated.
@@ -3339,6 +3353,7 @@ exports.hourlyChallengeAnnouncements = functions
       db,
       now,
       documentId: admin.firestore.FieldPath.documentId(),
+      includeReminders: true,
       perUser: async (uid, profile) => {
         // The all-users pass is needed for opted-in lapsed accounts. Avoid
         // deletion-ledger reads for the other local-hour buckets.
@@ -3357,7 +3372,10 @@ exports.hourlyChallengeAnnouncements = functions
             "hourlyChallengeAnnouncements"
           )
         ) {
-          await maybeSendChallengeAnnouncement(uid, now, profile);
+          if (challengeAnnouncements.isSweepWindow(now))
+            await maybeSendChallengeAnnouncement(uid, now, profile);
+          if (challengeAnnouncements.isReminderSweepWindow(now))
+            await maybeSendChallengeReminder(uid, now, profile);
         }
       },
     });

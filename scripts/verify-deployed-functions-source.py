@@ -122,6 +122,7 @@ def source_targets():
         "sendTestPush": push_paths,
         "hourlyStreakNudge": push_paths + ["lib/streakNudge.js", "lib/activeDates.js", "lib/badgeNudge.js"],
         "hourlyChallengeAnnouncements": push_paths + ["lib/challengeAnnouncements.js",
+                                                      "lib/challengeTiers.js",
                                                       "lib/challengeDefs.js", "lib/challengeActivityWindow.js", "lib/dateUtils.js",
                                                       "lib/streakNudge.js"],
     }

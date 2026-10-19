@@ -76,6 +76,7 @@ export type SettingsToggle =
   | "push_recap"
   | "push_badge"
   | "push_challenges"
+  | "push_challengeReminders"
   /** One of the activity notification switches (S3). Sends
    *  `"{category}:{on|off}"` (e.g. `"follows:on"`), like
    *  `share_default_set` pairs its value with the type it applies to. */
