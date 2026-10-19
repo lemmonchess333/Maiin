@@ -3,6 +3,7 @@ import type { RestContext } from "@/features/program/restTime";
 import type { WorkoutDay } from "@/features/program/programTypes";
 import { cardSessionMinutes } from "@/features/program/expressSession";
 import { liftCardTitle } from "@/lib/liftDayLabel";
+import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { FIRST_WEEK_DAYS, accountDay } from "@/lib/firstWeek";
 import { isAutomated } from "@/lib/launchSplash";
 import { readString } from "@/lib/localStore";
@@ -216,7 +217,7 @@ export const FOOD_STOP_BODY =
 /** The Food stop with today's target in it, as Home's food card shows it. */
 export function foodStopBody(calories: number | null | undefined): string {
   if (!calories || calories <= 0) return FOOD_STOP_BODY;
-  return `Log what you eat here, by typing it or scanning it. Today’s target is ${Math.round(calories).toLocaleString()} kcal, and it already counts your training, so there’s nothing to eat back.`;
+  return `Log what you eat here, by typing it or scanning it. Today’s target is ${formatCalories(calories)} ${CALORIE_UNIT}, and it already counts your training, so there’s nothing to eat back.`;
 }
 
 /**
