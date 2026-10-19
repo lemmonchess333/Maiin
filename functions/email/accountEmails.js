@@ -49,8 +49,14 @@ async function sendViaResend({ to, subject, html, text }) {
   });
   if (!resp.ok) {
     const body = await resp.text().catch(() => "");
+    // The message is logged by every caller, and Resend's error body can
+    // name the recipient ("Invalid `to` field: …"): the password-reset
+    // callable, which anyone can call, would log every address tried.
+    // Addresses are cut here, once, as trialReminders.js cuts its own.
     throw new Error(
-      `Resend send failed (${resp.status}): ${body.slice(0, 200)}`
+      `Resend send failed (${resp.status}): ${body
+        .slice(0, 200)
+        .replace(/\S+@\S+/g, "[address]")}`
     );
   }
 }
