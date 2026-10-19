@@ -495,6 +495,14 @@ function useStreaksInternal() {
   // badges that already have an earnedAt set in Firestore.
   const [streaksDocLoaded, setStreaksDocLoaded] = useState(false);
   const [mealsLoaded, setMealsLoaded] = useState(false);
+  // A failed read settles its loaded flag (below) so nothing hangs, but
+  // what it left behind is the defaults, not the data: the streak counted
+  // from it must not be saved over the stored one.
+  const [streaksDocFailed, setStreaksDocFailed] = useState(false);
+  const [mealsFailed, setMealsFailed] = useState(false);
+  // Bumped by retryLoad: Firestore ends a listener that fails, so trying
+  // again means opening the two below afresh.
+  const [streamsAttempt, setStreamsAttempt] = useState(0);
 
   // Account-switch reset (React "adjust state during render" idiom). Every
   // stream above belongs to the account it was read for, so any uid change
@@ -513,6 +521,8 @@ function useStreaksInternal() {
     setMeals([]);
     setStreaksDocLoaded(false);
     setMealsLoaded(false);
+    setStreaksDocFailed(false);
+    setMealsFailed(false);
   }
 
   // Reveal only confirmed awards from this account. Intent may be queued
@@ -577,11 +587,17 @@ function useStreaksInternal() {
     // Error callback applied to every subscription below: if any one fails,
     // flip its *Loaded flag true so `allLoaded` still resolves and the UI
     // doesn't hang in a skeleton state. State for the failed source stays
-    // at its previous value (empty by default, stale if we already had data).
+    // at its previous value (empty by default, stale if we already had data),
+    // and its *Failed flag holds the streak save off (`readFailed`).
     const onSubscriptionError =
-      (source: string, setLoadedFlag: (v: boolean) => void) =>
+      (
+        source: string,
+        setLoadedFlag: (v: boolean) => void,
+        setFailedFlag: (v: boolean) => void
+      ) =>
       (err: unknown) => {
         logger.error(`[useStreaks] ${source} subscription failed`, err);
+        setFailedFlag(true);
         setLoadedFlag(true);
       };
 
@@ -669,7 +685,7 @@ function useStreaksInternal() {
         }
         setStreaksDocLoaded(true);
       },
-      onSubscriptionError("streaks", setStreaksDocLoaded)
+      onSubscriptionError("streaks", setStreaksDocLoaded, setStreaksDocFailed)
     );
 
     const mealsRef = collection(db, "users", uid, "meals");
@@ -718,17 +734,22 @@ function useStreaksInternal() {
         setMeals(rows);
         setMealsLoaded(true);
       },
-      onSubscriptionError("meals", setMealsLoaded)
+      onSubscriptionError("meals", setMealsLoaded, setMealsFailed)
     );
 
     return () => {
       unsubStreaks();
       unsubMeals();
     };
-  }, [uid]);
+  }, [uid, streamsAttempt]);
 
   const allLoaded =
     streaksDocLoaded && workoutsLoaded && runsLoaded && mealsLoaded;
+  // Any stream that settled by failing. The saved-session readers report
+  // `failed` only when they hold no rows for this account; rows already
+  // read stay the evidence they were.
+  const readFailed =
+    streaksDocFailed || mealsFailed || savedWorkouts.failed || savedRuns.failed;
 
   // Per-day macro-target snapshots + water docs for the nutrition badges
   // (its own two listeners, owned here so they're singular per session).
@@ -1106,7 +1127,10 @@ function useStreaksInternal() {
   // only the two summary numbers we denormalise for cross-surface reads.
 
   useEffect(() => {
-    if (!allLoaded || !uid) return;
+    // A failed read is not an empty one: with the streaks document unread,
+    // longestStreak and the last active day are the defaults, and saving
+    // would write them over the stored record and both mirrors.
+    if (!allLoaded || !uid || readFailed) return;
     if (currentStreak === lastWrittenStreakRef.current) return;
     // Skip initial write if Firestore already has the right value (avoids
     // a pointless write on every fresh mount).
@@ -1180,6 +1204,7 @@ function useStreaksInternal() {
   }, [
     allLoaded,
     uid,
+    readFailed,
     currentStreak,
     totalActiveDays,
     activeDateSet,
@@ -1241,6 +1266,20 @@ function useStreaksInternal() {
     [awardEventBadges]
   );
 
+  // Open all four streams again after a failure. The pass after it is a
+  // first load, as on opening the app: badges found then are backfilled
+  // quietly rather than celebrated one by one.
+  const retryLoad = () => {
+    hasLoadedRef.current = false;
+    setStreaksDocFailed(false);
+    setMealsFailed(false);
+    setStreaksDocLoaded(false);
+    setMealsLoaded(false);
+    setStreamsAttempt((n) => n + 1);
+    savedWorkouts.refresh();
+    savedRuns.refresh();
+  };
+
   return {
     currentStreak,
     longestStreak,
@@ -1249,6 +1288,9 @@ function useStreaksInternal() {
     forgivenYesterday,
     backfillRescueStreak,
     loading: !allLoaded,
+    /** A stream failed to load, so the figures above are not the person's. */
+    loadFailed: readFailed,
+    retryLoad,
     earnedBadges,
     lockedBadges,
     allBadges,
