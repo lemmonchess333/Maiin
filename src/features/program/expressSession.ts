@@ -151,6 +151,25 @@ export function estimateSessionMinutes(
   return Math.round(estimateSessionSeconds(exercises, rest) / 60);
 }
 
+/**
+ * A session's minutes as its card prices them, or null when an exercise has
+ * no set count to price: a card shows no minutes rather than a guess. Home's
+ * lift card and the first-visit walk both read this, so they say the same
+ * number.
+ */
+export function cardSessionMinutes(
+  exercises: ReadonlyArray<Partial<PricedExercise>>,
+  rest: RestContext = {}
+): number | null {
+  const priced = exercises.filter(
+    (ex): ex is Partial<PricedExercise> & { sets: number } =>
+      typeof ex.sets === "number" && ex.sets > 0
+  );
+  return priced.length === exercises.length && exercises.length > 0
+    ? estimateSessionMinutes(priced, rest)
+    : null;
+}
+
 /** The same estimate in seconds, unrounded: what a plan is fitted against
  *  (`sessionFit.ts`), so a 30½-minute day doesn't read as 30. */
 export function estimateSessionSeconds(

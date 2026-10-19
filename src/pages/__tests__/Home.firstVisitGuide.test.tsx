@@ -21,6 +21,7 @@ import {
 } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { groupText } from "@/test/localeGrouping";
 
 const h = vi.hoisted(() => ({
   profile: null as any,
@@ -371,6 +372,10 @@ describe("the first-visit walk on Home", () => {
       { name: "Your first workout" },
       { timeout: 3000 }
     );
+    // FV3: it names this person's session, as its card does.
+    expect(screen.getByRole("dialog")).toHaveTextContent(
+      /Full Body Circuit A: 1 exercise, about \d+ min, starting with Squat\./
+    );
     await press("Next");
     await screen.findByRole("dialog", { name: "Your first week" });
     expect(screen.getByRole("dialog")).toHaveTextContent(
@@ -378,6 +383,10 @@ describe("the first-visit walk on Home", () => {
     );
     await press("Next");
     await screen.findByRole("dialog", { name: "Food" });
+    // And today's target, as Home's food card shows it.
+    expect(screen.getByRole("dialog")).toHaveTextContent(
+      `Today’s target is ${groupText(2200)} kcal`
+    );
     await press("Done");
 
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());

@@ -339,6 +339,21 @@ describe("todaySession — a run's dose", () => {
       })
     ).run?.dose;
 
+  // FV3: the first-visit walk names today's run as its card does.
+  it("names the run as its card does", () => {
+    const run = (templateId: string) =>
+      todaySession(
+        input({
+          profile: profileWith({ 3: "run" }),
+          programState: programStateWith({
+            runDays: [runDay(WEDNESDAY, { templateId })],
+          }),
+        })
+      ).run;
+    expect(run("easy_40")?.name).toBe("Easy 40");
+    expect(run("long_15k")?.name).toBe("Long 15K");
+  });
+
   it("is a timed run's own time", () => {
     expect(dose("easy_40")).toBe("40 min");
     expect(dose("easy_40", confirmed)).toBe("40 min");
@@ -695,6 +710,8 @@ describe("todaySession — a long run that finishes at race pace (Run21 (2))", (
       })
     );
     expect(session.run?.racePace).toMatchObject({ kind: "finish", blockKm: 5 });
+    // Named as its card names it, which the first-visit walk reads (FV3).
+    expect(session.run?.name).toBe("Long 15K with race pace");
   });
 
   it("gives none without a goal time", () => {
