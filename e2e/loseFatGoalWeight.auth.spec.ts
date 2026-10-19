@@ -79,7 +79,9 @@ test.describe("lose fat with a goal weight", () => {
         .getByRole("radiogroup", { name: "Weekly pace" })
         .getByRole("radio", { name: "0.25 kg", exact: true })
         .click();
-      await expect(page.getByText("Lose about 0.25 kg a week.")).toBeVisible();
+      await expect(
+        page.getByText("Lose about 0.25 kg a week.", { exact: true })
+      ).toBeVisible();
       await next();
 
       // The review: the daily target, for that pace.

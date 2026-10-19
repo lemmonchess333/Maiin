@@ -17,6 +17,10 @@ import RangeInput from "@/components/ui/RangeInput";
 import OptionCard from "@/components/onboarding/OptionCard";
 import BodyInputs from "@/components/onboarding/BodyInputs";
 import WeekPreview from "@/components/onboarding/WeekPreview";
+import FirstLiftPreview from "@/components/onboarding/FirstLiftPreview";
+import InjuryChangesList from "@/components/onboarding/InjuryChangesList";
+import DailyTarget from "@/components/onboarding/DailyTarget";
+import { injuryChanges } from "@/features/program/injuryChanges";
 import {
   equipmentLabel,
   experienceLabel,
@@ -54,7 +58,6 @@ import { Check, ChevronRight, ArrowLeft, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
 import SessionLengthLabel from "@/components/program/SessionLengthLabel";
-import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
@@ -69,7 +72,6 @@ import { newRunnerUntil } from "@/features/program/newRunner";
 import { runDoseLine } from "@/lib/runDose";
 import { smallPlatesHint } from "@/lib/liftRules";
 import { liftUnitForBodyWeight } from "@/lib/liftLoad";
-import { liftDayNameIn } from "@/lib/liftDayLabel";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
@@ -524,6 +526,20 @@ export default function Onboarding() {
       profile?.runFitness,
     ]
   );
+  const dailyTarget = {
+    calories: tdee.targetCalories,
+    protein: tdee.protein,
+    carbs: tdee.carbs,
+    fat: tdee.fat,
+    note:
+      goalPlan.direction === "maintain"
+        ? "Enough to hold your weight while you start. Set a goal weight any time in Settings → Nutrition."
+        : `To ${goalPlan.direction === "lose" ? "lose" : "gain"} about ${paceLabel(paceKgPerWeek)} a week.`,
+  };
+  const limitationChanges = useMemo(
+    () => injuryChanges(plan.programState.workouts, injuries),
+    [plan.programState.workouts, injuries]
+  );
   const effectiveRunMode = plan.profileUpdates.runMode;
   const effectiveRunDays = plan.profileUpdates.weeklyRunDaysTarget;
   // Run21 (5): a long run's minutes at a confirmed easy pace, the one the
@@ -879,7 +895,6 @@ export default function Onboarding() {
       setSaving(false);
     }
   };
-  const firstWorkout = plan.programState.workouts[0];
   const runningFirst =
     trainingActivity === "running" ||
     (trainingActivity === "both" && primaryGoal === "running");
@@ -1491,6 +1506,11 @@ export default function Onboarding() {
                   />
                 ))}
               </div>
+              {/* What the kit just chosen builds (FV3): the first lift and
+                  its first exercises, which change as the kit does. */}
+              {equipmentConfirmed && (
+                <FirstLiftPreview workouts={plan.programState.workouts} />
+              )}
               {/* Optional here, open everywhere else it appears. The draft
                   week renders on four screens, and on three of them it is
                   the thing being decided: steps 1 and 3 are the "Your week"
@@ -1547,16 +1567,11 @@ export default function Onboarding() {
                   }
                 />
               ))}
-              <details className="text-sm text-muted-foreground">
-                <summary className="min-h-11 py-3 cursor-pointer">
-                  How this affects your plan
-                </summary>
-                <p>
-                  The existing exercise filters use these choices when selecting
-                  movements. You can review the exercises in Train and change
-                  limitations in Settings.
-                </p>
-              </details>
+              {/* What the limitations just chosen changed (FV3), live.
+                  Limitations stay editable in Settings. */}
+              {injuries.some((id) => id !== "none") && (
+                <InjuryChangesList changes={limitationChanges} />
+              )}
             </div>
           )}
           {step === 5 && (
@@ -1698,84 +1713,52 @@ export default function Onboarding() {
                   </p>
                 )}
               </div>
+              {/* What these numbers set (FV3), moving with goal weight and
+                  pace as they change. */}
+              {validBody && <DailyTarget {...dailyTarget} />}
             </div>
           )}
           {step === 7 && (
             <div className="space-y-5">
-              <section
-                className="rounded-2xl bg-card card-shadow p-5 space-y-3"
-                aria-label={
-                  runningFirst ? "First run preview" : "First lift preview"
-                }
-              >
-                <SectionLabel
-                  className={
-                    runningFirst ? "text-running-strong" : "text-lifting-strong"
-                  }
+              {runningFirst ? (
+                <section
+                  className="rounded-2xl bg-card card-shadow p-5 space-y-3"
+                  aria-label="First run preview"
                 >
-                  {runningFirst
-                    ? firstRunTemplate
+                  <SectionLabel className="text-running-strong">
+                    {firstRunTemplate
                       ? "Your first planned run"
                       : effectiveRunMode === "race_prep"
                         ? "Your race plan"
-                        : "Your running setup"
-                    : "Your first lift"}
-                </SectionLabel>
-                <h2 className="text-xl font-bold">
-                  {runningFirst
-                    ? (firstRunTemplate?.name ??
+                        : "Your running setup"}
+                  </SectionLabel>
+                  <h2 className="text-xl font-bold">
+                    {firstRunTemplate?.name ??
                       (effectiveRunMode === "race_prep"
                         ? `${racePreview.distanceLabel} plan`
-                        : "Free running"))
-                    : firstWorkout &&
-                      liftDayNameIn(
-                        plan.programState.workouts.map((w) => w.dayName),
-                        0,
-                        firstWorkout.dayName
-                      )}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  <InlineNumerals>
-                    {runningFirst
-                      ? firstRunTemplate
+                        : "Free running")}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    <InlineNumerals>
+                      {firstRunTemplate
                         ? `${runDoseLine(firstRunTemplate, easyPaceSPerKm)} · ${firstRun?.date ? formatDayMonth(parseLocalDate(firstRun.date)) : ""}`
                         : effectiveRunMode === "race_prep"
                           ? `${effectiveRunDays} runs per week · see your upcoming week in Train.`
-                          : "Choose your route and pace. No scheduled runs or weekly quota."
-                      : `${firstWorkout?.exercises.length ?? 0} exercises · ${goalLabel(primaryGoal)}`}
-                  </InlineNumerals>
-                </p>
-                {!runningFirst && firstWorkout && (
-                  <ul className="space-y-2">
-                    {firstWorkout.exercises.slice(0, 3).map((exercise) => (
-                      <li
-                        key={exercise.instanceId ?? exercise.name}
-                        className="flex items-center gap-3"
-                      >
-                        <ExerciseThumb
-                          exerciseId={exercise.exerciseId}
-                          size="sm"
-                        />
-                        <span className="text-sm font-medium">
-                          {exercise.name}
-                        </span>
-                      </li>
-                    ))}
-                    {firstWorkout.exercises.length > 3 && (
-                      <li className="text-sm text-muted-foreground pl-[3.25rem]">
-                        <InlineNumerals>
-                          {`and ${firstWorkout.exercises.length - 3} more`}
-                        </InlineNumerals>
-                      </li>
-                    )}
-                  </ul>
-                )}
-                {runningFirst && firstRunTemplate && (
-                  <p className="text-sm text-muted-foreground">
-                    {firstRunTemplate.description}
+                          : "Choose your route and pace. No scheduled runs or weekly quota."}
+                    </InlineNumerals>
                   </p>
-                )}
-              </section>
+                  {firstRunTemplate && (
+                    <p className="text-sm text-muted-foreground">
+                      {firstRunTemplate.description}
+                    </p>
+                  )}
+                </section>
+              ) : (
+                <FirstLiftPreview
+                  workouts={plan.programState.workouts}
+                  meta={goalLabel(primaryGoal)}
+                />
+              )}
               <WeekPreview
                 schedule={plan.weekSchedule}
                 workouts={plan.programState.workouts}
@@ -1792,39 +1775,7 @@ export default function Onboarding() {
                   </p>
                 )}
 
-              {validBody && (
-                <section
-                  className="rounded-2xl bg-card card-shadow p-5 space-y-2"
-                  aria-label="Your daily target"
-                >
-                  <SectionLabel className="text-nutrition-strong">
-                    Your daily target
-                  </SectionLabel>
-                  <p className="text-3xl font-mono tabular-nums font-extrabold">
-                    {Math.round(tdee.targetCalories).toLocaleString()}{" "}
-                    <span className="text-base font-sans font-semibold text-muted-foreground">
-                      kcal
-                    </span>
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-mono tabular-nums">
-                      {tdee.protein} g
-                    </span>{" "}
-                    protein ·{" "}
-                    <span className="font-mono tabular-nums">
-                      {tdee.carbs} g
-                    </span>{" "}
-                    carbs ·{" "}
-                    <span className="font-mono tabular-nums">{tdee.fat} g</span>{" "}
-                    fat
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {goalPlan.direction === "maintain"
-                      ? "Enough to hold your weight while you start. Set a goal weight any time in Settings → Nutrition."
-                      : `To ${goalPlan.direction === "lose" ? "lose" : "gain"} about ${paceLabel(paceKgPerWeek)} a week.`}
-                  </p>
-                </section>
-              )}
+              {validBody && <DailyTarget {...dailyTarget} />}
               <details className="rounded-2xl bg-card card-shadow px-4">
                 <summary className="min-h-11 py-3 cursor-pointer text-base font-semibold">
                   Your answers
