@@ -1,5 +1,6 @@
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import {
+  describeRejection,
   isRateLimitedRejection,
   PLAN_SAVES_TOO_OFTEN,
 } from "@/lib/callableErrors";
@@ -599,7 +600,9 @@ export default function RunPlanSettings({
         );
       toast.error(
         conflict
-          ? "Your programme changed. Reopen settings to review the latest plan before saving."
+          ? // The server's sentence says what changed, when it wrote one.
+            (describeRejection(e) ??
+              "Your programme changed. Reopen settings to review the latest plan before saving.")
           : isRateLimitedRejection(e)
             ? PLAN_SAVES_TOO_OFTEN
             : "Couldn't save your run plan. Try again.",

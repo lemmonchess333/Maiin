@@ -30,6 +30,7 @@ import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { logger } from "../lib/logger";
+import { appErrorMessage } from "@/lib/callableErrors";
 import {
   calculatePace,
   detectBestEfforts,
@@ -1120,8 +1121,9 @@ export default function RunSummary() {
          the screen until they tap Done. */
     } catch (error) {
       logger.error("[RunSave] Failed:", error);
-      const message =
-        error instanceof Error ? error.message : "Failed to save run";
+      // The privacy-zone and storage sentences are the app's own; an
+      // SDK error's text is not copy.
+      const message = appErrorMessage(error, "Failed to save run");
       setSaveStatus("error");
       setSaveError(message);
       /* Toast still fires as supplementary feedback for users who

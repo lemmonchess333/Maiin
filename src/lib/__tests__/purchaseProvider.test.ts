@@ -206,6 +206,29 @@ describe("in mobile Safari on an iPhone (the web build)", () => {
     expect(rcPurchase).not.toHaveBeenCalled();
   });
 
+  it("a checkout that couldn't start says so, not the browser's error", async () => {
+    fetchSpy.mockRejectedValue(new TypeError("Failed to fetch"));
+
+    const result = await purchase("monthly", "uid-1", "a@example.com");
+
+    expect(result).toEqual({
+      success: false,
+      error: "Couldn't start checkout. Try again.",
+      detail: "Failed to fetch",
+    });
+  });
+
+  it("a billing portal that couldn't open says so, not the callable's code", async () => {
+    syncEntitlement.mockRejectedValueOnce(
+      Object.assign(new Error("internal"), { code: "functions/internal" })
+    );
+
+    const result = await manageSubscription("uid-1");
+
+    expect(result.error).toBe("Couldn't open billing portal. Try again.");
+    expect(result.detail).toBe("internal");
+  });
+
   it("Restore says it is an iOS action", async () => {
     expect(await restorePurchases()).toEqual({
       success: false,

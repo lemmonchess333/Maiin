@@ -100,6 +100,8 @@ vi.mock("@/hooks/useFoodFavourites", () => ({
 }));
 
 import FoodAnalyzer from "../FoodAnalyzer";
+import { createMealEntry } from "@/lib/mealEntry";
+import { toast } from "@/lib/toast";
 import { AI_ALLOWED } from "@/test/aiConsentFixtures";
 
 const MEAL = {
@@ -199,6 +201,31 @@ describe("FoodAnalyzer — the result sheet", () => {
     expect(
       within(sheet()).getByText("AI estimate · check the portions")
     ).toBeTruthy();
+  });
+
+  it.each([
+    [
+      "the app's own sentence",
+      new Error("Sign in again to log food."),
+      "Sign in again to log food.",
+    ],
+    [
+      "not an SDK error's text",
+      Object.assign(new Error("Missing or insufficient permissions."), {
+        code: "permission-denied",
+      }),
+      "Couldn't save — please try again.",
+    ],
+    [
+      "not a browser's error text",
+      new TypeError("Failed to fetch"),
+      "Couldn't save — please try again.",
+    ],
+  ])("a failed log says %s", async (_label, err, shown) => {
+    vi.mocked(createMealEntry).mockRejectedValueOnce(err);
+    await scan("breakfast");
+    fireEvent.click(screen.getByRole("button", { name: "Log to Breakfast" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(shown));
   });
 
   it("names the meal on its Log button, in food orange", async () => {

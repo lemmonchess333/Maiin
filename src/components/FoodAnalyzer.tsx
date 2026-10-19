@@ -15,6 +15,8 @@ import { useUid } from "@/lib/auth";
 import { OFF_CREDIT, offProductToPortion } from "@/lib/offNutrition";
 import { safeNum } from "@/lib/foodParseHelpers";
 import { toast } from "@/lib/toast";
+import { logger } from "@/lib/logger";
+import { appErrorMessage } from "@/lib/callableErrors";
 import { haptic } from "@/lib/haptic";
 import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
 import FoodCameraModal, {
@@ -642,11 +644,8 @@ export default function FoodAnalyzer({
       // to close. Toast + reset so the user gets feedback and can
       // retry.
       setSaving(false);
-      const message =
-        err instanceof Error && err.message
-          ? err.message
-          : "Couldn't save — please try again.";
-      toast.error(message);
+      logger.error("[FoodAnalyzer] save failed", err);
+      toast.error(appErrorMessage(err, "Couldn't save — please try again."));
     }
   };
 

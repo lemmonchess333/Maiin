@@ -102,7 +102,11 @@ export interface RcPurchaseOutcome {
    *  server keeps it for the trial reminder's email, since RevenueCat holds
    *  no renewal price for a trial. */
   price?: StorePrice;
+  /** A sentence for the person. */
   error?: string;
+  /** The SDK's own text ("There was a problem with the App Store."), for
+   *  logs and telemetry. Never shown. */
+  detail?: string;
 }
 
 /** Best-effort cancellation detection. The RC SDK rejects a cancelled
@@ -181,7 +185,8 @@ export async function rcPurchase(
     return {
       success: false,
       isProActive: false,
-      error: err instanceof Error ? err.message : "Purchase failed. Try again.",
+      error: "Purchase failed. Try again.",
+      detail: err instanceof Error ? err.message : String(err),
     };
   }
 }
@@ -212,8 +217,8 @@ export async function rcRestore(): Promise<RcPurchaseOutcome> {
     return {
       success: false,
       isProActive: false,
-      error:
-        err instanceof Error ? err.message : "Failed to restore purchases.",
+      error: "Failed to restore purchases.",
+      detail: err instanceof Error ? err.message : String(err),
     };
   }
 }

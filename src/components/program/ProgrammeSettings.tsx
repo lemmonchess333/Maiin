@@ -36,6 +36,7 @@
  * ScheduleLayoutSheet — both views link to it.
  */
 import {
+  describeRejection,
   isRateLimitedRejection,
   PLAN_SAVES_TOO_OFTEN,
 } from "@/lib/callableErrors";
@@ -767,8 +768,10 @@ export default function ProgrammeSettings({
         await refreshProfile().catch((error) =>
           logger.warn("Plan refresh failed", error)
         );
+        // The server's sentence says what changed, when it wrote one.
         toast.error(
-          "Your programme changed. Reopen settings to review the latest plan before saving."
+          describeRejection(err) ??
+            "Your programme changed. Reopen settings to review the latest plan before saving."
         );
       } else if (
         code === "functions/invalid-argument" ||

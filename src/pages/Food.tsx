@@ -24,6 +24,7 @@ import PageShell from "@/components/ui/PageShell";
 import { pageItemVariant } from "@/components/ui/pageMotion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
+import { appErrorMessage } from "@/lib/callableErrors";
 import {
   commitMealDeletes,
   deleteAfterUndoWindow,
@@ -1723,9 +1724,8 @@ export default function Food() {
                 await undo();
                 toast.success("Meal entry undone");
               } catch (err) {
-                toast.error(
-                  err instanceof Error ? err.message : "Couldn't undo meal."
-                );
+                logger.error("[Food] meal undo failed", err);
+                toast.error(appErrorMessage(err, "Couldn't undo meal."));
                 undoing = false;
               }
             },
@@ -1735,9 +1735,10 @@ export default function Food() {
       return true;
     } catch (err) {
       toast.error(
-        err instanceof Error && !("code" in err)
-          ? err.message
-          : "Couldn't save. Check your connection and retry this meal.",
+        appErrorMessage(
+          err,
+          "Couldn't save. Check your connection and retry this meal."
+        ),
         { id: "food-save-error" }
       );
       return false;
