@@ -484,6 +484,23 @@ describe("ProgrammeSettings — overview (the Programme page)", () => {
     expect(regenerateProgram).toHaveBeenCalledTimes(1);
   });
 
+  it("the confirmation is named, takes focus, and Escape cancels it", async () => {
+    const { regenerateProgram } = setup({}, "overview");
+    fireEvent.click(screen.getByRole("button", { name: /reset programme/i }));
+    const dialog = screen.getByRole("alertdialog", {
+      name: "Reset programme?",
+    });
+    expect(dialog).toContainElement(document.activeElement as HTMLElement);
+    // The safe button first: Enter on arrival does not reset.
+    expect(document.activeElement).toHaveTextContent("Cancel");
+    fireEvent.keyDown(document, { key: "Escape" });
+    // Gone once its exit animation has run.
+    await vi.waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).toBeNull()
+    );
+    expect(regenerateProgram).not.toHaveBeenCalled();
+  });
+
   it("a reset that fails says so, rather than nothing", async () => {
     const { regenerateProgram } = setup({}, "overview");
     regenerateProgram.mockRejectedValueOnce(

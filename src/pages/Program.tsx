@@ -6,6 +6,8 @@ import { workoutCompletionDayIdentity } from "@/lib/workoutCompletion";
 import { liftCompletionContext } from "@/lib/completionPlanContext";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { useBackDismiss } from "@/lib/backDismiss";
 import { useNavigate } from "react-router-dom";
 import { usePageSearchParams } from "@/hooks/usePageSearchParams";
 import { focusLabel } from "@/features/program/trainingBlock";
@@ -390,6 +392,24 @@ function ProgramInner() {
     name: string;
     open: boolean;
   }>({ name: "", open: false });
+
+  /* The plan's More options sheet and an exercise's menu: focus moves in
+     and stays there, Escape and the device's Back close them, and focus
+     goes back to the button that opened them (DESIGN_GUIDE §10). */
+  const overflowRef = useFocusTrap<HTMLDivElement>(showOverflow);
+  const contextMenuRef = useFocusTrap<HTMLDivElement>(contextMenu !== null);
+  useBackDismiss(showOverflow, () => setShowOverflow(false));
+  useBackDismiss(contextMenu !== null, () => setContextMenu(null));
+  useEffect(() => {
+    if (!showOverflow && contextMenu === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setShowOverflow(false);
+      setContextMenu(null);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [showOverflow, contextMenu]);
   const [replaceTarget, setReplaceTarget] = useState<{
     dayIndex: number;
     exIndex: number;
@@ -1024,6 +1044,8 @@ function ProgramInner() {
             className="p-2 rounded-lg hover:bg-muted transition-colors"
             style={{ minWidth: 44, minHeight: 44 }}
             aria-label="More options"
+            aria-haspopup="dialog"
+            aria-expanded={showOverflow}
           >
             <MoreHorizontal className="size-4 text-muted-foreground" />
           </button>
@@ -1584,6 +1606,11 @@ function ProgramInner() {
                                     </button>
                                     <IconButton
                                       aria-label={`More options for ${ex.name}`}
+                                      aria-haspopup="menu"
+                                      aria-expanded={
+                                        contextMenu?.dayIndex === idx &&
+                                        contextMenu?.exIndex === i
+                                      }
                                       icon={
                                         <MoreHorizontal className="size-5" />
                                       }
@@ -1797,6 +1824,13 @@ function ProgramInner() {
               onClick={() => setContextMenu(null)}
             />
             <motion.div
+              ref={contextMenuRef}
+              role="menu"
+              aria-label={`Options for ${
+                displayWorkouts[contextMenu.dayIndex]?.exercises[
+                  contextMenu.exIndex
+                ]?.name ?? "exercise"
+              }`}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -1810,6 +1844,7 @@ function ProgramInner() {
             >
               <button
                 type="button"
+                role="menuitem"
                 onClick={() => {
                   setReplaceTarget({
                     dayIndex: contextMenu.dayIndex,
@@ -1819,31 +1854,41 @@ function ProgramInner() {
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30"
               >
-                <Repeat className="size-4 text-muted-foreground" /> Replace
-                exercise
+                <Repeat
+                  className="size-4 text-muted-foreground"
+                  aria-hidden="true"
+                />{" "}
+                Replace exercise
               </button>
               <button
                 type="button"
+                role="menuitem"
                 onClick={() => {
                   removeExFromDay(contextMenu.dayIndex, contextMenu.exIndex);
                   setContextMenu(null);
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-destructive-strong hover:bg-muted transition-colors border-b border-border/30"
               >
-                <Trash2 className="size-4" /> Remove exercise
+                <Trash2 className="size-4" aria-hidden="true" /> Remove exercise
               </button>
               <button
                 type="button"
+                role="menuitem"
                 onClick={() => {
                   moveExercise(contextMenu.dayIndex, contextMenu.exIndex, -1);
                 }}
                 disabled={contextMenu.exIndex === 0}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30 disabled:opacity-30"
               >
-                <ArrowUp className="size-4 text-muted-foreground" /> Move up
+                <ArrowUp
+                  className="size-4 text-muted-foreground"
+                  aria-hidden="true"
+                />{" "}
+                Move up
               </button>
               <button
                 type="button"
+                role="menuitem"
                 onClick={() => {
                   moveExercise(contextMenu.dayIndex, contextMenu.exIndex, 1);
                 }}
@@ -1855,7 +1900,11 @@ function ProgramInner() {
                 }
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors disabled:opacity-30"
               >
-                <ArrowDown className="size-4 text-muted-foreground" /> Move down
+                <ArrowDown
+                  className="size-4 text-muted-foreground"
+                  aria-hidden="true"
+                />{" "}
+                Move down
               </button>
             </motion.div>
           </>
@@ -2101,8 +2150,10 @@ function ProgramInner() {
               onClick={() => setShowOverflow(false)}
             />
             <motion.div
+              ref={overflowRef}
               role="dialog"
               aria-modal="true"
+              aria-label="Plan options"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
