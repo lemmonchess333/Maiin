@@ -478,7 +478,7 @@ service cloud.firestore {
       // Monthly push claims are server-owned. Ordinary consent settings stay
       // writable; the deletion executor already erases this whole collection.
       allow write: if isOwnerAndNotDeleting(uid)
-        && !doc.matches('^challengeAnnouncement-[0-9]{4}-[0-9]{2}$');
+        && !doc.matches('^challenge(Announcement|Reminder)-[0-9]{4}-[0-9]{2}$');
     }
     match /users/{uid}/foodFavourites/{doc} {
       allow read: if isOwner(uid);

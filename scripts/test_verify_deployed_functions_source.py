@@ -108,6 +108,7 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
         for name in ("sendTestPush", "hourlyStreakNudge", "hourlyChallengeAnnouncements"):
             self.assertTrue(sender_artifacts.issubset(targets[name]))
         self.assertTrue({"lib/challengeAnnouncements.js", "lib/challengeDefs.js",
+                         "lib/challengeTiers.js",
                          "lib/challengeActivityWindow.js", "lib/streakNudge.js"}
                         .issubset(targets["hourlyChallengeAnnouncements"]))
         for name in verifier.PUSH_RUNTIME_LIMITS:

@@ -6,6 +6,12 @@ For a first iPhone installation, open [Tropos](https://adaptive-fitness-af8bb.fi
 
 This uses the existing FCM web channel and needs no TestFlight build or native APNs provisioning. An ordinary Safari tab cannot subscribe to iPhone web push. The website must have its public VAPID key configured, as the existing Hosting/Pages workflows provide. [Apple Web Push requirements](https://developer.apple.com/documentation/usernotifications/sending-web-push-notifications-in-web-apps-and-browsers)
 
+## Monthly closing reminders
+
+**Monthly challenge reminders** is a separate, default-off switch in the same settings. With global push enabled, it sends at most one reminder around 09:00 in your saved time zone during the last three local dates of the month. It only considers current monthly challenges you have joined and where Gold has not been reached, matching the cards' next-tier progression. Weekly and seasonal challenges are excluded. The shared distance challenge uses the community's total, rather than your personal distance. Several unfinished goals produce one reminder, and tapping it opens Together.
+
+The existing hourly scheduler handles both launch announcements and closing reminders. Their server-owned account/month claims are independent, so receiving a launch announcement does not suppress the closing reminder. A confirmed zero-accepted delivery can retry on a later remaining morning; an ambiguous result is consumed to avoid duplicate alerts. There is no new daily reminder or background-app requirement.
+
 ## Native app delivery
 
 The native app uses Firebase Messaging to register an FCM token, then the existing server ownership flow claims it for the signed-in account. Monthly challenge announcements require both the global push switch and the separate challenge switch. Existing accounts are not automatically enrolled. The app's test notification checks the same native delivery route.
