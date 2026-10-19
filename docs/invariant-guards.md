@@ -25,7 +25,7 @@ inflated new-user PI).
 | `validatePlanPayload.cross.test.ts`     | plan-payload validation identical                                                                                                                  |
 | `challengeTiers.cross.test.ts`          | challenge-tier resolution identical                                                                                                                |
 | `aiScanQuota.parity.cross.test.ts`      | AI scan-quota accounting identical                                                                                                                 |
-| `scheduledRunCompletion.cross.test.ts`  | scheduled-run completion identical                                                                                                                 |
+| `raceDayCompletion.test.js` (functions) | not a cross-test: the server's race-day rule is a deliberate non-mirror of the client's slot rule (ADR-0008), so golden fixtures hold it           |
 | `mirrorCrossTestGate.test.ts`           | **meta-guard:** every `functions/*.js` that declares a mirror is either pinned by a cross-test or consciously classified as not-an-equality-mirror |
 
 ## Persisted-field integrity

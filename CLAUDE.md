@@ -69,7 +69,7 @@ e2e/                    # Playwright specs; screenshot capture specs in e2e/scre
 ## Architecture Notes
 
 - **All pages are lazy-loaded** via `lazyRetry()` wrapper in App.tsx (handles stale cache)
-- **Manual chunks** in vite.config.ts: firebase-auth, firebase-db, charts, vendor, maplibre, motion, date-fns, barcode, body-highlighter
+- **Manual chunks** in vite.config.ts: firebase-auth, firebase-db, firebase-messaging, firebase-analytics, firebase-installations, charts, vendor, maplibre, motion, date-fns, barcode, body-highlighter. `check-dist-size` also holds which of them `index.html` preloads
 - **Path alias:** `@/` maps to `src/`
 - **Base path:** `/Maiin/` (for GitHub Pages deployment)
 - **Offline support:** `src/lib/offlineQueue.ts` queues writes when offline
@@ -165,7 +165,8 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `offlineQueue.ts`       | Queues Firestore writes when offline, flushes on reconnect     |
 | `errorReporting.ts`     | Error reporting utilities                                      |
 | `logger.ts`             | Structured logging                                             |
-| `notifications.ts`      | Push notification setup                                        |
+| `notifications.ts`      | Local reminders (meal, workout, streak), scheduled on device   |
+| `pushNotifications.ts`  | Push: the device's token, web or native, and its binding       |
 | `types.ts`              | Shared TypeScript type definitions                             |
 | `performanceTypes.ts`   | Performance engine type definitions                            |
 | `macroConstants.ts`     | Macro/nutrition constants                                      |
@@ -420,7 +421,7 @@ Tropos ships as a native Capacitor iOS app (Android is planned) — that is the 
 - **Default to platform parity.** When wiring a third-party SDK, browser API, or build-time integration, check up front whether it works inside the native WKWebView / Capacitor shell. If the web SDK won't run natively (e.g. Firebase Analytics web SDK, reCAPTCHA, anything depending on browser-only APIs), find the native equivalent (a Capacitor plugin, the native Firebase SDK via `GoogleService-Info.plist` / `google-services.json`, etc.) **as part of the same task** — don't ship the web half and call it done.
 - **If native parity is genuinely deferred, say so loudly and leave the seam.** It's acceptable to land the web path first when the native path needs a plugin/native-project change that can't be done in the current environment — but only if (a) the limitation is stated explicitly to the user at decision time, not discovered later, and (b) the code leaves a native injection point (the `appCheck.ts` web/native split + `setNativeAppCheckProvider` seam is the reference pattern). A silent web-only implementation that reads as "done" is the failure mode to avoid.
 - **Don't spend effort on web-exclusive polish for an iOS-first product.** Weigh the value of any web-only work against the fact that the audience is on the native app. "It works on the web build" is not the bar; "it works where the users are" is.
-- **The analytics layer is the reference example of this rule done right.** The provider in `analyticsProvider.ts` delivers on BOTH platforms behind one seam: web via the `firebase/analytics` SDK, native via the `@capacitor-firebase/analytics` plugin → native Firebase SDK. Each loads in its own dynamic-import chunk so neither platform ships the other's code. The only remaining native step is operator-only — add `GoogleService-Info.plist` to the Xcode project and `cap sync ios`; the web env var (`VITE_FIREBASE_MEASUREMENT_ID`) drives web, the plist drives native.
+- **The analytics layer is the reference example of this rule done right.** The provider in `analyticsProvider.ts` delivers on BOTH platforms behind one seam: web via the `firebase/analytics` SDK, native via the `@capacitor-firebase/analytics` plugin → native Firebase SDK. Each loads in its own dynamic-import chunk so neither platform ships the other's code. Native reads its config from `GoogleService-Info.plist`, which `deploy-ios.yml` writes from a secret into every build (`docs/ios-release.md`); the web env var (`VITE_FIREBASE_MEASUREMENT_ID`) drives web, the plist drives native.
 
 ## Plan-file lock discipline
 
