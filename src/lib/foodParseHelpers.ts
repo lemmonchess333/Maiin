@@ -51,7 +51,12 @@ export function safeNum(val: unknown): number {
  */
 export function parseServingGrams(servingSize?: string): number | null {
   if (!servingSize) return null;
-  const m = servingSize.match(/(\d+(?:[.,]\d+)?)\s*g/i);
+  // The unit is "g", "gr" or a spelled-out gram word, and no letter may
+  // follow it: "2 granola bars (42 g)" is 42 g, not the "2 g" of
+  // "granola", and "1 glass (250 ml)" has no gram serving at all.
+  const m = servingSize.match(
+    /(\d+(?:[.,]\d+)?)\s*(?:gram\p{L}*|gr|g)(?!\p{L})/iu
+  );
   if (!m) return null;
   const grams = Number(m[1].replace(",", "."));
   return Number.isFinite(grams) && grams > 0 ? grams : null;

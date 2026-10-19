@@ -63,6 +63,25 @@ describe("parseServingGrams", () => {
     expect(parseServingGrams("0,5 g")).toBe(0.5);
   });
 
+  it("does not read a counted word that starts with g as grams", () => {
+    /* The pattern took the first number followed by any "g", so the
+       count won: each of these read as 1 to 3 g, was scaled to it and
+       marked trusted, which hides the confirm-serving prompt. A 42 g
+       granola bar logged about a twentieth of its calories. */
+    expect(parseServingGrams("2 granola bars (42 g)")).toBe(42);
+    expect(parseServingGrams("3 gummies (7 g)")).toBe(7);
+    expect(parseServingGrams("1 gâteau (25 g)")).toBe(25);
+    expect(parseServingGrams("1 Galette (12 g)")).toBe(12);
+    expect(parseServingGrams("1 glass (250 ml)")).toBeNull();
+  });
+
+  it("still reads a gram unit written out", () => {
+    expect(parseServingGrams("30 grams")).toBe(30);
+    expect(parseServingGrams("30gr")).toBe(30);
+    expect(parseServingGrams("1 Riegel 25 Gramm")).toBe(25);
+    expect(parseServingGrams("2 biscuits (20 grammes)")).toBe(20);
+  });
+
   it("parses a comma decimal inside a longer serving string", () => {
     // The shape OFF actually stores: a portion description with the
     // grams in parentheses or trailing.
