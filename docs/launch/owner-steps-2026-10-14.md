@@ -190,9 +190,10 @@ These steps are what's left.
 
 1. **Version number.** App Store Connect's version is 1.0 but builds are
    stamped 1.2.0. Rename the App Store version to **1.2.0**.
-2. **Firestore kill-switch**: Firebase Console → Firestore → collection
-   `system` → doc `config` → add field `deletionExecutorEnabled`, type
-   **boolean** (not string), value `true`.
+2. **Firestore kill-switch**: no longer needed ahead of time. The deletion
+   executor reads the string `"false"` as a pause as well as the boolean, so
+   the field can be added on the day; the README's incident runbook has the
+   steps.
 3. **Budget alert**: Google Cloud console → Billing → Budgets & alerts →
    create a budget (e.g. £50/month) that emails you.
 4. **Mapbox terms**: read the Directions section of

@@ -157,7 +157,8 @@ workflow writes it from this secret before `cap sync`, checks its
 `BUNDLE_ID` is `com.tropos.app`, and — because the GoogleSignIn SDK
 raises without it — registers the plist's `REVERSED_CLIENT_ID` as a URL
 scheme in `Info.plist` for that build. Locally, drop the same file into
-`ios/App/App/` and add the URL scheme by hand (LAUNCH_TODO §15 step 2).
+`ios/App/App/` and add the URL scheme by hand: a `CFBundleURLTypes` entry in
+`ios/App/App/Info.plist` whose URL scheme is that plist's `REVERSED_CLIENT_ID`.
 
 The build step additionally reads the `VITE_FIREBASE_*` client config, the
 same six secrets `deploy.yml` uses for the web deploy, so on this repo they

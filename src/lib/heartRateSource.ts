@@ -69,12 +69,12 @@ export const webHeartRateSource: HeartRateSource = {
  */
 export function getHeartRateSource(): HeartRateSource {
   if (isNativePlatform()) {
-    // TODO(Step 2, docs/heart-rate-healthkit.md; tracked as item #10 in
-    // docs/LAUNCH_TODO.md): return nativeHeartRateSource, HealthKit live
-    // workout HR. The installed capacitor-health has no live stream (heart
-    // rate only arrives attached to a finished HKWorkout, which a Tropos run
-    // does not write), so it needs a plugin that streams. Until then native
-    // has no live stream either, and the inert source is the honest answer.
+    // TODO(Step 2, docs/heart-rate-healthkit.md): return
+    // nativeHeartRateSource, HealthKit live workout HR. The installed
+    // capacitor-health has no live stream (heart rate only arrives attached
+    // to a finished HKWorkout, which a Tropos run does not write), so it
+    // needs a plugin that streams. Until then native has no live stream
+    // either, and the inert source is the honest answer.
     return webHeartRateSource;
   }
   return webHeartRateSource;

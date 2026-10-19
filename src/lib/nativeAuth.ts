@@ -21,8 +21,8 @@
  * ⚠️ UNVERIFIED ON DEVICE. Written against the plugin's documented credential
  * shape; the token/nonce wiring and the Xcode-side config (reversed-client-id
  * URL scheme, GoogleService-Info.plist, "Sign in with Apple" capability) can
- * only be confirmed on a real build — see LAUNCH_TODO #15. The web path is
- * unaffected either way.
+ * only be confirmed on a real build (docs/qa/testflight-script.md, step 9).
+ * The web path is unaffected either way.
  */
 import {
   GoogleAuthProvider,

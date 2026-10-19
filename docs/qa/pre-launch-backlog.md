@@ -10,6 +10,58 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## What `docs/LAUNCH_TODO.md` still held (2026-10-19)
+
+`docs/LAUNCH_TODO.md` is retired: it now only says where each of its
+sections went. These are its checks that no other list carried. The
+TestFlight script names each one.
+
+- [ ] **Sign in with Apple and with Google on the phone.** On the
+      TestFlight build, sign out, then sign in with Apple, then with Google,
+      each with an account that has never signed in. Passing: each reaches
+      setup with no error, and GA4 DebugView shows `signup_completed` for
+      each. The native flow (`src/lib/nativeAuth.ts`) has only run against
+      mocks, and the Google button needs the `REVERSED_CLIENT_ID` URL scheme
+      that only CI's build adds (`deploy-ios.yml`). A launch blocker: App
+      Review tries every sign-in button. (Script step 9.)
+- [ ] **Push reaches the iPhone.** First the one-time setup in
+      `docs/ios-push-notifications.md` (Push Notifications on the
+      `com.tropos.app` App ID, the APNs key in Firebase); the iOS build stops
+      without the first. Then that doc's "Device acceptance check". Passing:
+      its five steps. (Script steps 6 and the "Push on the iPhone" section.)
+- [ ] **Haptics on a real iPhone.** Tick a set in a workout, then follow
+      someone. Passing: a tap is felt each time. `src/lib/haptic.ts`
+      calls `@capacitor/haptics` on native, which no test can feel.
+- [ ] **Change the password and the email.** Settings → Account → Sign-in &
+      security, on an email account. Change the password, sign out and sign
+      in with the new one. Then change the email and tap the link sent to the
+      new address. Passing: only the new password works; the sign-in email
+      changes only once the link is tapped; after the app's next start,
+      Firestore `users/{uid}` shows the new `email`.
+- [ ] **The minimum-version gate.** Firestore console → `config/client` →
+      string field `minSupportedVersion` = `"99.0.0"`. Open the app, then
+      delete the field and reopen. Passing: an update screen first (the
+      iPhone app names the App Store, the web offers Reload), then the app
+      as normal. This blocks every installed app while it is set, so delete
+      it straight away.
+- [ ] **The scheduled sweeps finish well inside their 540 s.** After
+      launch, once there are real users. Cloud Logging, one run each of
+      `weeklyPerformanceRollup`, `dailyPerformanceRefresh`,
+      `dailyRaceReconciliationSweep`, `hourlyStreakNudge` and
+      `hourlyChallengeAnnouncements`. Passing: each run's first and last
+      lines are well under 540 s apart. One near the limit is cut off with no
+      error and the rest of its users left as they were: shard it by
+      `lastActiveAt` rather than raising its memory.
+- [ ] **A lawyer reads the Privacy Policy and the Terms.** Not a check:
+      every claim in them was verified against the code, and that is not a
+      legal review.
+- [ ] **The run's lock-screen card needs its widget extension.** Not a
+      check: the app's half and the plugin are in
+      (`src/lib/runLiveActivity.ts`), but the Xcode target in
+      `docs/run-live-activity.md` was never added, so `startActivity`
+      rejects and nothing shows on the lock screen. That doc's device table
+      is the test once it exists. After 1.0.
+
 ## The Firebase key lets the iPhone app and troposfit.com sign in (2026-10-17)
 
 The web API key (`AIzaSyB-…`, in every build) is restricted to listed web
@@ -241,8 +293,8 @@ Unit tests cover the timing in every zone, the record and the email's
 words; these need the operator, a device, or a real trial.
 
 - [ ] **The sender.** troposfit.com verified in Resend and `RESEND_FROM`
-      set (the LAUNCH_TODO §19 item; until then every email reaches only
-      the Resend account's owner).
+      set (owner steps 2.1, `docs/launch/owner-steps-2026-10-14.md`; until
+      then every email reaches only the Resend account's owner).
 - [ ] **Apple's relay.** troposfit.com and Resend's `send.troposfit.com`
       registered under Certificates, Identifiers & Profiles → Services →
       Sign in with Apple for Email Communication. Then, from the sign-in
@@ -453,7 +505,7 @@ the two comment callables, `completeOnboarding`, `configurePlan`, the new
 `onSpacePostWritten` trigger), `functions/lib/reportTargets.js`,
 `reportAlert.js`, `objectionableText.js`, `spacePostModeration.js`.
 Operator setup (ADMIN_UIDS, MODERATION_ALERT_EMAIL, RESEND_FROM, the
-VITE_ADMIN_UIDS secret): `docs/LAUNCH_TODO.md` §19.
+VITE_ADMIN_UIDS secret): `docs/launch/owner-steps-2026-10-14.md` Part 1.
 
 The callables, the trigger and the email are tested against an in-memory
 Firestore with Resend mocked at `fetch`; whether an email actually lands, and

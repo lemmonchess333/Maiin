@@ -327,6 +327,36 @@ Action:
 4. If across multiple builds: rollback per
    `docs/app-check-rollout.md` Phase 4.
 
+### Pause account deletions
+
+1. Firestore console → `system/config` (create the doc if it is not
+   there) → field `deletionExecutorEnabled` = `false`. A boolean or the
+   string `"false"` both work (`functions/accountDeletion.js`,
+   `readsAsDisabled`); anything else leaves deletions running.
+2. Cloud Logging: the next deletion logs `deleteAccount.kill_switch_trip`
+   and fails with `executor-disabled`. A `kill_switch_malformed` line means
+   the value was not read as a pause.
+3. To resume, delete the field or set it to `true`.
+
+### Stop an old build being used
+
+1. Firestore console → `config/client` → string field
+   `minSupportedVersion`, e.g. `"1.3.0"`.
+2. Every build below it shows an update screen (the App Store on the
+   iPhone app, Reload on the web). Any error or a malformed value lets the
+   app open (`src/lib/versionGate.ts`).
+
+### Suspend an account
+
+1. `/admin/moderation` → the report → **Restrict user**. They can still
+   log and see their own things, but nothing they do reaches anyone else
+   (posts, comments, follows, joins). **Lift** on the Restricted accounts
+   list undoes it.
+2. To suspend outright, as Terms §7 allows: Firebase console →
+   Authentication → the user's row → Disable account. They cannot sign in
+   again; a session already open lasts until its token expires, up to an
+   hour.
+
 ### Symptom: rollback a native release
 
 1. iOS: App Store Connect → versions → submit a new build with
