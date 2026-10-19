@@ -1,0 +1,156 @@
+{
+  "exerciseId": "goblet-squat",
+  "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex native illustration polish review",
+  "reviewedAt": "2026-10-19T19:53:57.303945+00:00",
+  "reference": {
+    "path": "form-frames/goblet-squat/1.webp",
+    "sha256": "13fd26e58d89e3114662944cdbc779850bf8a152eae8679089ff9b83f1ed0cc6"
+  },
+  "cueSha256": "c1fe8abb01e8cfeb89d85d9ee9421b3c4ad62c6a74b2317688c528db9c212adf",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/goblet-squat/1.webp",
+      "sha256": "13fd26e58d89e3114662944cdbc779850bf8a152eae8679089ff9b83f1ed0cc6",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/goblet-squat/2026-10-19-illustration-polish/1.png",
+        "sha256": "9a8b31456f9a027869d8134f379fbcb807d1d96b6ea6b0c16bf0fe419d09dc63"
+      }
+    },
+    {
+      "path": "form-frames/goblet-squat/2.webp",
+      "sha256": "5adab9f01586a94d9eaf8db9253c4ee6270356613cbd276429e52caba953c0a6",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/goblet-squat/2026-10-19-illustration-polish/2.png",
+        "sha256": "d96930f7905008b8defb22d54a41e724662df7211c32c1dfe9c0f491985addae"
+      }
+    },
+    {
+      "path": "form-frames/goblet-squat/3.webp",
+      "sha256": "aaafbbcba395c804ffbcfffc4425e08064a5aa386e8f6851371aac1841a59501",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/goblet-squat/2026-10-19-illustration-polish/3.png",
+        "sha256": "70426488fa5ff64a5f451d732bd3e3dde4b3abbaa31f93524909b119d6cdf431"
+      }
+    },
+    {
+      "path": "form-frames/goblet-squat/4.webp",
+      "sha256": "094f6fe821f13d15244cfb025850b9ef19e38adef361023d8f18d4a86deb9335",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/goblet-squat/2026-10-19-illustration-polish/4.png",
+        "sha256": "6158dc679a75fa46abd7a9f27c350fc137892c31efe32ccfad014640b73313f5"
+      }
+    },
+    {
+      "path": "form-frames/goblet-squat/5.webp",
+      "sha256": "aaafbbcba395c804ffbcfffc4425e08064a5aa386e8f6851371aac1841a59501",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/goblet-squat/2026-10-19-illustration-polish/5.png",
+        "sha256": "70426488fa5ff64a5f451d732bd3e3dde4b3abbaa31f93524909b119d6cdf431"
+      }
+    },
+    {
+      "path": "form-frames/goblet-squat/6.webp",
+      "sha256": "5adab9f01586a94d9eaf8db9253c4ee6270356613cbd276429e52caba953c0a6",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/goblet-squat/2026-10-19-illustration-polish/6.png",
+        "sha256": "d96930f7905008b8defb22d54a41e724662df7211c32c1dfe9c0f491985addae"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "What minor illustration issues are still left? Fix those too, same model and colours, no shorts, and get them merged. Stop asking for approval.",
+    "context": "Explicit authority for scoped native colour/equipment/cutout corrections, local registration, verification and normal merge. Not strict certification."
+  },
+  "findings": [
+    "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers.",
+    "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+  ],
+  "resolvedIllustrationIssues": [
+    "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers."
+  ],
+  "priorFindings": {
+    "record": "docs/exercise-art/releases/2026-09-owner/goblet-squat.json",
+    "sha256": "a35901736d92f8471711a3ba0af4dfeaebdefccc5f13bb828364af4dc0103736",
+    "disposition": "Historical record preserved verbatim. Cosmetic issues addressed here are described separately; prior strict-measurement and source-provenance statements are not erased.",
+    "hashScope": "Exact repository blob bytes, independent of Windows checkout CRLF."
+  },
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/goblet-squat/2026-10-19-illustration-polish",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/goblet-squat/2026-10-19-illustration-polish/goblet-squat-native-polish.zip",
+      "sha256": "ddc11e1cde04d7470cc756a166678823b373b8afecdd79fa8d1660cdcc7c5ea3",
+      "bytes": 6111843
+    },
+    "priorRelease": "docs/exercise-art/releases/2026-09-owner/goblet-squat.json",
+    "method": "Exact native original drawings plus sparse editable colour/equipment pixels; alpha-only stray-mark cleanup for prepared cards. Portable source layers and deterministic lossless exports independently re-executed byte-for-byte.",
+    "reproductionScope": "Same-layer composition and export reproduction; no independent anatomy/physics certification.",
+    "newImageGenerationCalls": 0,
+    "anatomicalTransforms": []
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-19-illustration-polish/review.json"
+}

@@ -51,7 +51,7 @@ export default function ExerciseThumb({
           draggable={false}
           decoding="async"
           loading="lazy"
-          className="size-full object-contain p-0.5"
+          className="exercise-drawing size-full object-contain p-0.5"
         />
       ) : figure ? (
         <img src={figure} alt="" draggable={false} className="h-[88%] w-auto" />

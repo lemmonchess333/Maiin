@@ -1,0 +1,156 @@
+{
+  "exerciseId": "squat",
+  "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex native illustration polish review",
+  "reviewedAt": "2026-10-19T19:53:58.673605+00:00",
+  "reference": {
+    "path": "form-frames/squat/1.webp",
+    "sha256": "c3f99a5813f8337762865f228b65fcea6b1ef13f66a6097e0a0eba58f6fa8b41"
+  },
+  "cueSha256": "15a77017a96c711906ca3593af36f81d09e43710aac4cc51827135178bcbd322",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/squat/1.webp",
+      "sha256": "c3f99a5813f8337762865f228b65fcea6b1ef13f66a6097e0a0eba58f6fa8b41",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/squat/2026-10-19-illustration-polish/1.png",
+        "sha256": "7110cf1994d4e81461d7520306217559f54617be3165df7197c5c25efb49c8e8"
+      }
+    },
+    {
+      "path": "form-frames/squat/2.webp",
+      "sha256": "bcdfcbd9f01d8872acae9908d5fd8056b99a3b625b6ac2e19ad0da297f982b9c",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/squat/2026-10-19-illustration-polish/2.png",
+        "sha256": "1c670c5a39cfdd56f26b9033b1212ff08e7b015c455b8cf1025279e86839ea7d"
+      }
+    },
+    {
+      "path": "form-frames/squat/3.webp",
+      "sha256": "a4837b8cc84276be8ad124a9b96b85ab5078c89b364fc6e141462f44b712ba27",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/squat/2026-10-19-illustration-polish/3.png",
+        "sha256": "fbe674a449bbba4055c270728cebd69228df8a93dc0204a5584953bb9efcc0ea"
+      }
+    },
+    {
+      "path": "form-frames/squat/4.webp",
+      "sha256": "506e5698c794f6afce17c31f2dc74866a27eee404d130d14d47ea4258c85ca23",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/squat/2026-10-19-illustration-polish/4.png",
+        "sha256": "3dcd8da8082f32a5e0d18d8553834c0bf7ff46d5bd73b3754f560087852a6d2a"
+      }
+    },
+    {
+      "path": "form-frames/squat/5.webp",
+      "sha256": "c5417f6ec9b6a095151f31d8e74162872a59b90655e5d76d2bf654f372bd59c8",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/squat/2026-10-19-illustration-polish/5.png",
+        "sha256": "4f7bb8dd66a04c5c4b2b04c334a2c7f08a17587698bdc5c655fab2400149a38d"
+      }
+    },
+    {
+      "path": "form-frames/squat/6.webp",
+      "sha256": "c3f99a5813f8337762865f228b65fcea6b1ef13f66a6097e0a0eba58f6fa8b41",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/squat/2026-10-19-illustration-polish/6.png",
+        "sha256": "7110cf1994d4e81461d7520306217559f54617be3165df7197c5c25efb49c8e8"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "What minor illustration issues are still left? Fix those too, same model and colours, no shorts, and get them merged. Stop asking for approval.",
+    "context": "Explicit authority for scoped native colour/equipment/cutout corrections, local registration, verification and normal merge. Not strict certification."
+  },
+  "findings": [
+    "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers.",
+    "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+  ],
+  "resolvedIllustrationIssues": [
+    "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers."
+  ],
+  "priorFindings": {
+    "record": "docs/exercise-art/releases/2026-09-owner/squat.json",
+    "sha256": "8f88f79bed269e1bec3e8ddab796478bceb3ac26ff69c51f7048d670c4f6c39b",
+    "disposition": "Historical record preserved verbatim. Cosmetic issues addressed here are described separately; prior strict-measurement and source-provenance statements are not erased.",
+    "hashScope": "Exact repository blob bytes, independent of Windows checkout CRLF."
+  },
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/squat/2026-10-19-illustration-polish",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/squat/2026-10-19-illustration-polish/squat-native-polish.zip",
+      "sha256": "884797915c0ebcd6733be218db5831c52afcc83f856634790a1cc0f69a505d98",
+      "bytes": 8263463
+    },
+    "priorRelease": "docs/exercise-art/releases/2026-09-owner/squat.json",
+    "method": "Exact native original drawings plus sparse editable colour/equipment pixels; alpha-only stray-mark cleanup for prepared cards. Portable source layers and deterministic lossless exports independently re-executed byte-for-byte.",
+    "reproductionScope": "Same-layer composition and export reproduction; no independent anatomy/physics certification.",
+    "newImageGenerationCalls": 0,
+    "anatomicalTransforms": []
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-19-illustration-polish/review.json"
+}

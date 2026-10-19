@@ -1,0 +1,156 @@
+{
+  "exerciseId": "swimming",
+  "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+  "width": 1264,
+  "height": 848,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex native illustration polish review",
+  "reviewedAt": "2026-10-19T19:53:59.389872+00:00",
+  "reference": {
+    "path": "form-frames/swimming/2.webp",
+    "sha256": "915b47aa2432fc7b9334c5d981c1931e4c24804ab3ac8e9ca9147747c4fda7ca"
+  },
+  "cueSha256": "8518bb27027847fd0425b39f1264ed62ebc84b880771921aab1ad9a0520b2415",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited violet/pink muscle fields to the established palette with original lightness, and removed the 13-pixel water-line stub at the toes in the prepared card source. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited violet/pink muscle fields to the established palette with original lightness, and removed the 13-pixel water-line stub at the toes in the prepared card source. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited violet/pink muscle fields to the established palette with original lightness, and removed the 13-pixel water-line stub at the toes in the prepared card source. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited violet/pink muscle fields to the established palette with original lightness, and removed the 13-pixel water-line stub at the toes in the prepared card source. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited violet/pink muscle fields to the established palette with original lightness, and removed the 13-pixel water-line stub at the toes in the prepared card source. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited violet/pink muscle fields to the established palette with original lightness, and removed the 13-pixel water-line stub at the toes in the prepared card source. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited violet/pink muscle fields to the established palette with original lightness, and removed the 13-pixel water-line stub at the toes in the prepared card source. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited violet/pink muscle fields to the established palette with original lightness, and removed the 13-pixel water-line stub at the toes in the prepared card source. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited violet/pink muscle fields to the established palette with original lightness, and removed the 13-pixel water-line stub at the toes in the prepared card source. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited violet/pink muscle fields to the established palette with original lightness, and removed the 13-pixel water-line stub at the toes in the prepared card source. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited violet/pink muscle fields to the established palette with original lightness, and removed the 13-pixel water-line stub at the toes in the prepared card source. Actual registered component checks are recorded separately; no strict certificate asserted."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/swimming/1.webp",
+      "sha256": "229fb88e464358b2261443e643b2446eef0b578c89d412bb01a58a2d570af8e3",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-19-illustration-polish/1.png",
+        "sha256": "c660c92f63e1e04caa1f0fabdb5d813384e35c3083c17df5fb91f4477a1c59e8"
+      }
+    },
+    {
+      "path": "form-frames/swimming/2.webp",
+      "sha256": "915b47aa2432fc7b9334c5d981c1931e4c24804ab3ac8e9ca9147747c4fda7ca",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-19-illustration-polish/2.png",
+        "sha256": "bd50af7d047555a10a5328f612c06d5d289ccb6d6c1b672809ba65cf3fcc1f71"
+      }
+    },
+    {
+      "path": "form-frames/swimming/3.webp",
+      "sha256": "e8f77512860098fa03f69043ba9f2d6ef011f5f107298b089d7ed9074432d034",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-19-illustration-polish/3.png",
+        "sha256": "e7a41087e4ed17b7a711c58977be7640b6785eb74b3d0c8da5d7fb5bd7d93ef0"
+      }
+    },
+    {
+      "path": "form-frames/swimming/4.webp",
+      "sha256": "03c1dcb07e4f14423dd3c20e85094a43261772e54c5e76dcf8a624bbe7af15b9",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-19-illustration-polish/4.png",
+        "sha256": "ff79d90ab5a501dc2100278d3f61bdda047ddb71f01d08c5e8fa915a6d6c8ad4"
+      }
+    },
+    {
+      "path": "form-frames/swimming/5.webp",
+      "sha256": "dda4e035220c900148f49e79e6d37f3eeeee72e27173e5fdbebb7c51ec3e0ebf",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-19-illustration-polish/5.png",
+        "sha256": "f6a753b6cba737cc56fcc833d7fb9355e9d52675d3b3c544998b93160f5dcc48"
+      }
+    },
+    {
+      "path": "form-frames/swimming/6.webp",
+      "sha256": "5c856ae46bb4f5c51300bb81c51fa1ac83bc199fb288844f6c044ec50bebfbb9",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-19-illustration-polish/6.png",
+        "sha256": "3401c23aab0def03a886401beccdab0e4e02bc1e5b142f2b5aefd57ad2b20702"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "What minor illustration issues are still left? Fix those too, same model and colours, no shorts, and get them merged. Stop asking for approval.",
+    "context": "Explicit authority for scoped native colour/equipment/cutout corrections, local registration, verification and normal merge. Not strict certification."
+  },
+  "findings": [
+    "Mapped inherited violet/pink muscle fields to the established palette with original lightness, and removed the 13-pixel water-line stub at the toes in the prepared card source.",
+    "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+  ],
+  "resolvedIllustrationIssues": [
+    "Mapped inherited violet/pink muscle fields to the established palette with original lightness, and removed the 13-pixel water-line stub at the toes in the prepared card source."
+  ],
+  "priorFindings": {
+    "record": "docs/exercise-art/releases/2026-10-17/swimming.json",
+    "sha256": "c72120c78a98d8bec53fb9fa66b08518569894e4011de86cf7afb5f8b7098282",
+    "disposition": "Historical record preserved verbatim. Cosmetic issues addressed here are described separately; prior strict-measurement and source-provenance statements are not erased.",
+    "hashScope": "Exact repository blob bytes, independent of Windows checkout CRLF."
+  },
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/swimming/2026-10-19-illustration-polish",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/swimming/2026-10-19-illustration-polish/swimming-native-polish.zip",
+      "sha256": "b210caa284fa6e93fe6e7718247b6f6b44b052c8c6390bb3e082765fd863b44b",
+      "bytes": 16873504
+    },
+    "priorRelease": "docs/exercise-art/releases/2026-10-17/swimming.json",
+    "method": "Exact native original drawings plus sparse editable colour/equipment pixels; alpha-only stray-mark cleanup for prepared cards. Portable source layers and deterministic lossless exports independently re-executed byte-for-byte.",
+    "reproductionScope": "Same-layer composition and export reproduction; no independent anatomy/physics certification.",
+    "newImageGenerationCalls": 0,
+    "anatomicalTransforms": []
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-19-illustration-polish/review.json"
+}

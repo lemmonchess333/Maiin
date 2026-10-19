@@ -311,7 +311,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
           loading="lazy"
           data-lead-drawing=""
           className={
-            "pointer-events-none absolute inset-y-3 h-[calc(100%-1.5rem)] object-contain " +
+            "exercise-drawing pointer-events-none absolute inset-y-3 h-[calc(100%-1.5rem)] object-contain " +
             (flanked
               ? "right-3 w-[58%] object-right-bottom"
               : "inset-x-3 w-[calc(100%-1.5rem)] object-bottom")

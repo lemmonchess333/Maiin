@@ -138,7 +138,7 @@ export default function LiftCTACard({
           aria-hidden="true"
           draggable={false}
           decoding="async"
-          className="pointer-events-none absolute right-2 top-3 z-0 h-[136px] w-[42%] object-contain object-right-top @max-[14em]:hidden"
+          className="exercise-drawing pointer-events-none absolute right-2 top-3 z-0 h-[136px] w-[42%] object-contain object-right-top @max-[14em]:hidden"
         />
       )}
       <div

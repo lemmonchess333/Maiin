@@ -1,0 +1,189 @@
+[
+  {
+    "id": "assault-bike",
+    "changes": "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers.",
+    "changedFrames": [1, 2, 3, 4, 5, 6],
+    "changedPixels": 251814,
+    "preparedCardChanged": false,
+    "priorRecord": "docs/exercise-art/releases/2026-10-17/assault-bike.json",
+    "priorRecordSha256": "785df3af33810b9dfdd32484fc9ab34027335e447f07b3d4d69220cef096efd6",
+    "archive": {
+      "id": "assault-bike",
+      "archiveSha256": "874688e96ed98c8cd493f57bd39e4652eb7a689349d4de7460a402035fd913f1",
+      "archiveBytes": 12383886,
+      "allOutputBytesExact": true,
+      "outputCount": 15
+    },
+    "priorRecordHashScope": "Exact repository blob bytes."
+  },
+  {
+    "id": "barbell-curl",
+    "changes": "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers.",
+    "changedFrames": [1, 2, 3, 4, 5, 6],
+    "changedPixels": 221384,
+    "preparedCardChanged": false,
+    "priorRecord": "docs/exercise-art/releases/2026-09-owner/barbell-curl.json",
+    "priorRecordSha256": "2b886dc071467438d5f63e47ea2011718d0cea653f6fb6e5b705e67c51724c40",
+    "archive": {
+      "id": "barbell-curl",
+      "archiveSha256": "7c493f42f406245d588c9d9470963b8ea8dbdea76a9138bd50f7ff2a2e98bc0c",
+      "archiveBytes": 6387649,
+      "allOutputBytesExact": true,
+      "outputCount": 17
+    },
+    "priorRecordHashScope": "Exact repository blob bytes."
+  },
+  {
+    "id": "bike",
+    "changes": "Fixed bearing centre at native (498,1105), a clean shaded grey crank/bearing and the reference rear support in the opposed position. Original athlete, foot/strap and all upper-body pixels remain exact.",
+    "changedFrames": [3, 4],
+    "changedPixels": 42550,
+    "preparedCardChanged": false,
+    "priorRecord": "docs/exercise-art/releases/2026-10-15/bike.json",
+    "priorRecordSha256": "089c589a5319fb49aab59b30ebc903992ab023fe3a920cd60c86a8272795271b",
+    "archive": {
+      "id": "bike",
+      "archiveSha256": "74d43de7d577b8b30b76d1d6fae146fb1f85feb7c997c99dd5862c7cbb5551aa",
+      "archiveBytes": 14951208,
+      "allOutputBytesExact": true,
+      "outputCount": 15
+    },
+    "priorRecordHashScope": "Exact repository blob bytes."
+  },
+  {
+    "id": "goblet-squat",
+    "changes": "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers.",
+    "changedFrames": [1, 2, 3, 4, 5, 6],
+    "changedPixels": 323465,
+    "preparedCardChanged": false,
+    "priorRecord": "docs/exercise-art/releases/2026-09-owner/goblet-squat.json",
+    "priorRecordSha256": "a35901736d92f8471711a3ba0af4dfeaebdefccc5f13bb828364af4dc0103736",
+    "archive": {
+      "id": "goblet-squat",
+      "archiveSha256": "ddc11e1cde04d7470cc756a166678823b373b8afecdd79fa8d1660cdcc7c5ea3",
+      "archiveBytes": 6111843,
+      "allOutputBytesExact": true,
+      "outputCount": 17
+    },
+    "priorRecordHashScope": "Exact repository blob bytes."
+  },
+  {
+    "id": "overhead-press",
+    "changes": "Replaced the straight secondary-triceps tint boundary in the middle pose with a bounded curved tint edge, preserving native geometry and neutral source shading.",
+    "changedFrames": [3, 6],
+    "changedPixels": 2630,
+    "preparedCardChanged": false,
+    "priorRecord": "docs/exercise-art/releases/2026-10-17/overhead-press.json",
+    "priorRecordSha256": "eaccffcbdcaa3e3d1a9e0305d0ab7d12142105a33e454e5c6caf9d082ffd34ce",
+    "archive": {
+      "id": "overhead-press",
+      "archiveSha256": "8707083acbeae14a8b0536a6ad9b15f183ebf3ca6453ca4a0dab6f0aa97751f6",
+      "archiveBytes": 14523970,
+      "allOutputBytesExact": true,
+      "outputCount": 16
+    },
+    "priorRecordHashScope": "Exact repository blob bytes."
+  },
+  {
+    "id": "side-plank",
+    "changes": "Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged.",
+    "changedFrames": [],
+    "changedPixels": 0,
+    "preparedCardChanged": true,
+    "priorRecord": "docs/exercise-art/releases/2026-10-15/side-plank.json",
+    "priorRecordSha256": "382df3525945ae4a3888d72f2a36c3d1c05ba462c292686ad2d327b1de76e4d2",
+    "archive": {
+      "id": "side-plank",
+      "archiveSha256": "af47d52e6c8577877d9f798974bbdddad1bcfa9030153a15e7087e1a2eb7e677",
+      "archiveBytes": 11026637,
+      "allOutputBytesExact": true,
+      "outputCount": 15
+    },
+    "priorRecordHashScope": "Exact repository blob bytes."
+  },
+  {
+    "id": "spin-bike",
+    "changes": "Removed the detached 25-pixel horizontal old-equipment stub left of the calf in the standing position. Original athlete and remaining equipment are exact.",
+    "changedFrames": [4, 5],
+    "changedPixels": 50,
+    "preparedCardChanged": false,
+    "priorRecord": "docs/exercise-art/releases/2026-10-16/spin-bike.json",
+    "priorRecordSha256": "36d5fd811a8810dab0eecf7d109e71cec2e4d9ec83beed4f4070c939fb5e8c4d",
+    "archive": {
+      "id": "spin-bike",
+      "archiveSha256": "ac4a72aa45751cddacacfdee7227288c4da69ee71ccef759381ab83bd846fb53",
+      "archiveBytes": 2853916,
+      "allOutputBytesExact": true,
+      "outputCount": 16
+    },
+    "priorRecordHashScope": "Exact repository blob bytes."
+  },
+  {
+    "id": "squat",
+    "changes": "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers.",
+    "changedFrames": [1, 2, 3, 4, 5, 6],
+    "changedPixels": 356506,
+    "preparedCardChanged": false,
+    "priorRecord": "docs/exercise-art/releases/2026-09-owner/squat.json",
+    "priorRecordSha256": "8f88f79bed269e1bec3e8ddab796478bceb3ac26ff69c51f7048d670c4f6c39b",
+    "archive": {
+      "id": "squat",
+      "archiveSha256": "884797915c0ebcd6733be218db5831c52afcc83f856634790a1cc0f69a505d98",
+      "archiveBytes": 8263463,
+      "allOutputBytesExact": true,
+      "outputCount": 18
+    },
+    "priorRecordHashScope": "Exact repository blob bytes."
+  },
+  {
+    "id": "stairmaster",
+    "changes": "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers.",
+    "changedFrames": [1, 2, 3, 4, 5, 6],
+    "changedPixels": 117422,
+    "preparedCardChanged": false,
+    "priorRecord": "docs/exercise-art/releases/2026-10-17/stairmaster.json",
+    "priorRecordSha256": "98acbceb8e453dbda4a0989a4527e1e9d220ca72cc0787b9117a0d839fb6f853",
+    "archive": {
+      "id": "stairmaster",
+      "archiveSha256": "fd07d551b68c6312528b7a4c9fa7c89274d65e08d2093bfb85ab9e54b6be3bc0",
+      "archiveBytes": 10768899,
+      "allOutputBytesExact": true,
+      "outputCount": 15
+    },
+    "priorRecordHashScope": "Exact repository blob bytes."
+  },
+  {
+    "id": "swimming",
+    "changes": "Mapped inherited violet/pink muscle fields to the established palette with original lightness, and removed the 13-pixel water-line stub at the toes in the prepared card source.",
+    "changedFrames": [1, 2, 3, 4, 5, 6],
+    "changedPixels": 310519,
+    "preparedCardChanged": true,
+    "priorRecord": "docs/exercise-art/releases/2026-10-17/swimming.json",
+    "priorRecordSha256": "c72120c78a98d8bec53fb9fa66b08518569894e4011de86cf7afb5f8b7098282",
+    "archive": {
+      "id": "swimming",
+      "archiveSha256": "b210caa284fa6e93fe6e7718247b6f6b44b052c8c6390bb3e082765fd863b44b",
+      "archiveBytes": 16873504,
+      "allOutputBytesExact": true,
+      "outputCount": 20
+    },
+    "priorRecordHashScope": "Exact repository blob bytes."
+  },
+  {
+    "id": "turkish-get-up",
+    "changes": "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers.",
+    "changedFrames": [1, 2, 3, 4, 5, 6],
+    "changedPixels": 218032,
+    "preparedCardChanged": false,
+    "priorRecord": "docs/exercise-art/releases/2026-10-19-library-audit/turkish-get-up.json",
+    "priorRecordSha256": "7c947363b3bf1c876667a7966900bf79baee156b665f5b5257285b1693fbd432",
+    "archive": {
+      "id": "turkish-get-up",
+      "archiveSha256": "abdda62ca31521de0014560bc7a92e94c2b22af59679a2c0b2118184a81239a8",
+      "archiveBytes": 6190512,
+      "allOutputBytesExact": true,
+      "outputCount": 19
+    },
+    "priorRecordHashScope": "Exact repository blob bytes."
+  }
+]

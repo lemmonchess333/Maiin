@@ -1,0 +1,9 @@
+{
+  "reviewStatus": "reviewed",
+  "image": "side-plank.png",
+  "imageSha256": "7aa480e02f27864f8ead473da76a9ccd582ba160ffd0f60c60269333abb001a6",
+  "reference": "form-frames/side-plank/3.webp",
+  "referenceSha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+  "method": "Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged. Native RGBA edit mask retained in the portable source archive; normal keying/cutout exporter supplies app derivative.",
+  "reviewEvidence": "Native source on light/dark reviewed; normal exported card and integrated component evidence: docs/exercise-art/reviews/2026-10-19-illustration-polish/review.json"
+}

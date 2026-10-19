@@ -40,19 +40,6 @@ const existing = (
   reference: `form-frames/${id}/1.webp`,
 });
 
-// The owner explicitly requested these sets be activated with findings retained.
-// This state records release authorization, not a passing visual review.
-const ownerReleased = (
-  id: string,
-  width: number,
-  height: number
-): HandListedFormArtwork => ({
-  ...existing(id, width, height),
-  version: "owner-release-2026-09",
-  status: "owner-released-with-findings",
-  reviewFile: `docs/exercise-art/releases/2026-09-owner/${id}.json`,
-});
-
 const legacyRedrawn = (
   id: string,
   width: number,
@@ -88,6 +75,17 @@ const continuityCorrected = (
   ...legacyRedrawn(id, width, height, reference),
   version: `anatomy-v3-2026-10-18-${version}-v1`,
   reviewFile: `docs/exercise-art/releases/${reviewFolder}/${id}.json`,
+});
+
+const illustrationPolished = (
+  id: string,
+  width: number,
+  height: number,
+  reference: number
+): HandListedFormArtwork => ({
+  ...legacyRedrawn(id, width, height, reference),
+  version: "anatomy-v3-2026-10-19-illustration-polish-v1",
+  reviewFile: `docs/exercise-art/releases/2026-10-19-illustration-polish/${id}.json`,
 });
 
 /**
@@ -167,42 +165,11 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
     status: "owner-released-with-findings",
     reviewFile: "docs/exercise-art/releases/2026-10-16/seated-row.json",
   },
-  swimming: {
-    ...existing("swimming", 1264, 848),
-    reference: "form-frames/swimming/2.webp",
-    version: "anatomy-v3-2026-10-17-gemini-front-crawl-v1",
-    status: "owner-released-with-findings",
-    reviewFile: "docs/exercise-art/releases/2026-10-17/swimming.json",
-  },
-  stairmaster: {
-    ...existing("stairmaster", 1264, 848),
-    reference: "form-frames/stairmaster/1.webp",
-    version: "anatomy-v3-2026-10-17-gemini-stepmill-v1",
-    status: "owner-released-with-findings",
-    reviewFile: "docs/exercise-art/releases/2026-10-17/stairmaster.json",
-  },
-  "turkish-get-up": {
-    ...existing("turkish-get-up", 1024, 1024),
-    reference: "form-frames/turkish-get-up/1.webp",
-    version: "anatomy-v3-2026-10-19-get-up-sequence-v1",
-    status: "owner-released-with-findings",
-    reviewFile:
-      "docs/exercise-art/releases/2026-10-19-library-audit/turkish-get-up.json",
-  },
-  "assault-bike": {
-    ...existing("assault-bike", 1024, 1024),
-    reference: "form-frames/assault-bike/1.webp",
-    version: "anatomy-v3-2026-10-17-gemini-front-air-bike-v1",
-    status: "owner-released-with-findings",
-    reviewFile: "docs/exercise-art/releases/2026-10-17/assault-bike.json",
-  },
-  "spin-bike": {
-    ...existing("spin-bike", 432, 707),
-    reference: "form-frames/spin-bike/1.webp",
-    version: "anatomy-v3-2026-10-16-custom-perspective-spin-v1",
-    status: "owner-released-with-findings",
-    reviewFile: "docs/exercise-art/releases/2026-10-16/spin-bike.json",
-  },
+  swimming: illustrationPolished("swimming", 1264, 848, 2),
+  stairmaster: illustrationPolished("stairmaster", 1264, 848, 1),
+  "turkish-get-up": illustrationPolished("turkish-get-up", 1024, 1024, 1),
+  "assault-bike": illustrationPolished("assault-bike", 1024, 1024, 1),
+  "spin-bike": illustrationPolished("spin-bike", 432, 707, 1),
   elliptical: {
     ...existing("elliptical", 1047, 1072),
     reference: "form-frames/elliptical/1.webp",
@@ -239,13 +206,7 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
     reviewFile:
       "docs/exercise-art/releases/2026-10-15/single-leg-calf-raise.json",
   },
-  "side-plank": {
-    ...existing("side-plank", 1480, 696),
-    reference: "form-frames/side-plank/3.webp",
-    version: "anatomy-v3-2026-10-15-retained-side-plank-timed-hold-v1",
-    status: "owner-released-with-findings",
-    reviewFile: "docs/exercise-art/releases/2026-10-15/side-plank.json",
-  },
+  "side-plank": illustrationPolished("side-plank", 1480, 696, 3),
   "overhead-extension": {
     ...existing("overhead-extension", 461, 1547),
     reference: "form-frames/overhead-extension/3.webp",
@@ -265,15 +226,10 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
     status: "owner-released-with-findings",
     reviewFile: "docs/exercise-art/releases/2026-10-15/t-bar-row.json",
   },
-  bike: {
-    ...existing("bike", 929, 1432),
-    version: "anatomy-v3-2026-10-15-retained-two-endpoint-v1",
-    status: "owner-released-with-findings",
-    reviewFile: "docs/exercise-art/releases/2026-10-15/bike.json",
-  },
-  "goblet-squat": ownerReleased("goblet-squat", 1024, 1536),
-  squat: ownerReleased("squat", 1024, 1536),
-  "barbell-curl": ownerReleased("barbell-curl", 1024, 1536),
+  bike: illustrationPolished("bike", 929, 1432, 1),
+  "goblet-squat": illustrationPolished("goblet-squat", 1024, 1536, 1),
+  squat: illustrationPolished("squat", 1024, 1536, 1),
+  "barbell-curl": illustrationPolished("barbell-curl", 1024, 1536, 1),
   "barbell-row": legacyRedrawn("barbell-row", 1140, 1024, 4),
   "bench-press": continuityCorrected(
     "bench-press",
@@ -299,7 +255,7 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
     "2026-10-18-calf-timing"
   ),
   dips: legacyRedrawn("dips", 880, 1088, 4),
-  "overhead-press": legacyRedrawn("overhead-press", 1024, 1536, 4),
+  "overhead-press": illustrationPolished("overhead-press", 1024, 1536, 4),
   "rope-tricep-pushdown": equipmentCorrected(
     "rope-tricep-pushdown",
     1024,
