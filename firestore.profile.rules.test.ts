@@ -375,6 +375,49 @@ suite("users/{uid}/public/profile — the other two value gates", () => {
     );
   });
 
+  it("refuses any document under public/ but profile", async () => {
+    // User search reads the whole collection group: a second document
+    // here was a second search entry under any name.
+    const db = env.authenticatedContext(ME).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(db, `users/${ME}/public/profile`),
+        { displayName: "Me" },
+        {
+          merge: true,
+        }
+      )
+    );
+    await assertFails(
+      setDoc(doc(db, `users/${ME}/public/alias`), {
+        displayName: "Someone Else",
+      })
+    );
+  });
+
+  it("holds the name to the app's 50-character limit, and lets an empty one through", async () => {
+    const db = env.authenticatedContext(ME).firestore();
+    const ref = doc(db, `users/${ME}/public/profile`);
+    await assertSucceeds(
+      setDoc(
+        ref,
+        { displayName: "a".repeat(50), displayNameLower: "a".repeat(50) },
+        {
+          merge: true,
+        }
+      )
+    );
+    await assertFails(
+      setDoc(ref, { displayName: "a".repeat(51) }, { merge: true })
+    );
+    await assertFails(
+      setDoc(ref, { displayNameLower: "a".repeat(51) }, { merge: true })
+    );
+    await assertFails(setDoc(ref, { displayName: 42 }, { merge: true }));
+    await assertSucceeds(setDoc(ref, { displayName: "" }, { merge: true }));
+    await assertSucceeds(setDoc(ref, { displayName: null }, { merge: true }));
+  });
+
   it("refuses an unlisted key (hasOnly), so the projection cannot grow silently", async () => {
     const db = env.authenticatedContext(ME).firestore();
     await assertFails(

@@ -138,7 +138,10 @@ suite("partnerBonds rules", () => {
   it("refuses a forged lastSharedDay", async () => {
     const a = env.authenticatedContext(A).firestore();
     await assertFails(
-      setDoc(doc(a, "partnerBonds", BOND), bondDoc({ lastSharedDay: "2026-08-13" }))
+      setDoc(
+        doc(a, "partnerBonds", BOND),
+        bondDoc({ lastSharedDay: "2026-08-13" })
+      )
     );
   });
 
@@ -158,6 +161,26 @@ suite("partnerBonds rules", () => {
     );
   });
 
+  it("refuses a bond with someone who has blocked you, or whom you blocked", async () => {
+    // Anchor: the same bond is accepted with no block in place (the first
+    // case above), so a refusal here is the block's doing.
+    const a = env.authenticatedContext(A).firestore();
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), `blocks/${B}/users/${A}`), {
+        blockedAt: new Date(),
+      });
+    });
+    await assertFails(setDoc(doc(a, "partnerBonds", BOND), bondDoc()));
+
+    await env.clearFirestore();
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), `blocks/${A}/users/${B}`), {
+        blockedAt: new Date(),
+      });
+    });
+    await assertFails(setDoc(doc(a, "partnerBonds", BOND), bondDoc()));
+  });
+
   it("refuses a bond the author is not a member of", async () => {
     const c = env.authenticatedContext("user-c").firestore();
     await assertFails(setDoc(doc(c, "partnerBonds", BOND), bondDoc()));
@@ -170,9 +193,7 @@ suite("partnerBonds rules", () => {
       await setDoc(doc(ctx.firestore(), "partnerBonds", BOND), bondDoc());
     });
     const a = env.authenticatedContext(A).firestore();
-    await assertFails(
-      updateDoc(doc(a, "partnerBonds", BOND), { streak: 99 })
-    );
+    await assertFails(updateDoc(doc(a, "partnerBonds", BOND), { streak: 99 }));
   });
 
   it("lets a member read and dissolve their own bond", async () => {
