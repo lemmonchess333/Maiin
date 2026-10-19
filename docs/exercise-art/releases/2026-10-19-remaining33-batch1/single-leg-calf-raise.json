@@ -1,0 +1,162 @@
+{
+  "exerciseId": "single-leg-calf-raise",
+  "version": "anatomy-v3-2026-10-19-native-followup-v1",
+  "width": 626,
+  "height": 1209,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex native illustration and mobile source review",
+  "reviewedAt": "2026-10-19T22:30:10.443256+00:00",
+  "reference": {
+    "path": "form-frames/single-leg-calf-raise/3.webp",
+    "sha256": "b685d64b0d358b65c0bc7e78b48077430c94ca96153b53f08c57531ce7f1b7f1"
+  },
+  "cueSha256": "36bfdb7cff92252d94446e2767605d34850997a188873accebe58c19d87df99c",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/single-leg-calf-raise/1.webp",
+      "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/single-leg-calf-raise/2026-10-19-remaining33-batch1/1.png",
+        "sha256": "f02267b034ba56638c3bca2c685e516805ab1de21ef97d3e51c03b903dd98037"
+      },
+      "sourcePose": 1
+    },
+    {
+      "path": "form-frames/single-leg-calf-raise/2.webp",
+      "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/single-leg-calf-raise/2026-10-19-remaining33-batch1/2.png",
+        "sha256": "f02267b034ba56638c3bca2c685e516805ab1de21ef97d3e51c03b903dd98037"
+      },
+      "sourcePose": 1
+    },
+    {
+      "path": "form-frames/single-leg-calf-raise/3.webp",
+      "sha256": "b685d64b0d358b65c0bc7e78b48077430c94ca96153b53f08c57531ce7f1b7f1",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/single-leg-calf-raise/2026-10-19-remaining33-batch1/3.png",
+        "sha256": "48fc60f93108e142a9ee8b33b4dc5cb0c1ddc4518ec28c35eb61de0bf08076a3"
+      },
+      "sourcePose": 3
+    },
+    {
+      "path": "form-frames/single-leg-calf-raise/4.webp",
+      "sha256": "b685d64b0d358b65c0bc7e78b48077430c94ca96153b53f08c57531ce7f1b7f1",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/single-leg-calf-raise/2026-10-19-remaining33-batch1/4.png",
+        "sha256": "48fc60f93108e142a9ee8b33b4dc5cb0c1ddc4518ec28c35eb61de0bf08076a3"
+      },
+      "sourcePose": 3
+    },
+    {
+      "path": "form-frames/single-leg-calf-raise/5.webp",
+      "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/single-leg-calf-raise/2026-10-19-remaining33-batch1/5.png",
+        "sha256": "f02267b034ba56638c3bca2c685e516805ab1de21ef97d3e51c03b903dd98037"
+      },
+      "sourcePose": 1
+    },
+    {
+      "path": "form-frames/single-leg-calf-raise/6.webp",
+      "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/single-leg-calf-raise/2026-10-19-remaining33-batch1/6.png",
+        "sha256": "f02267b034ba56638c3bca2c685e516805ab1de21ef97d3e51c03b903dd98037"
+      },
+      "sourcePose": 1
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "Fix the remaining illustration issues in those33 sets too, same model and colours, no shorts, and get it all merged. Stop asking for approval.",
+    "context": "Explicit authority for source corrections, local activation, final checks and normal merge. Does not replace passing strict evidence."
+  },
+  "findings": [
+    "Same original athlete/trainers/hand and calf timing. Reference fixed support pixels, native2px visible-step registration and grey tread-only texture repair remove support drift and displaced contact-shadow double edge.",
+    "Existing discrete source poses and minor inherited source contour/projection differences remain qualitative. This scoped correction does not claim calibrated3D or blanket strict certification."
+  ],
+  "resolvedIllustrationIssues": [
+    "Same original athlete/trainers/hand and calf timing. Reference fixed support pixels, native2px visible-step registration and grey tread-only texture repair remove support drift and displaced contact-shadow double edge."
+  ],
+  "priorFindings": {
+    "record": "docs/exercise-art/releases/2026-10-15/single-leg-calf-raise.json",
+    "sha256": "e4c8f2f21096ff5fe75fe403a5517b54aa01b9c17e49ab45059da2f67af13cc8",
+    "disposition": "Historical source findings preserved verbatim in prior record and portable archive. Corrected issues are described separately; no blanket erasure of source/strict limitations."
+  },
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/single-leg-calf-raise/2026-10-19-remaining33-batch1",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/single-leg-calf-raise/2026-10-19-remaining33-batch1/single-leg-calf-raise-native-correction.zip",
+      "sha256": "9601a7cd1512dec0daf80c5b0a58542f60fd8d356fa42a75f1a36991ce68711a",
+      "bytes": 8156199
+    },
+    "priorRelease": "docs/exercise-art/releases/2026-10-15/single-leg-calf-raise.json",
+    "method": "Same original athlete/trainers/hand and calf timing. Reference fixed support pixels, native2px visible-step registration and grey tread-only texture repair remove support drift and displaced contact-shadow double edge.",
+    "reproductionScope": "Independent byte-exact re-execution of frozen native editable sources and exports, not independent anatomy certification.",
+    "anatomicalTransforms": []
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-19-remaining33-batch1/review.json",
+  "physicalPoses": 2,
+  "sourcePoseOrder": [1, 1, 3, 3, 1, 1]
+}

@@ -88,6 +88,17 @@ const illustrationPolished = (
   reviewFile: `docs/exercise-art/releases/2026-10-19-illustration-polish/${id}.json`,
 });
 
+const nativeIllustrationCorrected = (
+  id: string,
+  width: number,
+  height: number,
+  reference: number
+): HandListedFormArtwork => ({
+  ...legacyRedrawn(id, width, height, reference),
+  version: "anatomy-v3-2026-10-19-native-followup-v1",
+  reviewFile: `docs/exercise-art/releases/2026-10-19-remaining33-batch1/${id}.json`,
+});
+
 /**
  * A set approved by strict review. Every fact here comes from its release
  * record, through APPROVED_FORM_ART_RELEASES, which `npm run art:releases`
@@ -167,7 +178,12 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
   },
   swimming: illustrationPolished("swimming", 1264, 848, 2),
   stairmaster: illustrationPolished("stairmaster", 1264, 848, 1),
-  "turkish-get-up": illustrationPolished("turkish-get-up", 1024, 1024, 1),
+  "turkish-get-up": nativeIllustrationCorrected(
+    "turkish-get-up",
+    1024,
+    1152,
+    1
+  ),
   "assault-bike": illustrationPolished("assault-bike", 1024, 1024, 1),
   "spin-bike": illustrationPolished("spin-bike", 432, 707, 1),
   elliptical: {
@@ -198,14 +214,12 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
     status: "owner-released-with-findings",
     reviewFile: "docs/exercise-art/releases/2026-10-15/leg-extension.json",
   },
-  "single-leg-calf-raise": {
-    ...existing("single-leg-calf-raise", 626, 1209),
-    reference: "form-frames/single-leg-calf-raise/3.webp",
-    version: "anatomy-v3-2026-10-15-retained-single-leg-calf-two-endpoint-v1",
-    status: "owner-released-with-findings",
-    reviewFile:
-      "docs/exercise-art/releases/2026-10-15/single-leg-calf-raise.json",
-  },
+  "single-leg-calf-raise": nativeIllustrationCorrected(
+    "single-leg-calf-raise",
+    626,
+    1209,
+    3
+  ),
   "side-plank": illustrationPolished("side-plank", 1480, 696, 3),
   "overhead-extension": {
     ...existing("overhead-extension", 461, 1547),
@@ -229,7 +243,7 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
   bike: illustrationPolished("bike", 929, 1432, 1),
   "goblet-squat": illustrationPolished("goblet-squat", 1024, 1536, 1),
   squat: illustrationPolished("squat", 1024, 1536, 1),
-  "barbell-curl": illustrationPolished("barbell-curl", 1024, 1536, 1),
+  "barbell-curl": nativeIllustrationCorrected("barbell-curl", 1024, 1536, 1),
   "barbell-row": legacyRedrawn("barbell-row", 1140, 1024, 4),
   "bench-press": continuityCorrected(
     "bench-press",

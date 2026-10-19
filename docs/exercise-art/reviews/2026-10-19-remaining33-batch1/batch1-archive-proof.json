@@ -1,0 +1,23 @@
+[
+  {
+    "id": "barbell-curl",
+    "archive": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining33-illustration-fixes-20261019\\batch1-archives\\barbell-curl-native-correction.zip",
+    "sha256": "1831bf95b30412d5232b331610f58d79d07b53de255ec689b3463877c5dd688c",
+    "bytes": 6040103,
+    "independentFiles": 17
+  },
+  {
+    "id": "single-leg-calf-raise",
+    "archive": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining33-illustration-fixes-20261019\\batch1-archives\\single-leg-calf-raise-native-correction.zip",
+    "sha256": "9601a7cd1512dec0daf80c5b0a58542f60fd8d356fa42a75f1a36991ce68711a",
+    "bytes": 8156199,
+    "independentFiles": 15
+  },
+  {
+    "id": "turkish-get-up",
+    "archive": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining33-illustration-fixes-20261019\\batch1-archives\\turkish-get-up-native-correction.zip",
+    "sha256": "8c5704a94ebf7db40c96e3439fe79b6f1dc89ad3584846eabc147a57b14e1e54",
+    "bytes": 6791969,
+    "independentFiles": 19
+  }
+]
