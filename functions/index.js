@@ -1,10 +1,8 @@
-// Deploy note (2026-06-03): all SEVEN bound Secret Manager secrets
-// (APPLE_KEY_ID/ISSUER_ID/PRIVATE_KEY, BILLING_HMAC_SECRET,
-// BILLING_PREVIOUS_HMAC_SECRET, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET)
-// are provisioned AND the runtime SA (appspot.gserviceaccount.com) was granted
-// Secret Accessor on each (the deploy SA can't setIamPolicy, so the binding was
-// added manually). This change re-triggers deploy-functions so the push senders
-// + sendTestPush finally ship.
+// Bound Secret Manager secrets: `npm run secrets:check` lists every one and
+// the files that bind it. Each must be provisioned, and the runtime account
+// (appspot.gserviceaccount.com) granted Secret Accessor on it, before the
+// first deploy that binds it: the deploy account cannot setIamPolicy. See
+// docs/agents/functions-deploy.md.
 //
 // firebase-functions v6+ repointed the bare `require("firebase-functions")`
 // at the 2nd-gen API. Every export in this file is 1st-gen
