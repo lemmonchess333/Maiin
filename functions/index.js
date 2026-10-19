@@ -3994,7 +3994,13 @@ async function awardMilestoneBadges(uid, ids) {
  * transaction, idempotent via `earnedAt`), so re-passing an already-crossed
  * total is harmless. `kind` is "run" (metres) or "lift" (kg).
  */
-async function accrueLifetimeStat(uid, kind, incrementBy, sourceId) {
+async function accrueLifetimeStat(
+  uid,
+  kind,
+  incrementBy,
+  sourceId,
+  sourceRef = null
+) {
   const inc = Number(incrementBy) || 0;
   if (inc <= 0 || (kind !== "run" && kind !== "lift")) return;
 
@@ -4005,9 +4011,10 @@ async function accrueLifetimeStat(uid, kind, incrementBy, sourceId) {
   let newTotal = 0;
   try {
     newTotal = await db.runTransaction(async (tx) => {
-      const [totalsSnap, markerSnap] = await Promise.all([
+      const [totalsSnap, markerSnap, sourceSnap] = await Promise.all([
         tx.get(totalsRef),
         tx.get(markerRef),
+        sourceRef ? tx.get(sourceRef) : null,
       ]);
       const current = Number(
         (totalsSnap.exists && totalsSnap.data()[field]) || 0
@@ -4017,6 +4024,12 @@ async function accrueLifetimeStat(uid, kind, incrementBy, sourceId) {
         // award step below is still a (no-op) idempotent re-check.
         return current;
       }
+      // The session is gone: its delete can run before its create (trigger
+      // delivery is unordered), find no marker and reverse nothing, so a
+      // credit now would stand forever. Read here, inside the transaction,
+      // a delete either lands first (nothing credits) or after (its
+      // reversal finds this marker).
+      if (sourceSnap && !sourceSnap.exists) return current;
       const updated = current + inc;
       tx.set(totalsRef, { [field]: updated }, { merge: true });
       tx.set(markerRef, {
@@ -4057,7 +4070,8 @@ async function applyChallengeProgressIncrement(
   metric,
   incrementBy,
   sourceId,
-  activityDateKey
+  activityDateKey,
+  sourceRef = null
 ) {
   if (challenge.metric !== metric) return;
   // Credit this challenge only if the SOURCE ACTIVITY DAY is inside its
@@ -4108,6 +4122,8 @@ async function applyChallengeProgressIncrement(
       );
     const marker = await tx.get(markerRef);
     if (marker.exists) return; // already applied this activity — idempotent no-op
+    // A deleted session credits nothing; see accrueLifetimeStat.
+    if (sourceRef && !(await tx.get(sourceRef)).exists) return;
     const current = snap.data().currentValue || 0;
     const newValue = current + incrementBy;
     const tierAchieved = challengeTiers.resolveTier(newValue, tiers, metric);
@@ -4133,7 +4149,8 @@ async function syncChallengeProgress(
   metric,
   incrementBy,
   sourceId,
-  activityDateKey
+  activityDateKey,
+  sourceRef = null
 ) {
   try {
     // Fail closed: without a source activity day we cannot decide which
@@ -4158,7 +4175,8 @@ async function syncChallengeProgress(
         metric,
         incrementBy,
         sourceId,
-        activityDateKey
+        activityDateKey,
+        sourceRef
       );
     }
   } catch (err) {
@@ -4184,7 +4202,8 @@ async function syncFastestEffortProgress(
   runDistanceMeters,
   runDurationSeconds,
   sourceId,
-  activityDateKey
+  activityDateKey,
+  sourceRef = null
 ) {
   try {
     if (!(runDistanceMeters > 0) || !(runDurationSeconds > 0)) return;
@@ -4212,7 +4231,8 @@ async function syncFastestEffortProgress(
         runDistanceMeters,
         runDurationSeconds,
         sourceId,
-        activityDateKey
+        activityDateKey,
+        sourceRef
       );
     }
   } catch (err) {
@@ -4234,7 +4254,8 @@ async function applyFastestEffortToChallenge(
   runDistanceMeters,
   runDurationSeconds,
   sourceId,
-  activityDateKey
+  activityDateKey,
+  sourceRef = null
 ) {
   // Same [start, end) window predicate as the SUM path.
   if (!challengeContainsActivityDate(challenge, activityDateKey)) return;
@@ -4283,6 +4304,8 @@ async function applyFastestEffortToChallenge(
       );
     const marker = await tx.get(markerRef);
     if (marker.exists) return; // already applied this run — idempotent no-op
+    // A deleted run credits nothing; see accrueLifetimeStat.
+    if (sourceRef && !(await tx.get(sourceRef)).exists) return;
     const existingBest = snap.data().currentValue || 0;
     // 0 = no best yet, so first qualifying run always wins; else keep faster.
     const newBest =
@@ -4385,7 +4408,8 @@ async function backfillChallengeProgressForParticipant(challengeId, uid) {
             inc.metric,
             inc.value,
             d.id,
-            dayKey
+            dayKey,
+            d.ref
           );
         }
       }
@@ -4414,7 +4438,8 @@ async function backfillChallengeProgressForParticipant(challengeId, uid) {
               inc.meters,
               inc.seconds,
               d.id,
-              dayKey
+              dayKey,
+              d.ref
             );
           } else {
             await applyChallengeProgressIncrement(
@@ -4424,7 +4449,8 @@ async function backfillChallengeProgressForParticipant(challengeId, uid) {
               inc.metric,
               inc.value,
               d.id,
-              dayKey
+              dayKey,
+              d.ref
             );
           }
         }
@@ -4630,7 +4656,8 @@ exports.onWorkoutCreated = functions
           inc.metric,
           inc.value,
           workoutId,
-          activityDateKey
+          activityDateKey,
+          snap.ref
         );
       }
 
@@ -4655,7 +4682,8 @@ exports.onWorkoutCreated = functions
         uid,
         "lift",
         lifetimeAccrual.liftVolumeKgFor(data),
-        workoutId
+        workoutId,
+        snap.ref
       );
       // A correction may have landed before this create event credited its
       // original snapshot. Repair those ledgers using the current workout.
@@ -4820,7 +4848,7 @@ exports.onRunCreated = functions
         // the cumulative distance counter idempotently (per-run marker) and
         // awards once the lifetime total crosses 100 km. Gated by isCountable
         // (the enclosing block) so isInvalid / savedAnyway runs don't inflate.
-        await accrueLifetimeStat(uid, "run", runMeters, runId);
+        await accrueLifetimeStat(uid, "run", runMeters, runId, snap.ref);
 
         // Auto-progress the challenge metrics this run feeds: total_km +
         // the hybrid_score distance term (km×100, SOCIAL S4 Soc8), and
@@ -4836,7 +4864,8 @@ exports.onRunCreated = functions
               inc.meters,
               inc.seconds,
               runId,
-              activityDateKey
+              activityDateKey,
+              snap.ref
             );
           } else {
             await syncChallengeProgress(
@@ -4844,7 +4873,8 @@ exports.onRunCreated = functions
               inc.metric,
               inc.value,
               runId,
-              activityDateKey
+              activityDateKey,
+              snap.ref
             );
           }
         }
@@ -5420,7 +5450,7 @@ exports.recreditMyLiftVolume = functions
       withVolume++;
       lifetimeKg += volume;
 
-      await accrueLifetimeStat(uid, "lift", volume, docSnap.id);
+      await accrueLifetimeStat(uid, "lift", volume, docSnap.id, docSnap.ref);
 
       const activityDateKey = sourceActivityDateKey(workout);
       if (!activityDateKey) continue;
@@ -5434,7 +5464,8 @@ exports.recreditMyLiftVolume = functions
             inc.metric,
             inc.value,
             docSnap.id,
-            activityDateKey
+            activityDateKey,
+            docSnap.ref
           );
           challengeApplies++;
         }
