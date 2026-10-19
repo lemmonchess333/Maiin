@@ -20,10 +20,35 @@ updates:
     versioning-strategy: "increase"
     labels:
       - "dependencies"
+    # Majors that cannot install yet. Each one fails `npm ci` on a peer
+    # dependency another package has not widened, so its PR can never go
+    # green, and inside a group it holds back the minors it is bundled
+    # with: the firebase group's PR, open since 24 August 2026, fails on
+    # exactly this.
+    # Lift an entry when the package named in its reason supports the new
+    # major. Check with `npm view <package> peerDependencies`.
+    ignore:
+      # firebase 13: the @capacitor-firebase plugins (analytics,
+      # authentication, messaging, app-check; 8.5.2 is the latest) peer
+      # firebase ^12.6.
+      - dependency-name: "firebase"
+        update-types: ["version-update:semver-major"]
+      # @firebase/rules-unit-testing 6 peers firebase ^13, so it waits on
+      # firebase 13 above.
+      - dependency-name: "@firebase/rules-unit-testing"
+        update-types: ["version-update:semver-major"]
+      # eslint 10: eslint-plugin-jsx-a11y 6.10 peers eslint up to 9.
+      # @eslint/js moves with eslint.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
     groups:
-      # Bundle related Firebase + Capacitor + Recharts updates together so
-      # one PR carries the whole ecosystem update rather than five separate
-      # PRs that all need to land at the same time.
+      # Bundle each ecosystem's updates together, so one PR carries the
+      # whole update rather than several separate PRs that all need to
+      # land at the same time. Majors stay inside their group on purpose:
+      # Capacitor's packages must share a major, and the Firebase test
+      # package follows the SDK's.
       firebase:
         patterns:
           - "firebase*"
@@ -46,7 +71,7 @@ updates:
           - "happy-dom"
           - "jsdom"
 
-  # Cloud Functions package — plain JS / Node 20
+  # Cloud Functions package — plain JS / Node 22 (functions/package.json engines)
   - package-ecosystem: "npm"
     directory: "/functions"
     schedule:
