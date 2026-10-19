@@ -46,15 +46,15 @@
     },
     "sequenceAndLoop": {
       "passed": null,
-      "evidence": "Scoped native source review complete; actual registered review is recorded separately. No strict certification claimed."
+      "evidence": "Scoped actual registered review complete and bound byintegrationEvidence. Allsix manual positions and explicitwrap match the current images/cues in both themes. Timed normaldark/light and slowerdark playback accepted; Lu cycles and get-up stops atstanding untilReplay. All11strict flags remainnull."
     },
     "mobileLight": {
       "passed": null,
-      "evidence": "Scoped native source review complete; actual registered review is recorded separately. No strict certification claimed."
+      "evidence": "Scoped actual registered review complete and bound byintegrationEvidence. Allsix manual positions and explicitwrap match the current images/cues in both themes. Timed normaldark/light and slowerdark playback accepted; Lu cycles and get-up stops atstanding untilReplay. All11strict flags remainnull."
     },
     "mobileDark": {
       "passed": null,
-      "evidence": "Scoped native source review complete; actual registered review is recorded separately. No strict certification claimed."
+      "evidence": "Scoped actual registered review complete and bound byintegrationEvidence. Allsix manual positions and explicitwrap match the current images/cues in both themes. Timed normaldark/light and slowerdark playback accepted; Lu cycles and get-up stops atstanding untilReplay. All11strict flags remainnull."
     }
   },
   "frames": [
@@ -147,5 +147,14 @@
       "members": 47
     },
     "techniqueSource": "https://www.catalystathletics.com/exercise/865/Overhead-Lateral-Raise/"
-  }
+  },
+  "integrationEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-19-library-audit/whole-library-review.zip",
+    "sha256": "b46d4c2aac9e56c2a8cd1d78739ed4894c8f9ca26e5d4d8e9781fb345e70df35",
+    "bytes": 18019715,
+    "members": 63,
+    "review": "docs/exercise-art/reviews/2026-10-19-library-audit/whole-library-review.json",
+    "reviewSha256": "6ee713b6e5d048ce12df4348e58422c0608e864898014ff3e42eca7ced7338eb"
+  },
+  "recordStage": "Root native/source and actual registered light/dark manual, normal and slower playback review complete; normal project verification and CI/normal merge are separate gates."
 }

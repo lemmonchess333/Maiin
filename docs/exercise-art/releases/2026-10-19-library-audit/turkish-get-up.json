@@ -46,15 +46,15 @@
     },
     "sequenceAndLoop": {
       "passed": null,
-      "evidence": "Original artwork unchanged. Ascent-only lesson now stops at standing until explicit Replay; actual registered review recorded separately."
+      "evidence": "Scoped actual registered review complete and bound byintegrationEvidence. Allsix manual positions and explicitwrap match the current images/cues in both themes. Timed normaldark/light and slowerdark playback accepted; Lu cycles and get-up stops atstanding untilReplay. All11strict flags remainnull."
     },
     "mobileLight": {
       "passed": null,
-      "evidence": "Original artwork unchanged. Ascent-only lesson now stops at standing until explicit Replay; actual registered review recorded separately."
+      "evidence": "Scoped actual registered review complete and bound byintegrationEvidence. Allsix manual positions and explicitwrap match the current images/cues in both themes. Timed normaldark/light and slowerdark playback accepted; Lu cycles and get-up stops atstanding untilReplay. All11strict flags remainnull."
     },
     "mobileDark": {
       "passed": null,
-      "evidence": "Original artwork unchanged. Ascent-only lesson now stops at standing until explicit Replay; actual registered review recorded separately."
+      "evidence": "Scoped actual registered review complete and bound byintegrationEvidence. Allsix manual positions and explicitwrap match the current images/cues in both themes. Timed normaldark/light and slowerdark playback accepted; Lu cycles and get-up stops atstanding untilReplay. All11strict flags remainnull."
     }
   },
   "frames": [
@@ -125,7 +125,7 @@
       }
     }
   ],
-  "recordStage": "Owner release recorded; project verification, CI and merge remain separate gates",
+  "recordStage": "Root native/source and actual registered light/dark manual, normal and slower playback review complete; normal project verification and CI/normal merge are separate gates.",
   "approval": {
     "actor": "Human owner in this chat",
     "instruction": "Check the whole exercise library for errors then, fix anything wrong, same model and colours, no shorts, and get it all merged. Stop asking for approval.",
@@ -144,5 +144,13 @@
     "No contacts or anchors were measured.",
     "Automatic standing-to-supine reset corrected: this ascent-only lesson stops at frame6 and offers explicit Replay. Original six illustrations, source archives and cues are unchanged."
   ],
-  "playback": "sequence"
+  "playback": "sequence",
+  "integrationEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-19-library-audit/whole-library-review.zip",
+    "sha256": "b46d4c2aac9e56c2a8cd1d78739ed4894c8f9ca26e5d4d8e9781fb345e70df35",
+    "bytes": 18019715,
+    "members": 63,
+    "review": "docs/exercise-art/reviews/2026-10-19-library-audit/whole-library-review.json",
+    "reviewSha256": "6ee713b6e5d048ce12df4348e58422c0608e864898014ff3e42eca7ced7338eb"
+  }
 }

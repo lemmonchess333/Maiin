@@ -909,7 +909,7 @@ export const EXERCISES: Exercise[] = [
     category: "Shoulders",
     muscleGroup: "Deltoids",
     mechanic: "isolation",
-    secondaryMuscles: ["Upper Traps"],
+    secondaryMuscles: ["Traps"],
     equipment: "Dumbbells",
     caloriesPerMinute: 5,
     instructions: [
