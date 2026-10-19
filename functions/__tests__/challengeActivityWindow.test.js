@@ -14,6 +14,7 @@ import {
   instantToDateKey,
   sourceActivityDateKey,
   challengeContainsActivityDate,
+  openOnDayBound,
 } from "../lib/challengeActivityWindow";
 
 const ts = (iso) => ({ toDate: () => new Date(iso) });
@@ -134,5 +135,56 @@ describe("instantToDateKey — boundary type normalization", () => {
     expect(instantToDateKey(undefined)).toBe(null);
     expect(instantToDateKey("garbage")).toBe(null);
     expect(instantToDateKey({})).toBe(null);
+  });
+});
+
+describe("openOnDayBound — the end-date query never drops a creditable challenge", () => {
+  /* syncChallengeProgress and reconcileParticipationChallenges read only
+     challenges with `endDate > openOnDayBound(day)`, then apply
+     challengeContainsActivityDate. The query is only safe if it returns
+     every challenge the predicate would accept, so this walks windows of
+     several lengths (a day, a week, a month, a mid-day end) across days
+     before, inside, on the edges of and after each one. */
+  const day = (offset) =>
+    new Date(Date.UTC(2026, 6, 1) + offset * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+  const windows = [
+    ["2026-07-01T00:00:00.000Z", "2026-07-02T00:00:00.000Z"],
+    ["2026-07-06T00:00:00.000Z", "2026-07-13T00:00:00.000Z"],
+    ["2026-07-01T00:00:00.000Z", "2026-08-01T00:00:00.000Z"],
+    ["2026-07-10T00:00:00.000Z", "2026-07-20T15:30:00.000Z"],
+  ];
+
+  it("returns every challenge the window predicate accepts", () => {
+    let accepted = 0;
+    for (const [start, end] of windows) {
+      const challenge = { startDate: ts(start), endDate: ts(end) };
+      for (let offset = -3; offset <= 40; offset++) {
+        const key = day(offset);
+        if (!challengeContainsActivityDate(challenge, key)) continue;
+        accepted++;
+        // What Firestore evaluates for `endDate > bound`.
+        expect(new Date(end) > openOnDayBound(key)).toBe(true);
+      }
+    }
+    // Anchor: the walk reached days the predicate accepts. With none, the
+    // loop above would assert nothing.
+    // The mid-day window's end is on 20 July, so it accepts 10-19 July.
+    expect(accepted).toBe(1 + 7 + 31 + 10);
+  });
+
+  it("leaves out a challenge that ended on or before the day", () => {
+    const july = new Date("2026-08-01T00:00:00.000Z");
+    expect(july > openOnDayBound("2026-08-01")).toBe(false);
+    expect(july > openOnDayBound("2026-07-31")).toBe(true);
+  });
+
+  it("is UTC midnight of the day, and null for an invalid day", () => {
+    expect(openOnDayBound("2026-07-15")?.toISOString()).toBe(
+      "2026-07-15T00:00:00.000Z"
+    );
+    expect(openOnDayBound("2026-02-30")).toBeNull();
+    expect(openOnDayBound(undefined)).toBeNull();
   });
 });

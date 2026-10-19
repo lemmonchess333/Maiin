@@ -147,6 +147,7 @@ const challengeDefs = require("./lib/challengeDefs");
 const {
   sourceActivityDateKey,
   challengeContainsActivityDate,
+  openOnDayBound,
 } = require("./lib/challengeActivityWindow");
 // Source-doc → challenge-increment mapping, shared by the live activity
 // triggers and the join-time backfill so the crediting VALUES have one
@@ -4165,7 +4166,16 @@ async function syncChallengeProgress(
       return;
     }
 
-    const challengesSnap = await db.collection("challenges").get();
+    // Only the challenges still open on the activity day: this runs for
+    // every logged session, and challenges are never deleted, so a read of
+    // the whole collection grew with every week and month that passed.
+    // The apply helper still checks the window.
+    const dayBound = openOnDayBound(activityDateKey);
+    if (!dayBound) return;
+    const challengesSnap = await db
+      .collection("challenges")
+      .where("endDate", ">", dayBound)
+      .get();
 
     for (const doc of challengesSnap.docs) {
       await applyChallengeProgressIncrement(
