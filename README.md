@@ -1,8 +1,9 @@
 # Tropos / Maiin
 
 An adaptive fitness tracker for hybrid athletes — combines food, lifting,
-running, and progress tracking in one app. Ships as a React PWA (deployed
-to GitHub Pages) and as native iOS / Android builds via Capacitor.
+running, and progress tracking in one app. Ships as a native iOS app via
+Capacitor, and as a React PWA (Firebase Hosting, with GitHub Pages as the
+preview build). Android is planned, not built.
 
 This file is the entry point for anyone touching the codebase. For
 deep design context, see `CLAUDE.md` (project conventions + invariants).
@@ -31,13 +32,15 @@ Hot-reload dev server runs on http://localhost:5173/Maiin/ (note the
 - **Backend:** Firebase 12 (Auth, Firestore, Cloud Functions, Storage)
 - **AI:** Vertex AI / Gemini (food image + text parsing)
 - **Charts:** Recharts 3
-- **Maps:** MapLibre GL 5
+- **Maps:** MapLibre GL 6
 - **Animation:** Framer Motion 12 (gated through `useReducedMotion`)
 - **PWA:** custom service worker (`public/sw.js`) and registration (`src/lib/register-sw.ts`)
-- **Native:** Capacitor 8 (iOS + Android)
-- **Payments:** Stripe Checkout (web/Android), Apple In-App Purchase (iOS)
+- **Native:** Capacitor 8 (iOS; Android planned)
+- **Payments:** RevenueCat in-app purchases on iOS (ADR-0006); Stripe
+  Checkout is server-side only and dormant
 - **Testing:** Vitest 4 + React Testing Library + jsdom (unit),
-  Playwright (E2E), Firebase Local Emulator Suite (rules — planned)
+  Playwright (E2E), Firebase Local Emulator Suite (rules and functions,
+  `npm run test:rules`, run in CI)
 
 Folder map and architectural notes live in `CLAUDE.md`.
 
@@ -181,21 +184,24 @@ Connects automatically from `src/lib/firebase.ts` when
 
 ### iOS
 
-Requires macOS + Xcode 15+.
+Requires macOS + Xcode 16.3+ (the Swift package declares
+swift-tools-version 6.1).
 
 ```bash
-npm run build            # produces dist/ for Capacitor to bundle
-npx cap sync ios
+npm run build:ios        # the native build (CAPACITOR_BUILD) + cap sync ios
 npx cap open ios         # opens Xcode workspace
 ```
+
+A plain `npm run build` is the web build, with the Pages base path; opened
+in the app it is a white screen (`deploy-ios.yml` explains).
 
 In Xcode:
 
 - "Signing & Capabilities" → your team must be selected.
-- App Attest capability must be added (App Check rollout).
-- Push Notifications capability if you ever wire FCM (not currently
-  enabled).
-- Build → Archive → Distribute via TestFlight.
+- App Attest, Push Notifications, Sign in with Apple and HealthKit are
+  already in `App.entitlements`.
+- Build → Archive → Distribute via TestFlight. CI does this without a Mac
+  (`deploy-ios.yml`, `docs/ios-release.md`).
 
 ### Android — PLANNED, not yet reproducible
 
@@ -210,23 +216,32 @@ When Android is added for real, this section must gain: platform commit,
 signing/CI workflow, per-plugin verification (notifications, background
 geolocation, purchases, deep links), and store release docs.
 
-### Native plugins currently used
+### Native plugins
 
-- `@capacitor/local-notifications` — meal / workout / streak
-  reminders.
-- `@capacitor/core` — platform detection.
+`cap sync` links every plugin in `package.json` into the native project,
+so a plugin nothing imports still ships, and still answers to App Review.
+Keep this list and the dependencies the same.
+
+- `@capacitor/core`, `@capacitor/app` — platform detection, app state,
+  the back button.
+- `@capacitor/local-notifications` — meal / workout / streak reminders.
+- `@capacitor-firebase/messaging` — push.
+- `@capacitor-firebase/authentication` — Google and Apple sign-in.
+- `@capacitor-firebase/app-check` — App Attest
+  (`docs/app-check-rollout.md`).
+- `@capacitor-firebase/analytics` — analytics, without the ad id.
+- `@capacitor-community/background-geolocation` — run tracking with the
+  screen locked.
 - `@revenuecat/purchases-capacitor` — in-app purchases and entitlement
   (ADR-0006). The only StoreKit path. `cordova-plugin-purchase` was
   removed rather than left beside it: `cap sync` re-wires every plugin in
   `package.json` into the native project, so keeping the dependency meant
   shipping two StoreKit observers that race to finish a transaction.
-
-### Native plugins planned
-
-- `@capacitor-firebase/app-check` — native attestation
-  (see `docs/app-check-rollout.md`).
-- `@capacitor-community/background-geolocation` — durable run
-  tracking (audit P1 #9 Option B).
+- `capacitor-health` — HealthKit steps (ADR-0007).
+- `capacitor-live-activities` — the run's Live Activity.
+- `@capacitor/filesystem` — meal photos kept on the device (Food9).
+- `@capacitor/haptics`, `@capacitor/splash-screen`,
+  `@capacitor/status-bar`, `@capacitor/text-zoom` — the app shell.
 
 ---
 
@@ -334,11 +349,7 @@ items:
 - Authenticated E2E coverage via seeded auth fixture (audit PR B
   follow-up).
 - Functions-side test runner (audit P0 #1 / #2 / #3 emulator tests).
-- Native App Check plugin install + enforcement flip (see
-  `docs/app-check-rollout.md`).
-- Native background GPS via
-  `@capacitor-community/background-geolocation` (audit P1 #9
-  Option B).
+- App Check enforcement flip (see `docs/app-check-rollout.md`).
 - Active-run draft recovery (audit P1 #8).
 - Firestore rules tests + challenge write hardening (audit P1 #11).
 - Repeating native notification schedules (audit P1 #10
