@@ -44,8 +44,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/assault-bike/1.webp",
     sourceSha256:
-      "9ff463d8f00fb6621b87eb272c183ab7477442e75377b04635da94c4a75cc675",
-    sha256: "bad9cb198c02eaf20e7ff7b6b633bdb3e892faf11f6599ce5e54136d507ffe88",
+      "94c40ddb45446b465696c37a79489e005b1d7071988f9955a24d8b8235e46590",
+    sha256: "15eaaf640430e51147873f93759929dcd18d38773ad7dafe9ba223c6792dcdf1",
   },
   "barbell-curl": {
     src: "form-art/barbell-curl.webp",
@@ -54,8 +54,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/barbell-curl/4.webp",
     sourceSha256:
-      "929b4b2c9b1ab9f3a47ed097ed5731f20468c46096bcd98e8bf7e6842d9a1e63",
-    sha256: "5a3861358414681bf382850f5cc91a3048354a3ae368f61f575746e61853e19d",
+      "9e536646540943b503389e416334556333ac84f2d0b8ea3a30e58719d05e1f86",
+    sha256: "0497a98cba86261f4f6e6d8006ea4dcc80427e4b3cf56bcef1f9d5ee73720c0f",
   },
   "barbell-floor-press": {
     src: "form-art/barbell-floor-press.webp",
@@ -624,8 +624,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/goblet-squat/4.webp",
     sourceSha256:
-      "7edf39e04009a0a708ead73f76be1b25160a4927afdb4eb473c1eb630051d688",
-    sha256: "d93fa59a30dcd6dc83c0d2ad7c83959c831480b7accf2b1c23384dc48e90f7b2",
+      "094f6fe821f13d15244cfb025850b9ef19e38adef361023d8f18d4a86deb9335",
+    sha256: "4d10f10eb1de34a0d14a0fae50269cc174636b5d0d4e77bb924c410c2aaaa32b",
   },
   "hack-squat": {
     src: "form-art/hack-squat.webp",
@@ -1201,11 +1201,11 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     src: "form-art/side-plank.webp",
     width: 480,
     height: 226,
-    keyed: true,
+    keyed: false,
     source: "form-frames/side-plank/3.webp",
     sourceSha256:
       "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
-    sha256: "fafcaa0f236b7309ccd75c57370493e8192e2b786fa9821f37dfee847bcb3c1a",
+    sha256: "bdd17f243ecb7b77362a2abcad11089b508243c7880f7e88340822db5091aedd",
   },
   "single-arm-cable-pushdown": {
     src: "form-art/single-arm-cable-pushdown.webp",
@@ -1334,8 +1334,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/squat/4.webp",
     sourceSha256:
-      "ff8c9e3966701e83295ac40acb5e4c976d466bb5c2007e062278cda22ecfb407",
-    sha256: "94c2a54fe5e3f7ed7d85e2d6aa8a59d81f51661a2fe3a06ecb1ea780b31958ab",
+      "506e5698c794f6afce17c31f2dc74866a27eee404d130d14d47ea4258c85ca23",
+    sha256: "c5747d104bdb280a7f4c6d6776cbbe93f754c08991c0330a6ee72d6572ad6c4f",
   },
   stairmaster: {
     src: "form-art/stairmaster.webp",
@@ -1344,8 +1344,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/stairmaster/1.webp",
     sourceSha256:
-      "62a945275bd8c65c36992878dbc6bf6e24128760a2d6e25e50a345970c074e67",
-    sha256: "17efad8187b9d08f4085691372ce16bbce5dc9816d6cb489e21aca2fdcca9952",
+      "f08f44f67149914b24b24a71a594a5c5fbf2066fab1547eb9b3f547c8e135ca3",
+    sha256: "7d1b329501eee23a211250621bca0bf6d18a3f6d56ac85da9b125b47dbd21ddd",
   },
   "standing-calf-raise": {
     src: "form-art/standing-calf-raise.webp",
@@ -1394,8 +1394,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: false,
     source: "form-frames/swimming/2.webp",
     sourceSha256:
-      "f63e3fd3e9882676ab137d67d88f77ce2b94a212743b9e094138826dc6162bc0",
-    sha256: "648d24c1eefe43fe1d0e7ecd739aebe178fd21e98787521028e239d900d3feea",
+      "915b47aa2432fc7b9334c5d981c1931e4c24804ab3ac8e9ca9147747c4fda7ca",
+    sha256: "ee5b0a2d710c6f8678525aa194bb0f716bf9a345a72237cf450084c132fb7d01",
   },
   "t-bar-row": {
     src: "form-art/t-bar-row.webp",
@@ -1474,8 +1474,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/turkish-get-up/5.webp",
     sourceSha256:
-      "43a541aaca73fff5c113e8a29723de6709035a8b633954a713117414e39ba2c1",
-    sha256: "9ced9e7def43f9f08f40b42a1f638fd410181b57511bd9d36682cba828d0ee8f",
+      "2f5e3c5bce6ce2a495f44a482ad57eaccc0ce9505819f9076cb5aa38636a3b70",
+    sha256: "0b0df00a64ca17aee50a445c36526ef0b60beafbfc5262931fe7d969422f6dcf",
   },
   "walking-dumbbell-lunges": {
     src: "form-art/walking-dumbbell-lunges.webp",

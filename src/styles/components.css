@@ -485,6 +485,16 @@ html.guiding [data-brand-mark] {
   opacity: 0;
 }
 
+/* The white anatomical drawings keep their exact source palette. A small
+   neutral edge shadow helps them read on light cards, including list-size
+   cutouts; dark surfaces already provide the needed silhouette contrast. */
+.exercise-drawing {
+  filter: drop-shadow(0 0 0.65px hsl(var(--foreground) / 0.5));
+}
+.dark .exercise-drawing {
+  filter: none;
+}
+
 /* Reduced-motion safety net for the shared primitives. The
    Framer Motion components in Layout.tsx already gate via the
    useReducedMotion hook; this CSS belt-and-braces the primitives

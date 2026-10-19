@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import "../../src/index.css";
 import ExerciseRigDemo from "../../src/components/ExerciseRigDemo";
 import ExerciseFormFrames from "../../src/components/ExerciseFormFrames";
+import ExerciseThumb from "../../src/components/program/ExerciseThumb";
 import { getAuthoredBeats, getFormBeats } from "../../src/lib/bodyRig";
 import { FORM_ARTWORK } from "../../src/lib/formArtwork";
 import {
@@ -155,8 +156,16 @@ export default function Review() {
                 alt={`${id} card artwork`}
                 width={cardArt.width}
                 height={cardArt.height}
-                className="h-28 w-full object-contain"
+                className="exercise-drawing h-28 w-full object-contain"
               />
+              <div
+                className="mt-3 flex items-center gap-3"
+                data-testid="list-thumbnails"
+              >
+                <ExerciseThumb exerciseId={id} size="sm" />
+                <ExerciseThumb exerciseId={id} size="md" />
+                <ExerciseThumb exerciseId={id} size="lg" />
+              </div>
             </div>
           )}
           {beats.map((beat, i) => (
