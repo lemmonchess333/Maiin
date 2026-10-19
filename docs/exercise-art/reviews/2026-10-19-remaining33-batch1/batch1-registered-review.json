@@ -1,0 +1,394 @@
+{
+  "reviewer": "Root Codex",
+  "reviewedAt": "2026-10-19T22:52:18.578788+00:00",
+  "scope": "Actual registered ExerciseFormContent and ExerciseThumb, 390x844; every selected frame and normal cutout in both themes. Qualitative native/source review, no strict status upgrade.",
+  "manualPositions": 36,
+  "allRegisteredSourcePathsVerified": true,
+  "allSettledImagesDecoded": true,
+  "captures": [
+    {
+      "id": "barbell-curl",
+      "theme": "dark",
+      "frame": 1,
+      "capture": "barbell-curl-dark-1.png",
+      "sha256": "98b5ec8cc508c26b749213aaa40657072c7dedf80e2345ed3a4f07c35fcce825"
+    },
+    {
+      "id": "barbell-curl",
+      "theme": "dark",
+      "frame": 2,
+      "capture": "barbell-curl-dark-2.png",
+      "sha256": "19be80230362e2559cdc4e36d097f029c176c49e980d17b77cceaf83c52ac8cb"
+    },
+    {
+      "id": "barbell-curl",
+      "theme": "dark",
+      "frame": 3,
+      "capture": "barbell-curl-dark-3.png",
+      "sha256": "f2e34111619ac648b34e9fac7513b3b7b590bdeffc3112d4f04fd93330bf79c0"
+    },
+    {
+      "id": "barbell-curl",
+      "theme": "dark",
+      "frame": 4,
+      "capture": "barbell-curl-dark-4.png",
+      "sha256": "3b3fecb3239f957cd09f0a3954048adac3087047bfbfb3ff17c22f629a77156d"
+    },
+    {
+      "id": "barbell-curl",
+      "theme": "dark",
+      "frame": 5,
+      "capture": "barbell-curl-dark-5.png",
+      "sha256": "ab370b92fab385a6024dbe4ad9e5d4156e0d61da8bb287427ba4164d6b93ff99"
+    },
+    {
+      "id": "barbell-curl",
+      "theme": "dark",
+      "frame": 6,
+      "capture": "barbell-curl-dark-6.png",
+      "sha256": "6d3458ca4788f645bd8c93a16843d4c1bc88764cf48830417305bab71a09cb4c"
+    },
+    {
+      "id": "barbell-curl",
+      "theme": "light",
+      "frame": 1,
+      "capture": "barbell-curl-light-1.png",
+      "sha256": "0177a7c70af782d30f9d740064c4cc51b0fea4836fa4bedb30cf644a030c660b"
+    },
+    {
+      "id": "barbell-curl",
+      "theme": "light",
+      "frame": 2,
+      "capture": "barbell-curl-light-2.png",
+      "sha256": "02643a9bef22d1943734fb1fe1df3f0c3365ebd70d10ad45b2c1f65fbcab24c3"
+    },
+    {
+      "id": "barbell-curl",
+      "theme": "light",
+      "frame": 3,
+      "capture": "barbell-curl-light-3.png",
+      "sha256": "e45c512fd78978fbdd0e3455888fdf284f962469a9805c41126c4d2ad5f2f7ae"
+    },
+    {
+      "id": "barbell-curl",
+      "theme": "light",
+      "frame": 4,
+      "capture": "barbell-curl-light-4.png",
+      "sha256": "74434748953dcde41792f3b7a71e4703e7d70a3c46c87d4b118befcfcf7ddf55"
+    },
+    {
+      "id": "barbell-curl",
+      "theme": "light",
+      "frame": 5,
+      "capture": "barbell-curl-light-5.png",
+      "sha256": "dd236ed26d036f7837a43bb4252d00a3edcd0e1f8f773b79c14a49cd5b421413"
+    },
+    {
+      "id": "barbell-curl",
+      "theme": "light",
+      "frame": 6,
+      "capture": "barbell-curl-light-6.png",
+      "sha256": "fe347540f35657f0dce8e068ae51fdc15ec3198c4ef23c84a70edde46dced56e"
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "theme": "light",
+      "frame": 1,
+      "capture": "single-leg-calf-raise-light-1.png",
+      "sha256": "d01125b4c58c355eae0db35521e92cb30276d5014dded5aa061c8360519870a8"
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "theme": "light",
+      "frame": 2,
+      "capture": "single-leg-calf-raise-light-2.png",
+      "sha256": "be9cc1a0513ea943379455b9fca27ed71e8778d7644be7e957148e93674fc388"
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "theme": "light",
+      "frame": 3,
+      "capture": "single-leg-calf-raise-light-3.png",
+      "sha256": "e14bde3eca2aeb25fd02434399707ca66b5da6b65b30ec914dfc9094449a9a39"
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "theme": "light",
+      "frame": 4,
+      "capture": "single-leg-calf-raise-light-4.png",
+      "sha256": "8dcb1f5084da0b1190930283a9ad5316f7f139b9f63ccff5b295e13b118b753b"
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "theme": "light",
+      "frame": 5,
+      "capture": "single-leg-calf-raise-light-5.png",
+      "sha256": "f9b3dc7dcd779858e9e0cedea430b646bbccee0bafd3cbe27f80b46651277ea6"
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "theme": "light",
+      "frame": 6,
+      "capture": "single-leg-calf-raise-light-6.png",
+      "sha256": "734e3cce19ac1c79f12bfdc8f5e45cd3113982759ec878fed5d0829a909c3319"
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "theme": "dark",
+      "frame": 1,
+      "capture": "single-leg-calf-raise-dark-1.png",
+      "sha256": "b94ea9d24d3d240cbe8611600d7039790326032d26ada05901da310f40e665cb"
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "theme": "dark",
+      "frame": 2,
+      "capture": "single-leg-calf-raise-dark-2.png",
+      "sha256": "5826f85ef1fb7053871aaca357f546951a65e9301cae5d008deabce0c2ba10f5"
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "theme": "dark",
+      "frame": 3,
+      "capture": "single-leg-calf-raise-dark-3.png",
+      "sha256": "b9bae7d330c3ef7f09310efa9c73afb90ae1e7172c8f4a5bf104e7da9330c086"
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "theme": "dark",
+      "frame": 4,
+      "capture": "single-leg-calf-raise-dark-4.png",
+      "sha256": "1e6c8079f561cee54a2a05a74739db34a26ed7ef6f50ed6e2986e69306e81602"
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "theme": "dark",
+      "frame": 5,
+      "capture": "single-leg-calf-raise-dark-5.png",
+      "sha256": "8f160ba0e275ae656dc0c39dc6c4f62481bb12e6a9d7d2ff21d017213b7b95c7"
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "theme": "dark",
+      "frame": 6,
+      "capture": "single-leg-calf-raise-dark-6.png",
+      "sha256": "37044f336c128dd031a5049e1f114d9a8a384cee92f2626e10622c8152ff0b6a"
+    },
+    {
+      "id": "turkish-get-up",
+      "theme": "dark",
+      "frame": 1,
+      "capture": "turkish-get-up-dark-1.png",
+      "sha256": "f867a52e3c628f6957b0437f6e53b9de69a23e10ac137b2ec9e42af882f9fb94"
+    },
+    {
+      "id": "turkish-get-up",
+      "theme": "dark",
+      "frame": 2,
+      "capture": "turkish-get-up-dark-2.png",
+      "sha256": "774f9487408e93457c914fed9bab7d7bfb545b182e411cd556dd0c4ba49d30ab"
+    },
+    {
+      "id": "turkish-get-up",
+      "theme": "dark",
+      "frame": 3,
+      "capture": "turkish-get-up-dark-3.png",
+      "sha256": "dbeb5f1ed759bdc87eb015b3f76be87eddb94a770fdb596781200a5f0979894f"
+    },
+    {
+      "id": "turkish-get-up",
+      "theme": "dark",
+      "frame": 4,
+      "capture": "turkish-get-up-dark-4.png",
+      "sha256": "34a36958b78690414b5ff64c4b46e2162ae58f18f8f2b13607279fe845f09e2f"
+    },
+    {
+      "id": "turkish-get-up",
+      "theme": "dark",
+      "frame": 5,
+      "capture": "turkish-get-up-dark-5.png",
+      "sha256": "6af1e7f841a5e7832de56373362a0f742583e2675ce2cf85b1cb3be82bf14241"
+    },
+    {
+      "id": "turkish-get-up",
+      "theme": "dark",
+      "frame": 6,
+      "capture": "turkish-get-up-dark-6.png",
+      "sha256": "18888446e14253c0e35f8d8369623a1bca36ab68558fa7cddbab6c96083f7cc3"
+    },
+    {
+      "id": "turkish-get-up",
+      "theme": "light",
+      "frame": 1,
+      "capture": "turkish-get-up-light-1.png",
+      "sha256": "fa229d5fb4348c73015c8ec6b4c0622b8cfad54ed2de082ddf73fcfeb6a43216"
+    },
+    {
+      "id": "turkish-get-up",
+      "theme": "light",
+      "frame": 2,
+      "capture": "turkish-get-up-light-2.png",
+      "sha256": "a7bc1bbaf72656be3625df10872d0b8c7b21d25a3cd7e72ea2c23b9180f1e526"
+    },
+    {
+      "id": "turkish-get-up",
+      "theme": "light",
+      "frame": 3,
+      "capture": "turkish-get-up-light-3.png",
+      "sha256": "b48599f32e691dca68f7bd6e9d4355a9b420e003a57be1d27eca9a2fbb5cb1d5"
+    },
+    {
+      "id": "turkish-get-up",
+      "theme": "light",
+      "frame": 4,
+      "capture": "turkish-get-up-light-4.png",
+      "sha256": "5cb7591e3c88b7000717439053b48bd94f9c14e0210256dacf77eeccbf5eb642"
+    },
+    {
+      "id": "turkish-get-up",
+      "theme": "light",
+      "frame": 5,
+      "capture": "turkish-get-up-light-5.png",
+      "sha256": "3b39a9b5ef2e49a6866dde35ace0c00e40bff8df1ae23c0d2411e4d9c8263af3"
+    },
+    {
+      "id": "turkish-get-up",
+      "theme": "light",
+      "frame": 6,
+      "capture": "turkish-get-up-light-6.png",
+      "sha256": "a071b6c9538734fe8feabec64183dc5ce81c87e02d794ba92db923d9a6a7754a"
+    }
+  ],
+  "timings": [
+    {
+      "record": "barbell-curl-dark-normal-timed.json",
+      "sha256": "1305bcf07c8909aff8ac59cd2cd84a9970bb39104ecdb780679eff94ddcbbd3c",
+      "framesObserved": 6,
+      "lastSixSources": [
+        "/Maiin/form-frames/barbell-curl/2.webp",
+        "/Maiin/form-frames/barbell-curl/3.webp",
+        "/Maiin/form-frames/barbell-curl/4.webp",
+        "/Maiin/form-frames/barbell-curl/5.webp",
+        "/Maiin/form-frames/barbell-curl/6.webp",
+        "/Maiin/form-frames/barbell-curl/1.webp"
+      ],
+      "lastIntervalsMs": [1205, 1212, 1207, 1205, 1207],
+      "stoppedAtStandWithReplay": null
+    },
+    {
+      "record": "barbell-curl-dark-slower-timed.json",
+      "sha256": "3389fb66d515b190c6118f1449acaf625fe89f73e13bdd953cd1fbe97d0cd444",
+      "framesObserved": 6,
+      "lastSixSources": [
+        "/Maiin/form-frames/barbell-curl/5.webp",
+        "/Maiin/form-frames/barbell-curl/6.webp",
+        "/Maiin/form-frames/barbell-curl/1.webp",
+        "/Maiin/form-frames/barbell-curl/2.webp",
+        "/Maiin/form-frames/barbell-curl/3.webp",
+        "/Maiin/form-frames/barbell-curl/4.webp"
+      ],
+      "lastIntervalsMs": [2404, 2406, 2406, 2407, 2406],
+      "stoppedAtStandWithReplay": null
+    },
+    {
+      "record": "barbell-curl-light-normal-timed.json",
+      "sha256": "78958f3b0f24262af5b810d44bd4eafa8d43fc8b35d6f8884a0a96d70498848e",
+      "framesObserved": 6,
+      "lastSixSources": [
+        "/Maiin/form-frames/barbell-curl/1.webp",
+        "/Maiin/form-frames/barbell-curl/2.webp",
+        "/Maiin/form-frames/barbell-curl/3.webp",
+        "/Maiin/form-frames/barbell-curl/4.webp",
+        "/Maiin/form-frames/barbell-curl/5.webp",
+        "/Maiin/form-frames/barbell-curl/6.webp"
+      ],
+      "lastIntervalsMs": [1206, 1206, 1206, 1206, 1206],
+      "stoppedAtStandWithReplay": null
+    },
+    {
+      "record": "single-leg-calf-raise-dark-normal-timed.json",
+      "sha256": "1e4133c8cfbaf6bb7ea0ffa1a9ea81b0442b46fb24f73050638dbce41bb5b911",
+      "framesObserved": 6,
+      "lastSixSources": [
+        "/Maiin/form-frames/single-leg-calf-raise/2.webp",
+        "/Maiin/form-frames/single-leg-calf-raise/3.webp",
+        "/Maiin/form-frames/single-leg-calf-raise/4.webp",
+        "/Maiin/form-frames/single-leg-calf-raise/5.webp",
+        "/Maiin/form-frames/single-leg-calf-raise/6.webp",
+        "/Maiin/form-frames/single-leg-calf-raise/1.webp"
+      ],
+      "lastIntervalsMs": [1206, 1206, 1206, 1207, 1205],
+      "stoppedAtStandWithReplay": null
+    },
+    {
+      "record": "single-leg-calf-raise-dark-slower-timed.json",
+      "sha256": "68a96d8fd1e9b1b369c0db9fe38f17e63c1ccd7db659f38281346a9940c1066d",
+      "framesObserved": 6,
+      "lastSixSources": [
+        "/Maiin/form-frames/single-leg-calf-raise/1.webp",
+        "/Maiin/form-frames/single-leg-calf-raise/2.webp",
+        "/Maiin/form-frames/single-leg-calf-raise/3.webp",
+        "/Maiin/form-frames/single-leg-calf-raise/4.webp",
+        "/Maiin/form-frames/single-leg-calf-raise/5.webp",
+        "/Maiin/form-frames/single-leg-calf-raise/6.webp"
+      ],
+      "lastIntervalsMs": [2406, 2406, 2407, 2405, 2406],
+      "stoppedAtStandWithReplay": null
+    },
+    {
+      "record": "single-leg-calf-raise-light-normal-timed.json",
+      "sha256": "f1a3a0e38c11d0e42a7ed54a85fbad839dcbf03c16427d66fad7c3545e3716a1",
+      "framesObserved": 6,
+      "lastSixSources": [
+        "/Maiin/form-frames/single-leg-calf-raise/1.webp",
+        "/Maiin/form-frames/single-leg-calf-raise/2.webp",
+        "/Maiin/form-frames/single-leg-calf-raise/3.webp",
+        "/Maiin/form-frames/single-leg-calf-raise/4.webp",
+        "/Maiin/form-frames/single-leg-calf-raise/5.webp",
+        "/Maiin/form-frames/single-leg-calf-raise/6.webp"
+      ],
+      "lastIntervalsMs": [1206, 1208, 1204, 1206, 1206],
+      "stoppedAtStandWithReplay": null
+    },
+    {
+      "record": "turkish-get-up-dark-normal-timed.json",
+      "sha256": "64bbca4635e536f9962c76b445e6ba88b8cc1fad8988cdb25499888aceeb9616",
+      "framesObserved": 6,
+      "lastSixSources": [
+        "/Maiin/form-frames/turkish-get-up/1.webp",
+        "/Maiin/form-frames/turkish-get-up/2.webp",
+        "/Maiin/form-frames/turkish-get-up/3.webp",
+        "/Maiin/form-frames/turkish-get-up/4.webp",
+        "/Maiin/form-frames/turkish-get-up/5.webp",
+        "/Maiin/form-frames/turkish-get-up/6.webp"
+      ],
+      "lastIntervalsMs": [1220, 1211, 1213, 1212, 1218],
+      "stoppedAtStandWithReplay": true
+    },
+    {
+      "record": "turkish-get-up-light-slower-timed.json",
+      "sha256": "facc5a4ea5d4a1a21754b53a1a8903762b88d926a1f29bca81d1ce4baf9700a5",
+      "framesObserved": 6,
+      "lastSixSources": [
+        "/Maiin/form-frames/turkish-get-up/1.webp",
+        "/Maiin/form-frames/turkish-get-up/2.webp",
+        "/Maiin/form-frames/turkish-get-up/3.webp",
+        "/Maiin/form-frames/turkish-get-up/4.webp",
+        "/Maiin/form-frames/turkish-get-up/5.webp",
+        "/Maiin/form-frames/turkish-get-up/6.webp"
+      ],
+      "lastIntervalsMs": [2942, 2412, 2412, 2412, 2412],
+      "stoppedAtStandWithReplay": true
+    }
+  ],
+  "getUpReplay": {
+    "image": "/Maiin/form-frames/turkish-get-up/1.webp",
+    "pause": true
+  },
+  "traceCaveat": "The MutationObserver records a source transition before image load; false on the first event is not a broken image. All 36 settled manual selections decode successfully.",
+  "visualFindings": [
+    "Curl reference plates, collars and sleeves stay consistent through the cycle.",
+    "Calf support and tread no longer jump; original synchronized body/heel poses retained.",
+    "Get-up bridge to kneel to stand keeps front foot on the right and the same loaded far arm; sequence stops at standing."
+  ]
+}

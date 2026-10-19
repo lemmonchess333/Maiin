@@ -49,13 +49,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   "barbell-curl": {
     src: "form-art/barbell-curl.webp",
-    width: 275,
+    width: 278,
     height: 480,
     keyed: true,
     source: "form-frames/barbell-curl/4.webp",
     sourceSha256:
-      "9e536646540943b503389e416334556333ac84f2d0b8ea3a30e58719d05e1f86",
-    sha256: "0497a98cba86261f4f6e6d8006ea4dcc80427e4b3cf56bcef1f9d5ee73720c0f",
+      "4da03f12f518a7961d6ce0a903431ef6647444455795d4da920b476447c1f014",
+    sha256: "501b25222afda50114df4f94636b287a7d0836f7fb07ba37eb9de248100f7ea8",
   },
   "barbell-floor-press": {
     src: "form-art/barbell-floor-press.webp",
@@ -1234,8 +1234,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/single-leg-calf-raise/3.webp",
     sourceSha256:
-      "1d9a123655b12cd30e9dd25fc102acbe8c3a0b6519489da14339114d61b57fa3",
-    sha256: "bf19def08b9fcbcd4e97243c22fb8fbc2c7d4ac7b98d25c2fb86bd17dfab1298",
+      "b685d64b0d358b65c0bc7e78b48077430c94ca96153b53f08c57531ce7f1b7f1",
+    sha256: "d0d4c73e0c51acb2c37bd5eaa6fbe3eb57fd00918a539811e833ed06c6f43e06",
   },
   "sissy-squat": {
     src: "form-art/sissy-squat.webp",
@@ -1469,13 +1469,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   "turkish-get-up": {
     src: "form-art/turkish-get-up.webp",
-    width: 412,
+    width: 321,
     height: 480,
     keyed: true,
     source: "form-frames/turkish-get-up/5.webp",
     sourceSha256:
-      "2f5e3c5bce6ce2a495f44a482ad57eaccc0ce9505819f9076cb5aa38636a3b70",
-    sha256: "0b0df00a64ca17aee50a445c36526ef0b60beafbfc5262931fe7d969422f6dcf",
+      "7e705ce5a72feefb363062c7517a692f495fc14e05129d06603e23fa071f4971",
+    sha256: "d63b993dcc6d66b8c7ec5c7c9844100421dd7c8dbf7209825252c2d87bf74174",
   },
   "walking-dumbbell-lunges": {
     src: "form-art/walking-dumbbell-lunges.webp",
