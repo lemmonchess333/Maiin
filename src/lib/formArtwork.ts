@@ -110,13 +110,20 @@ const approved = (
 });
 
 /**
- * The sets listed by hand: thirty-two owner-authorized guides with findings
+ * The sets listed by hand: owner-authorized guides with findings
  * retained, including the six legacy sets redrawn in the current style.
  * They do not claim strict visual certification. An approved set never belongs
  * here: it comes from its record, and formArtwork.test.ts fails if an ID
  * is listed in both places.
  */
 export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
+  "lu-raise": {
+    ...existing("lu-raise", 1254, 1254),
+    version: "anatomy-v3-2026-10-19-lu-overhead-v1",
+    status: "owner-released-with-findings",
+    reviewFile:
+      "docs/exercise-art/releases/2026-10-19-library-audit/lu-raise.json",
+  },
   "incline-db-curl": {
     ...existing("incline-db-curl", 992, 784),
     reference: "form-frames/incline-db-curl/1.webp",
@@ -177,9 +184,10 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
   "turkish-get-up": {
     ...existing("turkish-get-up", 1024, 1024),
     reference: "form-frames/turkish-get-up/1.webp",
-    version: "anatomy-v3-2026-10-17-gemini-get-up-v2",
+    version: "anatomy-v3-2026-10-19-get-up-sequence-v1",
     status: "owner-released-with-findings",
-    reviewFile: "docs/exercise-art/releases/2026-10-17/turkish-get-up.json",
+    reviewFile:
+      "docs/exercise-art/releases/2026-10-19-library-audit/turkish-get-up.json",
   },
   "assault-bike": {
     ...existing("assault-bike", 1024, 1024),

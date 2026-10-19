@@ -1750,17 +1750,13 @@ export const RELEASED_FORM_PLACARDS = {
   "lu-raise": placard(
     "lu-raise",
     ["Deltoids"],
-    ["Front delts", "Side delts"],
+    [],
     [
       [0, "Start", "Stand tall, weights at your sides."],
       [0.25, "Raise laterally", "Raise both arms out to the sides."],
       [0.5, "Shoulder height", "Reach shoulder height with soft elbows."],
-      [
-        1,
-        "Sweep forward",
-        "Sweep forward, bringing the weights close together.",
-      ],
-      [0.5, "Open laterally", "Open back out at shoulder height."],
+      [1, "Continue overhead", "Continue out and up with soft elbows."],
+      [0.5, "Lower laterally", "Lower out to shoulder height under control."],
       [0.25, "Lower", "Lower steadily; continue to your sides."],
     ]
   ),
@@ -2275,23 +2271,26 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Reset", "Return low while maintaining both hand supports."],
     ]
   ),
-  "turkish-get-up": placard(
-    "turkish-get-up",
-    ["Shoulders", "Core"],
-    ["Triceps", "Upper Back", "Glutes", "Quads"],
-    [
-      [0, "Press", "Press the bell up; eyes on it."],
-      [0.2, "Elbow", "Roll onto your free elbow, arm locked."],
-      [0.4, "Hand", "Push up onto your free hand."],
-      [0.6, "Bridge", "Lift your hips high off the floor."],
-      [0.8, "Kneel", "Sweep your leg back into a half-kneel."],
-      [1, "Stand", "Stand tall, then reverse each step down."],
-    ],
-    [
-      "Lie on your back with the bell beside your shoulder.",
-      "Press it up with both hands to a locked arm, then free one hand.",
-    ]
-  ),
+  "turkish-get-up": {
+    ...placard(
+      "turkish-get-up",
+      ["Shoulders", "Core"],
+      ["Triceps", "Upper Back", "Glutes", "Quads"],
+      [
+        [0, "Press", "Press the bell up; eyes on it."],
+        [0.2, "Elbow", "Roll onto your free elbow, arm locked."],
+        [0.4, "Hand", "Push up onto your free hand."],
+        [0.6, "Bridge", "Lift your hips high off the floor."],
+        [0.8, "Kneel", "Sweep your leg back into a half-kneel."],
+        [1, "Stand", "Stand tall, then reverse each step down."],
+      ],
+      [
+        "Lie on your back with the bell beside your shoulder.",
+        "Press it up with both hands to a locked arm, then free one hand.",
+      ]
+    ),
+    playback: "sequence" as const,
+  },
   "assault-bike": placard(
     "assault-bike",
     ["Quads", "Glutes"],

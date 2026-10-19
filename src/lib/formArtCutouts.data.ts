@@ -849,13 +849,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   "lu-raise": {
     src: "form-art/lu-raise.webp",
-    width: 410,
+    width: 403,
     height: 480,
     keyed: true,
     source: "form-frames/lu-raise/3.webp",
     sourceSha256:
-      "68a393cd64a3fcf84860740f8edb41218477a5f49497df1da9ee5f8a3757a9fe",
-    sha256: "97fc608629777f788b9188a913471305723b9497b0be96472aa1f08e74661e8d",
+      "da133900c53c1a5ed65c06f7eb93b2f0919e983cc247f195b1f68601201975fb",
+    sha256: "115aecd88b9948764a7433234c8a6cceacba096a47ecd7a5337f35ca9ae48080",
   },
   lunges: {
     src: "form-art/lunges.webp",

@@ -1,0 +1,151 @@
+{
+  "exerciseId": "lu-raise",
+  "version": "anatomy-v3-2026-10-19-lu-overhead-v1",
+  "width": 1254,
+  "height": 1254,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex scoped native movement and library review",
+  "reviewedAt": "2026-10-19T17:17:15.698209+00:00",
+  "reference": {
+    "path": "form-frames/lu-raise/1.webp",
+    "sha256": "59fcfc366ae9148c1a3d5e799d150c842b5e7a6d9b57c063b45e1327396d4ab2"
+  },
+  "cueSha256": "aab2fd074009b104b3ca46c1ca7e6f016eea03c6705b37fae7093af0120727cf",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Scoped native source review complete; actual registered review is recorded separately. No strict certification claimed."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Scoped native source review complete; actual registered review is recorded separately. No strict certification claimed."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Scoped native source review complete; actual registered review is recorded separately. No strict certification claimed."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Scoped native source review complete; actual registered review is recorded separately. No strict certification claimed."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Scoped native source review complete; actual registered review is recorded separately. No strict certification claimed."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Scoped native source review complete; actual registered review is recorded separately. No strict certification claimed."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Scoped native source review complete; actual registered review is recorded separately. No strict certification claimed."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Scoped native source review complete; actual registered review is recorded separately. No strict certification claimed."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Scoped native source review complete; actual registered review is recorded separately. No strict certification claimed."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Scoped native source review complete; actual registered review is recorded separately. No strict certification claimed."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Scoped native source review complete; actual registered review is recorded separately. No strict certification claimed."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/lu-raise/1.webp",
+      "sha256": "59fcfc366ae9148c1a3d5e799d150c842b5e7a6d9b57c063b45e1327396d4ab2",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/lu-raise/2026-10-19-overhead-correction/1.png",
+        "sha256": "47a0f590c7373620a9dcf85d4b075c93771e27d7e56f13ee41ccdd9bdf658bdb"
+      }
+    },
+    {
+      "path": "form-frames/lu-raise/2.webp",
+      "sha256": "e56ec5601eef1cf77f3054038ccb25a9ab3fb8aab6349162f1d1bc0e8a867fff",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/lu-raise/2026-10-19-overhead-correction/2.png",
+        "sha256": "94aa7a8938dfc236f95b0fb2a95f8c7d00e48ece4c46b898be25f9748e5ceb6c"
+      }
+    },
+    {
+      "path": "form-frames/lu-raise/3.webp",
+      "sha256": "da133900c53c1a5ed65c06f7eb93b2f0919e983cc247f195b1f68601201975fb",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/lu-raise/2026-10-19-overhead-correction/3.png",
+        "sha256": "caaedba7967a0cbdfeb697e8a0d5ee1d9f2c38b672db2253c36714f5f32d9fbf"
+      }
+    },
+    {
+      "path": "form-frames/lu-raise/4.webp",
+      "sha256": "dbc9f1223c0c915613e1f4fb0ee5a1db48466cca4d626b18553cf843ab7e4946",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/lu-raise/2026-10-19-overhead-correction/4.png",
+        "sha256": "eaca32b4ceb1c0e6765b094253d9b4cd73df49283a4a6be7288681ae76c2f96f"
+      }
+    },
+    {
+      "path": "form-frames/lu-raise/5.webp",
+      "sha256": "da133900c53c1a5ed65c06f7eb93b2f0919e983cc247f195b1f68601201975fb",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/lu-raise/2026-10-19-overhead-correction/5.png",
+        "sha256": "caaedba7967a0cbdfeb697e8a0d5ee1d9f2c38b672db2253c36714f5f32d9fbf"
+      }
+    },
+    {
+      "path": "form-frames/lu-raise/6.webp",
+      "sha256": "e56ec5601eef1cf77f3054038ccb25a9ab3fb8aab6349162f1d1bc0e8a867fff",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/lu-raise/2026-10-19-overhead-correction/6.png",
+        "sha256": "94aa7a8938dfc236f95b0fb2a95f8c7d00e48ece4c46b898be25f9748e5ceb6c"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "Check the whole exercise library for errors then, fix anything wrong, same model and colours, no shorts, and get it all merged. Stop asking for approval.",
+    "context": "Explicit current-session authorization to correct the entire exercise library, register the same no-shorts athlete and established palette, verify and normally merge; no new strict certificate is claimed."
+  },
+  "supersedesApprovedRelease": "docs/exercise-art/releases/2026-09-24/lu-raise.json",
+  "findings": [
+    "The former shoulder-height forward sweep was an incorrect movement for the Lu Raise name. The replacement follows an outward overhead arc; catalogue and cues agree.",
+    "Four genuine discrete physical poses; matched outward/return lateral drawings are reused, with no continuous interpolation.",
+    "New overhead source retains small illustrative contour differences. Whole source image is native1254square; no anatomy warping, fitting, mirroring, resampling or head/shoe grafts.",
+    "Common canvas padding/crop preserves all old body and weight pixels at one fixed scale. Existing deltoid chroma uses canonical primary hue/saturation with original per-pixel lightness."
+  ],
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/lu-raise/2026-10-19-overhead-correction",
+    "method": "One native overhead pose from built-in imagegen; existing lateral sources receive common integer crop/padding and existing-chroma canonical mapping.",
+    "imageGenerationCalls": 2,
+    "rejectedWrongScaleOutputs": 1,
+    "anatomicalTransforms": [],
+    "priorRelease": "docs/exercise-art/releases/2026-09-24/lu-raise.json",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/lu-raise/2026-10-19-overhead-correction/portable-lu-overhead-source.zip",
+      "sha256": "dc718e29e9c1fe7a20dbf4b3ef38b43f1eb5baa4cd604f19c05b436b56ea29af",
+      "bytes": 22460027,
+      "members": 47
+    },
+    "techniqueSource": "https://www.catalystathletics.com/exercise/865/Overhead-Lateral-Raise/"
+  }
+}

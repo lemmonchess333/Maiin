@@ -11,6 +11,7 @@ interface Props {
   active?: boolean;
   initialIndex?: number;
   autoPlay?: boolean;
+  loop?: boolean;
   onStep?: (index: number) => void;
 }
 
@@ -24,6 +25,7 @@ export default function ExerciseFormFrames({
   active = true,
   initialIndex = 0,
   autoPlay = true,
+  loop = true,
   onStep,
 }: Props) {
   const reducedMotion = useReducedMotion();
@@ -50,12 +52,14 @@ export default function ExerciseFormFrames({
   const complete =
     beats.length === 6 && beats.every((beat) => Boolean(beat.image));
   const next = (index + 1) % 6;
+  const sequenceEnd = !loop && index === 5;
   const running =
     complete &&
     playing &&
     active &&
     visible &&
     !reducedMotion &&
+    !sequenceEnd &&
     failed === null;
   useEffect(() => {
     if (!running || !loaded[index] || !loaded[next]) return;
@@ -148,15 +152,22 @@ export default function ExerciseFormFrames({
             variant="secondary"
             disabled={failed !== null}
             leftIcon={
-              playing ? (
+              playing && !sequenceEnd ? (
                 <Pause className="size-4" />
               ) : (
                 <Play className="size-4" />
               )
             }
-            onClick={() => setPlaying((value) => !value)}
+            onClick={() => {
+              if (sequenceEnd) {
+                setIndex(0);
+                setPlaying(true);
+              } else {
+                setPlaying((value) => !value);
+              }
+            }}
           >
-            {playing ? "Pause" : "Play"}
+            {sequenceEnd ? "Replay" : playing ? "Pause" : "Play"}
           </Button>
         )}
         <IconButton

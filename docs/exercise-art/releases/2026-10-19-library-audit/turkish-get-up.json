@@ -1,0 +1,148 @@
+{
+  "exerciseId": "turkish-get-up",
+  "version": "anatomy-v3-2026-10-19-get-up-sequence-v1",
+  "width": 1024,
+  "height": 1024,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex scoped playback correction",
+  "reviewedAt": "2026-10-19T17:17:15.698209+00:00",
+  "reference": {
+    "path": "form-frames/turkish-get-up/1.webp",
+    "sha256": "5ec6ca45f5d7cd08b953e9805127fa8535a60f597ff7771745553498e46989b7"
+  },
+  "cueSha256": "ef47e27eedd522dc2a95f35480974a7805650cdbb6dc8dff207b1ea406262925",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Original artwork unchanged. Ascent-only lesson now stops at standing until explicit Replay; actual registered review recorded separately."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Original artwork unchanged. Ascent-only lesson now stops at standing until explicit Replay; actual registered review recorded separately."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Original artwork unchanged. Ascent-only lesson now stops at standing until explicit Replay; actual registered review recorded separately."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Original artwork unchanged. Ascent-only lesson now stops at standing until explicit Replay; actual registered review recorded separately."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Original artwork unchanged. Ascent-only lesson now stops at standing until explicit Replay; actual registered review recorded separately."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Original artwork unchanged. Ascent-only lesson now stops at standing until explicit Replay; actual registered review recorded separately."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Original artwork unchanged. Ascent-only lesson now stops at standing until explicit Replay; actual registered review recorded separately."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Original artwork unchanged. Ascent-only lesson now stops at standing until explicit Replay; actual registered review recorded separately."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Original artwork unchanged. Ascent-only lesson now stops at standing until explicit Replay; actual registered review recorded separately."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Original artwork unchanged. Ascent-only lesson now stops at standing until explicit Replay; actual registered review recorded separately."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Original artwork unchanged. Ascent-only lesson now stops at standing until explicit Replay; actual registered review recorded separately."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/turkish-get-up/1.webp",
+      "sha256": "5ec6ca45f5d7cd08b953e9805127fa8535a60f597ff7771745553498e46989b7",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-17/1.png",
+        "sha256": "04670d623c26b889ec26a16b3022f99e98f646904a14df0da24036de25d63643",
+        "generatedSha256": "a78045c310396d013a64b136cb21ee1e25abb010a8b97ce851047fac45cce52f"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/2.webp",
+      "sha256": "2a0371b5670b7e64162e0b2fe93e41ecc0ee888d41d9429501c3fba0ea8be337",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-17/2.png",
+        "sha256": "97eec20aa3610571745da16e49d805624c5f7401a1d7ccc7f2d9aaabe1c2b4b4",
+        "generatedSha256": "08aa587681f5812d0708b2e76ba3fcbd25484273ea5488dbce3377f4db5878cb"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/3.webp",
+      "sha256": "e1b720988c61535d068343aada3b8ce4750319f071019ce800761da72ec09daa",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-17/3.png",
+        "sha256": "37d5358bb49d238c2a97e13181c70f8d5627af4d33048075a7c2b92a0120a38b",
+        "generatedSha256": "51837689d46dc1fafb1d82c8357ed82d5fb8cab4a8bef4d609a62d8abdc2d811"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/4.webp",
+      "sha256": "7aa1e7b3c510a34bd317fdae23aada62dd098d840432863b0e8d93c8f377ae6a",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-17/4.png",
+        "sha256": "687917396bf47d8f5f6208297d9155a77ad6b015f0a155009b18183a2ab09454",
+        "generatedSha256": "cb1a8d51d6b9b7703331f07af2328249cb65ea84123da8dda705073718e41405"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/5.webp",
+      "sha256": "43a541aaca73fff5c113e8a29723de6709035a8b633954a713117414e39ba2c1",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-17/5.png",
+        "sha256": "c196c9345588ba21c82af4e55a87ce70518a599d3860f8daaa2a7b4d7299fcf7",
+        "generatedSha256": "ec228f37c5f09503ec094d72993ececd0e7469788a7f5f42c23e5dc8d7afe53d"
+      }
+    },
+    {
+      "path": "form-frames/turkish-get-up/6.webp",
+      "sha256": "19ebb2ec415c2f664fd3118313ce8f0a775d573b9098bf91c91009645a249bea",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/turkish-get-up/2026-10-17/6.png",
+        "sha256": "eb04cf62077bc0f29434933d55cd5218c451029b76e95428048073bd3cd9aa63",
+        "generatedSha256": "5ba718b702c88eed501d4bc9fb925161dc0aabdd333e79b7cde8dfff5156766e"
+      }
+    }
+  ],
+  "recordStage": "Owner release recorded; project verification, CI and merge remain separate gates",
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "Check the whole exercise library for errors then, fix anything wrong, same model and colours, no shorts, and get it all merged. Stop asking for approval.",
+    "context": "Explicit current-session authorization to correct the entire exercise library, register the same no-shorts athlete and established palette, verify and normally merge; no new strict certificate is claimed."
+  },
+  "provenance": {
+    "method": "gemini-3-pro-image through scripts/art/gemini-image.py, with the canonical athlete attached to every generation. Frames 1-4 as in version 1 (a master and edits from the pose before; frame 2 drawn between 1 and 3). Frame 5: a half-kneel drawn in profile from frame 4, flipped left to right. Frame 6: an edit of frame 5 up to standing, in the same profile. Frames 1-4 came back 3:2 and were padded square with black above. Every frame was then scaled (frames 1-4 by 0.87 x 0.95, frame 5 by 0.83 x 0.95, frame 6 by 0.95), set centred on one floor line, and near-black pixels clamped to pure black. Nothing was redrawn by hand.",
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "priorRelease": "docs/exercise-art/releases/2026-10-17/turkish-get-up.json"
+  },
+  "findings": [
+    "Frames 5 and 6 are in profile at about eye level, where frames 1-4 look down from a little above; the athlete no longer turns to face the viewer, which version 1 recorded.",
+    "Frame 5 is a generated half-kneel flipped left to right, so the bell stays in the left hand as in frames 1-4.",
+    "Every frame was scaled by one uniform resample to frame 6's size and set on one floor line; the lying figures are small in the square.",
+    "No contacts or anchors were measured.",
+    "Automatic standing-to-supine reset corrected: this ascent-only lesson stops at frame6 and offers explicit Replay. Original six illustrations, source archives and cues are unchanged."
+  ],
+  "playback": "sequence"
+}
