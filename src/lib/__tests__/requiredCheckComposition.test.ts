@@ -25,6 +25,13 @@
  * sit inside the required job: move the size ratchet, the suite or lint
  * out of `unit` and into a job nothing requires, and the gate is gone
  * with nothing else to say so.
+ *
+ * The second half holds `npm run verify` to the same job. CLAUDE.md tells
+ * every contributor to run it before pushing, as "everything CI's unit
+ * job blocks a merge on", and it was not that: the job ran the deploy
+ * verifiers' offline tests, which verify did not, and verify ran
+ * `check:form-drafts`, which no workflow ran at all. A push that passed
+ * verify could still go red at the gate.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
@@ -99,5 +106,68 @@ describe("what the required check actually runs", () => {
       "node --test scripts/rollover-deployed-challenges.test.mjs"
     );
     expect(verifierStep).not.toContain("continue-on-error");
+  });
+});
+
+const pkg = JSON.parse(
+  readFileSync(resolve(repoRoot, "package.json"), "utf8")
+) as { scripts: Record<string, string> };
+
+/** The scripts a block of workflow text runs with `npm run`, comment
+ *  lines skipped. */
+function npmRunNames(text: string): Set<string> {
+  const names = new Set<string>();
+  for (const line of text.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("#")) continue;
+    for (const m of trimmed.matchAll(/npm run ([\w:-]+)/g)) names.add(m[1]);
+  }
+  return names;
+}
+
+/** The shell commands inside the verifier step's `run: |` block. */
+function verifierCommands(body: string): string[] {
+  const step = body
+    .split(/\n {6}- /)
+    .find((s) =>
+      s.includes("name: Test production deploy verifiers (offline)")
+    );
+  expect(step, "required unit verifier step is missing").toBeDefined();
+  const lines = step!.split("\n");
+  const start = lines.findIndex((l) => /^ {8}run: \|\s*$/.test(l));
+  expect(
+    start,
+    "the verifier step's run block is not a `run: |`"
+  ).toBeGreaterThan(-1);
+  return lines
+    .slice(start + 1)
+    .filter((l) => l.startsWith(" ".repeat(10)))
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith("#"));
+}
+
+describe("`npm run verify` runs what the required check runs", () => {
+  const body = jobBody(REQUIRED_JOB);
+  const verify = pkg.scripts.verify.split("&&").map((part) => part.trim());
+
+  it("is made only of npm scripts, so every part of it is counted below", () => {
+    expect(verify.length).toBeGreaterThan(4);
+    for (const part of verify) expect(part).toMatch(/^npm run [\w:-]+$/);
+  });
+
+  it("runs the verifier step's commands through `test:verifiers`, exactly", () => {
+    const commands = verifierCommands(body);
+    expect(commands.length).toBe(2);
+    expect(
+      pkg.scripts["test:verifiers"].split("&&").map((part) => part.trim())
+    ).toEqual(commands);
+  });
+
+  it("runs every check the required job runs, and none it does not", () => {
+    // The verifier step runs its commands directly (other guards read
+    // them there), and the test above proves `test:verifiers` is them.
+    const job = new Set([...npmRunNames(body), "test:verifiers"]);
+    const local = new Set(verify.map((part) => part.replace(/^npm run /, "")));
+    expect([...local].sort()).toEqual([...job].sort());
   });
 });

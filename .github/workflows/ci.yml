@@ -74,11 +74,16 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run lint
+      # package.json's `test:verifiers` runs these same two commands, so
+      # `npm run verify` runs them before a push. The guard
+      # requiredCheckComposition.test.ts holds that script to this step,
+      # and this job's checks to verify's.
       - name: Test production deploy verifiers (offline)
         run: |
           python3 -m unittest discover -s scripts -p 'test_verify*.py' -v
           node --test scripts/rollover-deployed-challenges.test.mjs
       - run: npm run check:form-art
+      - run: npm run check:form-drafts
       # Zero-cycle gate (2026-07-11 repo audit batch 3): six circular
       # import chains were removed by relocating shared types to neutral
       # modules; this keeps the dependency graph acyclic.
