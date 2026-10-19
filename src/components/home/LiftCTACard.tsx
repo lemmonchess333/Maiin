@@ -7,15 +7,11 @@ import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { cardClasses } from "@/components/ui/cardClasses";
 import { formArtCutoutUrl, sessionLeadArt } from "@/lib/formArtCutouts";
 import {
-  estimateSessionMinutes,
+  cardSessionMinutes,
   type PricedExercise,
 } from "@/features/program/expressSession";
 import type { RestContext } from "@/features/program/restTime";
-import {
-  generatedDayType,
-  liftDayLine,
-  liftDayTitle,
-} from "@/lib/liftDayLabel";
+import { liftCardTitle, liftDayLine, liftDayTitle } from "@/lib/liftDayLabel";
 
 type LiftCardExercise = Partial<PricedExercise> & { name: string };
 
@@ -90,7 +86,7 @@ export default function LiftCTACard({
         : "Needs review";
 
   const count = nextWorkout.exercises.length;
-  const { category, title: dayTitle } = liftDayTitle(nextWorkout.dayName);
+  const { category } = liftDayTitle(nextWorkout.dayName);
   /* A generated day is titled as Train names it in its week ("Pull B");
      its name carries no category, so the eyebrow says "Planned for today",
      which is what this surface knows and reads as plan beside Train's
@@ -99,18 +95,12 @@ export default function LiftCTACard({
      with a dash keeps its first half above. No week number or rotation
      count: Home shows the session and its dose, and the rest lives in the
      day's details (owner direction). */
-  const title =
-    dayLabel && generatedDayType(nextWorkout.dayName) ? dayLabel : dayTitle;
+  const title = liftCardTitle(nextWorkout.dayName, dayLabel);
   const eyebrow = eyebrowLabel ?? category ?? "Planned for today";
-  const minutes = useMemo(() => {
-    const priced = nextWorkout.exercises.filter(
-      (ex): ex is LiftCardExercise & { sets: number } =>
-        typeof ex.sets === "number" && ex.sets > 0
-    );
-    return priced.length === count && count > 0
-      ? estimateSessionMinutes(priced, rest)
-      : null;
-  }, [nextWorkout.exercises, count, rest]);
+  const minutes = useMemo(
+    () => cardSessionMinutes(nextWorkout.exercises, rest),
+    [nextWorkout.exercises, rest]
+  );
   const art = useMemo(
     () => sessionLeadArt(nextWorkout.exercises)?.cutout ?? null,
     [nextWorkout.exercises]

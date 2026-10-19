@@ -1,4 +1,8 @@
 import type { TodaySession } from "@/lib/todaySession";
+import type { RestContext } from "@/features/program/restTime";
+import type { WorkoutDay } from "@/features/program/programTypes";
+import { cardSessionMinutes } from "@/features/program/expressSession";
+import { liftCardTitle } from "@/lib/liftDayLabel";
 import { FIRST_WEEK_DAYS, accountDay } from "@/lib/firstWeek";
 import { isAutomated } from "@/lib/launchSplash";
 import { readString } from "@/lib/localStore";
@@ -8,7 +12,8 @@ import { readString } from "@/lib/localStore";
  *
  * A new account's first visit to Home gets a short walk: the page dims and
  * the Tropos mark points at today's session, the first-week card and the
- * Food card, one at a time, saying what each screen doesn't. After that
+ * Food card, one at a time, saying what each screen doesn't. It talks about
+ * this person's plan (FV3): today's session by name, and today's target. After that
  * the guide turns up once in each place the first time it is used: Train's
  * order, the first set, the food composer and the first run. Analytics has
  * no hint: its empty state already says what one would.
@@ -100,6 +105,103 @@ const TODAY_WORDS: Record<
   },
 };
 
+/**
+ * What today's stop says of this person's own session (FV3), in the words
+ * its card uses: a lift's name, size, minutes and first exercise; a run's
+ * name and dose; on a rest day, the next session's name.
+ */
+export type TodayAbout =
+  | {
+      kind: "lift";
+      name: string;
+      exercises: number;
+      /** As the card prices it, or null when it shows none. */
+      minutes: number | null;
+      first: string;
+    }
+  | { kind: "run"; name: string; dose: string | null }
+  | { kind: "rest"; next: string };
+
+function liftAbout(
+  workout: WorkoutDay,
+  weekName: string | null | undefined,
+  rest: RestContext
+): TodayAbout | null {
+  const first = workout.exercises[0];
+  if (!first) return null;
+  return {
+    kind: "lift",
+    name: liftCardTitle(workout.dayName, weekName ?? undefined),
+    exercises: workout.exercises.length,
+    minutes: cardSessionMinutes(workout.exercises, rest),
+    first: first.name,
+  };
+}
+
+/** Today's session as the walk names it, or null when its card names
+ *  nothing more than the stop's own words: a free run, a run day with no
+ *  run written, a rest day before another. */
+export function todayAbout(session: TodaySession): TodayAbout | null {
+  switch (todayCard(session)) {
+    case "lift":
+      return session.lift?.workout
+        ? liftAbout(
+            session.lift.workout,
+            session.lift.name,
+            session.restContext
+          )
+        : null;
+    case "first-workout":
+      return session.rest?.kind === "first-workout"
+        ? liftAbout(
+            session.rest.workout,
+            session.rest.name,
+            session.restContext
+          )
+        : null;
+    case "run":
+      return session.run?.name
+        ? { kind: "run", name: session.run.name, dose: session.run.dose }
+        : null;
+    case "rest":
+      return session.rest?.kind === "rest" && session.rest.tomorrow
+        ? { kind: "rest", next: session.rest.tomorrow.label }
+        : null;
+    default:
+      return null;
+  }
+}
+
+/** Today's stop: the card's words, led by this person's session when the
+ *  walk knows it. */
+function todayWords(
+  card: Exclude<TodayCard, "first-meal">,
+  about: TodayAbout | null | undefined
+): { title: string; body: string } {
+  const words = TODAY_WORDS[card];
+  if (about?.kind === "lift" && (card === "lift" || card === "first-workout")) {
+    const size = [
+      `${about.exercises} ${about.exercises === 1 ? "exercise" : "exercises"}`,
+      ...(about.minutes ? [`about ${about.minutes} min`] : []),
+      `starting with ${about.first}`,
+    ].join(", ");
+    return { ...words, body: `${about.name}: ${size}. ${words.body}` };
+  }
+  if (about?.kind === "run" && card === "run") {
+    const lead = about.dose
+      ? `${about.name}: ${about.dose}.`
+      : `${about.name}.`;
+    return { ...words, body: `${lead} ${words.body}` };
+  }
+  if (about?.kind === "rest" && card === "rest") {
+    return {
+      ...words,
+      body: `Your next session, ${about.next}, shows here tomorrow, with Start to begin it.`,
+    };
+  }
+  return words;
+}
+
 const COUNT_WORDS = ["", "One", "Two", "Three", "Four", "Five", "Six"];
 
 /** "Three things", spelled as a person would say it. */
@@ -111,6 +213,12 @@ function thingsToDo(n: number): string {
 export const FOOD_STOP_BODY =
   "Log what you eat here, by typing it or scanning it. Your target already counts your training, so there’s nothing to eat back.";
 
+/** The Food stop with today's target in it, as Home's food card shows it. */
+export function foodStopBody(calories: number | null | undefined): string {
+  if (!calories || calories <= 0) return FOOD_STOP_BODY;
+  return `Log what you eat here, by typing it or scanning it. Today’s target is ${Math.round(calories).toLocaleString()} kcal, and it already counts your training, so there’s nothing to eat back.`;
+}
+
 /**
  * The walk's stops, in the order the page shows them. The session card
  * leads unless it is the first-meal card, which the Food stop already
@@ -121,13 +229,17 @@ export function walkStops(input: {
   today: TodayCard | null;
   /** Items on the first-week card, or 0 when the card isn't showing. */
   firstWeekItems: number;
+  /** Today's session as the walk names it (`todayAbout`). */
+  about?: TodayAbout | null;
+  /** Today's calorie target, as Home's food card shows it. */
+  calories?: number | null;
 }): GuideStop[] {
   const stops: GuideStop[] = [];
   if (input.today && input.today !== "first-meal") {
     stops.push({
       id: "today",
       target: todayCardTarget(input.today),
-      ...TODAY_WORDS[input.today],
+      ...todayWords(input.today, input.about),
     });
   }
   if (input.firstWeekItems > 0) {
@@ -142,7 +254,7 @@ export function walkStops(input: {
     id: "food",
     target: "food",
     title: "Food",
-    body: FOOD_STOP_BODY,
+    body: foodStopBody(input.calories),
   });
   return stops;
 }

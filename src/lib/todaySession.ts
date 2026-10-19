@@ -99,6 +99,9 @@ export interface TodayRun {
   /** A long run that finishes at race pace, which its name says
    *  (Run21 (2), `racePaceWorkFor`). Absent reads as none. */
   racePace?: RacePaceWork | null;
+  /** Its name as its card names it ("Easy 30", "Long 15K with race pace"),
+   *  or null with no planned run. Absent reads as unnamed. */
+  name?: string | null;
 }
 
 /** Tomorrow's session, as the rest-day card names it. */
@@ -206,11 +209,7 @@ export function todaySession(input: TodaySessionInput): TodaySession {
           completed: resolved.run.isCompleted,
           isFirst: framing.firstRun,
           dose: runDose(resolved.run.runDay, profile),
-          racePace: racePaceWorkFor(
-            templateOfRunDay(resolved.run.runDay),
-            profile,
-            programState?.runPlan
-          ),
+          ...runNameAndPace(resolved.run.runDay, profile, programState),
         }
       : null,
     rest:
@@ -374,6 +373,26 @@ function muscleGroupsOf(workout: WorkoutDay | null): string {
   if (unique.length === 0) return "";
   if (unique.length <= 3) return unique.join(" · ");
   return unique.slice(0, 3).join(" · ") + " + more";
+}
+
+/** A planned run's race-pace work, and its name as its card names it. */
+function runNameAndPace(
+  runDay: ScheduledRunDay | null,
+  profile: UserProfile | null,
+  programState: TodaySessionInput["programState"]
+): Pick<TodayRun, "name" | "racePace"> {
+  const template = templateOfRunDay(runDay);
+  const racePace = racePaceWorkFor(template, profile, programState?.runPlan);
+  return {
+    racePace,
+    name: template
+      ? runSessionName(
+          template,
+          racePace,
+          resolveDistanceUnit(profile?.preferredDistanceUnit)
+        )
+      : null,
+  };
 }
 
 /** The session a run day holds, its override included. */

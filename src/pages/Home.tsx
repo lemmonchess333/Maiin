@@ -23,6 +23,7 @@ import {
   guideAllowedHere,
   guideRequest,
   rowStop,
+  todayAbout,
   todayCard,
   walkOffered,
   walkStops,
@@ -610,9 +611,17 @@ export default function Home() {
   const guideCard = todayCard(session);
   const firstWeekItems =
     welcomeCard.visible && firstWeekState ? firstWeekState.items.length : 0;
+  const guideAbout = useMemo(() => todayAbout(session), [session]);
+  const guideCalories = effectiveTargets?.finalTarget ?? null;
   const guideStops = useMemo(
-    () => walkStops({ today: guideCard, firstWeekItems }),
-    [guideCard, firstWeekItems]
+    () =>
+      walkStops({
+        today: guideCard,
+        firstWeekItems,
+        about: guideAbout,
+        calories: guideCalories,
+      }),
+    [guideCard, firstWeekItems, guideAbout, guideCalories]
   );
   const homeSettled = countsLoaded && !programLoading;
   const walkDue =
