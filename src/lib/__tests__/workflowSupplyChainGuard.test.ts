@@ -1,7 +1,7 @@
 /**
  * GitHub Actions supply-chain guards (security workstream, item 1f).
  *
- * Two invariants, both about who can run code with this repository's
+ * Three invariants, all about who can run code with this repository's
  * tokens and signing certificates:
  *
  * 1. Every third-party Action is pinned to a full commit SHA. A floating
@@ -17,6 +17,14 @@
  *    `run:` is `gh pr merge --auto`, and the job is gated on the actor
  *    being dependabot[bot]. One added `actions/checkout` step turns it
  *    into a token-exfiltration path for anyone who can open a PR.
+ *
+ * 3. `firebase-tools` is installed at one exact version. It is the CLI
+ *    that deploys rules, indexes and functions with the production
+ *    service account, and it is installed globally in each job rather
+ *    than from package.json, so neither the lockfile nor Dependabot sees
+ *    it. Unpinned, every release ran whatever npm published last, chosen
+ *    the minute the job started. Bump it by changing every install line
+ *    in one commit; the test below fails until they agree.
  */
 import { describe, it, expect } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
@@ -69,6 +77,44 @@ describe("GitHub Actions are pinned to commit SHAs", () => {
       "Unpinned or comment-less action(s). Pin with `uses: owner/repo@<commit sha> # <tag>` — resolve the tag with `git ls-remote https://github.com/<owner>/<repo> refs/tags/<tag> refs/tags/<tag>^{}`.\n  " +
         offenders.join("\n  ")
     ).toEqual([]);
+  });
+});
+
+describe("firebase-tools is installed at one exact version", () => {
+  const installs = workflowFiles.flatMap((file) =>
+    readFileSync(resolve(workflowsDir, file), "utf8")
+      .split("\n")
+      .flatMap((text, i) => {
+        const m = text.match(/npm install -g firebase-tools(\S*)/);
+        return m ? [{ file, line: i + 1, version: m[1] }] : [];
+      })
+  );
+
+  it("finds the installs: the deploys and every emulator job", () => {
+    expect(installs.length).toBeGreaterThanOrEqual(8);
+    expect(installs.map((i) => i.file)).toEqual(
+      expect.arrayContaining([
+        "deploy-firestore.yml",
+        "deploy-functions.yml",
+        "deploy-storage.yml",
+        "emulator-tests.yml",
+      ])
+    );
+  });
+
+  it("every install names an exact version", () => {
+    const offenders = installs
+      .filter((i) => !/^@\d+\.\d+\.\d+$/.test(i.version))
+      .map((i) => `${i.file}:${i.line}  firebase-tools${i.version}`);
+    expect(
+      offenders,
+      "Install firebase-tools as `npm install -g firebase-tools@<x.y.z>`, the version every other workflow uses.\n  " +
+        offenders.join("\n  ")
+    ).toEqual([]);
+  });
+
+  it("every workflow installs the same version", () => {
+    expect(new Set(installs.map((i) => i.version)).size).toBe(1);
   });
 });
 

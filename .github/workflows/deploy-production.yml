@@ -22,6 +22,8 @@ jobs:
   changes:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # A checkout and a git diff: about a minute.
+    timeout-minutes: 10
     outputs:
       backend: ${{ steps.changes.outputs.backend }}
     steps:

@@ -14,6 +14,12 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # The whole job took 6 minutes on the release of 19 October, its deploy
+    # step 3m20s. A deploy that creates or deletes many functions runs
+    # longer, so the limit is generous; it exists so a hung deploy fails
+    # and alerts instead of holding the `production-release` queue for
+    # GitHub's six-hour default.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -58,7 +64,7 @@ jobs:
           echo "::warning::Secret Manager still not reachable after polling; deploy may 403."
 
       - name: Install Firebase CLI
-        run: npm install -g firebase-tools
+        run: npm install -g firebase-tools@15.34.0
 
       - name: Install function dependencies
         run: npm ci --prefix functions
@@ -131,8 +137,11 @@ jobs:
       # issue #1636) stranded production functions for two weeks.
       # One rolling issue: created on first failure, commented on
       # subsequent ones; close it once deploys are green again.
+      # `cancelled()` as well as `failure()`: a job that reaches its
+      # timeout-minutes is cancelled, not failed, and a deploy cut off
+      # mid-way strands production just as a failed one does.
       - name: Alert on failed production deploy
-        if: failure()
+        if: failure() || cancelled()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
