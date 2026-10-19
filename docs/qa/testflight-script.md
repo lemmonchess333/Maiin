@@ -106,7 +106,10 @@ core flow, an App Review rejection, or wrong data.
     should show the new week with nothing ticked, and Home should match.
 16. **Locked-phone run.** Start a run outdoors, lock the phone and run 1–2 km,
     then unlock and finish. The route should have no straight-line jump across
-    the locked stretch, and that split's pace should look right.
+    the locked stretch, and that split's pace should look right. With audio
+    cues on, listen too: the kilometre cue should be spoken while the phone is
+    locked. Cues use the web view's speech, and the app's only background mode
+    is location, so silence here is the thing to report.
 17. **Auto-pause.** With auto-pause on, stand still for a minute at a
     crossing. The time should stop and the distance shouldn't creep. Then tap
     Pause while auto-paused, and resume: no time should be counted twice.

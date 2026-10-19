@@ -25,7 +25,7 @@ npm run verify       # Everything CI's unit job blocks a merge on: run before pu
 - **Maps:** MapLibre GL 6, with OpenFreeMap's tiles (`src/lib/basemap.ts`; the credit must stay on every map)
 - **Animation:** Framer Motion 12
 - **PWA:** a hand-written service worker, `public/sw.js`, registered by `src/lib/register-sw.ts`
-- **Native:** Capacitor (iOS/Android)
+- **Native:** Capacitor (iOS; Android is planned, with no `android/` yet)
 - **Payments:** RevenueCat (`@revenuecat/purchases-capacitor`) for native IAP (ADR-0006); Stripe Checkout is server-side only and dormant (Sub4) — the client loads no Stripe SDK
 - **Drag & Drop:** @dnd-kit (sortable exercise lists)
 - **Barcode:** @zxing/browser (food barcode scanning)
@@ -413,7 +413,7 @@ Tropos is pre-launch with one user. That is a temporary condition. Every UX, eng
 
 ## Build for the iOS app, not just the web
 
-Tropos ships as a native Capacitor iOS (and Android) app — that is the primary distribution channel, not the GitHub Pages web build. Every feature, integration, and infrastructure decision must work on the native app where it's technically possible, not just in the browser. A capability that only functions on the web — when the real users are on iOS — is wasted work, not a shipped feature.
+Tropos ships as a native Capacitor iOS app (Android is planned) — that is the primary distribution channel, not the GitHub Pages web build. Every feature, integration, and infrastructure decision must work on the native app where it's technically possible, not just in the browser. A capability that only functions on the web — when the real users are on iOS — is wasted work, not a shipped feature.
 
 - **Parity runs BOTH ways — the web build is the active development & preview surface.** Tropos is currently built and previewed on the web app, so every feature must render and be exercisable on web _and_ be wired to work on native iOS. Don't ship web-only (invisible to the real iOS users); equally, don't ship native-only (invisible in the web preview loop the developer is actually using). When a capability can only fully execute on-device (a Capacitor plugin, a native SDK), still leave a **web-visible path** — a fallback, a stub, or the same UI with the native call no-op'd — so the feature can be seen and reviewed on web _before_ it's pushed to iOS. "It only shows up once it's on a device" is a broken preview loop.
 
