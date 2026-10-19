@@ -625,18 +625,28 @@ service cloud.firestore {
            rules is held to the app's limit (DISPLAY_NAME_MAX, pinned by
            displayNameLimit.cross.test.ts); this one is the copy search,
            profiles and suggestions show, and had none. Null and '' are
-           real states (a new email signup), so they pass. */
+           real states (a new email signup), so they pass. A stored name
+           the write leaves as it is passes too: every write here is a
+           merge (the streak mirror, a photo, the race toggle), so an
+           account already holding a longer name would otherwise have
+           all of them refused. Only a name being written is held. */
         && (
           !('displayName' in request.resource.data)
           || request.resource.data.displayName == null
           || (request.resource.data.displayName is string
               && request.resource.data.displayName.size() <= 50)
+          || (resource != null
+              && request.resource.data.displayName
+                   == resource.data.get('displayName', null))
         )
         && (
           !('displayNameLower' in request.resource.data)
           || request.resource.data.displayNameLower == null
           || (request.resource.data.displayNameLower is string
               && request.resource.data.displayNameLower.size() <= 50)
+          || (resource != null
+              && request.resource.data.displayNameLower
+                   == resource.data.get('displayNameLower', null))
         )
         /* photoURL value gate.
            Blocks tracking-pixel injection / arbitrary external URLs.

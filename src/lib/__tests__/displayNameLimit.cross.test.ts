@@ -1,7 +1,8 @@
 /**
  * One display-name limit — the app, the server and the rules agree.
  *
- * The app refuses a name past DISPLAY_NAME_MAX (src/lib/displayName.ts);
+ * The app refuses a name past DISPLAY_NAME_MAX (src/lib/displayNameLimit.ts,
+ * re-exported by displayName.ts, which validates against it);
  * the server cleans a profile's name to MAX_DISPLAY_NAME_LENGTH
  * (functions/profileSanitizer.js); the feed fan-out cuts a copied name to
  * it (functions/lib/socialFanout.js); and firestore.rules caps every place

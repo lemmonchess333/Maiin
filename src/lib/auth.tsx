@@ -45,6 +45,7 @@ import {
 import { clearStoredRun } from "@/lib/runResumeStorage";
 import { clearWorkoutDraft } from "@/hooks/useWorkoutDraft";
 import { stripUndefined } from "@/lib/firestoreGuards";
+import { clampDisplayName } from "@/lib/displayNameLimit";
 import {
   forgetDeviceShareDefaults,
   readDeviceShareDefaults,
@@ -639,7 +640,7 @@ function createDefaultProfile(
 ): UserProfile {
   return {
     uid,
-    displayName,
+    displayName: clampDisplayName(displayName),
     email,
     photoURL,
     athleteType: "Lifter",
