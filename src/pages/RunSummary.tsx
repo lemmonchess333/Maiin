@@ -528,9 +528,9 @@ export default function RunSummary() {
   // cancelled flag + try/catch so an unmount mid-flight or a failed read
   // can't setState on a dead component or leave the insight loading
   // forever. The run on this screen is handed to both separately (and
-  // dropped from the history by id), so the read does not follow it: it
-  // used to restart on every corrected distance and again on the save,
-  // each time reading every run the account has, routes and all.
+  // dropped from the history by id), so the read does not follow it.
+  // Following it would read every run the account has, routes and all,
+  // again on every corrected distance and on the save.
   const uid = user?.uid;
   const hasRun = state != null;
   const [historyRead, setHistoryRead] = useState<{
