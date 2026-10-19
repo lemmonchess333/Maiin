@@ -495,13 +495,6 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1536,
     reference: 3,
   },
-  "lu-raise": {
-    folder: "2026-09-24",
-    version: "anatomy-v3-2026-09-24",
-    width: 1536,
-    height: 1024,
-    reference: 1,
-  },
   lunges: {
     folder: "2026-10-12",
     version: "anatomy-v3-2026-10-12-reviewed-three-pose-v1",

@@ -64,6 +64,42 @@ describe("six-frame form guide", () => {
     act(() => vi.advanceTimersByTime(1200));
     expect(screen.getByRole("img")).toHaveAttribute("alt", "Squat, Position 3");
   });
+  it("stops an ascent-only lesson at the final pose until Replay is pressed", () => {
+    const onStep = vi.fn();
+    const view = render(
+      <ExerciseFormFrames
+        name="Get-up"
+        beats={beats}
+        loop={false}
+        onStep={onStep}
+      />
+    );
+    for (let i = 0; i < 5; i++) {
+      load(view.container);
+      act(() => vi.advanceTimersByTime(1200));
+    }
+    load(view.container);
+    act(() => vi.advanceTimersByTime(12000));
+    expect(onStep.mock.calls.map(([index]) => index)).toEqual([
+      0, 1, 2, 3, 4, 5,
+    ]);
+    expect(view.container.querySelectorAll("img")).toHaveLength(1);
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "alt",
+      "Get-up, Position 6"
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Replay" }));
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "alt",
+      "Get-up, Position 1"
+    );
+    load(view.container);
+    act(() => vi.advanceTimersByTime(1200));
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "alt",
+      "Get-up, Position 2"
+    );
+  });
   it("keeps the current pose on a preload failure, with an explicit retry", () => {
     const view = render(<ExerciseFormFrames name="Squat" beats={beats} />);
     const images = view.container.querySelectorAll("img");
