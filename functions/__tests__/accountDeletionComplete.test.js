@@ -90,6 +90,23 @@ function setup(extra = {}) {
     "groups/legacy/members/alice": { name: "Alice" },
     "spaces/retired-room/members/alice": { joinedAt: now },
     "challenges/missing-parent/participants/alice": { name: "Alice" },
+    "challenges/missing-parent/participants/alice/applied/run-1": {
+      sourceId: "run-1",
+    },
+    "challenges/weekly": { title: "This week" },
+    "challenges/weekly/participants/alice": { currentValue: 1 },
+    "challenges/weekly/participants/alice/applied/run-2": { sourceId: "run-2" },
+    // A challenge Alice left: the markers stay, by design, with no
+    // participant doc above them.
+    "challenges/left/participants/alice/applied/run-3": { sourceId: "run-3" },
+    "challenges/left": { title: "Left" },
+    "challenges/weekly/participants/bob/applied/run-4": { sourceId: "run-4" },
+    "appleNotifications/n-alice": {
+      type: "DID_RENEW",
+      originalTransactionId: "otx-alice",
+      uid: "alice",
+    },
+    "appleNotifications/n-bob": { type: "DID_RENEW", uid: "bob" },
     "spaces/retired-room/posts/own": { authorId: "alice" },
     "spaces/retired-room/posts/own/comments/bob": {
       authorId: "bob",
@@ -100,6 +117,26 @@ function setup(extra = {}) {
     "rateLimits/alice_scan": { recent: [1] },
     "rateLimits/alice2_scan": { recent: [1] },
     "rateLimits/verifyemail_alice_verificationEmail": { recent: [1] },
+    "audit_checkout_sessions/alice-checkout": {
+      uid: "alice",
+      stripeSessionId: "cs_alice",
+      priceId: "price_monthly",
+    },
+    "audit_checkout_sessions/bob-checkout": { uid: "bob" },
+    "commentModeration/alice-comment": {
+      action: "auto_delete",
+      reason: "profanity",
+      activityId: "other",
+      commentId: "alice-comment",
+      authorId: "alice",
+      textRedacted: "Alice's ****",
+      createdAt: now,
+    },
+    "commentModeration/bob-comment": {
+      action: "auto_delete",
+      authorId: "bob",
+      textRedacted: "Bob's ****",
+    },
     ...extra,
   });
   return {
@@ -125,6 +162,8 @@ function setup(extra = {}) {
 // smoke::blocksReverse
 // smoke::crewMemberships
 // smoke::kudosByMe
+// smoke::topLevelQuery::checkoutAudit
+// smoke::topLevelQuery::appleNotifications
 describe("complete account erasure", () => {
   it("removes nested personal data and cross-user copies, preserving other accounts and bounded private evidence", async () => {
     const ctx = setup();
@@ -154,8 +193,32 @@ describe("complete account erasure", () => {
       "challenges/missing-parent/participants/alice",
       "spaces/retired-room/posts/own/comments/bob",
       "spaces/retired-room/posts/own/likes/bob",
+      // Before 2026-10-20 neither the inventory nor the executor knew these.
+      "audit_checkout_sessions/alice-checkout",
+      "appleNotifications/n-alice",
+      // Deletes do not cascade: these outlived the participant docs.
+      "challenges/missing-parent/participants/alice/applied/run-1",
+      "challenges/weekly/participants/alice",
+      "challenges/weekly/participants/alice/applied/run-2",
+      "challenges/left/participants/alice/applied/run-3",
     ])
       expect(data.has(path), path).toBe(false);
+    for (const path of [
+      "audit_checkout_sessions/bob-checkout",
+      "appleNotifications/n-bob",
+      "challenges/weekly/participants/bob/applied/run-4",
+    ])
+      expect(data.has(path), path).toBe(true);
+    // The removal is still counted; who wrote it, and what, is not.
+    expect(data.get("commentModeration/alice-comment")).toEqual({
+      action: "auto_delete",
+      reason: "profanity",
+      activityId: "other",
+      commentId: "alice-comment",
+      createdAt: now,
+      authorId: null,
+    });
+    expect(data.get("commentModeration/bob-comment").authorId).toBe("bob");
     expect(data.get("users/bob/meals/lunch")).toEqual({ name: "Bob's meal" });
     expect(data.get("activities/other")).toMatchObject({
       kudosCount: 1,

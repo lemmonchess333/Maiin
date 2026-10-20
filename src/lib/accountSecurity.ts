@@ -26,6 +26,20 @@ import {
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { auth } from "./firebase";
 import { reauthWithPassword } from "./reauth";
+import { readString, remove, writeString } from "./localStore";
+import { noteEmailChange } from "./emailChangeNote";
+
+/* Whether the link sign-up sent reached the mail provider, as far as this
+   phone knows. Home said "We sent a link" either way; a send that failed
+   now says so, and the next successful send clears it. */
+const sendFailedKey = (uid: string) => `tropos-verify-send-failed:${uid}`;
+function noteVerificationSend(uid: string, failed: boolean): void {
+  if (failed) writeString(sendFailedKey(uid), "1");
+  else remove(sendFailedKey(uid));
+}
+export function verificationSendFailed(uid: string): boolean {
+  return readString(sendFailedKey(uid)) === "1";
+}
 
 /**
  * Send (or resend) the branded verification email for the signed-in user.
@@ -40,6 +54,7 @@ export async function sendVerificationEmail(): Promise<void> {
   );
   try {
     await fn({});
+    if (user) noteVerificationSend(user.uid, false);
   } catch (error) {
     const code = String((error as { code?: string })?.code || "");
     // Mandatory signup must still work during a branded-mail outage. Firebase
@@ -57,6 +72,7 @@ export async function sendVerificationEmail(): Promise<void> {
     )
       throw error;
     await sendFirebaseVerification(user);
+    noteVerificationSend(user.uid, false);
   }
 }
 
@@ -66,10 +82,15 @@ const initialVerificationRequests = new Map<string, Promise<void>>();
 export function sendInitialVerificationEmail(uid: string): Promise<void> {
   const existing = initialVerificationRequests.get(uid);
   if (existing) return existing;
-  const request = Promise.resolve().then(() => {
-    if (auth.currentUser?.uid !== uid) throw new Error("Account changed");
-    return sendVerificationEmail();
-  });
+  const request = Promise.resolve()
+    .then(() => {
+      if (auth.currentUser?.uid !== uid) throw new Error("Account changed");
+      return sendVerificationEmail();
+    })
+    .catch((error: unknown) => {
+      noteVerificationSend(uid, true);
+      throw error;
+    });
   initialVerificationRequests.set(uid, request);
   return request;
 }
@@ -108,4 +129,6 @@ export async function requestEmailChange(
 ): Promise<void> {
   await reauthWithPassword(user, currentPassword);
   await verifyBeforeUpdateEmail(user, newEmail.trim());
+  // Confirming it signs this phone out; Login reads this to say so.
+  noteEmailChange(newEmail.trim());
 }

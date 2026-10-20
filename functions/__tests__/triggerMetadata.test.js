@@ -70,7 +70,7 @@ const EXPECTED = {
     kind: "schedule",
     maxInstances: 1,
     timeoutSeconds: 540,
-    secrets: ["BILLING_HMAC_SECRET", "STRIPE_SECRET_KEY"],
+    secrets: ["BILLING_HMAC_SECRET", "RESEND_API_KEY", "STRIPE_SECRET_KEY"],
     schedule: "every 5 minutes",
   },
   applyProgramCommand: {

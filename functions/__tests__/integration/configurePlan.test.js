@@ -160,6 +160,11 @@ async function clearTestUserState() {
     .doc("current")
     .delete()
     .catch(() => {});
+  await userRef
+    .collection("public")
+    .doc("profile")
+    .delete()
+    .catch(() => {});
   await userRef.delete().catch(() => {});
   // Clear any deletion ledger / tombstone the freeze tests seed.
   await db
@@ -486,6 +491,57 @@ suite("completeOnboarding — emulator integration", () => {
     expect(psData.programSchemaVersion).toBe(2);
     expect(Array.isArray(psData.runDays)).toBe(true);
     expect(psData.runDays[0].status).toBe("planned");
+  });
+
+  /* The app's own copy of the public profile is best-effort; one that
+     failed showed "Athlete" to everyone. */
+  it("mirrors the name to the public profile, which the app's copy can miss", async () => {
+    const onboard = (profileData) =>
+      completeOnboarding.run(
+        {
+          profileData: {
+            ...validProfileUpdates(),
+            weightKg: 72,
+            heightCm: 180,
+            age: 28,
+            sex: "male",
+            activityLevel: "active",
+            ...profileData,
+          },
+          programState: validProgramState(),
+          weekSchedule: validWeekSchedule(),
+        },
+        { auth: { uid: TEST_UID } }
+      );
+    const publicRef = db
+      .collection("users")
+      .doc(TEST_UID)
+      .collection("public")
+      .doc("profile");
+
+    // No public profile at all: sign-up's batch failed.
+    await onboard({ displayName: "Myles Kennedy" });
+    expect((await getDocSettled(publicRef)).data()).toMatchObject({
+      uid: TEST_UID,
+      displayName: "Myles Kennedy",
+      displayNameLower: "myles kennedy",
+      currentStreak: 0,
+      longestStreak: 0,
+    });
+
+    // One already there keeps what onboarding does not set, and a run
+    // with no name leaves the name alone.
+    await publicRef.set(
+      { photoURL: "https://lh3.googleusercontent.com/a/x", currentStreak: 5 },
+      { merge: true }
+    );
+    await db.collection("rateLimits").doc(`${TEST_UID}_onboarding`).delete();
+    await onboard({ displayName: undefined });
+    expect((await getDocSettled(publicRef)).data()).toMatchObject({
+      displayName: "Myles Kennedy",
+      photoURL: "https://lh3.googleusercontent.com/a/x",
+      currentStreak: 5,
+    });
   });
 
   /* A new runner's first weeks count from the day setup finished

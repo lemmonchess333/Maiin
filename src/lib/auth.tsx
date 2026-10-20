@@ -26,6 +26,7 @@ import {
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
+import { clearEmailChange } from "./emailChangeNote";
 import { isNativePlatform } from "@/lib/platform";
 import {
   getGoogleCredentialNative,
@@ -1079,6 +1080,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }).catch((err) =>
                   logger.warn("[AuthProvider] email reconcile failed", err)
                 );
+                // The change has landed; Login has nothing left to explain.
+                clearEmailChange();
               }
               // Share answers this device saved before they were kept on
               // the account. Fire-and-forget; a failed move leaves them on
@@ -1134,6 +1137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (email: string, password: string) => {
       await revokeOutgoingAccountDeviceState();
       await signInWithEmailAndPassword(auth, email, password);
+      clearEmailChange();
     },
     [revokeOutgoingAccountDeviceState]
   );
@@ -1174,9 +1178,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const newProfile = createDefaultProfile(uid, "", cred.user.email || "");
       // Always finish creating the account's docs; only gate local state +
       // analytics attribution if the credential is no longer current.
-      await writeNewProfileDocs(uid, newProfile);
+      // The account exists once the credential does. A profile write that
+      // fails here is put right by setup, whose server call writes the
+      // profile (completeOnboarding); stopping at it skipped the
+      // verification email and the sign-up event, and told the person the
+      // sign-up had failed while signing them in.
+      let profileWritten = true;
+      try {
+        await writeNewProfileDocs(uid, newProfile);
+      } catch (err) {
+        profileWritten = false;
+        logger.error("Signup profile write failed; setup writes it", err);
+      }
       if (auth.currentUser?.uid !== uid) return;
-      setProfile(newProfile);
+      if (profileWritten) setProfile(newProfile);
       trackLifecycle("signup_completed", { method: "email" });
       // The verification link goes out now, so it is waiting in the inbox
       // by the time the plan is made; onboarding no longer stops for it.

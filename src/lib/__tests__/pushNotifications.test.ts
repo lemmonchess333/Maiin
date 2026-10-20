@@ -312,6 +312,28 @@ describe("unregisterDeviceToken (packet 19 — fenced release)", () => {
     await expect(unregisterDeviceToken("u1")).resolves.toBeUndefined();
   });
 
+  it("an account being deleted signs out: the deletion removes the claim itself", async () => {
+    const { registerDeviceToken, unregisterDeviceToken } = await load();
+    await registerDeviceToken("u1");
+    h.releaseFn.mockRejectedValueOnce(
+      Object.assign(new Error("in-progress deletion"), {
+        code: "functions/failed-precondition",
+        details: { errorCode: "account-deleting" },
+      })
+    );
+    // Before: this threw, and sign-out stayed refused until the deletion
+    // finished.
+    await expect(unregisterDeviceToken("u1")).resolves.toBeUndefined();
+    // A second try is refused the same way, and signs out the same way.
+    h.releaseFn.mockRejectedValueOnce(
+      Object.assign(new Error("in-progress deletion"), {
+        code: "functions/failed-precondition",
+        details: { errorCode: "account-deleting" },
+      })
+    );
+    await expect(unregisterDeviceToken("u1")).resolves.toBeUndefined();
+  });
+
   it("a real release failure still fails closed (throws)", async () => {
     const { registerDeviceToken, unregisterDeviceToken } = await load();
     await registerDeviceToken("u1");

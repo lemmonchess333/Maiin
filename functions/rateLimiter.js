@@ -51,6 +51,11 @@ async function isRateLimited(db, uid, action, maxCalls, windowMs) {
       tx.set(rl, {
         timestamps: trimmed,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        // Nothing in the record counts once its newest call is a window
+        // old, so the rateLimits TTL policy (firestore.indexes.json)
+        // deletes it then. Before, every record was kept for good,
+        // including the password-reset ones keyed by an address.
+        expiresAt: new Date(now + windowMs),
       });
       return false;
     });

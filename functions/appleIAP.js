@@ -454,10 +454,12 @@ exports.appleIAPWebhook = functions
               .firestore()
               .collection("appleNotifications")
               .doc(notificationUUID)
+              // No uid: this account is being erased, and the record
+              // outlived it. paymentEventsPostDeletion keeps the hashed
+              // prefix an operator needs.
               .set({
                 type: notificationType,
                 originalTransactionId,
-                uid,
                 processedAt: admin.firestore.FieldValue.serverTimestamp(),
                 result: "skipped_account_deleted",
               });

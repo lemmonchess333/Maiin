@@ -11,6 +11,7 @@ import { MemoryRouter } from "react-router-dom";
 const h = vi.hoisted(() => ({
   user: null as null | Record<string, unknown>,
   sendVerificationEmail: vi.fn(async () => {}),
+  unsent: false,
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }));
@@ -22,6 +23,7 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/accountSecurity", () => ({
   sendVerificationEmail: h.sendVerificationEmail,
   resendVerificationErrorMessage: () => "Couldn't send the email. Try again.",
+  verificationSendFailed: () => h.unsent,
 }));
 vi.mock("@/lib/toast", () => ({
   toast: { success: h.toastSuccess, error: h.toastError },
@@ -54,6 +56,7 @@ const show = () =>
 beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
+  h.unsent = false;
 });
 afterEach(cleanup);
 
@@ -133,5 +136,19 @@ describe("VerifyEmailBanner", () => {
     cleanup();
     show();
     expect(screen.queryByText(/Verify your email/)).toBeNull();
+  });
+
+  it("says the link did not go when sign-up's send failed, until one does", async () => {
+    h.user = emailUser();
+    h.unsent = true;
+    show();
+    expect(
+      screen.getByText(/We couldn't send the link to/)
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Send link" }));
+    await waitFor(() =>
+      expect(screen.getByText(/We sent a link to/)).toBeInTheDocument()
+    );
+    expect(screen.getByRole("button", { name: "Resend link" })).toBeEnabled();
   });
 });

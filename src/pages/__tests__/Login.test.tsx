@@ -50,8 +50,28 @@ const screens = () =>
 beforeEach(() => {
   vi.clearAllMocks();
   h.signedInBefore = false;
+  localStorage.clear();
 });
 afterEach(cleanup);
+
+describe("Login — after an email change", () => {
+  it("says why it signed out, and offers the new address", () => {
+    // Set by requestEmailChange; confirming the change ends the session.
+    localStorage.setItem(
+      "tropos-email-change-pending",
+      JSON.stringify({ email: "new@example.com", at: Date.now() })
+    );
+    show();
+    // Before: the welcome screen, then "Welcome back" and an empty field
+    // that refused the old address.
+    expect(
+      screen.getByText(
+        "Changing your email signs you out once the change is confirmed. Sign in with new@example.com."
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toHaveValue("new@example.com");
+  });
+});
 
 describe("Login — who sees which screen", () => {
   it("a first visit opens on the welcome screen, not on Welcome back", () => {

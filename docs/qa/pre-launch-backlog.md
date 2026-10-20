@@ -10,6 +10,57 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## What a deletion used to leave behind (2026-10-20)
+
+Four records outlived the account they named, and the password-reset
+limiter kept every address anyone typed. The executor and
+`firestore.indexes.json` now handle them, and
+`accountDeletionCollections.test.ts` fails on the next unlisted collection.
+Two steps happen only in production.
+
+- [ ] **The address-keyed reset records are gone.** Once the functions
+      deploy carrying the hashed key is live, run
+      `DRY_RUN=true node functions/scripts/purgeLegacyResetLimiterDocs.js`
+      from the repo root, then again without `DRY_RUN`. Passing: the second
+      run's report shows `deleted` equal to the dry run's `legacy`, and a
+      third dry run shows `legacy: 0`. It prints counts only, never an id.
+- [ ] **Rate-limit records expire.** Passing: the Deploy production run's
+      Firestore readiness gate (`scripts/verify-firestore-readiness.py`,
+      which fails while any TTL policy in `firestore.indexes.json` is not
+      active) is green, and Firestore console → Time-to-live lists
+      `rateLimits` / `expiresAt` as Serving.
+
+## What says a server job failed (2026-10-20)
+
+- [ ] **Every scheduled job leaves its last run.** Passing: a day after the
+      release, Firestore console → `jobRuns` holds a document for each of
+      the nine scheduled jobs, each with `lastOutcome: "ok"`, a
+      `lastFinishedAt` after its `lastStartedAt`, and the sweeps'
+      `lastSummary` counts. A `running: true` older than nine minutes is a
+      run that was killed (`functions/lib/jobRuns.js`).
+
+## Crash reports from the phone (Crashlytics, 2026-10-20)
+
+The owner chose Crashlytics for the iPhone app; the web keeps its Firestore
+reports (`src/lib/crashReporting.ts` says why). The tests mock the plugin, and
+no build has compiled it yet, so this needs the first TestFlight run.
+
+- [ ] **The release run uploads the symbol files.** Passing: the "Upload
+      Crashlytics symbol files" step in Deploy iOS is green (it runs after
+      the TestFlight upload, so it cannot hold the build back).
+- [ ] **A crash arrives, readable, under the account.** Passing: on the
+      TestFlight build, `/diagnostics` shows Crashlytics `active`; tap "Send a
+      test crash", open the app again, and Firebase console → Crashlytics
+      shows the crash with its frames named (no "missing dSYM" banner) and a
+      user ID equal to the UID row on `/diagnostics`.
+- [ ] **A JavaScript error arrives as a non-fatal.** Passing: an error the app
+      catches (for one, a card that fails to load) shows in Crashlytics as a
+      non-fatal event titled `[component in …]`, under the same user ID.
+- [ ] **The App Store label says it.** When filing the privacy label (the row
+      under "Privacy and consent for App Review"), Crash Data is collected,
+      linked to the user, for app functionality, and not used for tracking
+      (`docs/app-store/listing.md`).
+
 ## Triggers that retry, and saves that will not land (2026-10-20)
 
 Group 5 of the 20 October list. The emulator tests drive the run trigger

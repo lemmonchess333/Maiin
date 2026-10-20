@@ -205,7 +205,7 @@
             </li>
             <li>
               <strong>Crash and Error Reports:</strong> error messages and where
-              in the app they happened.
+              in the app they happened, and in the iPhone app, its crashes.
             </li>
             <li>
               <strong>Preferences and Time Zone:</strong> units, theme,
@@ -396,8 +396,9 @@
               (sign-in), Cloud Firestore (your data), Cloud Storage (progress,
               profile and Space photos), Cloud Functions (our server code), App
               Check (which checks that requests come from the real app; on the
-              web it uses reCAPTCHA) and Google Analytics for Firebase (usage
-              analytics, section 2).
+              web it uses reCAPTCHA), Google Analytics for Firebase (usage
+              analytics, section 2) and, in the iPhone app, Firebase Crashlytics
+              (crash reports, below).
             </li>
             <li>
               <strong>Photo checks (Google Cloud Vision):</strong> a photo you
@@ -489,9 +490,11 @@
           <p>
             <strong>Error Reporting:</strong> We automatically collect crash
             reports and error logs to improve app stability. They are stored
-            with your account. Reports include error messages and stack traces
-            but do not contain sensitive personal data such as passwords, meal
-            content, or workout details.
+            with your account, and in the iPhone app Google's Firebase
+            Crashlytics also receives them, with your account's ID but not your
+            name or email address. Reports include error messages and stack
+            traces but do not contain sensitive personal data such as passwords,
+            meal content, or workout details.
           </p>
         </section>
         <section>

@@ -173,3 +173,83 @@ describe.each([
     );
   }
 );
+
+/* A scan the service failed, not the person, is given back. It cost the
+   day's scan all the same, and answered "AI service error". */
+describe.each([
+  ["analyzeFood", analyzeFood, { imageBase64: "aGVsbG8=" }, "image_ai"],
+  ["analyzeFoodText", analyzeFoodText, { text: "2 eggs and toast" }, "text_ai"],
+])(
+  "%s — a scan the service failed costs nothing",
+  (_name, handler, good, action) => {
+    const model = (status, body) =>
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => ({
+          ok: status >= 200 && status < 300,
+          status,
+          text: async () => JSON.stringify(body),
+          json: async () => body,
+        }))
+      );
+    const spent = (db) => db.data.get("scanUsage/u1")?.[action]?.count;
+    const answer = {
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                text: '{"foodName":"Eggs","items":[],"totalCalories":150,"totalProtein":12,"totalCarbs":1,"totalFat":10,"confidence":"high"}',
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    it("keeps the charge for a scan that worked (the anchor)", async () => {
+      model(200, answer);
+      const db = seed();
+      installAdmin(db);
+      const res = await post(handler, good);
+      expect(res.statusCode).toBe(200);
+      expect(spent(db)).toBe(1);
+    });
+
+    it("says the model is busy, and gives the scan back", async () => {
+      model(429, { error: { status: "RESOURCE_EXHAUSTED" } });
+      const db = seed();
+      installAdmin(db);
+      const res = await post(handler, good);
+      expect(res.statusCode).toBe(503);
+      expect(res.body).toEqual({
+        error: "ai-busy",
+        message:
+          "Food analysis is busy right now. Try again in a minute. This one didn't use a scan.",
+      });
+      expect(spent(db)).toBe(0);
+    });
+
+    it.each([
+      ["a model error", () => model(500, {})],
+      ["an answer with nothing to read", () => model(200, { candidates: [] })],
+    ])("gives the scan back after %s", async (_label, arrange) => {
+      arrange();
+      const db = seed();
+      installAdmin(db);
+      const res = await post(handler, good);
+      expect(res.statusCode).toBe(500);
+      expect(res.body.message).toMatch(/didn't use a scan/);
+      expect(spent(db)).toBe(0);
+    });
+
+    it("keeps the charge when the model refused the request itself", async () => {
+      model(400, { error: { status: "INVALID_ARGUMENT" } });
+      const db = seed();
+      installAdmin(db);
+      const res = await post(handler, good);
+      expect(res.statusCode).toBe(500);
+      expect(spent(db)).toBe(1);
+    });
+  }
+);

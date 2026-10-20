@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -870,6 +870,16 @@ describe("all-users announcement pagination", () => {
 });
 
 describe("production monthly sender wiring", () => {
+  // The job's run record (lib/jobRuns.js) writes to Firestore, which a unit
+  // run has none of; the record has its own tests.
+  let record;
+  beforeEach(() => {
+    record = vi
+      .spyOn(require("../lib/jobRuns"), "recordJobRun")
+      .mockImplementation((_firestore, _name, job) => job());
+  });
+  afterEach(() => record.mockRestore());
+
   it("the same hourly export reaches the closing reminder sender in the final-days window", async () => {
     const fns = require("../index");
     const locks = require("../lib/accountDeletionLocks");
