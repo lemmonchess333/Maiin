@@ -10,6 +10,31 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Reminders, sign-in and posting on the phone (2026-10-20)
+
+Fixed with tests that mock the plugins (lemmonchess333/Maiin#2900, group 1);
+only a phone shows the OS doing its part.
+
+- [ ] **A repeating reminder fires at its time, once a day.** Repeating
+      reminders are now calendar triggers (`nativeSchedule` in
+      `src/lib/notifications.ts`); they were `{ at, every, repeats }`, which
+      the iOS plugin armed as an interval from the moment of scheduling.
+      Passing: a breakfast reminder at 08:00, set at 05:00, fires at 08:00
+      and next at 08:00 the following day (not at 11:00); a workout reminder
+      fires on its weekday only; Settings → Notifications shows each next
+      reminder's time (it read none on iOS: the plugin returns `at` as a
+      string).
+- [ ] **Signing out stops the account's reminders.** Passing: with meal
+      reminders on, sign out; no reminder arrives at the next set time.
+- [ ] **Closing the Google or Apple sheet says nothing.** Passing: tap
+      Continue with Google, close the sheet: no red line on Login; the same
+      for Continue with Apple. A sign-in that fails for a reason (airplane
+      mode) still shows its line.
+- [ ] **Verifying with the app closed lets you post at once.** Passing: sign
+      up with email, close the app, tap the link in Mail, open the app and
+      share a session to the feed straight away: it posts, rather than being
+      refused for up to an hour.
+
 ## What `docs/LAUNCH_TODO.md` still held (2026-10-19)
 
 `docs/LAUNCH_TODO.md` is retired: it now only says where each of its
