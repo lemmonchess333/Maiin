@@ -57,11 +57,16 @@ function subscribe(uid: string, today: string, notify: () => void): () => void {
     const start = localDateString(
       addLocalDays(parseLocalDate(today), -ADAPTIVE_TDEE_DEFAULTS.windowDays)
     );
+    // Intake ends yesterday: today is not over. Read through today, its
+    // 900 kcal by lunchtime counted as a whole day once it passed the
+    // plausibility floor, pulled the learned TDEE down every afternoon
+    // (2,400 read as 2,313) and back up at midnight, and the weekly step
+    // took whichever the hour gave it. Weigh-ins still run through today.
     const stopMeals = onSnapshot(
       query(
         collection(db, "users", uid, "meals"),
         where("date", ">=", start),
-        where("date", "<=", today)
+        where("date", "<", today)
       ),
       (snapshot) => {
         const byDay = new Map<string, number>();

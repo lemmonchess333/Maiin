@@ -487,6 +487,14 @@ export function migrateProgramState(
   // week. Pre-PR-0b-i the default was `localDateString()`, which
   // produced mid-week weekKey values for anyone opening the app on
   // any day but the anchor.
+  // A document a newer build wrote is left as it is. Written back at this
+  // build's version, the newer build would read it as old and run its
+  // one-shot repairs again (a weight someone set on purpose undone a second
+  // time), and an older build cannot know what a newer one's shape means.
+  if ((state.programSchemaVersion ?? 1) > CURRENT_PROGRAM_SCHEMA_VERSION) {
+    return state;
+  }
+
   const normalizedWeekStart = localWeekKey(parseLocalDate(weekStart));
   const weekStartDate = parseLocalDate(normalizedWeekStart);
 
@@ -659,6 +667,12 @@ export function backfillWeekScheduleIfMissing(
     profile.weekScheduleVersion === CURRENT_WEEKSCHEDULE_VERSION &&
     isValidWeekSchedule(profile.weekSchedule)
   ) {
+    return null;
+  }
+  // A schedule a newer build wrote is that build's to judge: this one's
+  // validator may not know its shape, and regenerating threw away the
+  // person's own week layout every time an older build opened it.
+  if ((profile.weekScheduleVersion ?? 0) > CURRENT_WEEKSCHEDULE_VERSION) {
     return null;
   }
 
