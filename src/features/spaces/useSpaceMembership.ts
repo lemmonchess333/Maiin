@@ -28,6 +28,7 @@ import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { invalidateSpacesDirectory } from "./useSpacesDirectory";
 import { showRestrictedToast } from "@/lib/accountRestriction";
 import { spaceDef } from "./spaceDefs";
 
@@ -116,6 +117,7 @@ export function useSpaceMembership(spaceId: string | undefined) {
         ...(profile?.photoURL ? { photoURL: profile.photoURL } : {}),
         uid: user.uid,
       });
+      invalidateSpacesDirectory(user.uid, spaceId);
     } catch {
       update(
         spaceId,
@@ -144,6 +146,7 @@ export function useSpaceMembership(spaceId: string | undefined) {
     haptic("light");
     try {
       await deleteDocGuarded(doc(db, "spaces", spaceId, "members", user.uid));
+      invalidateSpacesDirectory(user.uid, spaceId);
     } catch {
       update(
         spaceId,

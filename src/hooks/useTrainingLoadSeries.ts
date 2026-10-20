@@ -36,6 +36,9 @@ import {
  * the hook is loading until a series for the current uid AND window lands.
  * A same-account window change keeps the previous points until then, as
  * the card shows its skeleton while loading anyway.
+ *
+ * `enabled` (default true): History shows the curve on its Performance page
+ * only, and reads nothing for it on the others.
  */
 const WARMUP_DAYS = 60;
 const QUALITY_TYPES = new Set(["tempo", "intervals", "race"]);
@@ -48,7 +51,10 @@ interface LoadedSeries {
 
 const NO_POINTS: LoadPoint[] = [];
 
-export function useTrainingLoadSeries(displayDays: number): {
+export function useTrainingLoadSeries(
+  displayDays: number,
+  { enabled = true }: { enabled?: boolean } = {}
+): {
   points: LoadPoint[];
   loading: boolean;
 } {
@@ -60,7 +66,7 @@ export function useTrainingLoadSeries(displayDays: number): {
   });
 
   useEffect(() => {
-    if (!uid) return;
+    if (!uid || !enabled) return;
     let cancelled = false;
 
     const load = async () => {
@@ -118,11 +124,14 @@ export function useTrainingLoadSeries(displayDays: number): {
     return () => {
       cancelled = true;
     };
-  }, [uid, displayDays]);
+  }, [uid, displayDays, enabled]);
 
-  const ownSeries = uid !== null && loaded.uid === uid;
+  const ownSeries = enabled && uid !== null && loaded.uid === uid;
   return {
     points: ownSeries ? loaded.points : NO_POINTS,
-    loading: uid !== null && !(ownSeries && loaded.displayDays === displayDays),
+    loading:
+      enabled &&
+      uid !== null &&
+      !(ownSeries && loaded.displayDays === displayDays),
   };
 }

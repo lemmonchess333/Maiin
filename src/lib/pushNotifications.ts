@@ -205,7 +205,19 @@ type StoredDeviceBinding = {
   bindingId: string;
   /** Absent on existing v2 web bindings. */
   platform?: "web" | "ios";
+  /** When the server last confirmed the claim. Absent until it has: the
+   *  binding is written before the claim, so its presence alone proves
+   *  nothing. */
+  claimedAtMs?: number;
 };
+
+/** How long a confirmed claim of an unchanged token stands for the app's
+ *  own refreshes (each return to the app). Releasing and claiming again
+ *  leaves the server a revocation fence for 24 hours, and past 64 live
+ *  fences it refuses a release, which sign-out needs; so a refresh only
+ *  re-claims an unchanged token twice a day. A new token, an explicit
+ *  enable and a sign-in still claim at once. */
+const CLAIM_REUSE_MS = 12 * 3_600_000;
 
 type PushTokenCallableInput = {
   ownerUid: string;
@@ -239,7 +251,9 @@ function isStoredDeviceBinding(value: unknown): value is StoredDeviceBinding {
     /^[A-Za-z0-9_-]{16,128}$/.test((value as StoredDeviceBinding).bindingId) &&
     ((value as StoredDeviceBinding).platform === undefined ||
       (value as StoredDeviceBinding).platform === "web" ||
-      (value as StoredDeviceBinding).platform === "ios")
+      (value as StoredDeviceBinding).platform === "ios") &&
+    ((value as StoredDeviceBinding).claimedAtMs === undefined ||
+      Number.isFinite((value as StoredDeviceBinding).claimedAtMs))
   );
 }
 
@@ -361,11 +375,19 @@ function removeBindingIfStillCurrent(
 }
 
 // ── registration (serialised per uid) ───────────────────────────────────
-export function registerDeviceToken(uid: string): Promise<PushRegisterResult> {
+/**
+ * `reuseFreshClaim`: the app's own refresh. When this device's token is the
+ * one the server confirmed for this account within CLAIM_REUSE_MS, nothing
+ * is sent.
+ */
+export function registerDeviceToken(
+  uid: string,
+  { reuseFreshClaim = false }: { reuseFreshClaim?: boolean } = {}
+): Promise<PushRegisterResult> {
   const existing = pendingRegistrations.get(uid);
   if (existing) return existing;
 
-  const operation = registerDeviceTokenInternal(uid);
+  const operation = registerDeviceTokenInternal(uid, reuseFreshClaim);
   pendingRegistrations.set(uid, operation);
   const clear = () => {
     if (pendingRegistrations.get(uid) === operation) {
@@ -376,8 +398,24 @@ export function registerDeviceToken(uid: string): Promise<PushRegisterResult> {
   return operation;
 }
 
+function isFreshClaim(
+  binding: StoredDeviceBinding,
+  token: string,
+  platform: "web" | "ios",
+  nowMs: number
+): boolean {
+  return (
+    binding.token === token &&
+    (binding.platform ?? "web") === platform &&
+    typeof binding.claimedAtMs === "number" &&
+    binding.claimedAtMs <= nowMs &&
+    nowMs - binding.claimedAtMs < CLAIM_REUSE_MS
+  );
+}
+
 async function registerDeviceTokenInternal(
-  uid: string
+  uid: string,
+  reuseFreshClaim: boolean
 ): Promise<PushRegisterResult> {
   if (!uid) return { ok: false, reason: "no-uid" };
   const generation = tokenLifecycleGeneration;
@@ -400,7 +438,15 @@ async function registerDeviceTokenInternal(
       return { ok: false, reason: "account-changed" };
     }
 
+    const platform = isNativePlatform() ? "ios" : "web";
     const previous = readStoredDeviceBindings()[uid];
+    if (
+      reuseFreshClaim &&
+      previous &&
+      isFreshClaim(previous, token, platform, Date.now())
+    ) {
+      return { ok: true, token };
+    }
     if (previous) {
       // If a prior request is still in flight, this writes its durable fence
       // before a new binding can replace it.
@@ -414,7 +460,7 @@ async function registerDeviceTokenInternal(
     const binding: StoredDeviceBinding = {
       token,
       bindingId: newBindingId(),
-      platform: isNativePlatform() ? "ios" : "web",
+      platform,
     };
     const latest = readStoredDeviceBindings();
     latest[uid] = binding;
@@ -425,6 +471,12 @@ async function registerDeviceTokenInternal(
     await claimBinding(uid, binding);
     if (!isRegistrationCurrent(uid, generation)) {
       return { ok: false, reason: "account-changed" };
+    }
+    // The server confirmed it: record when, if nothing has replaced it.
+    const claimed = readStoredDeviceBindings();
+    if (sameBinding(claimed[uid], binding)) {
+      claimed[uid] = { ...binding, claimedAtMs: Date.now() };
+      writeStoredDeviceBindings(claimed);
     }
     return { ok: true, token };
   } catch (error) {
@@ -562,7 +614,7 @@ export async function refreshDeviceTokenForCurrentUser(
       ...(snapshot.exists() ? (snapshot.data() as Partial<PushConsent>) : {}),
     };
     if (!consent.enabled) return;
-    await registerDeviceToken(uid);
+    await registerDeviceToken(uid, { reuseFreshClaim: true });
   } catch (error) {
     logger.warn("[push] token refresh failed", error);
   }

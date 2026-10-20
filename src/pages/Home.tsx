@@ -17,6 +17,7 @@ import { useMeals } from "@/hooks/useMeals";
 import { useHomeData } from "@/hooks/useHomeData";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { isWithinActivationWindow } from "@/lib/activationFraming";
+import { homeMealsWindow } from "@/lib/homeMealsWindow";
 import { firstWeek, type FirstWeekItemKey } from "@/lib/firstWeek";
 import FirstWeekCard from "@/components/home/FirstWeekCard";
 import {
@@ -131,13 +132,6 @@ export default function Home() {
     getWorkoutsForDate,
     loading: workoutsLoading,
   } = useWorkouts();
-  const {
-    meals,
-    loading: mealsLoading,
-    error: mealsError,
-    refresh: refreshMeals,
-    getDailyTotals,
-  } = useMeals();
 
   const effectiveTargets = useEffectiveTargets();
   const { isPro, isInTrial, trialDaysLeft } = useSubscription();
@@ -173,6 +167,33 @@ export default function Home() {
     syncStatus: waterSyncStatus,
     retry: retryWater,
   } = useWaterLog();
+
+  // The day comes from the shared local date key, which moves at midnight
+  // and when the app returns to the foreground. Today's session
+  // (`todaySession`), the strip, the day peek, the week's counts and
+  // tomorrow's session all read it, so an app resumed the next morning
+  // names the new day rather than the one it was opened on.
+  const todayKey = useLocalDateKey();
+  // The day, and the moment Home read it: both move when the day turns, so
+  // a new account's window and a trial's end are measured on the same day
+  // as everything else here.
+  const { today, nowMs } = useMemo(
+    () => ({ today: parseLocalDate(todayKey), nowMs: new Date().getTime() }),
+    [todayKey]
+  );
+  const currentWeekKey = localWeekKey(today);
+  const mealsWindow = useMemo(
+    () =>
+      homeMealsWindow(currentWeekKey, startDayKey(profile?.createdAt), today),
+    [currentWeekKey, today, profile?.createdAt]
+  );
+  const {
+    meals,
+    loading: mealsLoading,
+    error: mealsError,
+    refresh: refreshMeals,
+    getDailyTotals,
+  } = useMeals(mealsWindow);
 
   // Home2 perf telemetry. renderStartRef takes its timestamp from
   // the post-mount effect (rather than lazy useState — that would
@@ -211,20 +232,6 @@ export default function Home() {
   const { dismissed: welcomeDismissed, dismiss: dismissCoachMarks } =
     useDismissOnce("tropos-welcome-checklist-dismissed");
 
-  // The day comes from the shared local date key, which moves at midnight
-  // and when the app returns to the foreground. Today's session
-  // (`todaySession`), the strip, the day peek, the week's counts and
-  // tomorrow's session all read it, so an app resumed the next morning
-  // names the new day rather than the one it was opened on.
-  const todayKey = useLocalDateKey();
-  // The day, and the moment Home read it: both move when the day turns, so
-  // a new account's window and a trial's end are measured on the same day
-  // as everything else here.
-  const { today, nowMs } = useMemo(
-    () => ({ today: parseLocalDate(todayKey), nowMs: new Date().getTime() }),
-    [todayKey]
-  );
-  const currentWeekKey = localWeekKey(today);
   // PR-J Q3 chunk B3c — single source of truth for derived run-day
   // completion across all of Home's surfaces (WeekStrip dot, DayPeek
   // "Run completed" copy, today-resolver's run.isCompleted). Q5
@@ -373,6 +380,9 @@ export default function Home() {
   // Meal history for the energy row's cold-start state. TodayEnergy gets
   // no meal-pattern insight or post-workout nudge — one voice per screen;
   // that detail lives in the Food tab.
+  // The meals in Home's window: in the first fortnight, every one since
+  // the account began, which is all the first-meal prompt and the
+  // first-week card ask; past it, neither reads the count.
   const totalLifetimeMeals = meals.length;
 
   // #972 cold-start activation framing. profile.createdAt is a Firestore

@@ -9,7 +9,10 @@ import {
   resumeReads,
   seedFirestore,
 } from "@/test/firestoreHarness";
-import { useSpacesDirectory } from "../useSpacesDirectory";
+import {
+  invalidateSpacesDirectory,
+  useSpacesDirectory,
+} from "../useSpacesDirectory";
 import type { RaceBrowseFilters } from "../raceBrowse";
 
 vi.mock("firebase/firestore");
@@ -132,5 +135,59 @@ describe("directory membership reads", () => {
     });
     expect(result.current.entries.every((e) => !e.joined)).toBe(true);
     expect(readsAt("spaces/boston-marathon/members/b")).toHaveLength(1);
+  });
+});
+
+describe("copies mounted together", () => {
+  /* The Feed, the Together directory and People each mount the hook, and
+     all three can be open at once. */
+  beforeEach(() => {
+    resetFirestore();
+    session.uid = "a";
+  });
+  const runners = (r: { current: ReturnType<typeof useSpacesDirectory> }) =>
+    r.current.entries.find((e) => e.def.id === "runners");
+
+  it("read each Space once, and read afresh once every copy has gone", async () => {
+    seedFirestore({ "spaces/runners/members/a": { uid: "a" } });
+    const feed = renderHook(() => useSpacesDirectory(true));
+    const together = renderHook(() => useSpacesDirectory(true));
+    const people = renderHook(() => useSpacesDirectory(true));
+    await waitFor(() => {
+      expect(feed.result.current.ready).toBe(true);
+      expect(together.result.current.ready).toBe(true);
+      expect(people.result.current.ready).toBe(true);
+    });
+    expect(runners(together.result)?.joined).toBe(true);
+    expect(readsAt("spaces/runners/members/a")).toHaveLength(1);
+    expect(readsAt("spaces/runners/members")).toHaveLength(1);
+
+    feed.unmount();
+    together.unmount();
+    people.unmount();
+    const again = renderHook(() => useSpacesDirectory(true));
+    await waitFor(() => expect(again.result.current.ready).toBe(true));
+    expect(readsAt("spaces/runners/members/a")).toHaveLength(2);
+    again.unmount();
+  });
+
+  it("a join reaches every mounted copy", async () => {
+    const feed = renderHook(() => useSpacesDirectory(true));
+    const together = renderHook(() => useSpacesDirectory(true));
+    await waitFor(() => {
+      expect(feed.result.current.ready).toBe(true);
+      expect(together.result.current.ready).toBe(true);
+    });
+    expect(runners(feed.result)?.joined).toBe(false);
+
+    seedFirestore({ "spaces/runners/members/a": { uid: "a" } });
+    act(() => invalidateSpacesDirectory("a", "runners"));
+    await waitFor(() => {
+      expect(runners(feed.result)?.joined).toBe(true);
+      expect(runners(together.result)?.joined).toBe(true);
+    });
+    expect(readsAt("spaces/runners/members/a")).toHaveLength(2);
+    feed.unmount();
+    together.unmount();
   });
 });
