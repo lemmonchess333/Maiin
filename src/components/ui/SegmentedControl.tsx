@@ -50,6 +50,10 @@ export interface SegmentedControlProps<T extends string | number> {
    *  field the user hasn't set) — renders with no active segment. */
   value: T | null | undefined;
   onChange: (value: T) => void;
+  /** Optional action when the selected option is clicked or activated with
+   *  Space/Enter. Used by the Food composer to clear its meal target.
+   *  Arrow/Home/End navigation never reactivates the selected option. */
+  onReselect?: (value: T) => void;
   /** Required accessible name for the radiogroup. */
   ariaLabel: string;
   /** Selected-label tint. `brand` = neutral foreground (default),
@@ -87,6 +91,7 @@ function SegmentedControl<T extends string | number>({
   options,
   value,
   onChange,
+  onReselect,
   ariaLabel,
   tone = "brand",
   emphasis = "track",
@@ -105,11 +110,12 @@ function SegmentedControl<T extends string | number>({
   // selected, the first enabled option does, so the group is still reachable.
   const tabbableIndex = selectedIndex >= 0 ? selectedIndex : (enabled[0] ?? 0);
 
-  function focusAndSelect(targetIndex: number) {
+  function focusAndSelect(targetIndex: number, activate = false) {
     const opt = options[targetIndex];
     if (!opt || !isOptionEnabled(targetIndex)) return;
     btnRefs.current[targetIndex]?.focus();
     if (opt.value !== value) onChange(opt.value);
+    else if (activate) onReselect?.(opt.value);
   }
 
   function step(direction: 1 | -1, fromIndex: number) {
@@ -143,7 +149,7 @@ function SegmentedControl<T extends string | number>({
       case " ":
       case "Enter":
         e.preventDefault();
-        focusAndSelect(index);
+        focusAndSelect(index, true);
         break;
     }
   }
@@ -179,7 +185,7 @@ function SegmentedControl<T extends string | number>({
             aria-checked={selected}
             disabled={!isOptionEnabled(i)}
             tabIndex={i === tabbableIndex ? 0 : -1}
-            onClick={() => focusAndSelect(i)}
+            onClick={() => focusAndSelect(i, true)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cn(
               OPTION_BASE,

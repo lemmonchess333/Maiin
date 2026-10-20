@@ -159,14 +159,43 @@ describe("Button — loading state", () => {
     expect(screen.getByRole("button").getAttribute("aria-busy")).toBeNull();
   });
 
-  it("hides the label text and shows a spinner with aria-hidden", () => {
+  it("visually hides the label but keeps its accessible name while loading", () => {
     render(<Button loading>Saving</Button>);
-    const btn = screen.getByRole("button");
-    // The label text is replaced by the spinner. Screen-readers
-    // announce the parent's aria-busy state, not the spinner svg.
-    expect(btn.textContent).not.toContain("Saving");
+    const btn = screen.getByRole("button", { name: "Saving" });
+    // The spinner is visual only. The label stays available to screen
+    // readers alongside the button's busy state.
+    expect(screen.getByText("Saving").className).toContain("sr-only");
     const spinner = btn.querySelector("svg");
     expect(spinner?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("preserves an explicit aria-label while loading", () => {
+    render(
+      <Button loading aria-label="Save workout">
+        Saving
+      </Button>
+    );
+    const btn = screen.getByRole("button", { name: "Save workout" });
+    expect(btn.getAttribute("aria-label")).toBe("Save workout");
+    expect(btn.getAttribute("aria-busy")).toBe("true");
+    expect((btn as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("keeps a composed label through repeated loading transitions", () => {
+    const label = (
+      <>
+        Save <span>workout</span>
+      </>
+    );
+    const { rerender } = render(<Button>{label}</Button>);
+
+    for (const loading of [true, false, true, false]) {
+      rerender(<Button loading={loading}>{label}</Button>);
+      const btn = screen.getByRole("button", { name: "Save workout" });
+      expect((btn as HTMLButtonElement).disabled).toBe(loading);
+      expect(btn.getAttribute("aria-busy")).toBe(loading ? "true" : null);
+      expect(btn.querySelector(".sr-only") !== null).toBe(loading);
+    }
   });
 });
 

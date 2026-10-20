@@ -423,3 +423,71 @@ describe("TodayEnergy — loading is not the same as having logged nothing", fun
     reads("protein", "160", "left");
   });
 });
+
+describe("TodayEnergy food read failures", () => {
+  it("does not turn an unsuccessful empty read into remaining calories", () => {
+    const retry = vi.fn();
+    renderAt({
+      mealsError: "Couldn't load your food diary.",
+      onRetryMeals: retry,
+    });
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Couldn't load your food diary."
+    );
+    expect(screen.queryByRole("button", { name: / calories / })).toBeNull();
+    expect(document.querySelector("[data-macro]")).toBeNull();
+    expect(screen.getByRole("link", { name: "Log food" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(retry).toHaveBeenCalledTimes(1);
+  });
+
+  it("labels available totals as stale and suppresses a fresh recovery recommendation", () => {
+    renderAt({
+      ...A_DAY,
+      mealsError: "Couldn't load your food diary.",
+      postWorkoutNudge: { type: "lift", proteinRemaining: 80 },
+    });
+    expect(
+      screen.getByText("Showing last available totals.")
+    ).toBeInTheDocument();
+    expect(ring()).toHaveAccessibleName(/^1450 of 2200 calories logged/);
+    expect(screen.queryByText(/Post-lift:/)).toBeNull();
+  });
+
+  it("disables repeated retry while refreshing, then restores successful empty totals", () => {
+    const props = {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      targets,
+      onRetryMeals: vi.fn(),
+    };
+    const { rerender } = render(
+      <MemoryRouter>
+        <TodayEnergy {...props} mealsError="Read failed" mealsLoading />
+      </MemoryRouter>
+    );
+    expect(screen.getByRole("button", { name: "Retrying…" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: / calories / })).toBeNull();
+    rerender(
+      <MemoryRouter>
+        <TodayEnergy {...props} />
+      </MemoryRouter>
+    );
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(ring()).toHaveAccessibleName(
+      /^0 of 2200 calories logged, 2200 remaining/
+    );
+  });
+
+  it("Home supplies the diary error and refresh action to the food card", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(
+      resolve(here, "../../../pages/Home.tsx"),
+      "utf8"
+    );
+    expect(source).toContain("mealsError={mealsError}");
+    expect(source).toContain("onRetryMeals={refreshMeals}");
+  });
+});

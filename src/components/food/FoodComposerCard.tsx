@@ -1,4 +1,10 @@
-import type { ReactNode, Ref, RefObject } from "react";
+import {
+  useEffect,
+  useRef,
+  type ReactNode,
+  type Ref,
+  type RefObject,
+} from "react";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import { Camera, PenLine, SendHorizontal } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
@@ -154,8 +160,35 @@ function FoodComposerCard({
   proHint,
   ref: suggestionsRef,
 }: FoodComposerCardProps) {
+  const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelBlur = () => {
+    if (blurTimer.current !== null) clearTimeout(blurTimer.current);
+    blurTimer.current = null;
+  };
+  useEffect(
+    () => () => {
+      if (blurTimer.current !== null) clearTimeout(blurTimer.current);
+    },
+    []
+  );
+
   return (
-    <div className="pb-2">
+    <div
+      className="pb-2"
+      onFocus={cancelBlur}
+      onBlur={(event) => {
+        // Tab moves through the send/scan controls to suggestion rows.
+        // Keep the entire composer open while focus stays in that region.
+        if (event.currentTarget.contains(event.relatedTarget as Node | null))
+          return;
+        cancelBlur();
+        blurTimer.current = setTimeout(() => {
+          setInputFocused(false);
+          setSuggestionsActive(false);
+          blurTimer.current = null;
+        }, 200);
+      }}
+    >
       {/* Meal-slot picker — SegmentedControl (ADR-0003) for the radiogroup
           semantics, keyboard handling and 44px targets, in its `solid`
           emphasis so the selected slot is a filled orange pill. The orange
@@ -179,6 +212,7 @@ function FoodComposerCard({
           }))}
           value={targetMeal}
           onChange={onTargetMeal}
+          onReselect={onTargetMeal}
         />
       </div>
       <div className="relative">
@@ -216,10 +250,6 @@ function FoodComposerCard({
               onFocus={() => {
                 setSuggestionsActive(true);
                 setInputFocused(true);
-              }}
-              onBlur={() => {
-                setInputFocused(false);
-                setTimeout(() => setSuggestionsActive(false), 200);
               }}
               onKeyDown={(e) => {
                 // Return / Enter submits. Two-tap confirm when the

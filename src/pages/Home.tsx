@@ -135,6 +135,7 @@ export default function Home() {
     meals,
     loading: mealsLoading,
     error: mealsError,
+    refresh: refreshMeals,
     getDailyTotals,
   } = useMeals();
 
@@ -1047,6 +1048,8 @@ export default function Home() {
               fat={todayIntake.fat}
               targets={effectiveTargets}
               mealsLoading={mealsLoading}
+              mealsError={mealsError}
+              onRetryMeals={refreshMeals}
               // Computed by useHomeData against the same protein target
               // the macro figures show (HOME-TARGET-01).
               postWorkoutNudge={postWorkoutNudge}
