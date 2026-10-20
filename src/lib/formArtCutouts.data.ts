@@ -564,8 +564,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/face-pulls/3.webp",
     sourceSha256:
-      "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65",
-    sha256: "bfd8b50f7ca509b4a770bdfbddf1379b05b34645332ad068764c9d5339945585",
+      "e95aef45a354b1941c35716c9100543d409ab7a35ad640d8419e03ffae312568",
+    sha256: "8baeef76823e06b0571ae5c0a15043492da030e384e86b4b599cf756b928a274",
   },
   "farmers-carry": {
     src: "form-art/farmers-carry.webp",
@@ -704,8 +704,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/incline-db-curl/3.webp",
     sourceSha256:
-      "25451a1d061e3436f5e592e1a57f52350fdd7847b22d4c4dd135fd22ef96c19a",
-    sha256: "4f39c07eaccfd1973ef2712dd41acf32fdc40cdf4f4100fc6619eb248876f3eb",
+      "402fe0ca44c4bc53f1d77880b7b6ac5082b33cd52f318cc20b5f20431872b0f5",
+    sha256: "c05dc348370037ec536333f33eb94dfa8c62469a0d174bf57d02e7a31f5db930",
   },
   "incline-db-press": {
     src: "form-art/incline-db-press.webp",
@@ -944,8 +944,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/overhead-extension/3.webp",
     sourceSha256:
-      "04aaf33df96a6fd4cfd9e7130d615e639c47f528322ae290f302f52944465428",
-    sha256: "17f7c4572f69d3d8ed4fc7edd935093d3a131c558e62875d7cdf918e0f2231d3",
+      "c77362ad26bb293c64300f1f237ce727c7ab404c75634235f32f95c0bf29ef97",
+    sha256: "61e207f1fa27b6e059c4f2bd30bfb6dafaf3eaad6868abb2ad1fe921b969b4b2",
   },
   "overhead-press": {
     src: "form-art/overhead-press.webp",

@@ -1,0 +1,3893 @@
+[
+  {
+    "id": "assault-bike",
+    "baselineFrames": [
+      {
+        "path": "form-frames/assault-bike/1.webp",
+        "sha256": "2914452590cf2d834ea0c4c8dc25e0cbce5680b8eebf97acd47dcca4a9383a7e",
+        "anchors": {
+          "fixedFrontFloorBaseMaterialFeature1": {
+            "x": 404,
+            "y": 984
+          },
+          "fixedFrontFloorBaseMaterialFeature2": {
+            "x": 471,
+            "y": 981
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontFloorBaseProjectedFeatureSpan": 67.06713054842886,
+          "oppositeFixedSupportProjectedFeatureSpan": 71.47027354082255
+        }
+      },
+      {
+        "path": "form-frames/assault-bike/2.webp",
+        "sha256": "2914452590cf2d834ea0c4c8dc25e0cbce5680b8eebf97acd47dcca4a9383a7e",
+        "anchors": {
+          "fixedFrontFloorBaseMaterialFeature1": {
+            "x": 404,
+            "y": 984
+          },
+          "fixedFrontFloorBaseMaterialFeature2": {
+            "x": 471,
+            "y": 981
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontFloorBaseProjectedFeatureSpan": 67.06713054842886,
+          "oppositeFixedSupportProjectedFeatureSpan": 71.47027354082255
+        }
+      },
+      {
+        "path": "form-frames/assault-bike/3.webp",
+        "sha256": "b1069eb71aea4f2123ba0b81b5780be8f49da889faeec8f277e8dc81575e2052",
+        "anchors": {
+          "fixedFrontFloorBaseMaterialFeature1": {
+            "x": 404,
+            "y": 984
+          },
+          "fixedFrontFloorBaseMaterialFeature2": {
+            "x": 471,
+            "y": 981
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontFloorBaseProjectedFeatureSpan": 67.06713054842886,
+          "oppositeFixedSupportProjectedFeatureSpan": 71.47027354082255
+        }
+      },
+      {
+        "path": "form-frames/assault-bike/4.webp",
+        "sha256": "b1069eb71aea4f2123ba0b81b5780be8f49da889faeec8f277e8dc81575e2052",
+        "anchors": {
+          "fixedFrontFloorBaseMaterialFeature1": {
+            "x": 404,
+            "y": 984
+          },
+          "fixedFrontFloorBaseMaterialFeature2": {
+            "x": 471,
+            "y": 981
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontFloorBaseProjectedFeatureSpan": 67.06713054842886,
+          "oppositeFixedSupportProjectedFeatureSpan": 71.47027354082255
+        }
+      },
+      {
+        "path": "form-frames/assault-bike/5.webp",
+        "sha256": "2914452590cf2d834ea0c4c8dc25e0cbce5680b8eebf97acd47dcca4a9383a7e",
+        "anchors": {
+          "fixedFrontFloorBaseMaterialFeature1": {
+            "x": 404,
+            "y": 984
+          },
+          "fixedFrontFloorBaseMaterialFeature2": {
+            "x": 471,
+            "y": 981
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontFloorBaseProjectedFeatureSpan": 67.06713054842886,
+          "oppositeFixedSupportProjectedFeatureSpan": 71.47027354082255
+        }
+      },
+      {
+        "path": "form-frames/assault-bike/6.webp",
+        "sha256": "2914452590cf2d834ea0c4c8dc25e0cbce5680b8eebf97acd47dcca4a9383a7e",
+        "anchors": {
+          "fixedFrontFloorBaseMaterialFeature1": {
+            "x": 404,
+            "y": 984
+          },
+          "fixedFrontFloorBaseMaterialFeature2": {
+            "x": 471,
+            "y": 981
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontFloorBaseProjectedFeatureSpan": 67.06713054842886,
+          "oppositeFixedSupportProjectedFeatureSpan": 71.47027354082255
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "barbell-curl",
+    "baselineFrames": [
+      {
+        "path": "form-frames/barbell-curl/1.webp",
+        "sha256": "c90649761627eaaa6da742d67cd8d3873817409b44890b975ed79ac9d4995e2f",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 338,
+            "y": 1418
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 576,
+            "y": 1479
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 225,
+          "rightImageSupportProjectedHorizontalSpan": 184
+        }
+      },
+      {
+        "path": "form-frames/barbell-curl/2.webp",
+        "sha256": "9d4bfcdb02a7d35404532ecb9d798b9ee17a220ba8b348a32fa062a4583e496c",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 338.5,
+            "y": 1418
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 575.5,
+            "y": 1479
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 223,
+          "rightImageSupportProjectedHorizontalSpan": 184
+        }
+      },
+      {
+        "path": "form-frames/barbell-curl/3.webp",
+        "sha256": "86f3d5a68c5779a0948940d1d83daff6858ed2bac4bfc0da7ae734919fdb6c10",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 337.5,
+            "y": 1419
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 576,
+            "y": 1479
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 224,
+          "rightImageSupportProjectedHorizontalSpan": 184
+        }
+      },
+      {
+        "path": "form-frames/barbell-curl/4.webp",
+        "sha256": "4da03f12f518a7961d6ce0a903431ef6647444455795d4da920b476447c1f014",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 337.5,
+            "y": 1419
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 575.5,
+            "y": 1479
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 224,
+          "rightImageSupportProjectedHorizontalSpan": 183
+        }
+      },
+      {
+        "path": "form-frames/barbell-curl/5.webp",
+        "sha256": "86f3d5a68c5779a0948940d1d83daff6858ed2bac4bfc0da7ae734919fdb6c10",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 337.5,
+            "y": 1419
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 576,
+            "y": 1479
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 224,
+          "rightImageSupportProjectedHorizontalSpan": 184
+        }
+      },
+      {
+        "path": "form-frames/barbell-curl/6.webp",
+        "sha256": "9d4bfcdb02a7d35404532ecb9d798b9ee17a220ba8b348a32fa062a4583e496c",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 338.5,
+            "y": 1418
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 575.5,
+            "y": 1479
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 223,
+          "rightImageSupportProjectedHorizontalSpan": 184
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "barbell-row",
+    "baselineFrames": [
+      {
+        "path": "form-frames/barbell-row/1.webp",
+        "sha256": "3d1708536445f65a0734b51d596830fabbc5824ff904d42128a687aeefe1ecf8",
+        "anchors": {
+          "plantedFarTrainerHeelContour": {
+            "x": 511,
+            "y": 859
+          },
+          "plantedNearTrainerHeelContour": {
+            "x": 734,
+            "y": 922
+          }
+        },
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 188,
+          "nearShoeOuterNeutralContourSpan": 177
+        }
+      },
+      {
+        "path": "form-frames/barbell-row/2.webp",
+        "sha256": "8175ecc0681f0e2eb5c7621abe6ec0a1f00e9b79ba95efb876c9e3925621b70a",
+        "anchors": {
+          "plantedFarTrainerHeelContour": {
+            "x": 511,
+            "y": 860
+          },
+          "plantedNearTrainerHeelContour": {
+            "x": 733,
+            "y": 922
+          }
+        },
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 189,
+          "nearShoeOuterNeutralContourSpan": 178
+        }
+      },
+      {
+        "path": "form-frames/barbell-row/3.webp",
+        "sha256": "998e34786cac216ab057c7e26d219a97111231edf31100b1c12acf4cc95bd9e6",
+        "anchors": {
+          "plantedFarTrainerHeelContour": {
+            "x": 511,
+            "y": 859
+          },
+          "plantedNearTrainerHeelContour": {
+            "x": 734,
+            "y": 922
+          }
+        },
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 188,
+          "nearShoeOuterNeutralContourSpan": 177
+        }
+      },
+      {
+        "path": "form-frames/barbell-row/4.webp",
+        "sha256": "9ed1076fc250c1e12778cf7438d8b402cd16f0501be5ce0a2e5a5fc15aea7730",
+        "anchors": {
+          "plantedFarTrainerHeelContour": {
+            "x": 512,
+            "y": 859
+          },
+          "plantedNearTrainerHeelContour": {
+            "x": 734,
+            "y": 922
+          }
+        },
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 189,
+          "nearShoeOuterNeutralContourSpan": 178
+        }
+      },
+      {
+        "path": "form-frames/barbell-row/5.webp",
+        "sha256": "998e34786cac216ab057c7e26d219a97111231edf31100b1c12acf4cc95bd9e6",
+        "anchors": {
+          "plantedFarTrainerHeelContour": {
+            "x": 511,
+            "y": 859
+          },
+          "plantedNearTrainerHeelContour": {
+            "x": 734,
+            "y": 922
+          }
+        },
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 188,
+          "nearShoeOuterNeutralContourSpan": 177
+        }
+      },
+      {
+        "path": "form-frames/barbell-row/6.webp",
+        "sha256": "3d1708536445f65a0734b51d596830fabbc5824ff904d42128a687aeefe1ecf8",
+        "anchors": {
+          "plantedFarTrainerHeelContour": {
+            "x": 511,
+            "y": 859
+          },
+          "plantedNearTrainerHeelContour": {
+            "x": 734,
+            "y": 922
+          }
+        },
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 188,
+          "nearShoeOuterNeutralContourSpan": 177
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "bench-press",
+    "baselineFrames": [
+      {
+        "path": "form-frames/bench-press/1.webp",
+        "sha256": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 482,
+            "y": 974
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 762,
+            "y": 876
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 128
+        }
+      },
+      {
+        "path": "form-frames/bench-press/2.webp",
+        "sha256": "4ab1f8d37c4137bd4ced6b2a9fb85bee29d7b905daab019b99cef7c46b8b014f",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 482,
+            "y": 974
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 762.5,
+            "y": 876
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 127
+        }
+      },
+      {
+        "path": "form-frames/bench-press/3.webp",
+        "sha256": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 482,
+            "y": 974
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 762,
+            "y": 876
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 128
+        }
+      },
+      {
+        "path": "form-frames/bench-press/4.webp",
+        "sha256": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 482,
+            "y": 974
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 762,
+            "y": 876
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 128
+        }
+      },
+      {
+        "path": "form-frames/bench-press/5.webp",
+        "sha256": "4ab1f8d37c4137bd4ced6b2a9fb85bee29d7b905daab019b99cef7c46b8b014f",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 482,
+            "y": 974
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 762.5,
+            "y": 876
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 127
+        }
+      },
+      {
+        "path": "form-frames/bench-press/6.webp",
+        "sha256": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 482,
+            "y": 974
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 762,
+            "y": 876
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 128
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "bike",
+    "baselineFrames": [
+      {
+        "path": "form-frames/bike/1.webp",
+        "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+        "anchors": {
+          "fixedFrontPodFastenerMaterialFeature1": {
+            "x": 56,
+            "y": 1374
+          },
+          "fixedFrontPodFastenerMaterialFeature2": {
+            "x": 129,
+            "y": 1375
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontPodFastenerProjectedFeatureSpan": 73.00684899377592,
+          "oppositeFixedSupportProjectedFeatureSpan": 66
+        }
+      },
+      {
+        "path": "form-frames/bike/2.webp",
+        "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+        "anchors": {
+          "fixedFrontPodFastenerMaterialFeature1": {
+            "x": 56,
+            "y": 1374
+          },
+          "fixedFrontPodFastenerMaterialFeature2": {
+            "x": 129,
+            "y": 1375
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontPodFastenerProjectedFeatureSpan": 73.00684899377592,
+          "oppositeFixedSupportProjectedFeatureSpan": 66
+        }
+      },
+      {
+        "path": "form-frames/bike/3.webp",
+        "sha256": "8c1cb083d7040982b6bb8cbd48370c32ef393ad4d7efc20afbc4792966e50e6f",
+        "anchors": {
+          "fixedFrontPodFastenerMaterialFeature1": {
+            "x": 56,
+            "y": 1374
+          },
+          "fixedFrontPodFastenerMaterialFeature2": {
+            "x": 129,
+            "y": 1375
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontPodFastenerProjectedFeatureSpan": 73.00684899377592,
+          "oppositeFixedSupportProjectedFeatureSpan": 66
+        }
+      },
+      {
+        "path": "form-frames/bike/4.webp",
+        "sha256": "8c1cb083d7040982b6bb8cbd48370c32ef393ad4d7efc20afbc4792966e50e6f",
+        "anchors": {
+          "fixedFrontPodFastenerMaterialFeature1": {
+            "x": 56,
+            "y": 1374
+          },
+          "fixedFrontPodFastenerMaterialFeature2": {
+            "x": 129,
+            "y": 1375
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontPodFastenerProjectedFeatureSpan": 73.00684899377592,
+          "oppositeFixedSupportProjectedFeatureSpan": 66
+        }
+      },
+      {
+        "path": "form-frames/bike/5.webp",
+        "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+        "anchors": {
+          "fixedFrontPodFastenerMaterialFeature1": {
+            "x": 56,
+            "y": 1374
+          },
+          "fixedFrontPodFastenerMaterialFeature2": {
+            "x": 129,
+            "y": 1375
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontPodFastenerProjectedFeatureSpan": 73.00684899377592,
+          "oppositeFixedSupportProjectedFeatureSpan": 66
+        }
+      },
+      {
+        "path": "form-frames/bike/6.webp",
+        "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+        "anchors": {
+          "fixedFrontPodFastenerMaterialFeature1": {
+            "x": 56,
+            "y": 1374
+          },
+          "fixedFrontPodFastenerMaterialFeature2": {
+            "x": 129,
+            "y": 1375
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontPodFastenerProjectedFeatureSpan": 73.00684899377592,
+          "oppositeFixedSupportProjectedFeatureSpan": 66
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "calf-raise",
+    "baselineFrames": [
+      {
+        "path": "form-frames/calf-raise/1.webp",
+        "sha256": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+        "anchors": {
+          "fixedStationFloorBaseMaterialFeature1": {
+            "x": 55,
+            "y": 1262
+          },
+          "fixedStationFloorBaseMaterialFeature2": {
+            "x": 95,
+            "y": 1297
+          }
+        },
+        "invariantDimensions": {
+          "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+          "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+        }
+      },
+      {
+        "path": "form-frames/calf-raise/2.webp",
+        "sha256": "f62196c455ae718790a76f014c79de10bfbcd33cfac329eb97b4156962375b2b",
+        "anchors": {
+          "fixedStationFloorBaseMaterialFeature1": {
+            "x": 55,
+            "y": 1262
+          },
+          "fixedStationFloorBaseMaterialFeature2": {
+            "x": 95,
+            "y": 1297
+          }
+        },
+        "invariantDimensions": {
+          "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+          "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+        }
+      },
+      {
+        "path": "form-frames/calf-raise/3.webp",
+        "sha256": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+        "anchors": {
+          "fixedStationFloorBaseMaterialFeature1": {
+            "x": 55,
+            "y": 1262
+          },
+          "fixedStationFloorBaseMaterialFeature2": {
+            "x": 95,
+            "y": 1297
+          }
+        },
+        "invariantDimensions": {
+          "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+          "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+        }
+      },
+      {
+        "path": "form-frames/calf-raise/4.webp",
+        "sha256": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+        "anchors": {
+          "fixedStationFloorBaseMaterialFeature1": {
+            "x": 55,
+            "y": 1262
+          },
+          "fixedStationFloorBaseMaterialFeature2": {
+            "x": 95,
+            "y": 1297
+          }
+        },
+        "invariantDimensions": {
+          "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+          "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+        }
+      },
+      {
+        "path": "form-frames/calf-raise/5.webp",
+        "sha256": "f62196c455ae718790a76f014c79de10bfbcd33cfac329eb97b4156962375b2b",
+        "anchors": {
+          "fixedStationFloorBaseMaterialFeature1": {
+            "x": 55,
+            "y": 1262
+          },
+          "fixedStationFloorBaseMaterialFeature2": {
+            "x": 95,
+            "y": 1297
+          }
+        },
+        "invariantDimensions": {
+          "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+          "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+        }
+      },
+      {
+        "path": "form-frames/calf-raise/6.webp",
+        "sha256": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+        "anchors": {
+          "fixedStationFloorBaseMaterialFeature1": {
+            "x": 55,
+            "y": 1262
+          },
+          "fixedStationFloorBaseMaterialFeature2": {
+            "x": 95,
+            "y": 1297
+          }
+        },
+        "invariantDimensions": {
+          "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+          "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "dips",
+    "baselineFrames": [
+      {
+        "path": "form-frames/dips/1.webp",
+        "sha256": "6550488aa4409c1fe6e83b86dfe2f5f1003c2d5c4bb29e88b4bfcb18b8bb2cde",
+        "anchors": {
+          "fixedLeftFrontFloorPodMaterialFeature1": {
+            "x": 74,
+            "y": 944
+          },
+          "fixedLeftFrontFloorPodMaterialFeature2": {
+            "x": 131,
+            "y": 930
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFrontFloorPodProjectedFeatureSpan": 58.69412236331676,
+          "oppositeFixedSupportProjectedFeatureSpan": 67.06713054842886
+        }
+      },
+      {
+        "path": "form-frames/dips/2.webp",
+        "sha256": "66b8958cdfc9e611499cbd4b3d6245151e86736070fb456387b4d278411177b7",
+        "anchors": {
+          "fixedLeftFrontFloorPodMaterialFeature1": {
+            "x": 74,
+            "y": 944
+          },
+          "fixedLeftFrontFloorPodMaterialFeature2": {
+            "x": 131,
+            "y": 930
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFrontFloorPodProjectedFeatureSpan": 58.69412236331676,
+          "oppositeFixedSupportProjectedFeatureSpan": 67.06713054842886
+        }
+      },
+      {
+        "path": "form-frames/dips/3.webp",
+        "sha256": "66b8958cdfc9e611499cbd4b3d6245151e86736070fb456387b4d278411177b7",
+        "anchors": {
+          "fixedLeftFrontFloorPodMaterialFeature1": {
+            "x": 74,
+            "y": 944
+          },
+          "fixedLeftFrontFloorPodMaterialFeature2": {
+            "x": 131,
+            "y": 930
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFrontFloorPodProjectedFeatureSpan": 58.69412236331676,
+          "oppositeFixedSupportProjectedFeatureSpan": 67.06713054842886
+        }
+      },
+      {
+        "path": "form-frames/dips/4.webp",
+        "sha256": "aec984bed1f2db0aa37c8db9fd5fb3783486b4053d9be89db1f130d234f61feb",
+        "anchors": {
+          "fixedLeftFrontFloorPodMaterialFeature1": {
+            "x": 74,
+            "y": 944
+          },
+          "fixedLeftFrontFloorPodMaterialFeature2": {
+            "x": 131,
+            "y": 930
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFrontFloorPodProjectedFeatureSpan": 58.69412236331676,
+          "oppositeFixedSupportProjectedFeatureSpan": 67.06713054842886
+        }
+      },
+      {
+        "path": "form-frames/dips/5.webp",
+        "sha256": "66b8958cdfc9e611499cbd4b3d6245151e86736070fb456387b4d278411177b7",
+        "anchors": {
+          "fixedLeftFrontFloorPodMaterialFeature1": {
+            "x": 74,
+            "y": 944
+          },
+          "fixedLeftFrontFloorPodMaterialFeature2": {
+            "x": 131,
+            "y": 930
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFrontFloorPodProjectedFeatureSpan": 58.69412236331676,
+          "oppositeFixedSupportProjectedFeatureSpan": 67.06713054842886
+        }
+      },
+      {
+        "path": "form-frames/dips/6.webp",
+        "sha256": "6550488aa4409c1fe6e83b86dfe2f5f1003c2d5c4bb29e88b4bfcb18b8bb2cde",
+        "anchors": {
+          "fixedLeftFrontFloorPodMaterialFeature1": {
+            "x": 74,
+            "y": 944
+          },
+          "fixedLeftFrontFloorPodMaterialFeature2": {
+            "x": 131,
+            "y": 930
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFrontFloorPodProjectedFeatureSpan": 58.69412236331676,
+          "oppositeFixedSupportProjectedFeatureSpan": 67.06713054842886
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "elliptical",
+    "baselineFrames": [
+      {
+        "path": "form-frames/elliptical/1.webp",
+        "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+        "anchors": {
+          "fixedLeftFloorBaseMaterialFeature1": {
+            "x": 42,
+            "y": 957
+          },
+          "fixedLeftFloorBaseMaterialFeature2": {
+            "x": 120,
+            "y": 990
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFloorBaseProjectedFeatureSpan": 84.69356528095862,
+          "oppositeFixedSupportProjectedFeatureSpan": 69.2314957226839
+        }
+      },
+      {
+        "path": "form-frames/elliptical/2.webp",
+        "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+        "anchors": {
+          "fixedLeftFloorBaseMaterialFeature1": {
+            "x": 42,
+            "y": 957
+          },
+          "fixedLeftFloorBaseMaterialFeature2": {
+            "x": 120,
+            "y": 990
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFloorBaseProjectedFeatureSpan": 84.69356528095862,
+          "oppositeFixedSupportProjectedFeatureSpan": 69.2314957226839
+        }
+      },
+      {
+        "path": "form-frames/elliptical/3.webp",
+        "sha256": "1b9862601b8c27b6ee101779b325cf9591a1a1175da9b35e18f8d29077864c1f",
+        "anchors": {
+          "fixedLeftFloorBaseMaterialFeature1": {
+            "x": 42,
+            "y": 957
+          },
+          "fixedLeftFloorBaseMaterialFeature2": {
+            "x": 120,
+            "y": 990
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFloorBaseProjectedFeatureSpan": 84.69356528095862,
+          "oppositeFixedSupportProjectedFeatureSpan": 69.2314957226839
+        }
+      },
+      {
+        "path": "form-frames/elliptical/4.webp",
+        "sha256": "1b9862601b8c27b6ee101779b325cf9591a1a1175da9b35e18f8d29077864c1f",
+        "anchors": {
+          "fixedLeftFloorBaseMaterialFeature1": {
+            "x": 42,
+            "y": 957
+          },
+          "fixedLeftFloorBaseMaterialFeature2": {
+            "x": 120,
+            "y": 990
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFloorBaseProjectedFeatureSpan": 84.69356528095862,
+          "oppositeFixedSupportProjectedFeatureSpan": 69.2314957226839
+        }
+      },
+      {
+        "path": "form-frames/elliptical/5.webp",
+        "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+        "anchors": {
+          "fixedLeftFloorBaseMaterialFeature1": {
+            "x": 42,
+            "y": 957
+          },
+          "fixedLeftFloorBaseMaterialFeature2": {
+            "x": 120,
+            "y": 990
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFloorBaseProjectedFeatureSpan": 84.69356528095862,
+          "oppositeFixedSupportProjectedFeatureSpan": 69.2314957226839
+        }
+      },
+      {
+        "path": "form-frames/elliptical/6.webp",
+        "sha256": "5b034eeaaebfc79750788c64f264aa2c87673f26d5cb15b4442baf26f24d6a7d",
+        "anchors": {
+          "fixedLeftFloorBaseMaterialFeature1": {
+            "x": 42,
+            "y": 957
+          },
+          "fixedLeftFloorBaseMaterialFeature2": {
+            "x": 120,
+            "y": 990
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFloorBaseProjectedFeatureSpan": 84.69356528095862,
+          "oppositeFixedSupportProjectedFeatureSpan": 69.2314957226839
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "face-pulls",
+    "baselineFrames": [
+      {
+        "path": "form-frames/face-pulls/1.webp",
+        "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+        "anchors": {
+          "fixedTowerTopCrossmemberMaterialFeature1": {
+            "x": 776,
+            "y": 35
+          },
+          "fixedTowerTopCrossmemberMaterialFeature2": {
+            "x": 918,
+            "y": 31
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+          "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+        }
+      },
+      {
+        "path": "form-frames/face-pulls/2.webp",
+        "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+        "anchors": {
+          "fixedTowerTopCrossmemberMaterialFeature1": {
+            "x": 776,
+            "y": 35
+          },
+          "fixedTowerTopCrossmemberMaterialFeature2": {
+            "x": 918,
+            "y": 31
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+          "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+        }
+      },
+      {
+        "path": "form-frames/face-pulls/3.webp",
+        "sha256": "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65",
+        "anchors": {
+          "fixedTowerTopCrossmemberMaterialFeature1": {
+            "x": 776,
+            "y": 35
+          },
+          "fixedTowerTopCrossmemberMaterialFeature2": {
+            "x": 918,
+            "y": 31
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+          "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+        }
+      },
+      {
+        "path": "form-frames/face-pulls/4.webp",
+        "sha256": "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65",
+        "anchors": {
+          "fixedTowerTopCrossmemberMaterialFeature1": {
+            "x": 776,
+            "y": 35
+          },
+          "fixedTowerTopCrossmemberMaterialFeature2": {
+            "x": 918,
+            "y": 31
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+          "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+        }
+      },
+      {
+        "path": "form-frames/face-pulls/5.webp",
+        "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+        "anchors": {
+          "fixedTowerTopCrossmemberMaterialFeature1": {
+            "x": 776,
+            "y": 35
+          },
+          "fixedTowerTopCrossmemberMaterialFeature2": {
+            "x": 918,
+            "y": 31
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+          "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+        }
+      },
+      {
+        "path": "form-frames/face-pulls/6.webp",
+        "sha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+        "anchors": {
+          "fixedTowerTopCrossmemberMaterialFeature1": {
+            "x": 776,
+            "y": 35
+          },
+          "fixedTowerTopCrossmemberMaterialFeature2": {
+            "x": 918,
+            "y": 31
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+          "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+        }
+      }
+    ],
+    "disposition": "corrected scoped native issue",
+    "newRelease": "docs/exercise-art/releases/2026-10-20-contour-polish/face-pulls.json"
+  },
+  {
+    "id": "front-squat",
+    "baselineFrames": [
+      {
+        "path": "form-frames/front-squat/1.webp",
+        "sha256": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 317.5,
+            "y": 730
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 451,
+            "y": 720
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 101,
+          "rightImageSupportProjectedHorizontalSpan": 118
+        }
+      },
+      {
+        "path": "form-frames/front-squat/2.webp",
+        "sha256": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 317.5,
+            "y": 730
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 451,
+            "y": 720
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 101,
+          "rightImageSupportProjectedHorizontalSpan": 118
+        }
+      },
+      {
+        "path": "form-frames/front-squat/3.webp",
+        "sha256": "2a2bb9acc5d0aa8237885c8e8020f66a38af4927c47e745bd0d3dac115f58380",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 317,
+            "y": 729
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 451,
+            "y": 720
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 101,
+          "rightImageSupportProjectedHorizontalSpan": 118
+        }
+      },
+      {
+        "path": "form-frames/front-squat/4.webp",
+        "sha256": "2a2bb9acc5d0aa8237885c8e8020f66a38af4927c47e745bd0d3dac115f58380",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 317,
+            "y": 729
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 451,
+            "y": 720
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 101,
+          "rightImageSupportProjectedHorizontalSpan": 118
+        }
+      },
+      {
+        "path": "form-frames/front-squat/5.webp",
+        "sha256": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 317.5,
+            "y": 730
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 451,
+            "y": 720
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 101,
+          "rightImageSupportProjectedHorizontalSpan": 118
+        }
+      },
+      {
+        "path": "form-frames/front-squat/6.webp",
+        "sha256": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 317.5,
+            "y": 730
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 451,
+            "y": 720
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 101,
+          "rightImageSupportProjectedHorizontalSpan": 118
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "goblet-squat",
+    "baselineFrames": [
+      {
+        "path": "form-frames/goblet-squat/1.webp",
+        "sha256": "13fd26e58d89e3114662944cdbc779850bf8a152eae8679089ff9b83f1ed0cc6",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 269,
+            "y": 1355
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 483,
+            "y": 1336
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 214.84180226389836,
+          "oppositeFixedSupportProjectedFeatureSpan": 184.69434208984313
+        }
+      },
+      {
+        "path": "form-frames/goblet-squat/2.webp",
+        "sha256": "5adab9f01586a94d9eaf8db9253c4ee6270356613cbd276429e52caba953c0a6",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 269,
+            "y": 1355
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 483,
+            "y": 1336
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 214.84180226389836,
+          "oppositeFixedSupportProjectedFeatureSpan": 184.61040057374882
+        }
+      },
+      {
+        "path": "form-frames/goblet-squat/3.webp",
+        "sha256": "aaafbbcba395c804ffbcfffc4425e08064a5aa386e8f6851371aac1841a59501",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 269,
+            "y": 1355
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 483,
+            "y": 1336
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 214.84180226389836,
+          "oppositeFixedSupportProjectedFeatureSpan": 183.69812192834198
+        }
+      },
+      {
+        "path": "form-frames/goblet-squat/4.webp",
+        "sha256": "094f6fe821f13d15244cfb025850b9ef19e38adef361023d8f18d4a86deb9335",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 269,
+            "y": 1355
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 483,
+            "y": 1336
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 214.84180226389836,
+          "oppositeFixedSupportProjectedFeatureSpan": 183.69812192834198
+        }
+      },
+      {
+        "path": "form-frames/goblet-squat/5.webp",
+        "sha256": "aaafbbcba395c804ffbcfffc4425e08064a5aa386e8f6851371aac1841a59501",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 269,
+            "y": 1355
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 483,
+            "y": 1336
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 214.84180226389836,
+          "oppositeFixedSupportProjectedFeatureSpan": 183.69812192834198
+        }
+      },
+      {
+        "path": "form-frames/goblet-squat/6.webp",
+        "sha256": "5adab9f01586a94d9eaf8db9253c4ee6270356613cbd276429e52caba953c0a6",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 269,
+            "y": 1355
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 483,
+            "y": 1336
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 214.84180226389836,
+          "oppositeFixedSupportProjectedFeatureSpan": 184.61040057374882
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "handstand-push-ups",
+    "baselineFrames": [
+      {
+        "path": "form-frames/handstand-push-ups/1.webp",
+        "sha256": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905",
+        "anchors": {
+          "wallFrontRightFloorJunction": {
+            "x": 627.5,
+            "y": 1364
+          },
+          "wallBackRightFloorJunction": {
+            "x": 640.5,
+            "y": 1361
+          }
+        },
+        "invariantDimensions": {
+          "visibleWallFrontWidthAtY200": 361,
+          "visibleWallSideFaceWidthAtY200": 13
+        }
+      },
+      {
+        "path": "form-frames/handstand-push-ups/2.webp",
+        "sha256": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905",
+        "anchors": {
+          "wallFrontRightFloorJunction": {
+            "x": 627.5,
+            "y": 1364
+          },
+          "wallBackRightFloorJunction": {
+            "x": 640.5,
+            "y": 1361
+          }
+        },
+        "invariantDimensions": {
+          "visibleWallFrontWidthAtY200": 361,
+          "visibleWallSideFaceWidthAtY200": 13
+        }
+      },
+      {
+        "path": "form-frames/handstand-push-ups/3.webp",
+        "sha256": "f042c84b2a1d70f7fc287a39515a22b2148c36a9830c8d8ea7e2f002afcd4b59",
+        "anchors": {
+          "wallFrontRightFloorJunction": {
+            "x": 626.5,
+            "y": 1364
+          },
+          "wallBackRightFloorJunction": {
+            "x": 639.5,
+            "y": 1361
+          }
+        },
+        "invariantDimensions": {
+          "visibleWallFrontWidthAtY200": 360,
+          "visibleWallSideFaceWidthAtY200": 13
+        }
+      },
+      {
+        "path": "form-frames/handstand-push-ups/4.webp",
+        "sha256": "f042c84b2a1d70f7fc287a39515a22b2148c36a9830c8d8ea7e2f002afcd4b59",
+        "anchors": {
+          "wallFrontRightFloorJunction": {
+            "x": 626.5,
+            "y": 1364
+          },
+          "wallBackRightFloorJunction": {
+            "x": 639.5,
+            "y": 1361
+          }
+        },
+        "invariantDimensions": {
+          "visibleWallFrontWidthAtY200": 360,
+          "visibleWallSideFaceWidthAtY200": 13
+        }
+      },
+      {
+        "path": "form-frames/handstand-push-ups/5.webp",
+        "sha256": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905",
+        "anchors": {
+          "wallFrontRightFloorJunction": {
+            "x": 627.5,
+            "y": 1364
+          },
+          "wallBackRightFloorJunction": {
+            "x": 640.5,
+            "y": 1361
+          }
+        },
+        "invariantDimensions": {
+          "visibleWallFrontWidthAtY200": 361,
+          "visibleWallSideFaceWidthAtY200": 13
+        }
+      },
+      {
+        "path": "form-frames/handstand-push-ups/6.webp",
+        "sha256": "1c0bfb7029138277e61fb3a4e337cc4ba9154b5f1d610872ba3b35e1fc2e5905",
+        "anchors": {
+          "wallFrontRightFloorJunction": {
+            "x": 627.5,
+            "y": 1364
+          },
+          "wallBackRightFloorJunction": {
+            "x": 640.5,
+            "y": 1361
+          }
+        },
+        "invariantDimensions": {
+          "visibleWallFrontWidthAtY200": 361,
+          "visibleWallSideFaceWidthAtY200": 13
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "incline-db-curl",
+    "baselineFrames": [
+      {
+        "path": "form-frames/incline-db-curl/1.webp",
+        "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 642.5,
+            "y": 721
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 875.5,
+            "y": 648
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 258,
+          "rightImageSupportProjectedHorizontalSpan": 180
+        }
+      },
+      {
+        "path": "form-frames/incline-db-curl/2.webp",
+        "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 642.5,
+            "y": 721
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 875.5,
+            "y": 648
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 258,
+          "rightImageSupportProjectedHorizontalSpan": 180
+        }
+      },
+      {
+        "path": "form-frames/incline-db-curl/3.webp",
+        "sha256": "25451a1d061e3436f5e592e1a57f52350fdd7847b22d4c4dd135fd22ef96c19a",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 642.5,
+            "y": 721
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 875.5,
+            "y": 648
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 258,
+          "rightImageSupportProjectedHorizontalSpan": 180
+        }
+      },
+      {
+        "path": "form-frames/incline-db-curl/4.webp",
+        "sha256": "25451a1d061e3436f5e592e1a57f52350fdd7847b22d4c4dd135fd22ef96c19a",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 642.5,
+            "y": 721
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 875.5,
+            "y": 648
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 258,
+          "rightImageSupportProjectedHorizontalSpan": 180
+        }
+      },
+      {
+        "path": "form-frames/incline-db-curl/5.webp",
+        "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 642.5,
+            "y": 721
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 875.5,
+            "y": 648
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 258,
+          "rightImageSupportProjectedHorizontalSpan": 180
+        }
+      },
+      {
+        "path": "form-frames/incline-db-curl/6.webp",
+        "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 642.5,
+            "y": 721
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 875.5,
+            "y": 648
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 258,
+          "rightImageSupportProjectedHorizontalSpan": 180
+        }
+      }
+    ],
+    "disposition": "corrected scoped native issue",
+    "newRelease": "docs/exercise-art/releases/2026-10-20-contour-polish/incline-db-curl.json"
+  },
+  {
+    "id": "leg-extension",
+    "baselineFrames": [
+      {
+        "path": "form-frames/leg-extension/1.webp",
+        "sha256": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826",
+        "anchors": {
+          "fixedTowerTopCapMaterialFeature1": {
+            "x": 76,
+            "y": 36
+          },
+          "fixedTowerTopCapMaterialFeature2": {
+            "x": 254,
+            "y": 65
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCapProjectedFeatureSpan": 180.34688796871433,
+          "oppositeFixedSupportProjectedFeatureSpan": 199
+        }
+      },
+      {
+        "path": "form-frames/leg-extension/2.webp",
+        "sha256": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826",
+        "anchors": {
+          "fixedTowerTopCapMaterialFeature1": {
+            "x": 76,
+            "y": 36
+          },
+          "fixedTowerTopCapMaterialFeature2": {
+            "x": 254,
+            "y": 65
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCapProjectedFeatureSpan": 180.34688796871433,
+          "oppositeFixedSupportProjectedFeatureSpan": 199
+        }
+      },
+      {
+        "path": "form-frames/leg-extension/3.webp",
+        "sha256": "67009ad87ae8a8d5d12215fda6cc375e94d5898db1ee2afef4f76dbf1fe30d59",
+        "anchors": {
+          "fixedTowerTopCapMaterialFeature1": {
+            "x": 76,
+            "y": 36
+          },
+          "fixedTowerTopCapMaterialFeature2": {
+            "x": 254,
+            "y": 65
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCapProjectedFeatureSpan": 180.34688796871433,
+          "oppositeFixedSupportProjectedFeatureSpan": 199
+        }
+      },
+      {
+        "path": "form-frames/leg-extension/4.webp",
+        "sha256": "67009ad87ae8a8d5d12215fda6cc375e94d5898db1ee2afef4f76dbf1fe30d59",
+        "anchors": {
+          "fixedTowerTopCapMaterialFeature1": {
+            "x": 76,
+            "y": 36
+          },
+          "fixedTowerTopCapMaterialFeature2": {
+            "x": 254,
+            "y": 65
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCapProjectedFeatureSpan": 180.34688796871433,
+          "oppositeFixedSupportProjectedFeatureSpan": 199
+        }
+      },
+      {
+        "path": "form-frames/leg-extension/5.webp",
+        "sha256": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826",
+        "anchors": {
+          "fixedTowerTopCapMaterialFeature1": {
+            "x": 76,
+            "y": 36
+          },
+          "fixedTowerTopCapMaterialFeature2": {
+            "x": 254,
+            "y": 65
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCapProjectedFeatureSpan": 180.34688796871433,
+          "oppositeFixedSupportProjectedFeatureSpan": 199
+        }
+      },
+      {
+        "path": "form-frames/leg-extension/6.webp",
+        "sha256": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826",
+        "anchors": {
+          "fixedTowerTopCapMaterialFeature1": {
+            "x": 76,
+            "y": 36
+          },
+          "fixedTowerTopCapMaterialFeature2": {
+            "x": 254,
+            "y": 65
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCapProjectedFeatureSpan": 180.34688796871433,
+          "oppositeFixedSupportProjectedFeatureSpan": 199
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "leg-press",
+    "baselineFrames": [
+      {
+        "path": "form-frames/leg-press/1.webp",
+        "sha256": "914544786909e8c84e7c6d9d1029ec9aeb565f88f8b16824b353eacc864fb863",
+        "anchors": {
+          "fixedFrontFloorPodMaterialFeature1": {
+            "x": 454,
+            "y": 950
+          },
+          "fixedFrontFloorPodMaterialFeature2": {
+            "x": 551,
+            "y": 975
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontFloorPodProjectedFeatureSpan": 100.16985574512923,
+          "oppositeFixedSupportProjectedFeatureSpan": 43.18564576337837
+        }
+      },
+      {
+        "path": "form-frames/leg-press/2.webp",
+        "sha256": "914544786909e8c84e7c6d9d1029ec9aeb565f88f8b16824b353eacc864fb863",
+        "anchors": {
+          "fixedFrontFloorPodMaterialFeature1": {
+            "x": 454,
+            "y": 950
+          },
+          "fixedFrontFloorPodMaterialFeature2": {
+            "x": 551,
+            "y": 975
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontFloorPodProjectedFeatureSpan": 100.16985574512923,
+          "oppositeFixedSupportProjectedFeatureSpan": 43.18564576337837
+        }
+      },
+      {
+        "path": "form-frames/leg-press/3.webp",
+        "sha256": "53eea11671983d8a56282077ccc0a82bce710713db7dc23b162d1aed121887d7",
+        "anchors": {
+          "fixedFrontFloorPodMaterialFeature1": {
+            "x": 454,
+            "y": 950
+          },
+          "fixedFrontFloorPodMaterialFeature2": {
+            "x": 551,
+            "y": 975
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontFloorPodProjectedFeatureSpan": 100.16985574512923,
+          "oppositeFixedSupportProjectedFeatureSpan": 43.18564576337837
+        }
+      },
+      {
+        "path": "form-frames/leg-press/4.webp",
+        "sha256": "53eea11671983d8a56282077ccc0a82bce710713db7dc23b162d1aed121887d7",
+        "anchors": {
+          "fixedFrontFloorPodMaterialFeature1": {
+            "x": 454,
+            "y": 950
+          },
+          "fixedFrontFloorPodMaterialFeature2": {
+            "x": 551,
+            "y": 975
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontFloorPodProjectedFeatureSpan": 100.16985574512923,
+          "oppositeFixedSupportProjectedFeatureSpan": 43.18564576337837
+        }
+      },
+      {
+        "path": "form-frames/leg-press/5.webp",
+        "sha256": "914544786909e8c84e7c6d9d1029ec9aeb565f88f8b16824b353eacc864fb863",
+        "anchors": {
+          "fixedFrontFloorPodMaterialFeature1": {
+            "x": 454,
+            "y": 950
+          },
+          "fixedFrontFloorPodMaterialFeature2": {
+            "x": 551,
+            "y": 975
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontFloorPodProjectedFeatureSpan": 100.16985574512923,
+          "oppositeFixedSupportProjectedFeatureSpan": 43.18564576337837
+        }
+      },
+      {
+        "path": "form-frames/leg-press/6.webp",
+        "sha256": "914544786909e8c84e7c6d9d1029ec9aeb565f88f8b16824b353eacc864fb863",
+        "anchors": {
+          "fixedFrontFloorPodMaterialFeature1": {
+            "x": 454,
+            "y": 950
+          },
+          "fixedFrontFloorPodMaterialFeature2": {
+            "x": 551,
+            "y": 975
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontFloorPodProjectedFeatureSpan": 100.16985574512923,
+          "oppositeFixedSupportProjectedFeatureSpan": 43.18564576337837
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "lu-raise",
+    "baselineFrames": [
+      {
+        "path": "form-frames/lu-raise/1.webp",
+        "sha256": "b6c3499e5ba03e9c4752b6518b3bc3d33bde18078f906a7ee6877d9f07c1d947",
+        "anchors": {
+          "farPlantedHeelMaterialFeature": {
+            "x": 466,
+            "y": 1248
+          },
+          "nearPlantedHeelMaterialFeature": {
+            "x": 622,
+            "y": 1281
+          }
+        },
+        "invariantDimensions": {
+          "farTrainerToeHeelSpan": 168.1814496310458,
+          "nearTrainerToeHeelSpan": 139.17614738165446
+        }
+      },
+      {
+        "path": "form-frames/lu-raise/2.webp",
+        "sha256": "20027691446c265af027ddc2737fff1243f889ab6a2ffd2f7503393f822c12fa",
+        "anchors": {
+          "farPlantedHeelMaterialFeature": {
+            "x": 467,
+            "y": 1247
+          },
+          "nearPlantedHeelMaterialFeature": {
+            "x": 622,
+            "y": 1281
+          }
+        },
+        "invariantDimensions": {
+          "farTrainerToeHeelSpan": 169.33103672983285,
+          "nearTrainerToeHeelSpan": 140.13208055259867
+        }
+      },
+      {
+        "path": "form-frames/lu-raise/3.webp",
+        "sha256": "3c7ad7fdfa6ebb93580cfbf5dc4231dd1e1d69b1e2f393cca2613abc761ab9d6",
+        "anchors": {
+          "farPlantedHeelMaterialFeature": {
+            "x": 467,
+            "y": 1248
+          },
+          "nearPlantedHeelMaterialFeature": {
+            "x": 623,
+            "y": 1282
+          }
+        },
+        "invariantDimensions": {
+          "farTrainerToeHeelSpan": 169.33103672983285,
+          "nearTrainerToeHeelSpan": 140.13208055259867
+        }
+      },
+      {
+        "path": "form-frames/lu-raise/4.webp",
+        "sha256": "791f568184a3fbfa56b9e18e5e398bec9599b80a0abf527d48b6050674744ec2",
+        "anchors": {
+          "farPlantedHeelMaterialFeature": {
+            "x": 466,
+            "y": 1248
+          },
+          "nearPlantedHeelMaterialFeature": {
+            "x": 621,
+            "y": 1282
+          }
+        },
+        "invariantDimensions": {
+          "farTrainerToeHeelSpan": 169.33103672983285,
+          "nearTrainerToeHeelSpan": 139.17614738165446
+        }
+      },
+      {
+        "path": "form-frames/lu-raise/5.webp",
+        "sha256": "3c7ad7fdfa6ebb93580cfbf5dc4231dd1e1d69b1e2f393cca2613abc761ab9d6",
+        "anchors": {
+          "farPlantedHeelMaterialFeature": {
+            "x": 467,
+            "y": 1248
+          },
+          "nearPlantedHeelMaterialFeature": {
+            "x": 623,
+            "y": 1282
+          }
+        },
+        "invariantDimensions": {
+          "farTrainerToeHeelSpan": 169.33103672983285,
+          "nearTrainerToeHeelSpan": 140.13208055259867
+        }
+      },
+      {
+        "path": "form-frames/lu-raise/6.webp",
+        "sha256": "20027691446c265af027ddc2737fff1243f889ab6a2ffd2f7503393f822c12fa",
+        "anchors": {
+          "farPlantedHeelMaterialFeature": {
+            "x": 467,
+            "y": 1247
+          },
+          "nearPlantedHeelMaterialFeature": {
+            "x": 622,
+            "y": 1281
+          }
+        },
+        "invariantDimensions": {
+          "farTrainerToeHeelSpan": 169.33103672983285,
+          "nearTrainerToeHeelSpan": 140.13208055259867
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "overhead-extension",
+    "baselineFrames": [
+      {
+        "path": "form-frames/overhead-extension/1.webp",
+        "sha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+        "anchors": {
+          "plantedFarTrainerHeelContour": {
+            "x": 216,
+            "y": 1409
+          },
+          "plantedNearTrainerHeelContour": {
+            "x": 394,
+            "y": 1475
+          }
+        },
+        "invariantDimensions": {
+          "farTrainerToeHeelProjectedSpan": 184.45595680270128,
+          "nearTrainerToeHeelProjectedSpan": 158.8238017426859
+        }
+      },
+      {
+        "path": "form-frames/overhead-extension/2.webp",
+        "sha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+        "anchors": {
+          "plantedFarTrainerHeelContour": {
+            "x": 216,
+            "y": 1409
+          },
+          "plantedNearTrainerHeelContour": {
+            "x": 394,
+            "y": 1475
+          }
+        },
+        "invariantDimensions": {
+          "farTrainerToeHeelProjectedSpan": 184.45595680270128,
+          "nearTrainerToeHeelProjectedSpan": 158.8238017426859
+        }
+      },
+      {
+        "path": "form-frames/overhead-extension/3.webp",
+        "sha256": "04aaf33df96a6fd4cfd9e7130d615e639c47f528322ae290f302f52944465428",
+        "anchors": {
+          "plantedFarTrainerHeelContour": {
+            "x": 216,
+            "y": 1410
+          },
+          "plantedNearTrainerHeelContour": {
+            "x": 394,
+            "y": 1475
+          }
+        },
+        "invariantDimensions": {
+          "farTrainerToeHeelProjectedSpan": 184.29595763336752,
+          "nearTrainerToeHeelProjectedSpan": 159.66527487215245
+        }
+      },
+      {
+        "path": "form-frames/overhead-extension/4.webp",
+        "sha256": "04aaf33df96a6fd4cfd9e7130d615e639c47f528322ae290f302f52944465428",
+        "anchors": {
+          "plantedFarTrainerHeelContour": {
+            "x": 216,
+            "y": 1410
+          },
+          "plantedNearTrainerHeelContour": {
+            "x": 394,
+            "y": 1475
+          }
+        },
+        "invariantDimensions": {
+          "farTrainerToeHeelProjectedSpan": 184.29595763336752,
+          "nearTrainerToeHeelProjectedSpan": 159.66527487215245
+        }
+      },
+      {
+        "path": "form-frames/overhead-extension/5.webp",
+        "sha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+        "anchors": {
+          "plantedFarTrainerHeelContour": {
+            "x": 216,
+            "y": 1409
+          },
+          "plantedNearTrainerHeelContour": {
+            "x": 394,
+            "y": 1475
+          }
+        },
+        "invariantDimensions": {
+          "farTrainerToeHeelProjectedSpan": 184.45595680270128,
+          "nearTrainerToeHeelProjectedSpan": 158.8238017426859
+        }
+      },
+      {
+        "path": "form-frames/overhead-extension/6.webp",
+        "sha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+        "anchors": {
+          "plantedFarTrainerHeelContour": {
+            "x": 216,
+            "y": 1409
+          },
+          "plantedNearTrainerHeelContour": {
+            "x": 394,
+            "y": 1475
+          }
+        },
+        "invariantDimensions": {
+          "farTrainerToeHeelProjectedSpan": 184.45595680270128,
+          "nearTrainerToeHeelProjectedSpan": 158.8238017426859
+        }
+      }
+    ],
+    "disposition": "corrected scoped native issue",
+    "newRelease": "docs/exercise-art/releases/2026-10-20-contour-polish/overhead-extension.json"
+  },
+  {
+    "id": "overhead-press",
+    "baselineFrames": [
+      {
+        "path": "form-frames/overhead-press/1.webp",
+        "sha256": "2e6f286cf0c46ec3f0943b77fc50c1b76d5b2307a85bce6ce00ac9749e48ddcc",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 331,
+            "y": 1381
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 431,
+            "y": 1350
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 104.69479452198185,
+          "oppositeFixedSupportProjectedFeatureSpan": 76.23647421018367
+        }
+      },
+      {
+        "path": "form-frames/overhead-press/2.webp",
+        "sha256": "2e6f286cf0c46ec3f0943b77fc50c1b76d5b2307a85bce6ce00ac9749e48ddcc",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 331,
+            "y": 1381
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 431,
+            "y": 1350
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 104.69479452198185,
+          "oppositeFixedSupportProjectedFeatureSpan": 76.23647421018367
+        }
+      },
+      {
+        "path": "form-frames/overhead-press/3.webp",
+        "sha256": "216e9680f3dd3b7bb0d1991bc3bb77c782d17bcae955772ee2d06a547117a3d4",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 331,
+            "y": 1381
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 431,
+            "y": 1350
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 104.69479452198185,
+          "oppositeFixedSupportProjectedFeatureSpan": 76.23647421018367
+        }
+      },
+      {
+        "path": "form-frames/overhead-press/4.webp",
+        "sha256": "b37c0fca9825a423d9539adb63394174b86bc749e9b45656639f02361238bc45",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 331,
+            "y": 1381
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 431,
+            "y": 1350
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 104.69479452198185,
+          "oppositeFixedSupportProjectedFeatureSpan": 76.23647421018367
+        }
+      },
+      {
+        "path": "form-frames/overhead-press/5.webp",
+        "sha256": "b37c0fca9825a423d9539adb63394174b86bc749e9b45656639f02361238bc45",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 331,
+            "y": 1381
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 431,
+            "y": 1350
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 104.69479452198185,
+          "oppositeFixedSupportProjectedFeatureSpan": 76.23647421018367
+        }
+      },
+      {
+        "path": "form-frames/overhead-press/6.webp",
+        "sha256": "216e9680f3dd3b7bb0d1991bc3bb77c782d17bcae955772ee2d06a547117a3d4",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 331,
+            "y": 1381
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 431,
+            "y": 1350
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 104.69479452198185,
+          "oppositeFixedSupportProjectedFeatureSpan": 76.23647421018367
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "pendlay-row",
+    "baselineFrames": [
+      {
+        "path": "form-frames/pendlay-row/1.webp",
+        "sha256": "7e41133d75b99596b1854caaccd630b21064c18a144aac9a156063d34312aed4",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 446.5,
+            "y": 792
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 649,
+            "y": 820
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 190,
+          "rightImageSupportProjectedHorizontalSpan": 182
+        }
+      },
+      {
+        "path": "form-frames/pendlay-row/2.webp",
+        "sha256": "7e41133d75b99596b1854caaccd630b21064c18a144aac9a156063d34312aed4",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 446.5,
+            "y": 792
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 649,
+            "y": 820
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 190,
+          "rightImageSupportProjectedHorizontalSpan": 182
+        }
+      },
+      {
+        "path": "form-frames/pendlay-row/3.webp",
+        "sha256": "562e35b61473e979dfb727ea3bcf24187dc6009feb704a5e91ba174eb0208850",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 446.5,
+            "y": 792
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 648,
+            "y": 820
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 190,
+          "rightImageSupportProjectedHorizontalSpan": 182
+        }
+      },
+      {
+        "path": "form-frames/pendlay-row/4.webp",
+        "sha256": "562e35b61473e979dfb727ea3bcf24187dc6009feb704a5e91ba174eb0208850",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 446.5,
+            "y": 792
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 648,
+            "y": 820
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 190,
+          "rightImageSupportProjectedHorizontalSpan": 182
+        }
+      },
+      {
+        "path": "form-frames/pendlay-row/5.webp",
+        "sha256": "7e41133d75b99596b1854caaccd630b21064c18a144aac9a156063d34312aed4",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 446.5,
+            "y": 792
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 649,
+            "y": 820
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 190,
+          "rightImageSupportProjectedHorizontalSpan": 182
+        }
+      },
+      {
+        "path": "form-frames/pendlay-row/6.webp",
+        "sha256": "7e41133d75b99596b1854caaccd630b21064c18a144aac9a156063d34312aed4",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 446.5,
+            "y": 792
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 649,
+            "y": 820
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 190,
+          "rightImageSupportProjectedHorizontalSpan": 182
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "rope-tricep-pushdown",
+    "baselineFrames": [
+      {
+        "path": "form-frames/rope-tricep-pushdown/1.webp",
+        "sha256": "9d0ea51b2f4229adcb63eb5d736d88bf3b45b52bc4242d5e78fdf65f31d2258e",
+        "anchors": {
+          "fixedTowerTopLipMaterialFeature1": {
+            "x": 753,
+            "y": 42
+          },
+          "fixedTowerTopLipMaterialFeature2": {
+            "x": 951,
+            "y": 26
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopLipProjectedFeatureSpan": 198.6454127333425,
+          "oppositeFixedSupportProjectedFeatureSpan": 230.70327262524907
+        }
+      },
+      {
+        "path": "form-frames/rope-tricep-pushdown/2.webp",
+        "sha256": "67820b245285700597e51394bc9423f0c465bbca1f15f3776f45ad3a21efad46",
+        "anchors": {
+          "fixedTowerTopLipMaterialFeature1": {
+            "x": 753,
+            "y": 42
+          },
+          "fixedTowerTopLipMaterialFeature2": {
+            "x": 951,
+            "y": 26
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopLipProjectedFeatureSpan": 198.6454127333425,
+          "oppositeFixedSupportProjectedFeatureSpan": 230.70327262524907
+        }
+      },
+      {
+        "path": "form-frames/rope-tricep-pushdown/3.webp",
+        "sha256": "a398a340fc3bfe428a84b57e4eedae720ea4f38f9ad7b3a1e58cde8f009adaa9",
+        "anchors": {
+          "fixedTowerTopLipMaterialFeature1": {
+            "x": 753,
+            "y": 42
+          },
+          "fixedTowerTopLipMaterialFeature2": {
+            "x": 951,
+            "y": 26
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopLipProjectedFeatureSpan": 198.6454127333425,
+          "oppositeFixedSupportProjectedFeatureSpan": 230.70327262524907
+        }
+      },
+      {
+        "path": "form-frames/rope-tricep-pushdown/4.webp",
+        "sha256": "cd3d5475d2e54b0a55b7578b690312b38d5536a79dd441e9dd8bb87d1cc58778",
+        "anchors": {
+          "fixedTowerTopLipMaterialFeature1": {
+            "x": 753,
+            "y": 42
+          },
+          "fixedTowerTopLipMaterialFeature2": {
+            "x": 951,
+            "y": 26
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopLipProjectedFeatureSpan": 198.6454127333425,
+          "oppositeFixedSupportProjectedFeatureSpan": 230.70327262524907
+        }
+      },
+      {
+        "path": "form-frames/rope-tricep-pushdown/5.webp",
+        "sha256": "eee2e2c13f44b600e784f6401623935f77f93143e5ced23d68af4e10df116c60",
+        "anchors": {
+          "fixedTowerTopLipMaterialFeature1": {
+            "x": 753,
+            "y": 42
+          },
+          "fixedTowerTopLipMaterialFeature2": {
+            "x": 951,
+            "y": 26
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopLipProjectedFeatureSpan": 198.6454127333425,
+          "oppositeFixedSupportProjectedFeatureSpan": 230.70327262524907
+        }
+      },
+      {
+        "path": "form-frames/rope-tricep-pushdown/6.webp",
+        "sha256": "9d0ea51b2f4229adcb63eb5d736d88bf3b45b52bc4242d5e78fdf65f31d2258e",
+        "anchors": {
+          "fixedTowerTopLipMaterialFeature1": {
+            "x": 753,
+            "y": 42
+          },
+          "fixedTowerTopLipMaterialFeature2": {
+            "x": 951,
+            "y": 26
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopLipProjectedFeatureSpan": 198.6454127333425,
+          "oppositeFixedSupportProjectedFeatureSpan": 230.70327262524907
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "rowing-machine",
+    "baselineFrames": [
+      {
+        "path": "form-frames/rowing-machine/1.webp",
+        "sha256": "a1fa9793f679c2406885ba5782c111658bed16c0c49bc9482200b579111b15e2",
+        "anchors": {
+          "fixedRearRailSupportMaterialFeature1": {
+            "x": 79,
+            "y": 653
+          },
+          "fixedRearRailSupportMaterialFeature2": {
+            "x": 136,
+            "y": 639
+          }
+        },
+        "invariantDimensions": {
+          "fixedRearRailSupportProjectedFeatureSpan": 58.69412236331676,
+          "oppositeFixedSupportProjectedFeatureSpan": 110.01818031580054
+        }
+      },
+      {
+        "path": "form-frames/rowing-machine/2.webp",
+        "sha256": "2c4d033e55298b8382f78c1d89e1c8945ddc603e21d6bacdc781275e1319b771",
+        "anchors": {
+          "fixedRearRailSupportMaterialFeature1": {
+            "x": 79,
+            "y": 653
+          },
+          "fixedRearRailSupportMaterialFeature2": {
+            "x": 136,
+            "y": 639
+          }
+        },
+        "invariantDimensions": {
+          "fixedRearRailSupportProjectedFeatureSpan": 58.69412236331676,
+          "oppositeFixedSupportProjectedFeatureSpan": 110.01818031580054
+        }
+      },
+      {
+        "path": "form-frames/rowing-machine/3.webp",
+        "sha256": "da6997e4fc48e388991798cb2b7691c32e5a34796d04b00fa059f9f096470d01",
+        "anchors": {
+          "fixedRearRailSupportMaterialFeature1": {
+            "x": 79,
+            "y": 653
+          },
+          "fixedRearRailSupportMaterialFeature2": {
+            "x": 136,
+            "y": 639
+          }
+        },
+        "invariantDimensions": {
+          "fixedRearRailSupportProjectedFeatureSpan": 58.69412236331676,
+          "oppositeFixedSupportProjectedFeatureSpan": 110.01818031580054
+        }
+      },
+      {
+        "path": "form-frames/rowing-machine/4.webp",
+        "sha256": "da6997e4fc48e388991798cb2b7691c32e5a34796d04b00fa059f9f096470d01",
+        "anchors": {
+          "fixedRearRailSupportMaterialFeature1": {
+            "x": 79,
+            "y": 653
+          },
+          "fixedRearRailSupportMaterialFeature2": {
+            "x": 136,
+            "y": 639
+          }
+        },
+        "invariantDimensions": {
+          "fixedRearRailSupportProjectedFeatureSpan": 58.69412236331676,
+          "oppositeFixedSupportProjectedFeatureSpan": 110.01818031580054
+        }
+      },
+      {
+        "path": "form-frames/rowing-machine/5.webp",
+        "sha256": "2c4d033e55298b8382f78c1d89e1c8945ddc603e21d6bacdc781275e1319b771",
+        "anchors": {
+          "fixedRearRailSupportMaterialFeature1": {
+            "x": 79,
+            "y": 653
+          },
+          "fixedRearRailSupportMaterialFeature2": {
+            "x": 136,
+            "y": 639
+          }
+        },
+        "invariantDimensions": {
+          "fixedRearRailSupportProjectedFeatureSpan": 58.69412236331676,
+          "oppositeFixedSupportProjectedFeatureSpan": 110.01818031580054
+        }
+      },
+      {
+        "path": "form-frames/rowing-machine/6.webp",
+        "sha256": "a1fa9793f679c2406885ba5782c111658bed16c0c49bc9482200b579111b15e2",
+        "anchors": {
+          "fixedRearRailSupportMaterialFeature1": {
+            "x": 79,
+            "y": 653
+          },
+          "fixedRearRailSupportMaterialFeature2": {
+            "x": 136,
+            "y": 639
+          }
+        },
+        "invariantDimensions": {
+          "fixedRearRailSupportProjectedFeatureSpan": 58.69412236331676,
+          "oppositeFixedSupportProjectedFeatureSpan": 110.01818031580054
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "seated-row",
+    "baselineFrames": [
+      {
+        "path": "form-frames/seated-row/1.webp",
+        "sha256": "a4ad168f8a595b039e710d9e42cbbee1cd88701cc12871235e9b5328451c9974",
+        "anchors": {
+          "fixedTowerTopCrossmemberMaterialFeature1": {
+            "x": 1057,
+            "y": 31
+          },
+          "fixedTowerTopCrossmemberMaterialFeature2": {
+            "x": 1218,
+            "y": 44
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCrossmemberProjectedFeatureSpan": 161.5239920259526,
+          "oppositeFixedSupportProjectedFeatureSpan": 335.1208737157386
+        }
+      },
+      {
+        "path": "form-frames/seated-row/2.webp",
+        "sha256": "a4ad168f8a595b039e710d9e42cbbee1cd88701cc12871235e9b5328451c9974",
+        "anchors": {
+          "fixedTowerTopCrossmemberMaterialFeature1": {
+            "x": 1057,
+            "y": 31
+          },
+          "fixedTowerTopCrossmemberMaterialFeature2": {
+            "x": 1218,
+            "y": 44
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCrossmemberProjectedFeatureSpan": 161.5239920259526,
+          "oppositeFixedSupportProjectedFeatureSpan": 335.1208737157386
+        }
+      },
+      {
+        "path": "form-frames/seated-row/3.webp",
+        "sha256": "ab9d79e0c4b36ffcd5cd082cb41c332069d73c8cbae00db47c7538e813598b07",
+        "anchors": {
+          "fixedTowerTopCrossmemberMaterialFeature1": {
+            "x": 1057,
+            "y": 31
+          },
+          "fixedTowerTopCrossmemberMaterialFeature2": {
+            "x": 1218,
+            "y": 44
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCrossmemberProjectedFeatureSpan": 161.5239920259526,
+          "oppositeFixedSupportProjectedFeatureSpan": 335.1208737157386
+        }
+      },
+      {
+        "path": "form-frames/seated-row/4.webp",
+        "sha256": "ab9d79e0c4b36ffcd5cd082cb41c332069d73c8cbae00db47c7538e813598b07",
+        "anchors": {
+          "fixedTowerTopCrossmemberMaterialFeature1": {
+            "x": 1057,
+            "y": 31
+          },
+          "fixedTowerTopCrossmemberMaterialFeature2": {
+            "x": 1218,
+            "y": 44
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCrossmemberProjectedFeatureSpan": 161.5239920259526,
+          "oppositeFixedSupportProjectedFeatureSpan": 335.1208737157386
+        }
+      },
+      {
+        "path": "form-frames/seated-row/5.webp",
+        "sha256": "a4ad168f8a595b039e710d9e42cbbee1cd88701cc12871235e9b5328451c9974",
+        "anchors": {
+          "fixedTowerTopCrossmemberMaterialFeature1": {
+            "x": 1057,
+            "y": 31
+          },
+          "fixedTowerTopCrossmemberMaterialFeature2": {
+            "x": 1218,
+            "y": 44
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCrossmemberProjectedFeatureSpan": 161.5239920259526,
+          "oppositeFixedSupportProjectedFeatureSpan": 335.1208737157386
+        }
+      },
+      {
+        "path": "form-frames/seated-row/6.webp",
+        "sha256": "a4ad168f8a595b039e710d9e42cbbee1cd88701cc12871235e9b5328451c9974",
+        "anchors": {
+          "fixedTowerTopCrossmemberMaterialFeature1": {
+            "x": 1057,
+            "y": 31
+          },
+          "fixedTowerTopCrossmemberMaterialFeature2": {
+            "x": 1218,
+            "y": 44
+          }
+        },
+        "invariantDimensions": {
+          "fixedTowerTopCrossmemberProjectedFeatureSpan": 161.5239920259526,
+          "oppositeFixedSupportProjectedFeatureSpan": 335.1208737157386
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "side-plank",
+    "baselineFrames": [
+      {
+        "path": "form-frames/side-plank/1.webp",
+        "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+        "anchors": {
+          "supportedForearmMaterialFeature1": {
+            "x": 67,
+            "y": 578
+          },
+          "supportedForearmMaterialFeature2": {
+            "x": 210,
+            "y": 603
+          }
+        },
+        "invariantDimensions": {
+          "supportedForearmProjectedFeatureSpan": 145.16886718577092,
+          "stackedTrainerProjectedFeatureSpan": 155.46382215808282
+        }
+      },
+      {
+        "path": "form-frames/side-plank/2.webp",
+        "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+        "anchors": {
+          "supportedForearmMaterialFeature1": {
+            "x": 67,
+            "y": 578
+          },
+          "supportedForearmMaterialFeature2": {
+            "x": 210,
+            "y": 603
+          }
+        },
+        "invariantDimensions": {
+          "supportedForearmProjectedFeatureSpan": 145.16886718577092,
+          "stackedTrainerProjectedFeatureSpan": 155.46382215808282
+        }
+      },
+      {
+        "path": "form-frames/side-plank/3.webp",
+        "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+        "anchors": {
+          "supportedForearmMaterialFeature1": {
+            "x": 67,
+            "y": 578
+          },
+          "supportedForearmMaterialFeature2": {
+            "x": 210,
+            "y": 603
+          }
+        },
+        "invariantDimensions": {
+          "supportedForearmProjectedFeatureSpan": 145.16886718577092,
+          "stackedTrainerProjectedFeatureSpan": 155.46382215808282
+        }
+      },
+      {
+        "path": "form-frames/side-plank/4.webp",
+        "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+        "anchors": {
+          "supportedForearmMaterialFeature1": {
+            "x": 67,
+            "y": 578
+          },
+          "supportedForearmMaterialFeature2": {
+            "x": 210,
+            "y": 603
+          }
+        },
+        "invariantDimensions": {
+          "supportedForearmProjectedFeatureSpan": 145.16886718577092,
+          "stackedTrainerProjectedFeatureSpan": 155.46382215808282
+        }
+      },
+      {
+        "path": "form-frames/side-plank/5.webp",
+        "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+        "anchors": {
+          "supportedForearmMaterialFeature1": {
+            "x": 67,
+            "y": 578
+          },
+          "supportedForearmMaterialFeature2": {
+            "x": 210,
+            "y": 603
+          }
+        },
+        "invariantDimensions": {
+          "supportedForearmProjectedFeatureSpan": 145.16886718577092,
+          "stackedTrainerProjectedFeatureSpan": 155.46382215808282
+        }
+      },
+      {
+        "path": "form-frames/side-plank/6.webp",
+        "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+        "anchors": {
+          "supportedForearmMaterialFeature1": {
+            "x": 67,
+            "y": 578
+          },
+          "supportedForearmMaterialFeature2": {
+            "x": 210,
+            "y": 603
+          }
+        },
+        "invariantDimensions": {
+          "supportedForearmProjectedFeatureSpan": 145.16886718577092,
+          "stackedTrainerProjectedFeatureSpan": 155.46382215808282
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "single-leg-calf-raise",
+    "baselineFrames": [
+      {
+        "path": "form-frames/single-leg-calf-raise/1.webp",
+        "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+        "anchors": {
+          "fixedStepFloorBaseMaterialFeature1": {
+            "x": 301,
+            "y": 1136
+          },
+          "fixedStepFloorBaseMaterialFeature2": {
+            "x": 320,
+            "y": 1133
+          }
+        },
+        "invariantDimensions": {
+          "fixedStepFloorBaseProjectedFeatureSpan": 19.235384061671343,
+          "oppositeFixedSupportProjectedFeatureSpan": 24.08318915758459
+        }
+      },
+      {
+        "path": "form-frames/single-leg-calf-raise/2.webp",
+        "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+        "anchors": {
+          "fixedStepFloorBaseMaterialFeature1": {
+            "x": 301,
+            "y": 1136
+          },
+          "fixedStepFloorBaseMaterialFeature2": {
+            "x": 320,
+            "y": 1133
+          }
+        },
+        "invariantDimensions": {
+          "fixedStepFloorBaseProjectedFeatureSpan": 19.235384061671343,
+          "oppositeFixedSupportProjectedFeatureSpan": 24.08318915758459
+        }
+      },
+      {
+        "path": "form-frames/single-leg-calf-raise/3.webp",
+        "sha256": "b685d64b0d358b65c0bc7e78b48077430c94ca96153b53f08c57531ce7f1b7f1",
+        "anchors": {
+          "fixedStepFloorBaseMaterialFeature1": {
+            "x": 301,
+            "y": 1136
+          },
+          "fixedStepFloorBaseMaterialFeature2": {
+            "x": 320,
+            "y": 1133
+          }
+        },
+        "invariantDimensions": {
+          "fixedStepFloorBaseProjectedFeatureSpan": 19.235384061671343,
+          "oppositeFixedSupportProjectedFeatureSpan": 24.08318915758459
+        }
+      },
+      {
+        "path": "form-frames/single-leg-calf-raise/4.webp",
+        "sha256": "b685d64b0d358b65c0bc7e78b48077430c94ca96153b53f08c57531ce7f1b7f1",
+        "anchors": {
+          "fixedStepFloorBaseMaterialFeature1": {
+            "x": 301,
+            "y": 1136
+          },
+          "fixedStepFloorBaseMaterialFeature2": {
+            "x": 320,
+            "y": 1133
+          }
+        },
+        "invariantDimensions": {
+          "fixedStepFloorBaseProjectedFeatureSpan": 19.235384061671343,
+          "oppositeFixedSupportProjectedFeatureSpan": 24.08318915758459
+        }
+      },
+      {
+        "path": "form-frames/single-leg-calf-raise/5.webp",
+        "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+        "anchors": {
+          "fixedStepFloorBaseMaterialFeature1": {
+            "x": 301,
+            "y": 1136
+          },
+          "fixedStepFloorBaseMaterialFeature2": {
+            "x": 320,
+            "y": 1133
+          }
+        },
+        "invariantDimensions": {
+          "fixedStepFloorBaseProjectedFeatureSpan": 19.235384061671343,
+          "oppositeFixedSupportProjectedFeatureSpan": 24.08318915758459
+        }
+      },
+      {
+        "path": "form-frames/single-leg-calf-raise/6.webp",
+        "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+        "anchors": {
+          "fixedStepFloorBaseMaterialFeature1": {
+            "x": 301,
+            "y": 1136
+          },
+          "fixedStepFloorBaseMaterialFeature2": {
+            "x": 320,
+            "y": 1133
+          }
+        },
+        "invariantDimensions": {
+          "fixedStepFloorBaseProjectedFeatureSpan": 19.235384061671343,
+          "oppositeFixedSupportProjectedFeatureSpan": 24.08318915758459
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "skull-crushers",
+    "baselineFrames": [
+      {
+        "path": "form-frames/skull-crushers/1.webp",
+        "sha256": "ccfccc28762088232fceca143df55b9c02b0e54813ece16df9cb7a562bd1e093",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 506,
+            "y": 991
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 787,
+            "y": 893
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 127
+        }
+      },
+      {
+        "path": "form-frames/skull-crushers/2.webp",
+        "sha256": "02c6af1f80944dd6ba1aef18b4a62b65b94fba83831c221d5543718366b87323",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 506,
+            "y": 991
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 787,
+            "y": 893
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 127
+        }
+      },
+      {
+        "path": "form-frames/skull-crushers/3.webp",
+        "sha256": "606a2b6ca2a5b1643568826cd815770237bcc2fa8640bf73e99261f8a995f0fc",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 506,
+            "y": 991
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 787,
+            "y": 893
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 127
+        }
+      },
+      {
+        "path": "form-frames/skull-crushers/4.webp",
+        "sha256": "50833f00e3cddb12597589b010ce83ac0f11e114727d78abf3ec8091280cc739",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 506,
+            "y": 991
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 787,
+            "y": 893
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 127
+        }
+      },
+      {
+        "path": "form-frames/skull-crushers/5.webp",
+        "sha256": "606a2b6ca2a5b1643568826cd815770237bcc2fa8640bf73e99261f8a995f0fc",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 506,
+            "y": 991
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 787,
+            "y": 893
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 127
+        }
+      },
+      {
+        "path": "form-frames/skull-crushers/6.webp",
+        "sha256": "ccfccc28762088232fceca143df55b9c02b0e54813ece16df9cb7a562bd1e093",
+        "anchors": {
+          "leftImageSupportLowestContourMidpoint": {
+            "x": 506,
+            "y": 991
+          },
+          "rightImageSupportLowestContourMidpoint": {
+            "x": 787,
+            "y": 893
+          }
+        },
+        "invariantDimensions": {
+          "leftImageSupportProjectedHorizontalSpan": 78,
+          "rightImageSupportProjectedHorizontalSpan": 127
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "spin-bike",
+    "baselineFrames": [
+      {
+        "path": "form-frames/spin-bike/1.webp",
+        "sha256": "4778b11213b83f0a6574bf61a5084764c406fdbd0e4949edc0c9ee42f81d3bab",
+        "anchors": {
+          "fixedFrontBaseRollerMaterialFeature1": {
+            "x": 44,
+            "y": 515
+          },
+          "fixedFrontBaseRollerMaterialFeature2": {
+            "x": 63,
+            "y": 523
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontBaseRollerProjectedFeatureSpan": 20.615528128088304,
+          "oppositeFixedSupportProjectedFeatureSpan": 32.984845004941285
+        }
+      },
+      {
+        "path": "form-frames/spin-bike/2.webp",
+        "sha256": "a9d2b4c9fa3fdf3e80696c8be36e56081b7beb31ecc8e81d9bb19d793eef2b3e",
+        "anchors": {
+          "fixedFrontBaseRollerMaterialFeature1": {
+            "x": 44,
+            "y": 515
+          },
+          "fixedFrontBaseRollerMaterialFeature2": {
+            "x": 63,
+            "y": 523
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontBaseRollerProjectedFeatureSpan": 20.615528128088304,
+          "oppositeFixedSupportProjectedFeatureSpan": 32.984845004941285
+        }
+      },
+      {
+        "path": "form-frames/spin-bike/3.webp",
+        "sha256": "a9d2b4c9fa3fdf3e80696c8be36e56081b7beb31ecc8e81d9bb19d793eef2b3e",
+        "anchors": {
+          "fixedFrontBaseRollerMaterialFeature1": {
+            "x": 44,
+            "y": 515
+          },
+          "fixedFrontBaseRollerMaterialFeature2": {
+            "x": 63,
+            "y": 523
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontBaseRollerProjectedFeatureSpan": 20.615528128088304,
+          "oppositeFixedSupportProjectedFeatureSpan": 32.984845004941285
+        }
+      },
+      {
+        "path": "form-frames/spin-bike/4.webp",
+        "sha256": "658e14ccd367ef2e86845a7939051fb20b4b26ad9c576ce8be9a161b64406a8c",
+        "anchors": {
+          "fixedFrontBaseRollerMaterialFeature1": {
+            "x": 44,
+            "y": 515
+          },
+          "fixedFrontBaseRollerMaterialFeature2": {
+            "x": 63,
+            "y": 523
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontBaseRollerProjectedFeatureSpan": 20.615528128088304,
+          "oppositeFixedSupportProjectedFeatureSpan": 32.984845004941285
+        }
+      },
+      {
+        "path": "form-frames/spin-bike/5.webp",
+        "sha256": "658e14ccd367ef2e86845a7939051fb20b4b26ad9c576ce8be9a161b64406a8c",
+        "anchors": {
+          "fixedFrontBaseRollerMaterialFeature1": {
+            "x": 44,
+            "y": 515
+          },
+          "fixedFrontBaseRollerMaterialFeature2": {
+            "x": 63,
+            "y": 523
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontBaseRollerProjectedFeatureSpan": 20.615528128088304,
+          "oppositeFixedSupportProjectedFeatureSpan": 32.984845004941285
+        }
+      },
+      {
+        "path": "form-frames/spin-bike/6.webp",
+        "sha256": "4778b11213b83f0a6574bf61a5084764c406fdbd0e4949edc0c9ee42f81d3bab",
+        "anchors": {
+          "fixedFrontBaseRollerMaterialFeature1": {
+            "x": 44,
+            "y": 515
+          },
+          "fixedFrontBaseRollerMaterialFeature2": {
+            "x": 63,
+            "y": 523
+          }
+        },
+        "invariantDimensions": {
+          "fixedFrontBaseRollerProjectedFeatureSpan": 20.615528128088304,
+          "oppositeFixedSupportProjectedFeatureSpan": 32.984845004941285
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "squat",
+    "baselineFrames": [
+      {
+        "path": "form-frames/squat/1.webp",
+        "sha256": "c3f99a5813f8337762865f228b65fcea6b1ef13f66a6097e0a0eba58f6fa8b41",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 269,
+            "y": 1352
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 482,
+            "y": 1336
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 213.60009363293827,
+          "oppositeFixedSupportProjectedFeatureSpan": 187.2591786802452
+        }
+      },
+      {
+        "path": "form-frames/squat/2.webp",
+        "sha256": "bcdfcbd9f01d8872acae9908d5fd8056b99a3b625b6ac2e19ad0da297f982b9c",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 269,
+            "y": 1352
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 482,
+            "y": 1336
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 213.60009363293827,
+          "oppositeFixedSupportProjectedFeatureSpan": 187.2591786802452
+        }
+      },
+      {
+        "path": "form-frames/squat/3.webp",
+        "sha256": "a4837b8cc84276be8ad124a9b96b85ab5078c89b364fc6e141462f44b712ba27",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 269,
+            "y": 1351
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 482,
+            "y": 1336
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 213.52751579129094,
+          "oppositeFixedSupportProjectedFeatureSpan": 186.11824198610947
+        }
+      },
+      {
+        "path": "form-frames/squat/4.webp",
+        "sha256": "506e5698c794f6afce17c31f2dc74866a27eee404d130d14d47ea4258c85ca23",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 269,
+            "y": 1351
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 482,
+            "y": 1336
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 213.52751579129094,
+          "oppositeFixedSupportProjectedFeatureSpan": 186.11824198610947
+        }
+      },
+      {
+        "path": "form-frames/squat/5.webp",
+        "sha256": "c5417f6ec9b6a095151f31d8e74162872a59b90655e5d76d2bf654f372bd59c8",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 269,
+            "y": 1352
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 482,
+            "y": 1336
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 213.60009363293827,
+          "oppositeFixedSupportProjectedFeatureSpan": 187.1069213043708
+        }
+      },
+      {
+        "path": "form-frames/squat/6.webp",
+        "sha256": "c3f99a5813f8337762865f228b65fcea6b1ef13f66a6097e0a0eba58f6fa8b41",
+        "anchors": {
+          "plantedFarTrainerMaterialFeature1": {
+            "x": 269,
+            "y": 1352
+          },
+          "plantedFarTrainerMaterialFeature2": {
+            "x": 482,
+            "y": 1336
+          }
+        },
+        "invariantDimensions": {
+          "plantedFarTrainerProjectedFeatureSpan": 213.60009363293827,
+          "oppositeFixedSupportProjectedFeatureSpan": 187.2591786802452
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "stairmaster",
+    "baselineFrames": [
+      {
+        "path": "form-frames/stairmaster/1.webp",
+        "sha256": "32277420a65c9ac788afe3e9de9741fe25b3fbc4f088ee57caa2d9d6abd14658",
+        "anchors": {
+          "fixedLeftFloorBaseMaterialFeature1": {
+            "x": 194,
+            "y": 1433
+          },
+          "fixedLeftFloorBaseMaterialFeature2": {
+            "x": 271,
+            "y": 1441
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFloorBaseProjectedFeatureSpan": 77.41446893184762,
+          "oppositeFixedSupportProjectedFeatureSpan": 44.721359549995796
+        }
+      },
+      {
+        "path": "form-frames/stairmaster/2.webp",
+        "sha256": "32277420a65c9ac788afe3e9de9741fe25b3fbc4f088ee57caa2d9d6abd14658",
+        "anchors": {
+          "fixedLeftFloorBaseMaterialFeature1": {
+            "x": 194,
+            "y": 1433
+          },
+          "fixedLeftFloorBaseMaterialFeature2": {
+            "x": 271,
+            "y": 1441
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFloorBaseProjectedFeatureSpan": 77.41446893184762,
+          "oppositeFixedSupportProjectedFeatureSpan": 44.721359549995796
+        }
+      },
+      {
+        "path": "form-frames/stairmaster/3.webp",
+        "sha256": "041edb8b642d60a15d6b2718ba4f16dfe17f3e3fef60c36f6f22fd3a0ae30106",
+        "anchors": {
+          "fixedLeftFloorBaseMaterialFeature1": {
+            "x": 194,
+            "y": 1433
+          },
+          "fixedLeftFloorBaseMaterialFeature2": {
+            "x": 271,
+            "y": 1441
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFloorBaseProjectedFeatureSpan": 77.41446893184762,
+          "oppositeFixedSupportProjectedFeatureSpan": 44.721359549995796
+        }
+      },
+      {
+        "path": "form-frames/stairmaster/4.webp",
+        "sha256": "5f8165ecad2874dbf2401ca6c14d912f7867183f2fe550fd40db1da993ec5746",
+        "anchors": {
+          "fixedLeftFloorBaseMaterialFeature1": {
+            "x": 194,
+            "y": 1433
+          },
+          "fixedLeftFloorBaseMaterialFeature2": {
+            "x": 271,
+            "y": 1441
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFloorBaseProjectedFeatureSpan": 77.41446893184762,
+          "oppositeFixedSupportProjectedFeatureSpan": 44.721359549995796
+        }
+      },
+      {
+        "path": "form-frames/stairmaster/5.webp",
+        "sha256": "5f8165ecad2874dbf2401ca6c14d912f7867183f2fe550fd40db1da993ec5746",
+        "anchors": {
+          "fixedLeftFloorBaseMaterialFeature1": {
+            "x": 194,
+            "y": 1433
+          },
+          "fixedLeftFloorBaseMaterialFeature2": {
+            "x": 271,
+            "y": 1441
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFloorBaseProjectedFeatureSpan": 77.41446893184762,
+          "oppositeFixedSupportProjectedFeatureSpan": 44.721359549995796
+        }
+      },
+      {
+        "path": "form-frames/stairmaster/6.webp",
+        "sha256": "32277420a65c9ac788afe3e9de9741fe25b3fbc4f088ee57caa2d9d6abd14658",
+        "anchors": {
+          "fixedLeftFloorBaseMaterialFeature1": {
+            "x": 194,
+            "y": 1433
+          },
+          "fixedLeftFloorBaseMaterialFeature2": {
+            "x": 271,
+            "y": 1441
+          }
+        },
+        "invariantDimensions": {
+          "fixedLeftFloorBaseProjectedFeatureSpan": 77.41446893184762,
+          "oppositeFixedSupportProjectedFeatureSpan": 44.721359549995796
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "standing-calf-raise",
+    "baselineFrames": [
+      {
+        "path": "form-frames/standing-calf-raise/1.webp",
+        "sha256": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+        "anchors": {
+          "fixedStationFloorBaseMaterialFeature1": {
+            "x": 55,
+            "y": 1262
+          },
+          "fixedStationFloorBaseMaterialFeature2": {
+            "x": 95,
+            "y": 1297
+          }
+        },
+        "invariantDimensions": {
+          "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+          "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+        }
+      },
+      {
+        "path": "form-frames/standing-calf-raise/2.webp",
+        "sha256": "f62196c455ae718790a76f014c79de10bfbcd33cfac329eb97b4156962375b2b",
+        "anchors": {
+          "fixedStationFloorBaseMaterialFeature1": {
+            "x": 55,
+            "y": 1262
+          },
+          "fixedStationFloorBaseMaterialFeature2": {
+            "x": 95,
+            "y": 1297
+          }
+        },
+        "invariantDimensions": {
+          "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+          "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+        }
+      },
+      {
+        "path": "form-frames/standing-calf-raise/3.webp",
+        "sha256": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+        "anchors": {
+          "fixedStationFloorBaseMaterialFeature1": {
+            "x": 55,
+            "y": 1262
+          },
+          "fixedStationFloorBaseMaterialFeature2": {
+            "x": 95,
+            "y": 1297
+          }
+        },
+        "invariantDimensions": {
+          "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+          "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+        }
+      },
+      {
+        "path": "form-frames/standing-calf-raise/4.webp",
+        "sha256": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+        "anchors": {
+          "fixedStationFloorBaseMaterialFeature1": {
+            "x": 55,
+            "y": 1262
+          },
+          "fixedStationFloorBaseMaterialFeature2": {
+            "x": 95,
+            "y": 1297
+          }
+        },
+        "invariantDimensions": {
+          "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+          "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+        }
+      },
+      {
+        "path": "form-frames/standing-calf-raise/5.webp",
+        "sha256": "f62196c455ae718790a76f014c79de10bfbcd33cfac329eb97b4156962375b2b",
+        "anchors": {
+          "fixedStationFloorBaseMaterialFeature1": {
+            "x": 55,
+            "y": 1262
+          },
+          "fixedStationFloorBaseMaterialFeature2": {
+            "x": 95,
+            "y": 1297
+          }
+        },
+        "invariantDimensions": {
+          "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+          "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+        }
+      },
+      {
+        "path": "form-frames/standing-calf-raise/6.webp",
+        "sha256": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+        "anchors": {
+          "fixedStationFloorBaseMaterialFeature1": {
+            "x": 55,
+            "y": 1262
+          },
+          "fixedStationFloorBaseMaterialFeature2": {
+            "x": 95,
+            "y": 1297
+          }
+        },
+        "invariantDimensions": {
+          "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+          "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "straight-arm-pulldown",
+    "baselineFrames": [
+      {
+        "path": "form-frames/straight-arm-pulldown/1.webp",
+        "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
+        "anchors": {
+          "fixedUpperPulleyMountMaterialFeature1": {
+            "x": 93,
+            "y": 60
+          },
+          "fixedUpperPulleyMountMaterialFeature2": {
+            "x": 95,
+            "y": 20
+          }
+        },
+        "invariantDimensions": {
+          "fixedUpperPulleyMountProjectedFeatureSpan": 40.049968789001575,
+          "oppositeFixedSupportProjectedFeatureSpan": 40.049968789001575
+        }
+      },
+      {
+        "path": "form-frames/straight-arm-pulldown/2.webp",
+        "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
+        "anchors": {
+          "fixedUpperPulleyMountMaterialFeature1": {
+            "x": 93,
+            "y": 60
+          },
+          "fixedUpperPulleyMountMaterialFeature2": {
+            "x": 95,
+            "y": 20
+          }
+        },
+        "invariantDimensions": {
+          "fixedUpperPulleyMountProjectedFeatureSpan": 40.049968789001575,
+          "oppositeFixedSupportProjectedFeatureSpan": 40.049968789001575
+        }
+      },
+      {
+        "path": "form-frames/straight-arm-pulldown/3.webp",
+        "sha256": "a03e3b285e22bcc2a66712af85276d964302076ced16a81185360a3f6dbd92dd",
+        "anchors": {
+          "fixedUpperPulleyMountMaterialFeature1": {
+            "x": 93,
+            "y": 60
+          },
+          "fixedUpperPulleyMountMaterialFeature2": {
+            "x": 95,
+            "y": 20
+          }
+        },
+        "invariantDimensions": {
+          "fixedUpperPulleyMountProjectedFeatureSpan": 40.049968789001575,
+          "oppositeFixedSupportProjectedFeatureSpan": 40.049968789001575
+        }
+      },
+      {
+        "path": "form-frames/straight-arm-pulldown/4.webp",
+        "sha256": "a03e3b285e22bcc2a66712af85276d964302076ced16a81185360a3f6dbd92dd",
+        "anchors": {
+          "fixedUpperPulleyMountMaterialFeature1": {
+            "x": 93,
+            "y": 60
+          },
+          "fixedUpperPulleyMountMaterialFeature2": {
+            "x": 95,
+            "y": 20
+          }
+        },
+        "invariantDimensions": {
+          "fixedUpperPulleyMountProjectedFeatureSpan": 40.049968789001575,
+          "oppositeFixedSupportProjectedFeatureSpan": 40.049968789001575
+        }
+      },
+      {
+        "path": "form-frames/straight-arm-pulldown/5.webp",
+        "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
+        "anchors": {
+          "fixedUpperPulleyMountMaterialFeature1": {
+            "x": 93,
+            "y": 60
+          },
+          "fixedUpperPulleyMountMaterialFeature2": {
+            "x": 95,
+            "y": 20
+          }
+        },
+        "invariantDimensions": {
+          "fixedUpperPulleyMountProjectedFeatureSpan": 40.049968789001575,
+          "oppositeFixedSupportProjectedFeatureSpan": 40.049968789001575
+        }
+      },
+      {
+        "path": "form-frames/straight-arm-pulldown/6.webp",
+        "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
+        "anchors": {
+          "fixedUpperPulleyMountMaterialFeature1": {
+            "x": 93,
+            "y": 60
+          },
+          "fixedUpperPulleyMountMaterialFeature2": {
+            "x": 95,
+            "y": 20
+          }
+        },
+        "invariantDimensions": {
+          "fixedUpperPulleyMountProjectedFeatureSpan": 40.049968789001575,
+          "oppositeFixedSupportProjectedFeatureSpan": 40.049968789001575
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "t-bar-row",
+    "baselineFrames": [
+      {
+        "path": "form-frames/t-bar-row/1.webp",
+        "sha256": "58b885dccced01e25ca695724629d027745374e4a7138a94ff9bb4d503306340",
+        "anchors": {
+          "frontApex": {
+            "x": 73,
+            "y": 886
+          },
+          "rightCorner": {
+            "x": 152,
+            "y": 871
+          }
+        },
+        "invariantDimensions": {
+          "leftSlopingMountPlateEdge": 53.50934497823721,
+          "rightSlopingMountPlateEdge": 80.4114419718985
+        }
+      },
+      {
+        "path": "form-frames/t-bar-row/2.webp",
+        "sha256": "58b885dccced01e25ca695724629d027745374e4a7138a94ff9bb4d503306340",
+        "anchors": {
+          "frontApex": {
+            "x": 73,
+            "y": 886
+          },
+          "rightCorner": {
+            "x": 152,
+            "y": 871
+          }
+        },
+        "invariantDimensions": {
+          "leftSlopingMountPlateEdge": 53.50934497823721,
+          "rightSlopingMountPlateEdge": 80.4114419718985
+        }
+      },
+      {
+        "path": "form-frames/t-bar-row/3.webp",
+        "sha256": "bb76be9f97caee89138d583af15e4540b8986c02b0b138f54b20d41754bf7145",
+        "anchors": {
+          "frontApex": {
+            "x": 73.5,
+            "y": 886
+          },
+          "rightCorner": {
+            "x": 153,
+            "y": 871
+          }
+        },
+        "invariantDimensions": {
+          "leftSlopingMountPlateEdge": 53.25645500782041,
+          "rightSlopingMountPlateEdge": 80.9027193609708
+        }
+      },
+      {
+        "path": "form-frames/t-bar-row/4.webp",
+        "sha256": "bb76be9f97caee89138d583af15e4540b8986c02b0b138f54b20d41754bf7145",
+        "anchors": {
+          "frontApex": {
+            "x": 73.5,
+            "y": 886
+          },
+          "rightCorner": {
+            "x": 153,
+            "y": 871
+          }
+        },
+        "invariantDimensions": {
+          "leftSlopingMountPlateEdge": 53.25645500782041,
+          "rightSlopingMountPlateEdge": 80.9027193609708
+        }
+      },
+      {
+        "path": "form-frames/t-bar-row/5.webp",
+        "sha256": "58b885dccced01e25ca695724629d027745374e4a7138a94ff9bb4d503306340",
+        "anchors": {
+          "frontApex": {
+            "x": 73,
+            "y": 886
+          },
+          "rightCorner": {
+            "x": 152,
+            "y": 871
+          }
+        },
+        "invariantDimensions": {
+          "leftSlopingMountPlateEdge": 53.50934497823721,
+          "rightSlopingMountPlateEdge": 80.4114419718985
+        }
+      },
+      {
+        "path": "form-frames/t-bar-row/6.webp",
+        "sha256": "58b885dccced01e25ca695724629d027745374e4a7138a94ff9bb4d503306340",
+        "anchors": {
+          "frontApex": {
+            "x": 73,
+            "y": 886
+          },
+          "rightCorner": {
+            "x": 152,
+            "y": 871
+          }
+        },
+        "invariantDimensions": {
+          "leftSlopingMountPlateEdge": 53.50934497823721,
+          "rightSlopingMountPlateEdge": 80.4114419718985
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "swimming",
+    "baselineFrames": [
+      {
+        "path": "form-frames/swimming/1.webp",
+        "sha256": "ddea3ccdcbffc4b5da60ed0b00055c1575fb80756f496377ed53dc542e09b12d",
+        "anchors": {
+          "poolTileTopLeft": {
+            "x": 128,
+            "y": 214
+          },
+          "poolTileTopRight": {
+            "x": 336,
+            "y": 214
+          },
+          "poolTileBottomLeft": {
+            "x": 128,
+            "y": 279
+          },
+          "poolTileBottomRight": {
+            "x": 336,
+            "y": 279
+          }
+        },
+        "invariantDimensions": {
+          "copingTileWidth": 208,
+          "copingVisibleDepth": 65
+        }
+      },
+      {
+        "path": "form-frames/swimming/2.webp",
+        "sha256": "12dc95ebf1cb96a5185c08fa71e02007668669615d83610fe1c3f2580ee0d28e",
+        "anchors": {
+          "poolTileTopLeft": {
+            "x": 128,
+            "y": 214
+          },
+          "poolTileTopRight": {
+            "x": 336,
+            "y": 214
+          },
+          "poolTileBottomLeft": {
+            "x": 128,
+            "y": 279
+          },
+          "poolTileBottomRight": {
+            "x": 336,
+            "y": 279
+          }
+        },
+        "invariantDimensions": {
+          "copingTileWidth": 208,
+          "copingVisibleDepth": 65
+        }
+      },
+      {
+        "path": "form-frames/swimming/3.webp",
+        "sha256": "19e08456cb4fd7b958b4f68aeaa621eb45aaa9144e745d2aecafceed6a0f9a37",
+        "anchors": {
+          "poolTileTopLeft": {
+            "x": 128,
+            "y": 214
+          },
+          "poolTileTopRight": {
+            "x": 336,
+            "y": 214
+          },
+          "poolTileBottomLeft": {
+            "x": 128,
+            "y": 279
+          },
+          "poolTileBottomRight": {
+            "x": 336,
+            "y": 279
+          }
+        },
+        "invariantDimensions": {
+          "copingTileWidth": 208,
+          "copingVisibleDepth": 65
+        }
+      },
+      {
+        "path": "form-frames/swimming/4.webp",
+        "sha256": "da30a0c84df06d8350d92cee4d392d2a17550eb8a7a7c4b355a6ceb37871bd5d",
+        "anchors": {
+          "poolTileTopLeft": {
+            "x": 128,
+            "y": 214
+          },
+          "poolTileTopRight": {
+            "x": 336,
+            "y": 214
+          },
+          "poolTileBottomLeft": {
+            "x": 128,
+            "y": 279
+          },
+          "poolTileBottomRight": {
+            "x": 336,
+            "y": 279
+          }
+        },
+        "invariantDimensions": {
+          "copingTileWidth": 208,
+          "copingVisibleDepth": 65
+        }
+      },
+      {
+        "path": "form-frames/swimming/5.webp",
+        "sha256": "1cbeec91bda7005b484ee5b040431dcb4e4ba3d5eb0b645291f79666afe5a1b7",
+        "anchors": {
+          "poolTileTopLeft": {
+            "x": 128,
+            "y": 214
+          },
+          "poolTileTopRight": {
+            "x": 336,
+            "y": 214
+          },
+          "poolTileBottomLeft": {
+            "x": 128,
+            "y": 279
+          },
+          "poolTileBottomRight": {
+            "x": 336,
+            "y": 279
+          }
+        },
+        "invariantDimensions": {
+          "copingTileWidth": 208,
+          "copingVisibleDepth": 65
+        }
+      },
+      {
+        "path": "form-frames/swimming/6.webp",
+        "sha256": "ae845c638287cd07be7c997705dc6c7bc67fbfdb5362fc06c75010ffc46b6217",
+        "anchors": {
+          "poolTileTopLeft": {
+            "x": 128,
+            "y": 214
+          },
+          "poolTileTopRight": {
+            "x": 336,
+            "y": 214
+          },
+          "poolTileBottomLeft": {
+            "x": 128,
+            "y": 279
+          },
+          "poolTileBottomRight": {
+            "x": 336,
+            "y": 279
+          }
+        },
+        "invariantDimensions": {
+          "copingTileWidth": 208,
+          "copingVisibleDepth": 65
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  },
+  {
+    "id": "turkish-get-up",
+    "baselineFrames": [
+      {
+        "path": "form-frames/turkish-get-up/1.webp",
+        "sha256": "49eb3272aca92b4bf760fc88edd62c0dfaf504db6c6c7823991e22b60c8b84c8",
+        "anchors": {
+          "matFarLeft": {
+            "x": 20,
+            "y": 935
+          },
+          "matFarRight": {
+            "x": 870,
+            "y": 885
+          },
+          "matNearRight": {
+            "x": 1000,
+            "y": 1085
+          },
+          "matNearLeft": {
+            "x": 150,
+            "y": 1135
+          }
+        },
+        "invariantDimensions": {
+          "matLongEdge": 851.46931829632,
+          "matShortEdge": 238.53720883753127
+        }
+      },
+      {
+        "path": "form-frames/turkish-get-up/2.webp",
+        "sha256": "9fc1e694eb08c7c0214731e9f5489e8ec048985c6b977de9feb82e47b6ac68a1",
+        "anchors": {
+          "matFarLeft": {
+            "x": 20,
+            "y": 935
+          },
+          "matFarRight": {
+            "x": 870,
+            "y": 885
+          },
+          "matNearRight": {
+            "x": 1000,
+            "y": 1085
+          },
+          "matNearLeft": {
+            "x": 150,
+            "y": 1135
+          }
+        },
+        "invariantDimensions": {
+          "matLongEdge": 851.46931829632,
+          "matShortEdge": 238.53720883753127
+        }
+      },
+      {
+        "path": "form-frames/turkish-get-up/3.webp",
+        "sha256": "8b73cfcc69ea94713322076822758a945039c2209c9201622e10f8e18de0ad8b",
+        "anchors": {
+          "matFarLeft": {
+            "x": 20,
+            "y": 935
+          },
+          "matFarRight": {
+            "x": 870,
+            "y": 885
+          },
+          "matNearRight": {
+            "x": 1000,
+            "y": 1085
+          },
+          "matNearLeft": {
+            "x": 150,
+            "y": 1135
+          }
+        },
+        "invariantDimensions": {
+          "matLongEdge": 851.46931829632,
+          "matShortEdge": 238.53720883753127
+        }
+      },
+      {
+        "path": "form-frames/turkish-get-up/4.webp",
+        "sha256": "daf883d61517fba8c876fc504a4f346172ac5c3537520af3b9e51bddd9c80452",
+        "anchors": {
+          "matFarLeft": {
+            "x": 20,
+            "y": 935
+          },
+          "matFarRight": {
+            "x": 870,
+            "y": 885
+          },
+          "matNearRight": {
+            "x": 1000,
+            "y": 1085
+          },
+          "matNearLeft": {
+            "x": 150,
+            "y": 1135
+          }
+        },
+        "invariantDimensions": {
+          "matLongEdge": 851.46931829632,
+          "matShortEdge": 238.53720883753127
+        }
+      },
+      {
+        "path": "form-frames/turkish-get-up/5.webp",
+        "sha256": "23026d00607a2aad0ad45a8f214c0ae0904600f2c4bb9e6870c10539438a2dd5",
+        "anchors": {
+          "matFarLeft": {
+            "x": 20,
+            "y": 935
+          },
+          "matFarRight": {
+            "x": 870,
+            "y": 885
+          },
+          "matNearRight": {
+            "x": 1000,
+            "y": 1085
+          },
+          "matNearLeft": {
+            "x": 150,
+            "y": 1135
+          }
+        },
+        "invariantDimensions": {
+          "matLongEdge": 851.46931829632,
+          "matShortEdge": 238.53720883753127
+        }
+      },
+      {
+        "path": "form-frames/turkish-get-up/6.webp",
+        "sha256": "d904cc714188b802becf191dfacbe52b34a091bb4b6fb3e468dec264195f6851",
+        "anchors": {
+          "matFarLeft": {
+            "x": 20,
+            "y": 935
+          },
+          "matFarRight": {
+            "x": 870,
+            "y": 885
+          },
+          "matNearRight": {
+            "x": 1000,
+            "y": 1085
+          },
+          "matNearLeft": {
+            "x": 150,
+            "y": 1135
+          }
+        },
+        "invariantDimensions": {
+          "matLongEdge": 851.46931829632,
+          "matShortEdge": 238.53720883753127
+        }
+      }
+    ],
+    "disposition": "reviewed; no additional actionable contour/projection fault identified",
+    "newRelease": null
+  }
+]

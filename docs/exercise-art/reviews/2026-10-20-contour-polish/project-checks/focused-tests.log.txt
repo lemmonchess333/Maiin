@@ -1,0 +1,9 @@
+
+ RUN  v5.0.4 C:/Users/myles/Documents/Codex/2026-10-04/lg/work/Maiin-burpees
+
+
+ Test Files  7 passed (7)
+      Tests  477 passed (477)
+   Start at  20:01:20
+   Duration  17.31s (environment 48%, setup 31%, tests 13%, transform 4%, import 3%, worker 1%)
+
