@@ -8,11 +8,6 @@
  * "Lifting Volume". The UNITS agreed, which is what let the names diverge
  * unnoticed — the figure looked right on both, so nothing read wrong.
  *
- * It was latent rather than live. The only production call site passes
- * `weekly_hybrid` (FeedView) and the full view defaults to the same, so a
- * user could only ever reach the two rows that happened to agree. The
- * card's other three sit behind a real `challenge` prop.
- *
  * This holds the consolidation the way the drift happened: by comparing
  * the two surfaces to each other, not by restating a table. A test that
  * asserted the four strings would pass just as happily with the duplicate
@@ -66,9 +61,9 @@ describe("leaderboard vocabulary", () => {
 
   it("covers every challenge, so a new one cannot ship unnamed", () => {
     const keys: ChallengeType[] = [
+      "weekly_sessions",
       "weekly_distance",
       "weekly_volume",
-      "weekly_hybrid",
       "weekly_workouts",
     ];
     for (const key of keys) {

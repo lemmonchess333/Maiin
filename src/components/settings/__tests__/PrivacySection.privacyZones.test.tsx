@@ -58,6 +58,7 @@ function renderSection(removeZone: (id: string) => Promise<void>) {
       profile={{ aiAnalysisEnabled: false, hideSharedRouteEnds: false }}
       updateProfile={vi.fn().mockResolvedValue({ ok: true })}
       updateShareDefaults={vi.fn().mockResolvedValue({ ok: true })}
+      refreshProfile={vi.fn().mockResolvedValue(undefined)}
       privacyZones={[ZONE]}
       addZone={vi.fn().mockResolvedValue(undefined)}
       removeZone={removeZone}

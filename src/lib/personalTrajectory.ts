@@ -1,12 +1,15 @@
 /**
- * Personal trajectory — week-over-week hybrid score for a single user.
+ * Personal trajectory — this week's sessions against last week's, for a
+ * single user.
  *
- * The hybrid score is the same formula as the weekly_hybrid
- * leaderboard challenge: `km * 100 + kg * 0.1`. We compute it for
- * both the current week (Monday 00:00 local → now) and the prior
- * week (Monday 00:00 → Sunday 23:59:59) so the Social "leaderboard
- * slot" can show a week-over-week trajectory when the user doesn't
- * have enough friends for a meaningful leaderboard.
+ * Counted as the friends board counts them (Polish2 call 5): every saved
+ * workout, and every run that counts toward volume. Sessions is the one
+ * measure a lifter and a runner share; the points this replaced
+ * (`km * 100 + kg * 0.1`) made 1 km worth 1,000 kg. We count both the
+ * current week (Monday 00:00 local → now) and the prior week (Monday
+ * 00:00 → Sunday 23:59:59) so the Social "leaderboard slot" can show a
+ * week-over-week trajectory when the user doesn't have enough friends for
+ * a meaningful leaderboard. Distance and volume stay as the breakdown.
  *
  * This is the solo-user alternative to LeaderboardCard. Design
  * rationale (from the council review): when you're the only athlete
@@ -26,9 +29,9 @@ import {
 } from "./savedWorkouts";
 
 export interface TrajectoryBreakdown {
+  sessions: number;
   km: number;
   kg: number;
-  score: number;
 }
 
 export interface PersonalTrajectory {
@@ -41,18 +44,17 @@ export interface PersonalTrajectory {
    * delta: comparing a Tuesday cumulative against a full prior week's
    * total guarantees a misleading negative percentage.
    *
-   * `lastWeek.score` is still kept around for the "Last week 287 pts"
-   * informational baseline row — it's the right number for that row,
-   * just not for the delta.
+   * `lastWeek.sessions` is still kept around for the "Last week 4
+   * sessions" informational baseline row — it's the right number for
+   * that row, just not for the delta.
    */
   lastWeekToDate: TrajectoryBreakdown;
   /**
-   * Percent change from `lastWeekToDate.score` to `thisWeek.score`.
-   * Positive = improvement, negative = regression. `null` when last
-   * week's same-day-of-week running total is zero (division-by-zero —
-   * caller should show an absolute delta or "new baseline" copy).
+   * Sessions this week less last week's at the same point. Positive =
+   * ahead, negative = behind. A count, not a percentage: on a handful of
+   * sessions a percentage swings wildly ("+50%" for one more).
    */
-  deltaPct: number | null;
+  delta: number;
 }
 
 function startOfWeek(d: Date): Date {
@@ -113,26 +115,19 @@ async function computeRangeBreakdown(
     fetchSavedWorkouts(uid, { since: fromKey, until: lastDay, cap: 100 }),
   ]);
 
-  const km = runs.reduce(
-    (s, run) =>
-      isVolumeEligible(run) && ranBefore(run, toDate)
-        ? s + run.distance / 1000
-        : s,
-    0
+  const counted = runs.filter(
+    (run) => isVolumeEligible(run) && ranBefore(run, toDate)
   );
+  const lifted = workouts.filter((workout) => liftedBefore(workout, toDate));
+  const km = counted.reduce((s, run) => s + run.distance / 1000, 0);
   // Timed holds lift nothing (`workoutTonnageKg`), as the server's
   // challenge maths has it.
-  const kg = workouts.reduce(
-    (s, workout) =>
-      liftedBefore(workout, toDate) ? s + workoutTonnageKg(workout) : s,
-    0
-  );
+  const kg = lifted.reduce((s, workout) => s + workoutTonnageKg(workout), 0);
 
-  const score = km * 100 + kg * 0.1;
   return {
+    sessions: counted.length + lifted.length,
     km: Math.round(km * 10) / 10,
     kg: Math.round(kg),
-    score: Math.round(score),
   };
 }
 
@@ -157,12 +152,10 @@ export async function getPersonalTrajectory(
     computeRangeBreakdown(uid, lastWeekStart, lastWeekToDateEnd),
   ]);
 
-  const deltaPct =
-    lastWeekToDate.score > 0
-      ? Math.round(
-          ((thisWeek.score - lastWeekToDate.score) / lastWeekToDate.score) * 100
-        )
-      : null;
-
-  return { thisWeek, lastWeek, lastWeekToDate, deltaPct };
+  return {
+    thisWeek,
+    lastWeek,
+    lastWeekToDate,
+    delta: thisWeek.sessions - lastWeekToDate.sessions,
+  };
 }

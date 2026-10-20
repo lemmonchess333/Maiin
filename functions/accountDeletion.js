@@ -535,6 +535,9 @@ async function deleteAccount({
     // .js) and was orphaning on every deletion. `rateLimits` is already
     // covered by its own range sweep.
     await firestore.doc(`scanUsage/${uid}`).delete();
+    // Polish2: the week shown on followers' boards. The session triggers
+    // that recompute it write nothing for an account being deleted.
+    await firestore.doc(`friendsBoard/${uid}`).delete();
 
     // 5. The user document itself
     stage = "user_document";

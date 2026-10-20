@@ -1,81 +1,36 @@
 import { Footprints, Dumbbell, Zap, ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
 import { useAuth } from "../../lib/auth";
-import { getDoc, doc } from "firebase/firestore";
-import { db } from "../../lib/firebase";
 import { THEME } from "../../lib/theme";
 import {
-  buildLeaderboard,
   CHALLENGE_LABELS,
   boardFigure,
-  type LeaderboardEntry,
   type ChallengeType,
 } from "../../lib/leaderboard";
+import { rankNamedBoard, useFriendsBoard } from "@/hooks/useFriendsBoard";
 import LeaderboardRow from "./LeaderboardRow";
+import ShowMyWeekRow from "./ShowMyWeekRow";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import EmptyState from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 
-interface EnrichedEntry extends LeaderboardEntry {
-  photoURL?: string;
-}
-
-/** Load a leaderboard and enrich each UID with displayName + photoURL
- *  from the PUBLIC profile projection. Pre-W1d this read `users/{uid}`
- *  directly, which is owner-only — cross-user reads silently failed and
- *  everyone rendered as "Athlete". Now sources from
- *  `users/{uid}/public/profile`, which IS cross-user readable. Only
- *  entries with activity this week are kept. */
-async function loadEntries(
-  uid: string,
-  challenge: ChallengeType
-): Promise<EnrichedEntry[]> {
-  const raw = await buildLeaderboard(uid, challenge);
-  const enriched = await Promise.all(
-    raw.map(async (e) => {
-      try {
-        const snap = await getDoc(doc(db, "users", e.uid, "public", "profile"));
-        const data = snap.data() as
-          | { displayName?: string; photoURL?: string }
-          | undefined;
-        return {
-          ...e,
-          name: data?.displayName || (e.uid === uid ? "You" : "Athlete"),
-          photoURL: data?.photoURL,
-        } as EnrichedEntry;
-      } catch {
-        return {
-          ...e,
-          name: e.uid === uid ? "You" : "Athlete",
-        } as EnrichedEntry;
-      }
-    })
-  );
-  return enriched.filter((e) => e.value > 0);
-}
-
+/**
+ * The friends board on the feed (Polish2 call 5): this week's sessions for
+ * you and the people you follow who share their week, from the tally the
+ * server keeps (friendsBoard/{uid}). Sessions is the card's measure, the
+ * one that compares a lifter with a runner; the full board adds distance
+ * and volume. Only people with something this week are ranked.
+ */
 export default function LeaderboardCard({
-  challenge = "weekly_hybrid",
+  challenge = "weekly_sessions",
   onViewFull,
 }: {
   challenge?: ChallengeType;
   onViewFull?: () => void;
 }) {
   const { user, profile } = useAuth();
-
-  /* The loaded board, stamped with the account and challenge it was
-     built for. `loading` and `entries` are derived from it, so a
-     different challenge (or account) reads as loading from its first
-     render, never as the previous board. A failed read settles as an
-     empty board. */
-  const boardKey = user ? `${user.uid}:${challenge}` : null;
-  const [board, setBoard] = useState<{
-    key: string;
-    entries: EnrichedEntry[];
-  } | null>(null);
-  const settledBoard = board !== null && board.key === boardKey ? board : null;
-  const loading = settledBoard === null;
-  const entries = settledBoard?.entries ?? [];
+  const { loading, failed, weeks, reload } = useFriendsBoard();
+  const entries = rankNamedBoard(weeks, challenge);
 
   /* Name and unit come from `CHALLENGE_LABELS`; only the ICON is local,
      because the full view renders a tab row rather than a sport-coded
@@ -83,25 +38,9 @@ export default function LeaderboardCard({
   const challengeIcons: Record<ChallengeType, string> = {
     weekly_distance: "footprints",
     weekly_volume: "dumbbell",
-    weekly_hybrid: "zap",
+    weekly_sessions: "zap",
     weekly_workouts: "dumbbell",
   };
-
-  useEffect(() => {
-    if (!user || boardKey === null) return;
-    let cancelled = false;
-    loadEntries(user.uid, challenge).then(
-      (loaded) => {
-        if (!cancelled) setBoard({ key: boardKey, entries: loaded });
-      },
-      () => {
-        if (!cancelled) setBoard({ key: boardKey, entries: [] });
-      }
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [user, challenge, boardKey]);
 
   const { title } = CHALLENGE_LABELS[challenge];
   const liftUnit = useLiftUnit();
@@ -141,12 +80,23 @@ export default function LeaderboardCard({
           </div>
         )}
 
-        {!loading && entries.length === 0 && (
+        {!loading && failed && (
+          <div className="flex flex-wrap items-center justify-between gap-3 py-1">
+            <p className="text-xs text-muted-foreground">
+              Couldn&rsquo;t load the board.
+            </p>
+            <Button variant="secondary" onClick={reload}>
+              Try again
+            </Button>
+          </div>
+        )}
+
+        {!loading && !failed && entries.length === 0 && (
           <EmptyState
             compact
             icon={Zap}
-            headline="No leaderboard yet"
-            sub="Follow athletes to compare your week."
+            headline="Nothing to compare yet"
+            sub="People you follow show here once they share their week."
             accent={THEME.brand}
           />
         )}
@@ -198,6 +148,7 @@ export default function LeaderboardCard({
             )}
           </>
         )}
+        {!loading && !failed && <ShowMyWeekRow onShared={reload} />}
       </div>
 
       {!loading && entries.length > 0 && onViewFull && (

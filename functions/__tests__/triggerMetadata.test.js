@@ -489,6 +489,11 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/followers/{uid}/users/{followerUid}",
   },
+  setBoardSharing: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   onFollowRequestCreated: {
     kind: "event",
     maxInstances: 50,

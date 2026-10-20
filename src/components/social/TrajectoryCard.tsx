@@ -9,14 +9,15 @@ import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 
 /**
  * Solo-user alternative to LeaderboardCard. Surfaces this week's
- * hybrid score vs last week's so the "leaderboard slot" on the
- * Following tab stays useful for users who don't yet have enough
- * friends for a meaningful leaderboard.
+ * sessions vs last week's, the measure the friends board ranks
+ * (Polish2 call 5), so the "leaderboard slot" on the Following tab stays
+ * useful for users who don't yet have enough friends for a meaningful
+ * leaderboard, and reads the same once they do.
  *
  * SOC-P1c: presentational — FeedView owns the getPersonalTrajectory
  * fetch (same one-shot read, just lifted), so an empty week renders no
- * card at all rather than this one's 0-pts grid. It sits under the
- * third post, not above the feed.
+ * card at all rather than a grid of zeros. It sits under the third
+ * post, not above the feed.
  *
  * Keeps the same outer shape (p-4 rounded-2xl card with a header
  * row featuring Zap + title + "This week" pill) as LeaderboardCard
@@ -31,33 +32,24 @@ export default function TrajectoryCard({
 }) {
   const thisWeek = data?.thisWeek;
   const lastWeek = data?.lastWeek;
-  const deltaPct = data?.deltaPct ?? null;
+  const delta = data?.delta ?? 0;
   const liftUnit = useLiftUnit();
+  const sessionsUnit = (n: number) => (n === 1 ? "session" : "sessions");
 
-  // Colour the delta: green = improvement, coral = regression,
-  // muted grey = flat / no baseline.
+  // Colour the delta: green = ahead, coral = behind, muted grey = level.
   const deltaColor =
-    deltaPct == null
-      ? "hsl(var(--muted-foreground))"
-      : deltaPct > 0
-        ? THEME.success
-        : deltaPct < 0
-          ? THEME.running
-          : "hsl(var(--muted-foreground))";
+    delta > 0
+      ? THEME.success
+      : delta < 0
+        ? THEME.running
+        : "hsl(var(--muted-foreground))";
 
   const deltaBg =
-    deltaPct == null || deltaPct === 0
+    delta === 0
       ? "hsl(var(--muted-foreground) / 0.08)"
-      : (deltaPct > 0 ? THEME.success : THEME.running) + "14";
+      : (delta > 0 ? THEME.success : THEME.running) + "14";
 
-  const DeltaIcon =
-    deltaPct == null
-      ? Minus
-      : deltaPct > 0
-        ? TrendingUp
-        : deltaPct < 0
-          ? TrendingDown
-          : Minus;
+  const DeltaIcon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
 
   return (
     <div className="p-4 rounded-2xl bg-card card-shadow">
@@ -77,9 +69,9 @@ export default function TrajectoryCard({
 
       {!loading && thisWeek && lastWeek && (
         <>
-          {/* Hero row — this week's score + delta chip.
-              Suppress the delta chip entirely when this week's score
-              is 0 — showing "-100%" before the user has logged anything
+          {/* Hero row — this week's sessions + delta chip.
+              Suppress the delta chip entirely when this week has no
+              sessions — showing "-2" before the user has logged anything
               for the new week reads as a failure-state in red. The
               "Start your week" zero-state nudge below is the calmer
               prompt to action. */}
@@ -88,25 +80,25 @@ export default function TrajectoryCard({
               className="text-3xl font-mono tabular-nums font-extrabold"
               style={{ color: THEME.brand }}
             >
-              {thisWeek.score === 0 ? "0" : thisWeek.score.toLocaleString()}
+              {thisWeek.sessions}
             </span>
             <span className="text-sm text-muted-foreground font-medium">
-              pts
+              {sessionsUnit(thisWeek.sessions)}
             </span>
-            {thisWeek.score > 0 && (
+            {thisWeek.sessions > 0 && (
               /* The delta compares against last week's running total at
                  the same elapsed point in the week (fair like-for-like)
                  rather than its full-week total. Tap surfaces a Tooltip
                  spelling out the comparison so curious users can
-                 resolve why the percentage doesn't match the visible
-                 "Last week N pts" baseline row below it (which is
+                 resolve why the delta doesn't match the visible
+                 "Last week N sessions" baseline row below it (which is
                  intentionally the full prior week, kept as an
                  aspirational target). The chip is a real <button type="button"> so
                  the Tooltip can wire aria-describedby and keyboard
                  focus correctly — Tooltip provides the accessible
                  name so the prior aria-label has been dropped. */
               <Tooltip
-                content="Compared against last week's running total at this same point in the week. The full prior week is shown below as the baseline."
+                content="Compared with last week at this same point in the week. The whole of last week is shown below."
                 placement="bottom"
               >
                 <button
@@ -121,9 +113,7 @@ export default function TrajectoryCard({
                   }}
                 >
                   <DeltaIcon size={12} />
-                  {deltaPct == null
-                    ? "new"
-                    : `${deltaPct > 0 ? "+" : ""}${deltaPct}%`}
+                  {delta === 0 ? "Same" : `${delta > 0 ? "+" : ""}${delta}`}
                 </button>
               </Tooltip>
             )}
@@ -134,7 +124,7 @@ export default function TrajectoryCard({
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
             <span>Last week</span>
             <span className="font-mono tabular-nums">
-              {lastWeek.score.toLocaleString()} pts
+              {lastWeek.sessions} {sessionsUnit(lastWeek.sessions)}
             </span>
           </div>
 
@@ -163,9 +153,9 @@ export default function TrajectoryCard({
           </div>
 
           {/* Zero-state nudge — no lift, no run this week yet */}
-          {thisWeek.score === 0 && (
+          {thisWeek.sessions === 0 && (
             <p className="text-xs text-muted-foreground text-center mt-3">
-              {lastWeek.score > 0
+              {lastWeek.sessions > 0
                 ? "Start your week — beat last week"
                 : "Start your week with your first workout or run"}
             </p>

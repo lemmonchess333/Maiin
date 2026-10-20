@@ -543,6 +543,23 @@
       "testCoverageStatus": "planned"
     },
     {
+      "key": "friendsBoardOwn",
+      "domain": "E_fanout",
+      "type": "topLevelByUid",
+      "path": "friendsBoard/{uid}",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "healthFitness",
+      "recordPurpose": "private",
+      "strategy": "deleteKnownDocIfExists",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "reason": "This week's sessions, distance and volume, shown on followers' friends boards (Polish2 call 5), written by the server only for someone who chose to share. Deleted with the account; the session triggers that recompute it check the deletion lock before writing.",
+      "testCoverageKey": "smoke::topLevelOwn::friendsBoard",
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/accountDeletion.js"
+    },
+    {
       "key": "globalRestrictedUids",
       "domain": "F_usage",
       "type": "topLevelByUid",

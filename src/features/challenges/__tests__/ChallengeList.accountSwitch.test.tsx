@@ -15,21 +15,25 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import type { LeaderboardEntry } from "@/lib/leaderboard";
+import type { BoardWeek } from "@/lib/leaderboard";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 
 const h = vi.hoisted(() => ({
   user: { uid: "acct-a" } as { uid: string },
-  boards: {} as Record<string, () => Promise<LeaderboardEntry[]>>,
+  boards: {} as Record<string, () => Promise<BoardWeek[]>>,
+  lifts: {} as Record<string, () => Promise<number>>,
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: h.user, profile: { displayName: "Me" } }),
   useUid: () => h.user.uid,
 }));
-vi.mock("@/lib/leaderboard", () => ({
-  buildLeaderboard: (uid: string) => h.boards[uid](),
+/* Partial: the ranking is the real one; only the reads are scripted. */
+vi.mock("@/lib/leaderboard", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/leaderboard")>()),
+  loadBoardWeeks: (uid: string) => h.boards[uid](),
+  countMyWeekLifts: (uid: string) => h.lifts[uid](),
 }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/toast", () => ({ toast: { error: vi.fn() } }));
@@ -50,13 +54,22 @@ beforeEach(() => {
   seedFirestore({
     "users/friend-of-a/public/profile": { displayName: "Friend Of A" },
   });
+  const week = (uid: string, lifts: number): BoardWeek => ({
+    uid,
+    sessions: lifts,
+    lifts,
+    runs: 0,
+    distanceM: 0,
+    volumeKg: 0,
+  });
   h.boards = {
-    "acct-a": async () => [
-      { uid: "friend-of-a", name: "", value: 3, rank: 1 },
-      { uid: "acct-a", name: "", value: 1, rank: 2 },
-    ],
-    // The next account's read never lands: anything social on its card
+    "acct-a": async () => [week("friend-of-a", 3), week("acct-a", 1)],
+    // The next account's reads never land: anything social on its card
     // could only have come from the previous account.
+    "acct-b": () => new Promise(() => {}),
+  };
+  h.lifts = {
+    "acct-a": async () => 1,
     "acct-b": () => new Promise(() => {}),
   };
 });

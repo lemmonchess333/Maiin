@@ -1624,6 +1624,23 @@ service cloud.firestore {
         && (request.auth.uid == uid || request.auth.uid == requesterUid);
     }
 
+    /* A person's week on friends' boards (Polish2 call 5): sessions,
+       distance and volume, kept by the server (functions/lib/
+       friendsBoard.js) only for someone who said yes. Read by them and by
+       their followers, who are people they accepted, never across a block
+       either way, as followers-only posts are read. */
+    match /friendsBoard/{uid} {
+      allow read: if request.auth != null
+        && (
+          request.auth.uid == uid
+          || (
+            exists(/databases/$(database)/documents/followers/$(uid)/users/$(request.auth.uid))
+            && !blockExistsBetween(uid, request.auth.uid)
+          )
+        );
+      allow write: if false;
+    }
+
     // ========================================
     // Partner streaks (SOCIAL S3): a 1:1 bond between two users that
     // tracks a shared streak (days both logged a session). Only the two

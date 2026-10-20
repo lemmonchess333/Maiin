@@ -1,9 +1,13 @@
-import { collection, getDocs } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  Timestamp,
+} from "firebase/firestore";
 import { db } from "./firebase";
-import { isVolumeEligible } from "./runStatsEligibility";
 import { localDateString, startOfLocalWeek } from "./dateHelpers";
-import { fetchSavedRuns } from "./savedRuns";
-import { fetchSavedWorkouts, workoutTonnageKg } from "./savedWorkouts";
+import { fetchSavedWorkouts } from "./savedWorkouts";
 import { liftUnitLabel, liftVolumeIn, type LiftUnit } from "./liftLoad";
 
 export interface LeaderboardEntry {
@@ -13,10 +17,13 @@ export interface LeaderboardEntry {
   rank: number;
 }
 
+/** What a board ranks. Sessions is the card's (Polish2 call 5: the one
+ *  measure that compares a lifter with a runner); the full board adds
+ *  distance and volume; workouts is the weekly challenge's lift count. */
 export type ChallengeType =
+  | "weekly_sessions"
   | "weekly_distance"
   | "weekly_volume"
-  | "weekly_hybrid"
   | "weekly_workouts";
 
 /**
@@ -28,12 +35,6 @@ export type ChallengeType =
  * against "Lifting Volume". The units agreed, which is what let the names
  * diverge unnoticed — the figure looked right on both.
  *
- * It was LATENT rather than live: the only production call site passes
- * `weekly_hybrid` (FeedView) and the full view defaults to the same, so a
- * user could only ever reach the two rows that happened to agree. The card's
- * other three entries sit behind a real `challenge` prop, so the day anyone
- * uses it the two surfaces disagree about what the user is looking at.
- *
  * The full view's wording won, for two reasons that are on the screen rather
  * than a preference: the card sport-codes its own icon (Footprints tinted
  * `running`, Dumbbell tinted `lifting`), so "Running"/"Lifting" matches what
@@ -41,7 +42,7 @@ export type ChallengeType =
  * renders a persistent "This week" eyebrow next to that title, which made
  * "Weekly Distance · This week" say it twice.
  *
- * Casing is deliberately untouched. All four are Title Case and internally
+ * Casing is deliberately untouched. All of them are Title Case and internally
  * consistent, so the house rule that catches a Title Case stray among
  * sentence-case siblings does not apply here; whether this whole set should
  * move to sentence case is a separate question with one answer, not four.
@@ -50,7 +51,7 @@ export const CHALLENGE_LABELS: Record<
   ChallengeType,
   { title: string; unit: string }
 > = {
-  weekly_hybrid: { title: "Hybrid Score", unit: "pts" },
+  weekly_sessions: { title: "Sessions", unit: "sessions" },
   weekly_volume: { title: "Lifting Volume", unit: "kg" },
   weekly_distance: { title: "Running Distance", unit: "km" },
   weekly_workouts: { title: "Workouts", unit: "sessions" },
@@ -68,80 +69,99 @@ export function boardFigure(
       value: Math.round(liftVolumeIn(value, liftUnit)),
       unit: liftUnitLabel(liftUnit),
     };
-  return { value, unit: CHALLENGE_LABELS[challenge].unit };
+  const { unit } = CHALLENGE_LABELS[challenge];
+  return { value, unit: unit === "sessions" && value === 1 ? "session" : unit };
 }
 
-export async function buildLeaderboard(
+/** One person's week as their followers' boards show it. */
+export interface BoardWeek {
+  uid: string;
+  sessions: number;
+  lifts: number;
+  runs: number;
+  distanceM: number;
+  volumeKg: number;
+}
+
+const isPermissionDenied = (err: unknown) =>
+  typeof err === "object" &&
+  err !== null &&
+  (err as { code?: string }).code === "permission-denied";
+
+/**
+ * This week for you and everyone you follow who shares theirs (Polish2
+ * call 5). Each is one read of `friendsBoard/{uid}`, the tally the server
+ * keeps from their sessions, because a person's sessions are theirs alone
+ * to read: the board this replaced read them for everyone followed, was
+ * refused for the first, and never loaded.
+ *
+ * Someone who does not share has no tally and is left out; someone who
+ * blocked you, or a follow since removed, is refused and left out the
+ * same way. A tally from a week already over (`weekEndsAt` passed where
+ * they are) is a week with nothing in it yet.
+ */
+export async function loadBoardWeeks(
   currentUid: string,
-  challenge: ChallengeType
-): Promise<LeaderboardEntry[]> {
+  now: number = Date.now()
+): Promise<BoardWeek[]> {
   const followingSnap = await getDocs(
     collection(db, "following", currentUid, "users")
   );
   const uids = [currentUid, ...followingSnap.docs.map((d) => d.id)];
-
-  // Week start through the shared anchor — this read the week boundary by
-  // hand, so it agreed with the rest of the app only by repetition.
-  const since = startOfLocalWeek(new Date());
-  // `workout.date` is stored as a LOCAL "YYYY-MM-DD" string, so the cutoff
-  // for the `where('date', '>=', ...)` query must be the LOCAL date of
-  // `since` — not `since.toISOString()` (UTC). `since` is LOCAL midnight on
-  // the week's first day; in positive-offset zones (e.g. UTC+9) that instant
-  // is still the previous calendar day in UTC, so the UTC stringify rolls the
-  // cutoff back a day and pulls in an extra day's workouts. Workouts and runs
-  // are both read by that day key, through their one readers (Lift3: a
-  // session belongs to the day it started).
-  const sinceDateStr = localDateString(since);
-
-  const entries: { uid: string; value: number }[] = [];
-
-  await Promise.all(
-    uids.map(async (uid) => {
-      let value = 0;
-
-      if (challenge === "weekly_distance" || challenge === "weekly_hybrid") {
-        const runs = await fetchSavedRuns(uid, {
-          since: sinceDateStr,
-          cap: 50,
-        });
-        const km = runs.reduce(
-          (s, run) => (isVolumeEligible(run) ? s + run.distance / 1000 : s),
-          0
-        );
-        if (challenge === "weekly_distance") value = Math.round(km * 10) / 10;
-        else value += km * 100;
+  const weeks = await Promise.all(
+    uids.map(async (uid): Promise<BoardWeek | null> => {
+      let snap;
+      try {
+        snap = await getDoc(doc(db, "friendsBoard", uid));
+      } catch (err) {
+        if (isPermissionDenied(err)) return null;
+        throw err;
       }
-
-      if (challenge === "weekly_volume" || challenge === "weekly_hybrid") {
-        // Timed holds lift nothing (`workoutTonnageKg`), as the server's
-        // challenge maths has it.
-        const workouts = await fetchSavedWorkouts(uid, {
-          since: sinceDateStr,
-          cap: 50,
-        });
-        const kg = workouts.reduce((s, w) => s + workoutTonnageKg(w), 0);
-        if (challenge === "weekly_volume") value = Math.round(kg);
-        else value += kg * 0.1;
-      }
-
-      if (challenge === "weekly_workouts") {
-        const workouts = await fetchSavedWorkouts(uid, {
-          since: sinceDateStr,
-          cap: 50,
-        });
-        value = workouts.length;
-      }
-
-      entries.push({ uid, value: Math.round(value * 10) / 10 });
+      if (!snap.exists()) return null;
+      const data = snap.data();
+      const ends =
+        data.weekEndsAt instanceof Timestamp ? data.weekEndsAt.toMillis() : 0;
+      const current = ends > now;
+      const figure = (v: unknown) =>
+        current && typeof v === "number" && Number.isFinite(v) && v > 0 ? v : 0;
+      return {
+        uid,
+        sessions: figure(data.sessions),
+        lifts: figure(data.lifts),
+        runs: figure(data.runs),
+        distanceM: figure(data.distanceM),
+        volumeKg: figure(data.volumeKg),
+      };
     })
   );
+  return weeks.filter((w): w is BoardWeek => w !== null);
+}
 
-  return entries
+/** One board's order: distance in km to a tenth, volume in whole kg. */
+export function rankBoard(
+  weeks: BoardWeek[],
+  challenge: ChallengeType
+): LeaderboardEntry[] {
+  const valueOf = (w: BoardWeek) =>
+    challenge === "weekly_sessions"
+      ? w.sessions
+      : challenge === "weekly_workouts"
+        ? w.lifts
+        : challenge === "weekly_distance"
+          ? Math.round(w.distanceM / 100) / 10
+          : Math.round(w.volumeKg);
+  return weeks
+    .map((w) => ({ uid: w.uid, value: valueOf(w) }))
     .sort((a, b) => b.value - a.value)
-    .map((e, i) => ({
-      uid: e.uid,
-      name: "",
-      value: e.value,
-      rank: i + 1,
-    }));
+    .map((e, i) => ({ uid: e.uid, name: "", value: e.value, rank: i + 1 }));
+}
+
+/** Your own lift sessions this week, for the weekly challenge's card,
+ *  whether or not you share your week: your sessions are yours to read. */
+export async function countMyWeekLifts(uid: string): Promise<number> {
+  // The week's first day through the shared anchor, as a LOCAL day key:
+  // `workout.date` is the local day a session started (Lift3).
+  const since = localDateString(startOfLocalWeek(new Date()));
+  const workouts = await fetchSavedWorkouts(uid, { since, cap: 50 });
+  return workouts.length;
 }

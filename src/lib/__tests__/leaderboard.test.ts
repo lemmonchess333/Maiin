@@ -5,7 +5,8 @@ import { pathToFileURL } from "node:url";
 import { localDateString } from "../dateHelpers";
 
 /**
- * leaderboard.ts builds a weekly leaderboard. The workouts query filters
+ * leaderboard.ts counts your own lifts this week for the weekly
+ * challenge's card (`countMyWeekLifts`). The workouts query filters
  * `where('date', '>=', cutoff)` where `workout.date` is a LOCAL
  * "YYYY-MM-DD" string. The cutoff (`since` = local Sunday midnight) MUST
  * therefore be stringified with the LOCAL date helper, not
@@ -18,7 +19,7 @@ import { localDateString } from "../dateHelpers";
  * `localDateString(since)` is the local calendar date of `since` regardless
  * of timezone, and diverges from `toISOString()` for a local-midnight Date
  * in positive-offset zones. `leaderboardSessions.test.ts` drives
- * `buildLeaderboard` itself against the Firestore fake. The vitest runner is UTC, so that case is
+ * `countMyWeekLifts` itself against the Firestore fake. The vitest runner is UTC, so that case is
  * exercised in a child process under TZ=Asia/Tokyo (UTC+9).
  */
 describe("leaderboard weekly cutoff — local vs UTC date string", () => {

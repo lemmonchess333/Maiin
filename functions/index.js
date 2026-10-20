@@ -35,6 +35,7 @@ const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const programCommands = require("./lib/programCommands");
 const { reconcileWorkoutMetrics } = require("./lib/workoutCorrections");
 const challengeParticipation = require("./lib/challengeParticipationProgress");
+const friendsBoard = require("./lib/friendsBoard");
 const {
   mergeChangedFields,
   ProgrammeConflictError,
@@ -4758,11 +4759,17 @@ exports.onWorkoutCreated = functions
       return;
     }
     // Recompute first and let failures retry before legacy side effects.
+    const sessionDays = challengeParticipation.affectedActivityDays(
+      snap.data()
+    );
     await challengeParticipation.reconcileParticipationChallenges(
       db,
       uid,
-      challengeParticipation.affectedActivityDays(snap.data())
+      sessionDays
     );
+    // Polish2: the week this person shares on friends' boards, if they
+    // do. Outside the steps, like the line above: a failure retries.
+    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     const data = snap.data();
     // Which day this session belongs to — the workout's own local date,
     // NOT trigger delivery time. Drives challenge-window attribution.
@@ -4915,11 +4922,17 @@ exports.onRunCreated = functions
       }
       return;
     }
+    const sessionDays = challengeParticipation.affectedActivityDays(
+      snap.data()
+    );
     await challengeParticipation.reconcileParticipationChallenges(
       db,
       uid,
-      challengeParticipation.affectedActivityDays(snap.data())
+      sessionDays
     );
+    // Polish2: the week this person shares on friends' boards, if they
+    // do. Outside the steps, like the line above: a failure retries.
+    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     const data = snap.data();
     // The run's own local day — drives challenge-window attribution, so a
     // run flushed offline in a later month still credits the right window.
@@ -5102,11 +5115,18 @@ exports.onWorkoutUpdated = functions
       return null;
     // A resumed Finish can overwrite duration without incrementing revision.
     // Reconcile current source facts before the correction-only gate.
+    const sessionDays = challengeParticipation.affectedActivityDays(
+      before,
+      after
+    );
     await challengeParticipation.reconcileParticipationChallenges(
       db,
       uid,
-      challengeParticipation.affectedActivityDays(before, after)
+      sessionDays
     );
+    // Polish2: the week this person shares on friends' boards, if they
+    // do. Outside the steps, like the line above: a failure retries.
+    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     if (
       !(after.revision > 0) ||
       (before.revision === after.revision &&
@@ -5139,14 +5159,18 @@ exports.onRunUpdated = functions
       ))
     )
       return null;
+    const sessionDays = challengeParticipation.affectedActivityDays(
+      change.before.data(),
+      change.after.data()
+    );
     await challengeParticipation.reconcileParticipationChallenges(
       db,
       uid,
-      challengeParticipation.affectedActivityDays(
-        change.before.data(),
-        change.after.data()
-      )
+      sessionDays
     );
+    // Polish2: the week this person shares on friends' boards, if they
+    // do. Outside the steps, like the line above: a failure retries.
+    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     return null;
   });
 
@@ -5198,11 +5222,17 @@ exports.onWorkoutDeleted = functions
     ) {
       return null;
     }
+    const sessionDays = challengeParticipation.affectedActivityDays(
+      snap.data()
+    );
     await challengeParticipation.reconcileParticipationChallenges(
       db,
       uid,
-      challengeParticipation.affectedActivityDays(snap.data())
+      sessionDays
     );
+    // Polish2: the week this person shares on friends' boards, if they
+    // do. Outside the steps, like the line above: a failure retries.
+    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     try {
       const data = snap.data() || {};
       await activityReversal.reverseChallengeProgressForSource(
@@ -5243,11 +5273,17 @@ exports.onRunDeleted = functions
     ) {
       return null;
     }
+    const sessionDays = challengeParticipation.affectedActivityDays(
+      snap.data()
+    );
     await challengeParticipation.reconcileParticipationChallenges(
       db,
       uid,
-      challengeParticipation.affectedActivityDays(snap.data())
+      sessionDays
     );
+    // Polish2: the week this person shares on friends' boards, if they
+    // do. Outside the steps, like the line above: a failure retries.
+    await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
     try {
       const data = snap.data() || {};
       // No isVolumeEligibleRun re-check here, unlike the create side. An
@@ -7905,6 +7941,46 @@ exports.onFollowRequestCreated = functions
       logKey: "onFollowRequestCreated",
     });
     return null;
+  });
+
+/**
+ * setBoardSharing — the person's answer to "Show my week" on friends'
+ * boards (Polish2 call 5). Yes stores the answer and computes this week's
+ * tally at once (friendsBoard.js); no stores the answer and deletes the
+ * tally. The answer is server-written, so the tally and the answer cannot
+ * disagree because a client wrote one and not the other.
+ *
+ * A restricted account cannot start sharing (it reaches no one, S4e) but
+ * can always stop.
+ */
+exports.setBoardSharing = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
+    }
+    const uid = context.auth.uid;
+    const share = data && data.share;
+    if (typeof share !== "boolean") {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "share must be true or false."
+      );
+    }
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    if (share) await restriction.assertNotRestricted(db, uid, functions);
+    const limited = await isRateLimited(uid, "boardSharing", 10, 60_000);
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many attempts. Please wait."
+      );
+    }
+    await friendsBoard.setBoardSharing(db, uid, share);
+    return { share };
   });
 
 // ══════════════════════════════════════════════
