@@ -39,6 +39,7 @@ const H = vi.hoisted(() => ({
   sendInitial: vi.fn(async (_uid: string) => {}),
   signOutAction: null as null | (() => Promise<void>),
   transition: vi.fn(async (operation: () => Promise<unknown>) => operation()),
+  cancelAllNotifications: vi.fn(async () => {}),
 }));
 const mockAuth = H.mockAuth;
 
@@ -66,6 +67,9 @@ vi.mock("@/lib/pushNotifications", () => ({
   stopListeningForForegroundPush: vi.fn(),
   unregisterDeviceToken: vi.fn().mockResolvedValue(undefined),
   waitForPendingPushRegistration: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock("@/lib/notifications", () => ({
+  cancelAllNotifications: H.cancelAllNotifications,
 }));
 vi.mock("firebase/auth", () => ({
   onAuthStateChanged: (
@@ -281,5 +285,37 @@ describe("AuthProvider — push transition barrier", () => {
     });
     expect(H.transition).toHaveBeenCalledOnce();
     expect(state().u).toBe("A");
+  });
+});
+
+describe("AuthProvider — the outgoing account's reminders", () => {
+  /* Meal, workout and streak reminders live on the device. Unmounting their
+     hooks only stopped the next pass, so the phone kept firing the signed-out
+     account's reminders every day. */
+  it("signing out cancels them before Firebase signs the account out", async () => {
+    await emit("A");
+    await waitFor(() => expect(state().p).toBe("A"));
+    const { signOut } = await import("firebase/auth");
+    vi.mocked(signOut).mockClear();
+    H.cancelAllNotifications.mockClear();
+    await act(async () => {
+      await H.signOutAction!();
+    });
+    expect(H.cancelAllNotifications).toHaveBeenCalledOnce();
+    expect(H.cancelAllNotifications.mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(signOut).mock.invocationCallOrder[0]
+    );
+  });
+
+  it("a failed cancel does not hold the sign-out", async () => {
+    await emit("A");
+    await waitFor(() => expect(state().p).toBe("A"));
+    const { signOut } = await import("firebase/auth");
+    vi.mocked(signOut).mockClear();
+    H.cancelAllNotifications.mockRejectedValueOnce(new Error("plugin gone"));
+    await act(async () => {
+      await H.signOutAction!();
+    });
+    expect(signOut).toHaveBeenCalledOnce();
   });
 });

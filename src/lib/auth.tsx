@@ -910,6 +910,27 @@ const PUBLIC_MIRRORED_FIELDS = [
   "athleteType",
 ] as const;
 
+/**
+ * The meal, workout and streak reminders are scheduled on the device for the
+ * account that set them, and unmounting their hooks only stops the next
+ * pass: without this the next person on the phone, or nobody, kept getting
+ * the last account's "Time for breakfast" every morning. Best effort, unlike
+ * the push release: a reminder names no one, and sign-out must not wait on a
+ * chunk that will not load offline. Loaded on demand so the first chunk does
+ * not carry the notifications plugin.
+ */
+async function cancelOutgoingAccountReminders(): Promise<void> {
+  try {
+    const { cancelAllNotifications } = await import("@/lib/notifications");
+    await cancelAllNotifications();
+  } catch (err) {
+    logger.warn(
+      "[auth] could not cancel the outgoing account's reminders",
+      err
+    );
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -1106,6 +1127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await unregisterDeviceToken(outgoingUid);
       clearStoredRun(outgoingUid);
       clearWorkoutDraft(outgoingUid);
+      await cancelOutgoingAccountReminders();
     }, []);
 
   const signIn = useCallback(
