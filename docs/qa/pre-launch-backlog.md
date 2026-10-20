@@ -10,6 +10,28 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Crash reports from the phone (Crashlytics, 2026-10-20)
+
+The owner chose Crashlytics for the iPhone app; the web keeps its Firestore
+reports (`src/lib/crashReporting.ts` says why). The tests mock the plugin, and
+no build has compiled it yet, so this needs the first TestFlight run.
+
+- [ ] **The release run uploads the symbol files.** Passing: the "Upload
+      Crashlytics symbol files" step in Deploy iOS is green (it runs after
+      the TestFlight upload, so it cannot hold the build back).
+- [ ] **A crash arrives, readable, under the account.** Passing: on the
+      TestFlight build, `/diagnostics` shows Crashlytics `active`; tap "Send a
+      test crash", open the app again, and Firebase console → Crashlytics
+      shows the crash with its frames named (no "missing dSYM" banner) and a
+      user ID equal to the UID row on `/diagnostics`.
+- [ ] **A JavaScript error arrives as a non-fatal.** Passing: an error the app
+      catches (for one, a card that fails to load) shows in Crashlytics as a
+      non-fatal event titled `[component in …]`, under the same user ID.
+- [ ] **The App Store label says it.** When filing the privacy label (the row
+      under "Privacy and consent for App Review"), Crash Data is collected,
+      linked to the user, for app functionality, and not used for tracking
+      (`docs/app-store/listing.md`).
+
 ## Triggers that retry, and saves that will not land (2026-10-20)
 
 Group 5 of the 20 October list. The emulator tests drive the run trigger
