@@ -1039,11 +1039,12 @@ export function useProgram() {
 
     // Moves up to MAX_ROLLOVER_WEEKS weeks without writing; the one
     // saveProgram below writes them all, and a plan further behind moves
-    // again when this effect runs on the saved plan.
+    // again when this effect runs on the saved plan. Given the day, not
+    // the week: the week reached plans no run before today.
     const { state: rolling, weeks } = rollRunWeeks(
       programState,
       profile,
-      todayKeyG,
+      today,
       recentLayoff
     );
     if (weeks === 0) return;
@@ -1065,7 +1066,7 @@ export function useProgram() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
     saveProgram(
       (stored) => {
-        const rolled = rollRunWeeks(stored, profile, todayKeyG, recentLayoff);
+        const rolled = rollRunWeeks(stored, profile, today, recentLayoff);
         return rolled.weeks === 0 ? null : rolled.state;
       },
       undefined,
