@@ -20,7 +20,10 @@ const { localDateKeyInTz } = require("./streakNudge");
  * (member, day), so a redelivered trigger is a no-op — and we skip the
  * write entirely when the engine returns unchanged state.
  *
- * The CALLER must have already gated `shouldSystemWriteProceed` (R1A).
+ * The CALLER must have already gated `shouldSystemWriteProceed` (R1A). A
+ * failure is the caller's too: the session triggers retry it, and the
+ * MAX-idempotence above makes the retry safe, where a catch here lost the
+ * day from the streak for good.
  *
  * @param {FirebaseFirestore.Firestore} firestore
  * @param {string} uid
@@ -28,67 +31,63 @@ const { localDateKeyInTz } = require("./streakNudge");
  */
 async function applyPartnerActivity(firestore, uid, localDay) {
   if (!localDay) return;
-  try {
-    const bondsSnap = await firestore
-      .collection("partnerBonds")
-      .where("members", "array-contains", uid)
-      .get();
-    for (const bondDoc of bondsSnap.docs) {
-      const ref = bondDoc.ref;
-      // The transaction returns the committed result (or null on a no-op
-      // skip) so we can log AFTER commit — once per real write, never on a
-      // same-day no-op and never duplicated by a transaction retry.
-      const wrote = await firestore.runTransaction(async (tx) => {
-        const snap = await tx.get(ref);
-        if (!snap.exists) return null;
-        const data = snap.data() || {};
-        const members = data.members;
-        if (!Array.isArray(members) || members.length !== 2) return null;
+  const bondsSnap = await firestore
+    .collection("partnerBonds")
+    .where("members", "array-contains", uid)
+    .get();
+  for (const bondDoc of bondsSnap.docs) {
+    const ref = bondDoc.ref;
+    // The transaction returns the committed result (or null on a no-op
+    // skip) so we can log AFTER commit — once per real write, never on a
+    // same-day no-op and never duplicated by a transaction retry.
+    const wrote = await firestore.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) return null;
+      const data = snap.data() || {};
+      const members = data.members;
+      if (!Array.isArray(members) || members.length !== 2) return null;
 
-        const state = {
-          streak: data.streak || 0,
-          lastSharedDay:
-            data.lastSharedDay === undefined ? null : data.lastSharedDay,
-          lastActive: data.lastActive || {},
-          freezeWeek: data.freezeWeek || {},
-        };
-        const next = recordPartnerActivity(state, uid, localDay, members);
+      const state = {
+        streak: data.streak || 0,
+        lastSharedDay:
+          data.lastSharedDay === undefined ? null : data.lastSharedDay,
+        lastActive: data.lastActive || {},
+        freezeWeek: data.freezeWeek || {},
+      };
+      const next = recordPartnerActivity(state, uid, localDay, members);
 
-        // Skip redundant writes (same-day re-log, or a bank that didn't
-        // change this member's latest day) — one write per bond per NEW
-        // shared/banked day, not per session.
-        const changed =
-          next.streak !== state.streak ||
-          next.lastSharedDay !== state.lastSharedDay ||
-          JSON.stringify(next.lastActive) !== JSON.stringify(state.lastActive) ||
-          JSON.stringify(next.freezeWeek) !== JSON.stringify(state.freezeWeek);
-        if (!changed) return null;
+      // Skip redundant writes (same-day re-log, or a bank that didn't
+      // change this member's latest day) — one write per bond per NEW
+      // shared/banked day, not per session.
+      const changed =
+        next.streak !== state.streak ||
+        next.lastSharedDay !== state.lastSharedDay ||
+        JSON.stringify(next.lastActive) !== JSON.stringify(state.lastActive) ||
+        JSON.stringify(next.freezeWeek) !== JSON.stringify(state.freezeWeek);
+      if (!changed) return null;
 
-        tx.set(
-          ref,
-          {
-            streak: next.streak,
-            lastSharedDay: next.lastSharedDay,
-            lastActive: next.lastActive,
-            freezeWeek: next.freezeWeek,
-          },
-          { merge: true }
-        );
-        return { streak: next.streak, lastSharedDay: next.lastSharedDay };
-      });
+      tx.set(
+        ref,
+        {
+          streak: next.streak,
+          lastSharedDay: next.lastSharedDay,
+          lastActive: next.lastActive,
+          freezeWeek: next.freezeWeek,
+        },
+        { merge: true }
+      );
+      return { streak: next.streak, lastSharedDay: next.lastSharedDay };
+    });
 
-      // Success observability (post-deploy verification): a single greppable
-      // line per real bond write. A same-day re-log returns null → no line,
-      // which is itself the confirmation that the no-op path held.
-      if (wrote) {
-        console.log(
-          `applyPartnerActivity: bond ${bondDoc.id} streak→${wrote.streak} ` +
-            `lastShared=${wrote.lastSharedDay} (uid ${uid}, day ${localDay})`
-        );
-      }
+    // Success observability (post-deploy verification): a single greppable
+    // line per real bond write. A same-day re-log returns null → no line,
+    // which is itself the confirmation that the no-op path held.
+    if (wrote) {
+      console.log(
+        `applyPartnerActivity: bond ${bondDoc.id} streak→${wrote.streak} ` +
+          `lastShared=${wrote.lastSharedDay} (uid ${uid}, day ${localDay})`
+      );
     }
-  } catch (err) {
-    console.error(`applyPartnerActivity: error for ${uid}:`, err.message);
   }
 }
 
