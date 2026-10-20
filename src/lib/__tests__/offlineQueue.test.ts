@@ -3,6 +3,9 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   queueWrite,
   queueDurableWrite,
+  queueWorkoutCompletion,
+  discardRefusedSaves,
+  getRefusedSaveCount,
   getQueueLength,
   getFailedMealSaveCount,
   pendingDocumentWrites,
@@ -27,6 +30,10 @@ const { auth } = vi.hoisted(() => ({
   auth: { currentUser: { uid: "user-a" } as { uid: string } | null },
 }));
 vi.mock("@/lib/firebase", () => ({ auth }));
+const { clearCompletedWorkoutDraft } = vi.hoisted(() => ({
+  clearCompletedWorkoutDraft: vi.fn(),
+}));
+vi.mock("@/hooks/useWorkoutDraft", () => ({ clearCompletedWorkoutDraft }));
 
 /** Ids the fake mints for `doc(collectionRef)` — the client-minted-id
  *  shape these tests pin. */
@@ -437,6 +444,43 @@ describe("offlineQueue", () => {
         localStorage.getItem("tropos_offline_queue") || "[]"
       );
       expect(stored.map((q: { docId: string }) => q.docId)).toEqual(["d2"]);
+    });
+
+    it("can be discarded, with what waits behind it, and only by its account", async () => {
+      queueDurableWrite(UID_A, meals, "refused", { foodName: "Oats" });
+      queueDurableWrite(UID_A, meals, "refused", { deletedAt: 1 }, true);
+      queueDurableWrite(UID_A, meals, "waiting", { foodName: "Eggs" });
+      queueDurableWrite(UID_B, `users/${UID_B}/meals`, "theirs", {});
+      failNextFirestore("commit", { code: "permission-denied" });
+      vi.stubGlobal("navigator", { onLine: false });
+      await flushQueue(db, UID_A);
+      vi.stubGlobal("navigator", { onLine: true });
+      // Offline, nothing was tried: nothing is refused yet.
+      expect(getRefusedSaveCount(UID_A)).toBe(0);
+      expect(await discardRefusedSaves(UID_A)).toBe(0);
+
+      await flushQueue(db, UID_A);
+      expect(getRefusedSaveCount(UID_A)).toBe(1);
+      expect(await discardRefusedSaves(UID_A)).toBe(1);
+      expect(pendingDocumentWrites(UID_A, meals)).toEqual([]);
+      expect(readDoc(`${meals}/waiting`)?.foodName).toBe("Eggs");
+      expect(getQueueLength(UID_B)).toBe(1);
+    });
+
+    it("discarding a refused workout retires its finished-session draft", async () => {
+      clearCompletedWorkoutDraft.mockClear();
+      failNextFirestore("commit", { code: "permission-denied" });
+      const settled = queueWorkoutCompletion(db, UID_A, "programme-c1", {
+        completionId: "c1",
+        date: "2026-10-20",
+        exercises: [],
+      });
+      expect(await settled).toBe("failed");
+      expect(getRefusedSaveCount(UID_A)).toBe(1);
+
+      expect(await discardRefusedSaves(UID_A)).toBe(1);
+      expect(getQueueLength(UID_A)).toBe(0);
+      expect(clearCompletedWorkoutDraft).toHaveBeenCalledWith(UID_A, "c1");
     });
 
     it("tells safeMerge's caller, and queues nothing", async () => {

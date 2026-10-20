@@ -16,11 +16,15 @@ import {
   getFailedWorkoutCompletionCount,
   getFailedRunSaveCount,
   getFailedMealSaveCount,
+  getRefusedSaveCount,
   subscribeQueuedWrites,
   flushQueue,
+  discardRefusedSaves,
 } from "@/lib/offlineQueue";
 import { db } from "@/lib/firebase";
 import Button from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { toast } from "@/lib/toast";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import { haptic } from "@/lib/haptic";
 import { outboxLength } from "@/features/program/commandOutbox";
@@ -60,15 +64,15 @@ function useQueuedChanges(uid: string | null) {
     // external-store read. Both queues and failures belong to THIS account.
     () =>
       uid
-        ? `${getQueueLength(uid) + outboxLength(uid)}:${getFailedWorkoutCompletionCount(uid)}:${getFailedRunSaveCount(uid)}:${getFailedMealSaveCount(uid)}`
-        : "0:0:0:0",
+        ? `${getQueueLength(uid) + outboxLength(uid)}:${getFailedWorkoutCompletionCount(uid)}:${getFailedRunSaveCount(uid)}:${getFailedMealSaveCount(uid)}:${getRefusedSaveCount(uid)}`
+        : "0:0:0:0:0",
     [uid]
   );
   const snapshot = useSyncExternalStore(subscribe, getSnapshot);
-  const [count, failedWorkouts, failedRuns, failedMeals] = snapshot
+  const [count, failedWorkouts, failedRuns, failedMeals, refused] = snapshot
     .split(":")
     .map(Number);
-  return { count, failedWorkouts, failedRuns, failedMeals };
+  return { count, failedWorkouts, failedRuns, failedMeals, refused };
 }
 
 const tabs: { to: string; icon: TabIcon; label: string }[] = [
@@ -97,8 +101,10 @@ export default function Layout() {
     failedWorkouts,
     failedRuns,
     failedMeals,
+    refused,
   } = useQueuedChanges(uid);
   const [retryingUid, setRetryingUid] = useState<string | null>(null);
+  const [confirmingDiscard, setConfirmingDiscard] = useState(false);
   const failedCount = failedWorkouts + failedRuns + failedMeals;
   const failedNoun = failedMeals
     ? failedWorkouts || failedRuns
@@ -127,6 +133,20 @@ export default function Layout() {
       // failed retry must never turn into a server-saved acknowledgement.
     } finally {
       setRetryingUid((current) => (current === owner ? null : current));
+    }
+  }
+
+  /* A save the server refuses for good (its rules, or a record it cannot
+     store) fails the same way on every Retry, so without a way to let it
+     go the banner stayed for good. */
+  async function discardRefused() {
+    setConfirmingDiscard(false);
+    if (!uid) return;
+    haptic();
+    try {
+      await discardRefusedSaves(uid);
+    } catch {
+      toast.error("Couldn't discard on this phone. Try again.");
     }
   }
 
@@ -240,6 +260,16 @@ export default function Layout() {
                     Retry
                   </Button>
                 )}
+                {isOnline && refused > 0 && (
+                  <Button
+                    variant="ghost"
+                    className="shrink-0 px-2 text-xs text-warning-strong"
+                    onClick={() => setConfirmingDiscard(true)}
+                    aria-label="Discard changes that won't save"
+                  >
+                    Discard
+                  </Button>
+                )}
               </div>
             </motion.div>
           )}
@@ -266,6 +296,19 @@ export default function Layout() {
           )}
         </AnimatePresence>
       </div>
+      <ConfirmDialog
+        open={confirmingDiscard}
+        title={
+          refused === 1
+            ? "Discard the change that won't save?"
+            : `Discard the ${refused} changes that won't save?`
+        }
+        description={`Retrying won't save ${refused === 1 ? "it" : "them"}. Discarding removes ${refused === 1 ? "it" : "them"} from this phone, and ${refused === 1 ? "it" : "they"} can't be brought back.`}
+        confirmLabel="Discard"
+        destructive
+        onConfirm={discardRefused}
+        onCancel={() => setConfirmingDiscard(false)}
+      />
 
       {/* Page fade also gated on reduced motion — the cross-page
           opacity transition is purely cosmetic. Reduced-motion users

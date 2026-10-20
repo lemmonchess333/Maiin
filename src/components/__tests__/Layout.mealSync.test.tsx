@@ -452,3 +452,78 @@ describe("meal sync status — real queue and Layout, shared Firestore fake", ()
     expect(getQueueLength(uid)).toBe(0);
   });
 });
+
+describe("a meal the server refuses for good", () => {
+  async function refuseMeal() {
+    failNextFirestore("getDoc", {
+      path: `${meals}/first`,
+      code: "permission-denied",
+    });
+    await flushQueue(state.db as Parameters<typeof flushQueue>[0], uid);
+    expect(unfiredFailures()).toEqual([]);
+  }
+
+  it("can be discarded with its Undo, after a confirmation, and nothing is written", async () => {
+    queueDurableWrite(uid, meals, "first", meal);
+    queueDurableWrite(
+      uid,
+      meals,
+      "first",
+      { deletedAt: Timestamp.fromMillis(1_700_000_000_000) },
+      true
+    );
+    queueDurableWrite(uid, meals, "later", { ...meal, foodName: "Rice" });
+    await refuseMeal();
+    // The flush went past it: the later meal synced.
+    expect(readDoc(`${meals}/later`)?.foodName).toBe("Rice");
+    renderLayout();
+    expect(banner()).toHaveTextContent(
+      "1 meal needs attention · saved on this phone. 1 other change waiting to sync"
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Discard changes that won't save" })
+    );
+    expect(
+      screen.getByRole("alertdialog", {
+        name: "Discard the change that won't save?",
+      })
+    ).toHaveTextContent(
+      "Retrying won't save it. Discarding removes it from this phone, and it can't be brought back."
+    );
+    expect(getQueueLength(uid)).toBe(2);
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: "Discard" }))
+    );
+
+    await waitFor(() => expect(getQueueLength(uid)).toBe(0));
+    await waitFor(() => expect(banner()).toHaveTextContent(""));
+    await flushQueue(state.db as Parameters<typeof flushQueue>[0], uid);
+    // The Undo was discarded with its meal, never applied on its own.
+    expect(readDoc(`${meals}/first`)).toBeUndefined();
+  });
+
+  it("keeps the meal when the person cancels", async () => {
+    queueDurableWrite(uid, meals, "first", meal);
+    await refuseMeal();
+    renderLayout();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Discard changes that won't save" })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(getQueueLength(uid)).toBe(1);
+    expect(banner()).toHaveTextContent("1 meal needs attention");
+  });
+
+  it("is not offered for a meal a retry can still save", async () => {
+    queueDurableWrite(uid, meals, "first", meal);
+    await failMealOnce();
+    renderLayout();
+    expect(
+      screen.getByRole("button", { name: "Retry syncing meals" })
+    ).toBeEnabled();
+    expect(
+      screen.queryByRole("button", { name: "Discard changes that won't save" })
+    ).toBeNull();
+  });
+});

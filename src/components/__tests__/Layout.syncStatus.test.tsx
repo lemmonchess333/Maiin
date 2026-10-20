@@ -34,6 +34,8 @@ vi.mock("@/lib/offlineQueue", () => ({
   getFailedWorkoutCompletionCount: (uid: string) => state.failed[uid] ?? 0,
   getFailedRunSaveCount: (uid: string) => state.failedRuns[uid] ?? 0,
   getFailedMealSaveCount: (uid: string) => state.failedMeals[uid] ?? 0,
+  getRefusedSaveCount: () => 0,
+  discardRefusedSaves: vi.fn(),
   subscribeQueuedWrites: (listener: () => void) => {
     state.listeners.add(listener);
     return () => state.listeners.delete(listener);

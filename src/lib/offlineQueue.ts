@@ -47,6 +47,9 @@ interface QueuedWrite {
   durable?: boolean;
   workoutCompletion?: { programme?: ProgrammeCompletionContext };
   failed?: boolean;
+  /** The last failure was one no retry can change (`refusedForGood`), so
+   *  the person may discard it. */
+  refused?: boolean;
 }
 
 const queueListeners = new Set<() => void>();
@@ -243,8 +246,10 @@ export function queueWorkoutCompletion(
       item.uid === uid && item.docId === workoutId && item.workoutCompletion
   );
   const id = existing?.id ?? crypto.randomUUID();
-  if (existing) existing.failed = false;
-  else
+  if (existing) {
+    existing.failed = false;
+    existing.refused = false;
+  } else
     queue.push({
       id,
       uid,
@@ -355,6 +360,67 @@ export function flushQueue(db: Firestore, uid: string): Promise<number> {
   return result;
 }
 
+/** The documents whose save this account's server refused for good. */
+function refusedDocuments(queue: QueuedWrite[], uid: string): Set<string> {
+  return new Set(
+    queue
+      .filter(
+        (item) =>
+          item.uid === uid && item.durable && item.failed && item.refused
+      )
+      .map((item) => `${item.collectionPath}/${item.docId}`)
+  );
+}
+
+/** Sessions and meals that will not save however often they are retried:
+ *  the ones the person can discard. */
+export function getRefusedSaveCount(uid: string): number {
+  return refusedDocuments(getQueue(), uid).size;
+}
+
+/**
+ * Remove what was refused for good, with every change queued behind it to
+ * the same document: applied on its own, a meal's Undo would create a meal
+ * that is only a deletion stamp. A discarded workout also retires its
+ * finished-session draft, which would otherwise wait for a save that
+ * cannot come. Chained behind any flush in flight, so the two never see
+ * different queues. Resolves to the number of records discarded.
+ */
+export function discardRefusedSaves(uid: string): Promise<number> {
+  const run = async () => {
+    const queue = getQueue();
+    const refused = refusedDocuments(queue, uid);
+    if (refused.size === 0) return 0;
+    const discarded = queue.filter(
+      (item) =>
+        item.uid === uid && refused.has(`${item.collectionPath}/${item.docId}`)
+    );
+    if (
+      !writeJson(
+        QUEUE_KEY,
+        queue.filter((item) => !discarded.includes(item))
+      )
+    )
+      throw new Error("Couldn't update this phone. Try again.");
+    notifyQueue();
+    const completions = discarded
+      .filter((item) => item.workoutCompletion)
+      .map(
+        (item) => (decode(item.data) as { completionId?: unknown }).completionId
+      )
+      .filter((id): id is string => typeof id === "string");
+    if (completions.length > 0) {
+      const { clearCompletedWorkoutDraft } =
+        await import("@/hooks/useWorkoutDraft");
+      for (const id of completions) clearCompletedWorkoutDraft(uid, id);
+    }
+    return refused.size;
+  };
+  const result = flushChain.then(run, run);
+  flushChain = result.catch(() => {});
+  return result;
+}
+
 async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
   const queue = getQueue();
   if (queue.length === 0) return 0;
@@ -433,7 +499,9 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
       if (item.durable) {
         // Kept, and shown as needing attention: the person's record.
         const latest = getQueue().map((entry) =>
-          entry.id === item.id ? { ...entry, failed: true } : entry
+          entry.id === item.id
+            ? { ...entry, failed: true, refused: forGood }
+            : entry
         );
         if (writeJson(QUEUE_KEY, latest)) notifyQueue();
         // Preserve create → undo ordering across a failed reconnect: a
