@@ -59,7 +59,8 @@ export interface WeeklyAggregates {
   runSessions: number;
 
   // Nutrition (may be partial)
-  mealDaysLogged: number; // distinct days with ≥1 meal
+  mealDaysLogged: number; // distinct days whose food reaches 800 kcal (FULL_FOOD_DAY_KCAL)
+  // The averages are over those same days.
   avgDailyCalories: number;
   avgDailyProtein: number;
 

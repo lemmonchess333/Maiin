@@ -41,6 +41,7 @@ const {
   triggerComputeKey,
   _internal,
 } = require("../performanceEngine");
+const perfScoring = require("../lib/perfScoring");
 
 const {
   dateKeyMinusN,
@@ -371,6 +372,50 @@ describe("aggregateWindow", () => {
     const agg = aggregateWindow(start, end, [], [], meals, []);
     expect(agg.mealDaysLogged).toBe(2);
     expect(agg.avgDailyCalories).toBe(Math.round((500 + 700 + 800) / 2)); // 1000
+  });
+
+  it("counts a food day, and averages it, only from 800 kcal", () => {
+    // A cutter on a 2,000 target: five days at 2,000 and two rest days with
+    // one 150 kcal coffee each. Averaged in, the coffees made the week
+    // (5 x 2000 + 2 x 150) / 7 = 1,471, and the calorie factor
+    // 100 - |1 - 1471/2000| x 200 = 47.
+    const full = [
+      "2026-05-13",
+      "2026-05-14",
+      "2026-05-15",
+      "2026-05-16",
+      "2026-05-17",
+    ];
+    const meals = [
+      ...full.map((date) => ({ date, totalCalories: 2000, totalProtein: 150 })),
+      { date: "2026-05-18", totalCalories: 150, totalProtein: 2 },
+      { date: "2026-05-19", totalCalories: 150, totalProtein: 2 },
+    ];
+    const agg = aggregateWindow(start, end, [], [], meals, []);
+    expect(agg.mealDaysLogged).toBe(5);
+    expect(agg.avgDailyCalories).toBe(2000);
+    expect(agg.avgDailyProtein).toBe(150);
+    // Sessions out of the way: calories and protein are the two factors.
+    const adherence = perfScoring.computeAdherenceScore(
+      { ...agg, liftSessions: 0, runSessions: 0 },
+      0,
+      2000,
+      150,
+      "cut"
+    );
+    expect(adherence).toBe(100);
+  });
+
+  it("a day of several small meals that reaches 800 kcal counts", () => {
+    const meals = [
+      { date: "2026-05-13", totalCalories: 300, totalProtein: 20 },
+      { date: "2026-05-13", totalCalories: 500, totalProtein: 30 },
+      { date: "2026-05-14", totalCalories: 799, totalProtein: 40 },
+    ];
+    const agg = aggregateWindow(start, end, [], [], meals, []);
+    expect(agg.mealDaysLogged).toBe(1);
+    expect(agg.avgDailyCalories).toBe(800);
+    expect(agg.avgDailyProtein).toBe(50);
   });
 
   it("ignores bodyweight logs with a missing/non-numeric weight (no NaN)", () => {

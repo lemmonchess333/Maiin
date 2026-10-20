@@ -160,6 +160,76 @@ describe("perfScoring.scorePerformance — goal-aware composition", () => {
     expect(a.adherenceScore).toBe(b.adherenceScore);
   });
 
+  // Adherence counts lifts and runs together, so it is scored against the
+  // lift days plus the run days planned. Each expected value is worked by
+  // hand: with no calorie or protein target the sessions factor is the only
+  // one, so adherence = round(min(done / planned, 1.2) * 100), capped at 100.
+  describe("the sessions target is lift days plus run days", () => {
+    const onlySessions = (liftSessions, runSessions) =>
+      makeAgg({ liftSessions, runSessions, mealDaysLogged: 0 });
+
+    it("a runner who plans no lifts and runs every planned run scores 100", () => {
+      // Was 60: weeklyWorkoutsTarget 0 read as "unset" and the bulk default 5 stood in (3/5).
+      const doc = scorePerformance(onlySessions(0, 3), makeBl(), {
+        goal: "lean bulk",
+        weeklyWorkoutsTarget: 0,
+        weeklyRunDaysTarget: 3,
+      });
+      expect(doc.adherenceScore).toBe(100);
+    });
+
+    it("a hybrid who skips every lift is scored against the whole week", () => {
+      // 4 lifts + 3 runs planned, 4 runs done: 4/7 = 57. Was 100 (4 runs against 4 lifts).
+      const doc = scorePerformance(onlySessions(0, 4), makeBl(), {
+        goal: "recomp",
+        weeklyWorkoutsTarget: 4,
+        weeklyRunDaysTarget: 3,
+      });
+      expect(doc.adherenceScore).toBe(57);
+    });
+
+    it("reads the legacy weeklyRunsTarget when the new field is absent", () => {
+      // 4 + 2 planned, 3 lifts done: 3/6 = 50.
+      const doc = scorePerformance(onlySessions(3, 0), makeBl(), {
+        goal: "recomp",
+        weeklyWorkoutsTarget: 4,
+        weeklyRunsTarget: 2,
+      });
+      expect(doc.adherenceScore).toBe(50);
+    });
+
+    it("an explicit 0 run days wins over the legacy field", () => {
+      // 4 + 0 planned, 3 lifts done: 3/4 = 75 (75 too would be the default 4; use a cut, default 3).
+      const doc = scorePerformance(onlySessions(3, 0), makeBl(), {
+        goal: "cut",
+        weeklyWorkoutsTarget: 4,
+        weeklyRunDaysTarget: 0,
+        weeklyRunsTarget: 3,
+      });
+      expect(doc.adherenceScore).toBe(75);
+    });
+
+    it("falls back to the goal's default only when nothing is planned", () => {
+      // Freeform runner, 0 + 0 planned: the cut default 3, 2 runs done = 67.
+      const doc = scorePerformance(onlySessions(0, 2), makeBl(), {
+        goal: "cut",
+        weeklyWorkoutsTarget: 0,
+        weeklyRunDaysTarget: 0,
+      });
+      expect(doc.adherenceScore).toBe(67);
+    });
+
+    it("ignores a target that is not a finite number", () => {
+      // A string would concatenate ("4" + 3 = "43"); it counts as unplanned.
+      const doc = scorePerformance(onlySessions(3, 0), makeBl(), {
+        goal: "cut",
+        weeklyWorkoutsTarget: "4",
+        weeklyRunDaysTarget: Number.NaN,
+      });
+      expect(doc.adherenceScore).toBe(100);
+    });
+  });
+
   it("suppresses deload when baseline has <3 weeks", () => {
     const agg = makeAgg({ liftTonnage: 40000, liftHardSets: 90 });
     const bl = makeBl({ weeksUsed: 2 });

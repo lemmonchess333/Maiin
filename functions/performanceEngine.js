@@ -369,17 +369,27 @@ function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
   });
 
   // ── Meals ──
-  const mealDays = new Set();
-  let totalCal = 0;
-  let totalProt = 0;
+  // Summed per day first: a day counts, and enters the averages, only once
+  // its food reaches FULL_FOOD_DAY_KCAL. A coffee-only rest day averaged in
+  // read a cutter eating 2,000 a day as 1,471, and the calorie factor as 47.
+  const mealDayTotals = new Map();
   meals.forEach((m) => {
     const d = new Date((m.date || "") + "T00:00:00Z");
     if (d < start || d >= end) return;
-    mealDays.add(m.date);
-    totalCal += m.totalCalories || 0;
-    totalProt += m.totalProtein || 0;
+    const day = mealDayTotals.get(m.date) || { cal: 0, prot: 0 };
+    day.cal += m.totalCalories || 0;
+    day.prot += m.totalProtein || 0;
+    mealDayTotals.set(m.date, day);
   });
-  const mealDaysLogged = mealDays.size;
+  let mealDaysLogged = 0;
+  let totalCal = 0;
+  let totalProt = 0;
+  mealDayTotals.forEach((day) => {
+    if (day.cal < perfScoring.FULL_FOOD_DAY_KCAL) return;
+    mealDaysLogged++;
+    totalCal += day.cal;
+    totalProt += day.prot;
+  });
 
   // ── Bodyweight ──
   // Average over current window; previous window for delta is the same-length
@@ -711,6 +721,8 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
       {
         goal: getNutritionPhase(profile),
         weeklyWorkoutsTarget: profile.weeklyWorkoutsTarget,
+        weeklyRunDaysTarget: profile.weeklyRunDaysTarget,
+        weeklyRunsTarget: profile.weeklyRunsTarget,
         targetCalories: scoringCalories,
         targetProtein: profile.targetProtein,
       },

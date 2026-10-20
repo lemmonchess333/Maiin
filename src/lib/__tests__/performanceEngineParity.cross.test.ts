@@ -60,6 +60,7 @@ import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 import { scorePerformance as scoreTs } from "../performanceEngine";
 import type { WeeklyAggregates, Baseline } from "../performanceTypes";
+import { ADAPTIVE_TDEE_DEFAULTS } from "../adaptiveTdee";
 
 const require = createRequire(import.meta.url);
 const js = require("../../../functions/lib/perfScoring");
@@ -158,6 +159,43 @@ const fixtures: Fixture[] = [
     },
   },
   {
+    name: "runner — no lift days planned, run days carry the target",
+    agg: makeAgg({ liftSessions: 0, runSessions: 3 }),
+    bl: makeBl(),
+    profile: {
+      goal: "lean bulk",
+      weeklyWorkoutsTarget: 0,
+      weeklyRunDaysTarget: 3,
+      targetCalories: 2800,
+      targetProtein: 180,
+    },
+  },
+  {
+    name: "hybrid — lift days plus run days, the legacy run field",
+    agg: makeAgg({ liftSessions: 1, runSessions: 4 }),
+    bl: makeBl(),
+    profile: {
+      goal: "recomp",
+      weeklyWorkoutsTarget: 4,
+      weeklyRunsTarget: 3,
+      targetCalories: 2500,
+      targetProtein: 170,
+    },
+  },
+  {
+    name: "freeform — nothing planned, the goal default stands in",
+    agg: makeAgg({ liftSessions: 0, runSessions: 2 }),
+    bl: makeBl(),
+    profile: {
+      goal: "cut",
+      weeklyWorkoutsTarget: 0,
+      weeklyRunDaysTarget: 0,
+      weeklyRunsTarget: 3,
+      targetCalories: 2000,
+      targetProtein: 160,
+    },
+  },
+  {
     name: "cold-start — empty agg, zero baseline, deload gated off",
     agg: makeAgg({
       liftTonnage: 0,
@@ -249,5 +287,15 @@ describe("Performance Index scoring — client (.ts) ↔ server (.js) parity", (
     const cut = scoreJs(agg, bl, { goal: "cut", targetCalories: 2000 }, 50);
     const blind = scoreJs(agg, bl, { targetCalories: 2000 }, 50);
     expect(cut.performanceIndex).not.toBe(blind.performanceIndex);
+  });
+});
+
+describe("the food-day floor", () => {
+  it("the server's FULL_FOOD_DAY_KCAL is the adaptive estimator's floor", () => {
+    // The PI's calorie average and the learned TDEE exclude the same days, and
+    // the weekly review reads the client constant directly.
+    expect(js.FULL_FOOD_DAY_KCAL).toBe(
+      ADAPTIVE_TDEE_DEFAULTS.plausibilityFloorKcal
+    );
   });
 });
