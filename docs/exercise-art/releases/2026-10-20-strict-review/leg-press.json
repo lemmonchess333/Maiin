@@ -1,0 +1,177 @@
+{
+  "exerciseId": "leg-press",
+  "version": "anatomy-v3-2026-10-20-strict-native-correction-v1",
+  "width": 1264,
+  "height": 1056,
+  "reference": {
+    "path": "form-frames/leg-press/1.webp",
+    "sha256": "914544786909e8c84e7c6d9d1029ec9aeb565f88f8b16824b353eacc864fb863"
+  },
+  "cueSha256": "cb5053df3c1c89d0fc0a607be8f3195f61eafacbc3a6f236319bb176574e5128",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:48.962746+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. Change only the existing Custom apparatus ORA layer from three plates to one. All other athlete, pigment and background layers remain byte-exact; linkage and fixed geometry are unchanged."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Both trainers stay on the footplate, back/pelvis supported, hips and knees extend together. Occluded glute surface is not falsely painted on the abdomen. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One modest load disc on the existing double-beam lever apparatus; rigid beams, fixed pivots and large footplate retained. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both trainers stay on the footplate, back/pelvis supported, hips and knees extend together. Occluded glute surface is not falsely painted on the abdomen. Actual named native supports are measured in all six frames: fixedFrontFloorPodMaterialFeature1, fixedFrontFloorPodMaterialFeature2. Maximum axis drift 0px. Dimensions: fixedFrontFloorPodProjectedFeatureSpan, oppositeFixedSupportProjectedFeatureSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Both trainers stay on the footplate, back/pelvis supported, hips and knees extend together. Occluded glute surface is not falsely painted on the abdomen. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Quads #7B72E9; secondary Glutes, Hamstrings #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Bend: Set both feet flat on the plate. / Brace: Brace; keep your back against the pad. / Press: Push the plate away through both feet. / Finish: Keep knees soft at the finish. / Return: Bend hips and knees under control. / Reset: Keep your heels down before pressing again.. Preparation remains [\"Sit against the back pad and hold the side handles.\", \"Place both feet on the plate; keep heels supported.\", \"Control the return and stop before your back rounds.\"]. Both trainers stay on the footplate, back/pelvis supported, hips and knees extend together. Occluded glute surface is not falsely painted on the abdomen."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Both trainers stay on the footplate, back/pelvis supported, hips and knees extend together. Occluded glute surface is not falsely painted on the abdomen. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-16/leg-press.json (sha256 12d9f911aa0df040eaf2485de91be5e90cce4d237fa3a053c30ac98aa983ad67). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-16/leg-press.json (sha256 12d9f911aa0df040eaf2485de91be5e90cce4d237fa3a053c30ac98aa983ad67). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/leg-press/1.webp",
+      "sha256": "914544786909e8c84e7c6d9d1029ec9aeb565f88f8b16824b353eacc864fb863",
+      "anchors": {
+        "fixedFrontFloorPodMaterialFeature1": { "x": 454, "y": 950 },
+        "fixedFrontFloorPodMaterialFeature2": { "x": 551, "y": 975 }
+      },
+      "invariantDimensions": {
+        "fixedFrontFloorPodProjectedFeatureSpan": 100.16985574512923,
+        "oppositeFixedSupportProjectedFeatureSpan": 43.18564576337837
+      }
+    },
+    {
+      "path": "form-frames/leg-press/2.webp",
+      "sha256": "914544786909e8c84e7c6d9d1029ec9aeb565f88f8b16824b353eacc864fb863",
+      "anchors": {
+        "fixedFrontFloorPodMaterialFeature1": { "x": 454, "y": 950 },
+        "fixedFrontFloorPodMaterialFeature2": { "x": 551, "y": 975 }
+      },
+      "invariantDimensions": {
+        "fixedFrontFloorPodProjectedFeatureSpan": 100.16985574512923,
+        "oppositeFixedSupportProjectedFeatureSpan": 43.18564576337837
+      }
+    },
+    {
+      "path": "form-frames/leg-press/3.webp",
+      "sha256": "53eea11671983d8a56282077ccc0a82bce710713db7dc23b162d1aed121887d7",
+      "anchors": {
+        "fixedFrontFloorPodMaterialFeature1": { "x": 454, "y": 950 },
+        "fixedFrontFloorPodMaterialFeature2": { "x": 551, "y": 975 }
+      },
+      "invariantDimensions": {
+        "fixedFrontFloorPodProjectedFeatureSpan": 100.16985574512923,
+        "oppositeFixedSupportProjectedFeatureSpan": 43.18564576337837
+      }
+    },
+    {
+      "path": "form-frames/leg-press/4.webp",
+      "sha256": "53eea11671983d8a56282077ccc0a82bce710713db7dc23b162d1aed121887d7",
+      "anchors": {
+        "fixedFrontFloorPodMaterialFeature1": { "x": 454, "y": 950 },
+        "fixedFrontFloorPodMaterialFeature2": { "x": 551, "y": 975 }
+      },
+      "invariantDimensions": {
+        "fixedFrontFloorPodProjectedFeatureSpan": 100.16985574512923,
+        "oppositeFixedSupportProjectedFeatureSpan": 43.18564576337837
+      }
+    },
+    {
+      "path": "form-frames/leg-press/5.webp",
+      "sha256": "914544786909e8c84e7c6d9d1029ec9aeb565f88f8b16824b353eacc864fb863",
+      "anchors": {
+        "fixedFrontFloorPodMaterialFeature1": { "x": 454, "y": 950 },
+        "fixedFrontFloorPodMaterialFeature2": { "x": 551, "y": 975 }
+      },
+      "invariantDimensions": {
+        "fixedFrontFloorPodProjectedFeatureSpan": 100.16985574512923,
+        "oppositeFixedSupportProjectedFeatureSpan": 43.18564576337837
+      }
+    },
+    {
+      "path": "form-frames/leg-press/6.webp",
+      "sha256": "914544786909e8c84e7c6d9d1029ec9aeb565f88f8b16824b353eacc864fb863",
+      "anchors": {
+        "fixedFrontFloorPodMaterialFeature1": { "x": 454, "y": 950 },
+        "fixedFrontFloorPodMaterialFeature2": { "x": 551, "y": 975 }
+      },
+      "invariantDimensions": {
+        "fixedFrontFloorPodProjectedFeatureSpan": 100.16985574512923,
+        "oppositeFixedSupportProjectedFeatureSpan": 43.18564576337837
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-16/leg-press.json",
+    "sha256": "12d9f911aa0df040eaf2485de91be5e90cce4d237fa3a053c30ac98aa983ad67"
+  },
+  "historicalFindings": [
+    "Two genuine hip-and-knee press endpoints occupy six cue slots; no six-unique-pose or continuous-animation claim.",
+    "New native shin repair and hip-and-knee-flexion authoring preserve the approved athlete. The B moving region is inserted at unchanged native coordinates onto A; the rest of that fixed source scene is byte-identical. A itself is an image-authored shin repair, so no byte-invariance to the older original is claimed.",
+    "A custom double-beam plate-loaded lever is drawn around the intact poses. Both beams retain identical endpoint lengths and fixed pivots; the same three load plates rise85.75px during extension and stay above the illustrated floor. This is screen-space mechanics, not calibrated anatomical3D or a factory replica.",
+    "Large rubber footplate supports both complete trainers in the two positions. Small projected toe/heel pitch differences and layered sole occlusion remain illustrative; no recovered3D contact certificate.",
+    "Source violet quads are finished in#7B72E9; visible source-tone posterior thigh fields use#9590E0. Manual anatomical boundaries are qualitative. No added body shading gradient.",
+    "Strict visual certification remains unverified under the owner-authorized release-with-findings workflow.",
+    "The gluteal surface is largely occluded by the supported pelvis/seat in this camera. It remains in the secondary-muscle legend without painting a false glute highlight onto the abdominal wall.",
+    "Two genuine physical endpoints occupy six cue slots; no continuous-motion or six-unique-pose certificate.",
+    "Normal cards use the established lossy export and transparent-background treatment. The white athlete has reduced contrast against the light card; at160px the complete apparatus/athlete is small. No strict readability certificate.",
+    "Actual native-coordinate source joins, anatomical colour boundaries and projected contact depth are qualitative findings. Strict visual checks remain null."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/leg-press.json",
+    "sha256": "6d6f7927199310e1360eda4f5602872e86ae1c0977c722c0142cad58af12d02b"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false,
+  "nativeSourceArchive": {
+    "path": "docs/exercise-art/sources/leg-press/2026-10-20-strict-review/native-source.zip",
+    "sha256": "a117b4bd30c645958d5b0ffec6208faa83d83eff83a41b6ee10d368a3dd9db15",
+    "bytes": 8790282,
+    "scope": "Change only the existing Custom apparatus ORA layer from three plates to one. All other athlete, pigment and background layers remain byte-exact; linkage and fixed geometry are unchanged.",
+    "independentReproductionExact": true
+  }
+}

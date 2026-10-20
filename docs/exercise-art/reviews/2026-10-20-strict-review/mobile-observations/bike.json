@@ -1,0 +1,230 @@
+{
+  "id": "bike",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Stationary Bike, Lower Pedal",
+              "decoded": true,
+              "height": 1432,
+              "src": "/Maiin/.strict33.local/candidate/bike/1.webp",
+              "width": 929
+            }
+          ],
+          "caption": "Lower Pedal 1/6",
+          "id": "bike",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Stationary Bike, Posture",
+              "decoded": true,
+              "height": 1432,
+              "src": "/Maiin/.strict33.local/candidate/bike/2.webp",
+              "width": 929
+            }
+          ],
+          "caption": "Posture 2/6",
+          "id": "bike",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Stationary Bike, Opposed Legs",
+              "decoded": true,
+              "height": 1432,
+              "src": "/Maiin/.strict33.local/candidate/bike/3.webp",
+              "width": 929
+            }
+          ],
+          "caption": "Opposed Legs 3/6",
+          "id": "bike",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Stationary Bike, Relaxed Grip",
+              "decoded": true,
+              "height": 1432,
+              "src": "/Maiin/.strict33.local/candidate/bike/4.webp",
+              "width": 929
+            }
+          ],
+          "caption": "Relaxed Grip 4/6",
+          "id": "bike",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Stationary Bike, Cadence",
+              "decoded": true,
+              "height": 1432,
+              "src": "/Maiin/.strict33.local/candidate/bike/5.webp",
+              "width": 929
+            }
+          ],
+          "caption": "Cadence 5/6",
+          "id": "bike",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Stationary Bike, Resistance",
+              "decoded": true,
+              "height": 1432,
+              "src": "/Maiin/.strict33.local/candidate/bike/6.webp",
+              "width": 929
+            }
+          ],
+          "caption": "Resistance 6/6",
+          "id": "bike",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Stationary Bike, Lower Pedal\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1202,\n    \"alt\": \"Stationary Bike, Posture\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Stationary Bike, Opposed Legs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2401,\n    \"alt\": \"Stationary Bike, Relaxed Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2962,\n    \"alt\": \"Stationary Bike, Cadence\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3524,\n    \"alt\": \"Stationary Bike, Resistance\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5202,\n    \"alt\": \"Stationary Bike, Lower Pedal\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Stationary Bike, Posture",
+            "decoded": true,
+            "height": 1432,
+            "src": "/Maiin/.strict33.local/candidate/bike/2.webp",
+            "width": 929
+          }
+        ],
+        "caption": "Posture 2/6",
+        "id": "bike",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / bike\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nStationary Bike\nCardio\nMachine\n\nPOSTURE 2/6\n\nPause\nNormal\nPRIMARY\nQuads\nSECONDARY\nHamstrings\n\nInstructions\n\nPreparation: Adjust the seat so your leg has a slight bend at the bottom of the pedal. Sit with a neutral spine, grip the bars loosely.\n\n1\n\nKeep a slight bend at the bottom.\n\n2\n\nSit tall; keep hips supported and level.\n\n3\n\nLet the other leg take its turn.\n\n4\n\nKeep your grip relaxed and shoulders down.\n\n5\n\nPedal steadily without yanking on the upstroke.\n\n6\n\nAdjust resistance to match your target effort.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Stationary Bike, Lower Pedal\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1202,\n    \"alt\": \"Stationary Bike, Posture\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Stationary Bike, Opposed Legs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2401,\n    \"alt\": \"Stationary Bike, Relaxed Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2962,\n    \"alt\": \"Stationary Bike, Cadence\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3524,\n    \"alt\": \"Stationary Bike, Resistance\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5202,\n    \"alt\": \"Stationary Bike, Lower Pedal\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6644,\n    \"alt\": \"Stationary Bike, Posture\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7846,\n    \"alt\": \"Stationary Bike, Opposed Legs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9123,\n    \"alt\": \"Stationary Bike, Relaxed Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10323,\n    \"alt\": \"Stationary Bike, Cadence\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11523,\n    \"alt\": \"Stationary Bike, Resistance\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12723,\n    \"alt\": \"Stationary Bike, Lower Pedal\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13923,\n    \"alt\": \"Stationary Bike, Posture\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Stationary Bike, Lower Pedal",
+              "decoded": true,
+              "height": 1432,
+              "src": "/Maiin/.strict33.local/candidate/bike/1.webp",
+              "width": 929
+            }
+          ],
+          "caption": "Lower Pedal 1/6",
+          "id": "bike",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Stationary Bike, Posture",
+              "decoded": true,
+              "height": 1432,
+              "src": "/Maiin/.strict33.local/candidate/bike/2.webp",
+              "width": 929
+            }
+          ],
+          "caption": "Posture 2/6",
+          "id": "bike",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Stationary Bike, Opposed Legs",
+              "decoded": true,
+              "height": 1432,
+              "src": "/Maiin/.strict33.local/candidate/bike/3.webp",
+              "width": 929
+            }
+          ],
+          "caption": "Opposed Legs 3/6",
+          "id": "bike",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Stationary Bike, Relaxed Grip",
+              "decoded": true,
+              "height": 1432,
+              "src": "/Maiin/.strict33.local/candidate/bike/4.webp",
+              "width": 929
+            }
+          ],
+          "caption": "Relaxed Grip 4/6",
+          "id": "bike",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Stationary Bike, Cadence",
+              "decoded": true,
+              "height": 1432,
+              "src": "/Maiin/.strict33.local/candidate/bike/5.webp",
+              "width": 929
+            }
+          ],
+          "caption": "Cadence 5/6",
+          "id": "bike",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Stationary Bike, Resistance",
+              "decoded": true,
+              "height": 1432,
+              "src": "/Maiin/.strict33.local/candidate/bike/6.webp",
+              "width": 929
+            }
+          ],
+          "caption": "Resistance 6/6",
+          "id": "bike",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Stationary Bike, Lower Pedal\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1202,\n    \"alt\": \"Stationary Bike, Posture\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Stationary Bike, Opposed Legs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2401,\n    \"alt\": \"Stationary Bike, Relaxed Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2962,\n    \"alt\": \"Stationary Bike, Cadence\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3524,\n    \"alt\": \"Stationary Bike, Resistance\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5202,\n    \"alt\": \"Stationary Bike, Lower Pedal\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6644,\n    \"alt\": \"Stationary Bike, Posture\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7846,\n    \"alt\": \"Stationary Bike, Opposed Legs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9123,\n    \"alt\": \"Stationary Bike, Relaxed Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10323,\n    \"alt\": \"Stationary Bike, Cadence\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11523,\n    \"alt\": \"Stationary Bike, Resistance\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12723,\n    \"alt\": \"Stationary Bike, Lower Pedal\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13923,\n    \"alt\": \"Stationary Bike, Posture\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15045,\n    \"alt\": \"Stationary Bike, Lower Pedal\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15602,\n    \"alt\": \"Stationary Bike, Posture\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16160,\n    \"alt\": \"Stationary Bike, Opposed Legs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16802,\n    \"alt\": \"Stationary Bike, Relaxed Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17365,\n    \"alt\": \"Stationary Bike, Cadence\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17924,\n    \"alt\": \"Stationary Bike, Resistance\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19521,\n    \"alt\": \"Stationary Bike, Lower Pedal\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Stationary Bike, Posture",
+            "decoded": true,
+            "height": 1432,
+            "src": "/Maiin/.strict33.local/candidate/bike/2.webp",
+            "width": 929
+          }
+        ],
+        "caption": "Posture 2/6",
+        "id": "bike",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / bike\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nStationary Bike\nCardio\nMachine\n\nPOSTURE 2/6\n\nPause\nNormal\nPRIMARY\nQuads\nSECONDARY\nHamstrings\n\nInstructions\n\nPreparation: Adjust the seat so your leg has a slight bend at the bottom of the pedal. Sit with a neutral spine, grip the bars loosely.\n\n1\n\nKeep a slight bend at the bottom.\n\n2\n\nSit tall; keep hips supported and level.\n\n3\n\nLet the other leg take its turn.\n\n4\n\nKeep your grip relaxed and shoulders down.\n\n5\n\nPedal steadily without yanking on the upstroke.\n\n6\n\nAdjust resistance to match your target effort.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Stationary Bike, Lower Pedal\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1202,\n    \"alt\": \"Stationary Bike, Posture\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Stationary Bike, Opposed Legs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2401,\n    \"alt\": \"Stationary Bike, Relaxed Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2962,\n    \"alt\": \"Stationary Bike, Cadence\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3524,\n    \"alt\": \"Stationary Bike, Resistance\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5202,\n    \"alt\": \"Stationary Bike, Lower Pedal\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6644,\n    \"alt\": \"Stationary Bike, Posture\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7846,\n    \"alt\": \"Stationary Bike, Opposed Legs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9123,\n    \"alt\": \"Stationary Bike, Relaxed Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10323,\n    \"alt\": \"Stationary Bike, Cadence\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11523,\n    \"alt\": \"Stationary Bike, Resistance\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12723,\n    \"alt\": \"Stationary Bike, Lower Pedal\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13923,\n    \"alt\": \"Stationary Bike, Posture\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15045,\n    \"alt\": \"Stationary Bike, Lower Pedal\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15602,\n    \"alt\": \"Stationary Bike, Posture\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16160,\n    \"alt\": \"Stationary Bike, Opposed Legs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16802,\n    \"alt\": \"Stationary Bike, Relaxed Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17365,\n    \"alt\": \"Stationary Bike, Cadence\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17924,\n    \"alt\": \"Stationary Bike, Resistance\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19521,\n    \"alt\": \"Stationary Bike, Lower Pedal\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21044,\n    \"alt\": \"Stationary Bike, Posture\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22244,\n    \"alt\": \"Stationary Bike, Opposed Legs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23444,\n    \"alt\": \"Stationary Bike, Relaxed Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24643,\n    \"alt\": \"Stationary Bike, Cadence\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25844,\n    \"alt\": \"Stationary Bike, Resistance\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27122,\n    \"alt\": \"Stationary Bike, Lower Pedal\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28323,\n    \"alt\": \"Stationary Bike, Posture\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bike/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

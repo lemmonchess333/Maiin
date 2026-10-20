@@ -1,0 +1,58 @@
+[
+  {
+    "id": "leg-press",
+    "package": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\packages\\leg-press",
+    "export": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\exports\\leg-press",
+    "scope": "Change only the existing Custom apparatus ORA layer from three plates to one. All other athlete, pigment and background layers remain byte-exact; linkage and fixed geometry are unchanged.",
+    "changedFrames": [1, 2, 3, 4, 5, 6],
+    "independentReproductionExact": true
+  },
+  {
+    "id": "rowing-machine",
+    "package": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\packages\\rowing-machine",
+    "export": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\exports\\rowing-machine",
+    "scope": "Preserve the original stationary front and rear machine supports at unchanged coordinates. All athlete, moving seat, chain and pedals outside the inspected regions remain exact.",
+    "changedFrames": [2, 3, 4, 5],
+    "independentReproductionExact": true
+  },
+  {
+    "id": "overhead-extension",
+    "package": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\packages\\overhead-extension",
+    "export": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\exports\\overhead-extension",
+    "scope": "Normalize the entire lowered source with a single uniform scale and translation. Final scale 1.0322697456032908, translation [-9.28307596033136,-45.91359497998633]. No anatomical part fitting.",
+    "changedFrames": [3, 4],
+    "independentReproductionExact": true
+  },
+  {
+    "id": "t-bar-row",
+    "package": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\packages\\t-bar-row",
+    "export": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\exports\\t-bar-row",
+    "scope": "Replace only the load with one modest grey plate, collar and closed sleeve, using the existing native skull-crusher equipment renderer. Both original complete athlete poses and grips remain unchanged.",
+    "changedFrames": [1, 2, 3, 4, 5, 6],
+    "independentReproductionExact": true
+  },
+  {
+    "id": "bike",
+    "package": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\packages\\bike",
+    "export": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\exports\\bike",
+    "scope": "Preserve the original stationary front and rear floor pods at unchanged coordinates. No athlete or moving pedal pixels occur in the two equipment regions.",
+    "changedFrames": [3, 4],
+    "independentReproductionExact": true
+  },
+  {
+    "id": "barbell-row",
+    "package": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\packages\\barbell-row",
+    "export": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\exports\\barbell-row",
+    "scope": "Normalize each entire source with one uniform scale and translation, below 0.4% scale change. No per-part transforms.",
+    "changedFrames": [2, 3, 4, 5],
+    "independentReproductionExact": true
+  },
+  {
+    "id": "dips",
+    "package": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\packages\\dips",
+    "export": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\exports\\dips",
+    "scope": "Preserve the original two front floor pods at unchanged coordinates. All athlete, hanging feet, grips and bars outside those equipment regions remain exact.",
+    "changedFrames": [2, 3, 4, 5],
+    "independentReproductionExact": true
+  }
+]

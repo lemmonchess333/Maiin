@@ -1,0 +1,230 @@
+{
+  "id": "straight-arm-pulldown",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Straight-Arm Pulldown, Reach",
+              "decoded": true,
+              "height": 1728,
+              "src": "/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp",
+              "width": 1152
+            }
+          ],
+          "caption": "Reach 1/6",
+          "id": "straight-arm-pulldown",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Straight-Arm Pulldown, Brace",
+              "decoded": true,
+              "height": 1728,
+              "src": "/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp",
+              "width": 1152
+            }
+          ],
+          "caption": "Brace 2/6",
+          "id": "straight-arm-pulldown",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Straight-Arm Pulldown, Pull to thighs",
+              "decoded": true,
+              "height": 1728,
+              "src": "/Maiin/.strict33.local/candidate/straight-arm-pulldown/3.webp",
+              "width": 1152
+            }
+          ],
+          "caption": "Pull to thighs 3/6",
+          "id": "straight-arm-pulldown",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Straight-Arm Pulldown, Squeeze",
+              "decoded": true,
+              "height": 1728,
+              "src": "/Maiin/.strict33.local/candidate/straight-arm-pulldown/4.webp",
+              "width": 1152
+            }
+          ],
+          "caption": "Squeeze 4/6",
+          "id": "straight-arm-pulldown",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Straight-Arm Pulldown, Control return",
+              "decoded": true,
+              "height": 1728,
+              "src": "/Maiin/.strict33.local/candidate/straight-arm-pulldown/5.webp",
+              "width": 1152
+            }
+          ],
+          "caption": "Control return 5/6",
+          "id": "straight-arm-pulldown",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Straight-Arm Pulldown, Reset",
+              "decoded": true,
+              "height": 1728,
+              "src": "/Maiin/.strict33.local/candidate/straight-arm-pulldown/6.webp",
+              "width": 1152
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "straight-arm-pulldown",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 84,\n    \"alt\": \"Straight-Arm Pulldown, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1205,\n    \"alt\": \"Straight-Arm Pulldown, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Straight-Arm Pulldown, Pull to thighs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2320,\n    \"alt\": \"Straight-Arm Pulldown, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2964,\n    \"alt\": \"Straight-Arm Pulldown, Control return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3521,\n    \"alt\": \"Straight-Arm Pulldown, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5206,\n    \"alt\": \"Straight-Arm Pulldown, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Straight-Arm Pulldown, Brace",
+            "decoded": true,
+            "height": 1728,
+            "src": "/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp",
+            "width": 1152
+          }
+        ],
+        "caption": "Brace 2/6",
+        "id": "straight-arm-pulldown",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / straight-arm-pulldown\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nStraight-Arm Pulldown\nBack\nCable Machine\n\nBRACE 2/6\n\nPause\nNormal\nPRIMARY\nLats\nSECONDARY\nTriceps, Core\n\nInstructions\n\nPreparation: Use two high cable handles; start with a light load. Stand tall with feet planted and handles around shoulder height. Keep a small, steady bend in both elbows.\n\n1\n\nStart with handles around shoulder height.\n\n2\n\nBrace your torso; keep elbows softly fixed.\n\n3\n\nSweep your upper arms toward your sides.\n\n4\n\nFinish near thighs without leaning back.\n\n5\n\nLet the handles rise under control.\n\n6\n\nKeep your stance steady before repeating.\n\nWatch out\n\nPull through your upper arms while keeping your torso steady.\n\nCOMMON MISTAKES\n\nTurning the movement into an elbow-bending pulldown.\nLeaning back or swinging to move the load.\nLetting the weight stacks drop on the return.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 84,\n    \"alt\": \"Straight-Arm Pulldown, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1205,\n    \"alt\": \"Straight-Arm Pulldown, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Straight-Arm Pulldown, Pull to thighs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2320,\n    \"alt\": \"Straight-Arm Pulldown, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2964,\n    \"alt\": \"Straight-Arm Pulldown, Control return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3521,\n    \"alt\": \"Straight-Arm Pulldown, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5206,\n    \"alt\": \"Straight-Arm Pulldown, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6641,\n    \"alt\": \"Straight-Arm Pulldown, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Straight-Arm Pulldown, Pull to thighs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9121,\n    \"alt\": \"Straight-Arm Pulldown, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10320,\n    \"alt\": \"Straight-Arm Pulldown, Control return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11521,\n    \"alt\": \"Straight-Arm Pulldown, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12721,\n    \"alt\": \"Straight-Arm Pulldown, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13921,\n    \"alt\": \"Straight-Arm Pulldown, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Straight-Arm Pulldown, Reach",
+              "decoded": true,
+              "height": 1728,
+              "src": "/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp",
+              "width": 1152
+            }
+          ],
+          "caption": "Reach 1/6",
+          "id": "straight-arm-pulldown",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Straight-Arm Pulldown, Brace",
+              "decoded": true,
+              "height": 1728,
+              "src": "/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp",
+              "width": 1152
+            }
+          ],
+          "caption": "Brace 2/6",
+          "id": "straight-arm-pulldown",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Straight-Arm Pulldown, Pull to thighs",
+              "decoded": true,
+              "height": 1728,
+              "src": "/Maiin/.strict33.local/candidate/straight-arm-pulldown/3.webp",
+              "width": 1152
+            }
+          ],
+          "caption": "Pull to thighs 3/6",
+          "id": "straight-arm-pulldown",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Straight-Arm Pulldown, Squeeze",
+              "decoded": true,
+              "height": 1728,
+              "src": "/Maiin/.strict33.local/candidate/straight-arm-pulldown/4.webp",
+              "width": 1152
+            }
+          ],
+          "caption": "Squeeze 4/6",
+          "id": "straight-arm-pulldown",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Straight-Arm Pulldown, Control return",
+              "decoded": true,
+              "height": 1728,
+              "src": "/Maiin/.strict33.local/candidate/straight-arm-pulldown/5.webp",
+              "width": 1152
+            }
+          ],
+          "caption": "Control return 5/6",
+          "id": "straight-arm-pulldown",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Straight-Arm Pulldown, Reset",
+              "decoded": true,
+              "height": 1728,
+              "src": "/Maiin/.strict33.local/candidate/straight-arm-pulldown/6.webp",
+              "width": 1152
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "straight-arm-pulldown",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 84,\n    \"alt\": \"Straight-Arm Pulldown, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1205,\n    \"alt\": \"Straight-Arm Pulldown, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Straight-Arm Pulldown, Pull to thighs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2320,\n    \"alt\": \"Straight-Arm Pulldown, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2964,\n    \"alt\": \"Straight-Arm Pulldown, Control return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3521,\n    \"alt\": \"Straight-Arm Pulldown, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5206,\n    \"alt\": \"Straight-Arm Pulldown, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6641,\n    \"alt\": \"Straight-Arm Pulldown, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Straight-Arm Pulldown, Pull to thighs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9121,\n    \"alt\": \"Straight-Arm Pulldown, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10320,\n    \"alt\": \"Straight-Arm Pulldown, Control return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11521,\n    \"alt\": \"Straight-Arm Pulldown, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12721,\n    \"alt\": \"Straight-Arm Pulldown, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13921,\n    \"alt\": \"Straight-Arm Pulldown, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15051,\n    \"alt\": \"Straight-Arm Pulldown, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15609,\n    \"alt\": \"Straight-Arm Pulldown, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16242,\n    \"alt\": \"Straight-Arm Pulldown, Pull to thighs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16805,\n    \"alt\": \"Straight-Arm Pulldown, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17363,\n    \"alt\": \"Straight-Arm Pulldown, Control return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17921,\n    \"alt\": \"Straight-Arm Pulldown, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19600,\n    \"alt\": \"Straight-Arm Pulldown, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Straight-Arm Pulldown, Brace",
+            "decoded": true,
+            "height": 1728,
+            "src": "/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp",
+            "width": 1152
+          }
+        ],
+        "caption": "Brace 2/6",
+        "id": "straight-arm-pulldown",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / straight-arm-pulldown\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nStraight-Arm Pulldown\nBack\nCable Machine\n\nBRACE 2/6\n\nPause\nNormal\nPRIMARY\nLats\nSECONDARY\nTriceps, Core\n\nInstructions\n\nPreparation: Use two high cable handles; start with a light load. Stand tall with feet planted and handles around shoulder height. Keep a small, steady bend in both elbows.\n\n1\n\nStart with handles around shoulder height.\n\n2\n\nBrace your torso; keep elbows softly fixed.\n\n3\n\nSweep your upper arms toward your sides.\n\n4\n\nFinish near thighs without leaning back.\n\n5\n\nLet the handles rise under control.\n\n6\n\nKeep your stance steady before repeating.\n\nWatch out\n\nPull through your upper arms while keeping your torso steady.\n\nCOMMON MISTAKES\n\nTurning the movement into an elbow-bending pulldown.\nLeaning back or swinging to move the load.\nLetting the weight stacks drop on the return.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 84,\n    \"alt\": \"Straight-Arm Pulldown, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1205,\n    \"alt\": \"Straight-Arm Pulldown, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Straight-Arm Pulldown, Pull to thighs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2320,\n    \"alt\": \"Straight-Arm Pulldown, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2964,\n    \"alt\": \"Straight-Arm Pulldown, Control return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3521,\n    \"alt\": \"Straight-Arm Pulldown, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5206,\n    \"alt\": \"Straight-Arm Pulldown, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6641,\n    \"alt\": \"Straight-Arm Pulldown, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Straight-Arm Pulldown, Pull to thighs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9121,\n    \"alt\": \"Straight-Arm Pulldown, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10320,\n    \"alt\": \"Straight-Arm Pulldown, Control return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11521,\n    \"alt\": \"Straight-Arm Pulldown, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12721,\n    \"alt\": \"Straight-Arm Pulldown, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13921,\n    \"alt\": \"Straight-Arm Pulldown, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15051,\n    \"alt\": \"Straight-Arm Pulldown, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15609,\n    \"alt\": \"Straight-Arm Pulldown, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16242,\n    \"alt\": \"Straight-Arm Pulldown, Pull to thighs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16805,\n    \"alt\": \"Straight-Arm Pulldown, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17363,\n    \"alt\": \"Straight-Arm Pulldown, Control return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17921,\n    \"alt\": \"Straight-Arm Pulldown, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19600,\n    \"alt\": \"Straight-Arm Pulldown, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21120,\n    \"alt\": \"Straight-Arm Pulldown, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22321,\n    \"alt\": \"Straight-Arm Pulldown, Pull to thighs\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23520,\n    \"alt\": \"Straight-Arm Pulldown, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24720,\n    \"alt\": \"Straight-Arm Pulldown, Control return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25920,\n    \"alt\": \"Straight-Arm Pulldown, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27120,\n    \"alt\": \"Straight-Arm Pulldown, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28320,\n    \"alt\": \"Straight-Arm Pulldown, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/straight-arm-pulldown/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

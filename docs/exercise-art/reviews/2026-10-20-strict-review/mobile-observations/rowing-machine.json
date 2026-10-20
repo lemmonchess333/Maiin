@@ -1,0 +1,230 @@
+{
+  "id": "rowing-machine",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Rowing Machine, Catch",
+              "decoded": true,
+              "height": 830,
+              "src": "/Maiin/.strict33.local/candidate/rowing-machine/1.webp",
+              "width": 1416
+            }
+          ],
+          "caption": "Catch 1/6",
+          "id": "rowing-machine",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Rowing Machine, Drive",
+              "decoded": true,
+              "height": 830,
+              "src": "/Maiin/.strict33.local/candidate/rowing-machine/2.webp",
+              "width": 1416
+            }
+          ],
+          "caption": "Drive 2/6",
+          "id": "rowing-machine",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Rowing Machine, Finish",
+              "decoded": true,
+              "height": 830,
+              "src": "/Maiin/.strict33.local/candidate/rowing-machine/3.webp",
+              "width": 1416
+            }
+          ],
+          "caption": "Finish 3/6",
+          "id": "rowing-machine",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Rowing Machine, Relax",
+              "decoded": true,
+              "height": 830,
+              "src": "/Maiin/.strict33.local/candidate/rowing-machine/4.webp",
+              "width": 1416
+            }
+          ],
+          "caption": "Relax 4/6",
+          "id": "rowing-machine",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Rowing Machine, Recover",
+              "decoded": true,
+              "height": 830,
+              "src": "/Maiin/.strict33.local/candidate/rowing-machine/5.webp",
+              "width": 1416
+            }
+          ],
+          "caption": "Recover 5/6",
+          "id": "rowing-machine",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Rowing Machine, Reset",
+              "decoded": true,
+              "height": 830,
+              "src": "/Maiin/.strict33.local/candidate/rowing-machine/6.webp",
+              "width": 1416
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "rowing-machine",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Rowing Machine, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1282,\n    \"alt\": \"Rowing Machine, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Rowing Machine, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2403,\n    \"alt\": \"Rowing Machine, Relax\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2962,\n    \"alt\": \"Rowing Machine, Recover\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3524,\n    \"alt\": \"Rowing Machine, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5204,\n    \"alt\": \"Rowing Machine, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Rowing Machine, Drive",
+            "decoded": true,
+            "height": 830,
+            "src": "/Maiin/.strict33.local/candidate/rowing-machine/2.webp",
+            "width": 1416
+          }
+        ],
+        "caption": "Drive 2/6",
+        "id": "rowing-machine",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / rowing-machine\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nRowing Machine\nCardio\nMachine\n\nDRIVE 2/6\n\nPause\nNormal\nPRIMARY\nQuads, Upper Back\nSECONDARY\nHamstrings, Biceps\n\nInstructions\n\nPreparation: Strap in, grip the handle, start compressed with shins vertical.\n\n1\n\nCompress with straight arms and vertical shins.\n\n2\n\nPush with your legs; keep arms straight.\n\n3\n\nLean back slightly; draw handle below ribs.\n\n4\n\nStay supported; keep wrists and shoulders relaxed.\n\n5\n\nArms away, then hinge forward before sliding.\n\n6\n\nRecover twice as slowly as you drive.\n\nWatch out\n\nIf you're yanking the handle with your arms first, you're wasting the big engine. Legs, back, arms — in that order.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Rowing Machine, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1282,\n    \"alt\": \"Rowing Machine, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Rowing Machine, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2403,\n    \"alt\": \"Rowing Machine, Relax\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2962,\n    \"alt\": \"Rowing Machine, Recover\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3524,\n    \"alt\": \"Rowing Machine, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5204,\n    \"alt\": \"Rowing Machine, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6641,\n    \"alt\": \"Rowing Machine, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7925,\n    \"alt\": \"Rowing Machine, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9124,\n    \"alt\": \"Rowing Machine, Relax\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10322,\n    \"alt\": \"Rowing Machine, Recover\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11604,\n    \"alt\": \"Rowing Machine, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12803,\n    \"alt\": \"Rowing Machine, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 14003,\n    \"alt\": \"Rowing Machine, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Rowing Machine, Catch",
+              "decoded": true,
+              "height": 830,
+              "src": "/Maiin/.strict33.local/candidate/rowing-machine/1.webp",
+              "width": 1416
+            }
+          ],
+          "caption": "Catch 1/6",
+          "id": "rowing-machine",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Rowing Machine, Drive",
+              "decoded": true,
+              "height": 830,
+              "src": "/Maiin/.strict33.local/candidate/rowing-machine/2.webp",
+              "width": 1416
+            }
+          ],
+          "caption": "Drive 2/6",
+          "id": "rowing-machine",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Rowing Machine, Finish",
+              "decoded": true,
+              "height": 830,
+              "src": "/Maiin/.strict33.local/candidate/rowing-machine/3.webp",
+              "width": 1416
+            }
+          ],
+          "caption": "Finish 3/6",
+          "id": "rowing-machine",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Rowing Machine, Relax",
+              "decoded": true,
+              "height": 830,
+              "src": "/Maiin/.strict33.local/candidate/rowing-machine/4.webp",
+              "width": 1416
+            }
+          ],
+          "caption": "Relax 4/6",
+          "id": "rowing-machine",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Rowing Machine, Recover",
+              "decoded": true,
+              "height": 830,
+              "src": "/Maiin/.strict33.local/candidate/rowing-machine/5.webp",
+              "width": 1416
+            }
+          ],
+          "caption": "Recover 5/6",
+          "id": "rowing-machine",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Rowing Machine, Reset",
+              "decoded": true,
+              "height": 830,
+              "src": "/Maiin/.strict33.local/candidate/rowing-machine/6.webp",
+              "width": 1416
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "rowing-machine",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Rowing Machine, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1282,\n    \"alt\": \"Rowing Machine, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Rowing Machine, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2403,\n    \"alt\": \"Rowing Machine, Relax\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2962,\n    \"alt\": \"Rowing Machine, Recover\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3524,\n    \"alt\": \"Rowing Machine, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5204,\n    \"alt\": \"Rowing Machine, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6641,\n    \"alt\": \"Rowing Machine, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7925,\n    \"alt\": \"Rowing Machine, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9124,\n    \"alt\": \"Rowing Machine, Relax\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10322,\n    \"alt\": \"Rowing Machine, Recover\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11604,\n    \"alt\": \"Rowing Machine, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12803,\n    \"alt\": \"Rowing Machine, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 14003,\n    \"alt\": \"Rowing Machine, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15043,\n    \"alt\": \"Rowing Machine, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15601,\n    \"alt\": \"Rowing Machine, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16165,\n    \"alt\": \"Rowing Machine, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16722,\n    \"alt\": \"Rowing Machine, Relax\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17361,\n    \"alt\": \"Rowing Machine, Recover\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17925,\n    \"alt\": \"Rowing Machine, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19682,\n    \"alt\": \"Rowing Machine, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Rowing Machine, Drive",
+            "decoded": true,
+            "height": 830,
+            "src": "/Maiin/.strict33.local/candidate/rowing-machine/2.webp",
+            "width": 1416
+          }
+        ],
+        "caption": "Drive 2/6",
+        "id": "rowing-machine",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / rowing-machine\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nRowing Machine\nCardio\nMachine\n\nDRIVE 2/6\n\nPause\nNormal\nPRIMARY\nQuads, Upper Back\nSECONDARY\nHamstrings, Biceps\n\nInstructions\n\nPreparation: Strap in, grip the handle, start compressed with shins vertical.\n\n1\n\nCompress with straight arms and vertical shins.\n\n2\n\nPush with your legs; keep arms straight.\n\n3\n\nLean back slightly; draw handle below ribs.\n\n4\n\nStay supported; keep wrists and shoulders relaxed.\n\n5\n\nArms away, then hinge forward before sliding.\n\n6\n\nRecover twice as slowly as you drive.\n\nWatch out\n\nIf you're yanking the handle with your arms first, you're wasting the big engine. Legs, back, arms — in that order.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Rowing Machine, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1282,\n    \"alt\": \"Rowing Machine, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Rowing Machine, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2403,\n    \"alt\": \"Rowing Machine, Relax\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2962,\n    \"alt\": \"Rowing Machine, Recover\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3524,\n    \"alt\": \"Rowing Machine, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5204,\n    \"alt\": \"Rowing Machine, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6641,\n    \"alt\": \"Rowing Machine, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7925,\n    \"alt\": \"Rowing Machine, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9124,\n    \"alt\": \"Rowing Machine, Relax\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10322,\n    \"alt\": \"Rowing Machine, Recover\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11604,\n    \"alt\": \"Rowing Machine, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12803,\n    \"alt\": \"Rowing Machine, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 14003,\n    \"alt\": \"Rowing Machine, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15043,\n    \"alt\": \"Rowing Machine, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15601,\n    \"alt\": \"Rowing Machine, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16165,\n    \"alt\": \"Rowing Machine, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16722,\n    \"alt\": \"Rowing Machine, Relax\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17361,\n    \"alt\": \"Rowing Machine, Recover\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17925,\n    \"alt\": \"Rowing Machine, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19682,\n    \"alt\": \"Rowing Machine, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21121,\n    \"alt\": \"Rowing Machine, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22324,\n    \"alt\": \"Rowing Machine, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23523,\n    \"alt\": \"Rowing Machine, Relax\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24725,\n    \"alt\": \"Rowing Machine, Recover\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25921,\n    \"alt\": \"Rowing Machine, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27204,\n    \"alt\": \"Rowing Machine, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28403,\n    \"alt\": \"Rowing Machine, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/rowing-machine/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

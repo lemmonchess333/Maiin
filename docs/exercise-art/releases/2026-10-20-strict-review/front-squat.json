@@ -1,0 +1,167 @@
+{
+  "exerciseId": "front-squat",
+  "version": "anatomy-v3-2026-10-16-worn-reference-harness-source-tone-v1",
+  "width": 736,
+  "height": 800,
+  "reference": {
+    "path": "form-frames/front-squat/3.webp",
+    "sha256": "2a2bb9acc5d0aa8237885c8e8020f66a38af4927c47e745bd0d3dac115f58380"
+  },
+  "cueSha256": "0cdf28cfd02dd15d5674b9d8434d6f6f965546db74da01f84e37771f1c363167",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:48.986342+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 1px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Harness-supported variation: hips/knees bend together, heels stay down, then rise; hands stabilise the apparatus. It is not labelled as a conventional unsupported front rack. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Bar with one modest plate per end is held by the explicitly named shoulder harness. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Harness-supported variation: hips/knees bend together, heels stay down, then rise; hands stabilise the apparatus. It is not labelled as a conventional unsupported front rack. Actual named native supports are measured in all six frames: leftImageSupportLowestContourMidpoint, rightImageSupportLowestContourMidpoint. Maximum axis drift 1px. Dimensions: leftImageSupportProjectedHorizontalSpan, rightImageSupportProjectedHorizontalSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Harness-supported variation: hips/knees bend together, heels stay down, then rise; hands stabilise the apparatus. It is not labelled as a conventional unsupported front rack. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Quads #7B72E9; secondary Glutes, Core #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Stand: Stand tall; keep the harness supported. / Brace: Brace; keep both feet firmly planted. / Squat: Bend hips and knees; keep heels grounded. / Control: Keep chest lifted and knees tracking outward. / Rise: Push through your whole feet to stand. / Reset: Stay braced with both hands stabilising.. Preparation remains [\"Shoulder-harness variation: use a fitted harness and start light.\", \"Set both shoulder pads and bar catches before lifting from a rack.\", \"Keep feet planted; brace before each squat.\"]. Harness-supported variation: hips/knees bend together, heels stay down, then rise; hands stabilise the apparatus. It is not labelled as a conventional unsupported front rack."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Harness-supported variation: hips/knees bend together, heels stay down, then rise; hands stabilise the apparatus. It is not labelled as a conventional unsupported front rack. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-16/front-squat.json (sha256 65bfc05f5e48e00b65f4e736af780f69393802e608fdaa7877b32d5c5095d0f2). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-16/front-squat.json (sha256 65bfc05f5e48e00b65f4e736af780f69393802e608fdaa7877b32d5c5095d0f2). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/front-squat/1.webp",
+      "sha256": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 317.5, "y": 730 },
+        "rightImageSupportLowestContourMidpoint": { "x": 451, "y": 720 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 101,
+        "rightImageSupportProjectedHorizontalSpan": 118
+      }
+    },
+    {
+      "path": "form-frames/front-squat/2.webp",
+      "sha256": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 317.5, "y": 730 },
+        "rightImageSupportLowestContourMidpoint": { "x": 451, "y": 720 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 101,
+        "rightImageSupportProjectedHorizontalSpan": 118
+      }
+    },
+    {
+      "path": "form-frames/front-squat/3.webp",
+      "sha256": "2a2bb9acc5d0aa8237885c8e8020f66a38af4927c47e745bd0d3dac115f58380",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 317, "y": 729 },
+        "rightImageSupportLowestContourMidpoint": { "x": 451, "y": 720 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 101,
+        "rightImageSupportProjectedHorizontalSpan": 118
+      }
+    },
+    {
+      "path": "form-frames/front-squat/4.webp",
+      "sha256": "2a2bb9acc5d0aa8237885c8e8020f66a38af4927c47e745bd0d3dac115f58380",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 317, "y": 729 },
+        "rightImageSupportLowestContourMidpoint": { "x": 451, "y": 720 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 101,
+        "rightImageSupportProjectedHorizontalSpan": 118
+      }
+    },
+    {
+      "path": "form-frames/front-squat/5.webp",
+      "sha256": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 317.5, "y": 730 },
+        "rightImageSupportLowestContourMidpoint": { "x": 451, "y": 720 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 101,
+        "rightImageSupportProjectedHorizontalSpan": 118
+      }
+    },
+    {
+      "path": "form-frames/front-squat/6.webp",
+      "sha256": "9054af9534b7ea73be47e7154b1f33f7cb5fdd094c5751896cc65a6199ddb64c",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 317.5, "y": 730 },
+        "rightImageSupportLowestContourMidpoint": { "x": 451, "y": 720 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 101,
+        "rightImageSupportProjectedHorizontalSpan": 118
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maxAnchorAxisDriftPx": 1,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-16/front-squat.json",
+    "sha256": "65bfc05f5e48e00b65f4e736af780f69393802e608fdaa7877b32d5c5095d0f2"
+  },
+  "historicalFindings": [
+    "Two genuine intact squat states repeat across six delivery slots; this is a discrete illustrated guide.",
+    "Custom shoulder harness based on a real apparatus principle; not a stock manufacturer replica or ordinary direct-shoulder front rack.",
+    "Equipment projection is illustrative; the source body is not calibrated in3D. The old nominal51mm neck-envelope clearance is not adopted.",
+    "Original neutral source pixels remain exact; original violet fields use the exact target bases and per-pixel source tone. Neutralised source tint is not recovered pre-tint anatomy.",
+    "Retained source plate projections and hand contours have minor illustrative pose differences; a calibrated continuous human movement is not claimed.",
+    "Native scoped review uses the actual worn regular-harness reference for medial upper-shoulder support; strict review and exact anatomical depth remain unverified.",
+    "Raw playback contains brief image/cue observer transitions; settled selections agree. Preview-reset and truncated-read evidence are preserved beside the successful repeated light playback capture."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/front-squat.json",
+    "sha256": "1b5aa1b84ba772fdbb4db46adcd908758999591c15b3ee776486bfb443754469"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false
+}

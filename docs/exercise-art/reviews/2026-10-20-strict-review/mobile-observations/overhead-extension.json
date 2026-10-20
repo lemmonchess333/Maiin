@@ -1,0 +1,230 @@
+{
+  "id": "overhead-extension",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Overhead Tricep Extension, Top",
+              "decoded": true,
+              "height": 1547,
+              "src": "/Maiin/.strict33.local/candidate/overhead-extension/1.webp",
+              "width": 461
+            }
+          ],
+          "caption": "Top 1/6",
+          "id": "overhead-extension",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Overhead Tricep Extension, Brace",
+              "decoded": true,
+              "height": 1547,
+              "src": "/Maiin/.strict33.local/candidate/overhead-extension/2.webp",
+              "width": 461
+            }
+          ],
+          "caption": "Brace 2/6",
+          "id": "overhead-extension",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Overhead Tricep Extension, Lower",
+              "decoded": true,
+              "height": 1547,
+              "src": "/Maiin/.strict33.local/candidate/overhead-extension/3.webp",
+              "width": 461
+            }
+          ],
+          "caption": "Lower 3/6",
+          "id": "overhead-extension",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Overhead Tricep Extension, Bottom",
+              "decoded": true,
+              "height": 1547,
+              "src": "/Maiin/.strict33.local/candidate/overhead-extension/4.webp",
+              "width": 461
+            }
+          ],
+          "caption": "Bottom 4/6",
+          "id": "overhead-extension",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Overhead Tricep Extension, Extend",
+              "decoded": true,
+              "height": 1547,
+              "src": "/Maiin/.strict33.local/candidate/overhead-extension/5.webp",
+              "width": 461
+            }
+          ],
+          "caption": "Extend 5/6",
+          "id": "overhead-extension",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Overhead Tricep Extension, Reset",
+              "decoded": true,
+              "height": 1547,
+              "src": "/Maiin/.strict33.local/candidate/overhead-extension/6.webp",
+              "width": 461
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "overhead-extension",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 84,\n    \"alt\": \"Overhead Tricep Extension, Top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1201,\n    \"alt\": \"Overhead Tricep Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1764,\n    \"alt\": \"Overhead Tricep Extension, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2405,\n    \"alt\": \"Overhead Tricep Extension, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2963,\n    \"alt\": \"Overhead Tricep Extension, Extend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3520,\n    \"alt\": \"Overhead Tricep Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5120,\n    \"alt\": \"Overhead Tricep Extension, Top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Overhead Tricep Extension, Brace",
+            "decoded": true,
+            "height": 1547,
+            "src": "/Maiin/.strict33.local/candidate/overhead-extension/2.webp",
+            "width": 461
+          }
+        ],
+        "caption": "Brace 2/6",
+        "id": "overhead-extension",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / overhead-extension\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nOverhead Tricep Extension\nTriceps\nDumbbells\n\nBRACE 2/6\n\nPause\nNormal\nPRIMARY\nTriceps\nSECONDARY\nFront Delts\n\nInstructions\n\nPreparation: Stand or sit, hold one dumbbell with both hands straight overhead. Keep elbows close to your ears and pointed at the ceiling.\n\n1\n\nHold the dumbbell overhead with both hands.\n\n2\n\nKeep your core braced and elbows up.\n\n3\n\nBend elbows; lower the dumbbell behind head.\n\n4\n\nKeep your upper arms beside your head.\n\n5\n\nStraighten your elbows and squeeze your triceps.\n\n6\n\nKeep the dumbbell steady at full extension.\n\nWatch out\n\nElbows flaring wide takes the triceps out of it. Keep them tucked by your ears, pointing up, and move only from the elbow.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 84,\n    \"alt\": \"Overhead Tricep Extension, Top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1201,\n    \"alt\": \"Overhead Tricep Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1764,\n    \"alt\": \"Overhead Tricep Extension, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2405,\n    \"alt\": \"Overhead Tricep Extension, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2963,\n    \"alt\": \"Overhead Tricep Extension, Extend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3520,\n    \"alt\": \"Overhead Tricep Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5120,\n    \"alt\": \"Overhead Tricep Extension, Top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6642,\n    \"alt\": \"Overhead Tricep Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Overhead Tricep Extension, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9043,\n    \"alt\": \"Overhead Tricep Extension, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10320,\n    \"alt\": \"Overhead Tricep Extension, Extend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11520,\n    \"alt\": \"Overhead Tricep Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12720,\n    \"alt\": \"Overhead Tricep Extension, Top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13920,\n    \"alt\": \"Overhead Tricep Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Overhead Tricep Extension, Top",
+              "decoded": true,
+              "height": 1547,
+              "src": "/Maiin/.strict33.local/candidate/overhead-extension/1.webp",
+              "width": 461
+            }
+          ],
+          "caption": "Top 1/6",
+          "id": "overhead-extension",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Overhead Tricep Extension, Brace",
+              "decoded": true,
+              "height": 1547,
+              "src": "/Maiin/.strict33.local/candidate/overhead-extension/2.webp",
+              "width": 461
+            }
+          ],
+          "caption": "Brace 2/6",
+          "id": "overhead-extension",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Overhead Tricep Extension, Lower",
+              "decoded": true,
+              "height": 1547,
+              "src": "/Maiin/.strict33.local/candidate/overhead-extension/3.webp",
+              "width": 461
+            }
+          ],
+          "caption": "Lower 3/6",
+          "id": "overhead-extension",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Overhead Tricep Extension, Bottom",
+              "decoded": true,
+              "height": 1547,
+              "src": "/Maiin/.strict33.local/candidate/overhead-extension/4.webp",
+              "width": 461
+            }
+          ],
+          "caption": "Bottom 4/6",
+          "id": "overhead-extension",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Overhead Tricep Extension, Extend",
+              "decoded": true,
+              "height": 1547,
+              "src": "/Maiin/.strict33.local/candidate/overhead-extension/5.webp",
+              "width": 461
+            }
+          ],
+          "caption": "Extend 5/6",
+          "id": "overhead-extension",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Overhead Tricep Extension, Reset",
+              "decoded": true,
+              "height": 1547,
+              "src": "/Maiin/.strict33.local/candidate/overhead-extension/6.webp",
+              "width": 461
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "overhead-extension",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 84,\n    \"alt\": \"Overhead Tricep Extension, Top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1201,\n    \"alt\": \"Overhead Tricep Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1764,\n    \"alt\": \"Overhead Tricep Extension, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2405,\n    \"alt\": \"Overhead Tricep Extension, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2963,\n    \"alt\": \"Overhead Tricep Extension, Extend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3520,\n    \"alt\": \"Overhead Tricep Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5120,\n    \"alt\": \"Overhead Tricep Extension, Top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6642,\n    \"alt\": \"Overhead Tricep Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Overhead Tricep Extension, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9043,\n    \"alt\": \"Overhead Tricep Extension, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10320,\n    \"alt\": \"Overhead Tricep Extension, Extend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11520,\n    \"alt\": \"Overhead Tricep Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12720,\n    \"alt\": \"Overhead Tricep Extension, Top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13920,\n    \"alt\": \"Overhead Tricep Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15042,\n    \"alt\": \"Overhead Tricep Extension, Top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15605,\n    \"alt\": \"Overhead Tricep Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16160,\n    \"alt\": \"Overhead Tricep Extension, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16805,\n    \"alt\": \"Overhead Tricep Extension, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17363,\n    \"alt\": \"Overhead Tricep Extension, Extend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17920,\n    \"alt\": \"Overhead Tricep Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19521,\n    \"alt\": \"Overhead Tricep Extension, Top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Overhead Tricep Extension, Brace",
+            "decoded": true,
+            "height": 1547,
+            "src": "/Maiin/.strict33.local/candidate/overhead-extension/2.webp",
+            "width": 461
+          }
+        ],
+        "caption": "Brace 2/6",
+        "id": "overhead-extension",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / overhead-extension\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nOverhead Tricep Extension\nTriceps\nDumbbells\n\nBRACE 2/6\n\nPause\nNormal\nPRIMARY\nTriceps\nSECONDARY\nFront Delts\n\nInstructions\n\nPreparation: Stand or sit, hold one dumbbell with both hands straight overhead. Keep elbows close to your ears and pointed at the ceiling.\n\n1\n\nHold the dumbbell overhead with both hands.\n\n2\n\nKeep your core braced and elbows up.\n\n3\n\nBend elbows; lower the dumbbell behind head.\n\n4\n\nKeep your upper arms beside your head.\n\n5\n\nStraighten your elbows and squeeze your triceps.\n\n6\n\nKeep the dumbbell steady at full extension.\n\nWatch out\n\nElbows flaring wide takes the triceps out of it. Keep them tucked by your ears, pointing up, and move only from the elbow.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 84,\n    \"alt\": \"Overhead Tricep Extension, Top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1201,\n    \"alt\": \"Overhead Tricep Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1764,\n    \"alt\": \"Overhead Tricep Extension, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2405,\n    \"alt\": \"Overhead Tricep Extension, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2963,\n    \"alt\": \"Overhead Tricep Extension, Extend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3520,\n    \"alt\": \"Overhead Tricep Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5120,\n    \"alt\": \"Overhead Tricep Extension, Top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6642,\n    \"alt\": \"Overhead Tricep Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Overhead Tricep Extension, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9043,\n    \"alt\": \"Overhead Tricep Extension, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10320,\n    \"alt\": \"Overhead Tricep Extension, Extend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11520,\n    \"alt\": \"Overhead Tricep Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12720,\n    \"alt\": \"Overhead Tricep Extension, Top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13920,\n    \"alt\": \"Overhead Tricep Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15042,\n    \"alt\": \"Overhead Tricep Extension, Top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15605,\n    \"alt\": \"Overhead Tricep Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16160,\n    \"alt\": \"Overhead Tricep Extension, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16805,\n    \"alt\": \"Overhead Tricep Extension, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17363,\n    \"alt\": \"Overhead Tricep Extension, Extend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17920,\n    \"alt\": \"Overhead Tricep Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19521,\n    \"alt\": \"Overhead Tricep Extension, Top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21042,\n    \"alt\": \"Overhead Tricep Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22241,\n    \"alt\": \"Overhead Tricep Extension, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23441,\n    \"alt\": \"Overhead Tricep Extension, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24642,\n    \"alt\": \"Overhead Tricep Extension, Extend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25842,\n    \"alt\": \"Overhead Tricep Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27044,\n    \"alt\": \"Overhead Tricep Extension, Top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28321,\n    \"alt\": \"Overhead Tricep Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/overhead-extension/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

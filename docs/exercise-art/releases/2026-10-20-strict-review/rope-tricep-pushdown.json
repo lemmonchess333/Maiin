@@ -1,0 +1,163 @@
+{
+  "exerciseId": "rope-tricep-pushdown",
+  "version": "anatomy-v3-2026-10-18-equipment-correction-v1",
+  "width": 1024,
+  "height": 1600,
+  "reference": {
+    "path": "form-frames/rope-tricep-pushdown/1.webp",
+    "sha256": "9d0ea51b2f4229adcb63eb5d736d88bf3b45b52bc4242d5e78fdf65f31d2258e"
+  },
+  "cueSha256": "8144f7c4de20ff5c1b190066059eacc85b521bc0851bc8ea22a143fb2d392f57",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:54.178678+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Upper arms remain beside ribs while elbows extend and rope ends separate. The selected stack rises with the pull; wrist/rope contacts and controlled return remain coherent. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Solid shaded selected4/resting8 stack plates, seated selector pin, guide bores, stem and supported pulley bracket. Rope branches and finite pulley cable path remain connected. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Upper arms remain beside ribs while elbows extend and rope ends separate. The selected stack rises with the pull; wrist/rope contacts and controlled return remain coherent. Actual named native supports are measured in all six frames: fixedTowerTopLipMaterialFeature1, fixedTowerTopLipMaterialFeature2. Maximum axis drift 0px. Dimensions: fixedTowerTopLipProjectedFeatureSpan, oppositeFixedSupportProjectedFeatureSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Upper arms remain beside ribs while elbows extend and rope ends separate. The selected stack rises with the pull; wrist/rope contacts and controlled return remain coherent. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Triceps #7B72E9; secondary Forearms #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Set: Elbows beside ribs; brace the trunk. / Initiate: Extend elbows; keep the shoulders still. / Push down: Press the rope toward your thighs. / Continue: Keep wrists straight and elbows tucked. / Extend: Straighten arms; separate the rope ends. / Return: Bend elbows slowly; keep upper arms still.. Preparation remains [\"Stand facing the high pulley and hold both rope ends.\", \"Set elbows beside ribs and keep the trunk braced.\"]. Upper arms remain beside ribs while elbows extend and rope ends separate. The selected stack rises with the pull; wrist/rope contacts and controlled return remain coherent."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Earlier actual registered all-six normal/slower loop and manual-wrap observations retained for this unchanged motion; no fresh complete mobile run is invented. Upper arms remain beside ribs while elbows extend and rope ends separate. The selected stack rises with the pull; wrist/rope contacts and controlled return remain coherent. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Exact unchanged art retains the earlier registered all-six light/dark visual evidence; current capture artefacts are explicitly excluded. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-18/rope-tricep-pushdown.json (sha256 6975d51b4acd3b366f40d64e7dd1790b86cbc49c5c359947240bc065112e2004). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Exact unchanged art retains the earlier registered all-six light/dark visual evidence; current capture artefacts are explicitly excluded. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-18/rope-tricep-pushdown.json (sha256 6975d51b4acd3b366f40d64e7dd1790b86cbc49c5c359947240bc065112e2004). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/rope-tricep-pushdown/1.webp",
+      "sha256": "9d0ea51b2f4229adcb63eb5d736d88bf3b45b52bc4242d5e78fdf65f31d2258e",
+      "anchors": {
+        "fixedTowerTopLipMaterialFeature1": { "x": 753, "y": 42 },
+        "fixedTowerTopLipMaterialFeature2": { "x": 951, "y": 26 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopLipProjectedFeatureSpan": 198.6454127333425,
+        "oppositeFixedSupportProjectedFeatureSpan": 230.70327262524907
+      }
+    },
+    {
+      "path": "form-frames/rope-tricep-pushdown/2.webp",
+      "sha256": "67820b245285700597e51394bc9423f0c465bbca1f15f3776f45ad3a21efad46",
+      "anchors": {
+        "fixedTowerTopLipMaterialFeature1": { "x": 753, "y": 42 },
+        "fixedTowerTopLipMaterialFeature2": { "x": 951, "y": 26 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopLipProjectedFeatureSpan": 198.6454127333425,
+        "oppositeFixedSupportProjectedFeatureSpan": 230.70327262524907
+      }
+    },
+    {
+      "path": "form-frames/rope-tricep-pushdown/3.webp",
+      "sha256": "a398a340fc3bfe428a84b57e4eedae720ea4f38f9ad7b3a1e58cde8f009adaa9",
+      "anchors": {
+        "fixedTowerTopLipMaterialFeature1": { "x": 753, "y": 42 },
+        "fixedTowerTopLipMaterialFeature2": { "x": 951, "y": 26 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopLipProjectedFeatureSpan": 198.6454127333425,
+        "oppositeFixedSupportProjectedFeatureSpan": 230.70327262524907
+      }
+    },
+    {
+      "path": "form-frames/rope-tricep-pushdown/4.webp",
+      "sha256": "cd3d5475d2e54b0a55b7578b690312b38d5536a79dd441e9dd8bb87d1cc58778",
+      "anchors": {
+        "fixedTowerTopLipMaterialFeature1": { "x": 753, "y": 42 },
+        "fixedTowerTopLipMaterialFeature2": { "x": 951, "y": 26 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopLipProjectedFeatureSpan": 198.6454127333425,
+        "oppositeFixedSupportProjectedFeatureSpan": 230.70327262524907
+      }
+    },
+    {
+      "path": "form-frames/rope-tricep-pushdown/5.webp",
+      "sha256": "eee2e2c13f44b600e784f6401623935f77f93143e5ced23d68af4e10df116c60",
+      "anchors": {
+        "fixedTowerTopLipMaterialFeature1": { "x": 753, "y": 42 },
+        "fixedTowerTopLipMaterialFeature2": { "x": 951, "y": 26 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopLipProjectedFeatureSpan": 198.6454127333425,
+        "oppositeFixedSupportProjectedFeatureSpan": 230.70327262524907
+      }
+    },
+    {
+      "path": "form-frames/rope-tricep-pushdown/6.webp",
+      "sha256": "9d0ea51b2f4229adcb63eb5d736d88bf3b45b52bc4242d5e78fdf65f31d2258e",
+      "anchors": {
+        "fixedTowerTopLipMaterialFeature1": { "x": 753, "y": 42 },
+        "fixedTowerTopLipMaterialFeature2": { "x": 951, "y": 26 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopLipProjectedFeatureSpan": 198.6454127333425,
+        "oppositeFixedSupportProjectedFeatureSpan": 230.70327262524907
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-18/rope-tricep-pushdown.json",
+    "sha256": "6975d51b4acd3b366f40d64e7dd1790b86cbc49c5c359947240bc065112e2004"
+  },
+  "historicalFindings": [
+    "Equipment-only correction replaces the thin poorly articulated stack with wider shaded solid plates, coherent oblique top/side faces, guide bores, a visible moving selector stem, seated fourth-plate selector pin and supported pulley bracket.",
+    "Only the two native equipment layers change. All athlete, muscle palette, trainers, rope grips/branches, cable and background layers remain exact decoded pixels. Every pixel left of x704, covering the entire athlete and rope contacts, is identical to the merged original.",
+    "Existing five physical poses and six-frame1/2/3/4/5/1 order, cues, setup,1024x1600 canvas, reference/card frame1,320px rope branches, finite24px-radius pulley path and constant cable length remain unchanged.",
+    "Selected4/resting8 plate counts and0-227.988px selected-stack rise remain. The selector stem is hidden behind resting plate fronts rather than showing through them.",
+    "Original illustrative upper-arm/elbow/forearm contour and generated rope-stub variations remain unchanged. This is an illustrative2D machine, not calibrated engineering or anatomical geometry.",
+    "Strict certification is not claimed. Scoped native source, actual registered390x844 light/dark normal/slower playback, manual wrap and normal-card reviews passed. Small48px light cards retain faint white athlete contours; equipment silhouettes remain identifiable. Original source/anatomical findings remain."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": null,
+  "mobileEvidenceReusedForUnchangedArt": true
+}

@@ -1,0 +1,306 @@
+# Separately derived baseline binding; original parser SHA256 cc29cc6256e5570a8915f0b440530a169e361557015161d2c7454acab14e0cfe
+# Synthetic proposed-merge execution; never relabel this run as an actual-main run.
+"""Index completed normal-verify evidence, including shared Vitest diagnostics.
+
+No tests, commands, repository writes or disposition/approval decisions.
+Run without arguments to save/check the fixed fresh baseline index.
+Later: python index-normal-verify.py --candidate LABEL [--runs-root DIRECTORY]
+"""
+from pathlib import Path
+import argparse
+import hashlib
+import json
+import re
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[1]
+RUNS = ROOT / 'work/remaining19-execution-20261015/checks'
+BASELINE = Path('C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining19-execution-20261015\\checks\\leg-extension-integration-baseline-71a35e84')
+BASELINE_HEAD = '71a35e841558fcb096979f9eb4b99d0835356301'
+BASELINE_LOG_SHA = '5667668c45a8881993891643a130487aee6103fb3446d4d54d37300d7ad907c6'
+BASELINE_RESULT_SHA = 'd4fa2eb84df1203758343bd7b3f8128db5a85fb22a0f6883d52056aad1472f3c'
+STAGES = ['lint', 'check:form-art', 'check:form-drafts', 'check:cycles', 'build', 'check:dist-size', 'test']
+ANSI = re.compile(r'\x1b\[[0-?]*[ -/]*[@-~]')
+FAIL = re.compile(r'^\s*FAIL\s+(?:\|(?P<project>[^|]+)\|\s+)?(?P<file>.+?\.[cm]?[jt]sx?)(?P<tail>\s+>\s+.+|\s+\[.+\])\s*$')
+SEPARATOR = re.compile(r'^\s*⎯+\[(?P<ordinal>\d+)/(?P<total>\d+)\]⎯*\s*$')
+SECTION = re.compile(r'^\s*⎯+\s+Failed (?P<kind>Suites|Tests) (?P<count>\d+)\s+⎯+\s*$')
+
+
+def require(value, message):
+    if not value:
+        raise RuntimeError(message)
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def load(path):
+    return json.loads(path.read_bytes())
+
+
+def encoded(data):
+    return (json.dumps(data, indent=2, ensure_ascii=False) + '\n').encode('utf-8')
+
+
+def save_exact_or_new(path, data):
+    content = encoded(data)
+    if path.exists():
+        require(path.read_bytes() == content, f'Refusing to replace different existing evidence: {path}')
+    else:
+        path.write_bytes(content)
+    return sha(content)
+
+
+def parse_log(raw):
+    raw.decode('utf-8')  # No replacement decoding or silent encoding conversion.
+    raw_lines = raw.splitlines(keepends=True)
+    texts = [ANSI.sub('', line.decode('utf-8').rstrip('\r\n')) for line in raw_lines]
+    offsets = [0]
+    for line in raw_lines:
+        offsets.append(offsets[-1] + len(line))
+
+    def span(start, end):
+        data = raw[offsets[start]:offsets[end]]
+        return {'startLine': start + 1, 'endLineInclusive': end,
+                'byteStart': offsets[start], 'byteEndExclusive': offsets[end],
+                'rawSha256': sha(data), 'byteLength': len(data)}
+
+    def summary(label):
+        found = [i for i, line in enumerate(texts) if re.match(r'^\s*' + re.escape(label) + r'\s+\d', line)]
+        require(len(found) <= 1, f'Multiple {label} summaries')
+        if not found:
+            return None
+        i = found[0]
+        tail = re.sub(r'^\s*' + re.escape(label) + r'\s+', '', texts[i])
+        total = re.search(r'\((\d+)\)\s*$', tail)
+        require(total, f'Missing {label} total')
+        body = tail[:total.start()]
+        pairs = re.findall(r'(\d+)\s+(failed|passed|skipped|todo)', body)
+        require(len(pairs) == len({key for _, key in pairs}), f'Duplicate {label} count')
+        residue = re.sub(r'\d+\s+(?:failed|passed|skipped|todo)', '', body)
+        require(not residue.replace('|', '').strip(), f'Unparsed {label} summary text')
+        counts = {kind: int(value) for value, kind in pairs}
+        require(sum(counts.values()) == int(total[1]), f'{label} counts do not sum')
+        return {**counts, 'total': int(total[1]), 'verbatim': texts[i].strip(), 'proof': span(i, i + 1)}
+
+    file_summary, test_summary = summary('Test Files'), summary('Tests')
+    require((file_summary is None) == (test_summary is None), 'Only one unit summary exists')
+    summary_line = file_summary['proof']['startLine'] - 1 if file_summary else len(texts)
+    sections = [(i, match) for i, line in enumerate(texts[:summary_line]) if (match := SECTION.fullmatch(line))]
+    require(len({match['kind'] for _, match in sections}) == len(sections), 'Duplicate failure section')
+    section_counts = {match['kind']: int(match['count']) for _, match in sections}
+    failure_indices = [i for i, text in enumerate(texts[:summary_line]) if re.match(r'^\s*FAIL\s+', text)]
+    require(not failure_indices or (sections and min(failure_indices) > sections[0][0]), 'Failure outside final diagnostic sections')
+    failures, groups = [], []
+    pending = []
+    first_diagnostic = None
+
+    def close_group(separator_line):
+        nonlocal pending, first_diagnostic
+        require(pending and first_diagnostic is not None, f'Separator without diagnostic at line{separator_line+1}')
+        separator = SEPARATOR.fullmatch(texts[separator_line])
+        core_start, core_end = first_diagnostic, separator_line
+        while core_start < core_end and not texts[core_start].strip():
+            core_start += 1
+        while core_end > core_start and not texts[core_end - 1].strip():
+            core_end -= 1
+        require(core_start < core_end, 'Empty shared/own diagnostic')
+        group_id = f'diagnostic-group-{len(groups)+1}'
+        diagnostic = {**span(core_start, core_end), 'firstOwnLine': texts[core_start],
+                      'firstThreeLines': texts[core_start: min(core_start + 3, core_end)]}
+        group = {'id': group_id, 'headerCount': len(pending), 'identities': [entry['canonicalId'] for entry in pending],
+                 'headersAndDiagnostic': span(pending[0]['headerLine'] - 1, separator_line),
+                 'diagnosticWithBlankPadding': span(first_diagnostic, separator_line),
+                 'diagnostic': diagnostic, 'separator': {**span(separator_line, separator_line + 1),
+                 'reportedOrdinal': int(separator['ordinal']), 'reportedTotal': int(separator['total'])}}
+        groups.append(group)
+        for entry in pending:
+            entry.update({'diagnosticGroupId': group_id, 'sharedDiagnosticHeaderCount': len(pending), 'diagnostic': diagnostic})
+            failures.append(entry)
+        pending, first_diagnostic = [], None
+
+    if sections:
+        for i in range(sections[0][0] + 1, summary_line):
+            text = texts[i]
+            if SECTION.fullmatch(text):
+                require(not pending, 'Open diagnostic at next failure section')
+                continue
+            if re.match(r'^\s*FAIL\s+', text):
+                match = FAIL.fullmatch(text)
+                require(match, f'Unparsed FAIL header at line{i+1}')
+                if pending:
+                    require(first_diagnostic is None, f'New FAIL before previous separator at line{i+1}')
+                name = match['file'].replace('\\', '/')
+                require(not name.startswith(('/', './')) and '..' not in Path(name).parts, 'Unsafe failure path')
+                tail = match['tail'].strip()
+                if tail.startswith('> '):
+                    kind, case = 'test', tail[2:]
+                else:
+                    imported = re.fullmatch(r'\[\s*(.*?)\s*\]', tail)
+                    require(imported and imported[1].replace('\\', '/') == name, 'Malformed suite import header')
+                    kind, case = 'suite', None
+                project = match['project'] or '[default]'
+                pending.append({'canonicalId': f'{project}|{name}|{case if case is not None else "[suite]"}',
+                                'project': project, 'file': name, 'kind': kind, 'case': case,
+                                'headerLine': i + 1, 'headerVerbatim': text, 'header': span(i, i + 1)})
+                continue
+            if SEPARATOR.fullmatch(text):
+                close_group(i)
+                continue
+            if pending and first_diagnostic is None and text.strip():
+                first_diagnostic = i
+        require(not pending, 'Unterminated final diagnostic block')
+
+    require(len(failures) == len(failure_indices), 'Not all FAIL headers accounted')
+    require(len({f['canonicalId'] for f in failures}) == len(failures), 'Duplicate failure identities')
+    test_headers = sum(f['kind'] == 'test' for f in failures)
+    suite_headers = len(failures) - test_headers
+    unique_files = {(f['project'], f['file']) for f in failures}
+    if test_summary:
+        require(test_headers == test_summary.get('failed', 0), 'Failed test summary/header mismatch')
+        require(len(unique_files) == file_summary.get('failed', 0), 'Failed file summary/header mismatch')
+        require(section_counts.get('Tests', 0) == test_headers, 'Failed Tests section/header mismatch')
+        require(section_counts.get('Suites', 0) == suite_headers, 'Failed Suites section/header mismatch')
+        for ordinal, group in enumerate(groups, 1):
+            require(group['separator']['reportedOrdinal'] == ordinal, 'Nonsequential diagnostic separator')
+            require(group['separator']['reportedTotal'] == len(failures), 'Reporter total differs from header count')
+        # The final ordinal counts diagnostic groups, not failure identities.
+        # A four-header shared group deliberately has one separator.
+
+    stages = []
+    for i, text in enumerate(texts):
+        match = re.fullmatch(r'>\s+\S+@\S+\s+(\S+)', text)
+        if match and match[1] in STAGES:
+            stages.append({'name': match[1], 'proof': span(i, i + 1)})
+    observed = [entry['name'] for entry in stages]
+    require(observed == STAGES[:len(observed)], 'Unexpected/duplicate normal stage order')
+    unhandled = [{'line': i+1, 'verbatim': text, 'proof': span(i, i+1)} for i, text in enumerate(texts)
+                 if re.search(r'Unhandled Errors|Unhandled Rejection|Uncaught Exception|^\s*Errors\s+\d+', text)]
+    complete = observed == STAGES and file_summary is not None and not unhandled
+    return {'allNormalVerifyStagesPresent': observed == STAGES, 'normalStages': stages,
+            'testFiles': file_summary, 'tests': test_summary, 'unitSummaryComplete': file_summary is not None,
+            'failureHeaderCount': len(failures), 'testFailureHeaders': test_headers, 'suiteFailureHeaders': suite_headers,
+            'diagnosticGroupCount': len(groups), 'sharedDiagnosticGroups': sum(g['headerCount'] > 1 for g in groups),
+            'failureAccountingComplete': bool(file_summary), 'unhandledErrorMarkers': unhandled,
+            'indexComplete': complete, 'groups': groups, 'failures': failures}
+
+
+def read_run(folder, baseline=False):
+    names = ['result.json', 'verify.log', 'inputs-before.json', 'inputs-after.json', 'start.json']
+    data = {name: (folder / name).read_bytes() for name in names}
+    result, start = json.loads(data['result.json']), json.loads(data['start.json'])
+    before, after = json.loads(data['inputs-before.json']), json.loads(data['inputs-after.json'])
+    require(result['normalCommand'] == 'npm run verify', 'Not normal full npm verify')
+    require(result['headBefore'] == result['headAfter'] == start['head'], 'HEAD changed during run')
+    require(result['headUnchanged'] is True, 'HEAD preservation not established')
+    require(result['statusBefore'] == result['statusAfter'] == start['status'] and result['statusRestored'] is True, 'Status not restored')
+    require(before == after and len(before) == result['inputCount'], 'Before/after input maps differ')
+    require(result['allInputsUnchanged'] is True and result['changedInputsAfterRestoration'] == [], 'Input restoration failed')
+    require(result['logSha256'] == sha(data['verify.log']), 'Log/result hash mismatch')
+    require(isinstance(result['exitCode'], int) and result.get('finishedAt'), 'Run not terminal')
+    require(result['fullVerificationPassed'] is (result['exitCode'] == 0), 'False full verification status')
+    require(start['startedAt'] == result['startedAt'] <= result['finishedAt'], 'Invalid run timestamps')
+    require(len(start['command']) == 4 and start['command'][-2:] == ['run','verify'], 'Changed normal command argv')
+    if baseline:
+        require(sha(data['result.json']) == BASELINE_RESULT_SHA, 'Pinned synthetic baseline result changed')
+        require(result['headBefore'] == BASELINE_HEAD and result['statusBefore'] == '', 'Wrong/dirty fresh baseline')
+        require(sha(data['verify.log']) == BASELINE_LOG_SHA, 'Fresh baseline raw log changed')
+    snapshots, captures = {}, []
+    require(len(start['snapshotPaths']) == len(set(start['snapshotPaths'])), 'Duplicate captured snapshot paths')
+    for index, source in enumerate(start['snapshotPaths']):
+        require(isinstance(source, str) and 'planSweep' in source and source.endswith('.snap'), 'Unexpected captured snapshot')
+        name = f'snapshot-before-{index}.snap'
+        digest = sha((folder / name).read_bytes())
+        if source in before:
+            require(digest == before[source], 'Snapshot capture/input mismatch')
+        snapshots[name] = digest
+        captures.append({'sourcePath': source, 'capturedFile': name, 'sha256': digest, 'boundByInputMap': source in before})
+    for restored in result['snapshotRestores']:
+        source = restored['path']
+        require(source in start['snapshotPaths'] and restored['restoredExact'] is True, 'Invalid snapshot restore')
+        index = start['snapshotPaths'].index(source)
+        require(snapshots[f'snapshot-before-{index}.snap'] == restored['originalSha256'] == before[source] == after[source], 'Snapshot not restored from exact captured bytes')
+        name = f'snapshot-test-output-{index}.snap'
+        snapshots[name] = sha((folder / name).read_bytes())
+        require(snapshots[name] == restored['testOutputSha256'], 'Changed snapshot output hash mismatch')
+    parsed = parse_log(data['verify.log'])
+    if parsed['indexComplete']:
+        any_failure = parsed['testFiles'].get('failed',0) > 0
+        require(any_failure == (result['exitCode'] != 0), 'Complete unit counts/terminal exit disagree')
+    return {'schemaVersion': 1, 'scope': ('Measured synthetic proposed-merge-tree baseline at 71a35e841558fcb096979f9eb4b99d0835356301; not run on actual merged main. Main reuse requires separate exact tree and runtime-input equivalence proof; no approval inferred.' if baseline else 'Measured completed-run evidence, not failure disposition or release approval'),
+            'folder': str(folder.resolve()), 'result': result, 'sourceProofHashes': {name: sha(raw) for name, raw in data.items()},
+            'snapshotProofHashes': snapshots, 'capturedSnapshots': captures, 'inputCount': len(before),
+            'inputBytesPreserved': True, 'overallGreen': result['exitCode'] == 0,
+            'diagnosticHashMethod': 'Exact UTF8 raw byte range after last grouped FAIL header and before separator, trimming blank padding only; header, padding and separator also separately hash-pinned. No diagnostic is borrowed from a later unrelated failure.',
+            **parsed}
+
+
+def compare(base, candidate):
+    old = {f['canonicalId']: f for f in base['failures']}
+    new = {f['canonicalId']: f for f in candidate['failures']}
+    added, removed, identical, changed = [], [], [], []
+    for key in sorted(new.keys() - old.keys()):
+        added.append(new[key])
+    for key in sorted(old.keys() - new.keys()):
+        removed.append(old[key])
+    for key in sorted(new.keys() & old.keys()):
+        if new[key]['diagnostic']['rawSha256'] == old[key]['diagnostic']['rawSha256']:
+            identical.append(key)
+        else:
+            changed.append({'canonicalId': key, 'file': new[key]['file'], 'baseline': old[key], 'candidate': new[key]})
+    complete = base['indexComplete'] and candidate['indexComplete']
+    before, after = load(Path(base['folder'])/'inputs-before.json'), load(Path(candidate['folder'])/'inputs-before.json')
+    return {'schemaVersion': 1, 'scope': 'Measured baseline/candidate comparison only; added/changed failures need actual review, no automatic pre-existing/fixed/environment classification',
+            'comparisonComplete': complete, 'baselineIndexComplete': base['indexComplete'], 'candidateIndexComplete': candidate['indexComplete'],
+            'baselineHead': base['result']['headBefore'], 'candidateHead': candidate['result']['headBefore'],
+            'baselineExitCode': base['result']['exitCode'], 'candidateExitCode': candidate['result']['exitCode'],
+            'overallGreen': candidate['overallGreen'], 'baselineTestFiles': base['testFiles'], 'baselineTests': base['tests'],
+            'candidateTestFiles': candidate['testFiles'], 'candidateTests': candidate['tests'],
+            'addedFailureIdentities': added if complete else None, 'removedFailureIdentities': removed if complete else None,
+            'identicalDiagnosticIdentities': identical if complete else None, 'changedDiagnostics': changed if complete else None,
+            'requiredWholeFileReview': sorted({f['file'] for f in added} | {f['file'] for f in changed}) if complete else None,
+            'betweenRunInputChanges': [{'path': name, 'baselineSha256': before.get(name), 'candidateSha256': after.get(name)} for name in sorted(before.keys()|after.keys()) if before.get(name)!=after.get(name)],
+            'withinEachRunInputsAndSnapshotsPreserved': base['inputBytesPreserved'] and candidate['inputBytesPreserved'],
+            'newOrChangedFailureDisposition': 'unreviewed' if complete else 'comparison-incomplete',
+            'releaseApproved': False}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--candidate', help='Completed run folder label; never executes it')
+    parser.add_argument('--runs-root', type=Path, default=RUNS, help='Candidate run parent; baseline is always the pinned fresh baseline')
+    args = parser.parse_args()
+    baseline = read_run(BASELINE, baseline=True)
+    require(baseline['indexComplete'], 'Fresh baseline index incomplete')
+    baseline_path = HERE/'baseline-normal-verify-index.json'
+    baseline_sha = save_exact_or_new(baseline_path, baseline)
+    proof = {'parserSha256': sha(Path(__file__).read_bytes()), 'baselineIndex': {'path': str(baseline_path), 'sha256': baseline_sha},
+             'baselineSourceProofHashes': baseline['sourceProofHashes'], 'baselineSnapshotProofHashes': baseline['snapshotProofHashes'],
+             'failureHeaders': baseline['failureHeaderCount'], 'diagnosticGroups': baseline['diagnosticGroupCount'],
+             'sharedDiagnosticGroups': baseline['sharedDiagnosticGroups'], 'testFailures': baseline['testFailureHeaders'],
+             'suiteFailures': baseline['suiteFailureHeaders'], 'allNormalStages': baseline['allNormalVerifyStagesPresent'],
+             'overallGreen': baseline['overallGreen'], 'noTestOrRepoMutation': True}
+    save_exact_or_new(HERE/'baseline-index-proof.json', proof)
+    output = {'baselineIndex': str(baseline_path), 'baselineIndexSha256': baseline_sha, 'headers': baseline['failureHeaderCount'],
+              'diagnosticGroups': baseline['diagnosticGroupCount'], 'testFiles': baseline['testFiles'], 'tests': baseline['tests']}
+    if args.candidate:
+        require(re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',args.candidate) and '..' not in args.candidate, 'Unsafe candidate label')
+        folder = args.runs_root.resolve()/args.candidate
+        candidate = read_run(folder)
+        index_path = HERE/f'{args.candidate}-normal-verify-index.json'
+        index_sha = save_exact_or_new(index_path, candidate)
+        comparison = compare(baseline,candidate)
+        comparison['indexes'] = {'baseline': {'path': str(baseline_path), 'sha256': baseline_sha}, 'candidate': {'path': str(index_path), 'sha256': index_sha}}
+        target = HERE/f'{args.candidate}-failure-comparison.json'
+        comparison_sha = save_exact_or_new(target,comparison)
+        output.update({'comparison':str(target),'comparisonSha256':comparison_sha,'comparisonComplete':comparison['comparisonComplete'],
+                       'added':len(comparison['addedFailureIdentities']) if comparison['comparisonComplete'] else None,
+                       'removed':len(comparison['removedFailureIdentities']) if comparison['comparisonComplete'] else None,
+                       'changedDiagnostics':len(comparison['changedDiagnostics']) if comparison['comparisonComplete'] else None,
+                       'candidateOverallGreen':comparison['overallGreen']})
+    print(json.dumps(output,indent=2))
+
+
+if __name__ == '__main__':
+    main()

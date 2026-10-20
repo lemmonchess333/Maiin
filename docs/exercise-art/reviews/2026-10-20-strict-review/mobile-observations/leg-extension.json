@@ -1,0 +1,230 @@
+{
+  "id": "leg-extension",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Leg Extension, Set",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-extension/1.webp",
+              "width": 1319
+            }
+          ],
+          "caption": "Set 1/6",
+          "id": "leg-extension",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Leg Extension, Brace",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-extension/2.webp",
+              "width": 1319
+            }
+          ],
+          "caption": "Brace 2/6",
+          "id": "leg-extension",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Leg Extension, Squeeze",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-extension/3.webp",
+              "width": 1319
+            }
+          ],
+          "caption": "Squeeze 3/6",
+          "id": "leg-extension",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Leg Extension, Hold",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-extension/4.webp",
+              "width": 1319
+            }
+          ],
+          "caption": "Hold 4/6",
+          "id": "leg-extension",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Leg Extension, Return",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-extension/5.webp",
+              "width": 1319
+            }
+          ],
+          "caption": "Return 5/6",
+          "id": "leg-extension",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Leg Extension, Reset",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-extension/6.webp",
+              "width": 1319
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "leg-extension",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 85,\n    \"alt\": \"Leg Extension, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1205,\n    \"alt\": \"Leg Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1842,\n    \"alt\": \"Leg Extension, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2406,\n    \"alt\": \"Leg Extension, Hold\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2964,\n    \"alt\": \"Leg Extension, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3521,\n    \"alt\": \"Leg Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5122,\n    \"alt\": \"Leg Extension, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Leg Extension, Brace",
+            "decoded": true,
+            "height": 1056,
+            "src": "/Maiin/.strict33.local/candidate/leg-extension/2.webp",
+            "width": 1319
+          }
+        ],
+        "caption": "Brace 2/6",
+        "id": "leg-extension",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / leg-extension\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nLeg Extension\nLegs\nMachine\n\nBRACE 2/6\n\nPause\nNormal\nPRIMARY\nQuads\nSECONDARY\nHip Flexors\n\nInstructions\n\nPreparation: Sit in the machine, adjust the pad so it sits on your shins, just above the ankle.\n\n1\n\nKeep your back supported and hips seated.\n\n2\n\nBrace your torso and grip the handles.\n\n3\n\nStraighten your legs and squeeze your quads.\n\n4\n\nKeep your hips down and hands gripping.\n\n5\n\nBend your knees slowly; control the resistance.\n\n6\n\nReturn to bent knees without losing control.\n\nWatch out\n\nSlamming to lockout and dropping the weight. Squeeze for a beat at the top, then lower under control.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 85,\n    \"alt\": \"Leg Extension, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1205,\n    \"alt\": \"Leg Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1842,\n    \"alt\": \"Leg Extension, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2406,\n    \"alt\": \"Leg Extension, Hold\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2964,\n    \"alt\": \"Leg Extension, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3521,\n    \"alt\": \"Leg Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5122,\n    \"alt\": \"Leg Extension, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6642,\n    \"alt\": \"Leg Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7842,\n    \"alt\": \"Leg Extension, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9042,\n    \"alt\": \"Leg Extension, Hold\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10241,\n    \"alt\": \"Leg Extension, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11521,\n    \"alt\": \"Leg Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12721,\n    \"alt\": \"Leg Extension, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13921,\n    \"alt\": \"Leg Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Leg Extension, Set",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-extension/1.webp",
+              "width": 1319
+            }
+          ],
+          "caption": "Set 1/6",
+          "id": "leg-extension",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Leg Extension, Brace",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-extension/2.webp",
+              "width": 1319
+            }
+          ],
+          "caption": "Brace 2/6",
+          "id": "leg-extension",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Leg Extension, Squeeze",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-extension/3.webp",
+              "width": 1319
+            }
+          ],
+          "caption": "Squeeze 3/6",
+          "id": "leg-extension",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Leg Extension, Hold",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-extension/4.webp",
+              "width": 1319
+            }
+          ],
+          "caption": "Hold 4/6",
+          "id": "leg-extension",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Leg Extension, Return",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-extension/5.webp",
+              "width": 1319
+            }
+          ],
+          "caption": "Return 5/6",
+          "id": "leg-extension",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Leg Extension, Reset",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-extension/6.webp",
+              "width": 1319
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "leg-extension",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 85,\n    \"alt\": \"Leg Extension, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1205,\n    \"alt\": \"Leg Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1842,\n    \"alt\": \"Leg Extension, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2406,\n    \"alt\": \"Leg Extension, Hold\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2964,\n    \"alt\": \"Leg Extension, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3521,\n    \"alt\": \"Leg Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5122,\n    \"alt\": \"Leg Extension, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6642,\n    \"alt\": \"Leg Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7842,\n    \"alt\": \"Leg Extension, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9042,\n    \"alt\": \"Leg Extension, Hold\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10241,\n    \"alt\": \"Leg Extension, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11521,\n    \"alt\": \"Leg Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12721,\n    \"alt\": \"Leg Extension, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13921,\n    \"alt\": \"Leg Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15122,\n    \"alt\": \"Leg Extension, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15608,\n    \"alt\": \"Leg Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16167,\n    \"alt\": \"Leg Extension, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16805,\n    \"alt\": \"Leg Extension, Hold\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17362,\n    \"alt\": \"Leg Extension, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17921,\n    \"alt\": \"Leg Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19529,\n    \"alt\": \"Leg Extension, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Leg Extension, Brace",
+            "decoded": true,
+            "height": 1056,
+            "src": "/Maiin/.strict33.local/candidate/leg-extension/2.webp",
+            "width": 1319
+          }
+        ],
+        "caption": "Brace 2/6",
+        "id": "leg-extension",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / leg-extension\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nLeg Extension\nLegs\nMachine\n\nBRACE 2/6\n\nPause\nNormal\nPRIMARY\nQuads\nSECONDARY\nHip Flexors\n\nInstructions\n\nPreparation: Sit in the machine, adjust the pad so it sits on your shins, just above the ankle.\n\n1\n\nKeep your back supported and hips seated.\n\n2\n\nBrace your torso and grip the handles.\n\n3\n\nStraighten your legs and squeeze your quads.\n\n4\n\nKeep your hips down and hands gripping.\n\n5\n\nBend your knees slowly; control the resistance.\n\n6\n\nReturn to bent knees without losing control.\n\nWatch out\n\nSlamming to lockout and dropping the weight. Squeeze for a beat at the top, then lower under control.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 85,\n    \"alt\": \"Leg Extension, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1205,\n    \"alt\": \"Leg Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1842,\n    \"alt\": \"Leg Extension, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2406,\n    \"alt\": \"Leg Extension, Hold\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2964,\n    \"alt\": \"Leg Extension, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3521,\n    \"alt\": \"Leg Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5122,\n    \"alt\": \"Leg Extension, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6642,\n    \"alt\": \"Leg Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7842,\n    \"alt\": \"Leg Extension, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9042,\n    \"alt\": \"Leg Extension, Hold\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10241,\n    \"alt\": \"Leg Extension, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11521,\n    \"alt\": \"Leg Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12721,\n    \"alt\": \"Leg Extension, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13921,\n    \"alt\": \"Leg Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15122,\n    \"alt\": \"Leg Extension, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15608,\n    \"alt\": \"Leg Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16167,\n    \"alt\": \"Leg Extension, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16805,\n    \"alt\": \"Leg Extension, Hold\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17362,\n    \"alt\": \"Leg Extension, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17921,\n    \"alt\": \"Leg Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19529,\n    \"alt\": \"Leg Extension, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21041,\n    \"alt\": \"Leg Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22241,\n    \"alt\": \"Leg Extension, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23442,\n    \"alt\": \"Leg Extension, Hold\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24722,\n    \"alt\": \"Leg Extension, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25921,\n    \"alt\": \"Leg Extension, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27120,\n    \"alt\": \"Leg Extension, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28320,\n    \"alt\": \"Leg Extension, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-extension/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

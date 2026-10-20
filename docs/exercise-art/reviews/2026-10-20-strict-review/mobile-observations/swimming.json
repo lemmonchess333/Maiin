@@ -1,0 +1,230 @@
+{
+  "id": "swimming",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Swimming, Catch",
+              "decoded": true,
+              "height": 848,
+              "src": "/Maiin/.strict33.local/candidate/swimming/1.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Catch 1/6",
+          "id": "swimming",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Swimming, Pull",
+              "decoded": true,
+              "height": 848,
+              "src": "/Maiin/.strict33.local/candidate/swimming/2.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Pull 2/6",
+          "id": "swimming",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Swimming, Breathe",
+              "decoded": true,
+              "height": 848,
+              "src": "/Maiin/.strict33.local/candidate/swimming/3.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Breathe 3/6",
+          "id": "swimming",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Swimming, Switch",
+              "decoded": true,
+              "height": 848,
+              "src": "/Maiin/.strict33.local/candidate/swimming/4.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Switch 4/6",
+          "id": "swimming",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Swimming, Drive",
+              "decoded": true,
+              "height": 848,
+              "src": "/Maiin/.strict33.local/candidate/swimming/5.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Drive 5/6",
+          "id": "swimming",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Swimming, Enter",
+              "decoded": true,
+              "height": 848,
+              "src": "/Maiin/.strict33.local/candidate/swimming/6.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Enter 6/6",
+          "id": "swimming",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Swimming, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1203,\n    \"alt\": \"Swimming, Pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1761,\n    \"alt\": \"Swimming, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2321,\n    \"alt\": \"Swimming, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2882,\n    \"alt\": \"Swimming, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3442,\n    \"alt\": \"Swimming, Enter\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5121,\n    \"alt\": \"Swimming, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Swimming, Pull",
+            "decoded": true,
+            "height": 848,
+            "src": "/Maiin/.strict33.local/candidate/swimming/2.webp",
+            "width": 1264
+          }
+        ],
+        "caption": "Pull 2/6",
+        "id": "swimming",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / swimming\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nSwimming\nCardio\nPool\n\nPULL 2/6\n\nPause\nNormal\nPRIMARY\nLats, Shoulders, Triceps\nSECONDARY\nCore, Glutes, Quads\n\nInstructions\n\nPreparation: Push off the wall in a long, flat line. Swim an easy length first to settle your breathing.\n\n1\n\nReach long and catch the water.\n\n2\n\nPull under your body, elbow high.\n\n3\n\nRoll and breathe as the arm enters.\n\n4\n\nCatch with the other arm, face down.\n\n5\n\nPull through; keep your hips high.\n\n6\n\nEnter fingertips first; kick small and steady.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Swimming, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1203,\n    \"alt\": \"Swimming, Pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1761,\n    \"alt\": \"Swimming, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2321,\n    \"alt\": \"Swimming, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2882,\n    \"alt\": \"Swimming, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3442,\n    \"alt\": \"Swimming, Enter\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5121,\n    \"alt\": \"Swimming, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6645,\n    \"alt\": \"Swimming, Pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Swimming, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9120,\n    \"alt\": \"Swimming, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10325,\n    \"alt\": \"Swimming, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11525,\n    \"alt\": \"Swimming, Enter\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12725,\n    \"alt\": \"Swimming, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13925,\n    \"alt\": \"Swimming, Pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Swimming, Catch",
+              "decoded": true,
+              "height": 848,
+              "src": "/Maiin/.strict33.local/candidate/swimming/1.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Catch 1/6",
+          "id": "swimming",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Swimming, Pull",
+              "decoded": true,
+              "height": 848,
+              "src": "/Maiin/.strict33.local/candidate/swimming/2.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Pull 2/6",
+          "id": "swimming",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Swimming, Breathe",
+              "decoded": true,
+              "height": 848,
+              "src": "/Maiin/.strict33.local/candidate/swimming/3.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Breathe 3/6",
+          "id": "swimming",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Swimming, Switch",
+              "decoded": true,
+              "height": 848,
+              "src": "/Maiin/.strict33.local/candidate/swimming/4.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Switch 4/6",
+          "id": "swimming",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Swimming, Drive",
+              "decoded": true,
+              "height": 848,
+              "src": "/Maiin/.strict33.local/candidate/swimming/5.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Drive 5/6",
+          "id": "swimming",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Swimming, Enter",
+              "decoded": true,
+              "height": 848,
+              "src": "/Maiin/.strict33.local/candidate/swimming/6.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Enter 6/6",
+          "id": "swimming",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Swimming, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1203,\n    \"alt\": \"Swimming, Pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1761,\n    \"alt\": \"Swimming, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2321,\n    \"alt\": \"Swimming, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2882,\n    \"alt\": \"Swimming, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3442,\n    \"alt\": \"Swimming, Enter\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5121,\n    \"alt\": \"Swimming, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6645,\n    \"alt\": \"Swimming, Pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Swimming, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9120,\n    \"alt\": \"Swimming, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10325,\n    \"alt\": \"Swimming, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11525,\n    \"alt\": \"Swimming, Enter\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12725,\n    \"alt\": \"Swimming, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13925,\n    \"alt\": \"Swimming, Pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15043,\n    \"alt\": \"Swimming, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15682,\n    \"alt\": \"Swimming, Pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16246,\n    \"alt\": \"Swimming, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16803,\n    \"alt\": \"Swimming, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17361,\n    \"alt\": \"Swimming, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17921,\n    \"alt\": \"Swimming, Enter\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19602,\n    \"alt\": \"Swimming, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Swimming, Pull",
+            "decoded": true,
+            "height": 848,
+            "src": "/Maiin/.strict33.local/candidate/swimming/2.webp",
+            "width": 1264
+          }
+        ],
+        "caption": "Pull 2/6",
+        "id": "swimming",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / swimming\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nSwimming\nCardio\nPool\n\nPULL 2/6\n\nPause\nNormal\nPRIMARY\nLats, Shoulders, Triceps\nSECONDARY\nCore, Glutes, Quads\n\nInstructions\n\nPreparation: Push off the wall in a long, flat line. Swim an easy length first to settle your breathing.\n\n1\n\nReach long and catch the water.\n\n2\n\nPull under your body, elbow high.\n\n3\n\nRoll and breathe as the arm enters.\n\n4\n\nCatch with the other arm, face down.\n\n5\n\nPull through; keep your hips high.\n\n6\n\nEnter fingertips first; kick small and steady.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Swimming, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1203,\n    \"alt\": \"Swimming, Pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1761,\n    \"alt\": \"Swimming, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2321,\n    \"alt\": \"Swimming, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2882,\n    \"alt\": \"Swimming, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3442,\n    \"alt\": \"Swimming, Enter\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5121,\n    \"alt\": \"Swimming, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6645,\n    \"alt\": \"Swimming, Pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Swimming, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9120,\n    \"alt\": \"Swimming, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10325,\n    \"alt\": \"Swimming, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11525,\n    \"alt\": \"Swimming, Enter\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12725,\n    \"alt\": \"Swimming, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13925,\n    \"alt\": \"Swimming, Pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15043,\n    \"alt\": \"Swimming, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15682,\n    \"alt\": \"Swimming, Pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16246,\n    \"alt\": \"Swimming, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16803,\n    \"alt\": \"Swimming, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17361,\n    \"alt\": \"Swimming, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17921,\n    \"alt\": \"Swimming, Enter\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19602,\n    \"alt\": \"Swimming, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21121,\n    \"alt\": \"Swimming, Pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22323,\n    \"alt\": \"Swimming, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23524,\n    \"alt\": \"Swimming, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24724,\n    \"alt\": \"Swimming, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25924,\n    \"alt\": \"Swimming, Enter\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27124,\n    \"alt\": \"Swimming, Catch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28325,\n    \"alt\": \"Swimming, Pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/swimming/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

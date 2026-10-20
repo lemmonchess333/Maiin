@@ -1,0 +1,162 @@
+{
+  "exerciseId": "barbell-curl",
+  "version": "anatomy-v3-2026-10-19-native-followup-v1",
+  "width": 1024,
+  "height": 1536,
+  "reference": {
+    "path": "form-frames/barbell-curl/1.webp",
+    "sha256": "c90649761627eaaa6da742d67cd8d3873817409b44890b975ed79ac9d4995e2f"
+  },
+  "cueSha256": "be3c8aab267aaf3ff369ada3e64af668f4c366b0988bcedae25bf871e2671a75",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:52.325334+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 1px; independent invariant dimensions maximum relative drift 0.008888889. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Both elbows flex without a torso swing; wrists/grips stay connected and planted feet stable. Earlier plate corrections are retained. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One modest cast plate per end, compact collars and one continuous grey shaft. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both elbows flex without a torso swing; wrists/grips stay connected and planted feet stable. Earlier plate corrections are retained. Actual named native supports are measured in all six frames: leftImageSupportLowestContourMidpoint, rightImageSupportLowestContourMidpoint. Maximum axis drift 1px. Dimensions: leftImageSupportProjectedHorizontalSpan, rightImageSupportProjectedHorizontalSpan; max 0.88889%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Both elbows flex without a torso swing; wrists/grips stay connected and planted feet stable. Earlier plate corrections are retained. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary biceps #7B72E9; secondary brachialis, brachioradialis #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Start: Hold the bar with an underhand grip. / Initiate curl: Curl without swinging your upper arms. / Mid curl: Keep elbows beside ribs and wrists straight. / Top curl: Finish the curl without lifting your elbows. / Controlled lower: Lower the bar slowly under control. / Return: Return towards straight arms without bouncing.. Preparation remains null. Both elbows flex without a torso swing; wrists/grips stay connected and planted feet stable. Earlier plate corrections are retained."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Both elbows flex without a torso swing; wrists/grips stay connected and planted feet stable. Earlier plate corrections are retained. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-19-remaining33-batch1/barbell-curl.json (sha256 e0648ec44a7c93a4eaa93b82e063320e75b5004c034d34898508e75e688b052d). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-19-remaining33-batch1/barbell-curl.json (sha256 e0648ec44a7c93a4eaa93b82e063320e75b5004c034d34898508e75e688b052d). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/barbell-curl/1.webp",
+      "sha256": "c90649761627eaaa6da742d67cd8d3873817409b44890b975ed79ac9d4995e2f",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 338, "y": 1418 },
+        "rightImageSupportLowestContourMidpoint": { "x": 576, "y": 1479 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 225,
+        "rightImageSupportProjectedHorizontalSpan": 184
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/2.webp",
+      "sha256": "9d4bfcdb02a7d35404532ecb9d798b9ee17a220ba8b348a32fa062a4583e496c",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 338.5, "y": 1418 },
+        "rightImageSupportLowestContourMidpoint": { "x": 575.5, "y": 1479 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 223,
+        "rightImageSupportProjectedHorizontalSpan": 184
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/3.webp",
+      "sha256": "86f3d5a68c5779a0948940d1d83daff6858ed2bac4bfc0da7ae734919fdb6c10",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 337.5, "y": 1419 },
+        "rightImageSupportLowestContourMidpoint": { "x": 576, "y": 1479 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 224,
+        "rightImageSupportProjectedHorizontalSpan": 184
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/4.webp",
+      "sha256": "4da03f12f518a7961d6ce0a903431ef6647444455795d4da920b476447c1f014",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 337.5, "y": 1419 },
+        "rightImageSupportLowestContourMidpoint": { "x": 575.5, "y": 1479 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 224,
+        "rightImageSupportProjectedHorizontalSpan": 183
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/5.webp",
+      "sha256": "86f3d5a68c5779a0948940d1d83daff6858ed2bac4bfc0da7ae734919fdb6c10",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 337.5, "y": 1419 },
+        "rightImageSupportLowestContourMidpoint": { "x": 576, "y": 1479 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 224,
+        "rightImageSupportProjectedHorizontalSpan": 184
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/6.webp",
+      "sha256": "9d4bfcdb02a7d35404532ecb9d798b9ee17a220ba8b348a32fa062a4583e496c",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 338.5, "y": 1418 },
+        "rightImageSupportLowestContourMidpoint": { "x": 575.5, "y": 1479 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 223,
+        "rightImageSupportProjectedHorizontalSpan": 184
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maxAnchorAxisDriftPx": 1,
+    "maxInvariantRelativeDrift": 0.008888888888888835,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-19-remaining33-batch1/barbell-curl.json",
+    "sha256": "e0648ec44a7c93a4eaa93b82e063320e75b5004c034d34898508e75e688b052d"
+  },
+  "historicalFindings": [
+    "Same original athlete and grips. Reuse native reference equipment at integer offsets; rigid modest plate/collar/sleeve geometry no longer shrinks through the curl.",
+    "Existing discrete source poses and minor inherited source contour/projection differences remain qualitative. This scoped correction does not claim calibrated3D or blanket strict certification."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/barbell-curl.json",
+    "sha256": "26d8cfba8e11b507528c093190c685dca00e263e341dab8081469090d2130911"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false
+}

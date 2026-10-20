@@ -1,0 +1,29 @@
+{
+  "status": "Lu Raise strict approval held following direct owner feedback",
+  "references": [
+    {
+      "url": "https://www.youtube.com/watch?v=J7zEP4WujbQ",
+      "title": "LU Raises (Lateral Raises) | LU Xiaojun training during AWC2020",
+      "channel": "LUXIAOJUN SPORT",
+      "observed": "Actual paused video frames at 0, 3.992 and 5 seconds reviewed. Plates rise outward through overhead range with long arms; shoulders rotate upward. This is a motion reference, not our athlete/style/equipment reference."
+    },
+    {
+      "url": "https://www.catalystathletics.com/exercise/865/Overhead-Lateral-Raise/",
+      "video": "https://www.youtube.com/watch?v=gHamzNksScE",
+      "observed": "Primary coaching description names this AKA Lu Raise; arms stay close to straight, weights move out to sides then overhead, arms externally rotate naturally, palms face more forward at top, controlled return."
+    }
+  ],
+  "confirmedCurrentDefects": [
+    "The existing top drawing stops in a broad high V instead of the fuller overhead endpoint required by the catalogue and demonstration.",
+    "Owner rejects the existing illustration style. The replacement is to use canonical FA56 directly and consistently through all poses, rather than mixing the existing old and new sources.",
+    "Current top colour fields read mainly at inner shoulder/upper-arm surfaces; redraw actual deltoid-cap highlights with inherited contours and source shading."
+  ],
+  "preserve": [
+    "canonical FA56 identity/proportions/trainers",
+    "primary #7B72E9",
+    "secondary #9590E0",
+    "smooth featureless pelvis, no shorts",
+    "native grey compact dumbbells",
+    "no anatomical warping, per-limb fitting or head/shoe grafts"
+  ]
+}

@@ -1,0 +1,230 @@
+{
+  "id": "barbell-row",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Barbell Row, Hang",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/barbell-row/1.webp",
+              "width": 1140
+            }
+          ],
+          "caption": "Hang 1/6",
+          "id": "barbell-row",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Barbell Row, Initiate pull",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/barbell-row/2.webp",
+              "width": 1140
+            }
+          ],
+          "caption": "Initiate pull 2/6",
+          "id": "barbell-row",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Barbell Row, Continue pull",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/barbell-row/3.webp",
+              "width": 1140
+            }
+          ],
+          "caption": "Continue pull 3/6",
+          "id": "barbell-row",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Barbell Row, Top contraction",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/barbell-row/4.webp",
+              "width": 1140
+            }
+          ],
+          "caption": "Top contraction 4/6",
+          "id": "barbell-row",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Barbell Row, Lower",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/barbell-row/5.webp",
+              "width": 1140
+            }
+          ],
+          "caption": "Lower 5/6",
+          "id": "barbell-row",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Barbell Row, Full stretch",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/barbell-row/6.webp",
+              "width": 1140
+            }
+          ],
+          "caption": "Full stretch 6/6",
+          "id": "barbell-row",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Barbell Row, Hang\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2007,\n    \"alt\": \"Barbell Row, Initiate pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2562,\n    \"alt\": \"Barbell Row, Continue pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3201,\n    \"alt\": \"Barbell Row, Top contraction\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3766,\n    \"alt\": \"Barbell Row, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 4404,\n    \"alt\": \"Barbell Row, Full stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/6.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Barbell Row, Initiate pull",
+            "decoded": true,
+            "height": 1024,
+            "src": "/Maiin/.strict33.local/candidate/barbell-row/2.webp",
+            "width": 1140
+          }
+        ],
+        "caption": "Initiate pull 2/6",
+        "id": "barbell-row",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / barbell-row\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nBarbell Row\nBack\nBarbell\n\nINITIATE PULL 2/6\n\nPause\nNormal\nPRIMARY\nLats\nSECONDARY\nRhomboids, Rear Deltoids, Biceps\n\nInstructions\n\nPreparation: Hinge at the hips with soft knees and a neutral back. Hold the bar overhand outside the knees, with plates clear of the floor.\n\n1\n\nHinge steady; arms hang below shoulders.\n\n2\n\nBend elbows; keep both wrists straight.\n\n3\n\nDrive elbows back beside the torso.\n\n4\n\nBring the bar to lower ribs.\n\n5\n\nLower smoothly; maintain the hip hinge.\n\n6\n\nArms extend; plates stay off floor.\n\nWatch out\n\nIf your torso keeps rising to yank the bar up, you're cheating with leg drive. Lock the hinge or drop weight — standing reps train traps, not lats.\n\nCOMMON MISTAKES\n\nStanding up through the pull so the torso angle changes rep to rep.\nRounding the lower back to reach the bar at the bottom.\nYanking with the arms before the shoulder blades have started to pull.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Barbell Row, Hang\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2007,\n    \"alt\": \"Barbell Row, Initiate pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2562,\n    \"alt\": \"Barbell Row, Continue pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3201,\n    \"alt\": \"Barbell Row, Top contraction\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3766,\n    \"alt\": \"Barbell Row, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 4404,\n    \"alt\": \"Barbell Row, Full stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6084,\n    \"alt\": \"Barbell Row, Hang\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7525,\n    \"alt\": \"Barbell Row, Initiate pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 8724,\n    \"alt\": \"Barbell Row, Continue pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9923,\n    \"alt\": \"Barbell Row, Top contraction\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11203,\n    \"alt\": \"Barbell Row, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12403,\n    \"alt\": \"Barbell Row, Full stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13603,\n    \"alt\": \"Barbell Row, Hang\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 14803,\n    \"alt\": \"Barbell Row, Initiate pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Barbell Row, Hang",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/barbell-row/1.webp",
+              "width": 1140
+            }
+          ],
+          "caption": "Hang 1/6",
+          "id": "barbell-row",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Barbell Row, Initiate pull",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/barbell-row/2.webp",
+              "width": 1140
+            }
+          ],
+          "caption": "Initiate pull 2/6",
+          "id": "barbell-row",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Barbell Row, Continue pull",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/barbell-row/3.webp",
+              "width": 1140
+            }
+          ],
+          "caption": "Continue pull 3/6",
+          "id": "barbell-row",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Barbell Row, Top contraction",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/barbell-row/4.webp",
+              "width": 1140
+            }
+          ],
+          "caption": "Top contraction 4/6",
+          "id": "barbell-row",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Barbell Row, Lower",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/barbell-row/5.webp",
+              "width": 1140
+            }
+          ],
+          "caption": "Lower 5/6",
+          "id": "barbell-row",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Barbell Row, Full stretch",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/barbell-row/6.webp",
+              "width": 1140
+            }
+          ],
+          "caption": "Full stretch 6/6",
+          "id": "barbell-row",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Barbell Row, Hang\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2007,\n    \"alt\": \"Barbell Row, Initiate pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2562,\n    \"alt\": \"Barbell Row, Continue pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3201,\n    \"alt\": \"Barbell Row, Top contraction\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3766,\n    \"alt\": \"Barbell Row, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 4404,\n    \"alt\": \"Barbell Row, Full stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6084,\n    \"alt\": \"Barbell Row, Hang\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7525,\n    \"alt\": \"Barbell Row, Initiate pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 8724,\n    \"alt\": \"Barbell Row, Continue pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9923,\n    \"alt\": \"Barbell Row, Top contraction\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11203,\n    \"alt\": \"Barbell Row, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12403,\n    \"alt\": \"Barbell Row, Full stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13603,\n    \"alt\": \"Barbell Row, Hang\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 14803,\n    \"alt\": \"Barbell Row, Initiate pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16004,\n    \"alt\": \"Barbell Row, Hang\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16562,\n    \"alt\": \"Barbell Row, Initiate pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17124,\n    \"alt\": \"Barbell Row, Continue pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17692,\n    \"alt\": \"Barbell Row, Top contraction\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18325,\n    \"alt\": \"Barbell Row, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18883,\n    \"alt\": \"Barbell Row, Full stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/6.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Barbell Row, Initiate pull",
+            "decoded": true,
+            "height": 1024,
+            "src": "/Maiin/.strict33.local/candidate/barbell-row/2.webp",
+            "width": 1140
+          }
+        ],
+        "caption": "Initiate pull 2/6",
+        "id": "barbell-row",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / barbell-row\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nBarbell Row\nBack\nBarbell\n\nINITIATE PULL 2/6\n\nPause\nNormal\nPRIMARY\nLats\nSECONDARY\nRhomboids, Rear Deltoids, Biceps\n\nInstructions\n\nPreparation: Hinge at the hips with soft knees and a neutral back. Hold the bar overhand outside the knees, with plates clear of the floor.\n\n1\n\nHinge steady; arms hang below shoulders.\n\n2\n\nBend elbows; keep both wrists straight.\n\n3\n\nDrive elbows back beside the torso.\n\n4\n\nBring the bar to lower ribs.\n\n5\n\nLower smoothly; maintain the hip hinge.\n\n6\n\nArms extend; plates stay off floor.\n\nWatch out\n\nIf your torso keeps rising to yank the bar up, you're cheating with leg drive. Lock the hinge or drop weight — standing reps train traps, not lats.\n\nCOMMON MISTAKES\n\nStanding up through the pull so the torso angle changes rep to rep.\nRounding the lower back to reach the bar at the bottom.\nYanking with the arms before the shoulder blades have started to pull.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 82,\n    \"alt\": \"Barbell Row, Hang\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2007,\n    \"alt\": \"Barbell Row, Initiate pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2562,\n    \"alt\": \"Barbell Row, Continue pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3201,\n    \"alt\": \"Barbell Row, Top contraction\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3766,\n    \"alt\": \"Barbell Row, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 4404,\n    \"alt\": \"Barbell Row, Full stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6084,\n    \"alt\": \"Barbell Row, Hang\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7525,\n    \"alt\": \"Barbell Row, Initiate pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 8724,\n    \"alt\": \"Barbell Row, Continue pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9923,\n    \"alt\": \"Barbell Row, Top contraction\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11203,\n    \"alt\": \"Barbell Row, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12403,\n    \"alt\": \"Barbell Row, Full stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13603,\n    \"alt\": \"Barbell Row, Hang\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 14803,\n    \"alt\": \"Barbell Row, Initiate pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16004,\n    \"alt\": \"Barbell Row, Hang\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16562,\n    \"alt\": \"Barbell Row, Initiate pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17124,\n    \"alt\": \"Barbell Row, Continue pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17692,\n    \"alt\": \"Barbell Row, Top contraction\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18325,\n    \"alt\": \"Barbell Row, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18883,\n    \"alt\": \"Barbell Row, Full stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 20561,\n    \"alt\": \"Barbell Row, Hang\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21925,\n    \"alt\": \"Barbell Row, Initiate pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23124,\n    \"alt\": \"Barbell Row, Continue pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24320,\n    \"alt\": \"Barbell Row, Top contraction\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25603,\n    \"alt\": \"Barbell Row, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 26803,\n    \"alt\": \"Barbell Row, Full stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28003,\n    \"alt\": \"Barbell Row, Hang\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 29205,\n    \"alt\": \"Barbell Row, Initiate pull\",\n    \"src\": \"/Maiin/.strict33.local/candidate/barbell-row/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

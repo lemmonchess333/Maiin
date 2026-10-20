@@ -1,0 +1,217 @@
+{
+  "exerciseId": "lu-raise",
+  "version": "anatomy-v3-2026-10-20-lu-fa56-full-overhead-v1",
+  "width": 993,
+  "height": 1374,
+  "frames": [
+    {
+      "path": "form-frames/lu-raise/1.webp",
+      "sha256": "b6c3499e5ba03e9c4752b6518b3bc3d33bde18078f906a7ee6877d9f07c1d947",
+      "anchors": {
+        "farPlantedHeelMaterialFeature": { "x": 466, "y": 1248 },
+        "nearPlantedHeelMaterialFeature": { "x": 622, "y": 1281 }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelSpan": 168.1814496310458,
+        "nearTrainerToeHeelSpan": 139.17614738165446
+      }
+    },
+    {
+      "path": "form-frames/lu-raise/2.webp",
+      "sha256": "20027691446c265af027ddc2737fff1243f889ab6a2ffd2f7503393f822c12fa",
+      "anchors": {
+        "farPlantedHeelMaterialFeature": { "x": 467, "y": 1247 },
+        "nearPlantedHeelMaterialFeature": { "x": 622, "y": 1281 }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelSpan": 169.33103672983285,
+        "nearTrainerToeHeelSpan": 140.13208055259867
+      }
+    },
+    {
+      "path": "form-frames/lu-raise/3.webp",
+      "sha256": "3c7ad7fdfa6ebb93580cfbf5dc4231dd1e1d69b1e2f393cca2613abc761ab9d6",
+      "anchors": {
+        "farPlantedHeelMaterialFeature": { "x": 467, "y": 1248 },
+        "nearPlantedHeelMaterialFeature": { "x": 623, "y": 1282 }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelSpan": 169.33103672983285,
+        "nearTrainerToeHeelSpan": 140.13208055259867
+      }
+    },
+    {
+      "path": "form-frames/lu-raise/4.webp",
+      "sha256": "791f568184a3fbfa56b9e18e5e398bec9599b80a0abf527d48b6050674744ec2",
+      "anchors": {
+        "farPlantedHeelMaterialFeature": { "x": 466, "y": 1248 },
+        "nearPlantedHeelMaterialFeature": { "x": 621, "y": 1282 }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelSpan": 169.33103672983285,
+        "nearTrainerToeHeelSpan": 139.17614738165446
+      }
+    },
+    {
+      "path": "form-frames/lu-raise/5.webp",
+      "sha256": "3c7ad7fdfa6ebb93580cfbf5dc4231dd1e1d69b1e2f393cca2613abc761ab9d6",
+      "anchors": {
+        "farPlantedHeelMaterialFeature": { "x": 467, "y": 1248 },
+        "nearPlantedHeelMaterialFeature": { "x": 623, "y": 1282 }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelSpan": 169.33103672983285,
+        "nearTrainerToeHeelSpan": 140.13208055259867
+      }
+    },
+    {
+      "path": "form-frames/lu-raise/6.webp",
+      "sha256": "20027691446c265af027ddc2737fff1243f889ab6a2ffd2f7503393f822c12fa",
+      "anchors": {
+        "farPlantedHeelMaterialFeature": { "x": 467, "y": 1247 },
+        "nearPlantedHeelMaterialFeature": { "x": 622, "y": 1281 }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelSpan": 169.33103672983285,
+        "nearTrainerToeHeelSpan": 140.13208055259867
+      }
+    }
+  ],
+  "reference": {
+    "path": "form-frames/lu-raise/4.webp",
+    "sha256": "791f568184a3fbfa56b9e18e5e398bec9599b80a0abf527d48b6050674744ec2"
+  },
+  "cueSha256": "5ee554c9997f8d932535674459a491f3b045df2ab5f8d13f7f257025dc827777",
+  "decision": "approved",
+  "reviewer": "Codex native canonical-reference and actual registered mobile visual review",
+  "reviewedAt": "2026-10-20T11:38:51.099254+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Four newly image-authored intact poses were visually compared to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless pale lean anatomy athlete, smooth featureless pelvis, no shorts, fine grey contours, inherited source shading and original white trainers. This supersedes the owner-rejected old Lu sequence; no old Lu body region is reused."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "All four complete poses share a 993x1374 common crop. Preview zoom is undone uniformly; only B receives one uniform whole-source camera refinement. Two actual planted heel material features drift at most 1px per axis; independent toe-to-heel trainer spans drift at most 0.686852%. No padding/canvas landmarks or individual limb fitting."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native complete A/B/C/D drawings and actual mobile player inspected: both continuous arm chains sweep outward through lateral positions to almost vertical beside the ears. Elbows remain softly bent; head, torso, stance and pelvis remain coherent. No detached/duplicated body parts, anatomical warping, composites, or head/shoe grafts. Small illustrative contour differences remain."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two compact ordinary grey hex dumbbells stay in both closed grips throughout. Shaft, end masses and hand contacts remain connected. Rotating dumbbell projections are reviewed visually rather than misused as fixed scene dimensions."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both complete trainers stay planted. Raw native heel material patches and independent toe-to-heel spans were inspected and measured in each of four physical poses, then bound to their six playing slots. Maximum anchor axis drift 1px; maximum invariant relative drift 0.0068685129523151645."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Movement was checked against Lu Xiaojun primary YouTube footage J7zEP4WujbQ at starting/lateral/overhead phases and Catalyst Athletics overhead lateral raise coaching text. Lu demonstrates plates; this is the catalogue dumbbell variation. Both arms raise outward then overhead with natural shoulder/scapular rotation and a fixed soft elbow bend; no press or backward torso swing. Controlled return reverses the outward arc."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Visible deltoid caps use primary #7B72E9; upper trapezius uses secondary #9590E0, matching the catalogue and live legend. Finishing changes only pre-existing violet source pigment and preserves inherited pixel lightness, shading and neutral contours; no new gradient. Occluded surfaces are not painted through the body."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "The exact new six bound cues match the actual drawings: Start: Stand tall, weights at your sides. / Raise laterally: Raise outward; keep elbows softly fixed. / Shoulder height: Pass shoulder height with thumbs up. / Reach overhead: Reach overhead without leaning back. / Lower laterally: Lower out to shoulder height under control. / Lower: Lower steadily; continue to your sides.. New preparation describes light dumbbells, comfortable outward plane, soft elbows and natural rotation overhead. Catalogue exercise remains Lu Raise with dumbbells."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Six playing slots A/B/C/D/C/B show four genuine complete native poses. All six current public frames decoded at 993x1374 in actual production ExerciseFormContent at 390x844 in both themes. Timed cycles, 6-to-1 loop and both manual wraps were observed. Return at shoulder height mirrors outbound; the final lower diagonal returns to sides. No continuous anatomical interpolation is asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current public registered guide, captions, preparation and Deltoids/Traps legend inspected at 390x844 in light mode. All six decoded current frames and timed/manual loop observations retained. Actual production ExerciseThumb in all three normal sizes uses /form-art/lu-raise.webp from current overhead frame4; no generic fallback. Settled separate-call stage/card captures reviewed. Tiny white contours retain the established light-card low contrast."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current public registered guide, captions, preparation and Deltoids/Traps legend inspected at 390x844 in dark mode. All six decoded current frames and timed/manual loop observations retained. Actual production ExerciseThumb in all three normal sizes uses /form-art/lu-raise.webp from current overhead frame4; no generic fallback. Settled separate-call stage/card captures reviewed."
+    }
+  },
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Manually scoped actual native material features, 25x25 raw RGB patch correlation and independent toe-to-heel spans; whole-source uniform camera framing only.",
+    "maxAnchorAxisDriftPx": 1,
+    "maxInvariantRelativeDrift": 0.0068685129523151645,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/final-native-proof.json"
+  },
+  "nativeSourceArchive": {
+    "path": "docs/exercise-art/sources/lu-raise/2026-10-20-strict-review/native-source.zip",
+    "sha256": "08adae3585e8b103d34e7258e7ea4c236e61957126a71ab541c33213ba1714cc",
+    "bytes": 8746790,
+    "scope": "Four intact canonical-reference image-authored poses, uniform whole-source framing, native violet-pigment finishing and common crop. No anatomical part edits.",
+    "independentReproductionExact": true
+  },
+  "currentMobileEvidence": {
+    "four-pose-review.png": {
+      "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/four-pose-review.png",
+      "sha256": "3d1d5eb37bf2c4e78446902df39aee8085584268767bd784d93f31e20d33259d"
+    },
+    "final-native-proof.json": {
+      "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/final-native-proof.json",
+      "sha256": "47fdc4526e6c391b94ecc9fdf028292782738bbd270ea4047481f3996182971e"
+    },
+    "source-comparison.json": {
+      "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/source-comparison.json",
+      "sha256": "12fb16e13565b5d2285aca96ccf9d9ca61b6883331c9884eb68423993ed1a2d0"
+    },
+    "registered-dark-card.png": {
+      "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-dark-card.png",
+      "sha256": "1d4d6803e5d2491af07de67941f4725923c9dcbe4153ee7cbc4500cd2d4d7592"
+    },
+    "registered-light-card.png": {
+      "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-light-card.png",
+      "sha256": "af0733d1519cfe9398fcdaf535cfa06f5ef4ab42cb6f73f0e4c11a78f199ca19"
+    },
+    "registered-dark-overhead.png": {
+      "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-dark-overhead.png",
+      "sha256": "0ca1183b0b928fd21c2b731b0ebda38f8c43dbeaba16747a74cbcda394e1dcef"
+    },
+    "registered-light-overhead.png": {
+      "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-light-overhead.png",
+      "sha256": "b9f7a8377ae9f94e308657c9d65a9c7b0382ebbe16c790b6a6058be878a73d04"
+    },
+    "registered-dark-observations.json": {
+      "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-dark-observations.json",
+      "sha256": "2f4987628f11814ded6b4370b1b310a24f2ec70ad45ea8bfae3c54a41016cb3a"
+    },
+    "registered-light-observations.json": {
+      "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-light-observations.json",
+      "sha256": "5c2b224a20c269d98a4a16a7f6b429e75066cdfdafd3465dbf9d7d2d26bcb6e7"
+    },
+    "registered-eight-dark-cards.png": {
+      "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-eight-dark-cards.png",
+      "sha256": "03eb8f56c27e939461a90f7463f7b7ffea00444cf1d6dad0ef8b4751993e708a"
+    },
+    "registered-eight-light-cards.png": {
+      "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-eight-light-cards.png",
+      "sha256": "7e17d7aed5ce64eb025b40c225e6a2a72819acfb0fb717c728e3ef7c9c4e2237"
+    },
+    "registered-eight-cards.json": {
+      "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-eight-cards.json",
+      "sha256": "bb21de2384059fc7143dcaa9b4536fce20658c40a1f702b505bffbe4df8fdc03"
+    }
+  },
+  "sourceReferences": [
+    {
+      "url": "https://www.youtube.com/watch?v=J7zEP4WujbQ",
+      "scope": "Primary Lu Xiaojun footage actually played and inspected at start/lateral/overhead phases; plates in source, dumbbells in this catalogue."
+    },
+    {
+      "url": "https://www.catalystathletics.com/exercise/865/Overhead-Lateral-Raise/",
+      "scope": "Primary coaching text; embedded coaching footage was not reviewed."
+    }
+  ],
+  "remainingIllustrationLimits": [
+    "Four discrete physical poses, not continuous interpolation or calibrated biomechanical certification.",
+    "Small source contour/projection variation and established low contrast of tiny white contours on light cards remain."
+  ],
+  "supersedesOwnerFeedback": "Old Lu model/style and incomplete wide-V endpoint rejected by owner on 2026-10-20; all four physical poses are redrawn directly from canonical FA56."
+}

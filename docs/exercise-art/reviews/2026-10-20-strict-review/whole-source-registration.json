@@ -1,0 +1,230 @@
+[
+  {
+    "id": "overhead-extension",
+    "frame": 1,
+    "input": "form-frames/overhead-extension/1.webp",
+    "inputSha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+    "uniformWholeSourceScale": 1,
+    "wholeSourceTranslation": [0, 0],
+    "output": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\overhead-extension\\1.png",
+    "outputSha256": "23764739b9317368f86bbd2c348f84b31232de0c5dda1ff0cdb731e1965e88db",
+    "dimensions": [461, 1547],
+    "projectedFeatureResidual": [
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0]
+    ],
+    "anatomicalPartTransforms": [],
+    "reviewDisposition": "candidate; native and mobile checks required"
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 2,
+    "input": "form-frames/overhead-extension/2.webp",
+    "inputSha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+    "uniformWholeSourceScale": 1,
+    "wholeSourceTranslation": [0, 0],
+    "output": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\overhead-extension\\2.png",
+    "outputSha256": "23764739b9317368f86bbd2c348f84b31232de0c5dda1ff0cdb731e1965e88db",
+    "dimensions": [461, 1547],
+    "projectedFeatureResidual": [
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0]
+    ],
+    "anatomicalPartTransforms": [],
+    "reviewDisposition": "candidate; native and mobile checks required"
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 3,
+    "input": "form-frames/overhead-extension/3.webp",
+    "inputSha256": "a116abf8ca0115651e2f3e4a3cfb1ac600e0848ef5b7e1f39201f8ca2c3a1ce7",
+    "uniformWholeSourceScale": 1.0327697456032907,
+    "wholeSourceTranslation": [-9.28307596033136, -46.66359497998633],
+    "output": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\overhead-extension\\3.png",
+    "outputSha256": "6e5621db9ac68cc178ace8d74c1ee6e3bbbf7641ac5ad8d2c7a3e8214cc79054",
+    "dimensions": [461, 1547],
+    "projectedFeatureResidual": [
+      [0.09325335500685128, 0.4920689431489791],
+      [-0.13927141881399052, 0.5417463206536013],
+      [-0.4838765067481745, -0.6400555574634836],
+      [0.5298945705553137, -0.39375970633909674]
+    ],
+    "anatomicalPartTransforms": [],
+    "reviewDisposition": "candidate; native and mobile checks required"
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 4,
+    "input": "form-frames/overhead-extension/4.webp",
+    "inputSha256": "a116abf8ca0115651e2f3e4a3cfb1ac600e0848ef5b7e1f39201f8ca2c3a1ce7",
+    "uniformWholeSourceScale": 1.0327697456032907,
+    "wholeSourceTranslation": [-9.28307596033136, -46.66359497998633],
+    "output": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\overhead-extension\\4.png",
+    "outputSha256": "6e5621db9ac68cc178ace8d74c1ee6e3bbbf7641ac5ad8d2c7a3e8214cc79054",
+    "dimensions": [461, 1547],
+    "projectedFeatureResidual": [
+      [0.09325335500685128, 0.4920689431489791],
+      [-0.13927141881399052, 0.5417463206536013],
+      [-0.4838765067481745, -0.6400555574634836],
+      [0.5298945705553137, -0.39375970633909674]
+    ],
+    "anatomicalPartTransforms": [],
+    "reviewDisposition": "candidate; native and mobile checks required"
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 5,
+    "input": "form-frames/overhead-extension/5.webp",
+    "inputSha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+    "uniformWholeSourceScale": 1,
+    "wholeSourceTranslation": [0, 0],
+    "output": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\overhead-extension\\5.png",
+    "outputSha256": "23764739b9317368f86bbd2c348f84b31232de0c5dda1ff0cdb731e1965e88db",
+    "dimensions": [461, 1547],
+    "projectedFeatureResidual": [
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0]
+    ],
+    "anatomicalPartTransforms": [],
+    "reviewDisposition": "candidate; native and mobile checks required"
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 6,
+    "input": "form-frames/overhead-extension/6.webp",
+    "inputSha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+    "uniformWholeSourceScale": 1,
+    "wholeSourceTranslation": [0, 0],
+    "output": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\overhead-extension\\6.png",
+    "outputSha256": "23764739b9317368f86bbd2c348f84b31232de0c5dda1ff0cdb731e1965e88db",
+    "dimensions": [461, 1547],
+    "projectedFeatureResidual": [
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0]
+    ],
+    "anatomicalPartTransforms": [],
+    "reviewDisposition": "candidate; native and mobile checks required"
+  },
+  {
+    "id": "barbell-row",
+    "frame": 1,
+    "input": "form-frames/barbell-row/1.webp",
+    "inputSha256": "3d1708536445f65a0734b51d596830fabbc5824ff904d42128a687aeefe1ecf8",
+    "uniformWholeSourceScale": 1,
+    "wholeSourceTranslation": [0, 0],
+    "output": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\barbell-row\\1.png",
+    "outputSha256": "6c8c3078bd8c24bda82a6b84f31d91a59f57ff02d46113399cbd5c003609b27e",
+    "dimensions": [1140, 1024],
+    "projectedFeatureResidual": [
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0]
+    ],
+    "anatomicalPartTransforms": [],
+    "reviewDisposition": "candidate; native and mobile checks required"
+  },
+  {
+    "id": "barbell-row",
+    "frame": 2,
+    "input": "form-frames/barbell-row/2.webp",
+    "inputSha256": "67db4c3c4d4e28ff270af0424c23dd117c9297a7f27bec282b3de10b9b4cb81e",
+    "uniformWholeSourceScale": 0.9975410247403022,
+    "wholeSourceTranslation": [0.08891202890549721, 2.435414262056497],
+    "output": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\barbell-row\\2.png",
+    "outputSha256": "cc4d6b931625638ee752824dee09185198ed7947ddabe92b426449385818743e",
+    "dimensions": [1140, 1024],
+    "projectedFeatureResidual": [
+      [-0.7422216088723985, 0.2936468108596273],
+      [0.8274577206805134, 0.3231545139760783],
+      [0.6331986751644081, -0.7850403974506435],
+      [-0.7184347869724661, 0.16823907261505155]
+    ],
+    "anatomicalPartTransforms": [],
+    "reviewDisposition": "candidate; native and mobile checks required"
+  },
+  {
+    "id": "barbell-row",
+    "frame": 3,
+    "input": "form-frames/barbell-row/3.webp",
+    "inputSha256": "c6252fc48d520586202aac07c1e814f4ebede5deb2eb8cd7b2e897be7daf6c75",
+    "uniformWholeSourceScale": 0.9967257080545814,
+    "wholeSourceTranslation": [1.7787590993486901, 2.6616641124635407],
+    "output": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\barbell-row\\3.png",
+    "outputSha256": "0f9fe97b8daa3c37839b19ac557c7e5981a2ba615e6c8b485fc7ed313f8f4645",
+    "dimensions": [1140, 1024],
+    "projectedFeatureResidual": [
+      [-0.32467728625738346, -1.1869698800506967],
+      [0.10559591523980316, 0.8457730394035252],
+      [0.843652559606312, -0.2982958061949148],
+      [-0.6245711885885612, 0.6394926468422]
+    ],
+    "anatomicalPartTransforms": [],
+    "reviewDisposition": "candidate; native and mobile checks required"
+  },
+  {
+    "id": "barbell-row",
+    "frame": 4,
+    "input": "form-frames/barbell-row/4.webp",
+    "inputSha256": "89d5812fc5e0168144ae8a5148c99e10a4eeb7579fdbe2cf9d36172f9a3fbb81",
+    "uniformWholeSourceScale": 0.9973472922611162,
+    "wholeSourceTranslation": [1.6904203022139654, 1.610246710671845],
+    "output": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\barbell-row\\4.png",
+    "outputSha256": "7e88c40d9728241e1ac20da67067e231d6ed7a1597c1776d63c626b3c3fa474c",
+    "dimensions": [1140, 1024],
+    "projectedFeatureResidual": [
+      [-0.2035422057898586, -0.7002617298959422],
+      [0.33488664764433906, 0.3289180552317248],
+      [0.12532273627255108, 0.20954620698194049],
+      [-0.2566671781268042, 0.1617974676820495]
+    ],
+    "anatomicalPartTransforms": [],
+    "reviewDisposition": "candidate; native and mobile checks required"
+  },
+  {
+    "id": "barbell-row",
+    "frame": 5,
+    "input": "form-frames/barbell-row/5.webp",
+    "inputSha256": "c6252fc48d520586202aac07c1e814f4ebede5deb2eb8cd7b2e897be7daf6c75",
+    "uniformWholeSourceScale": 0.9967257080545814,
+    "wholeSourceTranslation": [1.7787590993486901, 2.6616641124635407],
+    "output": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\barbell-row\\5.png",
+    "outputSha256": "0f9fe97b8daa3c37839b19ac557c7e5981a2ba615e6c8b485fc7ed313f8f4645",
+    "dimensions": [1140, 1024],
+    "projectedFeatureResidual": [
+      [-0.32467728625738346, -1.1869698800506967],
+      [0.10559591523980316, 0.8457730394035252],
+      [0.843652559606312, -0.2982958061949148],
+      [-0.6245711885885612, 0.6394926468422]
+    ],
+    "anatomicalPartTransforms": [],
+    "reviewDisposition": "candidate; native and mobile checks required"
+  },
+  {
+    "id": "barbell-row",
+    "frame": 6,
+    "input": "form-frames/barbell-row/6.webp",
+    "inputSha256": "3d1708536445f65a0734b51d596830fabbc5824ff904d42128a687aeefe1ecf8",
+    "uniformWholeSourceScale": 1,
+    "wholeSourceTranslation": [0, 0],
+    "output": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\barbell-row\\6.png",
+    "outputSha256": "6c8c3078bd8c24bda82a6b84f31d91a59f57ff02d46113399cbd5c003609b27e",
+    "dimensions": [1140, 1024],
+    "projectedFeatureResidual": [
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0]
+    ],
+    "anatomicalPartTransforms": [],
+    "reviewDisposition": "candidate; native and mobile checks required"
+  }
+]

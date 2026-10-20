@@ -1,0 +1,169 @@
+{
+  "exerciseId": "rowing-machine",
+  "version": "anatomy-v3-2026-10-20-strict-native-correction-v1",
+  "width": 1416,
+  "height": 830,
+  "reference": {
+    "path": "form-frames/rowing-machine/3.webp",
+    "sha256": "da6997e4fc48e388991798cb2b7691c32e5a34796d04b00fa059f9f096470d01"
+  },
+  "cueSha256": "2ec87c73d52fa54044118e1264b23883168530dc0717c2e987eec2da14ec49c3",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:50.065730+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. Preserve the original stationary front and rear machine supports at unchanged coordinates. All athlete, moving seat, chain and pedals outside the inspected regions remain exact."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Catch has bent knees; drive extends legs and slides the seat; finish has long legs and handle near ribs; recovery reverses. Athlete/seat/chain were not frozen with the base pods. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Fixed fan, rail and restored stationary support pods; chain meets the outlet. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Catch has bent knees; drive extends legs and slides the seat; finish has long legs and handle near ribs; recovery reverses. Athlete/seat/chain were not frozen with the base pods. Actual named native supports are measured in all six frames: fixedRearRailSupportMaterialFeature1, fixedRearRailSupportMaterialFeature2. Maximum axis drift 0px. Dimensions: fixedRearRailSupportProjectedFeatureSpan, oppositeFixedSupportProjectedFeatureSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Catch has bent knees; drive extends legs and slides the seat; finish has long legs and handle near ribs; recovery reverses. Athlete/seat/chain were not frozen with the base pods. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Quads, Upper back #7B72E9; secondary Hamstrings, Biceps #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Catch: Compress with straight arms and vertical shins. / Drive: Push with your legs; keep arms straight. / Finish: Lean back slightly; draw handle below ribs. / Relax: Stay supported; keep wrists and shoulders relaxed. / Recover: Arms away, then hinge forward before sliding. / Reset: Recover twice as slowly as you drive.. Preparation remains [\"Strap in, grip the handle, start compressed with shins vertical.\"]. Catch has bent knees; drive extends legs and slides the seat; finish has long legs and handle near ribs; recovery reverses. Athlete/seat/chain were not frozen with the base pods."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Catch has bent knees; drive extends legs and slides the seat; finish has long legs and handle near ribs; recovery reverses. Athlete/seat/chain were not frozen with the base pods. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-20-remaining33-final/rowing-machine.json (sha256 705c4202a5222ff85ea837949f63829fd30f66a605bd04825e5b08a7310dc952). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-20-remaining33-final/rowing-machine.json (sha256 705c4202a5222ff85ea837949f63829fd30f66a605bd04825e5b08a7310dc952). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/rowing-machine/1.webp",
+      "sha256": "a1fa9793f679c2406885ba5782c111658bed16c0c49bc9482200b579111b15e2",
+      "anchors": {
+        "fixedRearRailSupportMaterialFeature1": { "x": 79, "y": 653 },
+        "fixedRearRailSupportMaterialFeature2": { "x": 136, "y": 639 }
+      },
+      "invariantDimensions": {
+        "fixedRearRailSupportProjectedFeatureSpan": 58.69412236331676,
+        "oppositeFixedSupportProjectedFeatureSpan": 110.01818031580054
+      }
+    },
+    {
+      "path": "form-frames/rowing-machine/2.webp",
+      "sha256": "2c4d033e55298b8382f78c1d89e1c8945ddc603e21d6bacdc781275e1319b771",
+      "anchors": {
+        "fixedRearRailSupportMaterialFeature1": { "x": 79, "y": 653 },
+        "fixedRearRailSupportMaterialFeature2": { "x": 136, "y": 639 }
+      },
+      "invariantDimensions": {
+        "fixedRearRailSupportProjectedFeatureSpan": 58.69412236331676,
+        "oppositeFixedSupportProjectedFeatureSpan": 110.01818031580054
+      }
+    },
+    {
+      "path": "form-frames/rowing-machine/3.webp",
+      "sha256": "da6997e4fc48e388991798cb2b7691c32e5a34796d04b00fa059f9f096470d01",
+      "anchors": {
+        "fixedRearRailSupportMaterialFeature1": { "x": 79, "y": 653 },
+        "fixedRearRailSupportMaterialFeature2": { "x": 136, "y": 639 }
+      },
+      "invariantDimensions": {
+        "fixedRearRailSupportProjectedFeatureSpan": 58.69412236331676,
+        "oppositeFixedSupportProjectedFeatureSpan": 110.01818031580054
+      }
+    },
+    {
+      "path": "form-frames/rowing-machine/4.webp",
+      "sha256": "da6997e4fc48e388991798cb2b7691c32e5a34796d04b00fa059f9f096470d01",
+      "anchors": {
+        "fixedRearRailSupportMaterialFeature1": { "x": 79, "y": 653 },
+        "fixedRearRailSupportMaterialFeature2": { "x": 136, "y": 639 }
+      },
+      "invariantDimensions": {
+        "fixedRearRailSupportProjectedFeatureSpan": 58.69412236331676,
+        "oppositeFixedSupportProjectedFeatureSpan": 110.01818031580054
+      }
+    },
+    {
+      "path": "form-frames/rowing-machine/5.webp",
+      "sha256": "2c4d033e55298b8382f78c1d89e1c8945ddc603e21d6bacdc781275e1319b771",
+      "anchors": {
+        "fixedRearRailSupportMaterialFeature1": { "x": 79, "y": 653 },
+        "fixedRearRailSupportMaterialFeature2": { "x": 136, "y": 639 }
+      },
+      "invariantDimensions": {
+        "fixedRearRailSupportProjectedFeatureSpan": 58.69412236331676,
+        "oppositeFixedSupportProjectedFeatureSpan": 110.01818031580054
+      }
+    },
+    {
+      "path": "form-frames/rowing-machine/6.webp",
+      "sha256": "a1fa9793f679c2406885ba5782c111658bed16c0c49bc9482200b579111b15e2",
+      "anchors": {
+        "fixedRearRailSupportMaterialFeature1": { "x": 79, "y": 653 },
+        "fixedRearRailSupportMaterialFeature2": { "x": 136, "y": 639 }
+      },
+      "invariantDimensions": {
+        "fixedRearRailSupportProjectedFeatureSpan": 58.69412236331676,
+        "oppositeFixedSupportProjectedFeatureSpan": 110.01818031580054
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-20-remaining33-final/rowing-machine.json",
+    "sha256": "705c4202a5222ff85ea837949f63829fd30f66a605bd04825e5b08a7310dc952"
+  },
+  "historicalFindings": [
+    "Original catch, drive and recovery sources retained. Complete connected image-authored finish extends the legs and slides the seat back; original fixed apparatus is preserved outside the native pose footprint. The exposed original catch rail supplies vacated seat background, and a native straight grey chain meets the original fixed outlet. One whole-source framing normalization; no individual anatomy transforms or head/shoe grafts.",
+    "Discrete source poses and small illustrative contour/projection differences remain qualitative. Historical findings are preserved separately; no calibrated3D or strict certificate is asserted."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/rowing-machine.json",
+    "sha256": "8b2e5793d0977ab022433d86dc8c3e70fdd0d485a8551bbf794803e5656e23d0"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false,
+  "nativeSourceArchive": {
+    "path": "docs/exercise-art/sources/rowing-machine/2026-10-20-strict-review/native-source.zip",
+    "sha256": "8be7a7d901a06bbdcb594780662ec26f4fccae5ffff1fc3a4cc567550a760e3b",
+    "bytes": 16432070,
+    "scope": "Preserve the original stationary front and rear machine supports at unchanged coordinates. All athlete, moving seat, chain and pedals outside the inspected regions remain exact.",
+    "independentReproductionExact": true
+  }
+}

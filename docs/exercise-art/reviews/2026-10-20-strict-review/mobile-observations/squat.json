@@ -1,0 +1,230 @@
+{
+  "id": "squat",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Barbell Squat, Set up",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/squat/1.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Set up 1/6",
+          "id": "squat",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Barbell Squat, Descend",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/squat/2.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Descend 2/6",
+          "id": "squat",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Barbell Squat, Continue descent",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/squat/3.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Continue descent 3/6",
+          "id": "squat",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Barbell Squat, Bottom",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/squat/4.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Bottom 4/6",
+          "id": "squat",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Barbell Squat, Drive",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/squat/5.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Drive 5/6",
+          "id": "squat",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Barbell Squat, Stand",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/squat/6.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Stand 6/6",
+          "id": "squat",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 85,\n    \"alt\": \"Barbell Squat, Set up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1284,\n    \"alt\": \"Barbell Squat, Descend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Barbell Squat, Continue descent\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2322,\n    \"alt\": \"Barbell Squat, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2888,\n    \"alt\": \"Barbell Squat, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3520,\n    \"alt\": \"Barbell Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5122,\n    \"alt\": \"Barbell Squat, Set up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Barbell Squat, Descend",
+            "decoded": true,
+            "height": 1536,
+            "src": "/Maiin/.strict33.local/candidate/squat/2.webp",
+            "width": 1024
+          }
+        ],
+        "caption": "Descend 2/6",
+        "id": "squat",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / squat\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nBarbell Squat\nLegs\nBarbell\n\nDESCEND 2/6\n\nPause\nNormal\nPRIMARY\nQuadriceps\nSECONDARY\nGluteals\n\nInstructions\n\n1\n\nBrace with the bar across upper traps.\n\n2\n\nBend hips and knees; keep heels grounded.\n\n3\n\nKeep knees tracking with your toes.\n\n4\n\nStay braced at your comfortable squat depth.\n\n5\n\nPush through your whole feet to rise.\n\n6\n\nStand tall without leaning back.\n\nWatch out\n\nIf your knees cave inward on the way up, think push the floor apart with your feet. This is the #1 form error and it costs you power.\n\nCOMMON MISTAKES\n\nKnees caving inward (valgus) on the drive out of the hole.\nHeels lifting / weight shifting onto the toes.\nCutting depth short of parallel under heavier loads.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 85,\n    \"alt\": \"Barbell Squat, Set up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1284,\n    \"alt\": \"Barbell Squat, Descend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Barbell Squat, Continue descent\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2322,\n    \"alt\": \"Barbell Squat, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2888,\n    \"alt\": \"Barbell Squat, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3520,\n    \"alt\": \"Barbell Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5122,\n    \"alt\": \"Barbell Squat, Set up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6641,\n    \"alt\": \"Barbell Squat, Descend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Barbell Squat, Continue descent\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9042,\n    \"alt\": \"Barbell Squat, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10241,\n    \"alt\": \"Barbell Squat, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11441,\n    \"alt\": \"Barbell Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12641,\n    \"alt\": \"Barbell Squat, Set up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13844,\n    \"alt\": \"Barbell Squat, Descend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Barbell Squat, Set up",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/squat/1.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Set up 1/6",
+          "id": "squat",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Barbell Squat, Descend",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/squat/2.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Descend 2/6",
+          "id": "squat",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Barbell Squat, Continue descent",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/squat/3.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Continue descent 3/6",
+          "id": "squat",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Barbell Squat, Bottom",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/squat/4.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Bottom 4/6",
+          "id": "squat",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Barbell Squat, Drive",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/squat/5.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Drive 5/6",
+          "id": "squat",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Barbell Squat, Stand",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/squat/6.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Stand 6/6",
+          "id": "squat",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 85,\n    \"alt\": \"Barbell Squat, Set up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1284,\n    \"alt\": \"Barbell Squat, Descend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Barbell Squat, Continue descent\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2322,\n    \"alt\": \"Barbell Squat, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2888,\n    \"alt\": \"Barbell Squat, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3520,\n    \"alt\": \"Barbell Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5122,\n    \"alt\": \"Barbell Squat, Set up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6641,\n    \"alt\": \"Barbell Squat, Descend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Barbell Squat, Continue descent\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9042,\n    \"alt\": \"Barbell Squat, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10241,\n    \"alt\": \"Barbell Squat, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11441,\n    \"alt\": \"Barbell Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12641,\n    \"alt\": \"Barbell Squat, Set up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13844,\n    \"alt\": \"Barbell Squat, Descend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15043,\n    \"alt\": \"Barbell Squat, Set up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15601,\n    \"alt\": \"Barbell Squat, Descend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16162,\n    \"alt\": \"Barbell Squat, Continue descent\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16721,\n    \"alt\": \"Barbell Squat, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17362,\n    \"alt\": \"Barbell Squat, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17926,\n    \"alt\": \"Barbell Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19605,\n    \"alt\": \"Barbell Squat, Set up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Barbell Squat, Descend",
+            "decoded": true,
+            "height": 1536,
+            "src": "/Maiin/.strict33.local/candidate/squat/2.webp",
+            "width": 1024
+          }
+        ],
+        "caption": "Descend 2/6",
+        "id": "squat",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / squat\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nBarbell Squat\nLegs\nBarbell\n\nDESCEND 2/6\n\nPause\nNormal\nPRIMARY\nQuadriceps\nSECONDARY\nGluteals\n\nInstructions\n\n1\n\nBrace with the bar across upper traps.\n\n2\n\nBend hips and knees; keep heels grounded.\n\n3\n\nKeep knees tracking with your toes.\n\n4\n\nStay braced at your comfortable squat depth.\n\n5\n\nPush through your whole feet to rise.\n\n6\n\nStand tall without leaning back.\n\nWatch out\n\nIf your knees cave inward on the way up, think push the floor apart with your feet. This is the #1 form error and it costs you power.\n\nCOMMON MISTAKES\n\nKnees caving inward (valgus) on the drive out of the hole.\nHeels lifting / weight shifting onto the toes.\nCutting depth short of parallel under heavier loads.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 85,\n    \"alt\": \"Barbell Squat, Set up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1284,\n    \"alt\": \"Barbell Squat, Descend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Barbell Squat, Continue descent\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2322,\n    \"alt\": \"Barbell Squat, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2888,\n    \"alt\": \"Barbell Squat, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3520,\n    \"alt\": \"Barbell Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5122,\n    \"alt\": \"Barbell Squat, Set up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6641,\n    \"alt\": \"Barbell Squat, Descend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Barbell Squat, Continue descent\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9042,\n    \"alt\": \"Barbell Squat, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10241,\n    \"alt\": \"Barbell Squat, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11441,\n    \"alt\": \"Barbell Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12641,\n    \"alt\": \"Barbell Squat, Set up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13844,\n    \"alt\": \"Barbell Squat, Descend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15043,\n    \"alt\": \"Barbell Squat, Set up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15601,\n    \"alt\": \"Barbell Squat, Descend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16162,\n    \"alt\": \"Barbell Squat, Continue descent\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16721,\n    \"alt\": \"Barbell Squat, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17362,\n    \"alt\": \"Barbell Squat, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17926,\n    \"alt\": \"Barbell Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19605,\n    \"alt\": \"Barbell Squat, Set up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21125,\n    \"alt\": \"Barbell Squat, Descend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22326,\n    \"alt\": \"Barbell Squat, Continue descent\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23526,\n    \"alt\": \"Barbell Squat, Bottom\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24726,\n    \"alt\": \"Barbell Squat, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25926,\n    \"alt\": \"Barbell Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27125,\n    \"alt\": \"Barbell Squat, Set up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28323,\n    \"alt\": \"Barbell Squat, Descend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/squat/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+"""Bind the completed manual review to measured native geometry and exact assets.
+
+This does not infer a visual pass from numeric results. The dispositions below
+are the reviewer's recorded decisions after native/contact-sheet inspection.
+"""
+from pathlib import Path
+from PIL import Image
+import json,hashlib,shutil,zipfile,datetime
+H=Path(__file__).resolve().parent;R=H.parent/'Maiin-burpees'
+F='2026-10-20-strict-review';D=R/'docs/exercise-art/reviews'/F;D.mkdir(parents=True,exist_ok=True)
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+save=lambda p,v:p.write_text(json.dumps(v,indent=2)+'\n',encoding='utf-8',newline='\n')
+inv=json.loads((H/'current-inventory.json').read_bytes());meta={x['id']:x for x in json.loads((H/'guide-metadata.json').read_bytes())}
+fixes={x['id']:x for x in json.loads((H/'frozen-corrections.json').read_bytes())}
+notes={
+ 'lu-raise':('Two ordinary grey hex dumbbells remain closed in both grips.','Outward lateral raise continues overhead and reverses along the outward arc; feet stay planted. Four physical positions are reused honestly.'),
+ 'incline-db-curl':('Stable incline bench and one grey hex dumbbell in each grip.','The near arm curls while the far arm holds; setup and Alternate cue explicitly request opposite-side repetition. No simultaneous bilateral movement is claimed.'),
+ 'leg-press':('One modest load disc on the existing double-beam lever apparatus; rigid beams, fixed pivots and large footplate retained.','Both trainers stay on the footplate, back/pelvis supported, hips and knees extend together. Occluded glute surface is not falsely painted on the abdomen.'),
+ 'handstand-push-ups':('Wall and floor remain stable; no external weight.','Both palms bear support, heels remain at the wall, elbows flex and extend. Corrected neutral head direction remains intact; small finger contours are illustrative.'),
+ 'straight-arm-pulldown':('Two grey cable handles, closed grips and fixed upper pulley mounts; lifted selected stack remains connected.','Upper arms sweep to thighs with softly fixed elbows and braced torso, then return under control.'),
+ 'front-squat':('Bar with one modest plate per end is held by the explicitly named shoulder harness.','Harness-supported variation: hips/knees bend together, heels stay down, then rise; hands stabilise the apparatus. It is not labelled as a conventional unsupported front rack.'),
+ 'seated-row':('Fixed seat/foot supports and cable tower; handle and cable remain connected.','The explicitly labelled controlled-hinge variation reaches forward then rows to the lower ribs with an upright chest. It is not presented as a motionless-torso variation.'),
+ 'stairmaster':('Fixed rear camera, rails and moving treads remain coherent.','Athlete faces uphill. Left tread support, right knee swing and right landing are distinct; grips and upper body stay steady. Rear-visible glute/hamstring/calf fields match the legend.'),
+ 'assault-bike':('Grey fan, stationary base, two fixed lever pivots and connected foot rests.','Opposite arm/leg phases alternate, with hands around both grips and trainers at pedals. Upright seated posture and reciprocal lever action are coherent.'),
+ 'spin-bike':('Fixed grey frame, front roller, rear base and crank assembly.','Seated drive/recovery and standing drive retain both grips and pedal contacts; standing raises the pelvis from the saddle. Named holds reuse the actual poses.'),
+ 'elliptical':('Custom rear-drive frame, continuous side rails and linked pedals/handles.','Opposed stride phases keep both feet supported on platforms, hands at handles, and body above the fixed frame. It is an illustrated apparatus, not a manufacturer replica.'),
+ 'rowing-machine':('Fixed fan, rail and restored stationary support pods; chain meets the outlet.','Catch has bent knees; drive extends legs and slides the seat; finish has long legs and handle near ribs; recovery reverses. Athlete/seat/chain were not frozen with the base pods.'),
+ 'pendlay-row':('One modest plate on each bar end with both hands closing around the shaft.','Floor start and row-to-torso endpoints preserve the hip hinge, planted feet and clear bar path. Minor projected grip/torso contour redraw is retained, without a calibrated-3D claim.'),
+ 'leg-extension':('Fixed seat/towers and rotating shin-pad lever meet the same physical pivot.','Back and pelvis remain supported, both knees extend and lower legs move against the pad; hands stay on side handles.'),
+ 'single-leg-calf-raise':('Fixed step and support post; no added weight.','Planted forefoot stays at the step as heel/body rise together; opposite foot stays clear and hand remains at support.'),
+ 'side-plank':('Bodyweight hold with no invented apparatus.','Six named coaching slots describe one static side-plank hold. Supported forearm and stacked trainers stay fixed, with a coherent shoulder-hip-ankle line.'),
+ 'overhead-extension':('One grey dumbbell held with both hands above/behind the head.','Elbows flex behind the head and extend overhead; stance is planted. One uniform whole-source camera correction replaces the original scale drift; no isolated anatomy fitting.'),
+ 'face-pulls':('Fixed high cable tower with two rope branches and closed end grips.','Hands draw toward face as elbows rise and shoulders externally rotate; cable remains taut and torso/feet stay steady.'),
+ 't-bar-row':('One modest native-rendered cast disc, collar, steel sleeve and closed end in both poses.','Both grips remain on the original handle, feet planted and hinge braced. Load pivots about the original floor mount; return/hold slots reuse two real endpoints.'),
+ 'bike':('Same fixed stationary-bike body, saddle, crank and restored floor pods.','Opposed pedal phases preserve seated support and both grips. All athlete and pedal regions remain outside the two stationary-pod correction boxes.'),
+ 'goblet-squat':('One ordinary grey dumbbell held upright at chest level.','Hips and knees descend with heels planted, then rise; chest grip, wrist support and squat depth remain coherent.'),
+ 'squat':('Grey bar with one modest plate per end, resting across upper back and held by both hands.','Controlled descent/bottom/rise with heels planted and knees tracking over feet; bar travels with shoulders, without a detached load.'),
+ 'barbell-curl':('One modest cast plate per end, compact collars and one continuous grey shaft.','Both elbows flex without a torso swing; wrists/grips stay connected and planted feet stable. Earlier plate corrections are retained.'),
+ 'barbell-row':('Same continuous bar, modest paired plates and both closed grips.','Braced hip hinge, pull toward ribs and controlled return. Only whole-source scale/translation corrected framing; planted heel features and independently measured outer soles now pass.'),
+ 'bench-press':('Stable flat bench, continuous bar and one modest grey plate per end.','Feet, shoulders and pelvis stay supported while elbows flex and extend. Bar clears neck and touches near chest. Earlier bench/body jump correction remains intact.'),
+ 'calf-raise':('Fixed step, cable station and shoulder load with connected selected stack.','Heels, legs/hips, torso/head and shoulder load begin rising together in the middle pose; forefeet remain supported. Reverse return retains a modest below-step stretch.'),
+ 'standing-calf-raise':('Same shared fixed step, station and shoulder load as calf-raise.','Shared corrected sequence raises heels, hips, torso and shoulder load together. Holds and reverse return are genuine repeated poses, without a continuous-interpolation claim.'),
+ 'dips':('Stable parallel bars and corrected floor pods, with no residual belt/chain/plate.','Bodyweight chest-dip variation retains both grips, a slight forward lean, feet clear of floor, bent-elbow bottom and straight-arm finish. The middle Hold is intentionally repeated.'),
+ 'overhead-press':('One modest grey plate per end of a continuous bar; both grips remain closed.','Bar rises from shoulders as elbows extend, then returns with stance braced. Anterior-deltoid primary and upper-chest/triceps/core secondary fields retain their corrected contour boundaries.'),
+ 'rope-tricep-pushdown':('Solid shaded selected4/resting8 stack plates, seated selector pin, guide bores, stem and supported pulley bracket. Rope branches and finite pulley cable path remain connected.','Upper arms remain beside ribs while elbows extend and rope ends separate. The selected stack rises with the pull; wrist/rope contacts and controlled return remain coherent.'),
+ 'skull-crushers':('Compact native cast-disc plates, compact collars/sleeves and continuous shaft; earlier detached plate remnant is absent.','Supported bench posture and both closed grips remain intact; forearms fold behind the head and extend while upper arms stay raised. The bar stays clear of the face/head.')}
+assert len(notes)==31
+feature={x['id']:x for x in json.loads((H/'staged-native-feature-measurements.json').read_bytes())}
+supports={x['id']:x for x in json.loads((H/'support-measurements-v2.json').read_bytes())}
+soles=json.loads((H/'barbell-row-outer-sole-measurements.json').read_bytes())[1]
+wall=json.loads((H/'handstand-wall-measurements.json').read_bytes())
+tbar=json.loads((R/'docs/exercise-art/sources/t-bar-row/2026-10-15/draft/hardware-measurements.json').read_bytes())
+material={
+ 'straight-arm-pulldown':'fixedUpperPulleyMount','face-pulls':'fixedTowerTopCrossmember','rope-tricep-pushdown':'fixedTowerTopLip',
+ 'seated-row':'fixedTowerTopCrossmember','leg-extension':'fixedTowerTopCap','side-plank':'supportedForearm',
+ 'leg-press':'fixedFrontFloorPod','stairmaster':'fixedLeftFloorBase','assault-bike':'fixedFrontFloorBase',
+ 'spin-bike':'fixedFrontBaseRoller','elliptical':'fixedLeftFloorBase','rowing-machine':'fixedRearRailSupport',
+ 'single-leg-calf-raise':'fixedStepFloorBase','calf-raise':'fixedStationFloorBase','standing-calf-raise':'fixedStationFloorBase',
+ 'bike':'fixedFrontPodFastener','dips':'fixedLeftFrontFloorPod','goblet-squat':'plantedFarTrainer','squat':'plantedFarTrainer',
+ 'overhead-press':'plantedFarTrainer','overhead-extension':'plantedFarTrainer','barbell-row':'plantedFarTrainer'}
+results=[];archivefacts=[]
+for row in inv['rows']:
+ eid=row['id'];art=row['art'];changed=eid in fixes
+ if changed:
+  fx=fixes[eid];P=Path(fx['package']);E=Path(fx['export']);shutil.copytree(E/'editables',P/'editables',dirs_exist_ok=True)
+  sourceDir=R/f'docs/exercise-art/sources/{eid}/{F}';sourceDir.mkdir(parents=True,exist_ok=True);zpath=sourceDir/'native-source.zip'
+  with zipfile.ZipFile(zpath,'w',zipfile.ZIP_DEFLATED,compresslevel=6)as z:
+   for p in sorted(P.rglob('*')):
+    if p.is_file():
+     zi=zipfile.ZipInfo(p.relative_to(P).as_posix(),(2026,10,20,0,0,0));zi.compress_type=zipfile.ZIP_DEFLATED;z.writestr(zi,p.read_bytes())
+  (sourceDir/'README.md').write_text(fx['scope']+'\n\nUnzip native-source.zip and run reproduce.py --output <new-folder>. Frozen original sources, native replacement layers, canonical model, authoring snapshots and reopened ORA compositions are retained. Independent reproduction matched all six lossless exports. No anatomy warping, individual limb scaling or head/shoe grafts.\n',encoding='utf-8')
+  archive={'path':zpath.relative_to(R).as_posix(),'sha256':sha(zpath),'bytes':zpath.stat().st_size,'scope':fx['scope'],'independentReproductionExact':True};archivefacts.append({'id':eid,**archive})
+  for n in range(1,7):shutil.copyfile(E/f'frames/{n}.webp',R/f'public/form-frames/{eid}/{n}.webp')
+  version='anatomy-v3-2026-10-20-strict-native-correction-v1'
+ else:version=art['version'];archive=None
+ frames=[]
+ for n,path in enumerate(art['frames'],1):
+  p=R/'public'/path;frames.append({'path':path,'sha256':sha(p)})
+  if changed:assert Image.open(p).convert('RGBA').tobytes()==Image.open(H/f'staged/{eid}/{n}.png').convert('RGBA').tobytes()
+  else:assert frames[-1]['sha256']==row['expected']['frames'][n-1]['sha256']
+ expected={'exerciseId':eid,'version':version,'width':art['width'],'height':art['height'],'reference':{'path':art['reference'],'sha256':sha(R/'public'/art['reference'])},'cueSha256':row['expected']['cueSha256']}
+ if eid not in notes:
+  limitation={'swimming':'The swimmer and waterline provide no two fixed material scene anchors and two invariant scene dimensions. Waterline/canvas coordinates are not adopted as invented physical landmarks. Visual source and previous actual registered mobile review remain valid; strict numeric scene evidence is absent.', 'turkish-get-up':'Support changes from back/elbow to hand, knee and standing feet. Two comparable fixed material anchors and two invariant dimensions across those grounded phases have not been established. Repeated identical frames or canvas bounds are not used to manufacture a passing contact phase.'}[eid]
+  results.append({'id':eid,'decision':'retain-owner-release','visualReview':'Six current native drawings reviewed; same model/palette, coherent depicted movement and prior actual registered mobile evidence retained. No new visual defect requiring a redraw identified.','strictLimitation':limitation,'unchangedAssets':frames,'priorReview':art['reviewFile']});continue
+ if eid=='handstand-push-ups':geometry=wall
+ elif eid=='t-bar-row':geometry={'samples':tbar['frames'],'method':tbar['method']}
+ elif eid in ['lu-raise','incline-db-curl','front-squat','pendlay-row','barbell-curl','bench-press','skull-crushers']:geometry=supports[eid];assert geometry['numericPass']
+ else:
+  geometry=feature[eid];assert geometry['numericPass']
+  if eid!='barbell-row':assert geometry['featureEvidenceUsable']
+ for n,frame in enumerate(frames):
+  sample=geometry['samples'][n];anchors=sample['anchors'];dimensions=sample['invariantDimensions']
+  if eid in feature and eid!='handstand-push-ups':
+   base=material[eid]
+   if eid in ['barbell-row','overhead-extension']:
+    anchors={'plantedFarTrainerHeelContour':sample['features'][1],'plantedNearTrainerHeelContour':sample['features'][3]}
+    anchors={k:{'x':v['x'],'y':v['y']}for k,v in anchors.items()}
+    if eid=='barbell-row':dimensions=soles['samples'][n]['invariantDimensions']
+    else:dimensions={'farTrainerToeHeelProjectedSpan':list(dimensions.values())[0],'nearTrainerToeHeelProjectedSpan':list(dimensions.values())[1]}
+   else:
+    anchors={base+'MaterialFeature'+str(i+1):v for i,v in enumerate(anchors.values())}
+    dimensions={base+'ProjectedFeatureSpan':list(dimensions.values())[0],('stackedTrainer'if eid=='side-plank'else 'oppositeFixedSupport')+'ProjectedFeatureSpan':list(dimensions.values())[1]}
+  frame.update({'anchors':anchors,'invariantDimensions':dimensions})
+ ma=max(abs(f['anchors'][k][axis]-frames[0]['anchors'][k][axis])for f in frames for k in frames[0]['anchors']for axis in ['x','y'])
+ md=max(abs(f['invariantDimensions'][k]/frames[0]['invariantDimensions'][k]-1)for f in frames for k in frames[0]['invariantDimensions'])
+ assert ma<=1 and md<=.01,(eid,ma,md)
+ equipment,motion=notes[eid];g=meta[eid];old=row['record'];current=H/f'mobile/{eid}/observations.json'
+ currentEvidence={'path':f'docs/exercise-art/reviews/{F}/mobile-observations/{eid}.json','sha256':sha(current)}if current.exists()else None
+ provenance=f'Prior native/source and registered mobile evidence: {art["reviewFile"]} (sha256 {sha(R/art["reviewFile"])}). Current six-frame native/contact-sheet inspection completed. '
+ # The last unchanged sets retain their exact prior actual mobile observations.
+ reuse=eid in ['bench-press','calf-raise','standing-calf-raise','overhead-press','rope-tricep-pushdown','skull-crushers']
+ mobile=(('Exact unchanged art retains the earlier registered all-six light/dark visual evidence; current capture artefacts are explicitly excluded. 'if reuse else 'Actual current390x844 production player and source/card review completed. ')+('New stationary-pod dips screenshots stable-dark.png and stable-light.png show the complete corrected station and athlete. 'if eid=='dips'else '')+'Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. '+provenance)
+ checks={
+  'identity':'Compared current native sequences to canonical FA56 '+inv['canonicalSha256']+'. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved.',
+  'camera':f'Current native oblique scene remains coherent. Actual material anchors max-axis drift {ma:g}px; independent invariant dimensions maximum relative drift {md:.9f}. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. '+(fixes[eid]['scope']if changed else 'No artwork pixels changed during this review.'),
+  'anatomy':'Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. '+motion+' Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed.',
+  'equipment':equipment+' Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors.',
+  'contact':motion+f' Actual named native supports are measured in all six frames: {", ".join(frames[0]["anchors"])}. Maximum axis drift {ma:g}px. Dimensions: {", ".join(frames[0]["invariantDimensions"])}; max {md*100:.5f}%.',
+  'physics':motion+' Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification.',
+  'muscles':'Primary '+', '.join(g['muscleKey']['primary'])+' #7B72E9; secondary '+(', '.join(g['muscleKey']['secondary'])or'none')+' #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region.',
+  'cueAgreement':'Exact bound label/cue sequence reviewed against its drawings: '+ ' / '.join(b['label']+': '+b['cue']for b in row['beats'])+'. Preparation remains '+json.dumps(g['setup'])+'. '+motion,
+  'sequenceAndLoop':'Current six native frames reviewed in order with first/last transition. '+('Current actual manual decoded-path and timed-loop evidence retained separately. 'if current.exists()else 'Earlier actual registered all-six normal/slower loop and manual-wrap observations retained for this unchanged motion; no fresh complete mobile run is invented. ')+motion+' Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted.',
+  'mobileLight':mobile,
+  'mobileDark':mobile}
+ record={**expected,'decision':'approved','reviewer':'Codex current native visual review, actual mobile observations and measured physical scene evidence','reviewedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'reference':expected['reference'],'checks':{k:{'passed':True,'evidence':v}for k,v in checks.items()},'frames':frames,'canonicalReference':{'path':'docs/exercise-art/identity/athlete-anatomy-v3.png','sha256':inv['canonicalSha256']},'measurementEvidence':{'method':geometry.get('method','Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.'),'maxAnchorAxisDriftPx':ma,'maxInvariantRelativeDrift':md,'limitsUnchanged':{'anchorAxisPx':1,'invariantRelative':.01},'reviewBundle':f'docs/exercise-art/reviews/{F}/measurements.json'},'previousReview':{'path':art['reviewFile'],'sha256':sha(R/art['reviewFile'])},'historicalFindings':old.get('findings',[]),'remainingIllustrationLimits':['Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.','Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable.'],'currentMobileEvidence':currentEvidence,'mobileEvidenceReusedForUnchangedArt':reuse}
+ if archive:record['nativeSourceArchive']=archive
+ target=R/f'docs/exercise-art/releases/{F}/{eid}.json';target.parent.mkdir(parents=True,exist_ok=True);save(target,record)
+ results.append({'id':eid,'decision':'approved','changed':changed,'version':version,'maxAnchorAxisDriftPx':ma,'maxInvariantRelativeDrift':md,'release':target.relative_to(R).as_posix(),'currentMobileEvidence':currentEvidence,'priorMobileEvidenceRetained':True})
+for name in ['current-inventory.json','guide-metadata.json','frozen-corrections.json','whole-source-registration.json','uniform-camera-refinement.json','native-feature-measurements-initial.json','staged-native-feature-measurements.json','support-measurements-v2.json','barbell-row-outer-sole-measurements.json','handstand-wall-measurements.json','rower-fixed-support-proof.json','fixed-base-pod-proof.json']:
+ shutil.copyfile(H/name,D/name)
+save(D/'measurements.json',{'supportContours':list(supports.values()),'physicalFeatures':list(feature.values()),'handstandVisibleWall':wall,'barbellRowIndependentSoles':soles,'tbarUnchangedFloorMount':tbar,'invalidDiagnosticsExcluded':['Occluded lower-left handstand wall corner and finger/forearm brightness masks','Ambiguous barbell-row toe template; independent actual outer sole spans used instead','Featureless black padding candidates in initial template search']})
+(D/'mobile-observations').mkdir(exist_ok=True)
+for p in(H/'mobile').glob('*/observations.json'):shutil.copyfile(p,D/'mobile-observations'/f'{p.parent.name}.json')
+(D/'mobile-panels').mkdir(exist_ok=True)
+for p in(H/'mobile-panels').glob('*.png'):
+ if p.stem not in ['bench-press','calf-raise','standing-calf-raise']:shutil.copyfile(p,D/'mobile-panels'/p.name)
+for name in ['stable-dark.png','stable-light.png']:shutil.copyfile(H/'mobile/dips'/name,D/('dips-'+name))
+for p in H.glob('physical-landmarks-*.png'):shutil.copyfile(p,D/p.name)
+for p in H.glob('planted-supports-*.png'):shutil.copyfile(p,D/p.name)
+for name in ['measure-supports.py','measure-native-features.py','measure-handstand-wall.py','check-row-sole-contours.py','review-fixture.tsx.txt','publish-reviewed.py']:shutil.copyfile(H/name,D/(name if name.endswith('.txt')else name+'.txt'))
+save(D/'library-review.json',{'baseline':'a97944f5d8a6350d114e18bba2a18bb1d243ae35','canonicalSha256':inv['canonicalSha256'],'strictApproved':31,'ownerRetained':2,'correctedSets':list(fixes),'reviewedSets':results,'sourceArchives':archivefacts,'captureLimitations':'Fresh manual/timed DOM observations cover completed sets as files show. Batched browser image captures later became stale/blank; those failures are not visual proof. Prior actual registered light/dark reviews are retained for unchanged artwork; dips has separate settled current screenshots. No full fresh 33-set mobile run is claimed.','strictContractUnchanged':True})
+hand={r['id']:r['art']for r in inv['rows']if r['id']not in notes};original=(R/'src/lib/formArtwork.ts').read_text()
+start=original.index('const existing =');stop=original.index('/**\n * A set approved by strict review.')
+original=original[:start]+original[stop:]
+start=original.index('export const HAND_LISTED_FORM_ARTWORK:');stop=original.index('\nexport const FORM_ARTWORK:',start)
+original=original[:start]+'export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = '+json.dumps(hand,indent=2)+';\n'+original[stop:]
+(R/'src/lib/formArtwork.ts').write_text(original,encoding='utf-8',newline='\n')
+test=R/'src/lib/__tests__/formArtOwnerRelease.test.ts';s=test.read_text();a=s.index('const ids = [');b=s.index('const sha =',a);s=s[:a]+'const ids = ["swimming", "turkish-get-up"];\n'+s[b:];s=s.replace('ships exactly thirty-three owner-authorized guides','ships the two remaining owner-authorized guides').replace('evidence("goblet-squat")','evidence("turkish-get-up")').replace('FORM_ARTWORK["goblet-squat"]','FORM_ARTWORK["turkish-get-up"]');test.write_text(s,encoding='utf-8',newline='\n')
+print(json.dumps({'approved':31,'owner':2,'corrected':list(fixes),'archives':[{ 'id':x['id'],'bytes':x['bytes']}for x in archivefacts]},indent=2))

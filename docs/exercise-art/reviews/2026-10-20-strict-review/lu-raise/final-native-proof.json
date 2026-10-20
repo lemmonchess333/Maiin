@@ -1,0 +1,197 @@
+{
+  "commonCrop": [295, 223, 1288, 1597],
+  "poses": [
+    {
+      "pose": "A",
+      "previewScaleUndo": 1,
+      "wholeCameraScale": 1,
+      "combinedWholeSourceScale": 1,
+      "wholeSourceTranslation": [0, 0],
+      "individualAnatomicalTransforms": [],
+      "originalShoeGrafts": false,
+      "paletteChangedPixels": 12232,
+      "outsideOriginalVioletPigmentExact": true,
+      "observed": [
+        {
+          "x": 595,
+          "y": 1498,
+          "meanAbsoluteRGBError": 0,
+          "distinctMatchGap": 14.971733333333333
+        },
+        {
+          "x": 761,
+          "y": 1471,
+          "meanAbsoluteRGBError": 0,
+          "distinctMatchGap": 14.7264
+        },
+        {
+          "x": 784,
+          "y": 1545,
+          "meanAbsoluteRGBError": 0,
+          "distinctMatchGap": 16.621866666666666
+        },
+        {
+          "x": 917,
+          "y": 1504,
+          "meanAbsoluteRGBError": 0,
+          "distinctMatchGap": 12.964266666666667
+        }
+      ],
+      "crop": [295, 223, 1288, 1597],
+      "finalSize": [993, 1374],
+      "anchors": {
+        "farPlantedHeelMaterialFeature": { "x": 466, "y": 1248 },
+        "nearPlantedHeelMaterialFeature": { "x": 622, "y": 1281 }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelSpan": 168.1814496310458,
+        "nearTrainerToeHeelSpan": 139.17614738165446
+      }
+    },
+    {
+      "pose": "B",
+      "previewScaleUndo": 1.2734375,
+      "wholeCameraScale": 0.9967009771048712,
+      "combinedWholeSourceScale": 1.2692364005319843,
+      "wholeSourceTranslation": [3.7671544689833354, 4.2158542128927365],
+      "individualAnatomicalTransforms": [],
+      "originalShoeGrafts": false,
+      "paletteChangedPixels": 10652,
+      "outsideOriginalVioletPigmentExact": true,
+      "observed": [
+        {
+          "x": 595,
+          "y": 1498,
+          "meanAbsoluteRGBError": 6.8912,
+          "distinctMatchGap": 6.508266666666667
+        },
+        {
+          "x": 762,
+          "y": 1470,
+          "meanAbsoluteRGBError": 9.4288,
+          "distinctMatchGap": 6.4512
+        },
+        {
+          "x": 783,
+          "y": 1545,
+          "meanAbsoluteRGBError": 6.2165333333333335,
+          "distinctMatchGap": 8.337599999999998
+        },
+        {
+          "x": 917,
+          "y": 1504,
+          "meanAbsoluteRGBError": 6.852266666666667,
+          "distinctMatchGap": 7.138666666666666
+        }
+      ],
+      "crop": [295, 223, 1288, 1597],
+      "finalSize": [993, 1374],
+      "anchors": {
+        "farPlantedHeelMaterialFeature": { "x": 467, "y": 1247 },
+        "nearPlantedHeelMaterialFeature": { "x": 622, "y": 1281 }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelSpan": 169.33103672983285,
+        "nearTrainerToeHeelSpan": 140.13208055259867
+      }
+    },
+    {
+      "pose": "C",
+      "previewScaleUndo": 1.2734375,
+      "wholeCameraScale": 1,
+      "combinedWholeSourceScale": 1.2734375,
+      "wholeSourceTranslation": [0, 0],
+      "individualAnatomicalTransforms": [],
+      "originalShoeGrafts": false,
+      "paletteChangedPixels": 9721,
+      "outsideOriginalVioletPigmentExact": true,
+      "observed": [
+        {
+          "x": 595,
+          "y": 1499,
+          "meanAbsoluteRGBError": 6.674133333333334,
+          "distinctMatchGap": 5.913066666666666
+        },
+        {
+          "x": 762,
+          "y": 1471,
+          "meanAbsoluteRGBError": 9.792533333333333,
+          "distinctMatchGap": 5.4858666666666664
+        },
+        {
+          "x": 784,
+          "y": 1546,
+          "meanAbsoluteRGBError": 5.930666666666666,
+          "distinctMatchGap": 8.957866666666668
+        },
+        {
+          "x": 918,
+          "y": 1505,
+          "meanAbsoluteRGBError": 7.806933333333333,
+          "distinctMatchGap": 5.2463999999999995
+        }
+      ],
+      "crop": [295, 223, 1288, 1597],
+      "finalSize": [993, 1374],
+      "anchors": {
+        "farPlantedHeelMaterialFeature": { "x": 467, "y": 1248 },
+        "nearPlantedHeelMaterialFeature": { "x": 623, "y": 1282 }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelSpan": 169.33103672983285,
+        "nearTrainerToeHeelSpan": 140.13208055259867
+      }
+    },
+    {
+      "pose": "D",
+      "previewScaleUndo": 1.2734375,
+      "wholeCameraScale": 1,
+      "combinedWholeSourceScale": 1.2734375,
+      "wholeSourceTranslation": [0, 0],
+      "individualAnatomicalTransforms": [],
+      "originalShoeGrafts": false,
+      "paletteChangedPixels": 9035,
+      "outsideOriginalVioletPigmentExact": true,
+      "observed": [
+        {
+          "x": 594,
+          "y": 1499,
+          "meanAbsoluteRGBError": 6.033066666666667,
+          "distinctMatchGap": 8.270933333333334
+        },
+        {
+          "x": 761,
+          "y": 1471,
+          "meanAbsoluteRGBError": 7.6837333333333335,
+          "distinctMatchGap": 8.177066666666665
+        },
+        {
+          "x": 783,
+          "y": 1546,
+          "meanAbsoluteRGBError": 5.973866666666667,
+          "distinctMatchGap": 10.013333333333332
+        },
+        {
+          "x": 916,
+          "y": 1505,
+          "meanAbsoluteRGBError": 11.688533333333334,
+          "distinctMatchGap": 4.138133333333332
+        }
+      ],
+      "crop": [295, 223, 1288, 1597],
+      "finalSize": [993, 1374],
+      "anchors": {
+        "farPlantedHeelMaterialFeature": { "x": 466, "y": 1248 },
+        "nearPlantedHeelMaterialFeature": { "x": 621, "y": 1282 }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelSpan": 169.33103672983285,
+        "nearTrainerToeHeelSpan": 139.17614738165446
+      }
+    }
+  ],
+  "maxAnchorAxisDriftPx": 1,
+  "maxInvariantRelativeDrift": 0.0068685129523151645,
+  "numericPass": true,
+  "note": "Four genuine native complete poses; full overhead endpoint replaces wide V. Uniform framing and source-pigment finishing only; no anatomical warp, part fitting or head/shoe grafts."
+}

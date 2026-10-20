@@ -1,0 +1,350 @@
+{
+  "id": "standing-calf-raise",
+  "viewport": { "width": 390, "height": 844 },
+  "capture": "Actual browser native screenshots after scroll settling. DOM visible-image bounds and decoding checked. Earlier page-capture compositor artefacts are not visual passing evidence.",
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Standing Calf Raise, Set your stretch",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 631.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 271.1875,
+                "width": 332,
+                "x": 24,
+                "y": 271.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Set your stretch 1/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Standing Calf Raise, Raise your heels",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 631.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 271.1875,
+                "width": 332,
+                "x": 24,
+                "y": 271.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/standing-calf-raise/2.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Raise your heels 2/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Standing Calf Raise, Squeeze your calves",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 631.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 271.1875,
+                "width": 332,
+                "x": 24,
+                "y": 271.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/standing-calf-raise/3.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Squeeze your calves 3/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Standing Calf Raise, Hold the top",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 631.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 271.1875,
+                "width": 332,
+                "x": 24,
+                "y": 271.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/standing-calf-raise/4.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Hold the top 4/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Standing Calf Raise, Lower slowly",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 631.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 271.1875,
+                "width": 332,
+                "x": 24,
+                "y": 271.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/standing-calf-raise/5.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Lower slowly 5/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Standing Calf Raise, Return to stretch",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 631.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 271.1875,
+                "width": 332,
+                "x": 24,
+                "y": 271.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/standing-calf-raise/6.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Return to stretch 6/6",
+          "scrollY": 0
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 86,\n    \"alt\": \"Standing Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5167,\n    \"alt\": \"Standing Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6322,\n    \"alt\": \"Standing Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7464,\n    \"alt\": \"Standing Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 8586,\n    \"alt\": \"Standing Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9737,\n    \"alt\": \"Standing Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11174,\n    \"alt\": \"Standing Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Standing Calf Raise, Set your stretch",
+            "decoded": true,
+            "height": 1536,
+            "src": "/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp",
+            "width": 1024
+          }
+        ],
+        "caption": "Set your stretch 1/6",
+        "id": "standing-calf-raise",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / standing-calf-raise\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nStanding Calf Raise\nLegs\nMachine\n\nSET YOUR STRETCH 1/6\n\nPause\nNormal\nPRIMARY\nGastrocnemius\nSECONDARY\nSoleus\n\nInstructions\n\n1\n\nStand tall; lower heels below the step.\n\n2\n\nPush through forefeet; keep knees softly straight.\n\n3\n\nLift heels high and squeeze your calves.\n\n4\n\nPause briefly; keep your torso upright.\n\n5\n\nLower your heels slowly without bouncing.\n\n6\n\nLet heels sink below the step gently.\n\nWatch out\n\nBouncing out of the bottom. Pause in the stretch, drive to full tiptoe, and lower slowly — no springs.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 86,\n    \"alt\": \"Standing Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5167,\n    \"alt\": \"Standing Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6322,\n    \"alt\": \"Standing Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7464,\n    \"alt\": \"Standing Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 8586,\n    \"alt\": \"Standing Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9737,\n    \"alt\": \"Standing Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11174,\n    \"alt\": \"Standing Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13444,\n    \"alt\": \"Standing Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 14643,\n    \"alt\": \"Standing Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15843,\n    \"alt\": \"Standing Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17122,\n    \"alt\": \"Standing Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18322,\n    \"alt\": \"Standing Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19522,\n    \"alt\": \"Standing Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Standing Calf Raise, Set your stretch",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 631.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 271.1875,
+                "width": 332,
+                "x": 24,
+                "y": 271.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Set your stretch 1/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Standing Calf Raise, Raise your heels",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 631.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 271.1875,
+                "width": 332,
+                "x": 24,
+                "y": 271.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/standing-calf-raise/2.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Raise your heels 2/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Standing Calf Raise, Squeeze your calves",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 631.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 271.1875,
+                "width": 332,
+                "x": 24,
+                "y": 271.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/standing-calf-raise/3.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Squeeze your calves 3/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Standing Calf Raise, Hold the top",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 631.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 271.1875,
+                "width": 332,
+                "x": 24,
+                "y": 271.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/standing-calf-raise/4.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Hold the top 4/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Standing Calf Raise, Lower slowly",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 631.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 271.1875,
+                "width": 332,
+                "x": 24,
+                "y": 271.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/standing-calf-raise/5.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Lower slowly 5/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Standing Calf Raise, Return to stretch",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 631.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 271.1875,
+                "width": 332,
+                "x": 24,
+                "y": 271.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/standing-calf-raise/6.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Return to stretch 6/6",
+          "scrollY": 0
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 83,\n    \"alt\": \"Standing Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1283,\n    \"alt\": \"Standing Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2181,\n    \"alt\": \"Standing Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3891,\n    \"alt\": \"Standing Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5576,\n    \"alt\": \"Standing Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9552,\n    \"alt\": \"Standing Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11286,\n    \"alt\": \"Standing Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13020,\n    \"alt\": \"Standing Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16522,\n    \"alt\": \"Standing Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18198,\n    \"alt\": \"Standing Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19934,\n    \"alt\": \"Standing Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21682,\n    \"alt\": \"Standing Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23400,\n    \"alt\": \"Standing Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25146,\n    \"alt\": \"Standing Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27582,\n    \"alt\": \"Standing Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Standing Calf Raise, Set your stretch",
+            "decoded": true,
+            "height": 1536,
+            "rect": {
+              "bottom": 352.5208330154419,
+              "height": 360,
+              "left": 24,
+              "right": 356,
+              "top": -7.4791669845581055,
+              "width": 332,
+              "x": 24,
+              "y": -7.4791669845581055
+            },
+            "src": "/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp",
+            "width": 1024
+          }
+        ],
+        "caption": "Set your stretch 1/6",
+        "id": "standing-calf-raise",
+        "scrollY": 278.6666564941406,
+        "text": "Strict artwork review\n\nStaged assets in actual production content / standing-calf-raise\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nStanding Calf Raise\nLegs\nMachine\n\nSET YOUR STRETCH 1/6\n\nPause\nNormal\nPRIMARY\nGastrocnemius\nSECONDARY\nSoleus\n\nInstructions\n\n1\n\nStand tall; lower heels below the step.\n\n2\n\nPush through forefeet; keep knees softly straight.\n\n3\n\nLift heels high and squeeze your calves.\n\n4\n\nPause briefly; keep your torso upright.\n\n5\n\nLower your heels slowly without bouncing.\n\n6\n\nLet heels sink below the step gently.\n\nWatch out\n\nBouncing out of the bottom. Pause in the stretch, drive to full tiptoe, and lower slowly — no springs.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 83,\n    \"alt\": \"Standing Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1283,\n    \"alt\": \"Standing Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2181,\n    \"alt\": \"Standing Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3891,\n    \"alt\": \"Standing Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5576,\n    \"alt\": \"Standing Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9552,\n    \"alt\": \"Standing Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11286,\n    \"alt\": \"Standing Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13020,\n    \"alt\": \"Standing Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16522,\n    \"alt\": \"Standing Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18198,\n    \"alt\": \"Standing Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19934,\n    \"alt\": \"Standing Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21682,\n    \"alt\": \"Standing Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23400,\n    \"alt\": \"Standing Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25146,\n    \"alt\": \"Standing Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27582,\n    \"alt\": \"Standing Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 30882,\n    \"alt\": \"Standing Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 32084,\n    \"alt\": \"Standing Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 33282,\n    \"alt\": \"Standing Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 34482,\n    \"alt\": \"Standing Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 35761,\n    \"alt\": \"Standing Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 36961,\n    \"alt\": \"Standing Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/standing-calf-raise/1.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

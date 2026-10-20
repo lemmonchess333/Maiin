@@ -1,0 +1,166 @@
+{
+  "scope": "Actual production ExerciseThumb, public registered cutouts, three normal sizes, both themes visually reviewed",
+  "viewport": { "width": 390, "height": 844 },
+  "cards": [
+    {
+      "cards": [
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/lu-raise.webp"
+        },
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/lu-raise.webp"
+        },
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/lu-raise.webp"
+        }
+      ],
+      "exercise": "lu-raise"
+    },
+    {
+      "cards": [
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/leg-press.webp"
+        },
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/leg-press.webp"
+        },
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/leg-press.webp"
+        }
+      ],
+      "exercise": "leg-press"
+    },
+    {
+      "cards": [
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/rowing-machine.webp"
+        },
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/rowing-machine.webp"
+        },
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/rowing-machine.webp"
+        }
+      ],
+      "exercise": "rowing-machine"
+    },
+    {
+      "cards": [
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/overhead-extension.webp"
+        },
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/overhead-extension.webp"
+        },
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/overhead-extension.webp"
+        }
+      ],
+      "exercise": "overhead-extension"
+    },
+    {
+      "cards": [
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/t-bar-row.webp"
+        },
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/t-bar-row.webp"
+        },
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/t-bar-row.webp"
+        }
+      ],
+      "exercise": "t-bar-row"
+    },
+    {
+      "cards": [
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/bike.webp"
+        },
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/bike.webp"
+        },
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/bike.webp"
+        }
+      ],
+      "exercise": "bike"
+    },
+    {
+      "cards": [
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/barbell-row.webp"
+        },
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/barbell-row.webp"
+        },
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/barbell-row.webp"
+        }
+      ],
+      "exercise": "barbell-row"
+    },
+    {
+      "cards": [
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/dips.webp"
+        },
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/dips.webp"
+        },
+        {
+          "decoded": true,
+          "kind": "drawing",
+          "src": "/Maiin/form-art/dips.webp"
+        }
+      ],
+      "exercise": "dips"
+    }
+  ]
+}
