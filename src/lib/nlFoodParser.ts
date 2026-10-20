@@ -1452,6 +1452,15 @@ const FOOD_DB: Record<string, Macros> = {
     fat: 14,
     serving: "1 sandwich",
   },
+  // A toastie is a toasted sandwich: the sandwich's row, by its own name,
+  // so "cheese toastie" is the toastie and not a slice of cheese.
+  toastie: {
+    calories: 350,
+    protein: 18,
+    carbs: 35,
+    fat: 14,
+    serving: "1 toastie",
+  },
   burger: {
     calories: 500,
     protein: 28,
@@ -2119,46 +2128,91 @@ function depluralize(word: string): string {
 }
 
 /**
- * Try to find an exact or substring match in the food DB.
- * Falls back to depluralized forms, then to typos (see `typoAllowance`).
- * Returns the best matching key, or null.
+ * Plain bases a dish is built on: a food named with one is on it or in
+ * it, and adds ("chicken salad", "cheese omelette", "tuna pasta"). Every
+ * other dish is made with its filling, which its row already holds:
+ * "chicken wrap" is a wrap, "beef burrito" a burrito.
  */
-function findBestMatch(text: string): string | null {
-  const lower = andForAmpersand(text.toLowerCase().trim());
+const DISH_BASES = new Set([
+  "salad",
+  "omelette",
+  "omelet",
+  "toast",
+  "bagel",
+  "bread",
+  "sourdough",
+  "pasta",
+  "noodles",
+  "rice",
+  "brown rice",
+  "couscous",
+  "potato",
+  "jacket potato",
+  "sweet potato",
+  "mash",
+  "mashed potato",
+  "porridge",
+  "oats",
+  "oatmeal",
+  "tortilla",
+  "pita",
+  "naan",
+  "flatbread",
+  "cracker",
+  "crackers",
+  "rice cake",
+]);
 
-  // Exact match
-  if (FOOD_DB[lower]) return lower;
+/** Spreads and sauces: added to what they are on, and never the dish
+ *  ("tuna mayo" is tuna with mayonnaise). */
+const CONDIMENTS = new Set([
+  "mayo",
+  "mayonnaise",
+  "butter",
+  "jam",
+  "honey",
+  "hummus",
+  "houmous",
+  "cream cheese",
+]);
 
-  // Try depluralized form: "chocolate bars" → "chocolate bar"
-  const depluralWords = lower.split(/\s+/).map(depluralize).join(" ");
-  if (FOOD_DB[depluralWords]) return depluralWords;
+let keysLongestFirst: string[] | null = null;
+function foodKeysLongestFirst(): string[] {
+  keysLongestFirst ??= Object.keys(FOOD_DB).sort((a, b) => b.length - a.length);
+  return keysLongestFirst;
+}
 
-  // Try multi-word matches (longest first) — require word boundaries
-  const sortedKeys = Object.keys(FOOD_DB).sort((a, b) => b.length - a.length);
-  for (const key of sortedKeys) {
+/** The foods a phrase names, in the order named. A longer name takes its
+ *  words first: "peanut butter sandwich" names peanut butter and a
+ *  sandwich, not butter. */
+function foodsNamed(text: string): string[] {
+  const taken: [number, number][] = [];
+  const found: { key: string; at: number }[] = [];
+  for (const key of foodKeysLongestFirst()) {
     const re = new RegExp(
-      `\\b${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`
+      `\\b${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
+      "g"
     );
-    if (re.test(lower)) return key;
-  }
-
-  // Try depluralized text against word boundaries
-  if (depluralWords !== lower) {
-    for (const key of sortedKeys) {
-      const re = new RegExp(
-        `\\b${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`
-      );
-      if (re.test(depluralWords)) return key;
+    for (const m of text.matchAll(re)) {
+      const start = m.index;
+      const end = start + key.length;
+      if (taken.some(([s, e]) => start < e && end > s)) continue;
+      taken.push([start, end]);
+      found.push({ key, at: start });
     }
   }
+  return found.sort((a, b) => a.at - b.at).map((f) => f.key);
+}
 
-  // Typos: the closest key within the typed word's allowance.
+/** The closest key within the typed word's allowance (see
+ *  `typoAllowance`), or null. */
+function closestTypo(candidates: string[]): string | null {
   let bestKey: string | null = null;
   let bestDist = Infinity;
-  for (const candidate of [lower, depluralWords]) {
+  for (const candidate of candidates) {
     if (NOT_TYPOS.has(candidate)) continue;
     const allowance = typoAllowance(candidate);
-    for (const key of sortedKeys) {
+    for (const key of foodKeysLongestFirst()) {
       // Words further apart in length than the allowance cannot match.
       if (Math.abs(candidate.length - key.length) > allowance) continue;
       // Nearly every misspelling keeps its first letter, so a word that
@@ -2175,52 +2229,73 @@ function findBestMatch(text: string): string | null {
   return bestKey;
 }
 
+/** A phrase's food: the row it names (`head`) and the rows added to it. */
+interface Dish {
+  head: string;
+  added: string[];
+}
+
 /**
- * Try to match multiple words in a segment against individual DB keys.
- * "ham sandwich" → finds "ham" and "sandwich", sums their macros.
- * Returns the combined macros and matched words, or null if <1 match.
+ * The food a phrase names. An exact row wins, then its singular. Failing
+ * that, the dish is the last food named, as English names a dish: the
+ * longest name used to win, and the rest vanished ("chicken wrap" logged
+ * a chicken breast, "blueberry muffin" 1 kcal of blueberries). A plain
+ * base adds the foods named with it (`DISH_BASES`), and a condiment is
+ * added to whatever it is on (`CONDIMENTS`). Then typos.
  */
-function findCompoundMatch(
-  text: string
-): { macros: Macros; matchedKeys: string[] } | null {
-  const lower = text.toLowerCase().trim();
-  const words = lower.split(/\s+/);
-  const matched: { key: string; macros: Macros }[] = [];
-  const usedIndices = new Set<number>();
+function matchDish(text: string): Dish | null {
+  const lower = andForAmpersand(text.toLowerCase().trim());
+  if (FOOD_DB[lower]) return { head: lower, added: [] };
 
-  // Try multi-word keys first (longest first), then single words
-  const sortedKeys = Object.keys(FOOD_DB).sort((a, b) => b.length - a.length);
-  for (const key of sortedKeys) {
-    const keyWords = key.split(/\s+/);
-    // Check if consecutive words in `words` match this key
-    for (let i = 0; i <= words.length - keyWords.length; i++) {
-      if (usedIndices.has(i)) continue;
-      const slice = words.slice(i, i + keyWords.length).join(" ");
-      if (slice === key) {
-        matched.push({ key, macros: FOOD_DB[key] });
-        for (let j = i; j < i + keyWords.length; j++) usedIndices.add(j);
-        break;
-      }
-    }
+  // "chocolate bars" → "chocolate bar"
+  const depluralWords = lower.split(/\s+/).map(depluralize).join(" ");
+  if (FOOD_DB[depluralWords]) return { head: depluralWords, added: [] };
+
+  // The singular can name more of the phrase ("chicken salads" names a
+  // salad), or less ("onion crisps" loses its crisps): the reading that
+  // covers more of it stands.
+  const asTyped = foodsNamed(lower);
+  const singular =
+    depluralWords === lower ? asTyped : foodsNamed(depluralWords);
+  const covered = (keys: string[]) =>
+    keys.reduce((n, key) => n + key.length, 0);
+  const named = covered(singular) > covered(asTyped) ? singular : asTyped;
+  if (named.length > 0) {
+    const dishes = named.filter((key) => !CONDIMENTS.has(key));
+    const head = (dishes.length > 0 ? dishes : named).at(-1)!;
+    const rest = [...named];
+    rest.splice(rest.lastIndexOf(head), 1);
+    // What the row's own serving counts is the dish, not added to it:
+    // an egg omelette is the omelette ("1 omelette (2 eggs)").
+    const others = rest.filter(
+      (key) => servingUnits(FOOD_DB[head].serving, key) === null
+    );
+    const added = DISH_BASES.has(head)
+      ? others
+      : others.filter((key) => CONDIMENTS.has(key));
+    return { head, added };
   }
 
-  if (matched.length === 0) return null;
+  const typo = closestTypo([lower, depluralWords]);
+  return typo ? { head: typo, added: [] } : null;
+}
 
-  const combined: Macros = {
-    calories: 0,
-    protein: 0,
-    carbs: 0,
-    fat: 0,
-    serving: "1 serving",
-  };
-  for (const m of matched) {
-    combined.calories += m.macros.calories;
-    combined.protein += m.macros.protein;
-    combined.carbs += m.macros.carbs;
-    combined.fat += m.macros.fat;
+/** The row a phrase names, ignoring what is added to it. */
+function findBestMatch(text: string): string | null {
+  return matchDish(text)?.head ?? null;
+}
+
+/** A dish's macros: its row, and one serving of each food added to it,
+ *  against the row's serving. */
+function dishItem(dish: Dish): Macros {
+  const item = { ...FOOD_DB[dish.head] };
+  for (const key of dish.added) {
+    item.calories += FOOD_DB[key].calories;
+    item.protein += FOOD_DB[key].protein;
+    item.carbs += FOOD_DB[key].carbs;
+    item.fat += FOOD_DB[key].fat;
   }
-
-  return { macros: combined, matchedKeys: matched.map((m) => m.key) };
+  return item;
 }
 
 /**
@@ -2312,10 +2387,7 @@ const CONJUNCTION_KEYS = Object.keys(FOOD_DB).filter((k) =>
 function partResolves(part: string): boolean {
   const { rest } = extractQty(part);
   if (!rest) return false;
-  if (rest.split(/\s+with\s+/i).some((w) => findBestMatch(w) !== null)) {
-    return true;
-  }
-  return findCompoundMatch(rest) !== null;
+  return rest.split(/\s+with\s+/i).some((w) => findBestMatch(w) !== null);
 }
 
 function splitConjunctions(segment: string): string[] {
@@ -2448,9 +2520,16 @@ export function parseFoodText(input: string): ParsedFood[] {
                 ml: ml ?? extracted.ml,
               }
             : extracted;
-        const key = findBestMatch(amount.rest);
-        if (key) {
-          const multiplier = foodMultiplier(key, amount);
+        const dish = matchDish(amount.rest);
+        if (dish) {
+          const key = dish.head;
+          // A measure cannot be shared out between a base and what is on it.
+          const measured =
+            amount.grams !== undefined || amount.ml !== undefined;
+          const multiplier =
+            measured && dish.added.length > 0
+              ? null
+              : foodMultiplier(key, amount);
           if (multiplier === null) {
             unresolved.push(
               unresolvedQuantity(i === 0 ? typedParts[0] : part, key)
@@ -2458,7 +2537,7 @@ export function parseFoodText(input: string): ParsedFood[] {
             continue;
           }
           matchedParts.push({ index: i, text: part });
-          const item = FOOD_DB[key];
+          const item = dishItem(dish);
           const assumedShare = i === 0 ? 1 : addedShare(baseKey, key);
           const articlePortion = /^an?\s+/i.test(part);
           const impliedSplash =
@@ -2532,11 +2611,16 @@ export function parseFoodText(input: string): ParsedFood[] {
       }
     }
 
-    // Try exact/substring match first
-    const key = findBestMatch(rest);
-    if (key) {
-      const item = FOOD_DB[key];
-      const multiplier = foodMultiplier(key, { qty, grams, ml, counted, rest });
+    const dish = matchDish(rest);
+    if (dish) {
+      const key = dish.head;
+      const item = dishItem(dish);
+      const combined = dish.added.length > 0;
+      // A measure cannot be shared out between a base and what is on it.
+      const multiplier =
+        hasUnitPrefix && combined
+          ? null
+          : foodMultiplier(key, { qty, grams, ml, counted, rest });
       if (multiplier === null) {
         results.push(unresolvedQuantity(segment, key));
         continue;
@@ -2559,24 +2643,11 @@ export function parseFoodText(input: string): ParsedFood[] {
         // Skip canonical-key dedup when an explicit portion was
         // typed — merging "200g chicken" with "100g chicken" loses
         // the per-row portion semantics. Each portioned row stays
-        // independent in the diary.
-        ...(hasUnitPrefix ? {} : { _canonicalKey: canonicalKey(key) }),
-      });
-      continue;
-    }
-
-    // Fallback: compound word matching ("ham sandwich" → ham + sandwich).
-    // A measured single-food portion cannot safely scale a sum of foods.
-    const compound = hasUnitPrefix ? null : findCompoundMatch(rest);
-    if (compound && compound.macros.calories > 0) {
-      const displayName = countedName(rest, qty);
-      results.push({
-        name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
-        calories: Math.round(compound.macros.calories * qty),
-        protein: Math.round(compound.macros.protein * qty),
-        carbs: Math.round(compound.macros.carbs * qty),
-        fat: Math.round(compound.macros.fat * qty),
-        _canonicalKey: canonicalKey(compound.matchedKeys[0]),
+        // independent in the diary. A dish with foods added to it is
+        // a sum, not its row, so it never merges with that row either.
+        ...(hasUnitPrefix || combined
+          ? {}
+          : { _canonicalKey: canonicalKey(key) }),
       });
       continue;
     }
