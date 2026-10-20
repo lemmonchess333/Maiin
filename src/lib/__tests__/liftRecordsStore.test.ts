@@ -144,6 +144,30 @@ describe("loadLiftRecords", () => {
     expect(records.revision).toBe(4);
   });
 
+  it("rebuilds an old-format workout under its exercise and weight", async () => {
+    // G4-51: workouts saved before `exerciseName` and `weightKg` carry
+    // `name` and `set.weight`. Rebuilt, they were filed under `undefined`
+    // at 0 kg, so a 90 x 5 below a logged 100 x 5 was the best.
+    seedFirestore({
+      [RECORDS]: { invalidated: true, revision: 2 },
+      "users/u1/workouts/legacy": {
+        date: "2025-03-01",
+        completedAt: "2025-03-01T18:00:00.000Z",
+        exercises: [{ name: "Bench Press", sets: [{ weight: 100, reps: 5 }] }],
+      },
+      "users/u1/workouts/new": bench("2026-06-01", 90),
+    });
+
+    const records = await loadLiftRecords(
+      "u1",
+      await fetchSavedWorkouts("u1", { latest: 1 })
+    );
+
+    expect(benchBest(records)).toBe(100);
+    expect(Object.keys(records.map)).toEqual(["Bench Press"]);
+    expect(records.sessionCounts).toEqual({ "Bench Press": 2 });
+  });
+
   it("does not count warm-up sets as volume when it rebuilds", async () => {
     // The live session leaves warm-ups out of a session's volume, so a
     // rebuilt best that counted them was one no session could beat.

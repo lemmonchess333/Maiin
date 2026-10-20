@@ -1093,3 +1093,105 @@ describe("oats by their packet names are weighed dry", () => {
     );
   });
 });
+
+describe("a count of the unit a serving is written in", () => {
+  /* G4-12: a row whose serving counts its own units ("2 tbsp (32g)",
+     "2 slices (16g)", "1 omelette (2 eggs)") was multiplied by the typed
+     count again, so "2 tbsp peanut butter" logged 376 kcal where its own
+     row says 188, and "3 egg omelette" logged six eggs. References:
+     peanut butter 188 per 2 tbsp, bacon 90 per 2 slices, omelette 154
+     per 2 eggs. */
+  it.each([
+    ["2 tbsp peanut butter", 188],
+    ["1 tbsp peanut butter", 94],
+    ["4 tbsp peanut butter", 376],
+    ["2 slices of bacon", 90],
+    ["4 slices of bacon", 180],
+    ["a slice of bacon", 45],
+    ["3 egg omelette", 231],
+  ] as const)("%s", (text, calories) => {
+    expect(parseFoodText(text)[0]).toMatchObject({ calories });
+  });
+
+  it("keeps counting servings when the serving counts something else", () => {
+    // The anchors: toast is "1 slice", rice a weighed bowl, an egg "1 large".
+    expect(parseFoodText("2 slices of toast")[0].calories).toBe(
+      2 * parseFoodText("toast")[0].calories
+    );
+    expect(parseFoodText("2 cups of rice")[0].calories).toBe(
+      2 * parseFoodText("rice")[0].calories
+    );
+    expect(parseFoodText("2 eggs")[0].calories).toBe(
+      2 * parseFoodText("egg")[0].calories
+    );
+  });
+});
+
+describe("a dish is the food it is named for", () => {
+  /* G4-14: the longest food name in a phrase won and the rest of it
+     vanished. "chicken wrap" logged a chicken breast (0 g carbs),
+     "blueberry muffin" 1 kcal of blueberries, "strawberry yogurt" 4 kcal,
+     "chicken curry" and "chicken rice" a chicken breast. The dish is the
+     last food named, as English names a dish. A made dish (a wrap, a
+     sandwich, a curry) carries its filling; a plain base (a salad, an
+     omelette, rice, pasta) adds the foods named with it; a condiment is
+     added to whatever it is on. */
+  const one = (text: string) => parseFoodText(text)[0];
+  const macros = (text: string) => {
+    const row = one(text);
+    return [row.calories, row.protein, row.carbs, row.fat];
+  };
+  const together = (...foods: string[]) =>
+    foods.reduce((sum, food) => sum + one(food).calories, 0);
+
+  it.each([
+    ["chicken wrap", "wrap"],
+    ["blueberry muffin", "muffin"],
+    ["chocolate cake", "cake"],
+    ["strawberry yogurt", "yogurt"],
+    ["chicken curry", "curry"],
+    ["beef burrito", "burrito"],
+    ["peanut butter sandwich", "sandwich"],
+    ["fried egg sandwich", "sandwich"],
+    ["egg fried rice", "fried rice"],
+    ["cheese toastie", "toastie"],
+  ] as const)("%s is a %s", (dish, food) => {
+    expect(macros(dish)).toEqual(macros(food));
+    expect(one(dish).name.toLowerCase()).toBe(dish);
+  });
+
+  it.each([
+    ["chicken salad", ["chicken", "salad"]],
+    ["chicken caesar salad", ["chicken", "salad"]],
+    ["cheese omelette", ["cheese", "omelette"]],
+    ["tuna pasta", ["tuna", "pasta"]],
+    ["chicken rice", ["chicken", "rice"]],
+    ["chicken noodles", ["chicken", "noodles"]],
+    ["tuna mayo", ["tuna", "mayo"]],
+  ] as const)("%s is %j together", (dish, foods) => {
+    expect(one(dish).calories).toBe(together(...foods));
+  });
+
+  it("counts the dish", () => {
+    expect(one("2 chicken wraps").calories).toBe(2 * one("wrap").calories);
+    expect(one("2 chicken salads").calories).toBe(
+      2 * together("chicken", "salad")
+    );
+  });
+
+  it("keeps a food named once, and a dish with its own row, as they were", () => {
+    // The anchors: these logged right before and still do.
+    expect(macros("ham sandwich")).toEqual(macros("sandwich"));
+    expect(one("chicken breast").calories).toBe(248);
+    expect(one("salt and vinegar crisps").calories).toBe(152);
+    expect(macros("chicken stir fry")).toEqual(macros("stir fry"));
+    expect(one("grilled chicken").calories).toBe(one("chicken").calories);
+  });
+
+  it("asks rather than splitting a measure across a base and what is on it", () => {
+    expect(one("200g chicken salad").quantityIssue).toBeDefined();
+    // A measure of a made dish still scales the dish's own row, or asks
+    // as that row always did.
+    expect(one("200g chicken").calories).toBe(331);
+  });
+});
