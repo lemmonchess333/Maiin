@@ -99,6 +99,17 @@ const nativeIllustrationCorrected = (
   reviewFile: `docs/exercise-art/releases/2026-10-19-remaining33-batch1/${id}.json`,
 });
 
+const finalIllustrationCorrected = (
+  id: string,
+  width: number,
+  height: number,
+  reference: number
+): HandListedFormArtwork => ({
+  ...legacyRedrawn(id, width, height, reference),
+  version: "anatomy-v3-2026-10-20-native-final-v1",
+  reviewFile: `docs/exercise-art/releases/2026-10-20-remaining33-final/${id}.json`,
+});
+
 /**
  * A set approved by strict review. Every fact here comes from its release
  * record, through APPROVED_FORM_ART_RELEASES, which `npm run art:releases`
@@ -176,15 +187,15 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
     status: "owner-released-with-findings",
     reviewFile: "docs/exercise-art/releases/2026-10-16/seated-row.json",
   },
-  swimming: illustrationPolished("swimming", 1264, 848, 2),
-  stairmaster: illustrationPolished("stairmaster", 1264, 848, 1),
+  swimming: finalIllustrationCorrected("swimming", 1264, 848, 2),
+  stairmaster: finalIllustrationCorrected("stairmaster", 1024, 1536, 1),
   "turkish-get-up": nativeIllustrationCorrected(
     "turkish-get-up",
     1024,
     1152,
     1
   ),
-  "assault-bike": illustrationPolished("assault-bike", 1024, 1024, 1),
+  "assault-bike": finalIllustrationCorrected("assault-bike", 1024, 1024, 1),
   "spin-bike": illustrationPolished("spin-bike", 432, 707, 1),
   elliptical: {
     ...existing("elliptical", 1047, 1072),
@@ -193,13 +204,7 @@ export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
     status: "owner-released-with-findings",
     reviewFile: "docs/exercise-art/releases/2026-10-16/elliptical.json",
   },
-  "rowing-machine": {
-    ...existing("rowing-machine", 1416, 830),
-    reference: "form-frames/rowing-machine/3.webp",
-    version: "anatomy-v3-2026-10-15-retained-whole-trio-rowing-v1",
-    status: "owner-released-with-findings",
-    reviewFile: "docs/exercise-art/releases/2026-10-15/rowing-machine.json",
-  },
+  "rowing-machine": finalIllustrationCorrected("rowing-machine", 1416, 830, 3),
   "pendlay-row": {
     ...existing("pendlay-row", 1180, 892),
     reference: "form-frames/pendlay-row/3.webp",

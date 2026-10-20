@@ -1,0 +1,40 @@
+{
+  "baseline": "7e382a7b7983b0800c3d6c2575b8347cbecf9e67",
+  "changedGuideFiles": 15,
+  "unchangedGuideFiles": 897,
+  "changedCards": 3,
+  "unchangedRegisteredCards": 149,
+  "allCardFiles": 154,
+  "unchangedCardFilesIncludingUnregistered": 151,
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "sets": [
+    {
+      "id": "assault-bike",
+      "allPublicFramesExactToFrozenExports": true,
+      "normalCardExactToStaged": true,
+      "cardSha256": "9b0d9f0778801167407b29e2ac46496212f3a564be1a5c85c4d0213eafc2b321",
+      "changedFrames": [1, 2, 3, 4, 5, 6]
+    },
+    {
+      "id": "stairmaster",
+      "allPublicFramesExactToFrozenExports": true,
+      "normalCardExactToStaged": true,
+      "cardSha256": "be4cb180a29b34380e08988a461cde800eb6a3e32d8ad4e0218c731e5fae0be1",
+      "changedFrames": [1, 2, 3, 4, 5, 6]
+    },
+    {
+      "id": "rowing-machine",
+      "allPublicFramesExactToFrozenExports": true,
+      "normalCardExactToStaged": true,
+      "cardSha256": "8ddb1850d7e2838139687408859aad464e943c5af72e8854a71020c231851f10",
+      "changedFrames": [3, 4]
+    },
+    {
+      "id": "swimming",
+      "allPublicFramesExactToFrozenExports": true,
+      "normalCardExactToStaged": true,
+      "cardSha256": "ee5b0a2d710c6f8678525aa194bb0f716bf9a345a72237cf450084c132fb7d01",
+      "changedFrames": [3]
+    }
+  ]
+}
