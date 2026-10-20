@@ -39,12 +39,15 @@ const {
   getWeekKey,
   isInRollingWindow,
   triggerComputeKey,
+  inTriggerReach,
+  runDayKey,
   _internal,
 } = require("../performanceEngine");
 const perfScoring = require("../lib/perfScoring");
 
 const {
   dateKeyMinusN,
+  personTodayKey,
   currentWindow,
   baselineWindow,
   aggregateWindow,
@@ -229,6 +232,82 @@ describe("triggerComputeKey", () => {
       []
     );
     expect(aggToday.liftSessions).toBe(0);
+  });
+});
+
+/* G3-8 (20 October): the window was keyed by the server's day, and runs
+   were placed by the UTC instant they finished while lifts were placed by
+   their local day. */
+describe("the person's own week", () => {
+  // Wednesday 20 May 2026, 20:00 in New York (UTC-4).
+  const NOW = new Date("2026-05-21T00:00:00Z");
+
+  it("ends the window on the person's today", () => {
+    expect(personTodayKey("America/New_York", NOW, null)).toBe("2026-05-20");
+    expect(personTodayKey("Pacific/Auckland", NOW, null)).toBe("2026-05-21");
+    expect(personTodayKey("Pacific/Kiritimati", NOW, null)).toBe("2026-05-21");
+    expect(
+      personTodayKey("Pacific/Kiritimati", new Date("2026-05-20T12:00:00Z"))
+    ).toBe("2026-05-21");
+  });
+
+  it("keeps the server's day without a timezone, and its east-of-UTC case", () => {
+    expect(personTodayKey(null, NOW, null)).toBe("2026-05-21");
+    expect(personTodayKey("Not/AZone", NOW, null)).toBe("2026-05-21");
+    // A session one day ahead of the server's date is that day's.
+    expect(personTodayKey(null, NOW, "2026-05-22")).toBe("2026-05-22");
+    expect(personTodayKey(null, NOW, "2026-05-23")).toBe("2026-05-21");
+    // A timezone decides it: the session's label does not.
+    expect(personTodayKey("America/New_York", NOW, "2026-05-22")).toBe(
+      "2026-05-20"
+    );
+  });
+
+  it("dates a run by the day it started, else the day it finished there", () => {
+    const finished = { toDate: () => new Date("2026-05-15T01:40:00Z") };
+    expect(runDayKey({ date: "2026-05-14", completedAt: finished }, null)).toBe(
+      "2026-05-14"
+    );
+    expect(runDayKey({ completedAt: finished }, "America/New_York")).toBe(
+      "2026-05-14"
+    );
+    expect(runDayKey({ completedAt: finished }, null)).toBe("2026-05-15");
+    // Not a day: the finish time stands in.
+    expect(runDayKey({ date: "2026-02-30", completedAt: finished }, null)).toBe(
+      "2026-05-15"
+    );
+    expect(runDayKey({}, null)).toBeNull();
+  });
+
+  it("places a run and a lift on the same evening in the same window and week", () => {
+    const { start, end } = currentWindow("2026-05-20");
+    const workouts = [{ date: "2026-05-14", totalVolume: 1000, exercises: [] }];
+    const runs = [
+      {
+        date: "2026-05-14",
+        completedAt: { toDate: () => new Date("2026-05-15T01:40:00Z") },
+        distance: 5000,
+      },
+      // The evening before the window: Thursday in UTC.
+      {
+        date: "2026-05-13",
+        completedAt: { toDate: () => new Date("2026-05-14T01:40:00Z") },
+        distance: 5000,
+      },
+    ];
+    const agg = aggregateWindow(start, end, workouts, runs, [], []);
+    expect(agg.liftSessions).toBe(1);
+    expect(agg.runSessions).toBe(1);
+    expect(agg.activeWeeks).toBe(1);
+  });
+
+  it("lets a trigger through for a session a day either side of the window", () => {
+    const today = "2026-05-21";
+    expect(inTriggerReach("2026-05-22", today)).toBe(true);
+    expect(inTriggerReach("2026-05-14", today)).toBe(true);
+    expect(inTriggerReach("2026-05-13", today)).toBe(false);
+    expect(inTriggerReach("2026-05-23", today)).toBe(false);
+    expect(inTriggerReach(null, today)).toBe(false);
   });
 });
 

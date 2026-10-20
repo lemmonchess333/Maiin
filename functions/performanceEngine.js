@@ -46,6 +46,8 @@ const {
   resolveScoringCalorieTarget,
 } = require("./lib/calorieTargetResolution");
 const { computeEffectiveTier } = require("./helpers");
+const { isCalendarDate, utcDateString } = require("./lib/dateUtils");
+const { localDateKeyInTz } = require("./lib/streakNudge");
 
 const db = admin.firestore();
 
@@ -114,6 +116,53 @@ function baselineWindow(computeKey) {
 }
 
 /**
+ * The person's today: the day in their profile `timezone`, written by the
+ * app on every boot (#962), or the server's when there is none. The window
+ * ends on it, so at Wednesday 20:00 in New York it is Wednesday's seven
+ * days, not Thursday's.
+ *
+ * Without a timezone, `sessionDay` (the day of the session a trigger is
+ * recomputing for) keeps `triggerComputeKey`'s east-of-UTC case: a session
+ * one day ahead of the server's date is that day's.
+ */
+function personTodayKey(timezone, now, sessionDay) {
+  const local = localDateKeyInTz(now, timezone);
+  if (local) return local;
+  const serverDay = getComputeKey(now);
+  if (!sessionDay) return serverDay;
+  return triggerComputeKey(sessionDay, serverDay) || serverDay;
+}
+
+/**
+ * The day a saved run belongs to (Lift3): the day it started, `date`, as
+ * the app writes it and every other reader dates it; for a run saved before
+ * `date` existed, the day it finished in the person's timezone, or in UTC.
+ * Mirror of `runEvidenceDate` (src/lib/runExecutionEvidence.ts) and the
+ * rule `lib/activeDates.js` reads.
+ */
+function runDayKey(run, timezone) {
+  if (isCalendarDate(run.date)) return run.date;
+  const finished =
+    run.completedAt && run.completedAt.toDate ? run.completedAt.toDate() : null;
+  if (!finished) return null;
+  return localDateKeyInTz(finished, timezone) || utcDateString(finished);
+}
+
+/**
+ * Whether a trigger's session can be in the window of the person's today,
+ * whatever their timezone: up to a day either side of the server's window.
+ * The window itself is decided in the compute, which reads the timezone;
+ * this only saves the compute for an entry far outside it.
+ */
+function inTriggerReach(dateStr, todayKey) {
+  if (!dateStr) return false;
+  return (
+    dateStr >= dateKeyMinusN(todayKey, WINDOW_DAYS) &&
+    dateStr <= dateKeyMinusN(todayKey, -1)
+  );
+}
+
+/**
  * Trigger gate: returns true if `dateStr` (YYYY-MM-DD) falls within
  * the rolling window ending at `computeKey`. Used by onWorkoutCreated
  * / onRunCreated to skip recompute when a backdated entry is outside
@@ -163,8 +212,16 @@ function triggerComputeKey(dateStr, todayKey) {
  */
 async function fetchWindowData(uid, windowStart, windowEnd) {
   const userRef = db.collection("users").doc(uid);
-  const startTs = admin.firestore.Timestamp.fromDate(windowStart);
-  const endTs = admin.firestore.Timestamp.fromDate(windowEnd);
+  // A run is dated by the day it started (`runDayKey`), which can be a day
+  // either side of the UTC instant it finished: read a day wider, and the
+  // aggregate keeps the runs whose day is in the window.
+  const DAY_MS = 86400000;
+  const startTs = admin.firestore.Timestamp.fromDate(
+    new Date(windowStart.getTime() - DAY_MS)
+  );
+  const endTs = admin.firestore.Timestamp.fromDate(
+    new Date(windowEnd.getTime() + DAY_MS)
+  );
 
   const startStr = windowStart.toISOString().split("T")[0];
   const endStr = windowEnd.toISOString().split("T")[0];
@@ -301,8 +358,21 @@ async function fetchLifetimeData(uid) {
  * Aggregate raw data within an arbitrary date window [start, end).
  * Returns same shape as the legacy weekly aggregate, plus the
  * inclusive day-count for downstream baseline normalisation.
+ *
+ * Every session is placed by its day, as a lift always was: a run by
+ * `runDay` (the day it started, `runDayKey`), not the UTC instant it
+ * finished, so a run and a lift on the same evening west of UTC share a
+ * week.
  */
-function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
+function aggregateWindow(
+  start,
+  end,
+  workouts,
+  runs,
+  meals,
+  bodyweightLogs,
+  runDay = (r) => runDayKey(r, null)
+) {
   // Distinct 7-day sub-periods of the window that had a lift or run session —
   // the server-side equivalent of the client's "weeks with a session" count
   // (performanceEngine.ts computeBaseline). Drives weeksUsed so a zero-activity
@@ -347,9 +417,10 @@ function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
   let runSessions = 0;
 
   runs.forEach((r) => {
-    const d =
-      r.completedAt && r.completedAt.toDate ? r.completedAt.toDate() : null;
-    if (!d || d < start || d >= end) return;
+    const day = runDay(r);
+    if (!day) return;
+    const d = new Date(day + "T00:00:00Z");
+    if (d < start || d >= end) return;
     runSessions++;
     const wk = Math.floor((d.getTime() - start.getTime()) / WEEK_MS);
     activeWeeks.add(wk);
@@ -609,23 +680,35 @@ function priorDeloadIndex(data) {
  * @param {string|null} computeKeyOverride — null → today
  * @returns {{ ok, weekKey, performanceIndex, confidence, loadBand }}
  */
-async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
+/**
+ * `computeKeyOverride` names the window's last day; without one it is the
+ * person's today (`personTodayKey`). `options.sessionDay` is the day of the
+ * session a trigger recomputes for, and `options.now` the clock.
+ */
+async function computeAndWritePerformanceForUser(
+  uid,
+  computeKeyOverride,
+  options = {}
+) {
   try {
-    const computeKey = computeKeyOverride || getComputeKey(new Date());
+    const now = options.now || new Date();
+    // The profile first: the window's last day is the person's today.
+    const [profileSnap, lifetimeData] = await Promise.all([
+      db.collection("users").doc(uid).get(),
+      fetchLifetimeData(uid),
+    ]);
+    const profile = profileSnap.exists ? profileSnap.data() : {};
+    const timezone = profile.timezone || null;
+    const computeKey =
+      computeKeyOverride ||
+      personTodayKey(timezone, now, options.sessionDay || null);
 
     // Fetch combined window covering baseline + current + bodyweight prev
     const { start: baselineStart } = baselineWindow(computeKey);
     const { end: currentEnd } = currentWindow(computeKey);
-
-    // Pull profile + raw data + lifetime in parallel
-    const [profileSnap, rawData, lifetimeData] = await Promise.all([
-      db.collection("users").doc(uid).get(),
-      fetchWindowData(uid, baselineStart, currentEnd),
-      fetchLifetimeData(uid),
-    ]);
-
-    const profile = profileSnap.exists ? profileSnap.data() : {};
+    const rawData = await fetchWindowData(uid, baselineStart, currentEnd);
     const { workouts, runs, meals, bodyweightLogs } = rawData;
+    const runDay = (r) => runDayKey(r, timezone);
 
     // Aggregate current rolling window
     const { start: cStart, end: cEnd } = currentWindow(computeKey);
@@ -635,7 +718,8 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
       workouts,
       runs,
       meals,
-      bodyweightLogs
+      bodyweightLogs,
+      runDay
     );
 
     // Aggregate baseline window
@@ -646,7 +730,8 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
       workouts,
       runs,
       meals,
-      bodyweightLogs
+      bodyweightLogs,
+      runDay
     );
 
     // Normalise baseline to a 7-day-equivalent for ratio comparisons
@@ -886,6 +971,8 @@ module.exports = {
   getWeekKey, // legacy alias
   isInRollingWindow,
   triggerComputeKey,
+  inTriggerReach,
+  runDayKey,
   COOLDOWN_MS,
   // Pure helpers exposed for unit testing. The scoring helpers are re-exported
   // from ./lib/perfScoring (the shared, goal-aware copy) so existing tests that
@@ -893,6 +980,7 @@ module.exports = {
   _internal: {
     // server-specific
     dateKeyMinusN,
+    personTodayKey,
     currentWindow,
     baselineWindow,
     aggregateWindow,

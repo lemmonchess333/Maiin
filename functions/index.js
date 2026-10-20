@@ -2406,8 +2406,8 @@ const {
   acquireCooldownLock,
   releaseLock,
   getWeekKey,
-  isInRollingWindow,
-  triggerComputeKey,
+  inTriggerReach,
+  runDayKey,
 } = require("./performanceEngine");
 
 const db = admin.firestore();
@@ -4725,25 +4725,16 @@ exports.onWorkoutCreated = functions
       );
       await applyPartnerActivity(db, uid, workoutStreakDay);
 
-      let workoutComputeKey = null;
-      if (data.date) {
-        // PI1a: skip recompute when the workout falls outside the rolling
-        // 7-day window. Unlike the run trigger below — whose date is
-        // derived from `completedAt` in UTC, the same frame as the gate —
-        // `data.date` is the USER'S LOCAL day, so triggerComputeKey also
-        // handles the east-of-UTC case: a label one day ahead of the
-        // server's date is a same-day session, recomputed against the
-        // window ending on ITS day instead of skipped as backdated.
-        workoutComputeKey = triggerComputeKey(
-          data.date,
-          getWeekKey(new Date())
+      // PI1a: skip recompute when the workout falls outside the rolling
+      // 7-day window. `data.date` is the person's local day and the window
+      // ends on their today, which the compute reads from their timezone;
+      // the gate allows a day either side of the server's, so a session
+      // in the window is never skipped wherever they are.
+      if (data.date && !inTriggerReach(data.date, getWeekKey(new Date()))) {
+        console.log(
+          `onWorkoutCreated: skipping recompute for ${uid}, workout on ${data.date} outside rolling window`
         );
-        if (workoutComputeKey === null) {
-          console.log(
-            `onWorkoutCreated: skipping recompute for ${uid}, workout on ${data.date} outside rolling window`
-          );
-          return null;
-        }
+        return null;
       }
 
       const canRun = await acquireCooldownLock(uid);
@@ -4753,7 +4744,9 @@ exports.onWorkoutCreated = functions
       }
 
       try {
-        await computeAndWritePerformanceForUser(uid, workoutComputeKey);
+        await computeAndWritePerformanceForUser(uid, null, {
+          sessionDay: data.date || null,
+        });
         await releaseLock(uid, true);
         console.log(`onWorkoutCreated: computed performance for ${uid}`);
       } catch (err) {
@@ -4921,17 +4914,17 @@ exports.onRunCreated = functions
       // performance write surface), so failures here can't cascade.
       await _maybeWriteRecoveryEntryForRun(uid, data);
 
-      if (data.completedAt) {
-        const runDate = data.completedAt.toDate
-          ? data.completedAt.toDate()
-          : new Date(data.completedAt);
-        const runDateStr = runDate.toISOString().split("T")[0];
+      // The run's day (the day it started, as the compute dates it), or
+      // null for a run with neither a day nor a finish time.
+      const runDay = runDayKey(data, null);
+      if (runDay) {
         const currentKey = getWeekKey(new Date());
         // PI1a: skip recompute when the run falls outside the rolling
-        // 7-day window (was: outside the current Sunday-week).
-        if (!isInRollingWindow(runDateStr, currentKey)) {
+        // 7-day window, a day either side of the server's (see
+        // onWorkoutCreated).
+        if (!inTriggerReach(runDay, currentKey)) {
           console.log(
-            `onRunCreated: skipping recompute for ${uid}, run on ${runDateStr} outside rolling window ending ${currentKey}`
+            `onRunCreated: skipping recompute for ${uid}, run on ${runDay} outside rolling window ending ${currentKey}`
           );
           return null;
         }
@@ -4944,7 +4937,9 @@ exports.onRunCreated = functions
       }
 
       try {
-        await computeAndWritePerformanceForUser(uid, null);
+        await computeAndWritePerformanceForUser(uid, null, {
+          sessionDay: runDay,
+        });
         await releaseLock(uid, true);
         console.log(`onRunCreated: computed performance for ${uid}`);
       } catch (err) {
@@ -4993,10 +4988,11 @@ exports.onWorkoutUpdated = functions
     await reconcileWorkoutMetrics(db, uid, workoutId);
     const current = await change.after.ref.get();
     if (!current.exists) return null;
-    // Older corrections can change the 28-day baseline as well as the current window.
-    const todayKey = getWeekKey(new Date());
-    const key = triggerComputeKey(current.data().date, todayKey) ?? todayKey;
-    await computeAndWritePerformanceForUser(uid, key);
+    // Older corrections can change the 28-day baseline as well as the
+    // current window, so this always recomputes, for the person's today.
+    await computeAndWritePerformanceForUser(uid, null, {
+      sessionDay: current.data().date || null,
+    });
     return null;
   });
 
