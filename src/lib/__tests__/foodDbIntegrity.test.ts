@@ -107,6 +107,7 @@ const COMPOSITE_SERVINGS = new Set([
   "omelet",
   "wrap",
   "sandwich",
+  "toastie",
   "burger",
   "pizza",
   "burrito",
@@ -129,7 +130,7 @@ describe("FOOD_DB — the fixture reads the real table", () => {
     /* Guards the regex, not the data. A silently-empty scan would make every
        assertion below vacuously true — the exact shape of tautology this
        codebase keeps finding in its own tests. */
-    expect(ROWS.length).toBe(234);
+    expect(ROWS.length).toBe(235);
     expect(ROWS.map((r) => r.name)).toContain("chicken breast");
     expect(ROWS.find((r) => r.name === "chicken breast")).toMatchObject({
       calories: 248,

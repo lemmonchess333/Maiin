@@ -150,9 +150,11 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import ExerciseFormSheet from "@/components/program/ExerciseFormSheet";
 import { IconButton } from "@/components/ui/IconButton";
 import InlineNumerals from "@/components/ui/InlineNumerals";
-import { localDateString } from "@/lib/dateHelpers";
 import type { SessionShareAction } from "@/lib/sessionPost";
-import type { LiftCompletionReceipt } from "@/lib/liftCompletion";
+import {
+  liftSessionDay,
+  type LiftCompletionReceipt,
+} from "@/lib/liftCompletion";
 import GuideHint from "@/components/guide/GuideHint";
 import { FIRST_SET_BODY_NO_AUTO_REST } from "@/lib/firstGuide";
 import { liftUnitLabel, type LiftUnit } from "@/lib/liftLoad";
@@ -364,6 +366,11 @@ export default function WorkoutSession({
   const [originalStartedAt, setOriginalStartedAt] = useState(
     () => initialDraft?.startedAt ?? Date.now()
   );
+  /** The day the workout is saved under (Lift3: the day it started), and
+   *  so the day its records are dated: dated as each set was logged, a
+   *  best set at 00:05 in a session begun at 23:40 sat on a day the
+   *  workout is not. */
+  const sessionDay = liftSessionDay(originalStartedAt);
   const [showResumePrompt, setShowResumePrompt] = useState(
     initialDraft !== null && !initialDraft.completionPending
   );
@@ -1077,7 +1084,7 @@ export default function WorkoutSession({
       const nextMap = recordSetBest(prMap, exName, {
         weight: set.weight,
         reps: set.reps,
-        date: localDateString(),
+        date: sessionDay,
       });
       if (nextMap !== prMap || prResult) {
         prContext = {
@@ -1159,7 +1166,7 @@ export default function WorkoutSession({
             ...prev,
             [exName]: {
               volume: sessionVolume,
-              date: localDateString(),
+              date: sessionDay,
             },
           }));
         }
@@ -1207,7 +1214,7 @@ export default function WorkoutSession({
       sessionCounts,
       day.exercises,
       logs,
-      localDateString()
+      sessionDay
     );
     setPrMap(next.map);
     setPrResults(next.results);
@@ -1502,8 +1509,18 @@ export default function WorkoutSession({
       if (user?.uid && loadedRecords && Object.keys(prMap).length > 0) {
         void (async () => {
           try {
-            if (queuedReceipt && (await queuedReceipt) !== "synced") return;
+            // Saved on this phone, not yet on the server: the commit is a
+            // transaction, which cannot run offline, and waiting here for
+            // the sync dies with the app. Closed first, the map stayed
+            // complete without this session, so the next one celebrated a
+            // best below a lift already logged. Marked stale now, it is
+            // rebuilt from the whole history, which holds the queued
+            // workout (`fetchSavedWorkouts` includes this phone's queue).
             if (auth.currentUser?.uid !== user.uid) return;
+            if (queuedReceipt) {
+              await markLiftRecordsStale(user.uid);
+              return;
+            }
             // From the FINAL set logs, so an undone set never inflates a
             // record. Warm-ups are not volume, and an exercise with none
             // of its working sets done was not trained.
@@ -1516,7 +1533,7 @@ export default function WorkoutSession({
                   .filter((s2) => s2.completed && s2.type !== "warmup")
                   .map((s2) => ({ weightKg: s2.weight, reps: s2.reps })),
               })),
-              date: localDateString(),
+              date: sessionDay,
             });
           } catch (err) {
             // The workout is saved; its records are not. The map would
