@@ -91,6 +91,9 @@ suite("firestore.rules — a restricted account", () => {
         lastActionedReport: "report-1",
         strikes: null,
       });
+      // The person followed accepts everyone (Polish2: otherwise a follow
+      // is a request), so a follow is refused for the restriction alone.
+      await setDoc(doc(admin, "users", OTHER), { approveFollowers: false });
       // Both accounts already belong to the Space and the Circle, so a
       // post or an event is refused for the restriction alone.
       for (const uid of [RESTRICTED, CLEAR]) {
@@ -188,6 +191,13 @@ suite("firestore.rules — a restricted account", () => {
       write: (uid, c) =>
         setDoc(doc(c, `followers/${OTHER}/users/${uid}`), {
           createdAt: serverTimestamp(),
+        }),
+    },
+    {
+      name: "asking to follow someone",
+      write: (uid, c) =>
+        setDoc(doc(c, `followRequests/${OTHER}/users/${uid}`), {
+          requestedAt: serverTimestamp(),
         }),
     },
     {

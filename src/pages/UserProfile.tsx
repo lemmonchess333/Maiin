@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { blockUser } from "../lib/socialApi";
 import { useUid } from "../lib/auth";
 import FollowButton from "../components/social/FollowButton";
+import FollowRequestBanner from "../components/social/FollowRequestBanner";
 import TrainingForChip from "@/features/spaces/TrainingForChip";
 import PartnerStreakCard from "../features/partnerStreak/PartnerStreakCard";
 import ActivityCard from "../components/social/ActivityCard";
@@ -93,6 +94,7 @@ function ProfilePage({
     postsFailed,
     retry,
     adjustFollowers,
+    adjustFollowing,
   } = useUserProfileData(uid, viewerUid);
   const week = useMemo(() => profileWeek(posts), [posts]);
   const [showMenu, setShowMenu] = useState(false);
@@ -224,59 +226,71 @@ function ProfilePage({
           </Link>
         </div>
       ) : (
-        <div className="flex items-center gap-2">
-          <FollowButton
-            targetUid={uid}
-            className="flex-1 text-sm"
-            onFollowChange={(following) => adjustFollowers(following ? 1 : -1)}
+        <>
+          <FollowRequestBanner
+            requesterUid={uid}
+            name={name}
+            onAccepted={() => adjustFollowing(1)}
           />
-          <div className="relative">
-            <IconButton
-              aria-label="More options"
-              onClick={() => setShowMenu(!showMenu)}
-              icon={<MoreHorizontal />}
-              className="bg-muted hover:bg-muted/80 text-muted-foreground"
+          <div className="flex items-center gap-2">
+            <FollowButton
+              targetUid={uid}
+              className="flex-1 text-sm"
+              onFollowChange={(now, before) => {
+                // A request is not a follower yet.
+                if (now === "following") adjustFollowers(1);
+                else if (before === "following") adjustFollowers(-1);
+              }}
             />
-            {showMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Close menu"
-                  onClick={() => setShowMenu(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") setShowMenu(false);
-                  }}
-                />
-                <div className="absolute right-0 top-full mt-1 z-20 w-44 bg-card rounded-xl border border-border/50 shadow-xl overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowMenu(false);
-                      setShowReport(true);
+            <div className="relative">
+              <IconButton
+                aria-label="More options"
+                onClick={() => setShowMenu(!showMenu)}
+                icon={<MoreHorizontal />}
+                className="bg-muted hover:bg-muted/80 text-muted-foreground"
+              />
+              {showMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Close menu"
+                    onClick={() => setShowMenu(false)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ")
+                        setShowMenu(false);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
-                  >
-                    <Flag className="size-4" />
-                    Report user
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowMenu(false);
-                      setShowBlockConfirm(true);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive-strong hover:bg-destructive/10 transition-colors"
-                  >
-                    <Ban className="size-4" />
-                    Block user
-                  </button>
-                </div>
-              </>
-            )}
+                  />
+                  <div className="absolute right-0 top-full mt-1 z-20 w-44 bg-card rounded-xl border border-border/50 shadow-xl overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMenu(false);
+                        setShowReport(true);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                    >
+                      <Flag className="size-4" />
+                      Report user
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMenu(false);
+                        setShowBlockConfirm(true);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive-strong hover:bg-destructive/10 transition-colors"
+                    >
+                      <Ban className="size-4" />
+                      Block user
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Partner-streak entry (SOCIAL S3) — renders only for another

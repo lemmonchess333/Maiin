@@ -146,6 +146,43 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/globalRestrictedUids/$(request.auth.uid));
     }
 
+    /* Does this account approve each follower (Polish2 call 4)? Yes unless
+       its owner turned it off: an absent field is the default, so every
+       account that never chose approves. A follow opens followers-only
+       posts, the default share (S2c), so it waits for the person followed.
+       get() reads the owner-only profile document, as rules may; an
+       account with no profile document cannot be followed directly. */
+    function approvesFollowers(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data
+        .get('approveFollowers', true) != false;
+    }
+
+    /* The person followed accepting a request: only they write the two
+       follow edges for someone who asked, in the batch that deletes the
+       request (exists() reads the state before the batch). */
+    function acceptsFollowRequest(targetUid, requesterUid) {
+      return request.auth != null
+        && request.auth.uid == targetUid
+        && exists(/databases/$(database)/documents/followRequests/$(targetUid)/users/$(requesterUid))
+        && !isWriteFrozen(targetUid)
+        && !isWriteFrozen(requesterUid)
+        && !blockExistsBetween(targetUid, requesterUid);
+    }
+
+    /* approveFollowers is a boolean when present (Settings → Privacy); a
+       null, like the other switches', means none chosen: approval on. */
+    function approveFollowersValid() {
+      return !('approveFollowers' in request.resource.data)
+        || request.resource.data.approveFollowers == null
+        || request.resource.data.approveFollowers is bool;
+    }
+
+    function approveFollowersUnchangedOrValid() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['approveFollowers'])
+        || approveFollowersValid();
+    }
+
     /* Photo URL value gate — shared by every field a client writes that
        ANOTHER user's device will load as an <img src>: the public
        profile avatar, activity and space-post author avatars, a space
@@ -277,7 +314,7 @@ service cloud.firestore {
 
     /* notificationPreferences value gate — the switches under Settings →
        Notifications → Activity (S3). createNotification reads this map and
-       writes nothing for a kind that is off. Only the five switches, each
+       writes nothing for a kind that is off. Only the six switches, each
        a boolean; a whole-field null means none chosen (the defaults
        apply). Same keys as functions/lib/notificationPreferences.js and
        src/lib/notificationPreferences.ts (pinned by
@@ -289,10 +326,11 @@ service cloud.firestore {
         || p == null
         || (
           p is map
-          && p.keys().hasOnly(['kudos', 'comments', 'follows', 'circles', 'spaces'])
+          && p.keys().hasOnly(['kudos', 'comments', 'follows', 'followRequests', 'circles', 'spaces'])
           && (!('kudos' in p) || p.kudos is bool)
           && (!('comments' in p) || p.comments is bool)
           && (!('follows' in p) || p.follows is bool)
+          && (!('followRequests' in p) || p.followRequests is bool)
           && (!('circles' in p) || p.circles is bool)
           && (!('spaces' in p) || p.spaces is bool)
         );
@@ -334,6 +372,9 @@ service cloud.firestore {
         // S3 activity notification switches. Value-gated by
         // notificationPreferencesValid() above.
         'notificationPreferences',
+        // Polish2 call 4: whether each follower waits to be accepted.
+        // Value-gated by approveFollowersValid() above.
+        'approveFollowers',
         // #984 "Hide the number" anti-anxiety toggle — written client-side via
         // updateProfile (Settings → toggleHideWeightNumber) AND set by the
         // onboarding CF (in profileSanitizer). It was in the sanitiser + the
@@ -432,14 +473,16 @@ service cloud.firestore {
         && billingFieldsUnsetOnCreate()
         && raceGoalValid()
         && shareDefaultsValid()
-        && notificationPreferencesValid();
+        && notificationPreferencesValid()
+        && approveFollowersValid();
       allow update: if isOwner(uid)
         && !isWriteFrozen(uid)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedUserFields())
         && subscriptionFieldsUnchanged()
         && raceGoalUnchangedOrValid()
         && shareDefaultsUnchangedOrValid()
-        && notificationPreferencesUnchangedOrValid();
+        && notificationPreferencesUnchangedOrValid()
+        && approveFollowersUnchangedOrValid();
       // Freeze delete too: the deletion executor uses the Admin SDK (which
       // bypasses rules), so a client-side self-delete during the freeze /
       // tombstone window is never the executor and should be blocked.
@@ -1514,10 +1557,16 @@ service cloud.firestore {
           && exists(/databases/$(database)/documents/blocks/$(targetUid)/users/$(uid))
           && !isWriteFrozen(targetUid)
         );
-      allow create: if isOwnerAndNotDeleting(uid)
-        && !isWriteFrozen(targetUid)
-        && !blockExistsBetween(uid, targetUid)
-        && !isRestricted();
+      // A follow is direct only to an account that does not approve
+      // followers; otherwise the person followed writes it on accepting.
+      allow create: if (
+          isOwnerAndNotDeleting(uid)
+          && !isWriteFrozen(targetUid)
+          && !blockExistsBetween(uid, targetUid)
+          && !isRestricted()
+          && !approvesFollowers(targetUid)
+        )
+        || acceptsFollowRequest(targetUid, uid);
     }
 
     match /followers/{uid}/users/{followerUid} {
@@ -1540,12 +1589,39 @@ service cloud.firestore {
           && exists(/databases/$(database)/documents/blocks/$(uid)/users/$(followerUid))
           && !isWriteFrozen(uid)
         );
+      allow create: if (
+          request.auth != null
+          && request.auth.uid == followerUid
+          && !isWriteFrozen(followerUid)
+          && !isWriteFrozen(uid)
+          && !blockExistsBetween(uid, followerUid)
+          && !isRestricted()
+          && !approvesFollowers(uid)
+        )
+        || acceptsFollowRequest(uid, followerUid);
+    }
+
+    /* A follow waiting to be accepted (Polish2 call 4): who asked
+       (requesterUid) and who was asked (uid). Its own collection, so every
+       reader of followers/ and following/ (feeds, followers-only posts,
+       props and comments, partner bonds, counts) still reads only follows
+       that were accepted. Seen only by the two people. */
+    match /followRequests/{uid}/users/{requesterUid} {
+      allow read: if request.auth != null
+        && (request.auth.uid == uid || request.auth.uid == requesterUid);
       allow create: if request.auth != null
-        && request.auth.uid == followerUid
-        && !isWriteFrozen(followerUid)
+        && request.auth.uid == requesterUid
+        && requesterUid != uid
+        && !isWriteFrozen(requesterUid)
         && !isWriteFrozen(uid)
-        && !blockExistsBetween(uid, followerUid)
-        && !isRestricted();
+        && !blockExistsBetween(uid, requesterUid)
+        && !isRestricted()
+        && request.resource.data.keys().hasOnly(['requestedAt'])
+        && request.resource.data.requestedAt == request.time;
+      // Cancelled by who asked; accepted or declined by who was asked.
+      // Either may always remove it, like unfollowing.
+      allow delete: if request.auth != null
+        && (request.auth.uid == uid || request.auth.uid == requesterUid);
     }
 
     // ========================================

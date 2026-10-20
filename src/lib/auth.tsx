@@ -387,6 +387,10 @@ export interface UserProfileSocial {
    *  (`notificationEnabled`); the server reads the same map in
    *  createNotification and writes nothing for a kind that is off. */
   notificationPreferences?: NotificationPreferences | null;
+  /** Whether each follower waits to be accepted (Polish2): Settings →
+   *  Privacy → Approve followers. Absent means yes, the default the rules
+   *  apply too (`approvesFollowers` in firestore.rules). */
+  approveFollowers?: boolean;
   /** LEGACY (share composer superseded these, #1416): the saved share
    *  default decides auto-posting now — `shareDefaults` above. Nothing has
    *  READ these three since; the Settings switches that wrote

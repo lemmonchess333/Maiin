@@ -119,6 +119,12 @@ Two axes, from the food-logging reference set:
 - **Density gate (spaces)** — member counts below `SPACE_MEMBER_COUNT_MIN_VISIBLE` render "New space", never a shame-count (Soc8 idiom).
 - **Circles vs Spaces** — Circles stay the private 2–8-person support layer; Spaces are the public curated layer. Same tab (Community), different trust models.
 
+### Following (Polish2, 2026-10-20)
+
+- **Follower** — someone with an accepted follow: the two edges `following/{them}/users/{you}` and `followers/{you}/users/{them}`. A follower reads your followers-only posts (the default share, S2c) and gets them in their feed. Every reader of the follow graph checks only that the edge exists.
+- **Follow request** — a follow waiting for your yes: `followRequests/{you}/users/{them}`, seen only by the two of you. Answered under People or on the asker's profile; accepting writes both edges (with `fromRequest`), declining or a cancel deletes it.
+- **Approve followers** — `users/{uid}.approveFollowers`, Settings → Social & privacy. On unless turned off (absent or null is on, as the rules read it): a follow to such an account is refused and becomes a request. Off, a follow is immediate. Existing follows were left as they were.
+
 ### Performance Index (PI)
 
 A weekly 0–100 score of how the user's training week went, with a `loadBand` (deload / low / moderate / high / overreach — FIVE bands; this line said "low / deload / optimal / overreach" until 2026-08-11, naming a band that has never existed and omitting the two most common ones) and a `deloadRecommended` flag. The single conceptual engine has **two physical copies**: server `functions/performanceEngine.js` (the authoritative copy — `weeklyPerformanceRollup` / `computePerformanceWeek` persist the PI users actually see, which `usePerformance` reads straight off Firestore) and client `src/lib/performanceEngine.ts`.
@@ -220,6 +226,18 @@ Audited May 2026. Re-verify when products change. Each subsection lists what the
 **Pattern:** dominant apps use licensed photography on **editorial surfaces** — challenges, plans, curated content the brand produces — and keep the **peer activity feed** user-generated.
 
 **Tropos position (locked in the Social uplift arc, PRs #1575/#1576/v3):** conform on both halves. Editorial surfaces (challenge cards first; plan/curated surfaces may follow) render licensed photography with a sport-coded tint wash + scrim (`src/lib/editorialImages.ts`, assets in `src/assets/editorial/` — build-time glob, designed no-photo fallback until assets land). Feed cards stay user-data imagery: GPS route scenes and the brand muscle figure. Stock people never appear inside the peer feed; private user photos (progress/food) never leak to social. An earlier blanket "no stock imagery anywhere" stance was overturned by the operator citing Runna/Strava — the refined line above is the durable decision.
+
+### Follow approval (Polish2, 2026-10-20)
+
+**Reference apps** (checked against their own pages, 2026-10-20):
+
+- **Strava:** approval exists but is optional and off by default: adult accounts start at "Everyone", where anyone can follow without a request; switching to "Followers" approves each one.
+- **Garmin Connect:** connections are requests the other person accepts (forum evidence, not official documentation).
+- **Nike Run Club:** not confirmed.
+
+**Pattern:** open by default with an approval switch (Strava), or every connection a request (Garmin).
+
+**Tropos position (deliberate deviation from Strava's default):** approval on by default, with a switch to accept everyone. Tropos shares a finished session to followers only by default (S2c, Soc11), so the share sheet tells people their posts are restricted. With open follows that is not true: anyone who taps Follow sees them, maps included. Strava's default share is Everyone, so its open follow costs nothing it promised. The cost here is friction in a young network: a first follow is a request. The switch is one tap for anyone who wants Strava's model.
 
 ### Motivation / "why" capture in onboarding (DEFERRED, 2026-06-12)
 

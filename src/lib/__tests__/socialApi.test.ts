@@ -8,7 +8,9 @@ import {
   failNextFirestore,
   setSnapshotMetadata,
   unfiredFailures,
+  batchLog,
 } from "@/test/firestoreHarness";
+import { Timestamp } from "firebase/firestore";
 
 // Mock Firebase modules before importing socialApi
 const mockDeleteUser = vi.fn();
@@ -60,6 +62,11 @@ vi.mock("@/lib/errorReporting", async (importOriginal) => ({
 import {
   followUser,
   unfollowUser,
+  followOrRequest,
+  requestFollow,
+  acceptFollowRequest,
+  declineFollowRequest,
+  getFollowRequests,
   isFollowing,
   getFollowerCount,
   getFollowingCount,
@@ -90,6 +97,106 @@ describe("followUser", () => {
     // tell two correct writes from two writes to the same document.
     expect(readDoc("following/user1/users/user2")).toBeTruthy();
     expect(readDoc("followers/user2/users/user1")).toBeTruthy();
+  });
+});
+
+/* Polish2: an account approves each follower unless it turns that off, and
+   the rules refuse a direct follow to one that does. The fake has no rules,
+   so the refusal is armed the way the SDK reports it. */
+describe("followOrRequest", () => {
+  it("follows someone who accepts everyone", async () => {
+    expect(await followOrRequest("user1", "user2")).toBe("following");
+    expect(readDoc("followers/user2/users/user1")).toBeTruthy();
+    expect(allPaths()).not.toContain("followRequests/user2/users/user1");
+  });
+
+  it("asks someone who approves followers, writing no follow", async () => {
+    failNextFirestore("setDoc", {
+      path: "following/user1/users/user2",
+      code: "permission-denied",
+    });
+    expect(await followOrRequest("user1", "user2")).toBe("requested");
+    expect(unfiredFailures()).toEqual([]);
+    expect(readDoc("followRequests/user2/users/user1")).toBeTruthy();
+    expect(allPaths()).not.toContain("following/user1/users/user2");
+    expect(allPaths()).not.toContain("followers/user2/users/user1");
+  });
+
+  it("does not turn a failure that may clear into a request", async () => {
+    failNextFirestore("setDoc", {
+      path: "following/user1/users/user2",
+      code: "unavailable",
+    });
+    await expect(followOrRequest("user1", "user2")).rejects.toMatchObject({
+      code: "unavailable",
+    });
+    expect(allPaths()).not.toContain("followRequests/user2/users/user1");
+  });
+});
+
+describe("requestFollow", () => {
+  it("counts a request already waiting as asked", async () => {
+    // The rules have no update for a request, so a second ask is refused.
+    seedFirestore({ "followRequests/user2/users/user1": { requestedAt: 1 } });
+    failNextFirestore("setDoc", {
+      path: "followRequests/user2/users/user1",
+      code: "permission-denied",
+    });
+    await expect(requestFollow("user1", "user2")).resolves.toBeUndefined();
+    expect(unfiredFailures()).toEqual([]);
+  });
+});
+
+describe("answering a follow request", () => {
+  it("accepting writes both follows, from the request, and removes it, in one batch", async () => {
+    seedFirestore({ "followRequests/user1/users/user2": { requestedAt: 1 } });
+    await acceptFollowRequest("user1", "user2");
+    expect(readDoc("following/user2/users/user1")).toMatchObject({
+      fromRequest: true,
+    });
+    expect(readDoc("followers/user1/users/user2")).toMatchObject({
+      fromRequest: true,
+    });
+    expect(allPaths()).not.toContain("followRequests/user1/users/user2");
+    expect(batchLog()).toHaveLength(1);
+    expect(
+      batchLog()[0]
+        .map((w) => w.path)
+        .sort()
+    ).toEqual([
+      "followRequests/user1/users/user2",
+      "followers/user1/users/user2",
+      "following/user2/users/user1",
+    ]);
+  });
+
+  it("declining removes the request and writes no follow", async () => {
+    seedFirestore({ "followRequests/user1/users/user2": { requestedAt: 1 } });
+    await declineFollowRequest("user1", "user2");
+    expect(allPaths()).toEqual([]);
+  });
+
+  it("lists the requests waiting, newest first, with each asker's name", async () => {
+    seedFirestore({
+      "followRequests/user1/users/old": {
+        requestedAt: Timestamp.fromMillis(1_000),
+      },
+      "followRequests/user1/users/new": {
+        requestedAt: Timestamp.fromMillis(2_000),
+      },
+      "users/new/public/profile": { displayName: "Maya", photoURL: "p.jpg" },
+      // Someone else's request is not listed.
+      "followRequests/user3/users/user2": {
+        requestedAt: Timestamp.fromMillis(3_000),
+      },
+    });
+    const list = await getFollowRequests("user1");
+    expect(list.map((r) => [r.uid, r.displayName])).toEqual([
+      ["new", "Maya"],
+      ["old", "Athlete"],
+    ]);
+    expect(list[0].photoURL).toBe("p.jpg");
+    expect(list[0].requestedAt?.getTime()).toBe(2_000);
   });
 });
 
@@ -321,6 +428,9 @@ describe("blockUser", () => {
       "followers/user2/users/user1": { at: 1 },
       // An unrelated follow that must SURVIVE the block.
       "following/user1/users/user3": { at: 1 },
+      // A request either way goes too (Polish2).
+      "followRequests/user1/users/user2": { requestedAt: 1 },
+      "followRequests/user2/users/user1": { requestedAt: 1 },
     });
     await blockUser("user1", "user2");
 
@@ -330,6 +440,8 @@ describe("blockUser", () => {
       "followers/user1/users/user2",
       "following/user2/users/user1",
       "followers/user2/users/user1",
+      "followRequests/user1/users/user2",
+      "followRequests/user2/users/user1",
     ]) {
       expect(allPaths(), p).not.toContain(p);
     }

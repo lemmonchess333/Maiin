@@ -7823,17 +7823,45 @@ exports.onGoalSpaceEventCreated = functions
   });
 
 /**
+ * The two follow notices: "X started following you" and "X asked to follow
+ * you". The person following writes the doc each one fires on themselves
+ * (socialApi), so these triggers are the only place the server sees a
+ * follow or a request. Each id is fixed per person, so a re-delivery, or
+ * the same person following or asking again, rewrites one row instead of
+ * adding another. createNotification holds the block check and each
+ * recipient's switch, and skips an account that is being deleted.
+ */
+async function sendFollowNotice({ toUid, fromUid, type, verb, logKey }) {
+  try {
+    const profileSnap = await db.doc(`users/${fromUid}/public/profile`).get();
+    const fromName =
+      (profileSnap.exists && profileSnap.data().displayName) || "Someone";
+    await socialFanout.createNotification({
+      firestore: admin.firestore(),
+      fromUid,
+      toUid,
+      data: { type, fromName, message: `${fromName} ${verb}` },
+      serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+      notificationId: `${type}_${fromUid}`,
+    });
+  } catch (err) {
+    functions.logger.warn(`${logKey}.notification_failed`, {
+      uid: toUid,
+      fromUid,
+      message: err && err.message,
+    });
+    throw err;
+  }
+}
+
+/**
  * onFollowerCreated — "X started following you", for the people who turn
  * New followers on in Settings → Notifications (S3: off by default, so
- * createNotification skips everyone else before writing anything).
+ * createNotification skips everyone else before writing anything). Before
+ * it, "follow" was an allowed notification type nothing sent.
  *
- * The follower writes `followers/{uid}/users/{followerUid}` themselves
- * (socialApi.followUser), so this trigger is the only place the server sees
- * a follow. Before it, "follow" was an allowed notification type nothing
- * sent. The id is fixed per follower, so a re-delivery, or the same person
- * following again after unfollowing, rewrites one row instead of adding
- * another. createNotification also holds the block check and skips an
- * account that is being deleted.
+ * A follow the person accepted from a request (`fromRequest` on the edge,
+ * written by acceptFollowRequest) sends nothing: they have just said yes.
  */
 exports.onFollowerCreated = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
@@ -7843,32 +7871,39 @@ exports.onFollowerCreated = functions
     if (!uid || !followerUid || uid === followerUid) return null;
     // Retried: the notification's id is fixed per follower (above).
     if (pastRetryWindow(context)) return null;
-    try {
-      const profileSnap = await db
-        .doc(`users/${followerUid}/public/profile`)
-        .get();
-      const fromName =
-        (profileSnap.exists && profileSnap.data().displayName) || "Someone";
-      await socialFanout.createNotification({
-        firestore: admin.firestore(),
-        fromUid: followerUid,
-        toUid: uid,
-        data: {
-          type: "follow",
-          fromName,
-          message: `${fromName} started following you`,
-        },
-        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
-        notificationId: `follow_${followerUid}`,
-      });
-    } catch (err) {
-      functions.logger.warn("onFollowerCreated.notification_failed", {
-        uid,
-        followerUid,
-        message: err && err.message,
-      });
-      throw err;
-    }
+    if (snap.data() && snap.data().fromRequest === true) return null;
+    await sendFollowNotice({
+      toUid: uid,
+      fromUid: followerUid,
+      type: "follow",
+      verb: "started following you",
+      logKey: "onFollowerCreated",
+    });
+    return null;
+  });
+
+/**
+ * onFollowRequestCreated — "X asked to follow you" (Polish2 call 4). An
+ * account approves each follower unless it turns that off, so following it
+ * writes a request (`followRequests/{uid}/users/{requesterUid}`) instead.
+ * Follow requests are on by default in Settings → Notifications: a request
+ * nobody hears about just waits.
+ */
+exports.onFollowRequestCreated = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("followRequests/{uid}/users/{requesterUid}")
+  .onCreate(async (snap, context) => {
+    const { uid, requesterUid } = context.params;
+    if (!uid || !requesterUid || uid === requesterUid) return null;
+    // Retried: the notification's id is fixed per asker (above).
+    if (pastRetryWindow(context)) return null;
+    await sendFollowNotice({
+      toUid: uid,
+      fromUid: requesterUid,
+      type: "follow_request",
+      verb: "asked to follow you",
+      logKey: "onFollowRequestCreated",
+    });
     return null;
   });
 

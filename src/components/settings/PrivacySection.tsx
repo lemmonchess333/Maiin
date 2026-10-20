@@ -25,7 +25,10 @@ interface PrivacySectionProps {
    *  the aiAnalysisEnabled switch, which shows on only for `true`. */
   profile: Pick<
     UserProfile,
-    "aiAnalysisEnabled" | "hideSharedRouteEnds" | "shareDefaults"
+    | "aiAnalysisEnabled"
+    | "approveFollowers"
+    | "hideSharedRouteEnds"
+    | "shareDefaults"
   > | null;
   updateProfile: (
     data: Partial<UserProfile>,
@@ -84,6 +87,36 @@ export default function PrivacySection({
           shareDefaults={profile?.shareDefaults}
           updateShareDefaults={updateShareDefaults}
         />
+
+        {/* Approve followers (Polish2 call 4). On unless turned off: an
+            absent field is the default, as the rules read it. A follow
+            opens followers-only posts, the default share, so it waits for
+            a yes. Turning it off does not answer requests already waiting;
+            they stay under People until answered. */}
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 rounded-lg bg-muted">
+          <div className="min-w-[min(100%,8em)] flex-1">
+            <p className="text-sm font-medium text-foreground">
+              Approve followers
+            </p>
+            <p className="text-xs text-muted-foreground">
+              People ask to follow you, and you choose who sees what you share
+              with followers. Off, anyone can follow you.
+            </p>
+          </div>
+          <Toggle
+            checked={profile?.approveFollowers !== false}
+            label="Toggle approving followers"
+            onChange={async () => {
+              haptic("light");
+              const next = profile?.approveFollowers === false;
+              trackSettingsEvent("settings_toggle_changed", {
+                toggle: "approve_followers",
+                value: next,
+              });
+              await updateProfile({ approveFollowers: next });
+            }}
+          />
+        </div>
 
         {/* AI food analysis — permission before food goes to Google (App
             Review 5.1.2(i); the rule is in src/lib/aiConsent.ts). On only

@@ -81,6 +81,8 @@ const PROTECTED_PATHS = [
   "match /feeds/{uid}/items/{doc}",
   "match /following/{uid}/users/{targetUid}",
   "match /followers/{uid}/users/{followerUid}",
+  // Polish2: a request is created only while neither side is frozen.
+  "match /followRequests/{uid}/users/{requesterUid}",
   "match /notifications/{uid}/items/{doc}",
   "match /blocks/{uid}/users/{targetUid}",
   // Crews retirement (2026-07-20): /groups/{crewId} moved to the
@@ -334,7 +336,7 @@ describe("write-rules snapshot — drift detection", () => {
 });
 
 describe("Blocker E — path-count reconciliation", () => {
-  it("authoritative count is 37 (push lock removed /users/{uid}/devices)", () => {
+  it("authoritative count is 38 (Polish2 added /followRequests)", () => {
     // History: Chunk 2 prose said "22"; Chunk 2.C reconciled to 27.
     // 2026-05-26 audit PR 2 moved /groups/{crewId}/members/{userId}
     // to server-only (write `if false`), dropping the count to 26.
@@ -371,6 +373,8 @@ describe("Blocker E — path-count reconciliation", () => {
     // client-locked /users/{uid}/devices — writable surface gone, moved to
     // INFRASTRUCTURE_AND_READ_ONLY alongside the new /fcmTokenClaims
     // explicit-deny block, → 37.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(37);
+    // Polish2 (2026-10-20) added /followRequests/{uid}/users/{requesterUid}
+    // (create frozen via isWriteFrozen on both sides), → 38.
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(38);
   });
 });

@@ -124,6 +124,8 @@ const TOP_LEVEL_USER_KEYED_COLLECTIONS = Object.freeze([
   { parent: "following", sub: "users" },
   { parent: "followers", sub: "users" },
   { parent: "blocks", sub: "users" },
+  // Polish2: follow requests to this account.
+  { parent: "followRequests", sub: "users" },
 ]);
 
 const STORAGE_PREFIX_TEMPLATES = Object.freeze([

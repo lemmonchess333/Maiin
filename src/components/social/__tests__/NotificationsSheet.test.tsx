@@ -70,6 +70,20 @@ describe("NotificationsSheet", () => {
     expect(screen.getByText("Robin started following you")).toBeInTheDocument();
   });
 
+  it("a follow request opens the asker's profile, where it is answered", () => {
+    renderSheet([
+      item({
+        id: "r",
+        type: "follow_request",
+        fromUserId: "u-robin",
+        message: undefined,
+        fromName: "Robin",
+      }),
+    ]);
+    fireEvent.click(screen.getByText("Robin asked to follow you"));
+    expect(navigateMock).toHaveBeenCalledWith("/user/u-robin");
+  });
+
   it("CIRCLE-ACTIVITY-NOTIFICATIONS: renders named copy for the four Circle event types", () => {
     renderSheet([
       item({

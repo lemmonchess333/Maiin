@@ -128,7 +128,7 @@ async function cleanupSocial({ firestore, uid, now, checkpoint }) {
     if (path.length !== 4 || doc.id !== uid) return;
     if (path[0] === "kudos") {
       await removeCountedEdge({ firestore, ref: doc.ref, parent: firestore.doc(`activities/${path[1]}`), counter: "kudosCount" });
-    } else if (["following", "followers", "blocks"].includes(path[0])) {
+    } else if (["following", "followers", "blocks", "followRequests"].includes(path[0])) {
       await doc.ref.delete();
     }
   });

@@ -287,6 +287,14 @@ export default function PrivacyPolicy() {
               off, and your privacy zones are removed from it.
             </p>
             <p>
+              <strong className="text-foreground">Followers.</strong> Someone
+              becomes your follower once you accept their request, unless you
+              turn off Approve followers in Settings &gt; Social &amp; privacy,
+              when anyone can follow you. A request is seen only by you and the
+              person who asked. Who you follow and who follows you are visible
+              to other signed-in Tropos users.
+            </p>
+            <p>
               Some data goes to the services listed in section 7, each for the
               purpose stated there.
             </p>

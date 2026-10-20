@@ -263,6 +263,11 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
     setFollowers((n) => (n === null ? n : Math.max(0, n + delta)));
   }, []);
 
+  /** Accepting their request from the page: they follow one more. */
+  const adjustFollowing = useCallback((delta: number) => {
+    setFollowingCount((n) => (n === null ? n : Math.max(0, n + delta)));
+  }, []);
+
   return {
     status,
     identity,
@@ -278,5 +283,6 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
     postsFailed: posts.failed,
     retry,
     adjustFollowers,
+    adjustFollowing,
   };
 }

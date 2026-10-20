@@ -625,7 +625,9 @@ describe("SOC-P2g space-post engagement notifications", () => {
     const src = readFileSync(join(__dirname, "..", "index.js"), "utf8");
 
     const emitted = [];
-    const callRe = /createNotification\(\{[\s\S]{0,800}?type:\s*"([a-z_]+)"/g;
+    // sendFollowNotice is index.js's own wrapper for the two follow notices.
+    const callRe =
+      /(?:createNotification|sendFollowNotice)\(\{[\s\S]{0,800}?type:\s*"([a-z_]+)"/g;
     for (const m of src.matchAll(callRe)) emitted.push(m[1]);
 
     // Guard the scan itself: if the regex rots, this fails loudly instead
@@ -856,11 +858,12 @@ describe("notificationPreferences — the switch table", () => {
     );
   });
 
-  it("S3's defaults: props and comments on, new followers off", () => {
+  it("S3's defaults: props and comments on, new followers off; Polish2's follow requests on", () => {
     expect(NOTIFICATION_DEFAULTS).toEqual({
       kudos: true,
       comments: true,
       follows: false,
+      followRequests: true,
       circles: true,
       spaces: true,
     });

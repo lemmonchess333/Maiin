@@ -10,6 +10,27 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Follow approval (Polish2, 2026-10-20)
+
+An account approves each follower unless it turns that off (Settings →
+Social & privacy → Approve followers). The rules suite
+(`firestore.followRequests.rules.test.ts`) and the emulator trigger tests
+cover the logic; these need two real accounts.
+
+- [ ] **The release carries the rules and the trigger.** Passing: the
+      Deploy production run's Firestore and Functions stages are green, and
+      Firebase console → Functions lists `onFollowRequestCreated`.
+- [ ] **A follow to someone who never chose is a request.** On two
+      TestFlight accounts, A (never touched the switch) and B: B taps Follow
+      on A's profile and it reads Requested; A's bell shows "B asked to
+      follow you" and People lists B under Follow requests. Passing: Accept
+      makes B's button read Following on B's next look, and a followers-only
+      session A shares then shows on A's profile for B.
+- [ ] **Declining, cancelling and the switch.** Passing: a declined request
+      leaves B's button at Follow; B tapping Requested cancels it and A's
+      list no longer shows it; with A's switch off, B's Follow is immediate
+      and reads Following at once.
+
 ## What a deletion used to leave behind (2026-10-20)
 
 Four records outlived the account they named, and the password-reset

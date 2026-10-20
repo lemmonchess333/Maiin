@@ -36,6 +36,9 @@ vi.mock("@/lib/socialApi", () => ({
   getFollowingCount: async () => 0,
   batchGetKudos: async () => ({}),
   blockUser: vi.fn(),
+  hasFollowRequestFrom: async () => false,
+  acceptFollowRequest: vi.fn(),
+  declineFollowRequest: vi.fn(),
 }));
 vi.mock("@/hooks/useDistanceUnit", () => ({
   useDistanceUnit: () => "km" as const,
@@ -44,9 +47,12 @@ vi.mock("@/components/social/FollowButton", () => ({
   default: ({
     onFollowChange,
   }: {
-    onFollowChange?: (following: boolean) => void;
+    onFollowChange?: (now: string, before: string) => void;
   }) => (
-    <button type="button" onClick={() => onFollowChange?.(true)}>
+    <button
+      type="button"
+      onClick={() => onFollowChange?.("following", "not-following")}
+    >
       Follow
     </button>
   ),
