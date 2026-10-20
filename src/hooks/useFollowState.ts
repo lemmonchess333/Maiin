@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { useUid } from "@/lib/auth";
-import { followUser, isFollowing, unfollowUser } from "@/lib/socialApi";
+import {
+  cancelFollowRequest,
+  followOrRequest,
+  hasRequestedFollow,
+  isFollowing,
+  unfollowUser,
+} from "@/lib/socialApi";
 import { logger } from "@/lib/logger";
 
 /**
@@ -11,8 +17,14 @@ import { logger } from "@/lib/logger";
  * One read per (viewer, person) a session, however many controls show
  * that person, and a follow from any of them shows on all of them at
  * once. Keyed by viewer, so an account switch starts from nothing.
+ *
+ * "requested" is a follow waiting for the person to accept it (Polish2: an
+ * account approves each follower unless it turns that off).
  */
-type Known = "following" | "not-following" | "failed";
+type Known = FollowState | "failed";
+
+/** Where the signed-in person stands with someone. */
+export type FollowState = "following" | "requested" | "not-following";
 
 const states = new Map<string, Known>();
 const pending = new Set<string>();
@@ -50,9 +62,15 @@ function load(viewer: string, target: string) {
   if (states.has(key) || pending.has(key)) return;
   pending.add(key);
   isFollowing(viewer, target)
-    .then((v) => {
+    .then(async (v): Promise<Known> => {
+      if (v) return "following";
+      return (await hasRequestedFollow(viewer, target))
+        ? "requested"
+        : "not-following";
+    })
+    .then((known) => {
       // A follow tapped while the read was out wins over the read.
-      if (!states.has(key)) states.set(key, v ? "following" : "not-following");
+      if (!states.has(key)) states.set(key, known);
     })
     .catch((err) => {
       logger.error("[followState] isFollowing check failed", err);
@@ -84,26 +102,39 @@ export function useFollowState(targetUid: string) {
     load(viewer, targetUid);
   }, [viewer, targetUid]);
 
-  /** Follow or unfollow, showing the new state at once and putting it
-   *  back if the write fails. Resolves whether the write landed. */
+  /** Follow (or ask to), or undo either. Undoing shows at once and is put
+   *  back if the write fails; a follow waits for the write, which says
+   *  whether it became a follow or a request. Resolves to where things
+   *  stand once it lands, or null when it did not. */
   const toggle = useCallback(
-    async (next: boolean): Promise<boolean> => {
-      if (!viewer || viewer === targetUid) return false;
+    async (next: boolean): Promise<FollowState | null> => {
+      if (!viewer || viewer === targetUid) return null;
       const key = keyOf(viewer, targetUid);
       const before = states.get(key);
-      states.set(key, next ? "following" : "not-following");
-      emit();
+      if (!next) {
+        states.set(key, "not-following");
+        emit();
+      }
       setBusy(true);
       try {
-        if (next) await followUser(viewer, targetUid);
-        else await unfollowUser(viewer, targetUid);
-        return true;
+        if (next) {
+          const outcome = await followOrRequest(viewer, targetUid);
+          states.set(key, outcome);
+          emit();
+          return outcome;
+        }
+        if (before === "requested") {
+          await cancelFollowRequest(viewer, targetUid);
+        } else {
+          await unfollowUser(viewer, targetUid);
+        }
+        return "not-following";
       } catch (err) {
         logger.error("[followState] toggle failed", err);
         if (before === undefined) states.delete(key);
         else states.set(key, before);
         emit();
-        return false;
+        return null;
       } finally {
         setBusy(false);
       }
@@ -112,9 +143,16 @@ export function useFollowState(targetUid: string) {
   );
 
   return {
-    /** null until known, or when the check failed. */
+    /** null until known, or when the check failed. False while a request
+     *  waits: the person is not followed yet. */
     following:
-      known === "following" ? true : known === "not-following" ? false : null,
+      known === "following"
+        ? true
+        : known === "not-following" || known === "requested"
+          ? false
+          : null,
+    /** A follow request waiting for the person to accept it. */
+    requested: known === "requested",
     /** True once the check has answered, either way. */
     settled: known !== undefined,
     busy,

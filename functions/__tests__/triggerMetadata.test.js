@@ -489,6 +489,14 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/followers/{uid}/users/{followerUid}",
   },
+  onFollowRequestCreated: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.create",
+    resource:
+      "projects/{project}/databases/(default)/documents/followRequests/{uid}/users/{requesterUid}",
+  },
 };
 
 function endpointSummary(fn) {

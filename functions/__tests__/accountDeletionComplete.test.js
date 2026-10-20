@@ -45,6 +45,10 @@ function setup(extra = {}) {
     "following/bob/users/alice": { followedAt: now },
     "followers/bob/users/alice": { followedAt: now },
     "blocks/carol/users/alice": { blockedAt: now },
+    // Polish2: a request to Alice, one she sent, and one between others.
+    "followRequests/alice/users/bob": { requestedAt: now },
+    "followRequests/carol/users/alice": { requestedAt: now },
+    "followRequests/carol/users/bob": { requestedAt: now },
     "spaces/running/posts/bobs-post": { authorId: "bob", likeCount: 2 },
     "spaces/running/posts/bobs-post/likes/alice": { createdAt: now },
     "spaces/running/posts/bobs-post/likes/carol": { createdAt: now },
@@ -164,6 +168,8 @@ function setup(extra = {}) {
 // smoke::kudosByMe
 // smoke::topLevelQuery::checkoutAudit
 // smoke::topLevelQuery::appleNotifications
+// smoke::topLevelOwn::followRequests
+// smoke::followRequests::sent
 describe("complete account erasure", () => {
   it("removes nested personal data and cross-user copies, preserving other accounts and bounded private evidence", async () => {
     const ctx = setup();
@@ -180,6 +186,8 @@ describe("complete account erasure", () => {
       "following/bob/users/alice",
       "followers/bob/users/alice",
       "blocks/carol/users/alice",
+      "followRequests/alice/users/bob",
+      "followRequests/carol/users/alice",
       "notifications/bob/items/from-alice",
       "spaces/running/posts/bobs-post/likes/alice",
       "goalSpaces/old/events/event",
@@ -206,6 +214,7 @@ describe("complete account erasure", () => {
     for (const path of [
       "audit_checkout_sessions/bob-checkout",
       "appleNotifications/n-bob",
+      "followRequests/carol/users/bob",
       "challenges/weekly/participants/bob/applied/run-4",
     ])
       expect(data.has(path), path).toBe(true);

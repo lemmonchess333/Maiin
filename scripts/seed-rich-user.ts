@@ -493,6 +493,13 @@ async function main() {
   // the honest fixture (Following stays locked until 3, Explore shows
   // the community cards).
   const followedAt = Timestamp.now();
+  // Maya accepts every follower (Polish2: an account approves each one
+  // unless it turns that off), so a new account's Follow on her post is a
+  // follow, which the new-user feed capture films. Her only profile field.
+  await db
+    .collection("users")
+    .doc(feedAuthor.authorId)
+    .set({ approveFollowers: false }, { merge: true });
   await db
     .collection("following")
     .doc(uid)

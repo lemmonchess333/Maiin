@@ -26,7 +26,16 @@ const ROWS: {
 }[] = [
   { category: "kudos", label: "Props", description: "On your sessions" },
   { category: "comments", label: "Comments", description: "On your sessions" },
-  { category: "follows", label: "New followers" },
+  {
+    category: "follows",
+    label: "New followers",
+    description: "When anyone can follow you",
+  },
+  {
+    category: "followRequests",
+    label: "Follow requests",
+    description: "When someone asks to follow you",
+  },
   {
     category: "circles",
     label: "Circles",

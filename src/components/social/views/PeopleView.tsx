@@ -10,6 +10,7 @@ import { useUid } from "@/lib/auth";
 import { searchUsers } from "@/lib/socialApi";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import FollowButton from "@/components/social/FollowButton";
+import FollowRequestsSection from "@/components/social/FollowRequestsSection";
 import FollowsYouBadge from "@/components/social/FollowsYouBadge";
 import PartnerReadyBadge from "@/components/social/PartnerReadyBadge";
 import { Share, Users, X, Search } from "lucide-react";
@@ -220,6 +221,9 @@ export default function PeopleView({
             account is restricted · Contact support"), whose Contact
             support now opens a mail to support. */}
         {isRestricted && <RestrictedNotice />}
+        {/* Polish2: requests to follow you, answered here whether or not
+            their notifications are on. Nothing while there are none. */}
+        <FollowRequestsSection active={active} />
         {/* Section order rebuilt per audit: search-first because
       that's the highest-intent task on this surface. Suggested
       people next (most relevant social action). Invite
@@ -440,10 +444,10 @@ export default function PeopleView({
                   <FollowButton
                     targetUid={p.uid}
                     disabled={isRestricted}
-                    onFollowChange={(isFollowing) => {
-                      // Moved from "Suggested" to the user's Following feed —
-                      // remove from the suggestion list for immediate feedback.
-                      if (isFollowing) removeSuggestion(p.uid);
+                    onFollowChange={(now) => {
+                      // Followed, or asked to: off the suggestion list at
+                      // once.
+                      if (now !== "not-following") removeSuggestion(p.uid);
                     }}
                   />
                 </div>

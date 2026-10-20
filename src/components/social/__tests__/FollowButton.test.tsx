@@ -13,8 +13,13 @@ import {
 } from "@testing-library/react";
 
 const H = vi.hoisted(() => ({
-  state: { following: false as boolean | null, settled: true, busy: false },
-  toggle: vi.fn(async (_next: boolean) => true),
+  state: {
+    following: false as boolean | null,
+    requested: false,
+    settled: true,
+    busy: false,
+  },
+  toggle: vi.fn(async (_next: boolean): Promise<string | null> => "following"),
   toastError: vi.fn(),
   restriction: { isRestricted: false, loading: false },
 }));
@@ -32,8 +37,8 @@ import FollowButton from "../FollowButton";
 import { RESTRICTED_TOAST } from "@/lib/accountRestriction";
 
 beforeEach(() => {
-  H.state = { following: false, settled: true, busy: false };
-  H.toggle.mockClear();
+  H.state = { following: false, requested: false, settled: true, busy: false };
+  H.toggle.mockReset().mockResolvedValue("following");
   H.toastError.mockClear();
   H.restriction.isRestricted = false;
 });
@@ -77,5 +82,38 @@ describe("FollowButton", () => {
     await tap();
     expect(H.toggle).toHaveBeenCalledWith(false);
     expect(H.toastError).not.toHaveBeenCalled();
+  });
+});
+
+describe("FollowButton — follow requests (Polish2)", () => {
+  it("says Requested while a request waits, and a tap cancels it", async () => {
+    H.state = { following: false, requested: true, settled: true, busy: false };
+    H.toggle.mockResolvedValue("not-following");
+    const changed = vi.fn();
+    render(<FollowButton targetUid="maya" onFollowChange={changed} />);
+    const button = screen.getByRole("button", {
+      name: "Cancel follow request",
+    });
+    expect(button).toHaveTextContent("Requested");
+    await tap();
+    expect(H.toggle).toHaveBeenCalledWith(false);
+    expect(changed).toHaveBeenCalledWith("not-following", "requested");
+  });
+
+  it("tells its parent a follow became a request, so a count does not move", async () => {
+    H.toggle.mockResolvedValue("requested");
+    const changed = vi.fn();
+    render(<FollowButton targetUid="maya" onFollowChange={changed} />);
+    await tap();
+    expect(H.toggle).toHaveBeenCalledWith(true);
+    expect(changed).toHaveBeenCalledWith("requested", "not-following");
+  });
+
+  it("tells its parent nothing when the write failed", async () => {
+    H.toggle.mockResolvedValue(null);
+    const changed = vi.fn();
+    render(<FollowButton targetUid="maya" onFollowChange={changed} />);
+    await tap();
+    expect(changed).not.toHaveBeenCalled();
   });
 });

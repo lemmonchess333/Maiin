@@ -64,8 +64,8 @@ export default function PeopleToFollowRow({
             <FollowButton
               targetUid={person.uid}
               className="mt-auto w-full text-sm"
-              onFollowChange={(following) => {
-                if (!following) return;
+              onFollowChange={(now) => {
+                if (now === "not-following") return;
                 trackSocialEvent("social_follow", {
                   followSource: "people_row",
                 });

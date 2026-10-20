@@ -32,6 +32,9 @@ export type NotificationType =
   | "kudos"
   | "comment"
   | "follow"
+  // Polish2 — someone asked to follow the recipient. The row opens the
+  // asker's profile, where it can be accepted.
+  | "follow_request"
   | "challenge_milestone"
   // SOCIAL-FOCUS-01 — a Circle member backed the recipient's weekly
   // focus. Deliberately generic: the copy never names the backer or
@@ -82,6 +85,7 @@ const VALID_TYPES: ReadonlySet<string> = new Set<NotificationType>([
   "kudos",
   "comment",
   "follow",
+  "follow_request",
   "challenge_milestone",
   "circle_focus_backed",
   "circle_milestone",

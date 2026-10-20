@@ -14,6 +14,7 @@ import {
   where,
   Timestamp,
   serverTimestamp,
+  writeBatch,
   type DocumentSnapshot,
 } from "firebase/firestore";
 import {
@@ -53,6 +54,149 @@ export async function unfollowUser(currentUid: string, targetUid: string) {
   if (currentUid !== authedUid) throw new Error("Identity mismatch");
   await deleteDocGuarded(doc(db, "following", currentUid, "users", targetUid));
   await deleteDocGuarded(doc(db, "followers", targetUid, "users", currentUid));
+}
+
+// ============================================
+// Follow requests (Polish2 call 4)
+//
+// An account approves each follower unless its owner turns that off
+// (Settings → Privacy), and then a follow is a request,
+// `followRequests/{target}/users/{asker}`, seen only by the two people. The
+// rules decide which: a direct follow is refused while the person approves
+// followers, so the app tries it and asks instead. Only the person asked
+// writes the follow edges, on accepting.
+// ============================================
+
+/** What a tap on Follow did. */
+export type FollowOutcome = "following" | "requested";
+
+export async function followOrRequest(
+  currentUid: string,
+  targetUid: string
+): Promise<FollowOutcome> {
+  try {
+    await followUser(currentUid, targetUid);
+    return "following";
+  } catch (err) {
+    // Refused: they approve followers (or a block, a restriction or a
+    // deletion stands, which refuses the request too).
+    if (!isPermissionDenied(err)) throw err;
+  }
+  await requestFollow(currentUid, targetUid);
+  return "requested";
+}
+
+export async function requestFollow(currentUid: string, targetUid: string) {
+  const authedUid = getAuthUid();
+  if (currentUid !== authedUid) throw new Error("Identity mismatch");
+  const ref = doc(db, "followRequests", targetUid, "users", currentUid);
+  try {
+    await setDocGuarded(ref, { requestedAt: serverTimestamp() });
+  } catch (err) {
+    // A request already waiting cannot be written again; it still stands.
+    if (isPermissionDenied(err) && (await getDoc(ref)).exists()) return;
+    throw err;
+  }
+}
+
+export async function cancelFollowRequest(
+  currentUid: string,
+  targetUid: string
+) {
+  const authedUid = getAuthUid();
+  if (currentUid !== authedUid) throw new Error("Identity mismatch");
+  await deleteDocGuarded(
+    doc(db, "followRequests", targetUid, "users", currentUid)
+  );
+}
+
+export async function hasRequestedFollow(
+  currentUid: string,
+  targetUid: string
+): Promise<boolean> {
+  const snap = await getDoc(
+    doc(db, "followRequests", targetUid, "users", currentUid)
+  );
+  return snap.exists();
+}
+
+/** Has `requesterUid` asked to follow the signed-in person? */
+export async function hasFollowRequestFrom(
+  currentUid: string,
+  requesterUid: string
+): Promise<boolean> {
+  const snap = await getDoc(
+    doc(db, "followRequests", currentUid, "users", requesterUid)
+  );
+  return snap.exists();
+}
+
+/** Accept: the two follow edges and the request's removal, in one batch.
+ *  `fromRequest` tells onFollowerCreated not to announce a follow the
+ *  person has just accepted. */
+export async function acceptFollowRequest(
+  currentUid: string,
+  requesterUid: string
+) {
+  const authedUid = getAuthUid();
+  if (currentUid !== authedUid) throw new Error("Identity mismatch");
+  const edge = { followedAt: Timestamp.now(), fromRequest: true };
+  const batch = writeBatch(db);
+  batch.set(doc(db, "following", requesterUid, "users", currentUid), edge);
+  batch.set(doc(db, "followers", currentUid, "users", requesterUid), edge);
+  batch.delete(doc(db, "followRequests", currentUid, "users", requesterUid));
+  await batch.commit();
+}
+
+export async function declineFollowRequest(
+  currentUid: string,
+  requesterUid: string
+) {
+  const authedUid = getAuthUid();
+  if (currentUid !== authedUid) throw new Error("Identity mismatch");
+  await deleteDocGuarded(
+    doc(db, "followRequests", currentUid, "users", requesterUid)
+  );
+}
+
+export interface FollowRequest {
+  uid: string;
+  displayName: string;
+  photoURL?: string;
+  requestedAt: Date | null;
+}
+
+/** The requests waiting for the signed-in person, newest first, each with
+ *  the asker's public name and photo. */
+export async function getFollowRequests(
+  currentUid: string,
+  max = 50
+): Promise<FollowRequest[]> {
+  const snap = await getDocs(
+    query(
+      collection(db, "followRequests", currentUid, "users"),
+      orderBy("requestedAt", "desc"),
+      limit(max)
+    )
+  );
+  return Promise.all(
+    snap.docs.map(async (d) => {
+      const profile = await getDoc(
+        doc(db, "users", d.id, "public", "profile")
+      ).catch(() => null);
+      const data = profile?.exists() ? profile.data() : {};
+      const at = d.data().requestedAt;
+      return {
+        uid: d.id,
+        displayName:
+          typeof data.displayName === "string" && data.displayName
+            ? data.displayName
+            : "Athlete",
+        photoURL: typeof data.photoURL === "string" ? data.photoURL : undefined,
+        requestedAt: at instanceof Timestamp ? at.toDate() : null,
+      };
+    })
+  );
 }
 
 export async function isFollowing(
@@ -873,6 +1017,9 @@ export async function blockUser(currentUid: string, targetUid: string) {
     doc(db, "followers", currentUid, "users", targetUid),
     doc(db, "following", targetUid, "users", currentUid),
     doc(db, "followers", targetUid, "users", currentUid),
+    // And any request either way (Polish2): either person may remove one.
+    doc(db, "followRequests", currentUid, "users", targetUid),
+    doc(db, "followRequests", targetUid, "users", currentUid),
   ];
   const results = await Promise.allSettled(
     edges.map((ref) => deleteDocGuarded(ref))

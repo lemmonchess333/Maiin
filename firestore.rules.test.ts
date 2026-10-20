@@ -1114,6 +1114,17 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
     });
   }
 
+  /* An account that accepts every follower (Polish2: absent means each
+     follower waits to be accepted), so a refused follow below is refused
+     for the reason the test names. */
+  async function seedOpenAccount(uid: string) {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", uid), {
+        approveFollowers: false,
+      });
+    });
+  }
+
   it("owner writes meals succeed when no ledger doc exists", async () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(
@@ -1194,6 +1205,7 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
 
   it("follow creation FAILS when EITHER side is mid-deletion", async () => {
     // Owner mid-deletion: cannot create their own follow.
+    await seedOpenAccount(OTHER_UID);
     await seedDeletionStatus(OWNER_UID, "running");
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertFails(
@@ -1204,6 +1216,7 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
   });
 
   it("follow creation FAILS when target is mid-deletion", async () => {
+    await seedOpenAccount(OTHER_UID);
     await seedDeletionStatus(OTHER_UID, "running");
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertFails(
@@ -1234,6 +1247,7 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
   }
 
   it("a blocked user CANNOT re-follow the person who blocked them", async () => {
+    await seedOpenAccount(OWNER_UID);
     await seedBlock(OWNER_UID, OTHER_UID);
     const blockedDb = env.authenticatedContext(OTHER_UID).firestore();
     await assertFails(
@@ -1251,6 +1265,7 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
 
   it("a blocker cannot follow the person they blocked either", async () => {
     // Otherwise the block is a one-way mirror. Unblock first.
+    await seedOpenAccount(OTHER_UID);
     await seedBlock(OWNER_UID, OTHER_UID);
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertFails(
@@ -1262,7 +1277,10 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
 
   it("an ordinary follow between unblocked users still works", async () => {
     /* Guards the guard. A rule that denied every follow would satisfy both
-       assertions above and silently break the entire social graph. */
+       assertions above and silently break the entire social graph. To
+       someone who accepts every follower; the rest wait to be accepted
+       (firestore.followRequests.rules.test.ts). */
+    await seedOpenAccount(OTHER_UID);
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(
       setDoc(doc(ownerDb, "following", OWNER_UID, "users", OTHER_UID), {
@@ -1494,6 +1512,12 @@ suite("firestore.rules — tombstone freeze (completed deletion)", () => {
   });
 
   it("create a follow relationship FAILS", async () => {
+    // Bob accepts everyone, so the tombstone is what refuses it.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", BOB), {
+        approveFollowers: false,
+      });
+    });
     await assertFails(
       setDoc(doc(aliceDb(), "following", ALICE, "users", BOB), {
         createdAt: serverTimestamp(),
@@ -1844,7 +1868,14 @@ suite("firestore.rules — /activities visibility-aware reads (audit #1)", () =>
   it("profile: a stranger sees the public post, follows, and on reopening sees the followers-only one too", async () => {
     /* One visit from Explore, in the page's order: the two queries
        profilePostVisibilities(false) names, the follow written as
-       followUser writes it, then the same two queries again. */
+       followUser writes it, then the same two queries again. The owner
+       accepts every follower (approveFollowers false); otherwise the
+       follow is a request until accepted. */
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", OWNER_UID), {
+        approveFollowers: false,
+      });
+    });
     await seed({ activityId: "pub-v", visibility: "public" });
     await seed({ activityId: "fol-v", visibility: "followers" });
     const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();

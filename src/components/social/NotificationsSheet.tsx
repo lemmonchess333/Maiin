@@ -37,6 +37,7 @@ const TYPE_ICON: Record<
   kudos: { Icon: Heart, color: THEME.semantic.vitals },
   comment: { Icon: MessageCircle, color: THEME.brand },
   follow: { Icon: UserPlus, color: THEME.semantic.positive },
+  follow_request: { Icon: UserPlus, color: THEME.semantic.positive },
   challenge_milestone: { Icon: Trophy, color: THEME.semantic.nutrition },
   circle_focus_backed: { Icon: Users, color: THEME.brand },
   circle_milestone: { Icon: Trophy, color: THEME.semantic.positive },
@@ -59,6 +60,8 @@ function fallbackMessage(n: NotificationItem): string {
       return `${who} commented on your activity`;
     case "follow":
       return `${who} started following you`;
+    case "follow_request":
+      return `${who} asked to follow you`;
     case "challenge_milestone":
       return n.message || "You hit a challenge milestone";
     case "circle_focus_backed":
