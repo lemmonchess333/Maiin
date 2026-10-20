@@ -30,6 +30,13 @@ only a phone shows the OS doing its part.
       Continue with Google, close the sheet: no red line on Login; the same
       for Continue with Apple. A sign-in that fails for a reason (airplane
       mode) still shows its line.
+- [ ] **The evening reminder comes the evening after a rest day.** The
+      streak shows 0 that morning (the today/yesterday rule), and both the
+      push and the on-device reminder read the streak a log today keeps
+      (`savableStreak`), not the 0. Passing: with a streak of 3 or more, log
+      nothing for a day; the next evening the reminder arrives, and logging
+      then shows the streak with the rest day counted. A day later still with
+      nothing logged, no reminder comes.
 - [ ] **Verifying with the app closed lets you post at once.** Passing: sign
       up with email, close the app, tap the link in Mail, open the app and
       share a session to the feed straight away: it posts, rather than being
