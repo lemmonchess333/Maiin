@@ -603,6 +603,24 @@ jobs:
             --apiKey "$ASC_API_KEY_ID" \
             --apiIssuer "$ASC_API_ISSUER_ID"
 
+      # Crashlytics reads a native crash through the build's symbol files. A
+      # local Xcode build uploads them from a run-script phase; this archive
+      # is built on a runner, so they go up here, from the archive just sent
+      # to TestFlight. After that upload, so a failure here turns the run red
+      # without keeping the build from testers.
+      - name: Upload Crashlytics symbol files
+        run: |
+          set -euo pipefail
+          UPLOAD=$(find "$HOME/Library/Developer/Xcode/DerivedData" \
+            -path '*/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/upload-symbols' \
+            -type f | head -n 1)
+          if [ -z "$UPLOAD" ]; then
+            echo "::error::upload-symbols not found; did the archive resolve FirebaseCrashlytics?"
+            exit 1
+          fi
+          "$UPLOAD" -gsp ios/App/App/GoogleService-Info.plist -p ios \
+            "$RUNNER_TEMP/App.xcarchive/dSYMs"
+
       # The runner is thrown away after the job, but the signing key should
       # not outlive the steps that needed it.
       - name: Remove the signing keychain and key files

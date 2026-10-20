@@ -24,6 +24,10 @@ const reauthWithPassword = vi.fn();
 vi.mock("../reauth", () => ({
   reauthWithPassword: (...a: unknown[]) => reauthWithPassword(...a),
 }));
+const noteEmailChange = vi.fn();
+vi.mock("../emailChangeNote", () => ({
+  noteEmailChange: (...a: unknown[]) => noteEmailChange(...a),
+}));
 
 import {
   sendVerificationEmail,
@@ -90,6 +94,8 @@ describe("requestEmailChange", () => {
     await requestEmailChange(user, "old-pass", "  new@b.com  ");
     expect(reauthWithPassword).toHaveBeenCalledWith(user, "old-pass");
     expect(verifyBeforeUpdateEmail).toHaveBeenCalledWith(user, "new@b.com");
+    // Confirming it signs this phone out; Login explains with this.
+    expect(noteEmailChange).toHaveBeenCalledWith("new@b.com");
   });
 
   it("does NOT touch the email when reauth fails", async () => {

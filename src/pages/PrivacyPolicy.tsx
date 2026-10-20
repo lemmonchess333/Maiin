@@ -178,7 +178,8 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">
                   Crash and Error Reports:
                 </strong>{" "}
-                error messages and where in the app they happened.
+                error messages and where in the app they happened, and in the
+                iPhone app, its crashes.
               </li>
               <li>
                 <strong className="text-foreground">
@@ -412,8 +413,9 @@ export default function PrivacyPolicy() {
                 Firebase Authentication (sign-in), Cloud Firestore (your data),
                 Cloud Storage (progress, profile and Space photos), Cloud
                 Functions (our server code), App Check (which checks that
-                requests come from the real app; on the web it uses reCAPTCHA)
-                and Google Analytics for Firebase (usage analytics, section 2).
+                requests come from the real app; on the web it uses reCAPTCHA),
+                Google Analytics for Firebase (usage analytics, section 2) and,
+                in the iPhone app, Firebase Crashlytics (crash reports, below).
               </li>
               <li>
                 <strong className="text-foreground">
@@ -520,9 +522,12 @@ export default function PrivacyPolicy() {
             <p>
               <strong className="text-foreground">Error Reporting:</strong> We
               automatically collect crash reports and error logs to improve app
-              stability. They are stored with your account. Reports include
-              error messages and stack traces but do not contain sensitive
-              personal data such as passwords, meal content, or workout details.
+              stability. They are stored with your account, and in the iPhone
+              app Google&apos;s Firebase Crashlytics also receives them, with
+              your account&apos;s ID but not your name or email address. Reports
+              include error messages and stack traces but do not contain
+              sensitive personal data such as passwords, meal content, or
+              workout details.
             </p>
           </section>
 

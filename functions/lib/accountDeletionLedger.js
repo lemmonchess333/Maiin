@@ -94,6 +94,8 @@ const ALLOWED_FIELDS = Object.freeze([
   "pendingCleanupShards",
   "resumeVersion",
   "nextAttemptAt",
+  // When the owner was told this request is stuck (deletionAlert.js).
+  "stuckAlertedAt",
 ]);
 
 const COLLECTION = "accountDeletionRequests";
@@ -130,7 +132,7 @@ function assertValidTransition(fromStatus, toStatus) {
   }
   if (!allowed.includes(toStatus)) {
     throw new Error(
-      `disallowed transition: ${fromStatus} -> ${toStatus} (allowed: ${allowed.join(", ")})`,
+      `disallowed transition: ${fromStatus} -> ${toStatus} (allowed: ${allowed.join(", ")})`
     );
   }
 }
@@ -142,7 +144,7 @@ function assertMinimisedRecord(record) {
   for (const field of Object.keys(record)) {
     if (!ALLOWED_FIELDS.includes(field)) {
       throw new Error(
-        `forbidden field on accountDeletionRequests: ${field} (operational ledger must not carry personal data)`,
+        `forbidden field on accountDeletionRequests: ${field} (operational ledger must not carry personal data)`
       );
     }
   }
@@ -194,7 +196,11 @@ async function acquireLease({
     const data = snap.exists ? snap.data() || {} : null;
 
     if (data?.status === STATUS.COMPLETED) {
-      return { acquired: false, reason: "completed", generation: data.leaseGeneration };
+      return {
+        acquired: false,
+        reason: "completed",
+        generation: data.leaseGeneration,
+      };
     }
 
     // Fresh operation: no doc, or a cancelled request.
@@ -296,7 +302,9 @@ async function renewLease({
 async function verifyLeaseGeneration({ firestore, uid, expectedGeneration }) {
   const snap = await ledgerRef(firestore, uid).get();
   if (!snap.exists) return false;
-  return Number((snap.data() || {}).leaseGeneration) === Number(expectedGeneration);
+  return (
+    Number((snap.data() || {}).leaseGeneration) === Number(expectedGeneration)
+  );
 }
 
 /**
@@ -304,11 +312,27 @@ async function verifyLeaseGeneration({ firestore, uid, expectedGeneration }) {
  * A generation mismatch (a takeover happened) is a no-op returning
  * { transitioned: false, reason: 'superseded' } — the taker owns the state.
  */
+/**
+ * When a failed deletion is next tried, after its `attemptCount`-th
+ * attempt: 1, 2, 4 … minutes, doubling, then every six hours. A failure
+ * was retried a minute later every time, so a deletion that could not
+ * finish ran every five minutes (the resume job's beat) for good.
+ */
+const RETRY_BASE_MS = 60 * 1000;
+const RETRY_MAX_MS = 6 * 60 * 60 * 1000;
+function nextRetryAt(attemptCount, now = Date.now()) {
+  const attempts = Math.max(1, Number(attemptCount) || 1);
+  const delay = Math.min(RETRY_MAX_MS, RETRY_BASE_MS * 2 ** (attempts - 1));
+  return new Date(now + delay);
+}
+
 async function transitionStatus({
   firestore,
   uid,
   toStatus,
   expectedGeneration,
+  // An object, or a function of the request as it stands, for a field
+  // that depends on it (the next retry reads the attempt count).
   extraFields = {},
   now = Date.now(),
 }) {
@@ -330,11 +354,20 @@ async function transitionStatus({
       };
     }
     assertValidTransition(data.status, toStatus);
-    const update = { status: toStatus, updatedAt: now, ...extraFields };
+    const extra =
+      typeof extraFields === "function" ? extraFields(data) : extraFields;
+    const update = { status: toStatus, updatedAt: now, ...extra };
     assertMinimisedRecord(update);
     tx.set(ref, update, { merge: true });
     return { transitioned: true, generation: Number(data.leaseGeneration) };
   });
+}
+
+/** Note that the owner has been told this request is stuck, once. */
+async function markStuckAlerted({ firestore, uid, now = Date.now() }) {
+  const update = { stuckAlertedAt: now };
+  assertMinimisedRecord(update);
+  await ledgerRef(firestore, uid).set(update, { merge: true });
 }
 
 /** Read the operational ledger doc (or null). */
@@ -345,6 +378,8 @@ async function getDeletionStatus({ firestore, uid }) {
 }
 
 module.exports = {
+  nextRetryAt,
+  markStuckAlerted,
   STATUS,
   STATE_GRAPH,
   ALLOWED_FIELDS,

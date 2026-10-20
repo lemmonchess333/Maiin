@@ -177,6 +177,8 @@ const reportAlert = require("./lib/reportAlert");
 // effects run as steps that throw together (the session and social
 // triggers).
 const { pastRetryWindow, triggerSteps } = require("./lib/triggerRetry");
+// Each scheduled job's last run, in jobRuns/{name} (lib/jobRuns.js).
+const jobRuns = require("./lib/jobRuns");
 const { sendViaResend } = require("./email/accountEmails");
 // Admin-uid allowlist for moderation callables. Trust boundary for
 // the listPendingReports / resolveReport / hideActivity surfaces.
@@ -486,31 +488,40 @@ exports.deleteMyAccount = functions
 exports.resumeAccountDeletions = functions
   .runWith({
     ...SCHEDULED_CAP,
-    secrets: [STRIPE_SECRET_KEY, BILLING_HMAC_SECRET],
+    // RESEND_API_KEY: the email that tells the owner a deletion is stuck.
+    secrets: [STRIPE_SECRET_KEY, BILLING_HMAC_SECRET, RESEND_API_KEY],
   })
   .pubsub.schedule("every 5 minutes")
   .timeZone("UTC")
-  .onRun(async () => {
-    const retry = require("./lib/accountDeletionRetry");
-    const firestore = admin.firestore();
-    const deadline = Date.now() + 450000;
-    try {
-      await retry.retryBilling({ firestore, logger: functions.logger });
-    } catch (error) {
-      functions.logger.error("deleteAccount.billing_retry_failed", {
-        code: error.code || "unavailable",
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "resumeAccountDeletions", async () => {
+      const retry = require("./lib/accountDeletionRetry");
+      const firestore = admin.firestore();
+      const deadline = Date.now() + 450000;
+      try {
+        await retry.retryBilling({ firestore, logger: functions.logger });
+      } catch (error) {
+        functions.logger.error("deleteAccount.billing_retry_failed", {
+          code: error.code || "unavailable",
+        });
+      }
+      await retry.resumeDeletions({
+        firestore,
+        deleteAccount: accountDeletion.deleteAccount,
+        auth: admin.auth(),
+        storageBucket: admin.storage().bucket(),
+        logger: functions.logger,
+        sendAlert: (request) =>
+          require("./lib/deletionAlert").sendStuckDeletionAlert({
+            sendEmail: sendViaResend,
+            request,
+            logger: functions.logger,
+          }),
+        deadline,
       });
-    }
-    await retry.resumeDeletions({
-      firestore,
-      deleteAccount: accountDeletion.deleteAccount,
-      auth: admin.auth(),
-      storageBucket: admin.storage().bucket(),
-      logger: functions.logger,
-      deadline,
-    });
-    return null;
-  });
+      return null;
+    })
+  );
 
 // ══════════════════════════════════════════════
 // RATE LIMITER — per-user, Firestore-backed
@@ -885,12 +896,44 @@ exports.completeOnboarding = functions
       // tab crashed on its first render. A batch commits both or
       // neither, matching the contract the spec expects.
       const programRef = userRef.collection("programState").doc("current");
+      // The public profile carries the name every other person sees. The
+      // app writes it too (Onboarding.tsx), best-effort, and a copy that
+      // failed left "Athlete" in every feed, space and board; written here,
+      // it lands with the profile. Merged, so sign-up's photo and the
+      // streak mirror stay, and the name only when one was sent.
+      const publicRef = userRef.collection("public").doc("profile");
+      const publicSnap = await publicRef.get();
+      const publicName =
+        typeof profileData.displayName === "string" && profileData.displayName
+          ? profileData.displayName
+          : null;
       const batch = db.batch();
       if (existing.exists) {
         batch.set(userRef, profileData, { merge: true });
       } else {
         batch.set(userRef, profileData);
       }
+      batch.set(
+        publicRef,
+        {
+          uid,
+          ...(publicName && {
+            displayName: publicName,
+            // searchUsers matches on this; the app's onboarding copy left
+            // it out, so a new account was not found by name.
+            displayNameLower: publicName.toLowerCase(),
+          }),
+          ...(typeof profileData.athleteType === "string" && {
+            athleteType: profileData.athleteType,
+          }),
+          ...(!publicSnap.exists && {
+            currentStreak: 0,
+            longestStreak: 0,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          }),
+        },
+        { merge: true }
+      );
       // Allow-list the programState doc before persisting. validatePlanPayload
       // gates SHAPE (and only for v7 payloads); this strips arbitrary
       // top-level fields a client could inject into its own programState doc.
@@ -1273,6 +1316,15 @@ exports.analyzeFood = functions
         res.status(403).json({ error: "Origin not allowed" });
         return;
       }
+      // The scan this request was counted as, once it has been: a failure
+      // on the service's side after that gives it back (aiScanQuota).
+      let charge = null;
+      const failScan = async (modelStatus) => {
+        if (charge && aiScanQuota.isServiceFailure(modelStatus))
+          await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge);
+        const failed = aiScanQuota.failedScanResponse(modelStatus);
+        res.status(failed.status).json(failed.body);
+      };
       try {
         if (req.method !== "POST") {
           res.status(405).json({ error: "Method not allowed" });
@@ -1398,6 +1450,12 @@ exports.analyzeFood = functions
           return;
         }
 
+        charge = {
+          uid: authUser.uid,
+          action: aiScanQuota.ACTION_IMAGE_AI,
+          dayKey: quota.dayKey,
+        };
+
         const projectId = process.env.GCLOUD_PROJECT;
         const accessToken = await admin.credential
           .applicationDefault()
@@ -1452,7 +1510,7 @@ exports.analyzeFood = functions
             "Vertex AI error:",
             redactVertexResponse(data, { httpStatus: response.status })
           );
-          res.status(500).json({ error: "AI service error" });
+          await failScan(response.status);
           return;
         }
         functions.logger.info("analyzeFood.usage", vertexUsage(data));
@@ -1464,7 +1522,7 @@ exports.analyzeFood = functions
             "Unexpected response format:",
             redactVertexResponse(data, { httpStatus: response.status })
           );
-          res.status(500).json({ error: "Unexpected AI response format" });
+          await failScan();
           return;
         }
 
@@ -1488,7 +1546,9 @@ exports.analyzeFood = functions
         res.status(200).json(nutrition);
       } catch (error) {
         console.error("Error analyzing food:", error);
-        res.status(500).json({ error: "Failed to analyze food image" });
+        // An answer that would not parse is the service's failure too.
+        if (charge) await failScan();
+        else res.status(500).json({ error: "Failed to analyze food image" });
       }
     });
   });
@@ -1505,6 +1565,15 @@ exports.analyzeFoodText = functions
         res.status(403).json({ error: "Origin not allowed" });
         return;
       }
+      // As in analyzeFood: a service failure after the scan was counted
+      // gives it back.
+      let charge = null;
+      const failScan = async (modelStatus) => {
+        if (charge && aiScanQuota.isServiceFailure(modelStatus))
+          await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge);
+        const failed = aiScanQuota.failedScanResponse(modelStatus);
+        res.status(failed.status).json(failed.body);
+      };
       try {
         if (req.method !== "POST") {
           res.status(405).json({ error: "Method not allowed" });
@@ -1616,6 +1685,12 @@ exports.analyzeFoodText = functions
           return;
         }
 
+        charge = {
+          uid: authUser.uid,
+          action: aiScanQuota.ACTION_TEXT_AI,
+          dayKey: quota.dayKey,
+        };
+
         const projectId = process.env.GCLOUD_PROJECT;
         const accessToken = await admin.credential
           .applicationDefault()
@@ -1642,7 +1717,7 @@ exports.analyzeFoodText = functions
             "Vertex AI error:",
             redactVertexResponse(data, { httpStatus: response.status })
           );
-          res.status(500).json({ error: "AI service error" });
+          await failScan(response.status);
           return;
         }
         functions.logger.info("analyzeFoodText.usage", vertexUsage(data));
@@ -1653,7 +1728,7 @@ exports.analyzeFoodText = functions
             "Unexpected response format:",
             redactVertexResponse(data, { httpStatus: response.status })
           );
-          res.status(500).json({ error: "Unexpected AI response format" });
+          await failScan();
           return;
         }
 
@@ -1677,7 +1752,9 @@ exports.analyzeFoodText = functions
         res.status(200).json(nutrition);
       } catch (error) {
         console.error("Error analyzing food text:", error);
-        res.status(500).json({ error: "Failed to analyze food description" });
+        if (charge) await failScan();
+        else
+          res.status(500).json({ error: "Failed to analyze food description" });
       }
     });
   });
@@ -2523,16 +2600,16 @@ async function sweepActiveUsers({ name, cutoffDays, perUser }) {
       .where("lastActiveAt", ">=", cutoffTs)
       .get();
   } catch (err) {
-    console.error(
-      `${name}: lastActiveAt query failed, skipping run:`,
-      err.message
-    );
-    return;
+    // A run that could not find its users failed, and is recorded so;
+    // returning here once made it a success that did nothing.
+    console.error(`${name}: lastActiveAt query failed:`, err.message);
+    throw err;
   }
 
   const uids = usersSnap.docs.map((d) => d.id);
   console.log(`${name}: processing ${uids.length} users`);
 
+  let failed = 0;
   for (let i = 0; i < uids.length; i += 10) {
     const batch = uids.slice(i, i + 10);
     await Promise.all(
@@ -2540,11 +2617,15 @@ async function sweepActiveUsers({ name, cutoffDays, perUser }) {
         try {
           await perUser(uid);
         } catch (err) {
+          failed += 1;
           console.error(`${name}: failed for ${uid}:`, err.message);
         }
       })
     );
   }
+  // Stored with the run: one person's failure does not fail the sweep, but
+  // the count says how many there were.
+  return { users: uids.length, failed };
 }
 
 // ── 2) Scheduled: weekly rollup (Sundays 23:15 UTC) ──
@@ -2553,37 +2634,42 @@ exports.weeklyPerformanceRollup = functions
   .runWith(SCHEDULED_CAP)
   .pubsub.schedule("15 23 * * 0")
   .timeZone("Etc/UTC")
-  .onRun(async () => {
-    try {
-      console.log("weeklyPerformanceRollup: starting");
-      await sweepActiveUsers({
-        name: "weeklyPerformanceRollup",
-        cutoffDays: 30,
-        perUser: async (uid) => {
-          // R1A-Deletion: per-uid tombstone guard. The function read
-          // the active-users list seconds-to-minutes ago; a user may
-          // have started deletion since.
-          if (
-            !(await accountDeletionLocks.shouldSystemWriteProceed(
-              db,
-              uid,
-              "weeklyPerformanceRollup"
-            ))
-          ) {
-            return;
-          }
-          await computeAndWritePerformanceForUser(uid, null);
-        },
-      });
-      console.log("weeklyPerformanceRollup: done");
-    } catch (err) {
-      console.error("weeklyPerformanceRollup: fatal error:", {
-        message: err.message,
-        stack: err.stack,
-      });
-    }
-    return null;
-  });
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "weeklyPerformanceRollup", async () => {
+      let summary = null;
+      try {
+        console.log("weeklyPerformanceRollup: starting");
+        summary = await sweepActiveUsers({
+          name: "weeklyPerformanceRollup",
+          cutoffDays: 30,
+          perUser: async (uid) => {
+            // R1A-Deletion: per-uid tombstone guard. The function read
+            // the active-users list seconds-to-minutes ago; a user may
+            // have started deletion since.
+            if (
+              !(await accountDeletionLocks.shouldSystemWriteProceed(
+                db,
+                uid,
+                "weeklyPerformanceRollup"
+              ))
+            ) {
+              return;
+            }
+            await computeAndWritePerformanceForUser(uid, null);
+          },
+        });
+        console.log("weeklyPerformanceRollup: done");
+      } catch (err) {
+        console.error("weeklyPerformanceRollup: fatal error:", {
+          message: err.message,
+          stack: err.stack,
+        });
+        // Recorded as failed (lib/jobRuns.js), not as a success.
+        throw err;
+      }
+      return summary;
+    })
+  );
 
 // ── 3) Scheduled: daily refresh (02:10 UTC) ──
 
@@ -2591,34 +2677,39 @@ exports.dailyPerformanceRefresh = functions
   .runWith(SCHEDULED_CAP)
   .pubsub.schedule("10 2 * * *")
   .timeZone("Etc/UTC")
-  .onRun(async () => {
-    try {
-      console.log("dailyPerformanceRefresh: starting");
-      await sweepActiveUsers({
-        name: "dailyPerformanceRefresh",
-        cutoffDays: 14,
-        perUser: async (uid) => {
-          if (
-            !(await accountDeletionLocks.shouldSystemWriteProceed(
-              db,
-              uid,
-              "dailyPerformanceRefresh"
-            ))
-          ) {
-            return;
-          }
-          await computeAndWritePerformanceForUser(uid, null);
-        },
-      });
-      console.log("dailyPerformanceRefresh: done");
-    } catch (err) {
-      console.error("dailyPerformanceRefresh: fatal error:", {
-        message: err.message,
-        stack: err.stack,
-      });
-    }
-    return null;
-  });
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "dailyPerformanceRefresh", async () => {
+      let summary = null;
+      try {
+        console.log("dailyPerformanceRefresh: starting");
+        summary = await sweepActiveUsers({
+          name: "dailyPerformanceRefresh",
+          cutoffDays: 14,
+          perUser: async (uid) => {
+            if (
+              !(await accountDeletionLocks.shouldSystemWriteProceed(
+                db,
+                uid,
+                "dailyPerformanceRefresh"
+              ))
+            ) {
+              return;
+            }
+            await computeAndWritePerformanceForUser(uid, null);
+          },
+        });
+        console.log("dailyPerformanceRefresh: done");
+      } catch (err) {
+        console.error("dailyPerformanceRefresh: fatal error:", {
+          message: err.message,
+          stack: err.stack,
+        });
+        // Recorded as failed (lib/jobRuns.js), not as a success.
+        throw err;
+      }
+      return summary;
+    })
+  );
 
 // ── 4) Scheduled: challenge rollover (00:05 UTC daily) ──
 //
@@ -2637,58 +2728,62 @@ exports.rolloverChallenges = functions
   .runWith(SCHEDULED_CAP)
   .pubsub.schedule("5 0 * * *")
   .timeZone("Etc/UTC")
-  .onRun(async () => {
-    try {
-      console.log("rolloverChallenges: starting");
-      // Current period + one UTC day of lookahead: a UTC-positive user's
-      // local new-period activity lands hours before the UTC boundary, and
-      // the doc must already exist for syncChallengeProgress to credit it.
-      // The window predicate keeps early docs inert until their day arrives;
-      // the client hides not-yet-started challenges by local day. See
-      // buildUpcomingChallenges for the full seam.
-      const defs = challengeDefs.buildUpcomingChallenges(new Date());
-      let created = 0;
-      for (const def of defs) {
-        try {
-          const ref = db.collection("challenges").doc(def.id);
-          const snap = await ref.get();
-          if (snap.exists) {
-            // Words only: a description rewritten here reaches a challenge
-            // already running (the Together pass rewrote "Hybrid score:
-            // km x 100 + …" while Autumn Push was live). Nothing else on an
-            // existing challenge changes.
-            if (snap.get("description") !== def.description) {
-              await ref.update({ description: def.description });
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "rolloverChallenges", async () => {
+      try {
+        console.log("rolloverChallenges: starting");
+        // Current period + one UTC day of lookahead: a UTC-positive user's
+        // local new-period activity lands hours before the UTC boundary, and
+        // the doc must already exist for syncChallengeProgress to credit it.
+        // The window predicate keeps early docs inert until their day arrives;
+        // the client hides not-yet-started challenges by local day. See
+        // buildUpcomingChallenges for the full seam.
+        const defs = challengeDefs.buildUpcomingChallenges(new Date());
+        let created = 0;
+        for (const def of defs) {
+          try {
+            const ref = db.collection("challenges").doc(def.id);
+            const snap = await ref.get();
+            if (snap.exists) {
+              // Words only: a description rewritten here reaches a challenge
+              // already running (the Together pass rewrote "Hybrid score:
+              // km x 100 + …" while Autumn Push was live). Nothing else on an
+              // existing challenge changes.
+              if (snap.get("description") !== def.description) {
+                await ref.update({ description: def.description });
+              }
+              continue;
             }
-            continue;
+            const { id: _id, startDate, endDate, ...rest } = def;
+            await ref.set({
+              ...rest,
+              startDate: admin.firestore.Timestamp.fromDate(startDate),
+              endDate: admin.firestore.Timestamp.fromDate(endDate),
+              participantCount: 0,
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            created++;
+          } catch (err) {
+            console.error(
+              `rolloverChallenges: failed for ${def.id}:`,
+              err.message
+            );
           }
-          const { id: _id, startDate, endDate, ...rest } = def;
-          await ref.set({
-            ...rest,
-            startDate: admin.firestore.Timestamp.fromDate(startDate),
-            endDate: admin.firestore.Timestamp.fromDate(endDate),
-            participantCount: 0,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          });
-          created++;
-        } catch (err) {
-          console.error(
-            `rolloverChallenges: failed for ${def.id}:`,
-            err.message
-          );
         }
+        console.log(
+          `rolloverChallenges: done — ensured ${defs.length}, created ${created}`
+        );
+      } catch (err) {
+        console.error("rolloverChallenges: fatal error:", {
+          message: err.message,
+          stack: err.stack,
+        });
+        // Recorded as failed (lib/jobRuns.js), not as a success.
+        throw err;
       }
-      console.log(
-        `rolloverChallenges: done — ensured ${defs.length}, created ${created}`
-      );
-    } catch (err) {
-      console.error("rolloverChallenges: fatal error:", {
-        message: err.message,
-        stack: err.stack,
-      });
-    }
-    return null;
-  });
+      return null;
+    })
+  );
 
 // ══════════════════════════════════════════════
 // Push #961 — hourly streak-at-risk nudge sender (web)
@@ -3257,67 +3352,72 @@ exports.hourlyStreakNudge = functions
   .runWith(SCHEDULED_CAP)
   .pubsub.schedule("0 * * * *")
   .timeZone("Etc/UTC")
-  .onRun(async () => {
-    try {
-      console.log("hourlyStreakNudge: starting");
-      const now = new Date();
-      let sent = 0;
-      let badgeSent = 0;
-      let recapSent = 0;
-      await sweepActiveUsers({
-        name: "hourlyStreakNudge",
-        cutoffDays: 14,
-        perUser: async (uid) => {
-          if (
-            !(await accountDeletionLocks.shouldSystemWriteProceed(
-              db,
-              uid,
-              "hourlyStreakNudge"
-            ))
-          ) {
-            return;
-          }
-          // Three independent send-decisions per user in one sweep (avoids a
-          // second full active-user pass — cost). A throw in one must not
-          // skip the others. Recap is evaluated first so its per-day marker
-          // (recap > streak) suppresses the evening streak nudge.
-          try {
-            if (await maybeSendWeeklyRecap(uid, now)) recapSent++;
-          } catch (e) {
-            console.error("hourlyStreakNudge: recap send failed", {
-              uid,
-              message: e.message,
-            });
-          }
-          try {
-            if (await maybeSendStreakNudge(uid, now)) sent++;
-          } catch (e) {
-            console.error("hourlyStreakNudge: streak send failed", {
-              uid,
-              message: e.message,
-            });
-          }
-          try {
-            if (await maybeSendBadgeNudge(uid, now)) badgeSent++;
-          } catch (e) {
-            console.error("hourlyStreakNudge: badge send failed", {
-              uid,
-              message: e.message,
-            });
-          }
-        },
-      });
-      console.log(
-        `hourlyStreakNudge: done — sent=${sent} badgeSent=${badgeSent} recapSent=${recapSent}`
-      );
-    } catch (err) {
-      console.error("hourlyStreakNudge: fatal error:", {
-        message: err.message,
-        stack: err.stack,
-      });
-    }
-    return null;
-  });
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "hourlyStreakNudge", async () => {
+      let summary = null;
+      try {
+        console.log("hourlyStreakNudge: starting");
+        const now = new Date();
+        let sent = 0;
+        let badgeSent = 0;
+        let recapSent = 0;
+        summary = await sweepActiveUsers({
+          name: "hourlyStreakNudge",
+          cutoffDays: 14,
+          perUser: async (uid) => {
+            if (
+              !(await accountDeletionLocks.shouldSystemWriteProceed(
+                db,
+                uid,
+                "hourlyStreakNudge"
+              ))
+            ) {
+              return;
+            }
+            // Three independent send-decisions per user in one sweep (avoids a
+            // second full active-user pass — cost). A throw in one must not
+            // skip the others. Recap is evaluated first so its per-day marker
+            // (recap > streak) suppresses the evening streak nudge.
+            try {
+              if (await maybeSendWeeklyRecap(uid, now)) recapSent++;
+            } catch (e) {
+              console.error("hourlyStreakNudge: recap send failed", {
+                uid,
+                message: e.message,
+              });
+            }
+            try {
+              if (await maybeSendStreakNudge(uid, now)) sent++;
+            } catch (e) {
+              console.error("hourlyStreakNudge: streak send failed", {
+                uid,
+                message: e.message,
+              });
+            }
+            try {
+              if (await maybeSendBadgeNudge(uid, now)) badgeSent++;
+            } catch (e) {
+              console.error("hourlyStreakNudge: badge send failed", {
+                uid,
+                message: e.message,
+              });
+            }
+          },
+        });
+        console.log(
+          `hourlyStreakNudge: done — sent=${sent} badgeSent=${badgeSent} recapSent=${recapSent}`
+        );
+      } catch (err) {
+        console.error("hourlyStreakNudge: fatal error:", {
+          message: err.message,
+          stack: err.stack,
+        });
+        // Recorded as failed (lib/jobRuns.js), not as a success.
+        throw err;
+      }
+      return summary;
+    })
+  );
 
 // Exported for per-user decision+send testing (mirrors the reconciliation
 // sweep's _runDailyRaceReconciliationForUser convention).
@@ -3367,40 +3467,42 @@ exports.hourlyChallengeAnnouncements = functions
   .runWith(SCHEDULED_CAP)
   .pubsub.schedule("0 * * * *")
   .timeZone("Etc/UTC")
-  .onRun(async () => {
-    const now = new Date();
-    await challengeAnnouncements.sweepAnnouncementUsers({
-      db,
-      now,
-      documentId: admin.firestore.FieldPath.documentId(),
-      includeReminders: true,
-      perUser: async (uid, profile) => {
-        // The all-users pass is needed for opted-in lapsed accounts. Avoid
-        // deletion-ledger reads for the other local-hour buckets.
-        if (
-          !isLocalSendHour(
-            now,
-            profile?.timezone,
-            challengeAnnouncements.LOCAL_HOUR
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "hourlyChallengeAnnouncements", async () => {
+      const now = new Date();
+      await challengeAnnouncements.sweepAnnouncementUsers({
+        db,
+        now,
+        documentId: admin.firestore.FieldPath.documentId(),
+        includeReminders: true,
+        perUser: async (uid, profile) => {
+          // The all-users pass is needed for opted-in lapsed accounts. Avoid
+          // deletion-ledger reads for the other local-hour buckets.
+          if (
+            !isLocalSendHour(
+              now,
+              profile?.timezone,
+              challengeAnnouncements.LOCAL_HOUR
+            )
           )
-        )
-          return;
-        if (
-          await accountDeletionLocks.shouldSystemWriteProceed(
-            db,
-            uid,
-            "hourlyChallengeAnnouncements"
-          )
-        ) {
-          if (challengeAnnouncements.isSweepWindow(now))
-            await maybeSendChallengeAnnouncement(uid, now, profile);
-          if (challengeAnnouncements.isReminderSweepWindow(now))
-            await maybeSendChallengeReminder(uid, now, profile);
-        }
-      },
-    });
-    return null;
-  });
+            return;
+          if (
+            await accountDeletionLocks.shouldSystemWriteProceed(
+              db,
+              uid,
+              "hourlyChallengeAnnouncements"
+            )
+          ) {
+            if (challengeAnnouncements.isSweepWindow(now))
+              await maybeSendChallengeAnnouncement(uid, now, profile);
+            if (challengeAnnouncements.isReminderSweepWindow(now))
+              await maybeSendChallengeReminder(uid, now, profile);
+          }
+        },
+      });
+      return null;
+    })
+  );
 
 exports._maybeSendChallengeAnnouncement = maybeSendChallengeAnnouncement;
 
@@ -3708,43 +3810,48 @@ exports.dailyRaceReconciliationSweep = functions
   .runWith(SCHEDULED_CAP)
   .pubsub.schedule("0 4 * * *")
   .timeZone("Etc/UTC")
-  .onRun(async () => {
-    try {
-      console.log("dailyRaceReconciliationSweep: starting");
-      let totalNoShow = 0;
-      let totalRecoveryCleared = 0;
-      let totalNoShowCleared = 0;
-      let totalOrphanedGoalCleared = 0;
-      await sweepActiveUsers({
-        name: "dailyRaceReconciliationSweep",
-        cutoffDays: 30,
-        perUser: async (uid) => {
-          const {
-            noShowWritten,
-            recoveryCleared,
-            noShowCleared,
-            orphanedGoalCleared,
-          } = await _runDailyRaceReconciliationForUser(uid);
-          if (noShowWritten) totalNoShow += 1;
-          if (recoveryCleared) totalRecoveryCleared += 1;
-          if (noShowCleared) totalNoShowCleared += 1;
-          if (orphanedGoalCleared) totalOrphanedGoalCleared += 1;
-        },
-      });
-      console.log(
-        `dailyRaceReconciliationSweep: done — ` +
-          `noShow=${totalNoShow}, recoveryCleared=${totalRecoveryCleared}, ` +
-          `noShowCleared=${totalNoShowCleared}, ` +
-          `orphanedGoalCleared=${totalOrphanedGoalCleared}`
-      );
-    } catch (err) {
-      console.error("dailyRaceReconciliationSweep: fatal error:", {
-        message: err.message,
-        stack: err.stack,
-      });
-    }
-    return null;
-  });
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "dailyRaceReconciliationSweep", async () => {
+      let summary = null;
+      try {
+        console.log("dailyRaceReconciliationSweep: starting");
+        let totalNoShow = 0;
+        let totalRecoveryCleared = 0;
+        let totalNoShowCleared = 0;
+        let totalOrphanedGoalCleared = 0;
+        summary = await sweepActiveUsers({
+          name: "dailyRaceReconciliationSweep",
+          cutoffDays: 30,
+          perUser: async (uid) => {
+            const {
+              noShowWritten,
+              recoveryCleared,
+              noShowCleared,
+              orphanedGoalCleared,
+            } = await _runDailyRaceReconciliationForUser(uid);
+            if (noShowWritten) totalNoShow += 1;
+            if (recoveryCleared) totalRecoveryCleared += 1;
+            if (noShowCleared) totalNoShowCleared += 1;
+            if (orphanedGoalCleared) totalOrphanedGoalCleared += 1;
+          },
+        });
+        console.log(
+          `dailyRaceReconciliationSweep: done — ` +
+            `noShow=${totalNoShow}, recoveryCleared=${totalRecoveryCleared}, ` +
+            `noShowCleared=${totalNoShowCleared}, ` +
+            `orphanedGoalCleared=${totalOrphanedGoalCleared}`
+        );
+      } catch (err) {
+        console.error("dailyRaceReconciliationSweep: fatal error:", {
+          message: err.message,
+          stack: err.stack,
+        });
+        // Recorded as failed (lib/jobRuns.js), not as a success.
+        throw err;
+      }
+      return summary;
+    })
+  );
 
 // Test surface — the per-user worker is the meaningful unit. Export
 // it (and the helpers) under leading-underscore aliases so unit
@@ -7329,36 +7436,41 @@ exports.weeklyFellBehindCheck = functions
   .runWith(SCHEDULED_CAP)
   .pubsub.schedule("0 5 * * 1")
   .timeZone("Etc/UTC")
-  .onRun(async () => {
-    try {
-      console.log("weeklyFellBehindCheck: starting");
-      const range = _priorWeekUtcRange(Date.now());
-      console.log(
-        `weeklyFellBehindCheck: evaluating week ${range.weekKey} ` +
-          `(${range.weekStart}..${range.weekEnd})`
-      );
-      let setCount = 0;
-      let clearCount = 0;
-      await sweepActiveUsers({
-        name: "weeklyFellBehindCheck",
-        cutoffDays: 30,
-        perUser: async (uid) => {
-          const decision = await _runWeeklyFellBehindCheckForUser(uid, range);
-          if (decision.action === "set") setCount += 1;
-          if (decision.action === "clear") clearCount += 1;
-        },
-      });
-      console.log(
-        `weeklyFellBehindCheck: done — set=${setCount}, clear=${clearCount}`
-      );
-    } catch (err) {
-      console.error("weeklyFellBehindCheck: fatal error:", {
-        message: err.message,
-        stack: err.stack,
-      });
-    }
-    return null;
-  });
+  .onRun(() =>
+    jobRuns.recordJobRun(db, "weeklyFellBehindCheck", async () => {
+      let summary = null;
+      try {
+        console.log("weeklyFellBehindCheck: starting");
+        const range = _priorWeekUtcRange(Date.now());
+        console.log(
+          `weeklyFellBehindCheck: evaluating week ${range.weekKey} ` +
+            `(${range.weekStart}..${range.weekEnd})`
+        );
+        let setCount = 0;
+        let clearCount = 0;
+        summary = await sweepActiveUsers({
+          name: "weeklyFellBehindCheck",
+          cutoffDays: 30,
+          perUser: async (uid) => {
+            const decision = await _runWeeklyFellBehindCheckForUser(uid, range);
+            if (decision.action === "set") setCount += 1;
+            if (decision.action === "clear") clearCount += 1;
+          },
+        });
+        console.log(
+          `weeklyFellBehindCheck: done — set=${setCount}, clear=${clearCount}`
+        );
+      } catch (err) {
+        console.error("weeklyFellBehindCheck: fatal error:", {
+          message: err.message,
+          stack: err.stack,
+        });
+        // Recorded as failed (lib/jobRuns.js), not as a success.
+        throw err;
+      }
+      return summary;
+    })
+  );
 
 exports._priorWeekUtcRange = _priorWeekUtcRange;
 exports._isVolumeEligibleRun = _isVolumeEligibleRun;

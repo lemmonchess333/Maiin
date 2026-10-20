@@ -121,6 +121,8 @@ import {
   pendingReads,
   releaseRead,
   rejectRead,
+  failNextFirestore,
+  unfiredFailures,
 } from "@/test/firestoreHarness";
 
 function Probe() {
@@ -270,6 +272,30 @@ describe("AuthProvider — email sign-up", () => {
       await H.signUp!("n@example.com", "secret-123");
     });
     await waitFor(() => expect(H.sendInitial).toHaveBeenCalledWith("N"));
+  });
+
+  it("still sends the link and counts the sign-up when the profile write fails", async () => {
+    const { createUserWithEmailAndPassword } = await import("firebase/auth");
+    const { track } = await import("@/lib/lifecycleAnalytics");
+    vi.mocked(createUserWithEmailAndPassword).mockImplementationOnce(
+      async () => {
+        mockAuth.currentUser = { uid: "F" };
+        return { user: { uid: "F", email: "f@example.com" } } as never;
+      }
+    );
+    failNextFirestore("commit", { code: "unavailable" });
+    // Before: the write's failure was the sign-up's, so no link went and
+    // the person was told sign-up failed while being signed in.
+    await act(async () => {
+      await expect(
+        H.signUp!("f@example.com", "secret-123")
+      ).resolves.toBeUndefined();
+    });
+    expect(unfiredFailures()).toEqual([]);
+    await waitFor(() => expect(H.sendInitial).toHaveBeenCalledWith("F"));
+    expect(track).toHaveBeenCalledWith("signup_completed", {
+      method: "email",
+    });
   });
 });
 

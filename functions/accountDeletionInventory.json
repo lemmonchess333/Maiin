@@ -537,7 +537,7 @@
       "strategy": "deleteQueryInBatches",
       "lockNeeded": "system-writer",
       "hasNestedSubcollections": false,
-      "reason": "Deletes exact UID-prefixed action records and the verification-email limiter key.",
+      "reason": "Deletes exact UID-prefixed action records and the verification-email limiter key (verifyemail_{uid}_verificationEmail). Not every rateLimits doc is uid-prefixed: the signed-out password reset is keyed pwreset_{sha256(address)}, which no deletion can find, so since 2026-10-20 every rateLimits doc carries expiresAt (its newest call plus its window) under a Firestore TTL policy. Before that the reset key was the address itself and was kept for good; functions/scripts/purgeLegacyResetLimiterDocs.js removes those.",
       "testCoverageKey": "smoke::topLevelOwn::rateLimits",
       "testCoverageStatus": "implemented",
       "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
@@ -747,7 +747,7 @@
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
       "feasibilityNote": "A bare UID is not a valid collection-group documentId comparison. Implementation uses an ordered, resumable reference scan and checks the full path before mutation.",
-      "reason": "Reference scan also reaches participants under missing challenge roots. Existing deletion trigger owns participantCount reconciliation.",
+      "reason": "Reference scan also reaches participants under missing challenge roots. Existing deletion trigger owns participantCount reconciliation. Since 2026-10-20 each participation is deleted recursively, with its applied/{key} progress markers (the session counted, its day and amount): deletes do not cascade, and a left challenge keeps its markers with no participant doc above them.",
       "testCoverageKey": "unit::accountDeletion.challengeParticipations",
       "testCoverageStatus": "implemented",
       "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
@@ -969,6 +969,60 @@
       "reason": "Server-owned token-hash to uid ownership mapping. It contains no raw FCM token but the uid mapping remains personal data and must not survive account deletion.",
       "testCoverageKey": "smoke::topLevelQuery::fcmTokenClaims",
       "testCoverageStatus": "planned"
+    },
+    {
+      "key": "checkoutAuditOwn",
+      "domain": "G_payment",
+      "type": "topLevelQueryByField",
+      "path": "audit_checkout_sessions",
+      "where": ["uid", "==", "{uid}"],
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "paymentIdentifier",
+      "recordPurpose": "system",
+      "strategy": "deleteQueryInBatches",
+      "lockNeeded": "callable-actor",
+      "hasNestedSubcollections": false,
+      "reason": "One row per Stripe checkout the account started (functions/auditLog.js): uid, Stripe session id, price and plan. It records a checkout begun, not a payment; the payment is Stripe's, and deletedBillingIdentities keeps what a refund needs. Missing from the inventory and the executor until 2026-10-20, so every row outlived its account.",
+      "testCoverageKey": "smoke::topLevelQuery::checkoutAudit",
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js"
+    },
+    {
+      "key": "appleSubscriptionBindings",
+      "domain": "G_payment",
+      "type": "topLevelQueryByField",
+      "path": "appleSubscriptions",
+      "where": ["uid", "==", "{uid}"],
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "paymentIdentifier",
+      "recordPurpose": "payment",
+      "strategy": "deleteQueryInBatches",
+      "lockNeeded": "callable-actor",
+      "hasNestedSubcollections": false,
+      "reason": "Apple original-transaction bindings, keyed by transaction id and carrying the uid. Each binding's identity is tombstoned into deletedBillingIdentities BEFORE the binding is deleted (audit F8), so a deleted account's purchase cannot be claimed by another. Without BILLING_HMAC_SECRET the binding is kept with deletionExpiresAt, 13 months, under Firestore TTL. Deleted since F8; listed here 2026-10-20.",
+      "testCoverageKey": "unit::accountDeletion.appleSubscriptions",
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/accountDeletion.js"
+    },
+    {
+      "key": "appleNotificationsOwn",
+      "domain": "G_payment",
+      "type": "topLevelQueryByField",
+      "path": "appleNotifications",
+      "where": ["uid", "==", "{uid}"],
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "paymentIdentifier",
+      "recordPurpose": "system",
+      "strategy": "deleteQueryInBatches",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "reason": "The Apple webhook's record of each notification it applied (functions/appleIAP.js), keyed by notification id so a redelivery is skipped, carrying the uid and the original transaction id. Kept for good and reached by no deletion until 2026-10-20, and the branch for an account being erased wrote its uid after the erasure; it writes none now. Records without a uid (no account matched, or the account was being erased) name only Apple's transaction id and stay as dedup.",
+      "testCoverageKey": "smoke::topLevelQuery::appleNotifications",
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js"
     }
   ],
   "excluded": [
@@ -1192,6 +1246,21 @@
       "minimisationRule": "Only originalText, createdAt and expiresAt, keyed by SHA-256 of the comment path. No author UID, display name or photo. Entire collection client-denied.",
       "reviewedBy": "iphone-account-readiness-2026-09-15",
       "reason": "Keeps the existing bounded moderation evidence policy without exposing original text as a field on client-readable comments."
+    },
+    {
+      "key": "commentModerationByMe",
+      "domain": "H_excluded",
+      "type": "topLevelQueryByField",
+      "path": "commentModeration",
+      "where": ["authorId", "==", "{uid}"],
+      "containsPersonalData": true,
+      "piiCategory": "userContent",
+      "recordPurpose": "moderation",
+      "strategy": "anonymiseMinimisedShape",
+      "retentionWindow": "The minimised shape is kept: it names no one",
+      "minimisationRule": "Replaced with action, reason, activityId, commentId, createdAt and authorId null. textRedacted (the comment, masked) is dropped.",
+      "reviewedBy": "improvement-pass-2026-10-20",
+      "reason": "onCommentCreated writes one record per comment the profanity filter removes, with the author's uid and the comment's text, masked but still theirs. Kept for good and reached by no deletion until 2026-10-20. The count of removals stays useful to moderation without the author or the words."
     }
   ]
 }

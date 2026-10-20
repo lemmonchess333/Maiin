@@ -12,6 +12,8 @@ import {
   type PendingNotification,
 } from "@/lib/notifications";
 import { getQueueLength } from "@/lib/offlineQueue";
+import { crashReportingStatus, sendTestCrash } from "@/lib/crashReporting";
+import Button from "@/components/ui/Button";
 import { useUid } from "@/lib/auth";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -261,6 +263,32 @@ export default function Diagnostics() {
             Analytics
           </p>
           <Row label="Provider" value={analyticsStatus} />
+        </section>
+
+        <section className="bg-card rounded-2xl p-4 space-y-1">
+          <p className="text-caption uppercase tracking-widest text-muted-foreground mb-1">
+            Crash reporting
+          </p>
+          <Row
+            label="Crashlytics"
+            value={
+              crashReportingStatus() === "web"
+                ? "not on the web (Firestore reports)"
+                : crashReportingStatus()
+            }
+          />
+          {crashReportingStatus() !== "web" && (
+            /* Crashlytics sends a crash on the next launch, so the proof
+               that reports arrive is to cause one: the app closes. */
+            <Button
+              variant="secondary"
+              size="sm"
+              className="mt-2"
+              onClick={sendTestCrash}
+            >
+              Send a test crash
+            </Button>
+          )}
         </section>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">

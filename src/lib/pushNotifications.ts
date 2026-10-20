@@ -339,6 +339,15 @@ function isCallableNotDeployed(error: unknown): boolean {
   );
 }
 
+/** The server refused because this account is being, or has been,
+ *  deleted (accountDeletionLocks: failed-precondition, with the stable
+ *  errorCode on details). */
+function isAccountDeletionRefusal(error: unknown): boolean {
+  const errorCode = (error as { details?: { errorCode?: unknown } } | null)
+    ?.details?.errorCode;
+  return errorCode === "account-deleting" || errorCode === "account-deleted";
+}
+
 function removeBindingIfStillCurrent(
   uid: string,
   binding: StoredDeviceBinding,
@@ -484,9 +493,18 @@ export async function unregisterDeviceToken(uid: string): Promise<void> {
       );
       return;
     }
-    // Preserve the binding; a later same-account session can retry safely.
-    logger.error("[push] unregisterDeviceToken failed", error);
-    throw error;
+    if (isAccountDeletionRefusal(error)) {
+      // The deletion removes this device's claim itself (accountDeletion.js,
+      // FCM token claims), so there is nothing left to release. Failing
+      // closed here kept a person whose deletion was under way from
+      // signing out. The local token still goes, below.
+      logger.warn("[push] release refused for a deleting account", error);
+      if (binding) removeBindingIfStillCurrent(uid, binding, generation);
+    } else {
+      // Preserve the binding; a later same-account session can retry safely.
+      logger.error("[push] unregisterDeviceToken failed", error);
+      throw error;
+    }
   }
 
   // Server release is the Auth safety barrier. Once it has succeeded, a

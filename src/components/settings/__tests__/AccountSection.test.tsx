@@ -108,6 +108,21 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
+describe("AccountSection — sign out", () => {
+  it("says a connection is needed when sign-out fails offline", async () => {
+    const signOut = vi.fn().mockRejectedValue(new Error("unavailable"));
+    const online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    render(<AccountSection inline user={makeUser()} signOut={signOut} />);
+    fireEvent.click(screen.getByText("Sign out"));
+    await waitFor(() =>
+      expect(vi.mocked(toast.error).mock.calls[0]?.[0]).toBe(
+        "Signing out needs a connection, so this phone stops getting this account's notifications. Try again when you're online."
+      )
+    );
+    online.mockRestore();
+  });
+});
+
 describe("AccountSection — P0b Apple subscription warning", () => {
   it("goes straight to the DELETE-typing modal for users without an Apple subscription", () => {
     // Free user or web-only (Stripe) Pro user. No Apple warning

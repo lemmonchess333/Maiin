@@ -23,6 +23,7 @@ import { useDismissOnce } from "@/hooks/useDismissOnce";
 import {
   resendVerificationErrorMessage,
   sendVerificationEmail,
+  verificationSendFailed,
 } from "@/lib/accountSecurity";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
@@ -35,6 +36,10 @@ export default function VerifyEmailBanner() {
   const { dismissed, dismiss } = useDismissOnce(VERIFY_EMAIL_DISMISS_KEY);
   const [sending, setSending] = useState(false);
   const [checking, setChecking] = useState(false);
+  // The link sign-up sent may not have gone; the banner said it had.
+  const [unsent, setUnsent] = useState(() =>
+    user ? verificationSendFailed(user.uid) : false
+  );
 
   if (!gate.needsVerification || dismissed || !user?.email) return null;
 
@@ -42,6 +47,7 @@ export default function VerifyEmailBanner() {
     setSending(true);
     try {
       await sendVerificationEmail();
+      setUnsent(false);
       toast.success("Verification email sent");
     } catch (err) {
       logger.error("[VerifyEmailBanner] resend failed", err);
@@ -74,11 +80,12 @@ export default function VerifyEmailBanner() {
       title="Verify your email to post and comment"
       description={
         <>
-          We sent a link to{" "}
+          {unsent ? "We couldn't send the link to " : "We sent a link to "}
           <strong className="font-medium text-foreground break-all">
             {user.email}
           </strong>
-          . Wrong address?{" "}
+          {unsent ? ". Send it again below. " : ". "}
+          Wrong address?{" "}
           <Link
             to="/settings/account"
             className="underline underline-offset-2 text-foreground"
@@ -96,7 +103,7 @@ export default function VerifyEmailBanner() {
             loading={sending}
             onClick={resend}
           >
-            Resend link
+            {unsent ? "Send link" : "Resend link"}
           </Button>
           <Button
             size="sm"

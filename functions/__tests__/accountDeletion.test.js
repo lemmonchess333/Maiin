@@ -951,6 +951,7 @@ describe("deleteAccount — Chunk 3 lease + write-freeze (audit F2)", () => {
   });
 
   // ── Audit F8 — appleSubscriptions sweep (step 3c) ────────────────
+  // unit::accountDeletion.appleSubscriptions
   it("F8: tombstones the binding identity BEFORE deleting the binding", async () => {
     process.env.BILLING_HMAC_SECRET = "f8-test-secret";
     try {

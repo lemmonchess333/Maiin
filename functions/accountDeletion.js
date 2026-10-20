@@ -643,15 +643,16 @@ async function deleteAccount({
         uid,
         toStatus: ledger.STATUS.FAILED_CLEANUP,
         expectedGeneration: generation,
-        extraFields: {
+        extraFields: (request) => ({
           // This executor has stopped. Release its lease immediately so a
           // retry isn't blocked for nine minutes by a finished invocation.
           leaseExpiresAt: now,
-          nextAttemptAt: new Date(Date.now() + 60000),
+          // Each failure waits longer than the last (ledger.nextRetryAt).
+          nextAttemptAt: ledger.nextRetryAt(request.attemptCount, Date.now()),
           failedStage: stage,
           lastErrorCode: (err && err.code) || "unknown",
           lastErrorMessage: String((err && err.message) || "").slice(0, 500),
-        },
+        }),
         now,
       });
     } catch (transitionErr) {
