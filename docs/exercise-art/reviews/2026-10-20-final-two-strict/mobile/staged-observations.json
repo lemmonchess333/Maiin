@@ -1,0 +1,1082 @@
+{
+  "staged": {
+    "swimming": {
+      "lightManual": [
+        {
+          "frame": 1,
+          "active": {
+            "alt": "Swimming, Catch",
+            "decoded": true,
+            "height": 848,
+            "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+            "width": 1472
+          },
+          "caption": "Catch 1/6",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": {
+            "alt": "Swimming, Pull",
+            "decoded": true,
+            "height": 848,
+            "src": "/Maiin/.strict2.local/candidate/swimming/2.webp",
+            "width": 1472
+          },
+          "caption": "Pull 2/6",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": {
+            "alt": "Swimming, Breathe",
+            "decoded": true,
+            "height": 848,
+            "src": "/Maiin/.strict2.local/candidate/swimming/3.webp",
+            "width": 1472
+          },
+          "caption": "Breathe 3/6",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": {
+            "alt": "Swimming, Switch",
+            "decoded": true,
+            "height": 848,
+            "src": "/Maiin/.strict2.local/candidate/swimming/4.webp",
+            "width": 1472
+          },
+          "caption": "Switch 4/6",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": {
+            "alt": "Swimming, Drive",
+            "decoded": true,
+            "height": 848,
+            "src": "/Maiin/.strict2.local/candidate/swimming/5.webp",
+            "width": 1472
+          },
+          "caption": "Drive 5/6",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": {
+            "alt": "Swimming, Enter",
+            "decoded": true,
+            "height": 848,
+            "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+            "width": 1472
+          },
+          "caption": "Enter 6/6",
+          "theme": "light"
+        }
+      ],
+      "lightPlayback": {
+        "slow": false,
+        "theme": "light",
+        "end": {
+          "alt": "Swimming, Enter",
+          "decoded": true,
+          "height": 848,
+          "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+          "width": 1472
+        },
+        "replay": {
+          "alt": "Swimming, Catch",
+          "decoded": true,
+          "height": 848,
+          "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+          "width": 1472
+        },
+        "nextWrap": {
+          "alt": "Swimming, Catch",
+          "decoded": true,
+          "height": 848,
+          "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+          "width": 1472
+        },
+        "previousWrap": {
+          "alt": "Swimming, Enter",
+          "decoded": true,
+          "height": 848,
+          "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+          "width": 1472
+        },
+        "trace": [
+          {
+            "elapsedMs": 87,
+            "alt": "Swimming, Catch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 1284,
+            "alt": "Swimming, Pull",
+            "src": "/Maiin/.strict2.local/candidate/swimming/2.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 2484,
+            "alt": "Swimming, Breathe",
+            "src": "/Maiin/.strict2.local/candidate/swimming/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 3683,
+            "alt": "Swimming, Switch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/4.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 4881,
+            "alt": "Swimming, Drive",
+            "src": "/Maiin/.strict2.local/candidate/swimming/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 6165,
+            "alt": "Swimming, Enter",
+            "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 11868,
+            "alt": "Swimming, Catch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 12870,
+            "alt": "Swimming, Pull",
+            "src": "/Maiin/.strict2.local/candidate/swimming/2.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 13876,
+            "alt": "Swimming, Breathe",
+            "src": "/Maiin/.strict2.local/candidate/swimming/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 14881,
+            "alt": "Swimming, Switch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/4.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 15875,
+            "alt": "Swimming, Drive",
+            "src": "/Maiin/.strict2.local/candidate/swimming/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 16883,
+            "alt": "Swimming, Enter",
+            "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 26186,
+            "alt": "Swimming, Catch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 27203,
+            "alt": "Swimming, Pull",
+            "src": "/Maiin/.strict2.local/candidate/swimming/2.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 28186,
+            "alt": "Swimming, Breathe",
+            "src": "/Maiin/.strict2.local/candidate/swimming/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 29201,
+            "alt": "Swimming, Switch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/4.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 30203,
+            "alt": "Swimming, Drive",
+            "src": "/Maiin/.strict2.local/candidate/swimming/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 31203,
+            "alt": "Swimming, Enter",
+            "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 32202,
+            "alt": "Swimming, Breathe",
+            "src": "/Maiin/.strict2.local/candidate/swimming/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 52005,
+            "alt": "Swimming, Catch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 54333,
+            "alt": "Swimming, Pull",
+            "src": "/Maiin/.strict2.local/candidate/swimming/2.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 55534,
+            "alt": "Swimming, Breathe",
+            "src": "/Maiin/.strict2.local/candidate/swimming/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 56734,
+            "alt": "Swimming, Switch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/4.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 57934,
+            "alt": "Swimming, Drive",
+            "src": "/Maiin/.strict2.local/candidate/swimming/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 59129,
+            "alt": "Swimming, Enter",
+            "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+            "decoded": true
+          }
+        ]
+      },
+      "darkManual": [
+        {
+          "frame": 1,
+          "active": {
+            "alt": "Swimming, Catch",
+            "decoded": true,
+            "height": 848,
+            "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+            "width": 1472
+          },
+          "caption": "Catch 1/6",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": {
+            "alt": "Swimming, Pull",
+            "decoded": true,
+            "height": 848,
+            "src": "/Maiin/.strict2.local/candidate/swimming/2.webp",
+            "width": 1472
+          },
+          "caption": "Pull 2/6",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": {
+            "alt": "Swimming, Breathe",
+            "decoded": true,
+            "height": 848,
+            "src": "/Maiin/.strict2.local/candidate/swimming/3.webp",
+            "width": 1472
+          },
+          "caption": "Breathe 3/6",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": {
+            "alt": "Swimming, Switch",
+            "decoded": true,
+            "height": 848,
+            "src": "/Maiin/.strict2.local/candidate/swimming/4.webp",
+            "width": 1472
+          },
+          "caption": "Switch 4/6",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": {
+            "alt": "Swimming, Drive",
+            "decoded": true,
+            "height": 848,
+            "src": "/Maiin/.strict2.local/candidate/swimming/5.webp",
+            "width": 1472
+          },
+          "caption": "Drive 5/6",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": {
+            "alt": "Swimming, Enter",
+            "decoded": true,
+            "height": 848,
+            "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+            "width": 1472
+          },
+          "caption": "Enter 6/6",
+          "theme": "dark"
+        }
+      ],
+      "darkPlayback": {
+        "slow": true,
+        "theme": "dark",
+        "end": {
+          "alt": "Swimming, Enter",
+          "decoded": true,
+          "height": 848,
+          "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+          "width": 1472
+        },
+        "replay": {
+          "alt": "Swimming, Catch",
+          "decoded": true,
+          "height": 848,
+          "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+          "width": 1472
+        },
+        "nextWrap": {
+          "alt": "Swimming, Catch",
+          "decoded": true,
+          "height": 848,
+          "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+          "width": 1472
+        },
+        "previousWrap": {
+          "alt": "Swimming, Enter",
+          "decoded": true,
+          "height": 848,
+          "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+          "width": 1472
+        },
+        "trace": [
+          {
+            "elapsedMs": 87,
+            "alt": "Swimming, Catch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 1284,
+            "alt": "Swimming, Pull",
+            "src": "/Maiin/.strict2.local/candidate/swimming/2.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 2484,
+            "alt": "Swimming, Breathe",
+            "src": "/Maiin/.strict2.local/candidate/swimming/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 3683,
+            "alt": "Swimming, Switch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/4.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 4881,
+            "alt": "Swimming, Drive",
+            "src": "/Maiin/.strict2.local/candidate/swimming/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 6165,
+            "alt": "Swimming, Enter",
+            "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 11868,
+            "alt": "Swimming, Catch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 12870,
+            "alt": "Swimming, Pull",
+            "src": "/Maiin/.strict2.local/candidate/swimming/2.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 13876,
+            "alt": "Swimming, Breathe",
+            "src": "/Maiin/.strict2.local/candidate/swimming/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 14881,
+            "alt": "Swimming, Switch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/4.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 15875,
+            "alt": "Swimming, Drive",
+            "src": "/Maiin/.strict2.local/candidate/swimming/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 16883,
+            "alt": "Swimming, Enter",
+            "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 26186,
+            "alt": "Swimming, Catch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 27203,
+            "alt": "Swimming, Pull",
+            "src": "/Maiin/.strict2.local/candidate/swimming/2.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 28186,
+            "alt": "Swimming, Breathe",
+            "src": "/Maiin/.strict2.local/candidate/swimming/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 29201,
+            "alt": "Swimming, Switch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/4.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 30203,
+            "alt": "Swimming, Drive",
+            "src": "/Maiin/.strict2.local/candidate/swimming/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 31203,
+            "alt": "Swimming, Enter",
+            "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 32202,
+            "alt": "Swimming, Breathe",
+            "src": "/Maiin/.strict2.local/candidate/swimming/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 52005,
+            "alt": "Swimming, Catch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 54333,
+            "alt": "Swimming, Pull",
+            "src": "/Maiin/.strict2.local/candidate/swimming/2.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 55534,
+            "alt": "Swimming, Breathe",
+            "src": "/Maiin/.strict2.local/candidate/swimming/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 56734,
+            "alt": "Swimming, Switch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/4.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 57934,
+            "alt": "Swimming, Drive",
+            "src": "/Maiin/.strict2.local/candidate/swimming/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 59129,
+            "alt": "Swimming, Enter",
+            "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 75328,
+            "alt": "Swimming, Catch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 77341,
+            "alt": "Swimming, Enter",
+            "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 78334,
+            "alt": "Swimming, Catch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 79331,
+            "alt": "Swimming, Enter",
+            "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 81367,
+            "alt": "Swimming, Catch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 82347,
+            "alt": "Swimming, Pull",
+            "src": "/Maiin/.strict2.local/candidate/swimming/2.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 83363,
+            "alt": "Swimming, Breathe",
+            "src": "/Maiin/.strict2.local/candidate/swimming/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 84364,
+            "alt": "Swimming, Switch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/4.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 85364,
+            "alt": "Swimming, Drive",
+            "src": "/Maiin/.strict2.local/candidate/swimming/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 86374,
+            "alt": "Swimming, Enter",
+            "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 88382,
+            "alt": "Swimming, Catch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 90566,
+            "alt": "Swimming, Pull",
+            "src": "/Maiin/.strict2.local/candidate/swimming/2.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 91841,
+            "alt": "Swimming, Breathe",
+            "src": "/Maiin/.strict2.local/candidate/swimming/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 93047,
+            "alt": "Swimming, Switch",
+            "src": "/Maiin/.strict2.local/candidate/swimming/4.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 94249,
+            "alt": "Swimming, Drive",
+            "src": "/Maiin/.strict2.local/candidate/swimming/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 95446,
+            "alt": "Swimming, Enter",
+            "src": "/Maiin/.strict2.local/candidate/swimming/6.webp",
+            "decoded": true
+          }
+        ]
+      }
+    },
+    "turkish-get-up": {
+      "lightManual": [
+        {
+          "frame": 1,
+          "active": {
+            "alt": "Turkish Get-Up, Press",
+            "decoded": true,
+            "height": 1152,
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/1.webp",
+            "width": 1024
+          },
+          "caption": "Press 1/6",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": {
+            "alt": "Turkish Get-Up, Elbow",
+            "decoded": true,
+            "height": 1152,
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/2.webp",
+            "width": 1024
+          },
+          "caption": "Elbow 2/6",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": {
+            "alt": "Turkish Get-Up, Hand",
+            "decoded": true,
+            "height": 1152,
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/3.webp",
+            "width": 1024
+          },
+          "caption": "Hand 3/6",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": {
+            "alt": "Turkish Get-Up, Bridge",
+            "decoded": true,
+            "height": 1152,
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/4.webp",
+            "width": 1024
+          },
+          "caption": "Bridge 4/6",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": {
+            "alt": "Turkish Get-Up, Kneel",
+            "decoded": true,
+            "height": 1152,
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/5.webp",
+            "width": 1024
+          },
+          "caption": "Kneel 5/6",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": {
+            "alt": "Turkish Get-Up, Stand",
+            "decoded": true,
+            "height": 1152,
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/6.webp",
+            "width": 1024
+          },
+          "caption": "Stand 6/6",
+          "theme": "light"
+        }
+      ],
+      "lightPlayback": {
+        "slow": false,
+        "theme": "light",
+        "end": {
+          "alt": "Turkish Get-Up, Stand",
+          "decoded": true,
+          "height": 1152,
+          "src": "/Maiin/.strict2.local/candidate/turkish-get-up/6.webp",
+          "width": 1024
+        },
+        "replay": {
+          "alt": "Turkish Get-Up, Press",
+          "decoded": true,
+          "height": 1152,
+          "src": "/Maiin/.strict2.local/candidate/turkish-get-up/1.webp",
+          "width": 1024
+        },
+        "nextWrap": {
+          "alt": "Turkish Get-Up, Press",
+          "decoded": true,
+          "height": 1152,
+          "src": "/Maiin/.strict2.local/candidate/turkish-get-up/1.webp",
+          "width": 1024
+        },
+        "previousWrap": {
+          "alt": "Turkish Get-Up, Stand",
+          "decoded": true,
+          "height": 1152,
+          "src": "/Maiin/.strict2.local/candidate/turkish-get-up/6.webp",
+          "width": 1024
+        },
+        "trace": [
+          {
+            "elapsedMs": 118,
+            "alt": "Turkish Get-Up, Press",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 1131,
+            "alt": "Turkish Get-Up, Elbow",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/2.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 2113,
+            "alt": "Turkish Get-Up, Hand",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 3121,
+            "alt": "Turkish Get-Up, Bridge",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/4.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 4124,
+            "alt": "Turkish Get-Up, Kneel",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 5139,
+            "alt": "Turkish Get-Up, Stand",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/6.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 6133,
+            "alt": "Turkish Get-Up, Press",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 8324,
+            "alt": "Turkish Get-Up, Elbow",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/2.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 9601,
+            "alt": "Turkish Get-Up, Hand",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 10806,
+            "alt": "Turkish Get-Up, Bridge",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/4.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 12011,
+            "alt": "Turkish Get-Up, Kneel",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 13215,
+            "alt": "Turkish Get-Up, Stand",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/6.webp",
+            "decoded": true
+          }
+        ]
+      },
+      "darkManual": [
+        {
+          "frame": 1,
+          "active": {
+            "alt": "Turkish Get-Up, Press",
+            "decoded": true,
+            "height": 1152,
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/1.webp",
+            "width": 1024
+          },
+          "caption": "Press 1/6",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": {
+            "alt": "Turkish Get-Up, Elbow",
+            "decoded": true,
+            "height": 1152,
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/2.webp",
+            "width": 1024
+          },
+          "caption": "Elbow 2/6",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": {
+            "alt": "Turkish Get-Up, Hand",
+            "decoded": true,
+            "height": 1152,
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/3.webp",
+            "width": 1024
+          },
+          "caption": "Hand 3/6",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": {
+            "alt": "Turkish Get-Up, Bridge",
+            "decoded": true,
+            "height": 1152,
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/4.webp",
+            "width": 1024
+          },
+          "caption": "Bridge 4/6",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": {
+            "alt": "Turkish Get-Up, Kneel",
+            "decoded": true,
+            "height": 1152,
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/5.webp",
+            "width": 1024
+          },
+          "caption": "Kneel 5/6",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": {
+            "alt": "Turkish Get-Up, Stand",
+            "decoded": true,
+            "height": 1152,
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/6.webp",
+            "width": 1024
+          },
+          "caption": "Stand 6/6",
+          "theme": "dark"
+        }
+      ],
+      "darkPlayback": {
+        "slow": true,
+        "theme": "dark",
+        "end": {
+          "alt": "Turkish Get-Up, Stand",
+          "decoded": true,
+          "height": 1152,
+          "src": "/Maiin/.strict2.local/candidate/turkish-get-up/6.webp",
+          "width": 1024
+        },
+        "replay": {
+          "alt": "Turkish Get-Up, Press",
+          "decoded": true,
+          "height": 1152,
+          "src": "/Maiin/.strict2.local/candidate/turkish-get-up/1.webp",
+          "width": 1024
+        },
+        "nextWrap": {
+          "alt": "Turkish Get-Up, Press",
+          "decoded": true,
+          "height": 1152,
+          "src": "/Maiin/.strict2.local/candidate/turkish-get-up/1.webp",
+          "width": 1024
+        },
+        "previousWrap": {
+          "alt": "Turkish Get-Up, Stand",
+          "decoded": true,
+          "height": 1152,
+          "src": "/Maiin/.strict2.local/candidate/turkish-get-up/6.webp",
+          "width": 1024
+        },
+        "trace": [
+          {
+            "elapsedMs": 118,
+            "alt": "Turkish Get-Up, Press",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 1131,
+            "alt": "Turkish Get-Up, Elbow",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/2.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 2113,
+            "alt": "Turkish Get-Up, Hand",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 3121,
+            "alt": "Turkish Get-Up, Bridge",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/4.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 4124,
+            "alt": "Turkish Get-Up, Kneel",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 5139,
+            "alt": "Turkish Get-Up, Stand",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/6.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 6133,
+            "alt": "Turkish Get-Up, Press",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 8324,
+            "alt": "Turkish Get-Up, Elbow",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/2.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 9601,
+            "alt": "Turkish Get-Up, Hand",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 10806,
+            "alt": "Turkish Get-Up, Bridge",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/4.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 12011,
+            "alt": "Turkish Get-Up, Kneel",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 13215,
+            "alt": "Turkish Get-Up, Stand",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/6.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 18254,
+            "alt": "Turkish Get-Up, Press",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 20250,
+            "alt": "Turkish Get-Up, Stand",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/6.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 21248,
+            "alt": "Turkish Get-Up, Press",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 22254,
+            "alt": "Turkish Get-Up, Stand",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/6.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 23249,
+            "alt": "Turkish Get-Up, Kneel",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 64910,
+            "alt": "Turkish Get-Up, Press",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 65927,
+            "alt": "Turkish Get-Up, Elbow",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/2.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 66906,
+            "alt": "Turkish Get-Up, Hand",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 67920,
+            "alt": "Turkish Get-Up, Bridge",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/4.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 68928,
+            "alt": "Turkish Get-Up, Kneel",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 69926,
+            "alt": "Turkish Get-Up, Stand",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/6.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 71932,
+            "alt": "Turkish Get-Up, Press",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/1.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 74173,
+            "alt": "Turkish Get-Up, Elbow",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/2.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 75361,
+            "alt": "Turkish Get-Up, Hand",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/3.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 76564,
+            "alt": "Turkish Get-Up, Bridge",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/4.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 77764,
+            "alt": "Turkish Get-Up, Kneel",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/5.webp",
+            "decoded": true
+          },
+          {
+            "elapsedMs": 78964,
+            "alt": "Turkish Get-Up, Stand",
+            "src": "/Maiin/.strict2.local/candidate/turkish-get-up/6.webp",
+            "decoded": true
+          }
+        ]
+      }
+    }
+  }
+}

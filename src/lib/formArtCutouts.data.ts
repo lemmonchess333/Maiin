@@ -1394,7 +1394,7 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: false,
     source: "form-frames/swimming/2.webp",
     sourceSha256:
-      "915b47aa2432fc7b9334c5d981c1931e4c24804ab3ac8e9ca9147747c4fda7ca",
+      "12dc95ebf1cb96a5185c08fa71e02007668669615d83610fe1c3f2580ee0d28e",
     sha256: "ee5b0a2d710c6f8678525aa194bb0f716bf9a345a72237cf450084c132fb7d01",
   },
   "t-bar-row": {
@@ -1469,13 +1469,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   "turkish-get-up": {
     src: "form-art/turkish-get-up.webp",
-    width: 321,
+    width: 320,
     height: 480,
-    keyed: true,
+    keyed: false,
     source: "form-frames/turkish-get-up/5.webp",
     sourceSha256:
-      "7e705ce5a72feefb363062c7517a692f495fc14e05129d06603e23fa071f4971",
-    sha256: "d63b993dcc6d66b8c7ec5c7c9844100421dd7c8dbf7209825252c2d87bf74174",
+      "23026d00607a2aad0ad45a8f214c0ae0904600f2c4bb9e6870c10539438a2dd5",
+    sha256: "b446e8c9f9d9e58a6cf528bc60690a57ec25be1c4df034f308aa1db6b6631682",
   },
   "walking-dumbbell-lunges": {
     src: "form-art/walking-dumbbell-lunges.webp",

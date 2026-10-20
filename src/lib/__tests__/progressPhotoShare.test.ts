@@ -49,7 +49,12 @@ interface Drawn {
 }
 
 let drawn: Drawn[];
-let encoded: { width: number; height: number; type?: string; quality?: unknown }[];
+let encoded: {
+  width: number;
+  height: number;
+  type?: string;
+  quality?: unknown;
+}[];
 let encodeEmpty: boolean;
 
 /** A decoded photo of a given size, as `createImageBitmap` hands it back. */
@@ -80,12 +85,15 @@ function stubCanvas() {
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
     ctx as never
   );
-  vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(
-    function (this: HTMLCanvasElement, callback, type, quality) {
-      encoded.push({ width: this.width, height: this.height, type, quality });
-      callback(encodeEmpty ? null : new Blob(["drawn"], { type }));
-    }
-  );
+  vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(function (
+    this: HTMLCanvasElement,
+    callback,
+    type,
+    quality
+  ) {
+    encoded.push({ width: this.width, height: this.height, type, quality });
+    callback(encodeEmpty ? null : new Blob(["drawn"], { type }));
+  });
   vi.stubGlobal(
     "createImageBitmap",
     vi.fn(async (blob: Blob) => bitmaps.get(blob))
@@ -372,7 +380,10 @@ describe("shareProgressImage", () => {
 
   it("works the same in the native app", async () => {
     H.native = true;
-    setShareSheet(() => true, async () => {});
+    setShareSheet(
+      () => true,
+      async () => {}
+    );
     expect(await shareProgressImage(IMAGE, NAME)).toBe("shared");
   });
 

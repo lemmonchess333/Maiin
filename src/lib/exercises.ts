@@ -2384,7 +2384,7 @@ export const EXERCISES: Exercise[] = [
       "Keep the arm locked and bell vertical through every position.",
       "Reverse the sequence with the same control back to the start.",
     ],
-    tip: "Eyes lock on the bell from start to finish. If you lose sight of it or the arm bends, stop the set — a falling bell on a shoulder ends seasons.",
+    tip: "Keep the loaded elbow straight and wrist neutral. Move through each support under control, then reverse the steps to lower.",
   },
   {
     id: "man-maker",

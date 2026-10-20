@@ -1,0 +1,933 @@
+{
+  "schemaVersion": 1,
+  "scope": "Measured completed-run evidence, not failure disposition or release approval",
+  "folder": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining19-execution-20261015\\checks\\strict2-baseline-d4acc7f9-20261020",
+  "result": {
+    "startedAt": "2026-10-20T15:53:35.366302+00:00",
+    "finishedAt": "2026-10-20T16:08:10.381042+00:00",
+    "normalCommand": "npm run verify",
+    "exitCode": 1,
+    "durationSeconds": 873.063000000082,
+    "headBefore": "d4acc7f99748e4613f53b226805627563285746f",
+    "headAfter": "d4acc7f99748e4613f53b226805627563285746f",
+    "headUnchanged": true,
+    "statusBefore": "",
+    "statusAfterTestBeforeSnapshotRestore": " M src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap\n",
+    "statusAfter": "",
+    "statusRestored": true,
+    "snapshotRestores": [
+      {
+        "path": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+        "originalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "testOutputSha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "restoredExact": true
+      }
+    ],
+    "inputCount": 2757,
+    "changedInputsAfterRestoration": [],
+    "allInputsUnchanged": true,
+    "log": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining19-execution-20261015\\checks\\strict2-baseline-d4acc7f9-20261020\\verify.log",
+    "logSha256": "a4bce07de4c08c018491623582ba8fd7d9f21421ddf7c78f780ee3a78fc0d2a8",
+    "fullVerificationPassed": false
+  },
+  "sourceProofHashes": {
+    "result.json": "89c6dc010096daf709851a9af5fa0f5abd94107be9325a464cdd2973486b8c76",
+    "verify.log": "a4bce07de4c08c018491623582ba8fd7d9f21421ddf7c78f780ee3a78fc0d2a8",
+    "inputs-before.json": "54e55863cb13b21d87a9113fc491e1deeac4552c9501be324a65ae1a64c72273",
+    "inputs-after.json": "54e55863cb13b21d87a9113fc491e1deeac4552c9501be324a65ae1a64c72273",
+    "start.json": "a134a142d255e6a43b1f550e23c1ab3d47b1a75b36517d94c5393010fb0101bd"
+  },
+  "snapshotProofHashes": {
+    "snapshot-before-0.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-1.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-2.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-3.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-4.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-5.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-6.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-7.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-8.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-9.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-10.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-11.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-12.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-13.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-14.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-15.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-16.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-17.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-18.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-19.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-20.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-21.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-22.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-23.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-24.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-25.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-26.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-27.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-28.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-29.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-30.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-31.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-32.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-33.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-34.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-35.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-36.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-37.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-38.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-39.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-40.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-41.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-42.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-test-output-42.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f"
+  },
+  "capturedSnapshots": [
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-0.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-1.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-2.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-3.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/checks/branch-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-4.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/checks/branch-planSweep-before.snap",
+      "capturedFile": "snapshot-before-5.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-6.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-7.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+      "capturedFile": "snapshot-before-8.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+      "capturedFile": "snapshot-before-9.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-10.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+      "capturedFile": "snapshot-before-11.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-12.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+      "capturedFile": "snapshot-before-13.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+      "capturedFile": "snapshot-before-14.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+      "capturedFile": "snapshot-before-15.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+      "capturedFile": "snapshot-before-16.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+      "capturedFile": "snapshot-before-17.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-18.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-19.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+      "capturedFile": "snapshot-before-20.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+      "capturedFile": "snapshot-before-21.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-22.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+      "capturedFile": "snapshot-before-23.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-24.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+      "capturedFile": "snapshot-before-25.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+      "capturedFile": "snapshot-before-26.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+      "capturedFile": "snapshot-before-27.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+      "capturedFile": "snapshot-before-28.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+      "capturedFile": "snapshot-before-29.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-30.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-31.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+      "capturedFile": "snapshot-before-32.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+      "capturedFile": "snapshot-before-33.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-34.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+      "capturedFile": "snapshot-before-35.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-36.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+      "capturedFile": "snapshot-before-37.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+      "capturedFile": "snapshot-before-38.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+      "capturedFile": "snapshot-before-39.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+      "capturedFile": "snapshot-before-40.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+      "capturedFile": "snapshot-before-41.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+      "capturedFile": "snapshot-before-42.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": true
+    }
+  ],
+  "inputCount": 2757,
+  "inputBytesPreserved": true,
+  "overallGreen": false,
+  "diagnosticHashMethod": "Exact UTF8 raw byte range after last grouped FAIL header and before separator, trimming blank padding only; header, padding and separator also separately hash-pinned. No diagnostic is borrowed from a later unrelated failure.",
+  "allNormalVerifyStagesPresent": true,
+  "normalStages": [
+    {
+      "name": "lint",
+      "proof": {
+        "startLine": 6,
+        "endLineInclusive": 6,
+        "byteStart": 179,
+        "byteEndExclusive": 199,
+        "rawSha256": "a4f8b2c8d32b2439915ecf707c8d49fd71ce6fd6760ee2d53a796f1982f9c4ea",
+        "byteLength": 20
+      }
+    },
+    {
+      "name": "check:form-art",
+      "proof": {
+        "startLine": 10,
+        "endLineInclusive": 10,
+        "byteStart": 229,
+        "byteEndExclusive": 259,
+        "rawSha256": "ba7411a844c779a0015926b5c9fd8bf0a41b02dff43a0f199ba0726701c8e78e",
+        "byteLength": 30
+      }
+    },
+    {
+      "name": "check:form-drafts",
+      "proof": {
+        "startLine": 23,
+        "endLineInclusive": 23,
+        "byteStart": 473,
+        "byteEndExclusive": 506,
+        "rawSha256": "bad0a19101177e5e2d4acd32919d491f1e36c5d8bacfc6087d049463aab2ce17",
+        "byteLength": 33
+      }
+    },
+    {
+      "name": "check:cycles",
+      "proof": {
+        "startLine": 35,
+        "endLineInclusive": 35,
+        "byteStart": 698,
+        "byteEndExclusive": 726,
+        "rawSha256": "56262e88261c728e32576536d83f3052f363020ecf2a01b320e6d2d0adbedc98",
+        "byteLength": 28
+      }
+    },
+    {
+      "name": "build",
+      "proof": {
+        "startLine": 44,
+        "endLineInclusive": 44,
+        "byteStart": 895,
+        "byteEndExclusive": 916,
+        "rawSha256": "deb23f2fda5594fe5e10eb8cf5665853fe255092698f42d7e7ca1172206d4e1f",
+        "byteLength": 21
+      }
+    },
+    {
+      "name": "check:dist-size",
+      "proof": {
+        "startLine": 556,
+        "endLineInclusive": 556,
+        "byteStart": 54275,
+        "byteEndExclusive": 54306,
+        "rawSha256": "4dd3ee7775ae72deb97c38996d78fe403165c1a6ec767a9b9e3654a200148256",
+        "byteLength": 31
+      }
+    },
+    {
+      "name": "test",
+      "proof": {
+        "startLine": 566,
+        "endLineInclusive": 566,
+        "byteStart": 54618,
+        "byteEndExclusive": 54638,
+        "rawSha256": "d6b835dac15e4af35a81a747c41de8d6cd16b9c84642bafc5ec35c7015702dc8",
+        "byteLength": 20
+      }
+    }
+  ],
+  "testFiles": {
+    "failed": 6,
+    "passed": 1200,
+    "skipped": 10,
+    "total": 1216,
+    "verbatim": "Test Files  6 failed | 1200 passed | 10 skipped (1216)",
+    "proof": {
+      "startLine": 703,
+      "endLineInclusive": 703,
+      "byteStart": 62877,
+      "byteEndExclusive": 62933,
+      "rawSha256": "0487eafddc612ea01a878e50f182e2feb85fbbaec26041d2069324b763bbd0a6",
+      "byteLength": 56
+    }
+  },
+  "tests": {
+    "failed": 4,
+    "passed": 13945,
+    "skipped": 418,
+    "total": 14367,
+    "verbatim": "Tests  4 failed | 13945 passed | 418 skipped (14367)",
+    "proof": {
+      "startLine": 704,
+      "endLineInclusive": 704,
+      "byteStart": 62933,
+      "byteEndExclusive": 62992,
+      "rawSha256": "893f67e678f0f48e134a1950352d4d8e1f1503e0de38eedc215391935f657daf",
+      "byteLength": 59
+    }
+  },
+  "unitSummaryComplete": true,
+  "failureHeaderCount": 6,
+  "testFailureHeaders": 4,
+  "suiteFailureHeaders": 2,
+  "diagnosticGroupCount": 6,
+  "sharedDiagnosticGroups": 0,
+  "failureAccountingComplete": true,
+  "unhandledErrorMarkers": [],
+  "indexComplete": true,
+  "groups": [
+    {
+      "id": "diagnostic-group-1",
+      "headerCount": 1,
+      "identities": ["root-node|scripts/write-functions-env.test.ts|[suite]"],
+      "headersAndDiagnostic": {
+        "startLine": 622,
+        "endLineInclusive": 623,
+        "byteStart": 58937,
+        "byteEndExclusive": 59073,
+        "rawSha256": "908fb6ccd481f5a4c45f51bcbae30d88ef97750732b895a54b23e878de84f676",
+        "byteLength": 136
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 623,
+        "endLineInclusive": 623,
+        "byteStart": 59032,
+        "byteEndExclusive": 59073,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41
+      },
+      "diagnostic": {
+        "startLine": 623,
+        "endLineInclusive": 623,
+        "byteStart": 59032,
+        "byteEndExclusive": 59073,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": ["SyntaxError: Invalid or unexpected token"]
+      },
+      "separator": {
+        "startLine": 624,
+        "endLineInclusive": 624,
+        "byteStart": 59073,
+        "byteEndExclusive": 59154,
+        "rawSha256": "2aa6bcc677f108dbc797ae978e537cbd8e46826cc3ff3ee9cc8eef4997b0d0d7",
+        "byteLength": 81,
+        "reportedOrdinal": 1,
+        "reportedTotal": 6
+      }
+    },
+    {
+      "id": "diagnostic-group-2",
+      "headerCount": 1,
+      "identities": ["root-node|scripts/ios/asc-signing.test.ts|[suite]"],
+      "headersAndDiagnostic": {
+        "startLine": 626,
+        "endLineInclusive": 627,
+        "byteStart": 59155,
+        "byteEndExclusive": 59283,
+        "rawSha256": "102e6df0abebb61e0eb4bbec996e397b962dba23442ab197a7aa12bbafbf17a0",
+        "byteLength": 128
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 627,
+        "endLineInclusive": 627,
+        "byteStart": 59242,
+        "byteEndExclusive": 59283,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41
+      },
+      "diagnostic": {
+        "startLine": 627,
+        "endLineInclusive": 627,
+        "byteStart": 59242,
+        "byteEndExclusive": 59283,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": ["SyntaxError: Invalid or unexpected token"]
+      },
+      "separator": {
+        "startLine": 628,
+        "endLineInclusive": 628,
+        "byteStart": 59283,
+        "byteEndExclusive": 59364,
+        "rawSha256": "edc7a589803049bd4274c25109e93b0ac206833f585e61e4e94d5f93f32c0a1c",
+        "byteLength": 81,
+        "reportedOrdinal": 2,
+        "reportedTotal": 6
+      }
+    },
+    {
+      "id": "diagnostic-group-3",
+      "headerCount": 1,
+      "identities": [
+        "dom|src/components/__tests__/FoodCameraModal.photoLock.test.tsx|FoodCameraModal \u2014 photo scanning not on the tier > with no camera, offers a barcode photo, read on the device, and no photo scan"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 633,
+        "endLineInclusive": 643,
+        "byteStart": 59426,
+        "byteEndExclusive": 60132,
+        "rawSha256": "41212c6ffe1147a425c15d91f5bc3f1fc929c1382626ce14ba2057c525aeea9a",
+        "byteLength": 706
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 634,
+        "endLineInclusive": 643,
+        "byteStart": 59632,
+        "byteEndExclusive": 60132,
+        "rawSha256": "d122f958af96c659026b18deeb529ac34d99c5ed826296c09b070e7be1a32369",
+        "byteLength": 500
+      },
+      "diagnostic": {
+        "startLine": 634,
+        "endLineInclusive": 642,
+        "byteStart": 59632,
+        "byteEndExclusive": 60131,
+        "rawSha256": "87432c07de3c0756e127a1cbc16f92a6a34d14d62e649ccfeca7d854d2074340",
+        "byteLength": 499,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " \u276f src/components/__tests__/FoodCameraModal.photoLock.test.tsx:132:3"
+        ]
+      },
+      "separator": {
+        "startLine": 644,
+        "endLineInclusive": 644,
+        "byteStart": 60132,
+        "byteEndExclusive": 60213,
+        "rawSha256": "5713b4242f3237753684721f8bd20ff1276385ee7d65d35996814f21afa7c36a",
+        "byteLength": 81,
+        "reportedOrdinal": 3,
+        "reportedTotal": 6
+      }
+    },
+    {
+      "id": "diagnostic-group-4",
+      "headerCount": 1,
+      "identities": [
+        "node|src/lib/__tests__/noDisabledTests.test.ts|no test is switched off outright > finds no unconditional skip in src/ or functions/"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 646,
+        "endLineInclusive": 656,
+        "byteStart": 60214,
+        "byteEndExclusive": 60821,
+        "rawSha256": "b67faaf63063abdace6945638117759f09b313950acdb5109de6b459d5d9f763",
+        "byteLength": 607
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 647,
+        "endLineInclusive": 656,
+        "byteStart": 60357,
+        "byteEndExclusive": 60821,
+        "rawSha256": "28094b5121aca76cb9030e81ddca1a84877eb136d531a7a994a67d46e81b68b3",
+        "byteLength": 464
+      },
+      "diagnostic": {
+        "startLine": 647,
+        "endLineInclusive": 655,
+        "byteStart": 60357,
+        "byteEndExclusive": 60820,
+        "rawSha256": "661366c2c55a6f5d11ec18de3ca7ada9f2db570e7d3131479bfd87951fbfad3e",
+        "byteLength": 463,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " \u276f src/lib/__tests__/noDisabledTests.test.ts:65:3"
+        ]
+      },
+      "separator": {
+        "startLine": 657,
+        "endLineInclusive": 657,
+        "byteStart": 60821,
+        "byteEndExclusive": 60902,
+        "rawSha256": "bc80d7999248553adb8026cf5bb0ef7c605ad0fefc57c406a122c2a195059f05",
+        "byteLength": 81,
+        "reportedOrdinal": 4,
+        "reportedTotal": 6
+      }
+    },
+    {
+      "id": "diagnostic-group-5",
+      "headerCount": 1,
+      "identities": [
+        "node|src/features/program/__tests__/generatorAudit.test.ts|generator audit \u2014 every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 659,
+        "endLineInclusive": 669,
+        "byteStart": 60903,
+        "byteEndExclusive": 61643,
+        "rawSha256": "e5d3504dc7c842700278d512cd97795f3194bcd37d0c2ab615325b392c9ed99b",
+        "byteLength": 740
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 660,
+        "endLineInclusive": 669,
+        "byteStart": 61095,
+        "byteEndExclusive": 61643,
+        "rawSha256": "4497a4d8e5de883ab002281f6449826f9f96a7f0b50b53662b793277b808d562",
+        "byteLength": 548
+      },
+      "diagnostic": {
+        "startLine": 660,
+        "endLineInclusive": 668,
+        "byteStart": 61095,
+        "byteEndExclusive": 61642,
+        "rawSha256": "b23bfc7d5409dfeef7a855c216093984474602f74a0222dfe237771e08735b4f",
+        "byteLength": 547,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " \u276f src/features/program/__tests__/generatorAudit.test.ts:147:3"
+        ]
+      },
+      "separator": {
+        "startLine": 670,
+        "endLineInclusive": 670,
+        "byteStart": 61643,
+        "byteEndExclusive": 61724,
+        "rawSha256": "ece513576bda34d343b2aa8734cd096aa741a31f81eb672620c583772c22cd3b",
+        "byteLength": 81,
+        "reportedOrdinal": 5,
+        "reportedTotal": 6
+      }
+    },
+    {
+      "id": "diagnostic-group-6",
+      "headerCount": 1,
+      "identities": [
+        "node|src/features/program/__tests__/useProgramWriters.test.ts|RUN-RESCHEDULE-01 \u2014 moveRunDay > refuses to move a race slot (immovable identity)"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 672,
+        "endLineInclusive": 699,
+        "byteStart": 61725,
+        "byteEndExclusive": 62794,
+        "rawSha256": "dfee8bff37e30837577076f3685b45ecc37126e47758b1fd85a0ea01fdd742cb",
+        "byteLength": 1069
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 673,
+        "endLineInclusive": 699,
+        "byteStart": 61882,
+        "byteEndExclusive": 62794,
+        "rawSha256": "156a7449535762b2cc2937657fb4b7f14fe1f54688490bf549d868ff9c655cb3",
+        "byteLength": 912
+      },
+      "diagnostic": {
+        "startLine": 673,
+        "endLineInclusive": 698,
+        "byteStart": 61882,
+        "byteEndExclusive": 62793,
+        "rawSha256": "63ef6b308cff2ebc724df224077c89898af25dcf3be3c3cb031063af155a087a",
+        "byteLength": 911,
+        "firstOwnLine": "AssertionError: expected true to be false // Object.is equality",
+        "firstThreeLines": [
+          "AssertionError: expected true to be false // Object.is equality",
+          "",
+          "Ignored nodes: comments, script, style"
+        ]
+      },
+      "separator": {
+        "startLine": 700,
+        "endLineInclusive": 700,
+        "byteStart": 62794,
+        "byteEndExclusive": 62875,
+        "rawSha256": "60c63a9bb4c7fe1ae804e641bc1b4b0cc45faf7c4293cd3476889fe2d203e5b0",
+        "byteLength": 81,
+        "reportedOrdinal": 6,
+        "reportedTotal": 6
+      }
+    }
+  ],
+  "failures": [
+    {
+      "canonicalId": "root-node|scripts/write-functions-env.test.ts|[suite]",
+      "project": "root-node",
+      "file": "scripts/write-functions-env.test.ts",
+      "kind": "suite",
+      "case": null,
+      "headerLine": 622,
+      "headerVerbatim": " FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]",
+      "header": {
+        "startLine": 622,
+        "endLineInclusive": 622,
+        "byteStart": 58937,
+        "byteEndExclusive": 59032,
+        "rawSha256": "106d0a219ee689c698953dc2b9e6acf09062b42c7f63335d24834d628db3254b",
+        "byteLength": 95
+      },
+      "diagnosticGroupId": "diagnostic-group-1",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 623,
+        "endLineInclusive": 623,
+        "byteStart": 59032,
+        "byteEndExclusive": 59073,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": ["SyntaxError: Invalid or unexpected token"]
+      }
+    },
+    {
+      "canonicalId": "root-node|scripts/ios/asc-signing.test.ts|[suite]",
+      "project": "root-node",
+      "file": "scripts/ios/asc-signing.test.ts",
+      "kind": "suite",
+      "case": null,
+      "headerLine": 626,
+      "headerVerbatim": " FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]",
+      "header": {
+        "startLine": 626,
+        "endLineInclusive": 626,
+        "byteStart": 59155,
+        "byteEndExclusive": 59242,
+        "rawSha256": "e0a80464cefd95fa376b838268c66668b45caacf35a16a4ac1f7a17466737263",
+        "byteLength": 87
+      },
+      "diagnosticGroupId": "diagnostic-group-2",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 627,
+        "endLineInclusive": 627,
+        "byteStart": 59242,
+        "byteEndExclusive": 59283,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": ["SyntaxError: Invalid or unexpected token"]
+      }
+    },
+    {
+      "canonicalId": "dom|src/components/__tests__/FoodCameraModal.photoLock.test.tsx|FoodCameraModal \u2014 photo scanning not on the tier > with no camera, offers a barcode photo, read on the device, and no photo scan",
+      "project": "dom",
+      "file": "src/components/__tests__/FoodCameraModal.photoLock.test.tsx",
+      "kind": "test",
+      "case": "FoodCameraModal \u2014 photo scanning not on the tier > with no camera, offers a barcode photo, read on the device, and no photo scan",
+      "headerLine": 633,
+      "headerVerbatim": " FAIL  |dom| src/components/__tests__/FoodCameraModal.photoLock.test.tsx > FoodCameraModal \u2014 photo scanning not on the tier > with no camera, offers a barcode photo, read on the device, and no photo scan",
+      "header": {
+        "startLine": 633,
+        "endLineInclusive": 633,
+        "byteStart": 59426,
+        "byteEndExclusive": 59632,
+        "rawSha256": "01f9351a54c44d7eab4340adf51764c96b373dbfaf57ef57a17fb40730af8df6",
+        "byteLength": 206
+      },
+      "diagnosticGroupId": "diagnostic-group-3",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 634,
+        "endLineInclusive": 642,
+        "byteStart": 59632,
+        "byteEndExclusive": 60131,
+        "rawSha256": "87432c07de3c0756e127a1cbc16f92a6a34d14d62e649ccfeca7d854d2074340",
+        "byteLength": 499,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " \u276f src/components/__tests__/FoodCameraModal.photoLock.test.tsx:132:3"
+        ]
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/noDisabledTests.test.ts|no test is switched off outright > finds no unconditional skip in src/ or functions/",
+      "project": "node",
+      "file": "src/lib/__tests__/noDisabledTests.test.ts",
+      "kind": "test",
+      "case": "no test is switched off outright > finds no unconditional skip in src/ or functions/",
+      "headerLine": 646,
+      "headerVerbatim": " FAIL  |node| src/lib/__tests__/noDisabledTests.test.ts > no test is switched off outright > finds no unconditional skip in src/ or functions/",
+      "header": {
+        "startLine": 646,
+        "endLineInclusive": 646,
+        "byteStart": 60214,
+        "byteEndExclusive": 60357,
+        "rawSha256": "2f54ab7134e1e7dda5b8a5e73539e51f24ecd153022f888a0014f01db1042e8c",
+        "byteLength": 143
+      },
+      "diagnosticGroupId": "diagnostic-group-4",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 647,
+        "endLineInclusive": 655,
+        "byteStart": 60357,
+        "byteEndExclusive": 60820,
+        "rawSha256": "661366c2c55a6f5d11ec18de3ca7ada9f2db570e7d3131479bfd87951fbfad3e",
+        "byteLength": 463,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " \u276f src/lib/__tests__/noDisabledTests.test.ts:65:3"
+        ]
+      }
+    },
+    {
+      "canonicalId": "node|src/features/program/__tests__/generatorAudit.test.ts|generator audit \u2014 every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+      "project": "node",
+      "file": "src/features/program/__tests__/generatorAudit.test.ts",
+      "kind": "test",
+      "case": "generator audit \u2014 every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+      "headerLine": 659,
+      "headerVerbatim": " FAIL  |node| src/features/program/__tests__/generatorAudit.test.ts > generator audit \u2014 every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+      "header": {
+        "startLine": 659,
+        "endLineInclusive": 659,
+        "byteStart": 60903,
+        "byteEndExclusive": 61095,
+        "rawSha256": "b013654d3017765c18fde88fd5183f35b7802a00f30b2a54c4cf3899d6927092",
+        "byteLength": 192
+      },
+      "diagnosticGroupId": "diagnostic-group-5",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 660,
+        "endLineInclusive": 668,
+        "byteStart": 61095,
+        "byteEndExclusive": 61642,
+        "rawSha256": "b23bfc7d5409dfeef7a855c216093984474602f74a0222dfe237771e08735b4f",
+        "byteLength": 547,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " \u276f src/features/program/__tests__/generatorAudit.test.ts:147:3"
+        ]
+      }
+    },
+    {
+      "canonicalId": "node|src/features/program/__tests__/useProgramWriters.test.ts|RUN-RESCHEDULE-01 \u2014 moveRunDay > refuses to move a race slot (immovable identity)",
+      "project": "node",
+      "file": "src/features/program/__tests__/useProgramWriters.test.ts",
+      "kind": "test",
+      "case": "RUN-RESCHEDULE-01 \u2014 moveRunDay > refuses to move a race slot (immovable identity)",
+      "headerLine": 672,
+      "headerVerbatim": " FAIL  |node| src/features/program/__tests__/useProgramWriters.test.ts > RUN-RESCHEDULE-01 \u2014 moveRunDay > refuses to move a race slot (immovable identity)",
+      "header": {
+        "startLine": 672,
+        "endLineInclusive": 672,
+        "byteStart": 61725,
+        "byteEndExclusive": 61882,
+        "rawSha256": "74d6c67efb75c35374aafe36ba35c8b0e6aad2a378dd1dedb7d07ef037ee198d",
+        "byteLength": 157
+      },
+      "diagnosticGroupId": "diagnostic-group-6",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 673,
+        "endLineInclusive": 698,
+        "byteStart": 61882,
+        "byteEndExclusive": 62793,
+        "rawSha256": "63ef6b308cff2ebc724df224077c89898af25dcf3be3c3cb031063af155a087a",
+        "byteLength": 911,
+        "firstOwnLine": "AssertionError: expected true to be false // Object.is equality",
+        "firstThreeLines": [
+          "AssertionError: expected true to be false // Object.is equality",
+          "",
+          "Ignored nodes: comments, script, style"
+        ]
+      }
+    }
+  ]
+}

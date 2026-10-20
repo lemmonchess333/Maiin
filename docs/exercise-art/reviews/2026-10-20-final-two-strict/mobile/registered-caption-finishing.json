@@ -1,0 +1,49 @@
+{
+  "scope": "Caption-only finishing after the seven-word limit failure; native frame/card pixels, source paths and playback unchanged.",
+  "observations": [
+    {
+      "active": {
+        "alt": "Swimming, Breathe",
+        "decoded": true,
+        "src": "/Maiin/form-frames/swimming/3.webp"
+      },
+      "caption": "Breathe 3/6",
+      "theme": "light",
+      "breatheVisible": true,
+      "switchVisible": true
+    },
+    {
+      "active": {
+        "alt": "Swimming, Switch",
+        "decoded": true,
+        "src": "/Maiin/form-frames/swimming/4.webp"
+      },
+      "caption": "Switch 4/6",
+      "theme": "light",
+      "breatheVisible": true,
+      "switchVisible": true
+    },
+    {
+      "active": {
+        "alt": "Swimming, Breathe",
+        "decoded": true,
+        "src": "/Maiin/form-frames/swimming/3.webp"
+      },
+      "caption": "Breathe 3/6",
+      "theme": "dark",
+      "breatheVisible": true,
+      "switchVisible": true
+    },
+    {
+      "active": {
+        "alt": "Swimming, Switch",
+        "decoded": true,
+        "src": "/Maiin/form-frames/swimming/4.webp"
+      },
+      "caption": "Switch 4/6",
+      "theme": "dark",
+      "breatheVisible": true,
+      "switchVisible": true
+    }
+  ]
+}

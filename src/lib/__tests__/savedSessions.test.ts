@@ -70,9 +70,11 @@ function workoutSource() {
       (s: Session, w: Days) => s.day >= w.since && s.day <= w.until
     ),
     withQueued: vi.fn(
-      (_uid: string | null | undefined, loaded: readonly Session[], _w: Days) => [
-        ...loaded,
-      ]
+      (
+        _uid: string | null | undefined,
+        loaded: readonly Session[],
+        _w: Days
+      ) => [...loaded]
     ),
   } satisfies SavedSessionSource<Session, Days>;
   return source;

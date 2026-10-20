@@ -73,7 +73,9 @@ vi.mock("firebase/functions", () => ({
   httpsCallable: () => async (payload: { path: string }) => {
     H.events.push(`screen ${payload.path}`);
     if (H.screen === "unavailable") {
-      throw Object.assign(new Error("internal"), { code: "functions/internal" });
+      throw Object.assign(new Error("internal"), {
+        code: "functions/internal",
+      });
     }
     if (H.screen === "refused") {
       H.files.delete(payload.path);
@@ -174,7 +176,11 @@ describe("uploadProfilePhoto", () => {
     });
     expect(readDoc(MAIN)).toEqual({ displayName: "Sam", photoURL: NEW_URL });
     expect(batchLog()).toHaveLength(1);
-    expect(batchLog()[0].map((w) => w.path).sort()).toEqual([MAIN, PUBLIC]);
+    expect(
+      batchLog()[0]
+        .map((w) => w.path)
+        .sort()
+    ).toEqual([MAIN, PUBLIC]);
     expect(updateProfile).toHaveBeenCalledWith(H.auth.currentUser, {
       photoURL: NEW_URL,
     });
