@@ -10,6 +10,15 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## What says a server job failed (2026-10-20)
+
+- [ ] **Every scheduled job leaves its last run.** Passing: a day after the
+      release, Firestore console → `jobRuns` holds a document for each of
+      the nine scheduled jobs, each with `lastOutcome: "ok"`, a
+      `lastFinishedAt` after its `lastStartedAt`, and the sweeps'
+      `lastSummary` counts. A `running: true` older than nine minutes is a
+      run that was killed (`functions/lib/jobRuns.js`).
+
 ## Crash reports from the phone (Crashlytics, 2026-10-20)
 
 The owner chose Crashlytics for the iPhone app; the web keeps its Firestore
