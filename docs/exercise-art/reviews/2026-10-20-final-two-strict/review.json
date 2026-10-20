@@ -11,5 +11,39 @@
   "registeredMobileEvidence": "mobile/registered-observations.json",
   "noRelaxation": true,
   "finalAssetBinding": "final-asset-binding.json",
-  "registeredReviewCompleted": true
+  "registeredReviewCompleted": true,
+  "captionFinishing": {
+    "oldCueSha256": "60548b24bd9b3eda0ab2599b265566400acaf265040d907262991d71f3df3153",
+    "newCueSha256": "ccd8c9753a7f86f4cf42712e0127c26f76009e5fbd6e3c5635ee79cd43bef44f",
+    "cues": [
+      {
+        "label": "Catch",
+        "cue": "Reach long and catch the water."
+      },
+      {
+        "label": "Pull",
+        "cue": "Pull under your body, elbow high."
+      },
+      {
+        "label": "Breathe",
+        "cue": "Turn with your body; breathe sideways."
+      },
+      {
+        "label": "Switch",
+        "cue": "Face down; catch with the other arm."
+      },
+      {
+        "label": "Drive",
+        "cue": "Pull through; keep your hips high."
+      },
+      {
+        "label": "Enter",
+        "cue": "Enter fingertips first; kick small and steady."
+      }
+    ],
+    "maximumWords": 7,
+    "onlyCopyChanged": true,
+    "frameAndCardFilesUnchanged": true,
+    "evidence": "mobile/registered-caption-finishing.json"
+  }
 }

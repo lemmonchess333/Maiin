@@ -2328,8 +2328,8 @@ export const RELEASED_FORM_PLACARDS = {
       [
         [0, "Catch", "Reach long and catch the water."],
         [1 / 6, "Pull", "Pull under your body, elbow high."],
-        [2 / 6, "Breathe", "Turn with the body; breathe to the side."],
-        [3 / 6, "Switch", "Return face down; catch with the other arm."],
+        [2 / 6, "Breathe", "Turn with your body; breathe sideways."],
+        [3 / 6, "Switch", "Face down; catch with the other arm."],
         [4 / 6, "Drive", "Pull through; keep your hips high."],
         [5 / 6, "Enter", "Enter fingertips first; kick small and steady."],
       ],

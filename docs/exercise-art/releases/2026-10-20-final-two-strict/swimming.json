@@ -165,10 +165,10 @@
     "path": "form-frames/swimming/2.webp",
     "sha256": "12dc95ebf1cb96a5185c08fa71e02007668669615d83610fe1c3f2580ee0d28e"
   },
-  "cueSha256": "60548b24bd9b3eda0ab2599b265566400acaf265040d907262991d71f3df3153",
+  "cueSha256": "ccd8c9753a7f86f4cf42712e0127c26f76009e5fbd6e3c5635ee79cd43bef44f",
   "decision": "approved",
   "reviewer": "Codex native source, physical material measurement and actual mobile visual review",
-  "reviewedAt": "2026-10-20T16:29:33.745Z",
+  "reviewedAt": "2026-10-20T16:59:42.597Z",
   "checks": {
     "identity": {
       "passed": true,
@@ -200,7 +200,7 @@
     },
     "cueAgreement": {
       "passed": true,
-      "evidence": "Exact bound six labels/cues visually checked against their corresponding positions: Catch: Reach long and catch the water. / Pull: Pull under your body, elbow high. / Breathe: Turn with the body; breathe to the side. / Switch: Return face down; catch with the other arm. / Drive: Pull through; keep your hips high. / Enter: Enter fingertips first; kick small and steady. Preparation now specifies a long level body, side breathing, underwater exhalation and a small kick."
+      "evidence": "Exact bound six labels/cues visually checked against their corresponding positions: Catch: Reach long and catch the water. / Pull: Pull under your body, elbow high. / Breathe: Turn with your body; breathe sideways. / Switch: Face down; catch with the other arm. / Drive: Pull through; keep your hips high. / Enter: Enter fingertips first; kick small and steady. Preparation now specifies a long level body, side breathing, underwater exhalation and a small kick. Breathe and Switch captions were shortened to the unchanged seven-word maximum after CI caught the initial copy. Wording retains side breathing with body rotation and the opposite-arm catch. Image, scene, frame, card and playback hashes/behaviour are unchanged; current mobile copy checked separately in mobile/registered-caption-finishing.json."
     },
     "sequenceAndLoop": {
       "passed": true,
