@@ -172,10 +172,44 @@ export function workoutDay(value: unknown): string | null {
 }
 
 /**
+ * An exercise in today's field names. Older workouts named an exercise
+ * `name` and a set's load `weight` (`export.ts` has always read both), and
+ * every reader here reads `exerciseName` and `weightKg`: rebuilt lift
+ * records filed each of those sessions under `undefined` at 0 kg, so a
+ * best lifted before the rename was never a best. A document already in
+ * today's names comes back as it was stored.
+ */
+function currentExercise(exercise: unknown): unknown {
+  if (!exercise || typeof exercise !== "object") return exercise;
+  const ex = exercise as Record<string, unknown>;
+  const legacyName =
+    typeof ex.exerciseName !== "string" && typeof ex.name === "string";
+  const sets = Array.isArray(ex.sets) ? ex.sets : null;
+  const legacySet = (set: unknown) =>
+    !!set &&
+    typeof set === "object" &&
+    typeof (set as Record<string, unknown>).weightKg !== "number" &&
+    typeof (set as Record<string, unknown>).weight === "number";
+  const legacySets = !!sets?.some(legacySet);
+  if (!legacyName && !legacySets) return exercise;
+  return {
+    ...ex,
+    ...(legacyName && { exerciseName: ex.name }),
+    ...(legacySets && {
+      sets: sets!.map((set) =>
+        legacySet(set)
+          ? { ...set, weightKg: (set as Record<string, unknown>).weight }
+          : set
+      ),
+    }),
+  };
+}
+
+/**
  * A stored workout as a `Workout`, or null when it names no day. Every
- * stored field is kept; `date` is the day key and `exercises` is a list.
- * (Deleting a workout removes its document, ADR-0012; there is no
- * soft-deleted workout to leave out.)
+ * stored field is kept; `date` is the day key and `exercises` is a list in
+ * today's field names. (Deleting a workout removes its document, ADR-0012;
+ * there is no soft-deleted workout to leave out.)
  */
 export function parseSavedWorkout(
   id: string,
@@ -187,7 +221,9 @@ export function parseSavedWorkout(
     ...(data as Omit<Workout, "id" | "date" | "exercises">),
     id,
     date,
-    exercises: Array.isArray(data.exercises) ? data.exercises : [],
+    exercises: Array.isArray(data.exercises)
+      ? (data.exercises.map(currentExercise) as WorkoutExercise[])
+      : [],
   };
 }
 

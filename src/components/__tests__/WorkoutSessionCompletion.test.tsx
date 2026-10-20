@@ -677,6 +677,94 @@ it("rebuilds corrected records from full history without dropping an older valid
   });
 });
 
+it("a workout saved offline leaves the records for the next session to rebuild", async () => {
+  // G4-10: the records waited for the queued save to sync, in a closure
+  // that dies with the app. Closed first, the map stayed complete without
+  // this session, and the next one celebrated a "best" below a lift
+  // already logged. A transaction cannot run offline anyway.
+  h.user = { uid: "pr-user" };
+  const path = "users/pr-user/stats/prMap";
+  const stored = {
+    "Test exercise": {
+      "1rm": null,
+      "3rm": null,
+      "5rm": null,
+      "8rm": { weight: 60, reps: 8, date: "2026-07-01" },
+      "10rm": null,
+    },
+  };
+  seedFirestore({
+    [path]: {
+      revision: 3,
+      map: stored,
+      sessionCounts: { "Test exercise": 5 },
+      volumeBest: {},
+    },
+  });
+  await act(async () => {
+    // A sync that never comes while the app is open.
+    openSession(writer(new Promise<"synced" | "failed">(() => {})));
+  });
+  fireEvent.change(screen.getByRole("spinbutton", { name: "Set 1 weight" }), {
+    target: { value: "70" },
+  });
+  for (let i = 0; i < 3; i++)
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+  fireEvent.click(await screen.findByRole("button", { name: "Save workout" }));
+  await vi.waitFor(() =>
+    expect(readDoc(path)).toMatchObject({ invalidated: true, revision: 4 })
+  );
+  // Left for the rebuild, which reads the queued workout too.
+  expect(readDoc(path)?.map).toEqual(stored);
+});
+
+it("dates a session's records by the day it started, as its workout is", async () => {
+  // G4-51: records were dated as each set was logged and the workout by
+  // the day it started (Lift3), so a best set at 00:05 in a session begun
+  // at 23:40 sat on a day with no workout.
+  h.user = { uid: "pr-user" };
+  const path = "users/pr-user/stats/prMap";
+  seedFirestore({
+    [path]: {
+      revision: 3,
+      map: {
+        "Test exercise": {
+          "1rm": null,
+          "3rm": null,
+          "5rm": null,
+          "8rm": { weight: 60, reps: 8, date: "2026-07-01" },
+          "10rm": null,
+        },
+      },
+      sessionCounts: { "Test exercise": 5 },
+      volumeBest: {},
+    },
+  });
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(2026, 9, 19, 23, 40));
+  await act(async () => {
+    openSession();
+  });
+  vi.setSystemTime(new Date(2026, 9, 20, 0, 5));
+  fireEvent.change(screen.getByRole("spinbutton", { name: "Set 1 weight" }), {
+    target: { value: "70" },
+  });
+  for (let i = 0; i < 3; i++)
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+  fireEvent.click(await screen.findByRole("button", { name: "Save workout" }));
+  await vi.waitFor(() => expect(readDoc(path)?.revision).toBe(4));
+  const saved = readDoc(path) as {
+    map: Record<string, Record<string, { date: string } | null>>;
+    volumeBest: Record<string, { date: string }>;
+  };
+  expect(saved.map["Test exercise"]["8rm"]?.date).toBe("2026-10-19");
+  expect(saved.volumeBest["Test exercise"].date).toBe("2026-10-19");
+});
+
 it("an open session cannot replace records invalidated by a newer correction", async () => {
   h.user = { uid: "pr-user" };
   const path = "users/pr-user/stats/prMap";
