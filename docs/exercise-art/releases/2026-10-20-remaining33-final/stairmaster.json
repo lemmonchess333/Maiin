@@ -1,0 +1,175 @@
+{
+  "exerciseId": "stairmaster",
+  "version": "anatomy-v3-2026-10-20-native-final-v1",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex native source and mobile review",
+  "reviewedAt": "2026-10-20T00:07:59.084403+00:00",
+  "reference": {
+    "path": "form-frames/stairmaster/1.webp",
+    "sha256": "32277420a65c9ac788afe3e9de9741fe25b3fbc4f088ee57caa2d9d6abd14658"
+  },
+  "cueSha256": "e1c03ab37ef0fc06f68b5431c44577119100ed37972e0fd0445f0e5f62a24f71",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/stairmaster/1.webp",
+      "sha256": "32277420a65c9ac788afe3e9de9741fe25b3fbc4f088ee57caa2d9d6abd14658",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-20-remaining33-final/1.png",
+        "sha256": "08c485746b9d786005f5e235b94c0dbbb7ef8c7db1b60fec0b54d124950a013b"
+      },
+      "sourcePose": "A"
+    },
+    {
+      "path": "form-frames/stairmaster/2.webp",
+      "sha256": "32277420a65c9ac788afe3e9de9741fe25b3fbc4f088ee57caa2d9d6abd14658",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-20-remaining33-final/2.png",
+        "sha256": "08c485746b9d786005f5e235b94c0dbbb7ef8c7db1b60fec0b54d124950a013b"
+      },
+      "sourcePose": "A"
+    },
+    {
+      "path": "form-frames/stairmaster/3.webp",
+      "sha256": "041edb8b642d60a15d6b2718ba4f16dfe17f3e3fef60c36f6f22fd3a0ae30106",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-20-remaining33-final/3.png",
+        "sha256": "390953ac73cf5f6a96de5e3e65c0581786aeae3163420797b23432d68262b3fb"
+      },
+      "sourcePose": "B"
+    },
+    {
+      "path": "form-frames/stairmaster/4.webp",
+      "sha256": "5f8165ecad2874dbf2401ca6c14d912f7867183f2fe550fd40db1da993ec5746",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-20-remaining33-final/4.png",
+        "sha256": "cf2e428bafddacda43c492675f1c69a5c57e8ec7877fc86abaa44dfb5b038fe3"
+      },
+      "sourcePose": "C"
+    },
+    {
+      "path": "form-frames/stairmaster/5.webp",
+      "sha256": "5f8165ecad2874dbf2401ca6c14d912f7867183f2fe550fd40db1da993ec5746",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-20-remaining33-final/5.png",
+        "sha256": "cf2e428bafddacda43c492675f1c69a5c57e8ec7877fc86abaa44dfb5b038fe3"
+      },
+      "sourcePose": "C"
+    },
+    {
+      "path": "form-frames/stairmaster/6.webp",
+      "sha256": "32277420a65c9ac788afe3e9de9741fe25b3fbc4f088ee57caa2d9d6abd14658",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/stairmaster/2026-10-20-remaining33-final/6.png",
+        "sha256": "08c485746b9d786005f5e235b94c0dbbb7ef8c7db1b60fec0b54d124950a013b"
+      },
+      "sourcePose": "A"
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "Fix the remaining illustration issues in those33 sets too, same model and colours, no shorts, and get it all merged. Stop asking for approval.",
+    "context": "Authorization for correction, local registration, verification and normal merge, not human certification of these pixels or strict geometry."
+  },
+  "findings": [
+    "New fixed rear camera shows the canonical athlete facing uphill with three genuine connected poses: left upper-tread support, right-leg swing, and right upper-tread landing. Upper body, grips, rails and apparatus outside native lower-body/contact-shadow footprints remain identical to one master. Source order A,A,B,C,C,A; visible-muscle key describes primary glutes and secondary hamstrings/calves, with quads occluded.",
+    "Discrete source poses and small illustrative contour/projection differences remain qualitative. Historical findings are preserved separately; no calibrated3D or strict certificate is asserted."
+  ],
+  "resolvedIllustrationIssues": [
+    "New fixed rear camera shows the canonical athlete facing uphill with three genuine connected poses: left upper-tread support, right-leg swing, and right upper-tread landing. Upper body, grips, rails and apparatus outside native lower-body/contact-shadow footprints remain identical to one master. Source order A,A,B,C,C,A; visible-muscle key describes primary glutes and secondary hamstrings/calves, with quads occluded."
+  ],
+  "priorFindings": {
+    "record": "docs/exercise-art/releases/2026-10-19-illustration-polish/stairmaster.json",
+    "sha256": "5a55c6f705bc740f27adf1e41f8d488ffe8ab71e891fe666f5a49c3ef2f880fb",
+    "hashScope": "Exact Git blob bytes, independent of checkout line endings.",
+    "disposition": "Historical source findings retained verbatim in the prior release and portable archive; corrected items are identified separately."
+  },
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/stairmaster/2026-10-20-remaining33-final",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/stairmaster/2026-10-20-remaining33-final/stairmaster-native-correction.zip",
+      "sha256": "efd8b10fcd130da3a3de8dd2916239815de2d068c6910e90064a3002bd2854f2",
+      "bytes": 20903690
+    },
+    "priorRelease": "docs/exercise-art/releases/2026-10-19-illustration-polish/stairmaster.json",
+    "method": "New fixed rear camera shows the canonical athlete facing uphill with three genuine connected poses: left upper-tread support, right-leg swing, and right upper-tread landing. Upper body, grips, rails and apparatus outside native lower-body/contact-shadow footprints remain identical to one master. Source order A,A,B,C,C,A; visible-muscle key describes primary glutes and secondary hamstrings/calves, with quads occluded.",
+    "reproductionScope": "Independent byte-exact re-execution of frozen native editable composition and exports, not independent anatomical re-authoring.",
+    "anatomicalTransforms": []
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-20-remaining33-final/review.json",
+  "physicalPoses": 3,
+  "sourcePoseOrder": ["A", "A", "B", "C", "C", "A"],
+  "playback": "cycle",
+  "visibleMuscleKey": {
+    "primary": ["Glutes"],
+    "secondary": ["Hamstrings", "Calves"],
+    "occluded": ["Quads", "Core"],
+    "reason": "Rear camera; supplied-art key describes the visible fields. Exercise catalogue unchanged."
+  },
+  "physicalStates": {
+    "A": "Left foot upper-tread support, right foot lower tread.",
+    "B": "Right leg swings above upper tread; left foot supports on lower tread.",
+    "C": "Right foot lands fully on upper tread; left foot remains on lower tread."
+  }
+}

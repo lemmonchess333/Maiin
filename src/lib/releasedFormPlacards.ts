@@ -2327,14 +2327,14 @@ export const RELEASED_FORM_PLACARDS = {
   ),
   stairmaster: placard(
     "stairmaster",
-    ["Quads", "Glutes", "Calves"],
-    ["Hamstrings", "Core"],
+    ["Glutes"],
+    ["Hamstrings", "Calves"],
     [
       [0, "Step", "Stand tall; shoulders stacked over hips."],
       [0, "Drive", "Drive the whole foot down each step."],
-      [1, "Knee up", "Bring the other knee through to climb."],
+      [0.7, "Knee up", "Bring the other knee through to climb."],
       [1, "Grip", "Keep a light grip on the rails."],
-      [0, "Land", "Land the whole foot on the step."],
+      [1, "Land", "Land the whole foot on the step."],
       [0, "Steady", "Hold a pace you can sustain."],
     ],
     [

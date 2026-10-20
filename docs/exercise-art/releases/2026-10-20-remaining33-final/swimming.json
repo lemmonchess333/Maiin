@@ -1,0 +1,164 @@
+{
+  "exerciseId": "swimming",
+  "version": "anatomy-v3-2026-10-20-native-final-v1",
+  "width": 1264,
+  "height": 848,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex native source and mobile review",
+  "reviewedAt": "2026-10-20T00:07:59.084403+00:00",
+  "reference": {
+    "path": "form-frames/swimming/2.webp",
+    "sha256": "915b47aa2432fc7b9334c5d981c1931e4c24804ab3ac8e9ca9147747c4fda7ca"
+  },
+  "cueSha256": "8518bb27027847fd0425b39f1264ed62ebc84b880771921aab1ad9a0520b2415",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/swimming/1.webp",
+      "sha256": "229fb88e464358b2261443e643b2446eef0b578c89d412bb01a58a2d570af8e3",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-20-remaining33-final/1.png",
+        "sha256": "c660c92f63e1e04caa1f0fabdb5d813384e35c3083c17df5fb91f4477a1c59e8"
+      },
+      "sourcePose": "A"
+    },
+    {
+      "path": "form-frames/swimming/2.webp",
+      "sha256": "915b47aa2432fc7b9334c5d981c1931e4c24804ab3ac8e9ca9147747c4fda7ca",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-20-remaining33-final/2.png",
+        "sha256": "bd50af7d047555a10a5328f612c06d5d289ccb6d6c1b672809ba65cf3fcc1f71"
+      },
+      "sourcePose": "B"
+    },
+    {
+      "path": "form-frames/swimming/3.webp",
+      "sha256": "579164c7963935cece7619a2719a9660eafaf9e49e40bcd1c62ee66ec34c0a7b",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-20-remaining33-final/3.png",
+        "sha256": "481ba1321ce3dbade3133e9a375ca3eee19bfc605e848b15f67bf51fb065945d"
+      },
+      "sourcePose": "C"
+    },
+    {
+      "path": "form-frames/swimming/4.webp",
+      "sha256": "03c1dcb07e4f14423dd3c20e85094a43261772e54c5e76dcf8a624bbe7af15b9",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-20-remaining33-final/4.png",
+        "sha256": "ff79d90ab5a501dc2100278d3f61bdda047ddb71f01d08c5e8fa915a6d6c8ad4"
+      },
+      "sourcePose": "D"
+    },
+    {
+      "path": "form-frames/swimming/5.webp",
+      "sha256": "dda4e035220c900148f49e79e6d37f3eeeee72e27173e5fdbebb7c51ec3e0ebf",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-20-remaining33-final/5.png",
+        "sha256": "f6a753b6cba737cc56fcc833d7fb9355e9d52675d3b3c544998b93160f5dcc48"
+      },
+      "sourcePose": "E"
+    },
+    {
+      "path": "form-frames/swimming/6.webp",
+      "sha256": "5c856ae46bb4f5c51300bb81c51fa1ac83bc199fb288844f6c044ec50bebfbb9",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/swimming/2026-10-20-remaining33-final/6.png",
+        "sha256": "3401c23aab0def03a886401beccdab0e4e02bc1e5b142f2b5aefd57ad2b20702"
+      },
+      "sourcePose": "F"
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "Fix the remaining illustration issues in those33 sets too, same model and colours, no shorts, and get it all merged. Stop asking for approval.",
+    "context": "Authorization for correction, local registration, verification and normal merge, not human certification of these pixels or strict geometry."
+  },
+  "findings": [
+    "Replace only the complete breathing source with a side-rolled faceless head/body pose instead of a lifted forward-facing head. One uniform whole-source framing normalization and existing-pigment canonical chroma finishing; no isolated head graft. The other five delivered frames and normal card reference remain unchanged.",
+    "Discrete source poses and small illustrative contour/projection differences remain qualitative. Historical findings are preserved separately; no calibrated3D or strict certificate is asserted."
+  ],
+  "resolvedIllustrationIssues": [
+    "Replace only the complete breathing source with a side-rolled faceless head/body pose instead of a lifted forward-facing head. One uniform whole-source framing normalization and existing-pigment canonical chroma finishing; no isolated head graft. The other five delivered frames and normal card reference remain unchanged."
+  ],
+  "priorFindings": {
+    "record": "docs/exercise-art/releases/2026-10-19-illustration-polish/swimming.json",
+    "sha256": "0bab4eac65ccb3607c7ba33831b7a6eb90251967b5455e177cf2de44c66a31ab",
+    "hashScope": "Exact Git blob bytes, independent of checkout line endings.",
+    "disposition": "Historical source findings retained verbatim in the prior release and portable archive; corrected items are identified separately."
+  },
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/swimming/2026-10-20-remaining33-final",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/swimming/2026-10-20-remaining33-final/swimming-native-correction.zip",
+      "sha256": "d5037fc6db66a9038fe8e5816d4c2d135fa2b758b0217379f9775ceb2c572f89",
+      "bytes": 13310071
+    },
+    "priorRelease": "docs/exercise-art/releases/2026-10-19-illustration-polish/swimming.json",
+    "method": "Replace only the complete breathing source with a side-rolled faceless head/body pose instead of a lifted forward-facing head. One uniform whole-source framing normalization and existing-pigment canonical chroma finishing; no isolated head graft. The other five delivered frames and normal card reference remain unchanged.",
+    "reproductionScope": "Independent byte-exact re-execution of frozen native editable composition and exports, not independent anatomical re-authoring.",
+    "anatomicalTransforms": []
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-20-remaining33-final/review.json",
+  "physicalPoses": 6,
+  "sourcePoseOrder": ["A", "B", "C", "D", "E", "F"],
+  "playback": "cycle"
+}

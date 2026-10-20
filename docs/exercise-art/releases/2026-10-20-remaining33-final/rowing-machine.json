@@ -1,0 +1,164 @@
+{
+  "exerciseId": "rowing-machine",
+  "version": "anatomy-v3-2026-10-20-native-final-v1",
+  "width": 1416,
+  "height": 830,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex native source and mobile review",
+  "reviewedAt": "2026-10-20T00:07:59.079182+00:00",
+  "reference": {
+    "path": "form-frames/rowing-machine/3.webp",
+    "sha256": "6d0daf01b135a31a92d09a10bf1f8090313566d25a1b37731700f87cc7fb7b5e"
+  },
+  "cueSha256": "2ec87c73d52fa54044118e1264b23883168530dc0717c2e987eec2da14ec49c3",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/rowing-machine/1.webp",
+      "sha256": "a1fa9793f679c2406885ba5782c111658bed16c0c49bc9482200b579111b15e2",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rowing-machine/2026-10-20-remaining33-final/1.png",
+        "sha256": "8cbdcdc1c0267864785b40e7497ce392e5aaa44f13635ff1912d6c75581463d7"
+      },
+      "sourcePose": "A"
+    },
+    {
+      "path": "form-frames/rowing-machine/2.webp",
+      "sha256": "398603466c885d0f28bca0586bb726ef43004c5c9ae43c57ea5f90256a3f2597",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rowing-machine/2026-10-20-remaining33-final/2.png",
+        "sha256": "0470309eb91597eca4bcf2a420d84ff326fadb661070c54fb7143c6e0724c83c"
+      },
+      "sourcePose": "B"
+    },
+    {
+      "path": "form-frames/rowing-machine/3.webp",
+      "sha256": "6d0daf01b135a31a92d09a10bf1f8090313566d25a1b37731700f87cc7fb7b5e",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rowing-machine/2026-10-20-remaining33-final/3.png",
+        "sha256": "0727856f7c2fd571a18c13d7b903147ac4a80a966a605705fa27fbb2fced1653"
+      },
+      "sourcePose": "C"
+    },
+    {
+      "path": "form-frames/rowing-machine/4.webp",
+      "sha256": "6d0daf01b135a31a92d09a10bf1f8090313566d25a1b37731700f87cc7fb7b5e",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rowing-machine/2026-10-20-remaining33-final/4.png",
+        "sha256": "0727856f7c2fd571a18c13d7b903147ac4a80a966a605705fa27fbb2fced1653"
+      },
+      "sourcePose": "C"
+    },
+    {
+      "path": "form-frames/rowing-machine/5.webp",
+      "sha256": "398603466c885d0f28bca0586bb726ef43004c5c9ae43c57ea5f90256a3f2597",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rowing-machine/2026-10-20-remaining33-final/5.png",
+        "sha256": "0470309eb91597eca4bcf2a420d84ff326fadb661070c54fb7143c6e0724c83c"
+      },
+      "sourcePose": "B"
+    },
+    {
+      "path": "form-frames/rowing-machine/6.webp",
+      "sha256": "a1fa9793f679c2406885ba5782c111658bed16c0c49bc9482200b579111b15e2",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/rowing-machine/2026-10-20-remaining33-final/6.png",
+        "sha256": "8cbdcdc1c0267864785b40e7497ce392e5aaa44f13635ff1912d6c75581463d7"
+      },
+      "sourcePose": "A"
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "Fix the remaining illustration issues in those33 sets too, same model and colours, no shorts, and get it all merged. Stop asking for approval.",
+    "context": "Authorization for correction, local registration, verification and normal merge, not human certification of these pixels or strict geometry."
+  },
+  "findings": [
+    "Original catch, drive and recovery sources retained. Complete connected image-authored finish extends the legs and slides the seat back; original fixed apparatus is preserved outside the native pose footprint. The exposed original catch rail supplies vacated seat background, and a native straight grey chain meets the original fixed outlet. One whole-source framing normalization; no individual anatomy transforms or head/shoe grafts.",
+    "Discrete source poses and small illustrative contour/projection differences remain qualitative. Historical findings are preserved separately; no calibrated3D or strict certificate is asserted."
+  ],
+  "resolvedIllustrationIssues": [
+    "Original catch, drive and recovery sources retained. Complete connected image-authored finish extends the legs and slides the seat back; original fixed apparatus is preserved outside the native pose footprint. The exposed original catch rail supplies vacated seat background, and a native straight grey chain meets the original fixed outlet. One whole-source framing normalization; no individual anatomy transforms or head/shoe grafts."
+  ],
+  "priorFindings": {
+    "record": "docs/exercise-art/releases/2026-10-15/rowing-machine.json",
+    "sha256": "0c426e9d9cc8d85f8c26cd15b71c76ae56ccd64cc666daa1b60a2b32cbbf357c",
+    "hashScope": "Exact Git blob bytes, independent of checkout line endings.",
+    "disposition": "Historical source findings retained verbatim in the prior release and portable archive; corrected items are identified separately."
+  },
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/rowing-machine/2026-10-20-remaining33-final",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/rowing-machine/2026-10-20-remaining33-final/rowing-machine-native-correction.zip",
+      "sha256": "eb8fb0aa1241eb5f2b843f5ce2d5196cf0b3d4416ea392c3600ee5ccf4d01dd0",
+      "bytes": 17919561
+    },
+    "priorRelease": "docs/exercise-art/releases/2026-10-15/rowing-machine.json",
+    "method": "Original catch, drive and recovery sources retained. Complete connected image-authored finish extends the legs and slides the seat back; original fixed apparatus is preserved outside the native pose footprint. The exposed original catch rail supplies vacated seat background, and a native straight grey chain meets the original fixed outlet. One whole-source framing normalization; no individual anatomy transforms or head/shoe grafts.",
+    "reproductionScope": "Independent byte-exact re-execution of frozen native editable composition and exports, not independent anatomical re-authoring.",
+    "anatomicalTransforms": []
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-20-remaining33-final/review.json",
+  "physicalPoses": 3,
+  "sourcePoseOrder": ["A", "B", "C", "C", "B", "A"],
+  "playback": "cycle"
+}

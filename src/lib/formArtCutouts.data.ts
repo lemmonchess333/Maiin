@@ -44,8 +44,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/assault-bike/1.webp",
     sourceSha256:
-      "94c40ddb45446b465696c37a79489e005b1d7071988f9955a24d8b8235e46590",
-    sha256: "15eaaf640430e51147873f93759929dcd18d38773ad7dafe9ba223c6792dcdf1",
+      "2914452590cf2d834ea0c4c8dc25e0cbce5680b8eebf97acd47dcca4a9383a7e",
+    sha256: "9b0d9f0778801167407b29e2ac46496212f3a564be1a5c85c4d0213eafc2b321",
   },
   "barbell-curl": {
     src: "form-art/barbell-curl.webp",
@@ -1134,8 +1134,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/rowing-machine/3.webp",
     sourceSha256:
-      "8c7385705a8396f4068e2ffbf6571509e6764a61efa91a30373d64578cce2aae",
-    sha256: "06c0b4a713879eff74fcc5b6f5a9ee8fbfd0047c3a3782dbe4c6fd9ba7019fe5",
+      "6d0daf01b135a31a92d09a10bf1f8090313566d25a1b37731700f87cc7fb7b5e",
+    sha256: "8ddb1850d7e2838139687408859aad464e943c5af72e8854a71020c231851f10",
   },
   "russian-twist": {
     src: "form-art/russian-twist.webp",
@@ -1339,13 +1339,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   stairmaster: {
     src: "form-art/stairmaster.webp",
-    width: 388,
+    width: 240,
     height: 480,
     keyed: true,
     source: "form-frames/stairmaster/1.webp",
     sourceSha256:
-      "f08f44f67149914b24b24a71a594a5c5fbf2066fab1547eb9b3f547c8e135ca3",
-    sha256: "7d1b329501eee23a211250621bca0bf6d18a3f6d56ac85da9b125b47dbd21ddd",
+      "32277420a65c9ac788afe3e9de9741fe25b3fbc4f088ee57caa2d9d6abd14658",
+    sha256: "be4cb180a29b34380e08988a461cde800eb6a3e32d8ad4e0218c731e5fae0be1",
   },
   "standing-calf-raise": {
     src: "form-art/standing-calf-raise.webp",
