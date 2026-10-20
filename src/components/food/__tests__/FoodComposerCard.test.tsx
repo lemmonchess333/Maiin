@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, within, fireEvent } from "@testing-library/react";
+import { act, render, screen, within, fireEvent } from "@testing-library/react";
 import { createRef } from "react";
 
 vi.mock("framer-motion", () => ({
@@ -282,5 +282,63 @@ describe("FoodComposerCard — conditional quota caption (wave2 B)", () => {
     expect(cta.textContent).not.toMatch(/unlimited/i);
     fireEvent.click(cta);
     expect(onUpgrade).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("FoodComposerCard keyboard focus", () => {
+  const settleBlur = () =>
+    act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    });
+
+  it("keeps suggestions open when focus moves from the field into its rows", async () => {
+    const { props } = renderComposer({
+      showSuggestions: true,
+      offEmpty: true,
+      offSearchQuery: "zzqxv",
+    });
+    const input = screen.getByRole("textbox", { name: "What did you eat" });
+    const row = screen.getByRole("button", { name: /no matches found/i });
+    fireEvent.blur(input, { relatedTarget: row });
+    await settleBlur();
+    expect(props.setInputFocused).not.toHaveBeenCalledWith(false);
+    expect(props.setSuggestionsActive).not.toHaveBeenCalledWith(false);
+    fireEvent.click(row);
+    expect(props.onManualOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it("closes after focus actually leaves the composer", async () => {
+    const { props } = renderComposer({
+      showSuggestions: true,
+      offEmpty: true,
+      offSearchQuery: "zzqxv",
+    });
+    fireEvent.blur(screen.getByRole("button", { name: /no matches found/i }), {
+      relatedTarget: document.body,
+    });
+    await settleBlur();
+    expect(props.setInputFocused).toHaveBeenCalledWith(false);
+    expect(props.setSuggestionsActive).toHaveBeenCalledWith(false);
+  });
+
+  it("cancels an old blur when focus returns before dismissal", async () => {
+    const { props } = renderComposer();
+    const input = screen.getByRole("textbox", { name: "What did you eat" });
+    fireEvent.blur(input, { relatedTarget: document.body });
+    fireEvent.focus(input);
+    await settleBlur();
+    expect(props.setInputFocused).not.toHaveBeenCalledWith(false);
+    expect(props.setSuggestionsActive).not.toHaveBeenCalledWith(false);
+  });
+
+  it("does not run a stale blur callback after unmount", async () => {
+    const { props, unmount } = renderComposer();
+    fireEvent.blur(screen.getByRole("textbox", { name: "What did you eat" }), {
+      relatedTarget: document.body,
+    });
+    unmount();
+    await settleBlur();
+    expect(props.setInputFocused).not.toHaveBeenCalledWith(false);
+    expect(props.setSuggestionsActive).not.toHaveBeenCalledWith(false);
   });
 });
