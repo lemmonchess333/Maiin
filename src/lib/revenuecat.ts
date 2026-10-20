@@ -57,18 +57,22 @@ export async function configureRevenueCat(appUserID: string): Promise<void> {
 }
 
 /** Bind the RC identity to a Firebase uid on sign-in. Configures on first use,
- *  otherwise switches the App User ID (account switch on a shared device). */
-export async function rcLogIn(appUserID: string): Promise<void> {
-  if (!isRevenueCatEnabled()) return;
+ *  otherwise switches the App User ID (account switch on a shared device).
+ *  Resolves whether RevenueCat now has this account (true with nothing to
+ *  do), so useRevenueCatIdentity can try a failed one again. */
+export async function rcLogIn(appUserID: string): Promise<boolean> {
+  if (!isRevenueCatEnabled()) return true;
   try {
     if (!configured) {
       await configureRevenueCat(appUserID);
-      return;
+      return true;
     }
     const Purchases = await loadPurchases();
     await Purchases.logIn({ appUserID });
+    return true;
   } catch (err) {
     logger.error("[RevenueCat] logIn failed", err);
+    return false;
   }
 }
 

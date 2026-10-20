@@ -1316,6 +1316,15 @@ exports.analyzeFood = functions
         res.status(403).json({ error: "Origin not allowed" });
         return;
       }
+      // The scan this request was counted as, once it has been: a failure
+      // on the service's side after that gives it back (aiScanQuota).
+      let charge = null;
+      const failScan = async (modelStatus) => {
+        if (charge && aiScanQuota.isServiceFailure(modelStatus))
+          await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge);
+        const failed = aiScanQuota.failedScanResponse(modelStatus);
+        res.status(failed.status).json(failed.body);
+      };
       try {
         if (req.method !== "POST") {
           res.status(405).json({ error: "Method not allowed" });
@@ -1441,6 +1450,12 @@ exports.analyzeFood = functions
           return;
         }
 
+        charge = {
+          uid: authUser.uid,
+          action: aiScanQuota.ACTION_IMAGE_AI,
+          dayKey: quota.dayKey,
+        };
+
         const projectId = process.env.GCLOUD_PROJECT;
         const accessToken = await admin.credential
           .applicationDefault()
@@ -1495,7 +1510,7 @@ exports.analyzeFood = functions
             "Vertex AI error:",
             redactVertexResponse(data, { httpStatus: response.status })
           );
-          res.status(500).json({ error: "AI service error" });
+          await failScan(response.status);
           return;
         }
         functions.logger.info("analyzeFood.usage", vertexUsage(data));
@@ -1507,7 +1522,7 @@ exports.analyzeFood = functions
             "Unexpected response format:",
             redactVertexResponse(data, { httpStatus: response.status })
           );
-          res.status(500).json({ error: "Unexpected AI response format" });
+          await failScan();
           return;
         }
 
@@ -1531,7 +1546,9 @@ exports.analyzeFood = functions
         res.status(200).json(nutrition);
       } catch (error) {
         console.error("Error analyzing food:", error);
-        res.status(500).json({ error: "Failed to analyze food image" });
+        // An answer that would not parse is the service's failure too.
+        if (charge) await failScan();
+        else res.status(500).json({ error: "Failed to analyze food image" });
       }
     });
   });
@@ -1548,6 +1565,15 @@ exports.analyzeFoodText = functions
         res.status(403).json({ error: "Origin not allowed" });
         return;
       }
+      // As in analyzeFood: a service failure after the scan was counted
+      // gives it back.
+      let charge = null;
+      const failScan = async (modelStatus) => {
+        if (charge && aiScanQuota.isServiceFailure(modelStatus))
+          await aiScanQuota.refundDailyAiQuota(admin.firestore(), charge);
+        const failed = aiScanQuota.failedScanResponse(modelStatus);
+        res.status(failed.status).json(failed.body);
+      };
       try {
         if (req.method !== "POST") {
           res.status(405).json({ error: "Method not allowed" });
@@ -1659,6 +1685,12 @@ exports.analyzeFoodText = functions
           return;
         }
 
+        charge = {
+          uid: authUser.uid,
+          action: aiScanQuota.ACTION_TEXT_AI,
+          dayKey: quota.dayKey,
+        };
+
         const projectId = process.env.GCLOUD_PROJECT;
         const accessToken = await admin.credential
           .applicationDefault()
@@ -1685,7 +1717,7 @@ exports.analyzeFoodText = functions
             "Vertex AI error:",
             redactVertexResponse(data, { httpStatus: response.status })
           );
-          res.status(500).json({ error: "AI service error" });
+          await failScan(response.status);
           return;
         }
         functions.logger.info("analyzeFoodText.usage", vertexUsage(data));
@@ -1696,7 +1728,7 @@ exports.analyzeFoodText = functions
             "Unexpected response format:",
             redactVertexResponse(data, { httpStatus: response.status })
           );
-          res.status(500).json({ error: "Unexpected AI response format" });
+          await failScan();
           return;
         }
 
@@ -1720,7 +1752,9 @@ exports.analyzeFoodText = functions
         res.status(200).json(nutrition);
       } catch (error) {
         console.error("Error analyzing food text:", error);
-        res.status(500).json({ error: "Failed to analyze food description" });
+        if (charge) await failScan();
+        else
+          res.status(500).json({ error: "Failed to analyze food description" });
       }
     });
   });
