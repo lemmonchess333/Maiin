@@ -46,6 +46,7 @@ import { usualMeal, usualMealHeading, usualMealPortion } from "@/lib/usualMeal";
 import { duplicatedServingPayload } from "@/lib/servingEdit";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
+import { modelNumber, parseModelNumber, safeNum } from "@/lib/foodParseHelpers";
 import { Pencil, RotateCcw, X } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 const FoodAnalyzer = lazyRetry(() => import("@/components/FoodAnalyzer"));
@@ -526,11 +527,6 @@ export default function Food() {
      other toast / caption surfaces without copy-pasting the
      three-branch ladder. */
 
-  const safeNum = (value: unknown): number => {
-    const num = Number(value);
-    return isNaN(num) || value == null ? 0 : num;
-  };
-
   /* Slot derivation (explicit meal field first, else local log hour)
      lives in `@/lib/mealSlots` since the timeline migration — the
      timeline derives each row's slot chip from the same function, so
@@ -975,13 +971,21 @@ export default function Food() {
     if (consent === "allowed") {
       try {
         const result = await analyzeFoodText(nlInput);
-        if (result && result.items?.length > 0) {
+        // Every item needs a calorie figure to log. One the model wrote as
+        // words is read as the local parser would read the meal; a macro it
+        // left out is 0, as the scan path counts it, never the NaN total
+        // the raw value made.
+        if (
+          result &&
+          result.items?.length > 0 &&
+          result.items.every((i) => parseModelNumber(i.calories) !== null)
+        ) {
           items = result.items.map((i) => ({
             name: i.name,
-            calories: i.calories,
-            protein: i.protein,
-            carbs: i.carbs,
-            fat: i.fat,
+            calories: modelNumber(i.calories),
+            protein: modelNumber(i.protein),
+            carbs: modelNumber(i.carbs),
+            fat: modelNumber(i.fat),
             // Carry the AI's portion estimate ("1 cup", "200g", etc.)
             // through to the save path so the diary row records what
             // the AI thought it identified instead of a placeholder.

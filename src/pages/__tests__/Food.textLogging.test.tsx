@@ -124,7 +124,7 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-function startAnalysis() {
+function startAnalysis(meal: unknown = parsedMeal) {
   let resolve!: (response: Response) => void;
   const response = new Promise<Response>((done) => {
     resolve = done;
@@ -148,7 +148,7 @@ function startAnalysis() {
     fetchMock,
     finish: async () => {
       await act(async () => {
-        resolve({ ok: true, json: async () => parsedMeal } as Response);
+        resolve({ ok: true, json: async () => meal } as Response);
       });
       await waitFor(() => expect(api.notifyMealsLogged).toHaveBeenCalledOnce());
     },
@@ -543,6 +543,41 @@ describe("food text logging", () => {
     );
     expect(input).toHaveValue("toast");
     expect(screen.getByLabelText("Log meal")).toBeEnabled();
+  });
+});
+
+describe("a typed meal's figures as the model writes them", () => {
+  /* The text path mapped the model's macros raw: "~140 kcal" was not a
+     number, so the meal was blocked, and a protein it left out made the
+     saved total NaN (stripUndefined keeps NaN), read back as 0. */
+  const eggs = (fields: Record<string, unknown>) => ({
+    items: [{ name: "Eggs", portionSize: "2 eggs", ...fields }],
+  });
+
+  it("reads a figure written with words and units, and a missing macro as 0", async () => {
+    const { finish } = startAnalysis(
+      eggs({ calories: "~140 kcal", protein: "12g", carbs: 0 })
+    );
+    await finish();
+    const saved = api.createMealEntry.mock.calls[0][1];
+    expect(saved).toMatchObject({
+      confidence: "ai-parse",
+      totalCalories: 140,
+      totalProtein: 12,
+      totalFat: 0,
+    });
+    expect(Number.isNaN(saved.totalFat)).toBe(false);
+  });
+
+  it("reads the meal locally when the model gave no calorie figure", async () => {
+    const { finish } = startAnalysis(
+      eggs({ calories: "about a hundred", protein: 12, carbs: 0, fat: 10 })
+    );
+    await finish();
+    expect(api.createMealEntry).toHaveBeenCalledWith(
+      "u1",
+      expect.objectContaining({ confidence: "nl-parse" })
+    );
   });
 });
 

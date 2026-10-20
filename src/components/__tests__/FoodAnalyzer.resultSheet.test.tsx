@@ -160,11 +160,12 @@ const sheet = () => screen.getByTestId("scan-result-sheet");
 
 async function scan(
   meal: string | null = "breakfast",
-  button = "stub-capture"
+  button = "stub-capture",
+  result: unknown = MEAL
 ) {
   h.analyzeFood.mockImplementation(async () => {
-    h.state.result = MEAL;
-    return { data: MEAL, errorMessage: null };
+    h.state.result = result;
+    return { data: result, errorMessage: null };
   });
   render(<FoodAnalyzer date="2026-09-23" meal={meal} aiConsent={AI_ALLOWED} />);
   await waitFor(() => expect(modal().dataset.open).toBe("true"));
@@ -322,6 +323,25 @@ describe("FoodAnalyzer — the result sheet", () => {
       key: "Escape",
     });
     await waitFor(() => expect(h.reset).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(screen.queryByTestId("scan-result-sheet")).toBeNull()
+    );
+  });
+
+  it("logs a figure the model wrote as text, not 0 for it", async () => {
+    // "~248 kcal" was NaN to Number(), so the chicken logged at 0 and the
+    // plate at 264 of its 512.
+    const [chicken, ...rest] = MEAL.items;
+    await scan("breakfast", "stub-capture", {
+      ...MEAL,
+      items: [{ ...chicken, calories: "~248 kcal", protein: "46 g" }, ...rest],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Log to Breakfast" }));
+    await waitFor(() => expect(createMealEntry).toHaveBeenCalledOnce());
+    expect(vi.mocked(createMealEntry).mock.calls[0][1]).toMatchObject({
+      totalCalories: 512,
+      totalProtein: 49,
+    });
     await waitFor(() =>
       expect(screen.queryByTestId("scan-result-sheet")).toBeNull()
     );
