@@ -146,6 +146,7 @@ const EXPECTED = {
     kind: "callable",
     maxInstances: 100,
     secrets: ["BILLING_HMAC_SECRET", "STRIPE_SECRET_KEY"],
+    timeoutSeconds: 540,
   },
   completeOnboarding: {
     kind: "callable",
@@ -312,6 +313,7 @@ const EXPECTED = {
     kind: "event",
     maxInstances: 50,
     secrets: [],
+    timeoutSeconds: 300,
     eventType: "providers/cloud.firestore/eventTypes/document.create",
     resource:
       "projects/{project}/databases/(default)/documents/activities/{activityId}",
@@ -550,6 +552,13 @@ function endpointSummary(fn) {
           schedule: ep.scheduleTrigger.schedule,
           timeoutSeconds: ep.timeoutSeconds ?? null,
         }
+      : {}),
+    /* Any other function that sets its own timeout is pinned too: the
+       fan-out trigger and account deletion each need longer than the 60 s
+       default, and losing either timeout fails nothing else. An unset
+       timeout reads as firebase-functions' reset marker, not a number. */
+    ...(!ep.scheduleTrigger && typeof ep.timeoutSeconds === "number"
+      ? { timeoutSeconds: ep.timeoutSeconds }
       : {}),
     ...(ep.eventTrigger
       ? {

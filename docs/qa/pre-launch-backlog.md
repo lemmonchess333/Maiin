@@ -10,6 +10,26 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Server cost rows (survey items 43 to 46, 2026-10-20)
+
+A post reaches its followers a page of 100 at a time, with five minutes
+to do it; the scheduled sweeps reach the most recently active first and
+stop before their time runs out; the hourly nudge reads nothing more for a
+user outside their send hours; the fastest-effort scan reads only open
+challenges; feed copies and notifications expire. The unit and emulator
+suites cover the logic. Feed copies and notifications written before this
+release carry no `expiresAt` and are kept: at today's size that is too
+little to be worth a backfill script.
+
+- [ ] **The release carries the TTL policy and the trigger's timeout.**
+      Passing: Firestore console → TTL policies lists `items.expiresAt`
+      as active (the Firestore stage's readiness check waits for it), and
+      Functions → `onActivityCreated` → Details shows a 300 s timeout.
+- [ ] **A sweep's run record says when it was cut short.** Passing: the
+      latest `weeklyPerformanceRollup` and `hourlyStreakNudge` run records
+      in `jobRuns/{name}` carry `lastSummary.stoppedAtTimeLimit: false`.
+      A `true` is the sign the sweep needs splitting, not a failure.
+
 ## Restriction and identity rows (survey items 18 and 20, 2026-10-20)
 
 A restriction now outlives deleting the account (S4e, STATUS 2026-10-20),
@@ -29,7 +49,7 @@ emulator suites cover the logic; these need the release and real sign-ins.
       delete it from Settings → Account, then sign in again with the same
       Google account. Passing: Firestore console shows
       `globalRestrictedUids/{new uid}` with `carriedFromDeletedAccount:
-  true`, the app shows the restricted notice before a post, and
+true`, the app shows the restricted notice before a post, and
       `restrictedIdentities` holds two documents with only `reason`,
       `createdAt` and `expiresAt`.
 - [ ] **Lift clears it for good.** Lift that account's restriction, delete

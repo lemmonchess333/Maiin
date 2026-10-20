@@ -19,6 +19,18 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 
 const TS_TAG = "__TS__";
+
+/** Whether firestore.indexes.json deletes `collectionGroup` documents once
+ *  `fieldPath` has passed: a field nothing deletes on is only a date. */
+function ttlOn(collectionGroup, fieldPath) {
+  const { fieldOverrides } = require("../../firestore.indexes.json");
+  return fieldOverrides.some(
+    (o) =>
+      o.collectionGroup === collectionGroup &&
+      o.fieldPath === fieldPath &&
+      o.ttl === true
+  );
+}
 const serverTimestamp = () => ({ tag: TS_TAG });
 
 /**
@@ -73,11 +85,33 @@ function makeFirestoreStub({ initial = {}, collections = {} } = {}) {
           size: docs.length,
         };
       }),
+      /* The fan-out reads followers a page at a time, ordered by id. */
+      orderBy: () => makeQuery(path),
+    };
+  }
+  function makeQuery(path, after = null, cap = Infinity) {
+    return {
+      orderBy: () => makeQuery(path, after, cap),
+      limit: (n) => makeQuery(path, after, n),
+      startAfter: (snap) => makeQuery(path, snap.id, cap),
+      get: async () => {
+        const docs = [...(collectionDocs[path] || [])]
+          .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+          .filter((d) => after === null || d.id > after)
+          .slice(0, cap);
+        return {
+          docs: docs.map((d) => ({ id: d.id, data: () => d.data || {} })),
+          size: docs.length,
+        };
+      },
     };
   }
 
+  const transactions = { count: 0 };
   return {
+    transactions,
     async runTransaction(callback) {
+      transactions.count += 1;
       const queued = [];
       const result = await callback({
         get: (ref) => ref.get(),
@@ -127,6 +161,108 @@ describe("fanoutActivityToFeeds", () => {
     expect(paths.some((p) => p.startsWith("feeds/bob/items/"))).toBe(true);
     expect(paths.some((p) => p.startsWith("feeds/carol/items/"))).toBe(true);
     expect(paths.some((p) => p.startsWith("feeds/alice/items/"))).toBe(true);
+  });
+
+  it("reaches every follower of a large account, a page at a time", async () => {
+    const { fanoutActivityToFeeds } = require("../lib/socialFanout");
+    const followers = Array.from({ length: 250 }, (_, i) => ({
+      id: `f${String(i).padStart(3, "0")}`,
+    }));
+    const firestore = makeFirestoreStub({
+      collections: { "followers/alice/users": followers },
+    });
+
+    const result = await fanoutActivityToFeeds({
+      firestore,
+      activityId: "act1",
+      authorId: "alice",
+      activityData: { authorName: "Alice", type: "run", visibility: "public" },
+      serverTimestamp,
+    });
+
+    expect(result.fanned).toBe(251);
+    for (const { id } of followers) {
+      expect(firestore._state[`feeds/${id}/items/act1`]).toBeDefined();
+    }
+    // The author's own feed, then three pages of 100, 100 and 50: four
+    // transactions, where one each was 251.
+    expect(firestore.transactions.count).toBe(4);
+  });
+
+  it("a feed copy expires 180 days on, under the items TTL policy", async () => {
+    const {
+      fanoutActivityToFeeds,
+      FEED_COPY_RETENTION_DAYS,
+    } = require("../lib/socialFanout");
+    const firestore = makeFirestoreStub({
+      collections: { "followers/alice/users": [{ id: "bob" }] },
+    });
+    const before = Date.now();
+    await fanoutActivityToFeeds({
+      firestore,
+      activityId: "act1",
+      authorId: "alice",
+      activityData: { authorName: "Alice", type: "run", visibility: "public" },
+      serverTimestamp,
+    });
+    const after = Date.now();
+    const days = FEED_COPY_RETENTION_DAYS * 86_400_000;
+    expect(FEED_COPY_RETENTION_DAYS).toBe(180);
+    for (const path of ["feeds/alice/items/act1", "feeds/bob/items/act1"]) {
+      const at = firestore._state[path].expiresAt;
+      expect(at).toBeInstanceOf(Date);
+      expect(at.getTime()).toBeGreaterThanOrEqual(before + days);
+      expect(at.getTime()).toBeLessThanOrEqual(after + days);
+    }
+    expect(ttlOn("items", "expiresAt")).toBe(true);
+  });
+
+  it("skips a follower whose account is being deleted, and writes the rest of the page", async () => {
+    const { fanoutActivityToFeeds } = require("../lib/socialFanout");
+    const firestore = makeFirestoreStub({
+      initial: { "accountDeletionRequests/carol": { status: "running" } },
+      collections: {
+        "followers/alice/users": [
+          { id: "bob" },
+          { id: "carol" },
+          { id: "dan" },
+        ],
+      },
+    });
+
+    const result = await fanoutActivityToFeeds({
+      firestore,
+      activityId: "act1",
+      authorId: "alice",
+      activityData: { authorName: "Alice", type: "run", visibility: "public" },
+      serverTimestamp,
+    });
+
+    expect(result.fanned).toBe(3);
+    expect(firestore._state["feeds/carol/items/act1"]).toBeUndefined();
+    expect(firestore._state["feeds/bob/items/act1"]).toBeDefined();
+    expect(firestore._state["feeds/dan/items/act1"]).toBeDefined();
+  });
+
+  it("writes nothing for an author whose account is being deleted", async () => {
+    const { fanoutActivityToFeeds } = require("../lib/socialFanout");
+    const firestore = makeFirestoreStub({
+      initial: { "accountDeletionRequests/alice": { status: "running" } },
+      collections: { "followers/alice/users": [{ id: "bob" }] },
+    });
+
+    const result = await fanoutActivityToFeeds({
+      firestore,
+      activityId: "act1",
+      authorId: "alice",
+      activityData: { authorName: "Alice", type: "run", visibility: "public" },
+      serverTimestamp,
+    });
+
+    expect(result.fanned).toBe(0);
+    expect(
+      firestore._writes.filter((w) => w.path.startsWith("feeds/"))
+    ).toEqual([]);
   });
 
   it("CROSS-H1: re-delivery overwrites the same feed item (deterministic doc id = activityId)", async () => {
@@ -381,6 +517,30 @@ describe("createNotification", () => {
     expect(data.activityId).toBe("act1");
     expect(data.read).toBe(false);
     expect(data.createdAt).toEqual({ tag: TS_TAG });
+  });
+
+  it("a notification expires 90 days on, under the items TTL policy", async () => {
+    const {
+      createNotification,
+      NOTIFICATION_RETENTION_DAYS,
+    } = require("../lib/socialFanout");
+    const firestore = makeFirestoreStub();
+    const before = Date.now();
+    await createNotification({
+      firestore,
+      fromUid: "alice",
+      toUid: "bob",
+      data: { type: "kudos", activityId: "act1" },
+      serverTimestamp,
+    });
+    const after = Date.now();
+    const days = NOTIFICATION_RETENTION_DAYS * 86_400_000;
+    expect(NOTIFICATION_RETENTION_DAYS).toBe(90);
+    const at = firestore._writes[0].data.expiresAt;
+    expect(at).toBeInstanceOf(Date);
+    expect(at.getTime()).toBeGreaterThanOrEqual(before + days);
+    expect(at.getTime()).toBeLessThanOrEqual(after + days);
+    expect(ttlOn("items", "expiresAt")).toBe(true);
   });
 
   it("self-notification is a no-op (fromUid === toUid)", async () => {

@@ -2542,15 +2542,17 @@ exports.computePerformanceWeek = functions
 // SHARED ACTIVE-USERS SWEEP SCAFFOLD
 // ══════════════════════════════════════════════
 //
-// Four scheduled functions iterate active users in lockstep:
-// weeklyPerformanceRollup, dailyPerformanceRefresh,
+// Five scheduled functions iterate active users in lockstep:
+// weeklyPerformanceRollup, dailyPerformanceRefresh, hourlyStreakNudge,
 // dailyRaceReconciliationSweep, weeklyFellBehindCheck. All share
 // the same shape:
 //
 //   1. Query `users` filtered by `lastActiveAt >= cutoff` (fail
-//      loud — never fall back to a full scan, runaway-cost risk).
-//   2. Chunk the uid list into batches of 10 and run each batch
-//      with `Promise.all` for bounded concurrency.
+//      loud — never fall back to a full scan, runaway-cost risk),
+//      most recently active first, a page at a time.
+//   2. Chunk each page into batches of 10 and run each batch
+//      with `Promise.all` for bounded concurrency, stopping before
+//      the time limit.
 //   3. Per-uid try/catch so one bad user doesn't break the sweep.
 //   4. Outer try/catch on the function body so an unexpected
 //      throw can't crash the pubsub container without a log.
@@ -2590,45 +2592,85 @@ async function readUserProgramContext(uid) {
   };
 }
 
-async function sweepActiveUsers({ name, cutoffDays, perUser }) {
+/** Users read per page of a sweep, and worked on at once. */
+const SWEEP_PAGE_SIZE = 500;
+const SWEEP_CONCURRENCY = 10;
+/** When a sweep stops starting new users: a minute short of
+ *  SCHEDULED_CAP's 540 s, so the run finishes and is recorded. */
+const SWEEP_TIME_LIMIT_MS = 480_000;
+
+/**
+ * Every user active within `cutoffDays`, most recently active first, a page
+ * at a time. `perUser(uid, userData)` gets the user's own document from the
+ * page, so a worker that needs only its fields reads nothing more. A sweep
+ * that reaches its time limit stops starting new users and says so in its
+ * run record; newest first, the people it leaves out are the ones who have
+ * been away longest, not the ones it matters most for.
+ */
+async function sweepActiveUsers({
+  name,
+  cutoffDays,
+  perUser,
+  timeLimitMs = SWEEP_TIME_LIMIT_MS,
+}) {
+  const started = Date.now();
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - cutoffDays);
   const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
+  const query = db
+    .collection("users")
+    .where("lastActiveAt", ">=", cutoffTs)
+    .orderBy("lastActiveAt", "desc")
+    .limit(SWEEP_PAGE_SIZE);
 
-  let usersSnap;
-  try {
-    usersSnap = await db
-      .collection("users")
-      .where("lastActiveAt", ">=", cutoffTs)
-      .get();
-  } catch (err) {
-    // A run that could not find its users failed, and is recorded so;
-    // returning here once made it a success that did nothing.
-    console.error(`${name}: lastActiveAt query failed:`, err.message);
-    throw err;
-  }
-
-  const uids = usersSnap.docs.map((d) => d.id);
-  console.log(`${name}: processing ${uids.length} users`);
-
+  let users = 0;
   let failed = 0;
-  for (let i = 0; i < uids.length; i += 10) {
-    const batch = uids.slice(i, i + 10);
-    await Promise.all(
-      batch.map(async (uid) => {
-        try {
-          await perUser(uid);
-        } catch (err) {
-          failed += 1;
-          console.error(`${name}: failed for ${uid}:`, err.message);
-        }
-      })
-    );
+  let stoppedAtTimeLimit = false;
+  let cursor = null;
+  for (;;) {
+    let page;
+    try {
+      page = await (cursor ? query.startAfter(cursor) : query).get();
+    } catch (err) {
+      // A run that could not find its users failed, and is recorded so;
+      // returning here once made it a success that did nothing.
+      console.error(`${name}: lastActiveAt query failed:`, err.message);
+      throw err;
+    }
+    for (let i = 0; i < page.docs.length; i += SWEEP_CONCURRENCY) {
+      if (Date.now() - started > timeLimitMs) {
+        stoppedAtTimeLimit = true;
+        break;
+      }
+      const batch = page.docs.slice(i, i + SWEEP_CONCURRENCY);
+      users += batch.length;
+      await Promise.all(
+        batch.map(async (userDoc) => {
+          try {
+            await perUser(userDoc.id, userDoc.data() || {});
+          } catch (err) {
+            failed += 1;
+            console.error(`${name}: failed for ${userDoc.id}:`, err.message);
+          }
+        })
+      );
+    }
+    if (stoppedAtTimeLimit || page.docs.length < SWEEP_PAGE_SIZE) break;
+    cursor = page.docs[page.docs.length - 1];
+  }
+  console.log(`${name}: processed ${users} users`);
+  if (stoppedAtTimeLimit) {
+    console.warn(`${name}: stopped at the time limit after ${users} users`);
   }
   // Stored with the run: one person's failure does not fail the sweep, but
-  // the count says how many there were.
-  return { users: uids.length, failed };
+  // the count says how many there were, and a sweep cut short says so. The
+  // flag is written either way: the run record merges, so a run that left
+  // it out would keep the last cut-short run's true.
+  return { users, failed, stoppedAtTimeLimit };
 }
+
+// Exported for the sweep's own order and time-limit test.
+exports._sweepActiveUsers = sweepActiveUsers;
 
 // ── 2) Scheduled: weekly rollup (Sundays 23:15 UTC) ──
 
@@ -3032,19 +3074,22 @@ async function releaseClaimedPushSendLeases(uid, registrations) {
   );
 }
 
-async function maybeSendStreakNudge(uid, now) {
-  const [profileSnap, streakSnap, consentSnap, stateSnap] = await Promise.all([
-    db.doc(`users/${uid}`).get(),
-    db.doc(`users/${uid}/streaks/data`).get(),
-    db.doc(`users/${uid}/settings/push`).get(),
-    db.doc(`users/${uid}/settings/pushState`).get(),
-  ]);
-
-  const timezone = (profileSnap.data() || {}).timezone || null;
+async function maybeSendStreakNudge(uid, now, profile) {
+  // The sweep passes the user's document it already read; the hour is
+  // checked from it before anything else is.
+  const timezone =
+    (profile || (await db.doc(`users/${uid}`).get()).data() || {}).timezone ||
+    null;
   if (!timezone) return false; // skip-on-null-tz (no overnight pings)
 
   // Hour-bucket: only at ~19:00 local, never inside quiet hours.
   if (!isLocalSendHour(now, timezone, STREAK_NUDGE_LOCAL_HOUR)) return false;
+
+  const [streakSnap, consentSnap, stateSnap] = await Promise.all([
+    db.doc(`users/${uid}/streaks/data`).get(),
+    db.doc(`users/${uid}/settings/push`).get(),
+    db.doc(`users/${uid}/settings/pushState`).get(),
+  ]);
 
   // Consent: streak push must be opted in.
   if (!mayTargetUserConsent(consentSnap.data() || null, "streak")) return false;
@@ -3158,19 +3203,20 @@ async function maybeSendStreakNudge(uid, now) {
 // feels timely), at most once/day, gated on "badge" consent. The 2-day
 // recency window + pushedBadgeIds marker prevent back-spam of historical
 // badges and re-sends. Generic payload (Q7 — badge names leak streak counts).
-async function maybeSendBadgeNudge(uid, now) {
-  const [profileSnap, streakSnap, consentSnap, stateSnap] = await Promise.all([
-    db.doc(`users/${uid}`).get(),
-    db.doc(`users/${uid}/streaks/data`).get(),
-    db.doc(`users/${uid}/settings/push`).get(),
-    db.doc(`users/${uid}/settings/pushState`).get(),
-  ]);
-
-  const timezone = (profileSnap.data() || {}).timezone || null;
+async function maybeSendBadgeNudge(uid, now, profile) {
+  const timezone =
+    (profile || (await db.doc(`users/${uid}`).get()).data() || {}).timezone ||
+    null;
   if (!timezone) return false; // skip-on-null-tz (no overnight pings)
 
   // Any non-quiet local hour (timely), never inside quiet hours.
   if (withinQuietHours(localHourInTz(now, timezone))) return false;
+
+  const [streakSnap, consentSnap, stateSnap] = await Promise.all([
+    db.doc(`users/${uid}/streaks/data`).get(),
+    db.doc(`users/${uid}/settings/push`).get(),
+    db.doc(`users/${uid}/settings/pushState`).get(),
+  ]);
 
   // Consent: badge push must be opted in.
   if (!mayTargetUserConsent(consentSnap.data() || null, "badge")) return false;
@@ -3237,11 +3283,13 @@ async function maybeSendBadgeNudge(uid, now) {
 const RECAP_LOCAL_HOUR = 8;
 const RECAP_LOCAL_WEEKDAY = 1; // Monday (0=Sun..6=Sat)
 
-async function maybeSendWeeklyRecap(uid, now) {
-  // Cheap gate first: one profile read for tz, then the local Monday-8am check
-  // (skips the heavier reads on the other 167 hours of the week).
-  const profileSnap = await db.doc(`users/${uid}`).get();
-  const timezone = (profileSnap.data() || {}).timezone || null;
+async function maybeSendWeeklyRecap(uid, now, profile) {
+  // Cheap gate first: the tz (from the sweep's read, or one profile read),
+  // then the local Monday-8am check (skips the heavier reads on the other
+  // 167 hours of the week).
+  const timezone =
+    (profile || (await db.doc(`users/${uid}`).get()).data() || {}).timezone ||
+    null;
   if (!timezone) return false; // skip-on-null-tz (no overnight pings)
   if (localWeekdayInTz(now, timezone) !== RECAP_LOCAL_WEEKDAY) return false;
   if (!isLocalSendHour(now, timezone, RECAP_LOCAL_HOUR)) return false;
@@ -3366,7 +3414,15 @@ exports.hourlyStreakNudge = functions
         summary = await sweepActiveUsers({
           name: "hourlyStreakNudge",
           cutoffDays: 14,
-          perUser: async (uid) => {
+          perUser: async (uid, profile) => {
+            // Each nudge goes out at a local hour, never in quiet hours
+            // and never without a timezone. The sweep's page holds the
+            // user's document, so the hours when nothing can go out cost
+            // no reads at all.
+            const timezone = profile.timezone || null;
+            if (!timezone || withinQuietHours(localHourInTz(now, timezone))) {
+              return;
+            }
             if (
               !(await accountDeletionLocks.shouldSystemWriteProceed(
                 db,
@@ -3381,7 +3437,7 @@ exports.hourlyStreakNudge = functions
             // skip the others. Recap is evaluated first so its per-day marker
             // (recap > streak) suppresses the evening streak nudge.
             try {
-              if (await maybeSendWeeklyRecap(uid, now)) recapSent++;
+              if (await maybeSendWeeklyRecap(uid, now, profile)) recapSent++;
             } catch (e) {
               console.error("hourlyStreakNudge: recap send failed", {
                 uid,
@@ -3389,7 +3445,7 @@ exports.hourlyStreakNudge = functions
               });
             }
             try {
-              if (await maybeSendStreakNudge(uid, now)) sent++;
+              if (await maybeSendStreakNudge(uid, now, profile)) sent++;
             } catch (e) {
               console.error("hourlyStreakNudge: streak send failed", {
                 uid,
@@ -3397,7 +3453,7 @@ exports.hourlyStreakNudge = functions
               });
             }
             try {
-              if (await maybeSendBadgeNudge(uid, now)) badgeSent++;
+              if (await maybeSendBadgeNudge(uid, now, profile)) badgeSent++;
             } catch (e) {
               console.error("hourlyStreakNudge: badge send failed", {
                 uid,
@@ -4345,12 +4401,20 @@ async function syncFastestEffortProgress(
     return;
   }
 
+  // Only the challenges still open on the run's day, as the SUM path reads
+  // them: challenges are never deleted, so every fastest-effort challenge
+  // ever would grow with each edition. The metric is checked here rather
+  // than queried, which keeps to the endDate index the SUM path already
+  // uses; the apply helper still checks the window.
+  const dayBound = openOnDayBound(activityDateKey);
+  if (!dayBound) return;
   const challengesSnap = await db
     .collection("challenges")
-    .where("metric", "==", "fastest_effort")
+    .where("endDate", ">", dayBound)
     .get();
 
   for (const doc of challengesSnap.docs) {
+    if (doc.data().metric !== "fastest_effort") continue;
     await applyFastestEffortToChallenge(
       doc.id,
       doc.data(),
@@ -5735,7 +5799,14 @@ exports.recreditMyLiftVolume = functions
  * appeal and a moderator can review.
  */
 exports.onActivityCreated = functions
-  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .runWith({
+    ...TRIGGER_CAP,
+    failurePolicy: true,
+    // The fan-out writes a page of 100 followers per transaction; five
+    // minutes reaches tens of thousands of them, and the 60 s default
+    // would stop a large account's post part of the way through its list.
+    timeoutSeconds: 300,
+  })
   .firestore.document("activities/{activityId}")
   .onCreate(async (snap, context) => {
     const activityId = context.params.activityId;
