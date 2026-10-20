@@ -2038,6 +2038,26 @@ suite(
       );
     });
 
+    it("a createdAt that is not the server's time — rejected", async () => {
+      /* Discover orders by createdAt, and the rule checked only that it was
+         a timestamp: a post dated 2099 sat at the top of everyone's Discover
+         for good. postActivity sends serverTimestamp(), which the valid
+         cases above use. */
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      for (const [id, createdAt] of [
+        ["future-post", Timestamp.fromDate(new Date("2099-01-01T00:00:00Z"))],
+        ["past-post", Timestamp.fromDate(new Date("2020-01-01T00:00:00Z"))],
+        ["client-now-post", Timestamp.now()],
+      ] as const) {
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", id),
+            makeValidActivity({ createdAt })
+          )
+        );
+      }
+    });
+
     it("non-zero initial kudosCount — rejected (counter-forgery on create)", async () => {
       const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       await assertFails(
@@ -2907,9 +2927,21 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
 
   beforeEach(async () => {
     await env.clearFirestore();
+    // A and B follow each other: the consent a bond stands on.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      for (const [from, to] of [
+        [A_UID, B_UID],
+        [B_UID, A_UID],
+      ]) {
+        await setDoc(doc(ctx.firestore(), `following/${from}/users/${to}`), {
+          createdAt: serverTimestamp(),
+        });
+      }
+    });
   });
 
-  const BOND = "bond-ab";
+  // The id createBond derives: the pair's uids, sorted.
+  const BOND = `${A_UID}__${B_UID}`;
   const coldBond = (members: string[]) => ({
     members,
     streak: 0,

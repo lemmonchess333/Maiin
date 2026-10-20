@@ -78,8 +78,25 @@ afterAll(async () => {
   await env?.cleanup();
 });
 
+/** A and B follow each other: the consent a bond stands on. */
+async function seedMutualFollow(
+  edges: Array<[string, string]> = [
+    [A, B],
+    [B, A],
+  ]
+) {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    for (const [from, to] of edges) {
+      await setDoc(doc(ctx.firestore(), `following/${from}/users/${to}`), {
+        createdAt: new Date(),
+      });
+    }
+  });
+}
+
 beforeEach(async () => {
   await env?.clearFirestore();
+  if (env) await seedMutualFollow();
 });
 
 const A = "user-a";
@@ -173,12 +190,37 @@ suite("partnerBonds rules", () => {
     await assertFails(setDoc(doc(a, "partnerBonds", BOND), bondDoc()));
 
     await env.clearFirestore();
+    await seedMutualFollow();
     await env.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(doc(ctx.firestore(), `blocks/${A}/users/${B}`), {
         blockedAt: new Date(),
       });
     });
     await assertFails(setDoc(doc(a, "partnerBonds", BOND), bondDoc()));
+  });
+
+  it("refuses a bond with someone who does not follow you back", async () => {
+    /* Consent is the mutual follow, and only the client checked it, so a
+       script could bond a stranger and then read the day they last trained
+       off the bond, which the server writes on every session they save.
+       Anchor: the first case is the same bond with both follows in place. */
+    const a = env.authenticatedContext(A).firestore();
+    for (const edges of [[[A, B]], [[B, A]], []] as Array<
+      Array<[string, string]>
+    >) {
+      await env.clearFirestore();
+      await seedMutualFollow(edges);
+      await assertFails(setDoc(doc(a, "partnerBonds", BOND), bondDoc()));
+    }
+  });
+
+  it("refuses a bond under any id but the pair's sorted one", async () => {
+    // One bond per pair: a second id would be a second partner slot.
+    const a = env.authenticatedContext(A).firestore();
+    await assertFails(setDoc(doc(a, "partnerBonds", "bond-2"), bondDoc()));
+    await assertFails(
+      setDoc(doc(a, "partnerBonds", `${B}__${A}`), bondDoc({ members: [B, A] }))
+    );
   });
 
   it("refuses a bond the author is not a member of", async () => {

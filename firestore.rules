@@ -790,7 +790,10 @@ service cloud.firestore {
         )
         && request.resource.data.type in ['run', 'workout']
         && request.resource.data.visibility in ['public', 'followers', 'private']
-        && request.resource.data.createdAt is timestamp
+        // The server's time, as postActivity sends it (serverTimestamp).
+        // Discover orders by it, so a date in 2099 pinned a post at the
+        // top of everyone's Discover for good.
+        && request.resource.data.createdAt == request.time
         && request.resource.data.kudosCount == 0
         && request.resource.data.commentCount == 0
         // Payload size caps — pathological payload prevention
@@ -1288,10 +1291,39 @@ service cloud.firestore {
             !('photoUrl' in request.resource.data)
             || isAllowedPhotoUrl(request.resource.data.photoUrl)
           )
+          // The attached session is the composer's snapshot (toSnapshot in
+          // SpacePostComposer.tsx), served to every viewer of the Space.
+          // `is map` alone took 500 KB of anything.
           && (
             !('activity' in request.resource.data)
-            || request.resource.data.activity is map
+            || (request.resource.data.activity is map
+                && request.resource.data.activity.keys().hasOnly([
+                     'type', 'distance', 'avgPace', 'duration',
+                     'elevationGain', 'routePreview', 'totalVolume',
+                     'exerciseCount', 'muscleGroups', 'leadExerciseId'
+                   ])
+                && request.resource.data.activity.get('type', null)
+                     in ['run', 'workout']
+                // The composer downsamples a route to 40 points.
+                && (
+                  !('routePreview' in request.resource.data.activity)
+                  || (request.resource.data.activity.routePreview is list
+                      && request.resource.data.activity.routePreview.size() <= 100)
+                )
+                && (
+                  !('muscleGroups' in request.resource.data.activity)
+                  || (request.resource.data.activity.muscleGroups is list
+                      && request.resource.data.activity.muscleGroups.size() <= 20)
+                )
+                && (
+                  !('leadExerciseId' in request.resource.data.activity)
+                  || (request.resource.data.activity.leadExerciseId is string
+                      && request.resource.data.activity.leadExerciseId.size() <= 200)
+                ))
           )
+          // The server's time, as the composer sends it: the Space's
+          // posts are listed newest first by it.
+          && request.resource.data.createdAt == request.time
           && (
             !('likeCount' in request.resource.data)
             || request.resource.data.likeCount == 0
@@ -1545,6 +1577,16 @@ service cloud.firestore {
         return request.auth != null
           && request.auth.uid in resource.data.members;
       }
+      // Consent is the mutual follow (partnerStreakApi.createBond). It was
+      // checked only in the client, so anyone could bond a stranger: the
+      // bond then carries the stranger's last active day, which the server
+      // writes on every session they save, and takes one of their five
+      // partner slots. With these two the create reads nine documents, one
+      // under the per-request limit of ten.
+      function followEachOther(a, b) {
+        return exists(/databases/$(database)/documents/following/$(a)/users/$(b))
+          && exists(/databases/$(database)/documents/following/$(b)/users/$(a));
+      }
       allow read: if bondMember();
       // The whole INITIAL state is pinned, not just `streak`. `update` is
       // server-only (below), so create is the one client-reachable moment —
@@ -1565,6 +1607,15 @@ service cloud.firestore {
         && request.resource.data.members.size() == 2
         && request.resource.data.members[0] != request.resource.data.members[1]
         && request.auth.uid in request.resource.data.members
+        // One bond per pair, at the id createBond derives (sorted uids), so
+        // a pair cannot take a second slot under another id.
+        && request.resource.data.members[0] < request.resource.data.members[1]
+        && bondId == request.resource.data.members[0] + '__'
+             + request.resource.data.members[1]
+        && followEachOther(
+             request.resource.data.members[0],
+             request.resource.data.members[1]
+           )
         && request.resource.data.streak == 0
         && request.resource.data.lastSharedDay == null
         && request.resource.data.lastActive.size() == 0
