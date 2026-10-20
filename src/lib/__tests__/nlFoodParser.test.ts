@@ -1093,3 +1093,36 @@ describe("oats by their packet names are weighed dry", () => {
     );
   });
 });
+
+describe("a count of the unit a serving is written in", () => {
+  /* G4-12: a row whose serving counts its own units ("2 tbsp (32g)",
+     "2 slices (16g)", "1 omelette (2 eggs)") was multiplied by the typed
+     count again, so "2 tbsp peanut butter" logged 376 kcal where its own
+     row says 188, and "3 egg omelette" logged six eggs. References:
+     peanut butter 188 per 2 tbsp, bacon 90 per 2 slices, omelette 154
+     per 2 eggs. */
+  it.each([
+    ["2 tbsp peanut butter", 188],
+    ["1 tbsp peanut butter", 94],
+    ["4 tbsp peanut butter", 376],
+    ["2 slices of bacon", 90],
+    ["4 slices of bacon", 180],
+    ["a slice of bacon", 45],
+    ["3 egg omelette", 231],
+  ] as const)("%s", (text, calories) => {
+    expect(parseFoodText(text)[0]).toMatchObject({ calories });
+  });
+
+  it("keeps counting servings when the serving counts something else", () => {
+    // The anchors: toast is "1 slice", rice a weighed bowl, an egg "1 large".
+    expect(parseFoodText("2 slices of toast")[0].calories).toBe(
+      2 * parseFoodText("toast")[0].calories
+    );
+    expect(parseFoodText("2 cups of rice")[0].calories).toBe(
+      2 * parseFoodText("rice")[0].calories
+    );
+    expect(parseFoodText("2 eggs")[0].calories).toBe(
+      2 * parseFoodText("egg")[0].calories
+    );
+  });
+});

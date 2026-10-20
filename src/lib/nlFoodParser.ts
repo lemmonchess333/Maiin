@@ -1995,6 +1995,24 @@ function parseServingMl(serving: string): number | null {
   return m ? parseFloat(m[1]) : null;
 }
 
+/**
+ * How many of the typed unit a serving holds, when it counts them:
+ * "2 tbsp (32g)" holds 2 tbsp, "2 slices (16g)" 2 slices, "1 omelette
+ * (2 eggs)" 2 eggs. A count typed against that unit ("2 tbsp peanut
+ * butter", "3 egg omelette") counts units, not servings: multiplied as
+ * servings, 2 tbsp logged 4.
+ */
+function servingUnits(serving: string, rest: string): number | null {
+  const unit = depluralize(rest.toLowerCase().split(/\s+/)[0] ?? "");
+  if (unit.length < 2) return null;
+  for (const m of serving
+    .toLowerCase()
+    .matchAll(/(\d+(?:\.\d+)?)\s+([a-z]+)/g)) {
+    if (depluralize(m[2]) === unit) return Number(m[1]);
+  }
+  return null;
+}
+
 /** Scale only against a compatible reference. Mass and volume cannot be
  *  interchanged without food-specific conversion data. */
 function foodMultiplier(
@@ -2004,9 +2022,12 @@ function foodMultiplier(
   const item = FOOD_DB[key];
   let multiplier = amount.qty;
   const piece = amount.counted ? pieceGrams(key, amount.rest) : null;
+  const units = amount.counted ? servingUnits(item.serving, amount.rest) : null;
   if (piece) {
     const servingGrams = parseServingGrams(item.serving);
     if (servingGrams) multiplier = (amount.qty * piece) / servingGrams;
+  } else if (units) {
+    multiplier = amount.qty / units;
   } else if (amount.grams !== undefined) {
     const servingGrams = parseServingGrams(item.serving);
     if (!servingGrams) return null;
