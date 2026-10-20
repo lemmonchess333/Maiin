@@ -1,0 +1,163 @@
+{
+  "exerciseId": "calf-raise",
+  "version": "anatomy-v3-2026-10-18-calf-timing-correction-v1",
+  "width": 1024,
+  "height": 1536,
+  "reference": {
+    "path": "form-frames/calf-raise/3.webp",
+    "sha256": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490"
+  },
+  "cueSha256": "2f242605e505975db3cd60a9d9dd8bac4f336397481a008f3ba2438c0fae8f21",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:53.495524+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Heels, legs/hips, torso/head and shoulder load begin rising together in the middle pose; forefeet remain supported. Reverse return retains a modest below-step stretch. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Fixed step, cable station and shoulder load with connected selected stack. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Heels, legs/hips, torso/head and shoulder load begin rising together in the middle pose; forefeet remain supported. Reverse return retains a modest below-step stretch. Actual named native supports are measured in all six frames: fixedStationFloorBaseMaterialFeature1, fixedStationFloorBaseMaterialFeature2. Maximum axis drift 0px. Dimensions: fixedStationFloorBaseProjectedFeatureSpan, oppositeFixedSupportProjectedFeatureSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Heels, legs/hips, torso/head and shoulder load begin rising together in the middle pose; forefeet remain supported. Reverse return retains a modest below-step stretch. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Gastrocnemius #7B72E9; secondary Soleus #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Set your stretch: Stand tall; lower heels below the step. / Raise your heels: Push through forefeet; keep knees softly straight. / Squeeze your calves: Lift heels high and squeeze your calves. / Hold the top: Pause briefly; keep your torso upright. / Lower slowly: Lower your heels slowly without bouncing. / Return to stretch: Let heels sink below the step gently.. Preparation remains null. Heels, legs/hips, torso/head and shoulder load begin rising together in the middle pose; forefeet remain supported. Reverse return retains a modest below-step stretch."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Heels, legs/hips, torso/head and shoulder load begin rising together in the middle pose; forefeet remain supported. Reverse return retains a modest below-step stretch. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Exact unchanged art retains the earlier registered all-six light/dark visual evidence; current capture artefacts are explicitly excluded. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-18-calf-timing/calf-raise.json (sha256 fe54c2a08852f0d25b54c8d5d23f988d2c70f803dfb9defb78859fab9ae99cb7). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Exact unchanged art retains the earlier registered all-six light/dark visual evidence; current capture artefacts are explicitly excluded. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-18-calf-timing/calf-raise.json (sha256 fe54c2a08852f0d25b54c8d5d23f988d2c70f803dfb9defb78859fab9ae99cb7). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/calf-raise/1.webp",
+      "sha256": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+      "anchors": {
+        "fixedStationFloorBaseMaterialFeature1": { "x": 55, "y": 1262 },
+        "fixedStationFloorBaseMaterialFeature2": { "x": 95, "y": 1297 }
+      },
+      "invariantDimensions": {
+        "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+        "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+      }
+    },
+    {
+      "path": "form-frames/calf-raise/2.webp",
+      "sha256": "f62196c455ae718790a76f014c79de10bfbcd33cfac329eb97b4156962375b2b",
+      "anchors": {
+        "fixedStationFloorBaseMaterialFeature1": { "x": 55, "y": 1262 },
+        "fixedStationFloorBaseMaterialFeature2": { "x": 95, "y": 1297 }
+      },
+      "invariantDimensions": {
+        "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+        "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+      }
+    },
+    {
+      "path": "form-frames/calf-raise/3.webp",
+      "sha256": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+      "anchors": {
+        "fixedStationFloorBaseMaterialFeature1": { "x": 55, "y": 1262 },
+        "fixedStationFloorBaseMaterialFeature2": { "x": 95, "y": 1297 }
+      },
+      "invariantDimensions": {
+        "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+        "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+      }
+    },
+    {
+      "path": "form-frames/calf-raise/4.webp",
+      "sha256": "e64a4abbae4854b1c412aaa0a432ef8124956a8d7040048f123a1e872a0e1490",
+      "anchors": {
+        "fixedStationFloorBaseMaterialFeature1": { "x": 55, "y": 1262 },
+        "fixedStationFloorBaseMaterialFeature2": { "x": 95, "y": 1297 }
+      },
+      "invariantDimensions": {
+        "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+        "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+      }
+    },
+    {
+      "path": "form-frames/calf-raise/5.webp",
+      "sha256": "f62196c455ae718790a76f014c79de10bfbcd33cfac329eb97b4156962375b2b",
+      "anchors": {
+        "fixedStationFloorBaseMaterialFeature1": { "x": 55, "y": 1262 },
+        "fixedStationFloorBaseMaterialFeature2": { "x": 95, "y": 1297 }
+      },
+      "invariantDimensions": {
+        "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+        "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+      }
+    },
+    {
+      "path": "form-frames/calf-raise/6.webp",
+      "sha256": "57a2243cec977e4fe98633b0fb079a2c0cb3b154b0dfa47489dad89904b6363d",
+      "anchors": {
+        "fixedStationFloorBaseMaterialFeature1": { "x": 55, "y": 1262 },
+        "fixedStationFloorBaseMaterialFeature2": { "x": 95, "y": 1297 }
+      },
+      "invariantDimensions": {
+        "fixedStationFloorBaseProjectedFeatureSpan": 53.150729063673246,
+        "oppositeFixedSupportProjectedFeatureSpan": 54.08326913195984
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-18-calf-timing/calf-raise.json",
+    "sha256": "fe54c2a08852f0d25b54c8d5d23f988d2c70f803dfb9defb78859fab9ae99cb7"
+  },
+  "historicalFindings": [
+    "The prior early heel/body timing mismatch is corrected in the shared middle pose: heels, legs/hips, torso/head and shoulder load begin rising together.",
+    "Three genuine discrete poses1/2/3/3/2/1 remain; no continuous trajectory or exact biomechanical certification is claimed.",
+    "Minor inherited endpoint contour/contact differences and modest below-step heel stretch remain."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/calf-raise.json",
+    "sha256": "737da151762b857f2498905173c75516b719be35fbe69607ff18e95f0ff70832"
+  },
+  "mobileEvidenceReusedForUnchangedArt": true
+}

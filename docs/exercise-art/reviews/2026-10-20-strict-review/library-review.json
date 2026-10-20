@@ -1,0 +1,634 @@
+{
+  "baseline": "a97944f5d8a6350d114e18bba2a18bb1d243ae35",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "strictApproved": 31,
+  "ownerRetained": 2,
+  "correctedSets": [
+    "leg-press",
+    "rowing-machine",
+    "overhead-extension",
+    "t-bar-row",
+    "bike",
+    "barbell-row",
+    "dips",
+    "lu-raise"
+  ],
+  "reviewedSets": [
+    {
+      "id": "lu-raise",
+      "decision": "approved",
+      "changed": true,
+      "version": "anatomy-v3-2026-10-20-lu-fa56-full-overhead-v1",
+      "maxAnchorAxisDriftPx": 1,
+      "maxInvariantRelativeDrift": 0.0068685129523151645,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/lu-raise.json",
+      "currentMobileEvidence": {
+        "four-pose-review.png": {
+          "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/four-pose-review.png",
+          "sha256": "3d1d5eb37bf2c4e78446902df39aee8085584268767bd784d93f31e20d33259d"
+        },
+        "final-native-proof.json": {
+          "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/final-native-proof.json",
+          "sha256": "47fdc4526e6c391b94ecc9fdf028292782738bbd270ea4047481f3996182971e"
+        },
+        "source-comparison.json": {
+          "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/source-comparison.json",
+          "sha256": "12fb16e13565b5d2285aca96ccf9d9ca61b6883331c9884eb68423993ed1a2d0"
+        },
+        "registered-dark-card.png": {
+          "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-dark-card.png",
+          "sha256": "1d4d6803e5d2491af07de67941f4725923c9dcbe4153ee7cbc4500cd2d4d7592"
+        },
+        "registered-light-card.png": {
+          "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-light-card.png",
+          "sha256": "af0733d1519cfe9398fcdaf535cfa06f5ef4ab42cb6f73f0e4c11a78f199ca19"
+        },
+        "registered-dark-overhead.png": {
+          "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-dark-overhead.png",
+          "sha256": "0ca1183b0b928fd21c2b731b0ebda38f8c43dbeaba16747a74cbcda394e1dcef"
+        },
+        "registered-light-overhead.png": {
+          "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-light-overhead.png",
+          "sha256": "b9f7a8377ae9f94e308657c9d65a9c7b0382ebbe16c790b6a6058be878a73d04"
+        },
+        "registered-dark-observations.json": {
+          "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-dark-observations.json",
+          "sha256": "2f4987628f11814ded6b4370b1b310a24f2ec70ad45ea8bfae3c54a41016cb3a"
+        },
+        "registered-light-observations.json": {
+          "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-light-observations.json",
+          "sha256": "5c2b224a20c269d98a4a16a7f6b429e75066cdfdafd3465dbf9d7d2d26bcb6e7"
+        },
+        "registered-eight-dark-cards.png": {
+          "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-eight-dark-cards.png",
+          "sha256": "03eb8f56c27e939461a90f7463f7b7ffea00444cf1d6dad0ef8b4751993e708a"
+        },
+        "registered-eight-light-cards.png": {
+          "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-eight-light-cards.png",
+          "sha256": "7e17d7aed5ce64eb025b40c225e6a2a72819acfb0fb717c728e3ef7c9c4e2237"
+        },
+        "registered-eight-cards.json": {
+          "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-eight-cards.json",
+          "sha256": "bb21de2384059fc7143dcaa9b4536fce20658c40a1f702b505bffbe4df8fdc03"
+        }
+      },
+      "priorMobileEvidenceRetained": false
+    },
+    {
+      "id": "incline-db-curl",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-16-native-moving-source-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/incline-db-curl.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/incline-db-curl.json",
+        "sha256": "ed411bfe5a41f5074bb5bbf9e9b76422f4f709069b1d63ca3ecd5ee9953d85cb"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "leg-press",
+      "decision": "approved",
+      "changed": true,
+      "version": "anatomy-v3-2026-10-20-strict-native-correction-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/leg-press.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/leg-press.json",
+        "sha256": "6d6f7927199310e1360eda4f5602872e86ae1c0977c722c0142cad58af12d02b"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "handstand-push-ups",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-16-native-head-profile-v1",
+      "maxAnchorAxisDriftPx": 1,
+      "maxInvariantRelativeDrift": 0.0027700831024930483,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/handstand-push-ups.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/handstand-push-ups.json",
+        "sha256": "de5d8c6868cfa7e41572fcf9a1fd1828a8e84187c5daa560030f1bbfa6c71161"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "straight-arm-pulldown",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-16-native-local-repair-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/straight-arm-pulldown.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/straight-arm-pulldown.json",
+        "sha256": "f8374ee566a33eedb9b4a21cd00b5478b4e25ed93c2d9099e6e8e8af8da7b12c"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "front-squat",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-16-worn-reference-harness-source-tone-v1",
+      "maxAnchorAxisDriftPx": 1,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/front-squat.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/front-squat.json",
+        "sha256": "1b5aa1b84ba772fdbb4db46adcd908758999591c15b3ee776486bfb443754469"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "seated-row",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-16-controlled-hinge-cable-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/seated-row.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/seated-row.json",
+        "sha256": "87780c206109e65f8fbac27d18d6de4544c3808878107d0d9ef898d65f00e476"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "swimming",
+      "decision": "retain-owner-release",
+      "visualReview": "Six current native drawings reviewed; same model/palette, coherent depicted movement and prior actual registered mobile evidence retained. No new visual defect requiring a redraw identified.",
+      "strictLimitation": "The swimmer and waterline provide no two fixed material scene anchors and two invariant scene dimensions. Waterline/canvas coordinates are not adopted as invented physical landmarks. Visual source and previous actual registered mobile review remain valid; strict numeric scene evidence is absent.",
+      "unchangedAssets": [
+        {
+          "path": "form-frames/swimming/1.webp",
+          "sha256": "229fb88e464358b2261443e643b2446eef0b578c89d412bb01a58a2d570af8e3"
+        },
+        {
+          "path": "form-frames/swimming/2.webp",
+          "sha256": "915b47aa2432fc7b9334c5d981c1931e4c24804ab3ac8e9ca9147747c4fda7ca"
+        },
+        {
+          "path": "form-frames/swimming/3.webp",
+          "sha256": "579164c7963935cece7619a2719a9660eafaf9e49e40bcd1c62ee66ec34c0a7b"
+        },
+        {
+          "path": "form-frames/swimming/4.webp",
+          "sha256": "03c1dcb07e4f14423dd3c20e85094a43261772e54c5e76dcf8a624bbe7af15b9"
+        },
+        {
+          "path": "form-frames/swimming/5.webp",
+          "sha256": "dda4e035220c900148f49e79e6d37f3eeeee72e27173e5fdbebb7c51ec3e0ebf"
+        },
+        {
+          "path": "form-frames/swimming/6.webp",
+          "sha256": "5c856ae46bb4f5c51300bb81c51fa1ac83bc199fb288844f6c044ec50bebfbb9"
+        }
+      ],
+      "priorReview": "docs/exercise-art/releases/2026-10-20-remaining33-final/swimming.json"
+    },
+    {
+      "id": "stairmaster",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-20-native-final-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/stairmaster.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/stairmaster.json",
+        "sha256": "19fa8e313620fd695eda7c1892b0f8d91ec56a6f50de2590ad48d40b9f8f8a14"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "turkish-get-up",
+      "decision": "retain-owner-release",
+      "visualReview": "Six current native drawings reviewed; same model/palette, coherent depicted movement and prior actual registered mobile evidence retained. No new visual defect requiring a redraw identified.",
+      "strictLimitation": "Support changes from back/elbow to hand, knee and standing feet. Two comparable fixed material anchors and two invariant dimensions across those grounded phases have not been established. Repeated identical frames or canvas bounds are not used to manufacture a passing contact phase.",
+      "unchangedAssets": [
+        {
+          "path": "form-frames/turkish-get-up/1.webp",
+          "sha256": "09af983678602258edaad79b70ef2791b8ffef99d00cabb53c81831b7d71b9c9"
+        },
+        {
+          "path": "form-frames/turkish-get-up/2.webp",
+          "sha256": "b9a49e9c834f84b06f42bc8c22b5bfc92f3beea5b9cefc3f52ce291c501a812e"
+        },
+        {
+          "path": "form-frames/turkish-get-up/3.webp",
+          "sha256": "7dd32179c3d2547a8521fb4c9161d89e81bbe80797ce47975c7f6041d79feece"
+        },
+        {
+          "path": "form-frames/turkish-get-up/4.webp",
+          "sha256": "643fc1b60c4d9f0a809bf4b134f056580992bd9e6e5c7a083fe31bf7d6e33abe"
+        },
+        {
+          "path": "form-frames/turkish-get-up/5.webp",
+          "sha256": "7e705ce5a72feefb363062c7517a692f495fc14e05129d06603e23fa071f4971"
+        },
+        {
+          "path": "form-frames/turkish-get-up/6.webp",
+          "sha256": "7f0ad1540c87d2a12bdde4442174321caa4c82dbaecc5fedf82de271a09c2b10"
+        }
+      ],
+      "priorReview": "docs/exercise-art/releases/2026-10-19-remaining33-batch1/turkish-get-up.json"
+    },
+    {
+      "id": "assault-bike",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-20-native-final-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/assault-bike.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/assault-bike.json",
+        "sha256": "17efccf1820517e82499ca85e1aea0d57145d51d6317617b50cafe1a78c84055"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "spin-bike",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/spin-bike.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/spin-bike.json",
+        "sha256": "4f7c01e69bc98a4227181c49c8ceaf24abe3180166b0b60c9685a6e805942da9"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "elliptical",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-15-custom-rear-drive-elliptical-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/elliptical.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/elliptical.json",
+        "sha256": "e42bb27ea899ba2b66967a885e1e42d5c5478ab1cb5e022ec3436faea5f2e423"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "rowing-machine",
+      "decision": "approved",
+      "changed": true,
+      "version": "anatomy-v3-2026-10-20-strict-native-correction-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/rowing-machine.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/rowing-machine.json",
+        "sha256": "8b2e5793d0977ab022433d86dc8c3e70fdd0d485a8551bbf794803e5656e23d0"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "pendlay-row",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-15-retained-whole-pair-pendlay-v1",
+      "maxAnchorAxisDriftPx": 1,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/pendlay-row.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/pendlay-row.json",
+        "sha256": "993583cd415172130cb301ba4556cdb270c8d70b8b62111757582f2f77c21b81"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "leg-extension",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-15-material-endpoint-leg-extension-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/leg-extension.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/leg-extension.json",
+        "sha256": "83c73447d5028d0d7df097d98224c1b5f03a7b65d3a82637b1b3f2a48b8ba9a4"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-19-native-followup-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/single-leg-calf-raise.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/single-leg-calf-raise.json",
+        "sha256": "f7b9c3884d2990eeec7fc1ebbc6a9ea6a5297200d85c73e14e7b6c5373f5a515"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "side-plank",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/side-plank.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/side-plank.json",
+        "sha256": "9a260a95dddfe986b0b5d8343a82ad94b64a1b93b0eafc9ee7a3bfcb63144988"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "overhead-extension",
+      "decision": "approved",
+      "changed": true,
+      "version": "anatomy-v3-2026-10-20-strict-native-correction-v1",
+      "maxAnchorAxisDriftPx": 1,
+      "maxInvariantRelativeDrift": 0.005298155063872878,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/overhead-extension.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/overhead-extension.json",
+        "sha256": "cb302d15044688712f8e504985a06e8c962e2a9810ff379eef994d7bdef381ab"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "face-pulls",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-15-ergonomic-rope-two-endpoint-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/face-pulls.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/face-pulls.json",
+        "sha256": "b4032820fd39e7277e4c9cbb5946f31d0b8011c79659557d7fd6aa9593cd7d71"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "t-bar-row",
+      "decision": "approved",
+      "changed": true,
+      "version": "anatomy-v3-2026-10-20-strict-native-correction-v1",
+      "maxAnchorAxisDriftPx": 1,
+      "maxInvariantRelativeDrift": 0.006109545818665962,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/t-bar-row.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/t-bar-row.json",
+        "sha256": "436fb0423e693538d5402d0da976c6bfa9c517b3f09d25a5553d43475d1c9fef"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "bike",
+      "decision": "approved",
+      "changed": true,
+      "version": "anatomy-v3-2026-10-20-strict-native-correction-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/bike.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/bike.json",
+        "sha256": "c577718b871a47ee7b47a9c57c32ba6f808debd79aaf229af3448bbca801f9f2"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "goblet-squat",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0.005393885650360364,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/goblet-squat.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/goblet-squat.json",
+        "sha256": "7d5d0837f667966787faf53903ea9b97711a1f55949e77659b44cf5b7c21be29"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "squat",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+      "maxAnchorAxisDriftPx": 1,
+      "maxInvariantRelativeDrift": 0.006092821202019483,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/squat.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/squat.json",
+        "sha256": "b61da1e0d05dd968e87a100677de17d2b361fc7a4d9b5b801b8b618eb131faff"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "barbell-curl",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-19-native-followup-v1",
+      "maxAnchorAxisDriftPx": 1,
+      "maxInvariantRelativeDrift": 0.008888888888888835,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/barbell-curl.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/barbell-curl.json",
+        "sha256": "26d8cfba8e11b507528c093190c685dca00e263e341dab8081469090d2130911"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "barbell-row",
+      "decision": "approved",
+      "changed": true,
+      "version": "anatomy-v3-2026-10-20-strict-native-correction-v1",
+      "maxAnchorAxisDriftPx": 1,
+      "maxInvariantRelativeDrift": 0.005649717514124353,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/barbell-row.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/barbell-row.json",
+        "sha256": "11b631463722622229c568bd1f945067c2f2ea2ccf5e42ddc01a6780a6293cf7"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "bench-press",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-18-supported-continuity-v1",
+      "maxAnchorAxisDriftPx": 0.5,
+      "maxInvariantRelativeDrift": 0.0078125,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/bench-press.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/bench-press.json",
+        "sha256": "b79cd88cea76d7b5b3969f8e7330e56d927e819ba314153920d6565f8efbb450"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "calf-raise",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-18-calf-timing-correction-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/calf-raise.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/calf-raise.json",
+        "sha256": "737da151762b857f2498905173c75516b719be35fbe69607ff18e95f0ff70832"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "standing-calf-raise",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-18-calf-timing-correction-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/standing-calf-raise.json",
+      "currentMobileEvidence": {
+        "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/standing-calf-raise.json",
+        "sha256": "884ad373fdd07e2715debf9b6bd683e8da319f6164675209bb85dcccddbda7de"
+      },
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "dips",
+      "decision": "approved",
+      "changed": true,
+      "version": "anatomy-v3-2026-10-20-strict-native-correction-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/dips.json",
+      "currentMobileEvidence": null,
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "overhead-press",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/overhead-press.json",
+      "currentMobileEvidence": null,
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "rope-tricep-pushdown",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-18-equipment-correction-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/rope-tricep-pushdown.json",
+      "currentMobileEvidence": null,
+      "priorMobileEvidenceRetained": true
+    },
+    {
+      "id": "skull-crushers",
+      "decision": "approved",
+      "changed": false,
+      "version": "anatomy-v3-2026-10-18-equipment-correction-v1",
+      "maxAnchorAxisDriftPx": 0,
+      "maxInvariantRelativeDrift": 0,
+      "release": "docs/exercise-art/releases/2026-10-20-strict-review/skull-crushers.json",
+      "currentMobileEvidence": null,
+      "priorMobileEvidenceRetained": true
+    }
+  ],
+  "sourceArchives": [
+    {
+      "id": "leg-press",
+      "path": "docs/exercise-art/sources/leg-press/2026-10-20-strict-review/native-source.zip",
+      "sha256": "a117b4bd30c645958d5b0ffec6208faa83d83eff83a41b6ee10d368a3dd9db15",
+      "bytes": 8790282,
+      "scope": "Change only the existing Custom apparatus ORA layer from three plates to one. All other athlete, pigment and background layers remain byte-exact; linkage and fixed geometry are unchanged.",
+      "independentReproductionExact": true
+    },
+    {
+      "id": "rowing-machine",
+      "path": "docs/exercise-art/sources/rowing-machine/2026-10-20-strict-review/native-source.zip",
+      "sha256": "8be7a7d901a06bbdcb594780662ec26f4fccae5ffff1fc3a4cc567550a760e3b",
+      "bytes": 16432070,
+      "scope": "Preserve the original stationary front and rear machine supports at unchanged coordinates. All athlete, moving seat, chain and pedals outside the inspected regions remain exact.",
+      "independentReproductionExact": true
+    },
+    {
+      "id": "overhead-extension",
+      "path": "docs/exercise-art/sources/overhead-extension/2026-10-20-strict-review/native-source.zip",
+      "sha256": "67351e4a6aee88554c9aa5adfca2aadd6ffcf0e79d3650d1641e0ff698aa0202",
+      "bytes": 8415380,
+      "scope": "Normalize the entire lowered source with a single uniform scale and translation. Final scale 1.0322697456032908, translation [-9.28307596033136,-45.91359497998633]. No anatomical part fitting.",
+      "independentReproductionExact": true
+    },
+    {
+      "id": "t-bar-row",
+      "path": "docs/exercise-art/sources/t-bar-row/2026-10-20-strict-review/native-source.zip",
+      "sha256": "c49f611fa4bc517f329f1211aaeb447a2dee81364308297695063b9083f42dd7",
+      "bytes": 9049316,
+      "scope": "Replace only the load with one modest grey plate, collar and closed sleeve, using the existing native skull-crusher equipment renderer. Both original complete athlete poses and grips remain unchanged.",
+      "independentReproductionExact": true
+    },
+    {
+      "id": "bike",
+      "path": "docs/exercise-art/sources/bike/2026-10-20-strict-review/native-source.zip",
+      "sha256": "9fe43af7edd10ee083a1dfd50b13f808d195aba80be58b50bb00ab3ce014b30a",
+      "bytes": 15051621,
+      "scope": "Preserve the original stationary front and rear floor pods at unchanged coordinates. No athlete or moving pedal pixels occur in the two equipment regions.",
+      "independentReproductionExact": true
+    },
+    {
+      "id": "barbell-row",
+      "path": "docs/exercise-art/sources/barbell-row/2026-10-20-strict-review/native-source.zip",
+      "sha256": "964f45d007115e27be6a11af260d50c1f759bbd2c320cfc9ddde2b44b3b296a9",
+      "bytes": 22833303,
+      "scope": "Normalize each entire source with one uniform scale and translation, below 0.4% scale change. No per-part transforms.",
+      "independentReproductionExact": true
+    },
+    {
+      "id": "dips",
+      "path": "docs/exercise-art/sources/dips/2026-10-20-strict-review/native-source.zip",
+      "sha256": "a7ae49f9efaeecb00680f31065d44d318f0e71a0c5f8e82983b920e4a9fa9f82",
+      "bytes": 9272725,
+      "scope": "Preserve the original two front floor pods at unchanged coordinates. All athlete, hanging feet, grips and bars outside those equipment regions remain exact.",
+      "independentReproductionExact": true
+    },
+    {
+      "id": "lu-raise",
+      "path": "docs/exercise-art/sources/lu-raise/2026-10-20-strict-review/native-source.zip",
+      "sha256": "08adae3585e8b103d34e7258e7ea4c236e61957126a71ab541c33213ba1714cc",
+      "bytes": 8746790,
+      "scope": "Four intact canonical-reference image-authored poses, uniform whole-source framing, native violet-pigment finishing and common crop. No anatomical part edits.",
+      "independentReproductionExact": true
+    }
+  ],
+  "captureLimitations": "Fresh manual/timed DOM observations cover completed sets as files show. Batched browser image captures later became stale/blank; those failures are not visual proof. Prior actual registered light/dark reviews are retained for unchanged artwork; dips has separate settled current screenshots. No full fresh 33-set mobile run is claimed. Staged thumbnail metadata was stale and caused generic fallback; those staged thumbnails are not card proof. Final registered eight-set ExerciseThumb galleries in both themes supersede them. Old rejected Lu current-panel/observations were removed; the new canonical Lu has fresh actual registered evidence.",
+  "strictContractUnchanged": true,
+  "finalRegisteredCardEvidence": {
+    "registered-eight-dark-cards.png": {
+      "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-eight-dark-cards.png",
+      "sha256": "03eb8f56c27e939461a90f7463f7b7ffea00444cf1d6dad0ef8b4751993e708a"
+    },
+    "registered-eight-light-cards.png": {
+      "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-eight-light-cards.png",
+      "sha256": "7e17d7aed5ce64eb025b40c225e6a2a72819acfb0fb717c728e3ef7c9c4e2237"
+    },
+    "registered-eight-cards.json": {
+      "path": "docs/exercise-art/reviews/2026-10-20-strict-review/lu-raise/registered-eight-cards.json",
+      "sha256": "bb21de2384059fc7143dcaa9b4536fce20658c40a1f702b505bffbe4df8fdc03"
+    }
+  }
+}

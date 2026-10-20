@@ -1,0 +1,162 @@
+{
+  "exerciseId": "single-leg-calf-raise",
+  "version": "anatomy-v3-2026-10-19-native-followup-v1",
+  "width": 626,
+  "height": 1209,
+  "reference": {
+    "path": "form-frames/single-leg-calf-raise/3.webp",
+    "sha256": "b685d64b0d358b65c0bc7e78b48077430c94ca96153b53f08c57531ce7f1b7f1"
+  },
+  "cueSha256": "36bfdb7cff92252d94446e2767605d34850997a188873accebe58c19d87df99c",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:50.101591+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Planted forefoot stays at the step as heel/body rise together; opposite foot stays clear and hand remains at support. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Fixed step and support post; no added weight. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Planted forefoot stays at the step as heel/body rise together; opposite foot stays clear and hand remains at support. Actual named native supports are measured in all six frames: fixedStepFloorBaseMaterialFeature1, fixedStepFloorBaseMaterialFeature2. Maximum axis drift 0px. Dimensions: fixedStepFloorBaseProjectedFeatureSpan, oppositeFixedSupportProjectedFeatureSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Planted forefoot stays at the step as heel/body rise together; opposite foot stays clear and hand remains at support. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Calves #7B72E9; secondary Soleus #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Low: Lower heel slightly below the step. / Brace: Keep your knee straight; balance lightly. / Top: Rise onto your toes without pulling. / Hold: Pause tall; squeeze your working calf. / Lower: Lower slowly through the shown range. / Reset: Reset below step; keep forefoot planted.. Preparation remains [\"Stand on one foot on a step's edge, ball of the foot planted, heel hanging free.\", \"Hold a wall or rail for balance only \\u2014 don't pull yourself up with it.\"]. Planted forefoot stays at the step as heel/body rise together; opposite foot stays clear and hand remains at support."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Planted forefoot stays at the step as heel/body rise together; opposite foot stays clear and hand remains at support. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-19-remaining33-batch1/single-leg-calf-raise.json (sha256 feaef391b274d13a9bdb4d8976a6c8cb6b8073408ce89e68b6e518416b732775). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-19-remaining33-batch1/single-leg-calf-raise.json (sha256 feaef391b274d13a9bdb4d8976a6c8cb6b8073408ce89e68b6e518416b732775). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/single-leg-calf-raise/1.webp",
+      "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+      "anchors": {
+        "fixedStepFloorBaseMaterialFeature1": { "x": 301, "y": 1136 },
+        "fixedStepFloorBaseMaterialFeature2": { "x": 320, "y": 1133 }
+      },
+      "invariantDimensions": {
+        "fixedStepFloorBaseProjectedFeatureSpan": 19.235384061671343,
+        "oppositeFixedSupportProjectedFeatureSpan": 24.08318915758459
+      }
+    },
+    {
+      "path": "form-frames/single-leg-calf-raise/2.webp",
+      "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+      "anchors": {
+        "fixedStepFloorBaseMaterialFeature1": { "x": 301, "y": 1136 },
+        "fixedStepFloorBaseMaterialFeature2": { "x": 320, "y": 1133 }
+      },
+      "invariantDimensions": {
+        "fixedStepFloorBaseProjectedFeatureSpan": 19.235384061671343,
+        "oppositeFixedSupportProjectedFeatureSpan": 24.08318915758459
+      }
+    },
+    {
+      "path": "form-frames/single-leg-calf-raise/3.webp",
+      "sha256": "b685d64b0d358b65c0bc7e78b48077430c94ca96153b53f08c57531ce7f1b7f1",
+      "anchors": {
+        "fixedStepFloorBaseMaterialFeature1": { "x": 301, "y": 1136 },
+        "fixedStepFloorBaseMaterialFeature2": { "x": 320, "y": 1133 }
+      },
+      "invariantDimensions": {
+        "fixedStepFloorBaseProjectedFeatureSpan": 19.235384061671343,
+        "oppositeFixedSupportProjectedFeatureSpan": 24.08318915758459
+      }
+    },
+    {
+      "path": "form-frames/single-leg-calf-raise/4.webp",
+      "sha256": "b685d64b0d358b65c0bc7e78b48077430c94ca96153b53f08c57531ce7f1b7f1",
+      "anchors": {
+        "fixedStepFloorBaseMaterialFeature1": { "x": 301, "y": 1136 },
+        "fixedStepFloorBaseMaterialFeature2": { "x": 320, "y": 1133 }
+      },
+      "invariantDimensions": {
+        "fixedStepFloorBaseProjectedFeatureSpan": 19.235384061671343,
+        "oppositeFixedSupportProjectedFeatureSpan": 24.08318915758459
+      }
+    },
+    {
+      "path": "form-frames/single-leg-calf-raise/5.webp",
+      "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+      "anchors": {
+        "fixedStepFloorBaseMaterialFeature1": { "x": 301, "y": 1136 },
+        "fixedStepFloorBaseMaterialFeature2": { "x": 320, "y": 1133 }
+      },
+      "invariantDimensions": {
+        "fixedStepFloorBaseProjectedFeatureSpan": 19.235384061671343,
+        "oppositeFixedSupportProjectedFeatureSpan": 24.08318915758459
+      }
+    },
+    {
+      "path": "form-frames/single-leg-calf-raise/6.webp",
+      "sha256": "d20eb93d781102a424f74b720d340474ba32c787ad362d6e9b5126367040f36a",
+      "anchors": {
+        "fixedStepFloorBaseMaterialFeature1": { "x": 301, "y": 1136 },
+        "fixedStepFloorBaseMaterialFeature2": { "x": 320, "y": 1133 }
+      },
+      "invariantDimensions": {
+        "fixedStepFloorBaseProjectedFeatureSpan": 19.235384061671343,
+        "oppositeFixedSupportProjectedFeatureSpan": 24.08318915758459
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-19-remaining33-batch1/single-leg-calf-raise.json",
+    "sha256": "feaef391b274d13a9bdb4d8976a6c8cb6b8073408ce89e68b6e518416b732775"
+  },
+  "historicalFindings": [
+    "Same original athlete/trainers/hand and calf timing. Reference fixed support pixels, native2px visible-step registration and grey tread-only texture repair remove support drift and displaced contact-shadow double edge.",
+    "Existing discrete source poses and minor inherited source contour/projection differences remain qualitative. This scoped correction does not claim calibrated3D or blanket strict certification."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/single-leg-calf-raise.json",
+    "sha256": "f7b9c3884d2990eeec7fc1ebbc6a9ea6a5297200d85c73e14e7b6c5373f5a515"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false
+}

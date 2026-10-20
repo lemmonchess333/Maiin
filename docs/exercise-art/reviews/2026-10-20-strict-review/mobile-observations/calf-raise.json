@@ -1,0 +1,339 @@
+{
+  "id": "calf-raise",
+  "viewport": { "width": 390, "height": 844 },
+  "capture": "Actual browser native screenshots after scroll settling. DOM visible-image bounds and decoding checked. Earlier page-capture compositor artefacts are not visual passing evidence.",
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Calf Raise, Set your stretch",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/calf-raise/1.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Set your stretch 1/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Calf Raise, Raise your heels",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/calf-raise/2.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Raise your heels 2/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Calf Raise, Squeeze your calves",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/calf-raise/3.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Squeeze your calves 3/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Calf Raise, Hold the top",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/calf-raise/4.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Hold the top 4/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Calf Raise, Lower slowly",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/calf-raise/5.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Lower slowly 5/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Calf Raise, Return to stretch",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/calf-raise/6.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Return to stretch 6/6",
+          "scrollY": 0
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 81,\n    \"alt\": \"Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5247,\n    \"alt\": \"Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7376,\n    \"alt\": \"Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 8509,\n    \"alt\": \"Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9630,\n    \"alt\": \"Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10769,\n    \"alt\": \"Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 44423,\n    \"alt\": \"Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Calf Raise, Set your stretch",
+            "decoded": true,
+            "height": 1536,
+            "src": "/Maiin/.strict33.local/candidate/calf-raise/1.webp",
+            "width": 1024
+          }
+        ],
+        "caption": "Set your stretch 1/6",
+        "id": "calf-raise",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / calf-raise\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nCalf Raise\nLegs\nMachine\n\nSET YOUR STRETCH 1/6\n\nPause\nNormal\nPRIMARY\nGastrocnemius\nSECONDARY\nSoleus\n\nInstructions\n\n1\n\nStand tall; lower heels below the step.\n\n2\n\nPush through forefeet; keep knees softly straight.\n\n3\n\nLift heels high and squeeze your calves.\n\n4\n\nPause briefly; keep your torso upright.\n\n5\n\nLower your heels slowly without bouncing.\n\n6\n\nLet heels sink below the step gently.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 81,\n    \"alt\": \"Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5247,\n    \"alt\": \"Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7376,\n    \"alt\": \"Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 8509,\n    \"alt\": \"Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9630,\n    \"alt\": \"Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10769,\n    \"alt\": \"Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 44423,\n    \"alt\": \"Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 46723,\n    \"alt\": \"Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 47922,\n    \"alt\": \"Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 49202,\n    \"alt\": \"Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 50402,\n    \"alt\": \"Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 51602,\n    \"alt\": \"Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 52802,\n    \"alt\": \"Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/1.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Calf Raise, Set your stretch",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/calf-raise/1.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Set your stretch 1/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Calf Raise, Raise your heels",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/calf-raise/2.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Raise your heels 2/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Calf Raise, Squeeze your calves",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/calf-raise/3.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Squeeze your calves 3/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Calf Raise, Hold the top",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/calf-raise/4.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Hold the top 4/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Calf Raise, Lower slowly",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/calf-raise/5.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Lower slowly 5/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Calf Raise, Return to stretch",
+              "decoded": true,
+              "height": 1536,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/calf-raise/6.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Return to stretch 6/6",
+          "scrollY": 0
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 81,\n    \"alt\": \"Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5247,\n    \"alt\": \"Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7376,\n    \"alt\": \"Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 8509,\n    \"alt\": \"Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9630,\n    \"alt\": \"Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10769,\n    \"alt\": \"Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 44423,\n    \"alt\": \"Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 46723,\n    \"alt\": \"Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 47922,\n    \"alt\": \"Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 49202,\n    \"alt\": \"Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 50402,\n    \"alt\": \"Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 51602,\n    \"alt\": \"Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 52802,\n    \"alt\": \"Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 54008,\n    \"alt\": \"Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 56531,\n    \"alt\": \"Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 58646,\n    \"alt\": \"Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 60762,\n    \"alt\": \"Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 61848,\n    \"alt\": \"Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 63054,\n    \"alt\": \"Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 64204,\n    \"alt\": \"Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 65641,\n    \"alt\": \"Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Calf Raise, Raise your heels",
+            "decoded": true,
+            "height": 1536,
+            "src": "/Maiin/.strict33.local/candidate/calf-raise/2.webp",
+            "width": 1024
+          }
+        ],
+        "caption": "Raise your heels 2/6",
+        "id": "calf-raise",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / calf-raise\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nCalf Raise\nLegs\nMachine\n\nRAISE YOUR HEELS 2/6\n\nPause\nNormal\nPRIMARY\nGastrocnemius\nSECONDARY\nSoleus\n\nInstructions\n\n1\n\nStand tall; lower heels below the step.\n\n2\n\nPush through forefeet; keep knees softly straight.\n\n3\n\nLift heels high and squeeze your calves.\n\n4\n\nPause briefly; keep your torso upright.\n\n5\n\nLower your heels slowly without bouncing.\n\n6\n\nLet heels sink below the step gently.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 81,\n    \"alt\": \"Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5247,\n    \"alt\": \"Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7376,\n    \"alt\": \"Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 8509,\n    \"alt\": \"Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9630,\n    \"alt\": \"Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10769,\n    \"alt\": \"Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 44423,\n    \"alt\": \"Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 46723,\n    \"alt\": \"Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 47922,\n    \"alt\": \"Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 49202,\n    \"alt\": \"Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 50402,\n    \"alt\": \"Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 51602,\n    \"alt\": \"Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 52802,\n    \"alt\": \"Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 54008,\n    \"alt\": \"Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 56531,\n    \"alt\": \"Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 58646,\n    \"alt\": \"Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 60762,\n    \"alt\": \"Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 61848,\n    \"alt\": \"Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 63054,\n    \"alt\": \"Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 64204,\n    \"alt\": \"Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 65641,\n    \"alt\": \"Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 67923,\n    \"alt\": \"Calf Raise, Raise your heels\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 69123,\n    \"alt\": \"Calf Raise, Squeeze your calves\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 70329,\n    \"alt\": \"Calf Raise, Hold the top\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 71523,\n    \"alt\": \"Calf Raise, Lower slowly\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 72723,\n    \"alt\": \"Calf Raise, Return to stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 73935,\n    \"alt\": \"Calf Raise, Set your stretch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/calf-raise/1.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

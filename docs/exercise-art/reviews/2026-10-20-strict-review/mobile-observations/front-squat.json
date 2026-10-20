@@ -1,0 +1,230 @@
+{
+  "id": "front-squat",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Front Squat, Stand",
+              "decoded": true,
+              "height": 800,
+              "src": "/Maiin/.strict33.local/candidate/front-squat/1.webp",
+              "width": 736
+            }
+          ],
+          "caption": "Stand 1/6",
+          "id": "front-squat",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Front Squat, Brace",
+              "decoded": true,
+              "height": 800,
+              "src": "/Maiin/.strict33.local/candidate/front-squat/2.webp",
+              "width": 736
+            }
+          ],
+          "caption": "Brace 2/6",
+          "id": "front-squat",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Front Squat, Squat",
+              "decoded": true,
+              "height": 800,
+              "src": "/Maiin/.strict33.local/candidate/front-squat/3.webp",
+              "width": 736
+            }
+          ],
+          "caption": "Squat 3/6",
+          "id": "front-squat",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Front Squat, Control",
+              "decoded": true,
+              "height": 800,
+              "src": "/Maiin/.strict33.local/candidate/front-squat/4.webp",
+              "width": 736
+            }
+          ],
+          "caption": "Control 4/6",
+          "id": "front-squat",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Front Squat, Rise",
+              "decoded": true,
+              "height": 800,
+              "src": "/Maiin/.strict33.local/candidate/front-squat/5.webp",
+              "width": 736
+            }
+          ],
+          "caption": "Rise 5/6",
+          "id": "front-squat",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Front Squat, Reset",
+              "decoded": true,
+              "height": 800,
+              "src": "/Maiin/.strict33.local/candidate/front-squat/6.webp",
+              "width": 736
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "front-squat",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 83,\n    \"alt\": \"Front Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1204,\n    \"alt\": \"Front Squat, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1761,\n    \"alt\": \"Front Squat, Squat\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2320,\n    \"alt\": \"Front Squat, Control\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2883,\n    \"alt\": \"Front Squat, Rise\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3441,\n    \"alt\": \"Front Squat, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5125,\n    \"alt\": \"Front Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Front Squat, Brace",
+            "decoded": true,
+            "height": 800,
+            "src": "/Maiin/.strict33.local/candidate/front-squat/2.webp",
+            "width": 736
+          }
+        ],
+        "caption": "Brace 2/6",
+        "id": "front-squat",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / front-squat\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nFront Squat\nLegs\nBarbell\n\nBRACE 2/6\n\nPause\nNormal\nPRIMARY\nQuads\nSECONDARY\nGlutes, Core\n\nInstructions\n\nPreparation: Shoulder-harness variation: use a fitted harness and start light. Set both shoulder pads and bar catches before lifting from a rack. Keep feet planted; brace before each squat.\n\n1\n\nStand tall; keep the harness supported.\n\n2\n\nBrace; keep both feet firmly planted.\n\n3\n\nBend hips and knees; keep heels grounded.\n\n4\n\nKeep chest lifted and knees tracking outward.\n\n5\n\nPush through your whole feet to stand.\n\n6\n\nStay braced with both hands stabilising.\n\nWatch out\n\nKeep the harness supported on both shoulders and the bar secure in its catches.\n\nCOMMON MISTAKES\n\nLetting the harness tip or lose shoulder contact.\nLifting your heels or letting knees collapse inward.\nLosing your brace or leaning far forward.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 83,\n    \"alt\": \"Front Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1204,\n    \"alt\": \"Front Squat, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1761,\n    \"alt\": \"Front Squat, Squat\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2320,\n    \"alt\": \"Front Squat, Control\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2883,\n    \"alt\": \"Front Squat, Rise\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3441,\n    \"alt\": \"Front Squat, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5125,\n    \"alt\": \"Front Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6640,\n    \"alt\": \"Front Squat, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7840,\n    \"alt\": \"Front Squat, Squat\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9041,\n    \"alt\": \"Front Squat, Control\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10324,\n    \"alt\": \"Front Squat, Rise\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11525,\n    \"alt\": \"Front Squat, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12724,\n    \"alt\": \"Front Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13924,\n    \"alt\": \"Front Squat, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Front Squat, Stand",
+              "decoded": true,
+              "height": 800,
+              "src": "/Maiin/.strict33.local/candidate/front-squat/1.webp",
+              "width": 736
+            }
+          ],
+          "caption": "Stand 1/6",
+          "id": "front-squat",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Front Squat, Brace",
+              "decoded": true,
+              "height": 800,
+              "src": "/Maiin/.strict33.local/candidate/front-squat/2.webp",
+              "width": 736
+            }
+          ],
+          "caption": "Brace 2/6",
+          "id": "front-squat",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Front Squat, Squat",
+              "decoded": true,
+              "height": 800,
+              "src": "/Maiin/.strict33.local/candidate/front-squat/3.webp",
+              "width": 736
+            }
+          ],
+          "caption": "Squat 3/6",
+          "id": "front-squat",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Front Squat, Control",
+              "decoded": true,
+              "height": 800,
+              "src": "/Maiin/.strict33.local/candidate/front-squat/4.webp",
+              "width": 736
+            }
+          ],
+          "caption": "Control 4/6",
+          "id": "front-squat",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Front Squat, Rise",
+              "decoded": true,
+              "height": 800,
+              "src": "/Maiin/.strict33.local/candidate/front-squat/5.webp",
+              "width": 736
+            }
+          ],
+          "caption": "Rise 5/6",
+          "id": "front-squat",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Front Squat, Reset",
+              "decoded": true,
+              "height": 800,
+              "src": "/Maiin/.strict33.local/candidate/front-squat/6.webp",
+              "width": 736
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "front-squat",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 83,\n    \"alt\": \"Front Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1204,\n    \"alt\": \"Front Squat, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1761,\n    \"alt\": \"Front Squat, Squat\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2320,\n    \"alt\": \"Front Squat, Control\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2883,\n    \"alt\": \"Front Squat, Rise\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3441,\n    \"alt\": \"Front Squat, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5125,\n    \"alt\": \"Front Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6640,\n    \"alt\": \"Front Squat, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7840,\n    \"alt\": \"Front Squat, Squat\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9041,\n    \"alt\": \"Front Squat, Control\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10324,\n    \"alt\": \"Front Squat, Rise\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11525,\n    \"alt\": \"Front Squat, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12724,\n    \"alt\": \"Front Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13924,\n    \"alt\": \"Front Squat, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15040,\n    \"alt\": \"Front Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15604,\n    \"alt\": \"Front Squat, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16161,\n    \"alt\": \"Front Squat, Squat\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16725,\n    \"alt\": \"Front Squat, Control\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17282,\n    \"alt\": \"Front Squat, Rise\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17840,\n    \"alt\": \"Front Squat, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19525,\n    \"alt\": \"Front Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Front Squat, Brace",
+            "decoded": true,
+            "height": 800,
+            "src": "/Maiin/.strict33.local/candidate/front-squat/2.webp",
+            "width": 736
+          }
+        ],
+        "caption": "Brace 2/6",
+        "id": "front-squat",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / front-squat\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nFront Squat\nLegs\nBarbell\n\nBRACE 2/6\n\nPause\nNormal\nPRIMARY\nQuads\nSECONDARY\nGlutes, Core\n\nInstructions\n\nPreparation: Shoulder-harness variation: use a fitted harness and start light. Set both shoulder pads and bar catches before lifting from a rack. Keep feet planted; brace before each squat.\n\n1\n\nStand tall; keep the harness supported.\n\n2\n\nBrace; keep both feet firmly planted.\n\n3\n\nBend hips and knees; keep heels grounded.\n\n4\n\nKeep chest lifted and knees tracking outward.\n\n5\n\nPush through your whole feet to stand.\n\n6\n\nStay braced with both hands stabilising.\n\nWatch out\n\nKeep the harness supported on both shoulders and the bar secure in its catches.\n\nCOMMON MISTAKES\n\nLetting the harness tip or lose shoulder contact.\nLifting your heels or letting knees collapse inward.\nLosing your brace or leaning far forward.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 83,\n    \"alt\": \"Front Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1204,\n    \"alt\": \"Front Squat, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1761,\n    \"alt\": \"Front Squat, Squat\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2320,\n    \"alt\": \"Front Squat, Control\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2883,\n    \"alt\": \"Front Squat, Rise\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3441,\n    \"alt\": \"Front Squat, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5125,\n    \"alt\": \"Front Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6640,\n    \"alt\": \"Front Squat, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7840,\n    \"alt\": \"Front Squat, Squat\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9041,\n    \"alt\": \"Front Squat, Control\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10324,\n    \"alt\": \"Front Squat, Rise\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11525,\n    \"alt\": \"Front Squat, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12724,\n    \"alt\": \"Front Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13924,\n    \"alt\": \"Front Squat, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15040,\n    \"alt\": \"Front Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15604,\n    \"alt\": \"Front Squat, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16161,\n    \"alt\": \"Front Squat, Squat\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16725,\n    \"alt\": \"Front Squat, Control\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17282,\n    \"alt\": \"Front Squat, Rise\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17840,\n    \"alt\": \"Front Squat, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19525,\n    \"alt\": \"Front Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 20961,\n    \"alt\": \"Front Squat, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22161,\n    \"alt\": \"Front Squat, Squat\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23361,\n    \"alt\": \"Front Squat, Control\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24562,\n    \"alt\": \"Front Squat, Rise\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25761,\n    \"alt\": \"Front Squat, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 26963,\n    \"alt\": \"Front Squat, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28163,\n    \"alt\": \"Front Squat, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/front-squat/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

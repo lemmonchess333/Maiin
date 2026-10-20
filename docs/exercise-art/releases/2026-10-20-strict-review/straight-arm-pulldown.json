@@ -1,0 +1,167 @@
+{
+  "exerciseId": "straight-arm-pulldown",
+  "version": "anatomy-v3-2026-10-16-native-local-repair-v1",
+  "width": 1152,
+  "height": 1728,
+  "reference": {
+    "path": "form-frames/straight-arm-pulldown/1.webp",
+    "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f"
+  },
+  "cueSha256": "e665f569e7f76c1807763a0cfd34c53f0aebb2f0c067d39563046e10ed5c8c0c",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:48.980402+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Upper arms sweep to thighs with softly fixed elbows and braced torso, then return under control. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two grey cable handles, closed grips and fixed upper pulley mounts; lifted selected stack remains connected. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Upper arms sweep to thighs with softly fixed elbows and braced torso, then return under control. Actual named native supports are measured in all six frames: fixedUpperPulleyMountMaterialFeature1, fixedUpperPulleyMountMaterialFeature2. Maximum axis drift 0px. Dimensions: fixedUpperPulleyMountProjectedFeatureSpan, oppositeFixedSupportProjectedFeatureSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Upper arms sweep to thighs with softly fixed elbows and braced torso, then return under control. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Lats #7B72E9; secondary Triceps, Core #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Reach: Start with handles around shoulder height. / Brace: Brace your torso; keep elbows softly fixed. / Pull to thighs: Sweep your upper arms toward your sides. / Squeeze: Finish near thighs without leaning back. / Control return: Let the handles rise under control. / Reset: Keep your stance steady before repeating.. Preparation remains [\"Use two high cable handles; start with a light load.\", \"Stand tall with feet planted and handles around shoulder height.\", \"Keep a small, steady bend in both elbows.\"]. Upper arms sweep to thighs with softly fixed elbows and braced torso, then return under control."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Upper arms sweep to thighs with softly fixed elbows and braced torso, then return under control. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-16/straight-arm-pulldown.json (sha256 41ca6ca5122f8bfc97db6342a0c156519364c50588c59919c2f2d283a78e9158). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-16/straight-arm-pulldown.json (sha256 41ca6ca5122f8bfc97db6342a0c156519364c50588c59919c2f2d283a78e9158). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/straight-arm-pulldown/1.webp",
+      "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
+      "anchors": {
+        "fixedUpperPulleyMountMaterialFeature1": { "x": 93, "y": 60 },
+        "fixedUpperPulleyMountMaterialFeature2": { "x": 95, "y": 20 }
+      },
+      "invariantDimensions": {
+        "fixedUpperPulleyMountProjectedFeatureSpan": 40.049968789001575,
+        "oppositeFixedSupportProjectedFeatureSpan": 40.049968789001575
+      }
+    },
+    {
+      "path": "form-frames/straight-arm-pulldown/2.webp",
+      "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
+      "anchors": {
+        "fixedUpperPulleyMountMaterialFeature1": { "x": 93, "y": 60 },
+        "fixedUpperPulleyMountMaterialFeature2": { "x": 95, "y": 20 }
+      },
+      "invariantDimensions": {
+        "fixedUpperPulleyMountProjectedFeatureSpan": 40.049968789001575,
+        "oppositeFixedSupportProjectedFeatureSpan": 40.049968789001575
+      }
+    },
+    {
+      "path": "form-frames/straight-arm-pulldown/3.webp",
+      "sha256": "a03e3b285e22bcc2a66712af85276d964302076ced16a81185360a3f6dbd92dd",
+      "anchors": {
+        "fixedUpperPulleyMountMaterialFeature1": { "x": 93, "y": 60 },
+        "fixedUpperPulleyMountMaterialFeature2": { "x": 95, "y": 20 }
+      },
+      "invariantDimensions": {
+        "fixedUpperPulleyMountProjectedFeatureSpan": 40.049968789001575,
+        "oppositeFixedSupportProjectedFeatureSpan": 40.049968789001575
+      }
+    },
+    {
+      "path": "form-frames/straight-arm-pulldown/4.webp",
+      "sha256": "a03e3b285e22bcc2a66712af85276d964302076ced16a81185360a3f6dbd92dd",
+      "anchors": {
+        "fixedUpperPulleyMountMaterialFeature1": { "x": 93, "y": 60 },
+        "fixedUpperPulleyMountMaterialFeature2": { "x": 95, "y": 20 }
+      },
+      "invariantDimensions": {
+        "fixedUpperPulleyMountProjectedFeatureSpan": 40.049968789001575,
+        "oppositeFixedSupportProjectedFeatureSpan": 40.049968789001575
+      }
+    },
+    {
+      "path": "form-frames/straight-arm-pulldown/5.webp",
+      "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
+      "anchors": {
+        "fixedUpperPulleyMountMaterialFeature1": { "x": 93, "y": 60 },
+        "fixedUpperPulleyMountMaterialFeature2": { "x": 95, "y": 20 }
+      },
+      "invariantDimensions": {
+        "fixedUpperPulleyMountProjectedFeatureSpan": 40.049968789001575,
+        "oppositeFixedSupportProjectedFeatureSpan": 40.049968789001575
+      }
+    },
+    {
+      "path": "form-frames/straight-arm-pulldown/6.webp",
+      "sha256": "8dff4208bacb289262a1e1596f3b3b4e0f0ffd0464eb616dae2d03593e180d6f",
+      "anchors": {
+        "fixedUpperPulleyMountMaterialFeature1": { "x": 93, "y": 60 },
+        "fixedUpperPulleyMountMaterialFeature2": { "x": 95, "y": 20 }
+      },
+      "invariantDimensions": {
+        "fixedUpperPulleyMountProjectedFeatureSpan": 40.049968789001575,
+        "oppositeFixedSupportProjectedFeatureSpan": 40.049968789001575
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-16/straight-arm-pulldown.json",
+    "sha256": "41ca6ca5122f8bfc97db6342a0c156519364c50588c59919c2f2d283a78e9158"
+  },
+  "historicalFindings": [
+    "Two genuine source shoulder positions occupy six cue slots; no continuous or six-unique-pose motion claim.",
+    "The approved Front Raise source pair supplies the intact athlete. Newly image-authored local pixels restore the far forearm, near hand/thumb and occluded thigh surfaces at documented native coordinates; minor local shade joins remain illustrative.",
+    "Custom twin1:1 cable towers use finite sheave tangency, fixed hardware and conserved screen-space cable paths. This is a qualitative instructional drawing, not a factory replica or recovered3D human-camera calibration.",
+    "Visible latissimus is primary#7B72E9; the lowered near arm occludes it at the finish. Triceps/core secondary#9590E0 is restrained by uniform source-tone tint; highlight boundaries are manually traced qualitative regions, not measured activation.",
+    "Strict visual certification remains unverified under the owner-authorized release-with-findings workflow.",
+    "White anatomical athlete has reduced contrast on a light normal card, especially at160px long-side limit; the form guide retains its standard dark stage.",
+    "Raw playback includes brief observer image/cue transitions; all settled selections agree. A hot-reload theme reset and the fresh corrected light playback capture are retained in evidence."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/straight-arm-pulldown.json",
+    "sha256": "f8374ee566a33eedb9b4a21cd00b5478b4e25ed93c2d9099e6e8e8af8da7b12c"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false
+}

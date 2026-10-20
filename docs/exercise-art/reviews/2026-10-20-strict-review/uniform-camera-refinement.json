@@ -1,0 +1,2246 @@
+{
+  "id": "overhead-extension",
+  "scope": "finite refinement of one common uniform camera transform, with no anatomical part transforms",
+  "trials": [
+    {
+      "scale": 1.0312697456032907,
+      "translation": [-10.03307596033136, -47.41359497998633],
+      "anchorDrift": 3,
+      "dimensionDrifts": [0.0008674112352191621, 0.005298155063872878],
+      "mse": 45,
+      "meanTemplateError": 5.832933333333333,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1436,
+          "meanAbsoluteRGBError": 5.717866666666667,
+          "distinctMatchGap": 7.580800000000001
+        },
+        {
+          "x": 215,
+          "y": 1407,
+          "meanAbsoluteRGBError": 7.032533333333333,
+          "distinctMatchGap": 12.622399999999999
+        },
+        {
+          "x": 235,
+          "y": 1495,
+          "meanAbsoluteRGBError": 5.262933333333334,
+          "distinctMatchGap": 8.059733333333334
+        },
+        {
+          "x": 393,
+          "y": 1472,
+          "meanAbsoluteRGBError": 5.3184,
+          "distinctMatchGap": 6.194666666666667
+        }
+      ]
+    },
+    {
+      "scale": 1.0312697456032907,
+      "translation": [-10.03307596033136, -46.66359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0.0008674112352191621, 0.005298155063872878],
+      "mse": 25,
+      "meanTemplateError": 5.6356,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1437,
+          "meanAbsoluteRGBError": 4.441066666666667,
+          "distinctMatchGap": 9.081599999999998
+        },
+        {
+          "x": 215,
+          "y": 1408,
+          "meanAbsoluteRGBError": 8.555733333333333,
+          "distinctMatchGap": 10.945600000000002
+        },
+        {
+          "x": 235,
+          "y": 1496,
+          "meanAbsoluteRGBError": 4.336533333333334,
+          "distinctMatchGap": 9.676266666666667
+        },
+        {
+          "x": 393,
+          "y": 1473,
+          "meanAbsoluteRGBError": 5.209066666666667,
+          "distinctMatchGap": 6.333333333333334
+        }
+      ]
+    },
+    {
+      "scale": 1.0312697456032907,
+      "translation": [-10.03307596033136, -45.91359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 16,
+      "meanTemplateError": 4.9968,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1438,
+          "meanAbsoluteRGBError": 3.7514666666666665,
+          "distinctMatchGap": 9.916799999999999
+        },
+        {
+          "x": 215,
+          "y": 1408,
+          "meanAbsoluteRGBError": 6.832533333333333,
+          "distinctMatchGap": 11.436266666666665
+        },
+        {
+          "x": 235,
+          "y": 1497,
+          "meanAbsoluteRGBError": 4.7008,
+          "distinctMatchGap": 9.7376
+        },
+        {
+          "x": 394,
+          "y": 1473,
+          "meanAbsoluteRGBError": 4.7024,
+          "distinctMatchGap": 6.016000000000001
+        }
+      ]
+    },
+    {
+      "scale": 1.0312697456032907,
+      "translation": [-9.28307596033136, -47.41359497998633],
+      "anchorDrift": 3,
+      "dimensionDrifts": [0.006220854334452186, 0.005298155063872878],
+      "mse": 40,
+      "meanTemplateError": 5.949866666666667,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1436,
+          "meanAbsoluteRGBError": 5.4912,
+          "distinctMatchGap": 8.8368
+        },
+        {
+          "x": 215,
+          "y": 1407,
+          "meanAbsoluteRGBError": 9.871466666666667,
+          "distinctMatchGap": 7.501866666666668
+        },
+        {
+          "x": 236,
+          "y": 1495,
+          "meanAbsoluteRGBError": 5.025066666666667,
+          "distinctMatchGap": 9.199466666666666
+        },
+        {
+          "x": 394,
+          "y": 1472,
+          "meanAbsoluteRGBError": 3.4117333333333333,
+          "distinctMatchGap": 10.323733333333333
+        }
+      ]
+    },
+    {
+      "scale": 1.0312697456032907,
+      "translation": [-9.28307596033136, -46.66359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0.006220854334452186, 0.005298155063872878],
+      "mse": 20,
+      "meanTemplateError": 5.6033333333333335,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1437,
+          "meanAbsoluteRGBError": 4.5098666666666665,
+          "distinctMatchGap": 10.930133333333334
+        },
+        {
+          "x": 215,
+          "y": 1408,
+          "meanAbsoluteRGBError": 9.665066666666666,
+          "distinctMatchGap": 7.926399999999999
+        },
+        {
+          "x": 236,
+          "y": 1496,
+          "meanAbsoluteRGBError": 3.8352,
+          "distinctMatchGap": 11.4576
+        },
+        {
+          "x": 394,
+          "y": 1473,
+          "meanAbsoluteRGBError": 4.4032,
+          "distinctMatchGap": 6.8751999999999995
+        }
+      ]
+    },
+    {
+      "scale": 1.0312697456032907,
+      "translation": [-9.28307596033136, -45.91359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0, 0.005298155063872878],
+      "mse": 8,
+      "meanTemplateError": 5.452266666666667,
+      "feasible": true,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1438,
+          "meanAbsoluteRGBError": 4.016,
+          "distinctMatchGap": 11.042666666666667
+        },
+        {
+          "x": 216,
+          "y": 1408,
+          "meanAbsoluteRGBError": 8.836266666666667,
+          "distinctMatchGap": 8.2976
+        },
+        {
+          "x": 236,
+          "y": 1497,
+          "meanAbsoluteRGBError": 3.6432,
+          "distinctMatchGap": 11.984533333333333
+        },
+        {
+          "x": 394,
+          "y": 1474,
+          "meanAbsoluteRGBError": 5.3136,
+          "distinctMatchGap": 4.9712000000000005
+        }
+      ]
+    },
+    {
+      "scale": 1.0312697456032907,
+      "translation": [-8.53307596033136, -47.41359497998633],
+      "anchorDrift": 3,
+      "dimensionDrifts": [0.0008674112352191621, 0.005298155063872878],
+      "mse": 39,
+      "meanTemplateError": 6.080266666666667,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1436,
+          "meanAbsoluteRGBError": 6.7456,
+          "distinctMatchGap": 4.683200000000001
+        },
+        {
+          "x": 216,
+          "y": 1407,
+          "meanAbsoluteRGBError": 7.5498666666666665,
+          "distinctMatchGap": 10.4256
+        },
+        {
+          "x": 237,
+          "y": 1495,
+          "meanAbsoluteRGBError": 6.1984,
+          "distinctMatchGap": 9.101333333333333
+        },
+        {
+          "x": 395,
+          "y": 1472,
+          "meanAbsoluteRGBError": 3.8272,
+          "distinctMatchGap": 8.346133333333334
+        }
+      ]
+    },
+    {
+      "scale": 1.0312697456032907,
+      "translation": [-8.53307596033136, -46.66359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0.0008674112352191621, 0.005298155063872878],
+      "mse": 19,
+      "meanTemplateError": 6.2565333333333335,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1437,
+          "meanAbsoluteRGBError": 5.694933333333333,
+          "distinctMatchGap": 5.841066666666666
+        },
+        {
+          "x": 216,
+          "y": 1408,
+          "meanAbsoluteRGBError": 8.6816,
+          "distinctMatchGap": 8.131733333333333
+        },
+        {
+          "x": 237,
+          "y": 1496,
+          "meanAbsoluteRGBError": 5.539733333333333,
+          "distinctMatchGap": 9.668266666666668
+        },
+        {
+          "x": 395,
+          "y": 1473,
+          "meanAbsoluteRGBError": 5.109866666666667,
+          "distinctMatchGap": 7.0789333333333335
+        }
+      ]
+    },
+    {
+      "scale": 1.0312697456032907,
+      "translation": [-8.53307596033136, -45.91359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.006224433959209463],
+      "mse": 11,
+      "meanTemplateError": 6.293466666666666,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1438,
+          "meanAbsoluteRGBError": 5.9744,
+          "distinctMatchGap": 6.351999999999999
+        },
+        {
+          "x": 216,
+          "y": 1408,
+          "meanAbsoluteRGBError": 9.871466666666667,
+          "distinctMatchGap": 7.436266666666668
+        },
+        {
+          "x": 237,
+          "y": 1497,
+          "meanAbsoluteRGBError": 4.785066666666666,
+          "distinctMatchGap": 9.107199999999999
+        },
+        {
+          "x": 395,
+          "y": 1473,
+          "meanAbsoluteRGBError": 4.542933333333333,
+          "distinctMatchGap": 6.096000000000001
+        }
+      ]
+    },
+    {
+      "scale": 1.0317697456032908,
+      "translation": [-10.03307596033136, -47.41359497998633],
+      "anchorDrift": 3,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 32,
+      "meanTemplateError": 5.567066666666667,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1437,
+          "meanAbsoluteRGBError": 4.3536,
+          "distinctMatchGap": 9.039466666666666
+        },
+        {
+          "x": 215,
+          "y": 1407,
+          "meanAbsoluteRGBError": 7.763733333333334,
+          "distinctMatchGap": 11.44373333333333
+        },
+        {
+          "x": 235,
+          "y": 1496,
+          "meanAbsoluteRGBError": 4.750933333333333,
+          "distinctMatchGap": 8.879466666666666
+        },
+        {
+          "x": 394,
+          "y": 1472,
+          "meanAbsoluteRGBError": 5.4,
+          "distinctMatchGap": 4.1808
+        }
+      ]
+    },
+    {
+      "scale": 1.0317697456032908,
+      "translation": [-10.03307596033136, -46.66359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 16,
+      "meanTemplateError": 4.8759999999999994,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1438,
+          "meanAbsoluteRGBError": 3.8496,
+          "distinctMatchGap": 9.781333333333333
+        },
+        {
+          "x": 215,
+          "y": 1408,
+          "meanAbsoluteRGBError": 5.907733333333334,
+          "distinctMatchGap": 13.1648
+        },
+        {
+          "x": 235,
+          "y": 1497,
+          "meanAbsoluteRGBError": 5.3104,
+          "distinctMatchGap": 8.789333333333333
+        },
+        {
+          "x": 394,
+          "y": 1473,
+          "meanAbsoluteRGBError": 4.436266666666667,
+          "distinctMatchGap": 6.034133333333333
+        }
+      ]
+    },
+    {
+      "scale": 1.0317697456032908,
+      "translation": [-10.03307596033136, -45.91359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0, 0.006224433959209463],
+      "mse": 5,
+      "meanTemplateError": 5.390000000000001,
+      "feasible": true,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1439,
+          "meanAbsoluteRGBError": 5.2432,
+          "distinctMatchGap": 9.296533333333333
+        },
+        {
+          "x": 215,
+          "y": 1409,
+          "meanAbsoluteRGBError": 5.562133333333334,
+          "distinctMatchGap": 13.234133333333334
+        },
+        {
+          "x": 236,
+          "y": 1498,
+          "meanAbsoluteRGBError": 6.5728,
+          "distinctMatchGap": 4.759466666666667
+        },
+        {
+          "x": 394,
+          "y": 1474,
+          "meanAbsoluteRGBError": 4.181866666666667,
+          "distinctMatchGap": 7.333866666666666
+        }
+      ]
+    },
+    {
+      "scale": 1.0317697456032908,
+      "translation": [-9.28307596033136, -47.41359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.005298155063872878],
+      "mse": 22,
+      "meanTemplateError": 5.631600000000001,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1437,
+          "meanAbsoluteRGBError": 4.285333333333333,
+          "distinctMatchGap": 11.045866666666669
+        },
+        {
+          "x": 216,
+          "y": 1407,
+          "meanAbsoluteRGBError": 9.355733333333333,
+          "distinctMatchGap": 8.8112
+        },
+        {
+          "x": 236,
+          "y": 1496,
+          "meanAbsoluteRGBError": 3.8576,
+          "distinctMatchGap": 10.656
+        },
+        {
+          "x": 394,
+          "y": 1473,
+          "meanAbsoluteRGBError": 5.027733333333333,
+          "distinctMatchGap": 6.333866666666666
+        }
+      ]
+    },
+    {
+      "scale": 1.0317697456032908,
+      "translation": [-9.28307596033136, -46.66359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 12,
+      "meanTemplateError": 5.1216,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1438,
+          "meanAbsoluteRGBError": 3.8704,
+          "distinctMatchGap": 11.232533333333333
+        },
+        {
+          "x": 216,
+          "y": 1408,
+          "meanAbsoluteRGBError": 7.778666666666667,
+          "distinctMatchGap": 9.5552
+        },
+        {
+          "x": 236,
+          "y": 1497,
+          "meanAbsoluteRGBError": 3.981333333333333,
+          "distinctMatchGap": 10.917866666666667
+        },
+        {
+          "x": 395,
+          "y": 1473,
+          "meanAbsoluteRGBError": 4.856,
+          "distinctMatchGap": 6.026666666666667
+        }
+      ]
+    },
+    {
+      "scale": 1.0317697456032908,
+      "translation": [-9.28307596033136, -45.91359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 4,
+      "meanTemplateError": 6.0348,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1439,
+          "meanAbsoluteRGBError": 4.9872,
+          "distinctMatchGap": 9.7664
+        },
+        {
+          "x": 216,
+          "y": 1409,
+          "meanAbsoluteRGBError": 7.772266666666667,
+          "distinctMatchGap": 9.339199999999998
+        },
+        {
+          "x": 236,
+          "y": 1498,
+          "meanAbsoluteRGBError": 5.370133333333333,
+          "distinctMatchGap": 10.507733333333332
+        },
+        {
+          "x": 395,
+          "y": 1474,
+          "meanAbsoluteRGBError": 6.0096,
+          "distinctMatchGap": 4.239466666666666
+        }
+      ]
+    },
+    {
+      "scale": 1.0317697456032908,
+      "translation": [-8.53307596033136, -47.41359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0.0008674112352191621, 0.005298155063872878],
+      "mse": 19,
+      "meanTemplateError": 5.996533333333334,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1437,
+          "meanAbsoluteRGBError": 5.7552,
+          "distinctMatchGap": 5.783466666666666
+        },
+        {
+          "x": 216,
+          "y": 1408,
+          "meanAbsoluteRGBError": 9.3904,
+          "distinctMatchGap": 7.647466666666666
+        },
+        {
+          "x": 237,
+          "y": 1496,
+          "meanAbsoluteRGBError": 4.5008,
+          "distinctMatchGap": 11.250666666666667
+        },
+        {
+          "x": 395,
+          "y": 1473,
+          "meanAbsoluteRGBError": 4.339733333333333,
+          "distinctMatchGap": 7.0144
+        }
+      ]
+    },
+    {
+      "scale": 1.0317697456032908,
+      "translation": [-8.53307596033136, -46.66359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0, 0.005298155063872878],
+      "mse": 10,
+      "meanTemplateError": 6.264266666666668,
+      "feasible": true,
+      "observed": [
+        {
+          "x": 35,
+          "y": 1438,
+          "meanAbsoluteRGBError": 6.005333333333334,
+          "distinctMatchGap": 7.917866666666666
+        },
+        {
+          "x": 217,
+          "y": 1408,
+          "meanAbsoluteRGBError": 9.820266666666667,
+          "distinctMatchGap": 6.582933333333331
+        },
+        {
+          "x": 237,
+          "y": 1497,
+          "meanAbsoluteRGBError": 4.0229333333333335,
+          "distinctMatchGap": 10.561066666666665
+        },
+        {
+          "x": 395,
+          "y": 1474,
+          "meanAbsoluteRGBError": 5.2085333333333335,
+          "distinctMatchGap": 5.202666666666666
+        }
+      ]
+    },
+    {
+      "scale": 1.0317697456032908,
+      "translation": [-8.53307596033136, -45.91359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0.005348774480253726, 0.006224433959209463],
+      "mse": 4,
+      "meanTemplateError": 6.003866666666666,
+      "feasible": true,
+      "observed": [
+        {
+          "x": 35,
+          "y": 1439,
+          "meanAbsoluteRGBError": 5.5776,
+          "distinctMatchGap": 7.3584
+        },
+        {
+          "x": 216,
+          "y": 1409,
+          "meanAbsoluteRGBError": 9.518933333333333,
+          "distinctMatchGap": 6.955733333333335
+        },
+        {
+          "x": 237,
+          "y": 1498,
+          "meanAbsoluteRGBError": 5.171733333333333,
+          "distinctMatchGap": 9.168533333333333
+        },
+        {
+          "x": 395,
+          "y": 1474,
+          "meanAbsoluteRGBError": 3.7472,
+          "distinctMatchGap": 8.3488
+        }
+      ]
+    },
+    {
+      "scale": 1.0322697456032908,
+      "translation": [-10.03307596033136, -47.41359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 16,
+      "meanTemplateError": 5.068666666666666,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1438,
+          "meanAbsoluteRGBError": 3.9722666666666666,
+          "distinctMatchGap": 9.632533333333333
+        },
+        {
+          "x": 215,
+          "y": 1408,
+          "meanAbsoluteRGBError": 6.0709333333333335,
+          "distinctMatchGap": 12.1312
+        },
+        {
+          "x": 235,
+          "y": 1497,
+          "meanAbsoluteRGBError": 5.9632,
+          "distinctMatchGap": 7.847466666666667
+        },
+        {
+          "x": 394,
+          "y": 1473,
+          "meanAbsoluteRGBError": 4.268266666666666,
+          "distinctMatchGap": 6.315733333333333
+        }
+      ]
+    },
+    {
+      "scale": 1.0322697456032908,
+      "translation": [-10.03307596033136, -46.66359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0, 0.006224433959209463],
+      "mse": 5,
+      "meanTemplateError": 5.188133333333333,
+      "feasible": true,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1439,
+          "meanAbsoluteRGBError": 5.513066666666667,
+          "distinctMatchGap": 9.118933333333333
+        },
+        {
+          "x": 215,
+          "y": 1409,
+          "meanAbsoluteRGBError": 5.674666666666667,
+          "distinctMatchGap": 11.818666666666665
+        },
+        {
+          "x": 236,
+          "y": 1498,
+          "meanAbsoluteRGBError": 6.2368,
+          "distinctMatchGap": 5.538666666666667
+        },
+        {
+          "x": 394,
+          "y": 1474,
+          "meanAbsoluteRGBError": 3.328,
+          "distinctMatchGap": 8.345600000000001
+        }
+      ]
+    },
+    {
+      "scale": 1.0322697456032908,
+      "translation": [-10.03307596033136, -45.91359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0.0008674112352191621, 0.011529178270976992],
+      "mse": 8,
+      "meanTemplateError": 5.713733333333334,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1439,
+          "meanAbsoluteRGBError": 5.459733333333333,
+          "distinctMatchGap": 8.071466666666666
+        },
+        {
+          "x": 215,
+          "y": 1410,
+          "meanAbsoluteRGBError": 7.007466666666667,
+          "distinctMatchGap": 10.5168
+        },
+        {
+          "x": 235,
+          "y": 1498,
+          "meanAbsoluteRGBError": 5.782933333333333,
+          "distinctMatchGap": 6.771199999999999
+        },
+        {
+          "x": 394,
+          "y": 1475,
+          "meanAbsoluteRGBError": 4.6048,
+          "distinctMatchGap": 7.120533333333333
+        }
+      ]
+    },
+    {
+      "scale": 1.0322697456032908,
+      "translation": [-9.28307596033136, -47.41359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 12,
+      "meanTemplateError": 4.8752,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1438,
+          "meanAbsoluteRGBError": 3.8213333333333335,
+          "distinctMatchGap": 11.312
+        },
+        {
+          "x": 216,
+          "y": 1408,
+          "meanAbsoluteRGBError": 6.590933333333333,
+          "distinctMatchGap": 11.307733333333335
+        },
+        {
+          "x": 236,
+          "y": 1497,
+          "meanAbsoluteRGBError": 4.6277333333333335,
+          "distinctMatchGap": 9.848533333333334
+        },
+        {
+          "x": 395,
+          "y": 1473,
+          "meanAbsoluteRGBError": 4.4608,
+          "distinctMatchGap": 6.1008000000000004
+        }
+      ]
+    },
+    {
+      "scale": 1.0322697456032908,
+      "translation": [-9.28307596033136, -46.66359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 4,
+      "meanTemplateError": 5.593333333333334,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1439,
+          "meanAbsoluteRGBError": 5.189866666666667,
+          "distinctMatchGap": 9.714133333333333
+        },
+        {
+          "x": 216,
+          "y": 1409,
+          "meanAbsoluteRGBError": 6.634133333333334,
+          "distinctMatchGap": 11.157866666666667
+        },
+        {
+          "x": 236,
+          "y": 1498,
+          "meanAbsoluteRGBError": 5.9696,
+          "distinctMatchGap": 9.650666666666666
+        },
+        {
+          "x": 395,
+          "y": 1474,
+          "meanAbsoluteRGBError": 4.579733333333333,
+          "distinctMatchGap": 6.670400000000001
+        }
+      ]
+    },
+    {
+      "scale": 1.0322697456032908,
+      "translation": [-9.28307596033136, -45.91359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0.0008674112352191621, 0.005298155063872878],
+      "mse": 3,
+      "meanTemplateError": 6.007866666666667,
+      "feasible": true,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1439,
+          "meanAbsoluteRGBError": 4.9664,
+          "distinctMatchGap": 9.406933333333333
+        },
+        {
+          "x": 216,
+          "y": 1410,
+          "meanAbsoluteRGBError": 7.8,
+          "distinctMatchGap": 10.393066666666666
+        },
+        {
+          "x": 236,
+          "y": 1498,
+          "meanAbsoluteRGBError": 5.213333333333333,
+          "distinctMatchGap": 8.184000000000001
+        },
+        {
+          "x": 394,
+          "y": 1475,
+          "meanAbsoluteRGBError": 6.051733333333333,
+          "distinctMatchGap": 4.676266666666667
+        }
+      ]
+    },
+    {
+      "scale": 1.0322697456032908,
+      "translation": [-8.53307596033136, -47.41359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 16,
+      "meanTemplateError": 5.838933333333333,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 35,
+          "y": 1438,
+          "meanAbsoluteRGBError": 5.6816,
+          "distinctMatchGap": 8.150400000000001
+        },
+        {
+          "x": 217,
+          "y": 1408,
+          "meanAbsoluteRGBError": 8.8128,
+          "distinctMatchGap": 8.0048
+        },
+        {
+          "x": 237,
+          "y": 1497,
+          "meanAbsoluteRGBError": 3.6432,
+          "distinctMatchGap": 11.961599999999999
+        },
+        {
+          "x": 396,
+          "y": 1473,
+          "meanAbsoluteRGBError": 5.218133333333333,
+          "distinctMatchGap": 5.276266666666667
+        }
+      ]
+    },
+    {
+      "scale": 1.0322697456032908,
+      "translation": [-8.53307596033136, -46.66359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0, 0.006224433959209463],
+      "mse": 5,
+      "meanTemplateError": 6.514533333333333,
+      "feasible": true,
+      "observed": [
+        {
+          "x": 35,
+          "y": 1439,
+          "meanAbsoluteRGBError": 5.709866666666667,
+          "distinctMatchGap": 7.2448
+        },
+        {
+          "x": 217,
+          "y": 1409,
+          "meanAbsoluteRGBError": 9.472,
+          "distinctMatchGap": 7.053866666666666
+        },
+        {
+          "x": 237,
+          "y": 1498,
+          "meanAbsoluteRGBError": 4.9930666666666665,
+          "distinctMatchGap": 10.244266666666668
+        },
+        {
+          "x": 395,
+          "y": 1474,
+          "meanAbsoluteRGBError": 5.8832,
+          "distinctMatchGap": 6.119999999999999
+        }
+      ]
+    },
+    {
+      "scale": 1.0322697456032908,
+      "translation": [-8.53307596033136, -45.91359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0.0008674112352191621, 0.005298155063872878],
+      "mse": 3,
+      "meanTemplateError": 6.322133333333333,
+      "feasible": true,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1439,
+          "meanAbsoluteRGBError": 6.549333333333333,
+          "distinctMatchGap": 4.578133333333334
+        },
+        {
+          "x": 216,
+          "y": 1410,
+          "meanAbsoluteRGBError": 9.1872,
+          "distinctMatchGap": 8.1248
+        },
+        {
+          "x": 237,
+          "y": 1498,
+          "meanAbsoluteRGBError": 5.0176,
+          "distinctMatchGap": 9.304
+        },
+        {
+          "x": 395,
+          "y": 1475,
+          "meanAbsoluteRGBError": 4.5344,
+          "distinctMatchGap": 7.809066666666666
+        }
+      ]
+    },
+    {
+      "scale": 1.0327697456032907,
+      "translation": [-10.03307596033136, -47.41359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0, 0.006224433959209463],
+      "mse": 5,
+      "meanTemplateError": 5.202,
+      "feasible": true,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1439,
+          "meanAbsoluteRGBError": 5.7904,
+          "distinctMatchGap": 8.951466666666667
+        },
+        {
+          "x": 215,
+          "y": 1409,
+          "meanAbsoluteRGBError": 6.1952,
+          "distinctMatchGap": 10.657599999999999
+        },
+        {
+          "x": 236,
+          "y": 1498,
+          "meanAbsoluteRGBError": 5.877866666666667,
+          "distinctMatchGap": 6.410666666666667
+        },
+        {
+          "x": 394,
+          "y": 1474,
+          "meanAbsoluteRGBError": 2.9445333333333332,
+          "distinctMatchGap": 8.962666666666667
+        }
+      ]
+    },
+    {
+      "scale": 1.0327697456032907,
+      "translation": [-10.03307596033136, -46.66359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0.0008674112352191621, 0.011529178270976992],
+      "mse": 8,
+      "meanTemplateError": 5.565466666666667,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1439,
+          "meanAbsoluteRGBError": 5.351466666666667,
+          "distinctMatchGap": 8.274133333333333
+        },
+        {
+          "x": 215,
+          "y": 1410,
+          "meanAbsoluteRGBError": 7.2885333333333335,
+          "distinctMatchGap": 9.591999999999999
+        },
+        {
+          "x": 235,
+          "y": 1498,
+          "meanAbsoluteRGBError": 6.066133333333333,
+          "distinctMatchGap": 6.050133333333333
+        },
+        {
+          "x": 394,
+          "y": 1475,
+          "meanAbsoluteRGBError": 3.5557333333333334,
+          "distinctMatchGap": 9.113599999999998
+        }
+      ]
+    },
+    {
+      "scale": 1.0327697456032907,
+      "translation": [-10.03307596033136, -45.91359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0, 0.011529178270976992],
+      "mse": 9,
+      "meanTemplateError": 5.748,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1440,
+          "meanAbsoluteRGBError": 4.1984,
+          "distinctMatchGap": 9.026133333333334
+        },
+        {
+          "x": 215,
+          "y": 1410,
+          "meanAbsoluteRGBError": 8.2816,
+          "distinctMatchGap": 9.776533333333335
+        },
+        {
+          "x": 235,
+          "y": 1499,
+          "meanAbsoluteRGBError": 5.780266666666667,
+          "distinctMatchGap": 7.157333333333333
+        },
+        {
+          "x": 394,
+          "y": 1476,
+          "meanAbsoluteRGBError": 4.731733333333334,
+          "distinctMatchGap": 6.948799999999999
+        }
+      ]
+    },
+    {
+      "scale": 1.0327697456032907,
+      "translation": [-9.28307596033136, -47.41359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 4,
+      "meanTemplateError": 5.370399999999999,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1439,
+          "meanAbsoluteRGBError": 5.395733333333333,
+          "distinctMatchGap": 9.444266666666667
+        },
+        {
+          "x": 216,
+          "y": 1409,
+          "meanAbsoluteRGBError": 5.930666666666666,
+          "distinctMatchGap": 12.693866666666665
+        },
+        {
+          "x": 236,
+          "y": 1498,
+          "meanAbsoluteRGBError": 6.594133333333334,
+          "distinctMatchGap": 8.731733333333333
+        },
+        {
+          "x": 395,
+          "y": 1474,
+          "meanAbsoluteRGBError": 3.5610666666666666,
+          "distinctMatchGap": 8.174933333333334
+        }
+      ]
+    },
+    {
+      "scale": 1.0327697456032907,
+      "translation": [-9.28307596033136, -46.66359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0.0008674112352191621, 0.011529178270976992],
+      "mse": 4,
+      "meanTemplateError": 5.6944,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1439,
+          "meanAbsoluteRGBError": 4.766933333333333,
+          "distinctMatchGap": 9.6144
+        },
+        {
+          "x": 216,
+          "y": 1410,
+          "meanAbsoluteRGBError": 7.529066666666667,
+          "distinctMatchGap": 11.574399999999999
+        },
+        {
+          "x": 236,
+          "y": 1498,
+          "meanAbsoluteRGBError": 5.477866666666666,
+          "distinctMatchGap": 7.5072
+        },
+        {
+          "x": 395,
+          "y": 1475,
+          "meanAbsoluteRGBError": 5.003733333333333,
+          "distinctMatchGap": 6.536533333333333
+        }
+      ]
+    },
+    {
+      "scale": 1.0327697456032907,
+      "translation": [-9.28307596033136, -45.91359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 4,
+      "meanTemplateError": 5.297066666666667,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1440,
+          "meanAbsoluteRGBError": 3.9632,
+          "distinctMatchGap": 10.895999999999999
+        },
+        {
+          "x": 216,
+          "y": 1410,
+          "meanAbsoluteRGBError": 7.195733333333333,
+          "distinctMatchGap": 11.951466666666668
+        },
+        {
+          "x": 236,
+          "y": 1499,
+          "meanAbsoluteRGBError": 4.692266666666667,
+          "distinctMatchGap": 8.9984
+        },
+        {
+          "x": 395,
+          "y": 1475,
+          "meanAbsoluteRGBError": 5.337066666666667,
+          "distinctMatchGap": 4.413333333333334
+        }
+      ]
+    },
+    {
+      "scale": 1.0327697456032907,
+      "translation": [-8.53307596033136, -47.41359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 8,
+      "meanTemplateError": 6.1488,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 35,
+          "y": 1439,
+          "meanAbsoluteRGBError": 5.8512,
+          "distinctMatchGap": 7.250133333333332
+        },
+        {
+          "x": 217,
+          "y": 1409,
+          "meanAbsoluteRGBError": 8.437866666666666,
+          "distinctMatchGap": 8.808533333333335
+        },
+        {
+          "x": 237,
+          "y": 1498,
+          "meanAbsoluteRGBError": 5.304,
+          "distinctMatchGap": 10.511466666666667
+        },
+        {
+          "x": 396,
+          "y": 1474,
+          "meanAbsoluteRGBError": 5.002133333333333,
+          "distinctMatchGap": 5.9530666666666665
+        }
+      ]
+    },
+    {
+      "scale": 1.0327697456032907,
+      "translation": [-8.53307596033136, -46.66359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0.004486760261223965, 0.005298155063872878],
+      "mse": 4,
+      "meanTemplateError": 6.7026666666666666,
+      "feasible": true,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1439,
+          "meanAbsoluteRGBError": 6.460266666666667,
+          "distinctMatchGap": 4.538133333333334
+        },
+        {
+          "x": 217,
+          "y": 1410,
+          "meanAbsoluteRGBError": 9.6448,
+          "distinctMatchGap": 7.999466666666667
+        },
+        {
+          "x": 237,
+          "y": 1498,
+          "meanAbsoluteRGBError": 4.971733333333333,
+          "distinctMatchGap": 8.773866666666667
+        },
+        {
+          "x": 395,
+          "y": 1475,
+          "meanAbsoluteRGBError": 5.733866666666667,
+          "distinctMatchGap": 5.286933333333333
+        }
+      ]
+    },
+    {
+      "scale": 1.0327697456032907,
+      "translation": [-8.53307596033136, -45.91359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0.00534955195109954, 0.012449756489309793],
+      "mse": 7,
+      "meanTemplateError": 6.0166666666666675,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1440,
+          "meanAbsoluteRGBError": 6.0624,
+          "distinctMatchGap": 5.530133333333334
+        },
+        {
+          "x": 217,
+          "y": 1410,
+          "meanAbsoluteRGBError": 8.916266666666667,
+          "distinctMatchGap": 8.637333333333332
+        },
+        {
+          "x": 237,
+          "y": 1499,
+          "meanAbsoluteRGBError": 3.816,
+          "distinctMatchGap": 10.784533333333332
+        },
+        {
+          "x": 396,
+          "y": 1475,
+          "meanAbsoluteRGBError": 5.272,
+          "distinctMatchGap": 4.530666666666667
+        }
+      ]
+    },
+    {
+      "scale": 1.0332697456032907,
+      "translation": [-10.03307596033136, -47.41359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0.0008674112352191621, 0.005298155063872878],
+      "mse": 5,
+      "meanTemplateError": 5.8584,
+      "feasible": true,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1439,
+          "meanAbsoluteRGBError": 5.242133333333333,
+          "distinctMatchGap": 8.177066666666667
+        },
+        {
+          "x": 215,
+          "y": 1410,
+          "meanAbsoluteRGBError": 8.0208,
+          "distinctMatchGap": 8.765866666666666
+        },
+        {
+          "x": 236,
+          "y": 1498,
+          "meanAbsoluteRGBError": 6.3941333333333334,
+          "distinctMatchGap": 8.738133333333334
+        },
+        {
+          "x": 394,
+          "y": 1475,
+          "meanAbsoluteRGBError": 3.7765333333333335,
+          "distinctMatchGap": 8.313600000000001
+        }
+      ]
+    },
+    {
+      "scale": 1.0332697456032907,
+      "translation": [-10.03307596033136, -46.66359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0, 0.005298155063872878],
+      "mse": 6,
+      "meanTemplateError": 6.035866666666666,
+      "feasible": true,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1440,
+          "meanAbsoluteRGBError": 4.1312,
+          "distinctMatchGap": 9.032
+        },
+        {
+          "x": 215,
+          "y": 1410,
+          "meanAbsoluteRGBError": 9.496,
+          "distinctMatchGap": 8.1168
+        },
+        {
+          "x": 236,
+          "y": 1499,
+          "meanAbsoluteRGBError": 5.764266666666667,
+          "distinctMatchGap": 9.313600000000001
+        },
+        {
+          "x": 394,
+          "y": 1476,
+          "meanAbsoluteRGBError": 4.752,
+          "distinctMatchGap": 6.2703999999999995
+        }
+      ]
+    },
+    {
+      "scale": 1.0332697456032907,
+      "translation": [-10.03307596033136, -45.91359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.005298155063872878],
+      "mse": 16,
+      "meanTemplateError": 5.766400000000001,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1441,
+          "meanAbsoluteRGBError": 4.309866666666666,
+          "distinctMatchGap": 9.280533333333334
+        },
+        {
+          "x": 215,
+          "y": 1411,
+          "meanAbsoluteRGBError": 8.156266666666667,
+          "distinctMatchGap": 8.693333333333332
+        },
+        {
+          "x": 236,
+          "y": 1500,
+          "meanAbsoluteRGBError": 4.973333333333334,
+          "distinctMatchGap": 8.796800000000001
+        },
+        {
+          "x": 394,
+          "y": 1477,
+          "meanAbsoluteRGBError": 5.626133333333334,
+          "distinctMatchGap": 4.3461333333333325
+        }
+      ]
+    },
+    {
+      "scale": 1.0332697456032907,
+      "translation": [-9.28307596033136, -47.41359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0.0008674112352191621, 0.011529178270976992],
+      "mse": 4,
+      "meanTemplateError": 5.498666666666667,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1439,
+          "meanAbsoluteRGBError": 4.590933333333333,
+          "distinctMatchGap": 9.826133333333335
+        },
+        {
+          "x": 216,
+          "y": 1410,
+          "meanAbsoluteRGBError": 7.810666666666667,
+          "distinctMatchGap": 10.026666666666667
+        },
+        {
+          "x": 236,
+          "y": 1498,
+          "meanAbsoluteRGBError": 5.7248,
+          "distinctMatchGap": 6.891733333333333
+        },
+        {
+          "x": 395,
+          "y": 1475,
+          "meanAbsoluteRGBError": 3.8682666666666665,
+          "distinctMatchGap": 8.445866666666666
+        }
+      ]
+    },
+    {
+      "scale": 1.0332697456032907,
+      "translation": [-9.28307596033136, -46.66359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0, 0.011529178270976992],
+      "mse": 5,
+      "meanTemplateError": 5.199333333333334,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1440,
+          "meanAbsoluteRGBError": 3.832,
+          "distinctMatchGap": 10.808533333333333
+        },
+        {
+          "x": 216,
+          "y": 1410,
+          "meanAbsoluteRGBError": 6.770666666666667,
+          "distinctMatchGap": 12.309866666666665
+        },
+        {
+          "x": 236,
+          "y": 1499,
+          "meanAbsoluteRGBError": 5.133866666666667,
+          "distinctMatchGap": 8.2256
+        },
+        {
+          "x": 395,
+          "y": 1476,
+          "meanAbsoluteRGBError": 5.0608,
+          "distinctMatchGap": 6.797866666666666
+        }
+      ]
+    },
+    {
+      "scale": 1.0332697456032907,
+      "translation": [-9.28307596033136, -45.91359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 12,
+      "meanTemplateError": 4.922266666666666,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1441,
+          "meanAbsoluteRGBError": 3.9109333333333334,
+          "distinctMatchGap": 10.915733333333332
+        },
+        {
+          "x": 216,
+          "y": 1411,
+          "meanAbsoluteRGBError": 5.547733333333333,
+          "distinctMatchGap": 12.593066666666665
+        },
+        {
+          "x": 236,
+          "y": 1500,
+          "meanAbsoluteRGBError": 5.887466666666667,
+          "distinctMatchGap": 7.961066666666667
+        },
+        {
+          "x": 395,
+          "y": 1476,
+          "meanAbsoluteRGBError": 4.342933333333334,
+          "distinctMatchGap": 6.4741333333333335
+        }
+      ]
+    },
+    {
+      "scale": 1.0332697456032907,
+      "translation": [-8.53307596033136, -47.41359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0.004486760261223965, 0.011529178270976992],
+      "mse": 7,
+      "meanTemplateError": 6.402533333333333,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1439,
+          "meanAbsoluteRGBError": 6.4192,
+          "distinctMatchGap": 4.506666666666666
+        },
+        {
+          "x": 217,
+          "y": 1410,
+          "meanAbsoluteRGBError": 8.613333333333333,
+          "distinctMatchGap": 9.497066666666665
+        },
+        {
+          "x": 237,
+          "y": 1498,
+          "meanAbsoluteRGBError": 5.155733333333333,
+          "distinctMatchGap": 8.290133333333333
+        },
+        {
+          "x": 396,
+          "y": 1475,
+          "meanAbsoluteRGBError": 5.421866666666666,
+          "distinctMatchGap": 5.932266666666667
+        }
+      ]
+    },
+    {
+      "scale": 1.0332697456032907,
+      "translation": [-8.53307596033136, -46.66359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 8,
+      "meanTemplateError": 5.795333333333334,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 35,
+          "y": 1440,
+          "meanAbsoluteRGBError": 5.949866666666667,
+          "distinctMatchGap": 8.751466666666666
+        },
+        {
+          "x": 217,
+          "y": 1410,
+          "meanAbsoluteRGBError": 7.7594666666666665,
+          "distinctMatchGap": 10.234666666666667
+        },
+        {
+          "x": 237,
+          "y": 1499,
+          "meanAbsoluteRGBError": 4.213866666666667,
+          "distinctMatchGap": 9.916266666666665
+        },
+        {
+          "x": 396,
+          "y": 1475,
+          "meanAbsoluteRGBError": 5.258133333333333,
+          "distinctMatchGap": 4.4922666666666675
+        }
+      ]
+    },
+    {
+      "scale": 1.0332697456032907,
+      "translation": [-8.53307596033136, -45.91359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 16,
+      "meanTemplateError": 5.1384,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 35,
+          "y": 1441,
+          "meanAbsoluteRGBError": 5.096533333333333,
+          "distinctMatchGap": 8.584
+        },
+        {
+          "x": 217,
+          "y": 1411,
+          "meanAbsoluteRGBError": 6.705066666666666,
+          "distinctMatchGap": 10.877333333333333
+        },
+        {
+          "x": 237,
+          "y": 1500,
+          "meanAbsoluteRGBError": 4.5472,
+          "distinctMatchGap": 9.9776
+        },
+        {
+          "x": 396,
+          "y": 1476,
+          "meanAbsoluteRGBError": 4.2048,
+          "distinctMatchGap": 6.397866666666666
+        }
+      ]
+    },
+    {
+      "scale": 1.0337697456032906,
+      "translation": [-10.03307596033136, -47.41359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0.00534955195109954, 0.012449756489309793],
+      "mse": 5,
+      "meanTemplateError": 6.0976,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1440,
+          "meanAbsoluteRGBError": 4.0944,
+          "distinctMatchGap": 9.025066666666666
+        },
+        {
+          "x": 216,
+          "y": 1410,
+          "meanAbsoluteRGBError": 10.3616,
+          "distinctMatchGap": 6.081066666666668
+        },
+        {
+          "x": 236,
+          "y": 1499,
+          "meanAbsoluteRGBError": 4.765866666666667,
+          "distinctMatchGap": 10.7792
+        },
+        {
+          "x": 395,
+          "y": 1475,
+          "meanAbsoluteRGBError": 5.168533333333333,
+          "distinctMatchGap": 4.9248
+        }
+      ]
+    },
+    {
+      "scale": 1.0337697456032906,
+      "translation": [-10.03307596033136, -46.66359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 14,
+      "meanTemplateError": 5.6837333333333335,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1441,
+          "meanAbsoluteRGBError": 4.530133333333334,
+          "distinctMatchGap": 9.104
+        },
+        {
+          "x": 215,
+          "y": 1411,
+          "meanAbsoluteRGBError": 9.260266666666666,
+          "distinctMatchGap": 7.342933333333335
+        },
+        {
+          "x": 236,
+          "y": 1500,
+          "meanAbsoluteRGBError": 4.2026666666666666,
+          "distinctMatchGap": 10.154666666666667
+        },
+        {
+          "x": 395,
+          "y": 1476,
+          "meanAbsoluteRGBError": 4.741866666666667,
+          "distinctMatchGap": 6.2943999999999996
+        }
+      ]
+    },
+    {
+      "scale": 1.0337697456032906,
+      "translation": [-10.03307596033136, -45.91359497998633],
+      "anchorDrift": 3,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 30,
+      "meanTemplateError": 6.4132,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1442,
+          "meanAbsoluteRGBError": 6.321066666666667,
+          "distinctMatchGap": 8.670933333333334
+        },
+        {
+          "x": 215,
+          "y": 1412,
+          "meanAbsoluteRGBError": 8.022933333333333,
+          "distinctMatchGap": 8.706666666666669
+        },
+        {
+          "x": 236,
+          "y": 1501,
+          "meanAbsoluteRGBError": 5.282133333333333,
+          "distinctMatchGap": 8.745066666666666
+        },
+        {
+          "x": 395,
+          "y": 1477,
+          "meanAbsoluteRGBError": 6.026666666666666,
+          "distinctMatchGap": 4.309866666666667
+        }
+      ]
+    },
+    {
+      "scale": 1.0337697456032906,
+      "translation": [-9.28307596033136, -47.41359497998633],
+      "anchorDrift": 1,
+      "dimensionDrifts": [0, 0.011529178270976992],
+      "mse": 5,
+      "meanTemplateError": 5.365333333333333,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1440,
+          "meanAbsoluteRGBError": 3.7008,
+          "distinctMatchGap": 10.758399999999998
+        },
+        {
+          "x": 216,
+          "y": 1410,
+          "meanAbsoluteRGBError": 7.435733333333333,
+          "distinctMatchGap": 10.559466666666667
+        },
+        {
+          "x": 236,
+          "y": 1499,
+          "meanAbsoluteRGBError": 5.708266666666667,
+          "distinctMatchGap": 7.304
+        },
+        {
+          "x": 395,
+          "y": 1476,
+          "meanAbsoluteRGBError": 4.616533333333333,
+          "distinctMatchGap": 6.416
+        }
+      ]
+    },
+    {
+      "scale": 1.0337697456032906,
+      "translation": [-9.28307596033136, -46.66359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.006224433959209463],
+      "mse": 11,
+      "meanTemplateError": 5.358933333333334,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1441,
+          "meanAbsoluteRGBError": 4.0304,
+          "distinctMatchGap": 10.677333333333333
+        },
+        {
+          "x": 216,
+          "y": 1411,
+          "meanAbsoluteRGBError": 6.146133333333333,
+          "distinctMatchGap": 10.995199999999999
+        },
+        {
+          "x": 237,
+          "y": 1500,
+          "meanAbsoluteRGBError": 5.749333333333333,
+          "distinctMatchGap": 7.6848
+        },
+        {
+          "x": 395,
+          "y": 1476,
+          "meanAbsoluteRGBError": 5.5098666666666665,
+          "distinctMatchGap": 6.034666666666667
+        }
+      ]
+    },
+    {
+      "scale": 1.0337697456032906,
+      "translation": [-9.28307596033136, -45.91359497998633],
+      "anchorDrift": 3,
+      "dimensionDrifts": [0, 0.006224433959209463],
+      "mse": 27,
+      "meanTemplateError": 5.421866666666667,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1442,
+          "meanAbsoluteRGBError": 5.803733333333334,
+          "distinctMatchGap": 8.914133333333334
+        },
+        {
+          "x": 216,
+          "y": 1412,
+          "meanAbsoluteRGBError": 6.24,
+          "distinctMatchGap": 10.703999999999999
+        },
+        {
+          "x": 237,
+          "y": 1501,
+          "meanAbsoluteRGBError": 5.9408,
+          "distinctMatchGap": 6.2672
+        },
+        {
+          "x": 395,
+          "y": 1477,
+          "meanAbsoluteRGBError": 3.702933333333333,
+          "distinctMatchGap": 8.801066666666667
+        }
+      ]
+    },
+    {
+      "scale": 1.0337697456032906,
+      "translation": [-8.53307596033136, -47.41359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 8,
+      "meanTemplateError": 5.585333333333334,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 35,
+          "y": 1440,
+          "meanAbsoluteRGBError": 5.6752,
+          "distinctMatchGap": 8.931733333333334
+        },
+        {
+          "x": 217,
+          "y": 1410,
+          "meanAbsoluteRGBError": 6.669866666666667,
+          "distinctMatchGap": 12.138133333333332
+        },
+        {
+          "x": 237,
+          "y": 1499,
+          "meanAbsoluteRGBError": 4.629333333333333,
+          "distinctMatchGap": 9.1168
+        },
+        {
+          "x": 396,
+          "y": 1475,
+          "meanAbsoluteRGBError": 5.366933333333333,
+          "distinctMatchGap": 4.6421333333333346
+        }
+      ]
+    },
+    {
+      "scale": 1.0337697456032906,
+      "translation": [-8.53307596033136, -46.66359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 16,
+      "meanTemplateError": 4.987733333333333,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 35,
+          "y": 1441,
+          "meanAbsoluteRGBError": 4.8992,
+          "distinctMatchGap": 8.736533333333332
+        },
+        {
+          "x": 217,
+          "y": 1411,
+          "meanAbsoluteRGBError": 5.726933333333333,
+          "distinctMatchGap": 12.681600000000001
+        },
+        {
+          "x": 237,
+          "y": 1500,
+          "meanAbsoluteRGBError": 5.16,
+          "distinctMatchGap": 9.0176
+        },
+        {
+          "x": 396,
+          "y": 1476,
+          "meanAbsoluteRGBError": 4.1648,
+          "distinctMatchGap": 6.6181333333333345
+        }
+      ]
+    },
+    {
+      "scale": 1.0337697456032906,
+      "translation": [-8.53307596033136, -45.91359497998633],
+      "anchorDrift": 3,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 32,
+      "meanTemplateError": 5.553066666666667,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 35,
+          "y": 1442,
+          "meanAbsoluteRGBError": 6.142933333333334,
+          "distinctMatchGap": 7.223466666666667
+        },
+        {
+          "x": 217,
+          "y": 1412,
+          "meanAbsoluteRGBError": 6.565333333333333,
+          "distinctMatchGap": 12.060799999999999
+        },
+        {
+          "x": 237,
+          "y": 1501,
+          "meanAbsoluteRGBError": 6.5152,
+          "distinctMatchGap": 8.8432
+        },
+        {
+          "x": 396,
+          "y": 1477,
+          "meanAbsoluteRGBError": 2.9888,
+          "distinctMatchGap": 8.9632
+        }
+      ]
+    },
+    {
+      "scale": 1.0342697456032908,
+      "translation": [-10.03307596033136, -47.41359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0.00534955195109954, 0.012449756489309793],
+      "mse": 13,
+      "meanTemplateError": 5.6348,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1441,
+          "meanAbsoluteRGBError": 4.769066666666666,
+          "distinctMatchGap": 8.922133333333335
+        },
+        {
+          "x": 216,
+          "y": 1411,
+          "meanAbsoluteRGBError": 9.813866666666666,
+          "distinctMatchGap": 6.281066666666668
+        },
+        {
+          "x": 236,
+          "y": 1500,
+          "meanAbsoluteRGBError": 3.6938666666666666,
+          "distinctMatchGap": 11.658133333333334
+        },
+        {
+          "x": 395,
+          "y": 1476,
+          "meanAbsoluteRGBError": 4.2624,
+          "distinctMatchGap": 6.460266666666667
+        }
+      ]
+    },
+    {
+      "scale": 1.0342697456032908,
+      "translation": [-10.03307596033136, -46.66359497998633],
+      "anchorDrift": 3,
+      "dimensionDrifts": [0.0008674112352191621, 0.012449756489309793],
+      "mse": 25,
+      "meanTemplateError": 6.243333333333333,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1441,
+          "meanAbsoluteRGBError": 6.466666666666667,
+          "distinctMatchGap": 6.1968
+        },
+        {
+          "x": 215,
+          "y": 1412,
+          "meanAbsoluteRGBError": 8.8944,
+          "distinctMatchGap": 8.101866666666668
+        },
+        {
+          "x": 236,
+          "y": 1501,
+          "meanAbsoluteRGBError": 4.997866666666667,
+          "distinctMatchGap": 10.0832
+        },
+        {
+          "x": 395,
+          "y": 1477,
+          "meanAbsoluteRGBError": 4.6144,
+          "distinctMatchGap": 6.5984
+        }
+      ]
+    },
+    {
+      "scale": 1.0342697456032908,
+      "translation": [-10.03307596033136, -45.91359497998633],
+      "anchorDrift": 4,
+      "dimensionDrifts": [0.0008674112352191621, 0.005298155063872878],
+      "mse": 41,
+      "meanTemplateError": 6.388266666666667,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 33,
+          "y": 1442,
+          "meanAbsoluteRGBError": 5.017066666666667,
+          "distinctMatchGap": 8.058666666666667
+        },
+        {
+          "x": 215,
+          "y": 1413,
+          "meanAbsoluteRGBError": 9.3984,
+          "distinctMatchGap": 7.809599999999998
+        },
+        {
+          "x": 236,
+          "y": 1501,
+          "meanAbsoluteRGBError": 5.050133333333333,
+          "distinctMatchGap": 9.462933333333334
+        },
+        {
+          "x": 394,
+          "y": 1478,
+          "meanAbsoluteRGBError": 6.087466666666667,
+          "distinctMatchGap": 4.495466666666666
+        }
+      ]
+    },
+    {
+      "scale": 1.0342697456032908,
+      "translation": [-9.28307596033136, -47.41359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 14,
+      "meanTemplateError": 5.422000000000001,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1441,
+          "meanAbsoluteRGBError": 4.185066666666667,
+          "distinctMatchGap": 10.449066666666667
+        },
+        {
+          "x": 216,
+          "y": 1411,
+          "meanAbsoluteRGBError": 7.3168,
+          "distinctMatchGap": 9.372799999999998
+        },
+        {
+          "x": 237,
+          "y": 1500,
+          "meanAbsoluteRGBError": 5.069333333333334,
+          "distinctMatchGap": 8.632533333333335
+        },
+        {
+          "x": 396,
+          "y": 1476,
+          "meanAbsoluteRGBError": 5.1168,
+          "distinctMatchGap": 5.547733333333333
+        }
+      ]
+    },
+    {
+      "scale": 1.0342697456032908,
+      "translation": [-9.28307596033136, -46.66359497998633],
+      "anchorDrift": 3,
+      "dimensionDrifts": [0.0008674112352191621, 0.006224433959209463],
+      "mse": 22,
+      "meanTemplateError": 6.072,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1441,
+          "meanAbsoluteRGBError": 5.817066666666666,
+          "distinctMatchGap": 7.384533333333333
+        },
+        {
+          "x": 216,
+          "y": 1412,
+          "meanAbsoluteRGBError": 7.024,
+          "distinctMatchGap": 9.713066666666666
+        },
+        {
+          "x": 237,
+          "y": 1501,
+          "meanAbsoluteRGBError": 5.600533333333333,
+          "distinctMatchGap": 7.303466666666667
+        },
+        {
+          "x": 395,
+          "y": 1477,
+          "meanAbsoluteRGBError": 5.8464,
+          "distinctMatchGap": 5.957333333333334
+        }
+      ]
+    },
+    {
+      "scale": 1.0342697456032908,
+      "translation": [-9.28307596033136, -45.91359497998633],
+      "anchorDrift": 4,
+      "dimensionDrifts": [0.0008674112352191621, 0.011529178270976992],
+      "mse": 40,
+      "meanTemplateError": 6.006666666666667,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 34,
+          "y": 1442,
+          "meanAbsoluteRGBError": 4.351466666666667,
+          "distinctMatchGap": 10.132266666666666
+        },
+        {
+          "x": 216,
+          "y": 1413,
+          "meanAbsoluteRGBError": 8.552,
+          "distinctMatchGap": 8.1328
+        },
+        {
+          "x": 236,
+          "y": 1501,
+          "meanAbsoluteRGBError": 6.343466666666667,
+          "distinctMatchGap": 5.241599999999999
+        },
+        {
+          "x": 395,
+          "y": 1478,
+          "meanAbsoluteRGBError": 4.779733333333334,
+          "distinctMatchGap": 7.319466666666666
+        }
+      ]
+    },
+    {
+      "scale": 1.0342697456032908,
+      "translation": [-8.53307596033136, -47.41359497998633],
+      "anchorDrift": 2,
+      "dimensionDrifts": [0, 0.012449756489309793],
+      "mse": 16,
+      "meanTemplateError": 5.255333333333334,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 35,
+          "y": 1441,
+          "meanAbsoluteRGBError": 4.8192,
+          "distinctMatchGap": 8.810133333333333
+        },
+        {
+          "x": 217,
+          "y": 1411,
+          "meanAbsoluteRGBError": 5.462933333333333,
+          "distinctMatchGap": 12.732800000000001
+        },
+        {
+          "x": 237,
+          "y": 1500,
+          "meanAbsoluteRGBError": 5.812266666666667,
+          "distinctMatchGap": 8.082133333333331
+        },
+        {
+          "x": 396,
+          "y": 1476,
+          "meanAbsoluteRGBError": 4.926933333333333,
+          "distinctMatchGap": 6.4101333333333335
+        }
+      ]
+    },
+    {
+      "scale": 1.0342697456032908,
+      "translation": [-8.53307596033136, -46.66359497998633],
+      "anchorDrift": 3,
+      "dimensionDrifts": [0, 0.006224433959209463],
+      "mse": 33,
+      "meanTemplateError": 5.618666666666668,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 35,
+          "y": 1442,
+          "meanAbsoluteRGBError": 6.3002666666666665,
+          "distinctMatchGap": 6.928533333333333
+        },
+        {
+          "x": 217,
+          "y": 1412,
+          "meanAbsoluteRGBError": 6.690133333333334,
+          "distinctMatchGap": 11.463466666666667
+        },
+        {
+          "x": 238,
+          "y": 1501,
+          "meanAbsoluteRGBError": 6.3408,
+          "distinctMatchGap": 5.305066666666667
+        },
+        {
+          "x": 396,
+          "y": 1477,
+          "meanAbsoluteRGBError": 3.143466666666667,
+          "distinctMatchGap": 9.253866666666667
+        }
+      ]
+    },
+    {
+      "scale": 1.0342697456032908,
+      "translation": [-8.53307596033136, -45.91359497998633],
+      "anchorDrift": 3,
+      "dimensionDrifts": [0, 0.011529178270976992],
+      "mse": 37,
+      "meanTemplateError": 5.754133333333334,
+      "feasible": false,
+      "observed": [
+        {
+          "x": 35,
+          "y": 1442,
+          "meanAbsoluteRGBError": 6.013866666666667,
+          "distinctMatchGap": 9.623466666666667
+        },
+        {
+          "x": 217,
+          "y": 1412,
+          "meanAbsoluteRGBError": 7.788266666666667,
+          "distinctMatchGap": 12.001599999999998
+        },
+        {
+          "x": 237,
+          "y": 1501,
+          "meanAbsoluteRGBError": 5.6677333333333335,
+          "distinctMatchGap": 7.030399999999999
+        },
+        {
+          "x": 396,
+          "y": 1478,
+          "meanAbsoluteRGBError": 3.546666666666667,
+          "distinctMatchGap": 8.6048
+        }
+      ]
+    }
+  ],
+  "selected": {
+    "scale": 1.0322697456032908,
+    "translation": [-9.28307596033136, -45.91359497998633],
+    "anchorDrift": 1,
+    "dimensionDrifts": [0.0008674112352191621, 0.005298155063872878],
+    "mse": 3,
+    "meanTemplateError": 6.007866666666667,
+    "feasible": true,
+    "observed": [
+      {
+        "x": 34,
+        "y": 1439,
+        "meanAbsoluteRGBError": 4.9664,
+        "distinctMatchGap": 9.406933333333333
+      },
+      {
+        "x": 216,
+        "y": 1410,
+        "meanAbsoluteRGBError": 7.8,
+        "distinctMatchGap": 10.393066666666666
+      },
+      {
+        "x": 236,
+        "y": 1498,
+        "meanAbsoluteRGBError": 5.213333333333333,
+        "distinctMatchGap": 8.184000000000001
+      },
+      {
+        "x": 394,
+        "y": 1475,
+        "meanAbsoluteRGBError": 6.051733333333333,
+        "distinctMatchGap": 4.676266666666667
+      }
+    ]
+  }
+}

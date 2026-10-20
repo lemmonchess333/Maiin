@@ -1750,15 +1750,27 @@ export const RELEASED_FORM_PLACARDS = {
   "lu-raise": placard(
     "lu-raise",
     ["Deltoids"],
-    [],
+    ["Traps"],
     [
       [0, "Start", "Stand tall, weights at your sides."],
-      [0.25, "Raise laterally", "Raise both arms out to the sides."],
-      [0.5, "Shoulder height", "Reach shoulder height with soft elbows."],
-      [1, "Continue overhead", "Continue out and up with soft elbows."],
+      [0.25, "Raise laterally", "Raise outward; keep elbows softly fixed."],
+      [0.5, "Shoulder height", "Pass shoulder height with thumbs up."],
+      [1, "Reach overhead", "Reach overhead without leaning back."],
       [0.5, "Lower laterally", "Lower out to shoulder height under control."],
       [0.25, "Lower", "Lower steadily; continue to your sides."],
-    ]
+    ],
+    [
+      "Stand tall with light dumbbells at your sides and palms facing in.",
+      "Keep a slight elbow bend and raise outward in a comfortable plane just in front of your shoulders.",
+      "Allow natural arm and shoulder-blade rotation as you continue overhead; lower along the same arc.",
+    ],
+    {
+      tip: "Use light weights, stay tall and control the full outward arc.",
+      commonMistakes: [
+        "Bending the elbows to press the weights overhead.",
+        "Leaning backward or swinging the hips to lift.",
+      ],
+    }
   ),
   "arnold-press": placard(
     "arnold-press",

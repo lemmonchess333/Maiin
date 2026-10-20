@@ -1,0 +1,230 @@
+{
+  "id": "side-plank",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Side Plank, Support",
+              "decoded": true,
+              "height": 696,
+              "src": "/Maiin/.strict33.local/candidate/side-plank/1.webp",
+              "width": 1480
+            }
+          ],
+          "caption": "Support 1/6",
+          "id": "side-plank",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Side Plank, Stack",
+              "decoded": true,
+              "height": 696,
+              "src": "/Maiin/.strict33.local/candidate/side-plank/2.webp",
+              "width": 1480
+            }
+          ],
+          "caption": "Stack 2/6",
+          "id": "side-plank",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Side Plank, Align",
+              "decoded": true,
+              "height": 696,
+              "src": "/Maiin/.strict33.local/candidate/side-plank/3.webp",
+              "width": 1480
+            }
+          ],
+          "caption": "Align 3/6",
+          "id": "side-plank",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Side Plank, Brace",
+              "decoded": true,
+              "height": 696,
+              "src": "/Maiin/.strict33.local/candidate/side-plank/4.webp",
+              "width": 1480
+            }
+          ],
+          "caption": "Brace 4/6",
+          "id": "side-plank",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Side Plank, Breathe",
+              "decoded": true,
+              "height": 696,
+              "src": "/Maiin/.strict33.local/candidate/side-plank/5.webp",
+              "width": 1480
+            }
+          ],
+          "caption": "Breathe 5/6",
+          "id": "side-plank",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Side Plank, Time",
+              "decoded": true,
+              "height": 696,
+              "src": "/Maiin/.strict33.local/candidate/side-plank/6.webp",
+              "width": 1480
+            }
+          ],
+          "caption": "Time 6/6",
+          "id": "side-plank",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 84,\n    \"alt\": \"Side Plank, Support\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1205,\n    \"alt\": \"Side Plank, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Side Plank, Align\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2321,\n    \"alt\": \"Side Plank, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2962,\n    \"alt\": \"Side Plank, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3443,\n    \"alt\": \"Side Plank, Time\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5121,\n    \"alt\": \"Side Plank, Support\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Side Plank, Brace",
+            "decoded": true,
+            "height": 696,
+            "src": "/Maiin/.strict33.local/candidate/side-plank/4.webp",
+            "width": 1480
+          }
+        ],
+        "caption": "Brace 4/6",
+        "id": "side-plank",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / side-plank\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nSide Plank\nCore\nBodyweight\n\nBRACE 4/6\n\nPause\nNormal\nPRIMARY\nObliques\nSECONDARY\nCore, Shoulders\n\nInstructions\n\nPreparation: Lie on your side with your forearm on the floor, elbow under your shoulder. Stack your feet (or stagger for easier) and brace your core. Lift your hips off the floor into a straight line from head to feet.\n\n1\n\nKeep your elbow beneath your shoulder.\n\n2\n\nKeep your feet stacked and steady.\n\n3\n\nKeep head, hips and feet aligned.\n\n4\n\nKeep your hips raised and core braced.\n\n5\n\nBreathe normally without dropping your hips.\n\n6\n\nHold for time; then repeat opposite side.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 84,\n    \"alt\": \"Side Plank, Support\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1205,\n    \"alt\": \"Side Plank, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Side Plank, Align\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2321,\n    \"alt\": \"Side Plank, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2962,\n    \"alt\": \"Side Plank, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3443,\n    \"alt\": \"Side Plank, Time\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5121,\n    \"alt\": \"Side Plank, Support\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6563,\n    \"alt\": \"Side Plank, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Side Plank, Align\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9042,\n    \"alt\": \"Side Plank, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10241,\n    \"alt\": \"Side Plank, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11442,\n    \"alt\": \"Side Plank, Time\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12720,\n    \"alt\": \"Side Plank, Support\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13920,\n    \"alt\": \"Side Plank, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15121,\n    \"alt\": \"Side Plank, Align\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/3.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Side Plank, Support",
+              "decoded": true,
+              "height": 696,
+              "src": "/Maiin/.strict33.local/candidate/side-plank/1.webp",
+              "width": 1480
+            }
+          ],
+          "caption": "Support 1/6",
+          "id": "side-plank",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Side Plank, Stack",
+              "decoded": true,
+              "height": 696,
+              "src": "/Maiin/.strict33.local/candidate/side-plank/2.webp",
+              "width": 1480
+            }
+          ],
+          "caption": "Stack 2/6",
+          "id": "side-plank",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Side Plank, Align",
+              "decoded": true,
+              "height": 696,
+              "src": "/Maiin/.strict33.local/candidate/side-plank/3.webp",
+              "width": 1480
+            }
+          ],
+          "caption": "Align 3/6",
+          "id": "side-plank",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Side Plank, Brace",
+              "decoded": true,
+              "height": 696,
+              "src": "/Maiin/.strict33.local/candidate/side-plank/4.webp",
+              "width": 1480
+            }
+          ],
+          "caption": "Brace 4/6",
+          "id": "side-plank",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Side Plank, Breathe",
+              "decoded": true,
+              "height": 696,
+              "src": "/Maiin/.strict33.local/candidate/side-plank/5.webp",
+              "width": 1480
+            }
+          ],
+          "caption": "Breathe 5/6",
+          "id": "side-plank",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Side Plank, Time",
+              "decoded": true,
+              "height": 696,
+              "src": "/Maiin/.strict33.local/candidate/side-plank/6.webp",
+              "width": 1480
+            }
+          ],
+          "caption": "Time 6/6",
+          "id": "side-plank",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 84,\n    \"alt\": \"Side Plank, Support\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1205,\n    \"alt\": \"Side Plank, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Side Plank, Align\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2321,\n    \"alt\": \"Side Plank, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2962,\n    \"alt\": \"Side Plank, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3443,\n    \"alt\": \"Side Plank, Time\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5121,\n    \"alt\": \"Side Plank, Support\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6563,\n    \"alt\": \"Side Plank, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Side Plank, Align\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9042,\n    \"alt\": \"Side Plank, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10241,\n    \"alt\": \"Side Plank, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11442,\n    \"alt\": \"Side Plank, Time\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12720,\n    \"alt\": \"Side Plank, Support\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13920,\n    \"alt\": \"Side Plank, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15121,\n    \"alt\": \"Side Plank, Align\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16321,\n    \"alt\": \"Side Plank, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17284,\n    \"alt\": \"Side Plank, Support\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17841,\n    \"alt\": \"Side Plank, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18401,\n    \"alt\": \"Side Plank, Align\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18962,\n    \"alt\": \"Side Plank, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19521,\n    \"alt\": \"Side Plank, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 20084,\n    \"alt\": \"Side Plank, Time\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21763,\n    \"alt\": \"Side Plank, Support\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Side Plank, Stack",
+            "decoded": true,
+            "height": 696,
+            "src": "/Maiin/.strict33.local/candidate/side-plank/2.webp",
+            "width": 1480
+          }
+        ],
+        "caption": "Stack 2/6",
+        "id": "side-plank",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / side-plank\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nSide Plank\nCore\nBodyweight\n\nSTACK 2/6\n\nPause\nNormal\nPRIMARY\nObliques\nSECONDARY\nCore, Shoulders\n\nInstructions\n\nPreparation: Lie on your side with your forearm on the floor, elbow under your shoulder. Stack your feet (or stagger for easier) and brace your core. Lift your hips off the floor into a straight line from head to feet.\n\n1\n\nKeep your elbow beneath your shoulder.\n\n2\n\nKeep your feet stacked and steady.\n\n3\n\nKeep head, hips and feet aligned.\n\n4\n\nKeep your hips raised and core braced.\n\n5\n\nBreathe normally without dropping your hips.\n\n6\n\nHold for time; then repeat opposite side.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 84,\n    \"alt\": \"Side Plank, Support\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1205,\n    \"alt\": \"Side Plank, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Side Plank, Align\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2321,\n    \"alt\": \"Side Plank, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2962,\n    \"alt\": \"Side Plank, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3443,\n    \"alt\": \"Side Plank, Time\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5121,\n    \"alt\": \"Side Plank, Support\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6563,\n    \"alt\": \"Side Plank, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Side Plank, Align\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9042,\n    \"alt\": \"Side Plank, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10241,\n    \"alt\": \"Side Plank, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11442,\n    \"alt\": \"Side Plank, Time\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12720,\n    \"alt\": \"Side Plank, Support\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13920,\n    \"alt\": \"Side Plank, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15121,\n    \"alt\": \"Side Plank, Align\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16321,\n    \"alt\": \"Side Plank, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17284,\n    \"alt\": \"Side Plank, Support\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17841,\n    \"alt\": \"Side Plank, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18401,\n    \"alt\": \"Side Plank, Align\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18962,\n    \"alt\": \"Side Plank, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19521,\n    \"alt\": \"Side Plank, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 20084,\n    \"alt\": \"Side Plank, Time\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21763,\n    \"alt\": \"Side Plank, Support\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23205,\n    \"alt\": \"Side Plank, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24400,\n    \"alt\": \"Side Plank, Align\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25605,\n    \"alt\": \"Side Plank, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 26803,\n    \"alt\": \"Side Plank, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28082,\n    \"alt\": \"Side Plank, Time\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 29283,\n    \"alt\": \"Side Plank, Support\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 30486,\n    \"alt\": \"Side Plank, Stack\",\n    \"src\": \"/Maiin/.strict33.local/candidate/side-plank/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

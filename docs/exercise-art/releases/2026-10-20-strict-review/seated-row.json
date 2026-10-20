@@ -1,0 +1,167 @@
+{
+  "exerciseId": "seated-row",
+  "version": "anatomy-v3-2026-10-16-controlled-hinge-cable-v1",
+  "width": 1335,
+  "height": 942,
+  "reference": {
+    "path": "form-frames/seated-row/3.webp",
+    "sha256": "ab9d79e0c4b36ffcd5cd082cb41c332069d73c8cbae00db47c7538e813598b07"
+  },
+  "cueSha256": "6f87638404233d04126decce52212251355366804beed780d699e00fbd1575da",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:48.992375+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. The explicitly labelled controlled-hinge variation reaches forward then rows to the lower ribs with an upright chest. It is not presented as a motionless-torso variation. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Fixed seat/foot supports and cable tower; handle and cable remain connected. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "The explicitly labelled controlled-hinge variation reaches forward then rows to the lower ribs with an upright chest. It is not presented as a motionless-torso variation. Actual named native supports are measured in all six frames: fixedTowerTopCrossmemberMaterialFeature1, fixedTowerTopCrossmemberMaterialFeature2. Maximum axis drift 0px. Dimensions: fixedTowerTopCrossmemberProjectedFeatureSpan, oppositeFixedSupportProjectedFeatureSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "The explicitly labelled controlled-hinge variation reaches forward then rows to the lower ribs with an upright chest. It is not presented as a motionless-torso variation. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Upper back #7B72E9; secondary Biceps #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Reach: Reach forward; keep both feet braced. / Set: Keep knees soft and wrists straight. / Row: Draw elbows back; bring chest upright. / Squeeze: Bring the handle toward your lower ribs. / Return: Extend arms; hinge forward under control. / Reset: Keep feet braced; avoid bouncing.. Preparation remains [\"Controlled torso-hinge variation: start light and move smoothly.\", \"Sit on the fixed bench; brace both feet with knees slightly bent.\"]. The explicitly labelled controlled-hinge variation reaches forward then rows to the lower ribs with an upright chest. It is not presented as a motionless-torso variation."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. The explicitly labelled controlled-hinge variation reaches forward then rows to the lower ribs with an upright chest. It is not presented as a motionless-torso variation. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-16/seated-row.json (sha256 6318ca10a4927250858ab17abf6243273cf34f7b5b8d803e315ee1be83220a47). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-16/seated-row.json (sha256 6318ca10a4927250858ab17abf6243273cf34f7b5b8d803e315ee1be83220a47). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/seated-row/1.webp",
+      "sha256": "a4ad168f8a595b039e710d9e42cbbee1cd88701cc12871235e9b5328451c9974",
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": { "x": 1057, "y": 31 },
+        "fixedTowerTopCrossmemberMaterialFeature2": { "x": 1218, "y": 44 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 161.5239920259526,
+        "oppositeFixedSupportProjectedFeatureSpan": 335.1208737157386
+      }
+    },
+    {
+      "path": "form-frames/seated-row/2.webp",
+      "sha256": "a4ad168f8a595b039e710d9e42cbbee1cd88701cc12871235e9b5328451c9974",
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": { "x": 1057, "y": 31 },
+        "fixedTowerTopCrossmemberMaterialFeature2": { "x": 1218, "y": 44 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 161.5239920259526,
+        "oppositeFixedSupportProjectedFeatureSpan": 335.1208737157386
+      }
+    },
+    {
+      "path": "form-frames/seated-row/3.webp",
+      "sha256": "ab9d79e0c4b36ffcd5cd082cb41c332069d73c8cbae00db47c7538e813598b07",
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": { "x": 1057, "y": 31 },
+        "fixedTowerTopCrossmemberMaterialFeature2": { "x": 1218, "y": 44 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 161.5239920259526,
+        "oppositeFixedSupportProjectedFeatureSpan": 335.1208737157386
+      }
+    },
+    {
+      "path": "form-frames/seated-row/4.webp",
+      "sha256": "ab9d79e0c4b36ffcd5cd082cb41c332069d73c8cbae00db47c7538e813598b07",
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": { "x": 1057, "y": 31 },
+        "fixedTowerTopCrossmemberMaterialFeature2": { "x": 1218, "y": 44 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 161.5239920259526,
+        "oppositeFixedSupportProjectedFeatureSpan": 335.1208737157386
+      }
+    },
+    {
+      "path": "form-frames/seated-row/5.webp",
+      "sha256": "a4ad168f8a595b039e710d9e42cbbee1cd88701cc12871235e9b5328451c9974",
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": { "x": 1057, "y": 31 },
+        "fixedTowerTopCrossmemberMaterialFeature2": { "x": 1218, "y": 44 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 161.5239920259526,
+        "oppositeFixedSupportProjectedFeatureSpan": 335.1208737157386
+      }
+    },
+    {
+      "path": "form-frames/seated-row/6.webp",
+      "sha256": "a4ad168f8a595b039e710d9e42cbbee1cd88701cc12871235e9b5328451c9974",
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": { "x": 1057, "y": 31 },
+        "fixedTowerTopCrossmemberMaterialFeature2": { "x": 1218, "y": 44 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 161.5239920259526,
+        "oppositeFixedSupportProjectedFeatureSpan": 335.1208737157386
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-16/seated-row.json",
+    "sha256": "6318ca10a4927250858ab17abf6243273cf34f7b5b8d803e315ee1be83220a47"
+  },
+  "historicalFindings": [
+    "Two genuine source poses repeat across six delivery slots; no six-unique-pose or calibrated continuous human movement claim.",
+    "A labelled flex-and-extend cable-row variation, with matching advice; the default still-torso catalogue remains unchanged.",
+    "The source body and native flexible straps retain minor illustrative pose variations; held bar projections differ between source poses.",
+    "New fixed geometric charcoal equipment is an illustrative custom station, not a manufacturer replica or recovered source-body calibration.",
+    "Existing lower-body colour fields are neutralised per source-pixel luminance; this is not a recovered original untinted body.",
+    "Strict review remains unverified.",
+    "Raw playback observation includes brief image/cue transition entries; all six settled selections agree in both themes. This is a discrete illustrated guide, not continuous animation."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/seated-row.json",
+    "sha256": "87780c206109e65f8fbac27d18d6de4544c3808878107d0d9ef898d65f00e476"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false
+}

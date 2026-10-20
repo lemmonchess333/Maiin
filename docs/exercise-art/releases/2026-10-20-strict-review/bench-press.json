@@ -1,0 +1,163 @@
+{
+  "exerciseId": "bench-press",
+  "version": "anatomy-v3-2026-10-18-supported-continuity-v1",
+  "width": 888,
+  "height": 1024,
+  "reference": {
+    "path": "form-frames/bench-press/4.webp",
+    "sha256": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd"
+  },
+  "cueSha256": "bccf45debd6d111fe77549134591d101fea4b4894a0755cc11f0e35dd6fd4c04",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:53.483452+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0.5px; independent invariant dimensions maximum relative drift 0.007812500. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Feet, shoulders and pelvis stay supported while elbows flex and extend. Bar clears neck and touches near chest. Earlier bench/body jump correction remains intact. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Stable flat bench, continuous bar and one modest grey plate per end. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Feet, shoulders and pelvis stay supported while elbows flex and extend. Bar clears neck and touches near chest. Earlier bench/body jump correction remains intact. Actual named native supports are measured in all six frames: leftImageSupportLowestContourMidpoint, rightImageSupportLowestContourMidpoint. Maximum axis drift 0.5px. Dimensions: leftImageSupportProjectedHorizontalSpan, rightImageSupportProjectedHorizontalSpan; max 0.78125%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Feet, shoulders and pelvis stay supported while elbows flex and extend. Bar clears neck and touches near chest. Earlier bench/body jump correction remains intact. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Pectorals #7B72E9; secondary Triceps, Anterior deltoids #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Set: Shoulder blades set; feet stay planted. / Lower: Bend elbows; keep wrists over elbows. / Continue down: Lower smoothly toward the mid-chest. / Chest touch: Touch lightly; keep the neck clear. / Drive: Press upward and back toward shoulders. / Lockout: Straight arms; hips remain on bench.. Preparation remains [\"Lie on the bench with both feet planted and shoulder blades set.\", \"Grip the bar just outside shoulders and unrack before the shown cycle.\"]. Feet, shoulders and pelvis stay supported while elbows flex and extend. Bar clears neck and touches near chest. Earlier bench/body jump correction remains intact."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Feet, shoulders and pelvis stay supported while elbows flex and extend. Bar clears neck and touches near chest. Earlier bench/body jump correction remains intact. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Exact unchanged art retains the earlier registered all-six light/dark visual evidence; current capture artefacts are explicitly excluded. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-18/bench-press.json (sha256 b1f8d1e8a2d0b77097dc5a78d3d7549710db39fe28dee7aec28b922133f8fef1). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Exact unchanged art retains the earlier registered all-six light/dark visual evidence; current capture artefacts are explicitly excluded. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-18/bench-press.json (sha256 b1f8d1e8a2d0b77097dc5a78d3d7549710db39fe28dee7aec28b922133f8fef1). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/bench-press/1.webp",
+      "sha256": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 482, "y": 974 },
+        "rightImageSupportLowestContourMidpoint": { "x": 762, "y": 876 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 78,
+        "rightImageSupportProjectedHorizontalSpan": 128
+      }
+    },
+    {
+      "path": "form-frames/bench-press/2.webp",
+      "sha256": "4ab1f8d37c4137bd4ced6b2a9fb85bee29d7b905daab019b99cef7c46b8b014f",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 482, "y": 974 },
+        "rightImageSupportLowestContourMidpoint": { "x": 762.5, "y": 876 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 78,
+        "rightImageSupportProjectedHorizontalSpan": 127
+      }
+    },
+    {
+      "path": "form-frames/bench-press/3.webp",
+      "sha256": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 482, "y": 974 },
+        "rightImageSupportLowestContourMidpoint": { "x": 762, "y": 876 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 78,
+        "rightImageSupportProjectedHorizontalSpan": 128
+      }
+    },
+    {
+      "path": "form-frames/bench-press/4.webp",
+      "sha256": "014a13dc3036dd0cde4b5f39c2d757be26dfaa5faf91a64592ead5a6807559cd",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 482, "y": 974 },
+        "rightImageSupportLowestContourMidpoint": { "x": 762, "y": 876 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 78,
+        "rightImageSupportProjectedHorizontalSpan": 128
+      }
+    },
+    {
+      "path": "form-frames/bench-press/5.webp",
+      "sha256": "4ab1f8d37c4137bd4ced6b2a9fb85bee29d7b905daab019b99cef7c46b8b014f",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 482, "y": 974 },
+        "rightImageSupportLowestContourMidpoint": { "x": 762.5, "y": 876 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 78,
+        "rightImageSupportProjectedHorizontalSpan": 127
+      }
+    },
+    {
+      "path": "form-frames/bench-press/6.webp",
+      "sha256": "72df954b442eed991e2472e23dce2dafa37ef27934c90f8b4cef87c82ffd796f",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 482, "y": 974 },
+        "rightImageSupportLowestContourMidpoint": { "x": 762, "y": 876 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 78,
+        "rightImageSupportProjectedHorizontalSpan": 128
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maxAnchorAxisDriftPx": 0.5,
+    "maxInvariantRelativeDrift": 0.0078125,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-18/bench-press.json",
+    "sha256": "b1f8d1e8a2d0b77097dc5a78d3d7549710db39fe28dee7aec28b922133f8fef1"
+  },
+  "historicalFindings": [
+    "Three genuine physical poses reused across six guide paths. Frames 3 and 4 intentionally share the supported chest-touch pose; frame 5 returns through the existing early state.",
+    "Native supported sources retain minor pre-existing illustration contour differences; no pixel-exact invariant-scene certification is asserted.",
+    "Early state remains about 12% descent. No new anatomical interpolation or intermediate source is invented."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/bench-press.json",
+    "sha256": "b79cd88cea76d7b5b3969f8e7330e56d927e819ba314153920d6565f8efbb450"
+  },
+  "mobileEvidenceReusedForUnchangedArt": true
+}

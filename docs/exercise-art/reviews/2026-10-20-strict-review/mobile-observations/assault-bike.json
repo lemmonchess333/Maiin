@@ -1,0 +1,230 @@
+{
+  "id": "assault-bike",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Assault Bike, Drive",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/assault-bike/1.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Drive 1/6",
+          "id": "assault-bike",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Assault Bike, Arms",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/assault-bike/2.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Arms 2/6",
+          "id": "assault-bike",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Assault Bike, Switch",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/assault-bike/3.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Switch 3/6",
+          "id": "assault-bike",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Assault Bike, Tall",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/assault-bike/4.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Tall 4/6",
+          "id": "assault-bike",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Assault Bike, Breathe",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/assault-bike/5.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Breathe 5/6",
+          "id": "assault-bike",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Assault Bike, Steady",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/assault-bike/6.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Steady 6/6",
+          "id": "assault-bike",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 81,\n    \"alt\": \"Assault Bike, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1281,\n    \"alt\": \"Assault Bike, Arms\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1842,\n    \"alt\": \"Assault Bike, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2400,\n    \"alt\": \"Assault Bike, Tall\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2965,\n    \"alt\": \"Assault Bike, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3522,\n    \"alt\": \"Assault Bike, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5203,\n    \"alt\": \"Assault Bike, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Assault Bike, Arms",
+            "decoded": true,
+            "height": 1024,
+            "src": "/Maiin/.strict33.local/candidate/assault-bike/2.webp",
+            "width": 1024
+          }
+        ],
+        "caption": "Arms 2/6",
+        "id": "assault-bike",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / assault-bike\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nAssault Bike\nCardio\nMachine\n\nARMS 2/6\n\nPause\nNormal\nPRIMARY\nQuads, Glutes\nSECONDARY\nChest, Front Delts, Biceps, Calves\n\nInstructions\n\nPreparation: Set the seat so your leg is almost straight at the bottom. Hold the moving handles and put both feet on the pedals.\n\n1\n\nDrive down through your whole foot.\n\n2\n\nPush and pull the handles while pedalling.\n\n3\n\nKeep both legs turning; no dead spots.\n\n4\n\nSit tall; keep your hips seated.\n\n5\n\nBreathe in rhythm; never hold your breath.\n\n6\n\nHold a pace you can sustain.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 81,\n    \"alt\": \"Assault Bike, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1281,\n    \"alt\": \"Assault Bike, Arms\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1842,\n    \"alt\": \"Assault Bike, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2400,\n    \"alt\": \"Assault Bike, Tall\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2965,\n    \"alt\": \"Assault Bike, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3522,\n    \"alt\": \"Assault Bike, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5203,\n    \"alt\": \"Assault Bike, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6722,\n    \"alt\": \"Assault Bike, Arms\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7922,\n    \"alt\": \"Assault Bike, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9121,\n    \"alt\": \"Assault Bike, Tall\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10321,\n    \"alt\": \"Assault Bike, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11520,\n    \"alt\": \"Assault Bike, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12721,\n    \"alt\": \"Assault Bike, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13923,\n    \"alt\": \"Assault Bike, Arms\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Assault Bike, Drive",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/assault-bike/1.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Drive 1/6",
+          "id": "assault-bike",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Assault Bike, Arms",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/assault-bike/2.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Arms 2/6",
+          "id": "assault-bike",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Assault Bike, Switch",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/assault-bike/3.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Switch 3/6",
+          "id": "assault-bike",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Assault Bike, Tall",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/assault-bike/4.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Tall 4/6",
+          "id": "assault-bike",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Assault Bike, Breathe",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/assault-bike/5.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Breathe 5/6",
+          "id": "assault-bike",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Assault Bike, Steady",
+              "decoded": true,
+              "height": 1024,
+              "src": "/Maiin/.strict33.local/candidate/assault-bike/6.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Steady 6/6",
+          "id": "assault-bike",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 81,\n    \"alt\": \"Assault Bike, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1281,\n    \"alt\": \"Assault Bike, Arms\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1842,\n    \"alt\": \"Assault Bike, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2400,\n    \"alt\": \"Assault Bike, Tall\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2965,\n    \"alt\": \"Assault Bike, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3522,\n    \"alt\": \"Assault Bike, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5203,\n    \"alt\": \"Assault Bike, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6722,\n    \"alt\": \"Assault Bike, Arms\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7922,\n    \"alt\": \"Assault Bike, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9121,\n    \"alt\": \"Assault Bike, Tall\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10321,\n    \"alt\": \"Assault Bike, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11520,\n    \"alt\": \"Assault Bike, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12721,\n    \"alt\": \"Assault Bike, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13923,\n    \"alt\": \"Assault Bike, Arms\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15122,\n    \"alt\": \"Assault Bike, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15692,\n    \"alt\": \"Assault Bike, Arms\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16321,\n    \"alt\": \"Assault Bike, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16885,\n    \"alt\": \"Assault Bike, Tall\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17443,\n    \"alt\": \"Assault Bike, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18001,\n    \"alt\": \"Assault Bike, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19601,\n    \"alt\": \"Assault Bike, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Assault Bike, Tall",
+            "decoded": true,
+            "height": 1024,
+            "src": "/Maiin/.strict33.local/candidate/assault-bike/4.webp",
+            "width": 1024
+          }
+        ],
+        "caption": "Tall 4/6",
+        "id": "assault-bike",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / assault-bike\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nAssault Bike\nCardio\nMachine\n\nTALL 4/6\n\nPause\nNormal\nPRIMARY\nQuads, Glutes\nSECONDARY\nChest, Front Delts, Biceps, Calves\n\nInstructions\n\nPreparation: Set the seat so your leg is almost straight at the bottom. Hold the moving handles and put both feet on the pedals.\n\n1\n\nDrive down through your whole foot.\n\n2\n\nPush and pull the handles while pedalling.\n\n3\n\nKeep both legs turning; no dead spots.\n\n4\n\nSit tall; keep your hips seated.\n\n5\n\nBreathe in rhythm; never hold your breath.\n\n6\n\nHold a pace you can sustain.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 81,\n    \"alt\": \"Assault Bike, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1281,\n    \"alt\": \"Assault Bike, Arms\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1842,\n    \"alt\": \"Assault Bike, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2400,\n    \"alt\": \"Assault Bike, Tall\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2965,\n    \"alt\": \"Assault Bike, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3522,\n    \"alt\": \"Assault Bike, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5203,\n    \"alt\": \"Assault Bike, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6722,\n    \"alt\": \"Assault Bike, Arms\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7922,\n    \"alt\": \"Assault Bike, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9121,\n    \"alt\": \"Assault Bike, Tall\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10321,\n    \"alt\": \"Assault Bike, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11520,\n    \"alt\": \"Assault Bike, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12721,\n    \"alt\": \"Assault Bike, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13923,\n    \"alt\": \"Assault Bike, Arms\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15122,\n    \"alt\": \"Assault Bike, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15692,\n    \"alt\": \"Assault Bike, Arms\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16321,\n    \"alt\": \"Assault Bike, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16885,\n    \"alt\": \"Assault Bike, Tall\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17443,\n    \"alt\": \"Assault Bike, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18001,\n    \"alt\": \"Assault Bike, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19601,\n    \"alt\": \"Assault Bike, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21121,\n    \"alt\": \"Assault Bike, Arms\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22321,\n    \"alt\": \"Assault Bike, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23521,\n    \"alt\": \"Assault Bike, Tall\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24721,\n    \"alt\": \"Assault Bike, Breathe\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25920,\n    \"alt\": \"Assault Bike, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27121,\n    \"alt\": \"Assault Bike, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28323,\n    \"alt\": \"Assault Bike, Arms\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 29600,\n    \"alt\": \"Assault Bike, Switch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 30801,\n    \"alt\": \"Assault Bike, Tall\",\n    \"src\": \"/Maiin/.strict33.local/candidate/assault-bike/4.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "exerciseId": "goblet-squat",
+  "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+  "width": 1024,
+  "height": 1536,
+  "reference": {
+    "path": "form-frames/goblet-squat/1.webp",
+    "sha256": "13fd26e58d89e3114662944cdbc779850bf8a152eae8679089ff9b83f1ed0cc6"
+  },
+  "cueSha256": "c1fe8abb01e8cfeb89d85d9ee9421b3c4ad62c6a74b2317688c528db9c212adf",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:52.313573+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.005393886. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Hips and knees descend with heels planted, then rise; chest grip, wrist support and squat depth remain coherent. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One ordinary grey dumbbell held upright at chest level. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Hips and knees descend with heels planted, then rise; chest grip, wrist support and squat depth remain coherent. Actual named native supports are measured in all six frames: plantedFarTrainerMaterialFeature1, plantedFarTrainerMaterialFeature2. Maximum axis drift 0px. Dimensions: plantedFarTrainerProjectedFeatureSpan, oppositeFixedSupportProjectedFeatureSpan; max 0.53939%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Hips and knees descend with heels planted, then rise; chest grip, wrist support and squat depth remain coherent. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary quadriceps #7B72E9; secondary gluteals #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Stand tall: Hold the dumbbell close to your chest. / Begin descent: Bend hips and knees; keep heels grounded. / Lower: Let knees follow the direction of toes. / Bottom: Keep your chest lifted and feet planted. / Drive up: Push through your whole feet to rise. / Finish rising: Finish standing without leaning back.. Preparation remains null. Hips and knees descend with heels planted, then rise; chest grip, wrist support and squat depth remain coherent."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Hips and knees descend with heels planted, then rise; chest grip, wrist support and squat depth remain coherent. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-19-illustration-polish/goblet-squat.json (sha256 d2da195b88a795c9154c9fea1c4b71d2001187bd6843c6d8ae5390929250a4a1). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-19-illustration-polish/goblet-squat.json (sha256 d2da195b88a795c9154c9fea1c4b71d2001187bd6843c6d8ae5390929250a4a1). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/goblet-squat/1.webp",
+      "sha256": "13fd26e58d89e3114662944cdbc779850bf8a152eae8679089ff9b83f1ed0cc6",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 269, "y": 1355 },
+        "plantedFarTrainerMaterialFeature2": { "x": 483, "y": 1336 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 214.84180226389836,
+        "oppositeFixedSupportProjectedFeatureSpan": 184.69434208984313
+      }
+    },
+    {
+      "path": "form-frames/goblet-squat/2.webp",
+      "sha256": "5adab9f01586a94d9eaf8db9253c4ee6270356613cbd276429e52caba953c0a6",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 269, "y": 1355 },
+        "plantedFarTrainerMaterialFeature2": { "x": 483, "y": 1336 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 214.84180226389836,
+        "oppositeFixedSupportProjectedFeatureSpan": 184.61040057374882
+      }
+    },
+    {
+      "path": "form-frames/goblet-squat/3.webp",
+      "sha256": "aaafbbcba395c804ffbcfffc4425e08064a5aa386e8f6851371aac1841a59501",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 269, "y": 1355 },
+        "plantedFarTrainerMaterialFeature2": { "x": 483, "y": 1336 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 214.84180226389836,
+        "oppositeFixedSupportProjectedFeatureSpan": 183.69812192834198
+      }
+    },
+    {
+      "path": "form-frames/goblet-squat/4.webp",
+      "sha256": "094f6fe821f13d15244cfb025850b9ef19e38adef361023d8f18d4a86deb9335",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 269, "y": 1355 },
+        "plantedFarTrainerMaterialFeature2": { "x": 483, "y": 1336 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 214.84180226389836,
+        "oppositeFixedSupportProjectedFeatureSpan": 183.69812192834198
+      }
+    },
+    {
+      "path": "form-frames/goblet-squat/5.webp",
+      "sha256": "aaafbbcba395c804ffbcfffc4425e08064a5aa386e8f6851371aac1841a59501",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 269, "y": 1355 },
+        "plantedFarTrainerMaterialFeature2": { "x": 483, "y": 1336 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 214.84180226389836,
+        "oppositeFixedSupportProjectedFeatureSpan": 183.69812192834198
+      }
+    },
+    {
+      "path": "form-frames/goblet-squat/6.webp",
+      "sha256": "5adab9f01586a94d9eaf8db9253c4ee6270356613cbd276429e52caba953c0a6",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 269, "y": 1355 },
+        "plantedFarTrainerMaterialFeature2": { "x": 483, "y": 1336 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 214.84180226389836,
+        "oppositeFixedSupportProjectedFeatureSpan": 184.61040057374882
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0.005393885650360364,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-19-illustration-polish/goblet-squat.json",
+    "sha256": "d2da195b88a795c9154c9fea1c4b71d2001187bd6843c6d8ae5390929250a4a1"
+  },
+  "historicalFindings": [
+    "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers.",
+    "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/goblet-squat.json",
+    "sha256": "7d5d0837f667966787faf53903ea9b97711a1f55949e77659b44cf5b7c21be29"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false
+}

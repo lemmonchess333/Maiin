@@ -1,0 +1,80 @@
+"""Read-only physical feature matching. Approval still requires native review."""
+from pathlib import Path
+from PIL import Image,ImageDraw
+import numpy as np,json,math,sys,hashlib
+H=Path(__file__).resolve().parent;R=H.parent/'Maiin-burpees'
+config={
+'assault-bike':[(.39,.95),(.46,.96),(.58,.96),(.65,.95)],
+'stairmaster':[(.20,.94),(.26,.95),(.76,.94),(.81,.95)],
+'spin-bike':[(.06,.73),(.14,.75),(.79,.955),(.81,.925)],
+'elliptical':[(.04,.90),(.12,.93),(.90,.92),(.97,.95)],
+'rowing-machine':[(.055,.788),(.102,.781),(.897,.911),(.970,.861)],
+'single-leg-calf-raise':[(.47,.94),(.54,.95),(.90,.94),(.96,.95)],
+'calf-raise':[(.04,.82),(.095,.85),(.90,.90),(.96,.92)],
+'standing-calf-raise':[(.04,.82),(.095,.85),(.90,.90),(.96,.92)],
+'leg-extension':[(.06,.03),(.18,.06),(.82,.20),(.96,.22)],
+'leg-press':[(.37,.91),(.43,.94),(.91,.88),(.97,.90)],
+'straight-arm-pulldown':[(93/1152,60/1728),(98/1152,18/1728),(199/1152,100/1728),(203/1152,59/1728)],
+'face-pulls':[(.79,.03),(.93,.03),(.69,.87),(.96,.90)],
+'rope-tricep-pushdown':[(.735,.015),(.925,.015),(.724,.928),(.930,.928)],
+'seated-row':[(.80,.03),(.91,.04),(.74,.94),(.97,.94)],
+'side-plank':[(.04,.82),(.13,.84),(.86,.82),(.96,.84)],
+'overhead-extension':[(.07,.93),(.44,.91),(.54,.97),(.86,.96)],
+'goblet-squat':[(.28,.89),(.47,.87),(.52,.92),(.68,.92)],
+'squat':[(.28,.89),(.47,.87),(.52,.92),(.68,.92)],
+'barbell-row':[(.31,.85),(.46,.84),(.53,.90),(.66,.90)],
+'overhead-press':[(.33,.90),(.42,.89),(.58,.90),(.67,.90)],
+'handstand-push-ups':[(266/688,1322/1504),(266/688,32/1504),(628/688,1365/1504),(628/688,32/1504)],
+'dips':[(82/880,947/1088),(130/880,945/1088),(431/880,1006/1088),(483/880,1009/1088)],
+'bike':[(43/929,1385/1432),(147/929,1380/1432),(803/929,1388/1432),(886/929,1387/1432)],
+}
+def sum_window(a,k):
+ p=np.pad(a,((1,0),(1,0))).cumsum(0).cumsum(1)
+ return p[k:,k:]-p[:-k,k:]-p[k:,:-k]+p[:-k,:-k]
+def snap(image,point,radius=18):
+ x,y=map(round,point);x0=max(5,x-radius);y0=max(5,y-radius);x1=min(image.shape[1]-5,x+radius+1);y1=min(image.shape[0]-5,y+radius+1)
+ a=image[y0-4:y1+4,x0-4:x1+4].mean(2);gy,gx=np.gradient(a);A=sum_window(gx*gx,9);B=sum_window(gy*gy,9);C=sum_window(gx*gy,9)
+ score=(A+B-np.sqrt((A-B)**2+4*C*C))/2
+ yy,xx=np.mgrid[:score.shape[0],:score.shape[1]];score=score/(1+((xx+x0-x)**2+(yy+y0-y)**2)/250)
+ py,px=np.unravel_index(np.argmax(score),score.shape)
+ return (int(px+x0),int(py+y0),float(score[py,px]))
+def match(image,reference,point,radius=15,half=12):
+ x,y=point[:2];target=reference[y-half:y+half+1,x-half:x+half+1].astype('int16')
+ x0=max(half,x-radius);x1=min(image.shape[1]-half-1,x+radius);y0=max(half,y-radius);y1=min(image.shape[0]-half-1,y+radius)
+ scores=[]
+ for dy in range(y0,y1+1):
+  strip=image[dy-half:dy+half+1,x0-half:x1+half+1].astype('int16')
+  windows=np.lib.stride_tricks.sliding_window_view(strip,(2*half+1,2*half+1),axis=(0,1))[0].transpose(0,2,3,1)
+  values=np.abs(windows-target).mean(axis=(1,2,3))
+  scores.extend((float(value),xx,dy)for xx,value in zip(range(x0,x1+1),values))
+ scores.sort();best=scores[0]
+ distinct=next((v for v in scores if abs(v[1]-best[1])+abs(v[2]-best[2])>2),None)
+ return {'x':best[1],'y':best[2],'meanAbsoluteRGBError':best[0],'distinctMatchGap':distinct[0]-best[0]if distinct else None}
+staged='--staged'in sys.argv
+inventory=json.loads((H/'current-inventory.json').read_bytes());out=[];folder=H/('staged-feature-proof'if staged else'feature-proof');folder.mkdir(exist_ok=True)
+for row in inventory['rows']:
+ eid=row['id']
+ if eid not in config:continue
+ paths=[H/'staged'/eid/f'{i+1}.png'if staged and(H/'staged'/eid/f'{i+1}.png').exists()else R/'public'/f['path']for i,f in enumerate(row['expected']['frames'])]
+ images=[np.array(Image.open(p).convert('RGB'))for p in paths];ref=images[0];h,w=ref.shape[:2]
+ points=[snap(ref,(px*w,py*h))for px,py in config[eid]]
+ samples=[]
+ for i,image in enumerate(images):
+  observed=[match(image,ref,p)for p in points]
+  anchors={f'physicalFeature{k+1}':{'x':p['x'],'y':p['y']}for k,p in enumerate(observed[:2])}
+  dimensions={f'physicalFeatureSpan{j+1}':math.hypot(observed[a]['x']-observed[b]['x'],observed[a]['y']-observed[b]['y'])for j,(a,b)in enumerate([(0,1),(2,3)])}
+  if eid in ['barbell-row','overhead-extension']:
+   anchors={f'plantedHeelFeature{k+1}':{'x':observed[k]['x'],'y':observed[k]['y']}for k in [1,3]}
+  samples.append({'frame':i+1,**row['expected']['frames'][i],'measurementInput':str(paths[i]),'measurementInputSha256':hashlib.sha256(paths[i].read_bytes()).hexdigest(),'features':observed,'anchors':anchors,'invariantDimensions':dimensions})
+  if i in [0,2,3]:
+   im=Image.fromarray(image);d=ImageDraw.Draw(im)
+   for k,p in enumerate(observed):
+    x,y=p['x'],p['y'];d.line((x-8,y,x+8,y),fill='red',width=2);d.line((x,y-8,x,y+8),fill='red',width=2);d.text((x+9,y-9),f'{k+1}: {x},{y}',fill='red')
+   im.save(folder/f'{eid}-{i+1}.png')
+ amax=max(abs(s['anchors'][k][axis]-samples[0]['anchors'][k][axis])for s in samples for k in samples[0]['anchors']for axis in ['x','y'])
+ dmax=max(abs(s['invariantDimensions'][k]/samples[0]['invariantDimensions'][k]-1)for s in samples for k in samples[0]['invariantDimensions'])
+ err=max(p['meanAbsoluteRGBError']for s in samples for p in s['features']);gap=min(p['distinctMatchGap']for s in samples for p in s['features'])
+ contrast=min(p[2]for p in points);usable=contrast>20 and gap>.05 and err<20
+ out.append({'id':eid,'referenceFeatures':points,'maximumAnchorDriftPx':amax,'maximumDimensionDriftRatio':dmax,'maximumTemplateError':err,'minimumDistinctMatchGap':gap,'minimumCornerEvidence':contrast,'featureEvidenceUsable':usable,'numericPass':amax<=1 and dmax<=.01,'samples':samples,'reviewDisposition':'unreviewed: verify all four are actual named physical landmarks, matching is unambiguous, and spans are invariant before adoption'})
+(H/('staged-native-feature-measurements.json'if staged else'native-feature-measurements.json')).write_text(json.dumps(out,indent=2)+'\n')
+print(json.dumps([{k:v for k,v in r.items()if k not in ['samples','referenceFeatures','reviewDisposition']}for r in out],indent=2))
