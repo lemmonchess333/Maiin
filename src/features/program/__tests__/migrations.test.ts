@@ -1273,3 +1273,103 @@ describe("migrateProgramState — v6 the named lift leads its Full Body day", ()
     ]);
   });
 });
+
+describe("a document a newer build wrote", () => {
+  /* The web build ships a schema bump days before the App Store build does,
+     and both open the same programme. The older build wrote the document back
+     at its own version (`!==` where `<` was meant), so the newer build read it
+     as old and ran its one-shot repairs again: a weight someone set on purpose
+     undone on every flip between the two, and a custom week regenerated. */
+  const newer = CURRENT_PROGRAM_SCHEMA_VERSION + 1;
+
+  it("is returned untouched, the same reference, so nothing is written", () => {
+    const state = makeLegacyProgramState({
+      programSchemaVersion: newer,
+      runDays: [legacyRunDay()],
+    });
+    expect(migrateProgramState(state, "2026-10-05")).toBe(state);
+  });
+
+  it("keeps its version and its lifts as they were", () => {
+    // The same lift a v4 document has rounded onto the grid (101 → 100).
+    const workouts = [
+      {
+        dayName: "Full body",
+        dayType: "full_body",
+        completed: false,
+        exercises: [
+          {
+            name: "bench-press",
+            exerciseId: "bench-press",
+            instanceId: "i-0",
+            movementCategory: "horizontal_push",
+            sets: 3,
+            baseSets: 3,
+            reps: 8,
+            baseReps: 8,
+            repUnit: "reps",
+            progressionType: "linear",
+            weight: 101,
+            lastSuccessfulWeight: 101,
+            lastAttemptedWeight: 101,
+            consecutiveFailures: 0,
+            plateauCount: 0,
+            performanceHistory: [],
+            lastPerformance: null,
+          },
+        ],
+      },
+    ] as unknown as ProgramState["workouts"];
+    const old = migrateProgramState(
+      makeLegacyProgramState({ programSchemaVersion: 4, workouts }),
+      "2026-10-05"
+    );
+    expect(old.workouts[0].exercises[0].weight).toBe(100);
+    const out = migrateProgramState(
+      makeLegacyProgramState({ programSchemaVersion: newer, workouts }),
+      "2026-10-05"
+    );
+    expect(out.programSchemaVersion).toBe(newer);
+    expect(out.workouts[0].exercises[0].weight).toBe(101);
+  });
+
+  it("keeps a week schedule a newer build wrote, valid here or not", () => {
+    const custom = [
+      { day: 0, type: "rest" },
+      { day: 1, type: "lift" },
+      { day: 2, type: "lift" },
+      { day: 3, type: "run" },
+      { day: 4, type: "lift" },
+      { day: 5, type: "run" },
+      { day: 6, type: "rest" },
+    ] satisfies { day: number; type: "lift" | "run" | "both" | "rest" }[];
+    expect(
+      backfillWeekScheduleIfMissing({
+        weekSchedule: custom,
+        weekScheduleVersion: CURRENT_WEEKSCHEDULE_VERSION + 1,
+        weeklyWorkoutsTarget: 3,
+        weeklyRunDaysTarget: 2,
+      })
+    ).toBeNull();
+    expect(
+      backfillWeekScheduleIfMissing({
+        // A shape this build's validator does not know.
+        weekSchedule: [
+          { day: 0, type: "mobility" },
+        ] as unknown as typeof custom,
+        weekScheduleVersion: CURRENT_WEEKSCHEDULE_VERSION + 1,
+      })
+    ).toBeNull();
+  });
+
+  it("an older schedule is still regenerated", () => {
+    expect(
+      backfillWeekScheduleIfMissing({
+        weekSchedule: [{ day: 0, type: "rest" }],
+        weekScheduleVersion: 0,
+        weeklyWorkoutsTarget: 3,
+        weeklyRunDaysTarget: 2,
+      })
+    ).not.toBeNull();
+  });
+});

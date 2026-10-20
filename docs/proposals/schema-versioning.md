@@ -80,6 +80,22 @@ adopt a schema parser library. If you are wiring one in: configure
 permissive (`passthrough`/`extend`) mode by default; never `strict` for
 Firestore-read paths.
 
+### A newer document opened by an older build
+
+The web build ships a bump days before the App Store build does, and both
+open the same documents. An older build leaves a newer one exactly as it
+found it: `migrateProgramState()` returns it untouched and
+`backfillWeekScheduleIfMissing()` returns `null` (both pinned in
+`migrations.test.ts`, "a document a newer build wrote"). Until 2026-10-20
+both compared with `!==`, so the older build wrote the document back at its
+own version and the newer build then re-ran its one-shot repairs, undoing
+what the person had set since.
+
+What that leaves: the older build's programme writes are refused, because
+`commitProgramTransition` and the rollover effects act only on a document at
+their own version. So a bump should go out with the minimum-version gate
+raised to the build that carries it.
+
 ## Server validator obligations
 
 Cloud Functions that accept versioned payloads MUST cross-check the

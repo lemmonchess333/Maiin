@@ -1214,7 +1214,8 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
   });
 
   /* Blocking severs the follow edges at block time (`blockUser` deletes all
-     four docs) — but nothing stopped the blocked user simply FOLLOWING AGAIN.
+     four docs, the cases at the end of this block) — but nothing stopped
+     the blocked user simply FOLLOWING AGAIN.
      The follow write is a direct client write, and these rules allowed any
      authenticated user to create `followers/{anyone}/users/{self}`. Fan-out
      reads `followers/{author}`, so a re-follow put the author's activities
@@ -1289,6 +1290,52 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(
       deleteDoc(doc(ownerDb, "following", OWNER_UID, "users", OTHER_UID))
+    );
+  });
+
+  /* OTHER follows OWNER, then OWNER blocks OTHER. The two docs of OTHER's
+     follow belong to OTHER, so the rules refused OWNER's deletes and the
+     follow survived the block, with OTHER still in followers/OWNER, the
+     list that opens OWNER's followers-only posts. */
+  async function seedFollow(follower: string, followed: string) {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "following", follower, "users", followed), {
+        createdAt: serverTimestamp(),
+      });
+      await setDoc(doc(db, "followers", followed, "users", follower), {
+        createdAt: serverTimestamp(),
+      });
+    });
+  }
+
+  it("a blocker removes the blocked person's follow of them, both docs", async () => {
+    await seedFollow(OTHER_UID, OWNER_UID);
+    await seedBlock(OWNER_UID, OTHER_UID);
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      deleteDoc(doc(ownerDb, "followers", OWNER_UID, "users", OTHER_UID))
+    );
+    await assertSucceeds(
+      deleteDoc(doc(ownerDb, "following", OTHER_UID, "users", OWNER_UID))
+    );
+  });
+
+  it("without a block, nobody removes someone else's follow", async () => {
+    // Anchor for the case above: the block is what allows it.
+    await seedFollow(OTHER_UID, OWNER_UID);
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      deleteDoc(doc(ownerDb, "followers", OWNER_UID, "users", OTHER_UID))
+    );
+    await assertFails(
+      deleteDoc(doc(ownerDb, "following", OTHER_UID, "users", OWNER_UID))
+    );
+    // Nor may a third party remove it, block or not.
+    await seedBlock(OWNER_UID, OTHER_UID);
+    const strangerDb = env.authenticatedContext("stranger-uid").firestore();
+    await assertFails(
+      deleteDoc(doc(strangerDb, "followers", OWNER_UID, "users", OTHER_UID))
     );
   });
 });
@@ -1710,6 +1757,37 @@ suite("firestore.rules — /activities visibility-aware reads (audit #1)", () =>
     await assertFails(getDoc(doc(strangerDb, "activities", "fol-2")));
   });
 
+  it("followers-only activity — NOT readable by a follower after a block, either way", async () => {
+    // The follow edge outlived blocks made before blockUser could remove
+    // it, so the read checks the block itself.
+    await seed({
+      activityId: "fol-blocked",
+      visibility: "followers",
+      follower: FOLLOWER_UID,
+    });
+    const followerDb = env.authenticatedContext(FOLLOWER_UID).firestore();
+    await assertSucceeds(getDoc(doc(followerDb, "activities", "fol-blocked")));
+    for (const [blocker, blocked] of [
+      [OWNER_UID, FOLLOWER_UID],
+      [FOLLOWER_UID, OWNER_UID],
+    ]) {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), "blocks", blocker, "users", blocked),
+          {
+            blockedAt: serverTimestamp(),
+          }
+        );
+      });
+      await assertFails(getDoc(doc(followerDb, "activities", "fol-blocked")));
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await deleteDoc(
+          doc(ctx.firestore(), "blocks", blocker, "users", blocked)
+        );
+      });
+    }
+  });
+
   it("followers-only activity — readable by the owner", async () => {
     await seed({ activityId: "fol-3", visibility: "followers" });
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
@@ -1958,6 +2036,26 @@ suite(
           makeValidActivity({ type: "meal" })
         )
       );
+    });
+
+    it("a createdAt that is not the server's time — rejected", async () => {
+      /* Discover orders by createdAt, and the rule checked only that it was
+         a timestamp: a post dated 2099 sat at the top of everyone's Discover
+         for good. postActivity sends serverTimestamp(), which the valid
+         cases above use. */
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      for (const [id, createdAt] of [
+        ["future-post", Timestamp.fromDate(new Date("2099-01-01T00:00:00Z"))],
+        ["past-post", Timestamp.fromDate(new Date("2020-01-01T00:00:00Z"))],
+        ["client-now-post", Timestamp.now()],
+      ] as const) {
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", id),
+            makeValidActivity({ createdAt })
+          )
+        );
+      }
     });
 
     it("non-zero initial kudosCount — rejected (counter-forgery on create)", async () => {
@@ -2829,9 +2927,21 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
 
   beforeEach(async () => {
     await env.clearFirestore();
+    // A and B follow each other: the consent a bond stands on.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      for (const [from, to] of [
+        [A_UID, B_UID],
+        [B_UID, A_UID],
+      ]) {
+        await setDoc(doc(ctx.firestore(), `following/${from}/users/${to}`), {
+          createdAt: serverTimestamp(),
+        });
+      }
+    });
   });
 
-  const BOND = "bond-ab";
+  // The id createBond derives: the pair's uids, sorted.
+  const BOND = `${A_UID}__${B_UID}`;
   const coldBond = (members: string[]) => ({
     members,
     streak: 0,

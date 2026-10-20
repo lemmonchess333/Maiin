@@ -6,6 +6,7 @@ import {
   friendlyAuthError,
   providerHint,
   duplicateEmailHint,
+  isSignInCancelled,
 } from "@/lib/authErrors";
 import { AlertCircle, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import appIconUrl from "@/assets/brand/app-icon.svg";
@@ -160,8 +161,7 @@ export default function Login() {
      right button by name. */
   const surfaceOAuthError = async (err: unknown) => {
     const message = err instanceof Error ? err.message : "Something went wrong";
-    /* popup-closed = user cancelled. Silent, no error toast. */
-    if (message.includes("popup-closed")) return;
+    if (isSignInCancelled(err)) return;
     if (message.includes("account-exists-with-different-credential")) {
       const collidingEmail = (err as { customData?: { email?: string } })
         ?.customData?.email;

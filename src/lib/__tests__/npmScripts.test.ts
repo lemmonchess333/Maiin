@@ -52,6 +52,9 @@ const SYSTEM = new Set([
   "mv",
   "true",
   "false",
+  // On every GitHub runner image; `test:verifiers` runs the deploy
+  // verifiers' Python tests with it, as CI's required `unit` job does.
+  "python3",
   // Installed GLOBALLY, not as a dependency. This exemption is not taken
   // on trust — the test below asserts a workflow actually installs it, so
   // removing `npm install -g firebase-tools` from CI turns the exemption

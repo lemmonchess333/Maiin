@@ -588,8 +588,11 @@ export default function FeedView({
                 className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20"
                 aria-live="polite"
               >
+                {/* The hook keeps the raw error for the log; it is the
+                    SDK's text ("Missing or insufficient permissions."),
+                    not a sentence for the person. */}
                 <p className="text-xs text-destructive-strong">
-                  {followingFeed.error}
+                  Couldn't load your feed. Check your connection.
                 </p>
                 <button
                   type="button"

@@ -3,7 +3,13 @@
  * for the Open Food Facts barcode + AI macro-parsing pipelines.
  */
 import { describe, it, expect } from "vitest";
-import { safeNum, parseServingGrams, round1 } from "../foodParseHelpers";
+import {
+  safeNum,
+  modelNumber,
+  parseModelNumber,
+  parseServingGrams,
+  round1,
+} from "../foodParseHelpers";
 
 describe("safeNum", () => {
   it("returns finite numbers unchanged", () => {
@@ -63,6 +69,25 @@ describe("parseServingGrams", () => {
     expect(parseServingGrams("0,5 g")).toBe(0.5);
   });
 
+  it("does not read a counted word that starts with g as grams", () => {
+    /* The pattern took the first number followed by any "g", so the
+       count won: each of these read as 1 to 3 g, was scaled to it and
+       marked trusted, which hides the confirm-serving prompt. A 42 g
+       granola bar logged about a twentieth of its calories. */
+    expect(parseServingGrams("2 granola bars (42 g)")).toBe(42);
+    expect(parseServingGrams("3 gummies (7 g)")).toBe(7);
+    expect(parseServingGrams("1 gâteau (25 g)")).toBe(25);
+    expect(parseServingGrams("1 Galette (12 g)")).toBe(12);
+    expect(parseServingGrams("1 glass (250 ml)")).toBeNull();
+  });
+
+  it("still reads a gram unit written out", () => {
+    expect(parseServingGrams("30 grams")).toBe(30);
+    expect(parseServingGrams("30gr")).toBe(30);
+    expect(parseServingGrams("1 Riegel 25 Gramm")).toBe(25);
+    expect(parseServingGrams("2 biscuits (20 grammes)")).toBe(20);
+  });
+
   it("parses a comma decimal inside a longer serving string", () => {
     // The shape OFF actually stores: a portion description with the
     // grams in parentheses or trailing.
@@ -109,6 +134,60 @@ describe("parseServingGrams", () => {
   it("returns null for zero or negative grams", () => {
     /* Defensive: 0g serving doesn't make sense as a portion. */
     expect(parseServingGrams("0g")).toBeNull();
+  });
+});
+
+describe("parseModelNumber", () => {
+  /* A model's figures arrive as text often enough: "~200 kcal" and "1,240"
+     were NaN to Number(), so a scanned item logged 0 and a typed meal's
+     total became NaN. Open Food Facts is read by safeNum and
+     parseServingGrams instead, with its decimal comma. */
+  it.each([
+    [240, 240],
+    ["240", 240],
+    ["~200 kcal", 200],
+    ["about 350 calories", 350],
+    ["1,240", 1240],
+    ["1,234.5", 1234.5],
+    ["1.234,5", 1234.5],
+    ["12,5", 12.5],
+    ["12.5g", 12.5],
+    ["1.250", 1.25],
+    ["-5", -5],
+    ["200-250 kcal", 200],
+  ] as const)("%j is %d", (value, expected) => {
+    expect(parseModelNumber(value)).toBe(expected);
+  });
+
+  it.each([
+    [null],
+    [undefined],
+    [""],
+    ["unknown"],
+    [Number.NaN],
+    [Infinity],
+    [{ value: 5 }],
+    [true],
+  ])("%j has no number", (value) => {
+    expect(parseModelNumber(value)).toBeNull();
+  });
+
+  it("modelNumber is 0 where the model wrote none; safeNum is unchanged", () => {
+    expect(modelNumber("~200 kcal")).toBe(200);
+    expect(modelNumber(undefined)).toBe(0);
+    expect(modelNumber("unknown")).toBe(0);
+    // Open Food Facts' reader keeps Number()'s reading.
+    expect(safeNum("~200 kcal")).toBe(0);
+  });
+});
+
+describe("parseServingGrams — a count of a weight", () => {
+  it("is the count times the weight", () => {
+    // Was 25 at high confidence: the first weight, half the pack.
+    expect(parseServingGrams("2 x 25g")).toBe(50);
+    expect(parseServingGrams("2 x 25 g bars (50g)")).toBe(50);
+    expect(parseServingGrams("4×12,5 g")).toBe(50);
+    expect(parseServingGrams("1 x 30g")).toBe(30);
   });
 });
 

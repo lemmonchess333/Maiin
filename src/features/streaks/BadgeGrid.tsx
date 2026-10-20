@@ -16,6 +16,35 @@ import { ProgressRing } from "./BadgeProgressRing";
 import { badgeProgress, nearestBadge } from "./badgeProgress";
 import { Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { Skeleton } from "@/components/LoadingSkeleton";
+
+const SUMMARY_LABELS = ["Current streak", "Longest streak", "Badges earned"];
+
+/** The page's shape while the streams arrive: a zero here would be a
+ *  claim about the person, not a placeholder. */
+function BadgeGridSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-3 text-center">
+        {SUMMARY_LABELS.map((label) => (
+          <div
+            key={label}
+            className="p-3 rounded-xl bg-card border border-border/50"
+          >
+            <Skeleton className="mx-auto h-9 w-10" />
+            <p className="text-xs text-muted-foreground mt-1">{label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {Array.from({ length: 6 }, (_, i) => (
+          <Skeleton key={i} className="h-28 rounded-xl" stagger={i % 5} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /** Thin tier-tinted progress track + "X / Y" label, for in-progress badges. */
 function ProgressBar({
@@ -55,8 +84,24 @@ export function BadgeGrid() {
     allBadges,
     earnedBadges,
     badgeProgressCtx,
+    loading,
+    loadFailed,
+    retryLoad,
   } = useStreaks();
   const liftUnit = useLiftUnit();
+
+  // A failed read leaves streak 0 and every badge locked, which is not
+  // this person's record.
+  if (loadFailed) {
+    return (
+      <ErrorState
+        title="Couldn't load your badges"
+        description="Check your connection and try again."
+        retry={{ onClick: retryLoad }}
+      />
+    );
+  }
+  if (loading) return <BadgeGridSkeleton />;
 
   const categories = Object.keys(CATEGORY_LABELS) as BadgeDef["category"][];
 

@@ -21,6 +21,8 @@ const emptyFeed = {
 };
 /** The posts both feeds hand back; a test sets it before rendering. */
 let feedItems: unknown[] = [];
+/** The Following feed's raw error, as the hook reports it. */
+let followingError: string | null = null;
 const post = (id: string) => ({
   id,
   activityId: id,
@@ -32,7 +34,11 @@ const post = (id: string) => ({
 });
 
 vi.mock("@/hooks/useSocialFeed", () => ({
-  useSocialFeed: () => ({ ...emptyFeed, items: feedItems }),
+  useSocialFeed: () => ({
+    ...emptyFeed,
+    items: feedItems,
+    error: followingError,
+  }),
 }));
 vi.mock("@/hooks/useDiscoverFeed", () => ({
   useDiscoverFeed: () => ({ ...emptyFeed, items: feedItems }),
@@ -187,6 +193,22 @@ function setup(overrides: FeedViewProps = {}) {
   const rerender = (more: FeedViewProps) => view.rerender(element(more));
   return { selectFeedSubTab, openTogether, rerender, refreshRef };
 }
+
+describe("FeedView — a failed Following feed", () => {
+  afterEach(() => {
+    followingError = null;
+  });
+
+  it("says the feed couldn't load, not the SDK's error text", () => {
+    followingError = "Missing or insufficient permissions.";
+    setup({ feedSubTab: "following" });
+    expect(
+      screen.getByText("Couldn't load your feed. Check your connection.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/insufficient permissions/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
+});
 
 describe("FeedView — compact source menu", () => {
   it("names the current source on one chip and opens the two-option menu", () => {

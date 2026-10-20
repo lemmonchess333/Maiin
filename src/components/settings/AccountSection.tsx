@@ -16,7 +16,7 @@ import {
   isSupportedReauthProvider,
   type SupportedReauthProviderId,
 } from "@/lib/reauth";
-import { friendlyAuthError } from "@/lib/authErrors";
+import { friendlyAuthError, isSignInCancelled } from "@/lib/authErrors";
 import { modalReducer, initialModalState } from "./accountDeletionReducer";
 import AccordionSection from "@/components/AccordionSection";
 import type { User } from "firebase/auth";
@@ -300,11 +300,7 @@ function AccountSectionContent({
       if (activeUser.current?.uid !== user.uid) return;
       const code = String((err as { code?: string } | null)?.code ?? "");
       const msg = err instanceof Error ? err.message : "";
-      if (
-        /popup-closed-by-user|cancelled-popup-request|canceled|cancelled|1001/i.test(
-          code + " " + msg
-        )
-      ) {
+      if (isSignInCancelled(err)) {
         dispatchModal({ type: "REAUTH_CANCEL" });
         return;
       }

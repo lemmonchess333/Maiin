@@ -14,11 +14,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import {
-  flightBetween,
-  flightFrames,
-  hexagonClipPath,
-} from "@/lib/launchSplash";
+import { hexagonClipPath } from "@/lib/launchSplash";
 
 const auth: {
   user: { uid: string } | null;
@@ -394,15 +390,15 @@ describe("LaunchSplash", () => {
       await wait(800);
       expect(document.documentElement).toHaveClass("launching");
 
-      // Along the arc, landing exactly on the header's mark.
+      // From where the overlay's mark is, landing exactly on the header's.
+      // Centre onto centre: x 18 + 13.5/2 − (150 + 90/2) = −170.25,
+      // y 97 + 16/2 − (370 + 104/2) = −317; scale 16/104 ≈ 0.15385. The
+      // arc between is launchSplash.test.ts's.
       const [flight] = motionsOf(".launch-splash-flight");
-      const expected = flightFrames(
-        flightBetween(
-          { left: 150, top: 370, width: 90, height: 104 },
-          { left: 18, top: 97, width: 13.5, height: 16 }
-        )
-      );
-      expect(flight.keyframes.map((k) => k.transform)).toEqual(expected);
+      const frames = flight.keyframes.map((k) => k.transform);
+      expect(frames).toHaveLength(31); // 30 steps, both ends
+      expect(frames[0]).toBe("translate(0px, 0px) scale(1)");
+      expect(frames.at(-1)).toBe("translate(-170.25px, -317px) scale(0.15385)");
       expect(flight.options.easing).toBe("linear");
       // The ground clears just after the mark has left it.
       const [clear] = motionsOf(".launch-splash-ground");

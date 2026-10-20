@@ -7,6 +7,7 @@ import {
   writeLog,
   failNextFirestore,
   setSnapshotMetadata,
+  unfiredFailures,
 } from "@/test/firestoreHarness";
 
 // Mock Firebase modules before importing socialApi
@@ -48,6 +49,12 @@ vi.mock("firebase/functions", () => ({
 vi.mock("../firebase", () => ({
   db: "mock-db",
   auth: { currentUser: { uid: "user1" } },
+}));
+
+const reported = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/errorReporting", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/errorReporting")>()),
+  captureError: reported,
 }));
 
 import {
@@ -327,6 +334,31 @@ describe("blockUser", () => {
       expect(allPaths(), p).not.toContain(p);
     }
     expect(readDoc("following/user1/users/user3")).toBeTruthy();
+  });
+});
+
+describe("blockUser — an edge that could not be removed", () => {
+  it("still blocks, removes the rest, and reports the one that stayed", async () => {
+    seedFirestore({
+      "followers/user1/users/user2": { at: 1 },
+      "following/user2/users/user1": { at: 1 },
+    });
+    failNextFirestore("deleteDoc", { path: "followers/user1/users/user2" });
+
+    await expect(blockUser("user1", "user2")).resolves.toBeUndefined();
+
+    expect(unfiredFailures()).toEqual([]);
+    expect(readDoc("blocks/user1/users/user2")).toBeTruthy();
+    expect(allPaths()).not.toContain("following/user2/users/user1");
+    expect(reported).toHaveBeenCalledTimes(1);
+    expect(reported).toHaveBeenCalledWith(
+      expect.any(Error),
+      "network",
+      expect.objectContaining({
+        action: "blockUser",
+        path: "followers/user1/users/user2",
+      })
+    );
   });
 });
 

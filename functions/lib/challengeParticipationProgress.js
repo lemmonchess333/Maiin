@@ -4,10 +4,12 @@ const {
   sourceActivityDateKey,
   challengeContainsActivityDate,
   isValidDateKey,
+  openOnDayBound,
 } = require("./challengeActivityWindow");
 const { backfillQueryWindow } = require("./challengeBackfill");
 const { resolveTier } = require("./challengeTiers");
 const { isVolumeEligibleRun } = require("./runEligibility");
+const { creditableSessionSeconds } = require("./sharedCreditBounds");
 
 function isParticipationMetric(metric) {
   return metric === "active_days" || metric === "training_minutes";
@@ -40,7 +42,7 @@ function participationValue(challenge, workouts, runs) {
     const day = sourceActivityDateKey(data);
     if (!challengeContainsActivityDate(challenge, day)) continue;
     days.add(day);
-    seconds += storedSeconds(data.durationMinutes, 60);
+    seconds += creditableSessionSeconds(storedSeconds(data.durationMinutes, 60));
   }
   for (const data of runs) {
     // The eligibility predicate also serves older, loosely shaped records.
@@ -56,7 +58,7 @@ function participationValue(challenge, workouts, runs) {
     const day = sourceActivityDateKey(data);
     if (!challengeContainsActivityDate(challenge, day)) continue;
     days.add(day);
-    seconds += storedSeconds(data.duration);
+    seconds += creditableSessionSeconds(storedSeconds(data.duration));
   }
   return challenge.metric === "active_days" ? days.size : seconds / 60;
 }
@@ -111,7 +113,14 @@ async function recomputeParticipationChallenge(db, challengeId, uid) {
 async function reconcileParticipationChallenges(db, uid, activityDays) {
   const days = [...new Set(activityDays.filter(isValidDateKey))];
   if (!uid || days.length === 0) return;
-  const challenges = await db.collection("challenges").get();
+  // Only challenges still open on the earliest affected day can contain
+  // any of them (see openOnDayBound); this runs on every session create,
+  // edit and delete, and challenges are never deleted.
+  const earliest = [...days].sort()[0];
+  const challenges = await db
+    .collection("challenges")
+    .where("endDate", ">", openOnDayBound(earliest))
+    .get();
   for (const doc of challenges.docs) {
     const challenge = doc.data();
     if (

@@ -139,7 +139,9 @@ export function useProCheckout(): UseProCheckoutResult {
             featureKey: options.featureKey,
             selectedPlan: submittedPlan,
             platform,
-            error: message,
+            // What went wrong underneath, where there is more to say than
+            // the sentence shown.
+            error: result.detail ?? message,
           });
         }
         // Success path: on Stripe, purchase() has already navigated
@@ -148,10 +150,7 @@ export function useProCheckout(): UseProCheckoutResult {
         // verifyApplePurchase callable. Either way nothing to do
         // here beyond clearing the loading flag in finally.
       } catch (err) {
-        const message =
-          err instanceof Error
-            ? err.message
-            : "Couldn't start checkout. Try again.";
+        const message = "Couldn't start checkout. Try again.";
         setError(message);
         toast.error(message);
         track("checkout_failed", {
@@ -159,7 +158,7 @@ export function useProCheckout(): UseProCheckoutResult {
           featureKey: options.featureKey,
           selectedPlan: submittedPlan,
           platform,
-          error: message,
+          error: err instanceof Error ? err.message : String(err),
         });
       } finally {
         setLoading(false);

@@ -9,6 +9,7 @@ import { getFeed, fetchActivitiesByIds, batchGetKudos } from "../lib/socialApi";
 import { useUid } from "../lib/auth";
 import type { DocumentSnapshot } from "firebase/firestore";
 import { logger } from "../lib/logger";
+import { captureError } from "../lib/errorReporting";
 
 export interface ActivityData {
   authorId?: string;
@@ -212,7 +213,9 @@ export function useSocialFeed(
       } catch (e) {
         if (!isCurrent()) return;
         logger.error("Feed error:", e);
-        setError(e instanceof Error ? e.message : "Failed to load feed");
+        const msg = e instanceof Error ? e.message : String(e);
+        setError(msg);
+        captureError(e instanceof Error ? e : new Error(msg), "network");
       }
       if (isCurrent()) setInternalLoading(false);
     },

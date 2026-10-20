@@ -8,6 +8,7 @@ import { useAuth } from "../lib/auth";
 import { getSavedRoutine, type SavedRoutine } from "../lib/savedRoutines";
 import { exerciseFromRoutine } from "../features/program/routineExercise";
 import { Skeleton } from "../components/LoadingSkeleton";
+import { ErrorState } from "../components/ui/ErrorState";
 import WorkoutSession from "../components/WorkoutSession";
 
 /* Synthetic dayIndex used by saved-routine sessions.
@@ -39,17 +40,27 @@ export default function Routine() {
   const { user, profile } = useAuth();
   const [routine, setRoutine] = useState<SavedRoutine | null>(null);
   const [loading, setLoading] = useState(true);
+  // A read that failed is not a routine that doesn't exist.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
+  // The uid, not the user object: a new object for the same account is not
+  // a reason to read again, and each read re-renders.
+  const uid = user?.uid;
 
   useEffect(() => {
-    if (!user || !routineId) return;
+    if (!uid || !routineId) return;
     let cancelled = false;
     void (async () => {
       try {
-        const r = await getSavedRoutine(user.uid, routineId);
+        const r = await getSavedRoutine(uid, routineId);
         if (cancelled) return;
         setRoutine(r);
+        setLoadFailed(false);
       } catch {
-        if (!cancelled) setRoutine(null);
+        if (cancelled) return;
+        setRoutine(null);
+        setLoadFailed(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -57,7 +68,7 @@ export default function Routine() {
     return () => {
       cancelled = true;
     };
-  }, [user, routineId]);
+  }, [uid, routineId, attempt]);
 
   /* Synthetic workout day from the routine. Built once routine loads. */
   const synthDay = useMemo(() => {
@@ -145,6 +156,31 @@ export default function Routine() {
         <Skeleton className="h-8 w-32" />
         <Skeleton className="h-32 w-full" />
         <Skeleton className="h-32 w-full" />
+      </div>
+    );
+  }
+
+  if (loadFailed) {
+    return (
+      <div className="p-6 space-y-3 text-center">
+        <ErrorState
+          title="Couldn't load this routine"
+          description="Check your connection and try again."
+          retry={{
+            onClick: () => {
+              setLoading(true);
+              setLoadFailed(false);
+              setAttempt((n) => n + 1);
+            },
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => navigate("/program")}
+          className="text-xs font-medium text-lifting-strong"
+        >
+          Back to program
+        </button>
       </div>
     );
   }

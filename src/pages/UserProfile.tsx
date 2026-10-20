@@ -14,6 +14,7 @@ import Card from "../components/ui/Card";
 import SectionHeading from "../components/ui/SectionHeading";
 import SectionLabel from "../components/ui/SectionLabel";
 import StatFigure from "../components/ui/StatFigure";
+import { ErrorState } from "../components/ui/ErrorState";
 import { EmptyState } from "../components/ui/EmptyState";
 import { BADGE_ART, BADGE_ICONS } from "../features/streaks/badges";
 import { BadgeHex } from "../features/streaks/BadgeHex";
@@ -84,9 +85,12 @@ function ProfilePage({
     trainingForSpaceId,
     followers,
     followingCount,
+    countsFailed,
     badges,
+    badgesFailed,
     posts,
     postsLoading,
+    postsFailed,
     retry,
     adjustFollowers,
   } = useUserProfileData(uid, viewerUid);
@@ -180,7 +184,11 @@ function ProfilePage({
           >
             {name}
           </h1>
-          {followers === null || followingCount === null ? (
+          {countsFailed ? (
+            <p className="mt-1 text-small text-muted-foreground">
+              Couldn't load follower counts.
+            </p>
+          ) : followers === null || followingCount === null ? (
             <Skeleton className="mt-1.5 h-4 w-36 rounded" />
           ) : (
             <p className="mt-1 text-small text-muted-foreground">
@@ -295,6 +303,10 @@ function ProfilePage({
         </div>
         {postsLoading ? (
           <Skeleton className="mt-3 h-12 w-full rounded-lg" />
+        ) : postsFailed ? (
+          <p className="mt-2 text-small text-muted-foreground">
+            Couldn't load this week's sessions.
+          </p>
         ) : week.sessions > 0 ? (
           <div className="mt-3 grid grid-cols-3 divide-x divide-border">
             <StatFigure
@@ -317,6 +329,11 @@ function ProfilePage({
         )}
       </Card>
 
+      {badgesFailed && (
+        <p className="text-small text-muted-foreground">
+          Couldn't load badges.
+        </p>
+      )}
       {badges.length > 0 && (
         <ul className="grid grid-cols-4 gap-2" aria-label="Recent badges">
           {badges.map((badge) => (
@@ -343,6 +360,12 @@ function ProfilePage({
             <ActivityCardSkeleton />
             <ActivityCardSkeleton stagger={1} />
           </>
+        ) : postsFailed ? (
+          <ErrorState
+            title="Couldn't load sessions"
+            description="Check your connection and try again."
+            retry={{ onClick: retry }}
+          />
         ) : posts.length > 0 ? (
           posts.map((item) => <ActivityCard key={item.id} feedItem={item} />)
         ) : isOwnProfile ? (

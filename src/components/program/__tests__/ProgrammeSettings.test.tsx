@@ -197,6 +197,39 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
     ).toBeInTheDocument();
   });
 
+  it.each([
+    [
+      "says what changed, in the server's words",
+      Object.assign(
+        new Error(
+          "Your programme changed while you were editing. Review the latest plan and try again."
+        ),
+        { code: "functions/failed-precondition" }
+      ),
+      "Your programme changed while you were editing. Review the latest plan and try again.",
+    ],
+    [
+      "never shows a deletion lock's message, which names the account",
+      Object.assign(
+        new Error(
+          "Account u-123 has an in-progress deletion. Writes are frozen until the deletion completes or is cancelled."
+        ),
+        {
+          code: "functions/failed-precondition",
+          details: { errorCode: "account-deleting", uid: "u-123" },
+        }
+      ),
+      "Your programme changed. Reopen settings to review the latest plan before saving.",
+    ],
+  ])("a save refused as out of date %s", async (_label, err, shown) => {
+    configureSpy.mockRejectedValueOnce(err);
+    setup({}, "lift");
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(toast.error).toHaveBeenCalledWith(shown));
+  });
+
   it("a lift edit still saves via configurePlan (rebuild path intact)", async () => {
     const { refreshProfile } = setup({}, "lift");
     fireEvent.click(screen.getByText("Get stronger"));
@@ -449,6 +482,40 @@ describe("ProgrammeSettings — overview (the Programme page)", () => {
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /^reset$/i }));
     expect(regenerateProgram).toHaveBeenCalledTimes(1);
+  });
+
+  it("the confirmation is named, takes focus, and Escape cancels it", async () => {
+    const { regenerateProgram } = setup({}, "overview");
+    fireEvent.click(screen.getByRole("button", { name: /reset programme/i }));
+    const dialog = screen.getByRole("alertdialog", {
+      name: "Reset programme?",
+    });
+    expect(dialog).toContainElement(document.activeElement as HTMLElement);
+    // The safe button first: Enter on arrival does not reset.
+    expect(document.activeElement).toHaveTextContent("Cancel");
+    fireEvent.keyDown(document, { key: "Escape" });
+    // Gone once its exit animation has run.
+    await vi.waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).toBeNull()
+    );
+    expect(regenerateProgram).not.toHaveBeenCalled();
+  });
+
+  it("a reset that fails says so, rather than nothing", async () => {
+    const { regenerateProgram } = setup({}, "overview");
+    regenerateProgram.mockRejectedValueOnce(
+      Object.assign(new Error("Missing or insufficient permissions."), {
+        code: "permission-denied",
+      })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /reset programme/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^reset$/i }));
+    await vi.waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't reset your programme. Try again."
+      )
+    );
+    expect(toast.success).not.toHaveBeenCalledWith("Programme reset");
   });
 });
 

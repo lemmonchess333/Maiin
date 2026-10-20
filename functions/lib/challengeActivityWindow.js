@@ -67,10 +67,29 @@ function challengeContainsActivityDate(challenge, activityDateKey) {
   return startKey <= activityDateKey && activityDateKey < endKey;
 }
 
+/**
+ * The bound for reading only the challenges that can contain a day:
+ * query `endDate > openOnDayBound(day)`.
+ *
+ * challengeContainsActivityDate accepts a challenge only when its end
+ * falls on a later UTC day than `day`, so every challenge it accepts ends
+ * after UTC midnight of `day`, and the query returns all of them. It also
+ * returns some the predicate then rejects (one ending later that same day,
+ * one not started yet), which is why callers still apply it. A challenge
+ * with no end date is left out by the query and rejected by the predicate
+ * alike. Challenge dates are written as Timestamps (rolloverChallenges),
+ * which a Date bound compares against. Null for an invalid day.
+ */
+function openOnDayBound(activityDateKey) {
+  if (!isValidDateKey(activityDateKey)) return null;
+  return new Date(`${activityDateKey}T00:00:00.000Z`);
+}
+
 module.exports = {
   DATE_KEY_RE,
   isValidDateKey,
   instantToDateKey,
   sourceActivityDateKey,
   challengeContainsActivityDate,
+  openOnDayBound,
 };

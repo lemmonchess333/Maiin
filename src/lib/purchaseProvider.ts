@@ -12,6 +12,8 @@
 import { Capacitor } from "@capacitor/core";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
+import { logger } from "@/lib/logger";
+import { describeRejection } from "@/lib/callableErrors";
 import type { PlanId, StorePrice } from "@/lib/proPlans";
 import {
   isRevenueCatEnabled,
@@ -24,7 +26,11 @@ export type { PlanId };
 
 export interface PurchaseResult {
   success: boolean;
+  /** A sentence for the person: callers show it as it is. */
   error?: string;
+  /** The underlying error's own text (an SDK's, a fetch's), for logs and
+   *  telemetry. Never shown. */
+  detail?: string;
   /** Optional URL the caller can redirect to (Stripe portal, App
    *  Store manage-subscriptions page). When set, the caller is
    *  responsible for navigation — purchase() and manageSubscription()
@@ -152,9 +158,11 @@ async function purchaseWithStripe(
     }
     throw new Error("No checkout URL returned");
   } catch (err) {
+    logger.error("[purchase] Stripe checkout failed", err);
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Something went wrong",
+      error: "Couldn't start checkout. Try again.",
+      detail: err instanceof Error ? err.message : String(err),
     };
   }
 }
@@ -178,6 +186,7 @@ async function purchaseWithRevenueCat(plan: PlanId): Promise<PurchaseResult> {
     return {
       success: false,
       error: outcome.error ?? "Purchase failed. Try again.",
+      detail: outcome.detail,
     };
   }
   await syncEntitlementBestEffort(
@@ -308,12 +317,14 @@ export async function manageSubscription(uid: string): Promise<PurchaseResult> {
     window.location.href = url;
     return { success: true, redirectUrl: url };
   } catch (err) {
+    logger.error("[purchase] billing portal failed", err);
     return {
       success: false,
+      // A failed-precondition carries a sentence the server wrote for the
+      // person; any other code's message is the server's own.
       error:
-        err instanceof Error
-          ? err.message
-          : "Couldn't open billing portal. Try again.",
+        describeRejection(err) ?? "Couldn't open billing portal. Try again.",
+      detail: err instanceof Error ? err.message : String(err),
     };
   }
 }
@@ -335,6 +346,7 @@ export async function restorePurchases(): Promise<PurchaseResult> {
     return {
       success: false,
       error: outcome.error ?? "Failed to restore purchases.",
+      detail: outcome.detail,
     };
   }
   await syncEntitlementBestEffort();

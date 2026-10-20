@@ -365,6 +365,51 @@ describe("nutrition (adherence-neutral)", () => {
     });
   });
 
+  it("counts and averages only the days logged in full", () => {
+    // Five days at 2,000 and two rest days with one 150 kcal coffee each.
+    // Averaged in, the coffees read the week as (5 x 2000 + 2 x 150) / 7 =
+    // 1,471 against a 2,000 target. A day counts from 800 kcal, the adaptive
+    // estimator's floor, and the count is the days the average is over.
+    const days = [
+      "2026-06-22",
+      "2026-06-23",
+      "2026-06-24",
+      "2026-06-25",
+      "2026-06-26",
+    ];
+    const r = buildWeeklyReview(
+      base({
+        mealDays: [
+          ...days.map((date) => ({ date, calories: 2000 })),
+          { date: "2026-06-27", calories: 150 },
+          { date: "2026-06-28", calories: 150 },
+        ],
+        calorieTarget: 2000,
+      })
+    );
+    expect(r?.nutrition).toMatchObject({ daysLogged: 5, avgCalories: 2000 });
+  });
+
+  it("a day at the floor counts; one under it does not", () => {
+    const r = buildWeeklyReview(
+      base({
+        mealDays: [
+          { date: "2026-06-23", calories: 800 },
+          { date: "2026-06-24", calories: 799 },
+        ],
+      })
+    );
+    expect(r?.nutrition).toMatchObject({ daysLogged: 1, avgCalories: 800 });
+  });
+
+  it("collapses when no day was logged in full, but the week is not quiet", () => {
+    const r = buildWeeklyReview(
+      base({ mealDays: [{ date: "2026-06-23", calories: 150 }] })
+    );
+    expect(r?.nutrition).toBeNull();
+    expect(r?.kind).not.toBe("quiet");
+  });
+
   it("collapses when nothing was logged", () => {
     const r = buildWeeklyReview(
       base({ workouts: [{ date: "2026-06-23", tonnageKg: 100 }] })

@@ -14,7 +14,12 @@ vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/auth", () => ({ useUid: () => "u1" }));
 vi.mock("@/lib/notifications");
-let streak = { currentStreak: 3, hasLoggedToday: false, loading: false };
+let streak = {
+  currentStreak: 3,
+  savableStreak: 3,
+  hasLoggedToday: false,
+  loading: false,
+};
 vi.mock("@/features/streaks/useStreaks", () => ({ useStreaks: () => streak }));
 
 beforeEach(() => {
@@ -22,7 +27,12 @@ beforeEach(() => {
   resetNotifications();
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2026, 8, 6, 12));
-  streak = { currentStreak: 3, hasLoggedToday: false, loading: false };
+  streak = {
+    currentStreak: 3,
+    savableStreak: 3,
+    hasLoggedToday: false,
+    loading: false,
+  };
   seedFirestore({
     "users/u1/settings/streakReminder": {
       enabled: true,
@@ -69,12 +79,33 @@ it("cancels after a log or an ended streak", async () => {
     await settleNotifications();
   });
   expect(scheduledIds()).toEqual([]);
-  streak = { ...streak, hasLoggedToday: false, currentStreak: 0 };
+  streak = {
+    ...streak,
+    hasLoggedToday: false,
+    currentStreak: 0,
+    savableStreak: 0,
+  };
   rerender();
   await act(async () => {
     await settleNotifications();
   });
   expect(scheduledIds()).toEqual([]);
+});
+
+it("arms the evening after a rest day, when the streak shows 0 but a log keeps it", async () => {
+  // Shown 0 since this morning (today/yesterday rule); 40 days end the day
+  // before yesterday, and logging today keeps them with yesterday forgiven.
+  streak = {
+    currentStreak: 0,
+    savableStreak: 40,
+    hasLoggedToday: false,
+    loading: false,
+  };
+  const { result } = renderHook(() => useStreakReminderInternal());
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  await waitFor(() =>
+    expect(scheduledAt(STREAK_NOTIFICATION_ID)).toBeDefined()
+  );
 });
 
 it.each(["22:00", "23:30", "07:00"])(

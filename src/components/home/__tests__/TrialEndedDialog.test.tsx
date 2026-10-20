@@ -43,6 +43,17 @@ describe("TrialEndedDialog", () => {
     expect(onKeep).toHaveBeenCalledTimes(1);
   });
 
+  it("takes focus, keeps it, and treats Escape as Not now", () => {
+    const onDismiss = vi.fn();
+    render(<TrialEndedDialog onDismiss={onDismiss} onKeep={vi.fn()} />);
+    const dialog = screen.getByRole("dialog", {
+      name: "Your free trial has ended",
+    });
+    expect(dialog).toContainElement(document.activeElement as HTMLElement);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
   it("Home sends Keep Pro to the offer page, tagged as the trial-end entry", () => {
     // Home owns the wiring (the surface slot, the one-time flag, the
     // navigate), and no Home suite stages the trial surface — so pin the
@@ -62,7 +73,10 @@ describe("TrialEndedDialog", () => {
   it("tapping the backdrop dismisses", () => {
     const onDismiss = vi.fn();
     render(<TrialEndedDialog onDismiss={onDismiss} onKeep={vi.fn()} />);
-    fireEvent.click(screen.getByTestId("trial-ended-backdrop"));
+    // The shared dialog's backdrop: the layer behind the panel.
+    const backdrop = document.querySelector('[role="presentation"]');
+    expect(backdrop).not.toBeNull();
+    fireEvent.click(backdrop!);
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 });

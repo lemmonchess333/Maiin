@@ -192,10 +192,15 @@ export function onSnapshot(
       ? (b as (e: unknown) => void)
       : (a as { error?: (e: unknown) => void })?.error;
 
+  // The SDK ends a listener that errors: nothing reaches it afterwards,
+  // and the app has to subscribe again. A fake that kept delivering would
+  // let a later write revive it, which no device does.
+  let ended = false;
   return firestoreFake.addListener({
     ref,
     includeMetadataChanges,
     fire: () => {
+      if (ended) return;
       try {
         firestoreFake.failIfArmed("onSnapshot", ref.path);
         const snapshot = isDocRef(ref)
@@ -212,6 +217,7 @@ export function onSnapshot(
           })
         );
       } catch (err) {
+        ended = true;
         onError?.(err);
       }
     },

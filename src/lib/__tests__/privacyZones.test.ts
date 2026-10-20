@@ -107,8 +107,8 @@ describe("applyPrivacyZones", () => {
  * the park that passes home halfway, published the exact home coordinates.
  *
  * Every fixture above starts or ends inside the zone; none crosses one
- * mid-route. That is why the gap survived, and why `LAUNCH_TODO.md` carried
- * privacy zones as "verified".
+ * mid-route. That is why the gap survived, and why the legal pages' checklist
+ * carried privacy zones as "verified".
  *
  * `Math.random` is pinned to 0 by the suite's `beforeEach`, so the jitter
  * margin is 0 and these assert the removal itself rather than the padding.

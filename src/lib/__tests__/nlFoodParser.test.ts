@@ -1006,3 +1006,90 @@ describe("measured quantities require a compatible nutrition reference", () => {
     }
   );
 });
+
+describe("a measure written after the food", () => {
+  /* extractQty read a measure only from the start, so "chicken breast 200g"
+     logged the row's 150 g serving (248 kcal) under a name that said 200g.
+     References: chicken breast 248 per 150 g, milk 150 per 240 ml. */
+  it.each([
+    ["chicken breast 200g", "200g chicken breast", 331, "200g"],
+    ["chicken breast 200 g", "200g chicken breast", 331, "200g"],
+    ["chicken breast 0.2kg", "0.2kg chicken breast", 331, "0.2kg"],
+    ["milk 300ml", "300ml milk", 188, "300ml"],
+    ["a chicken breast 200g", "200g chicken breast", 331, "200g"],
+  ] as const)("%s logs the typed amount", (text, name, calories, label) => {
+    expect(parseFoodText(text)).toEqual([
+      expect.objectContaining({ name, calories, portionLabel: label }),
+    ]);
+  });
+
+  it("logs the same as the measure written first", () => {
+    expect(parseFoodText("chicken breast 200g")).toEqual(
+      parseFoodText("200g chicken breast")
+    );
+  });
+
+  it("a base food's own measure stands inside a with phrase", () => {
+    // 331 for the chicken; the rice keeps its normal serving.
+    const rice = parseFoodText("rice")[0].calories;
+    expect(parseFoodText("chicken breast 200g with rice")[0].calories).toBe(
+      331 + rice
+    );
+  });
+
+  it("a leading count still wins over a trailing number", () => {
+    expect(parseFoodText("2 eggs")[0]).toMatchObject({ calories: 156 });
+  });
+});
+
+describe("a count written as a fraction or a word", () => {
+  /* A fraction was no count (half an avocado logged the whole one, 240 kcal)
+     and a number word was part of the name ("two eggs" logged one egg).
+     References: avocado 240 per one, egg 78 per one, lager 245 per pint. */
+  it.each([
+    ["half an avocado", "Avocado (x0.5)", 120],
+    ["half avocado", "Avocado (x0.5)", 120],
+    ["a half of an avocado", "Avocado (x0.5)", 120],
+    ["1/2 avocado", "Avocado (x0.5)", 120],
+    ["½ avocado", "Avocado (x0.5)", 120],
+    ["1 1/2 avocados", "Avocados (x1.5)", 360],
+    ["two eggs", "Eggs (x2)", 156],
+    ["Three eggs", "Eggs (x3)", 234],
+    ["one egg", "Egg", 78],
+  ] as const)("%s", (text, name, calories) => {
+    expect(parseFoodText(text)).toEqual([
+      expect.objectContaining({ name, calories }),
+    ]);
+  });
+
+  it("two pints are two pints, and half a pint written as a fraction", () => {
+    expect(parseFoodText("two pints of lager")[0]).toMatchObject({
+      name: "2 pints of lager",
+      calories: 490,
+      portionLabel: "2 pints",
+    });
+    expect(parseFoodText("1/2 pint of milk")).toEqual(
+      parseFoodText("half a pint of milk")
+    );
+  });
+});
+
+describe("oats by their packet names are weighed dry", () => {
+  /* "porridge" is a cooked bowl (234 g), so "50g porridge oats" found it and
+     logged 32 kcal. Oats are 150 per 40 g dry: 50 g is 188. "50g porridge"
+     stays the cooked bowl: by weight, porridge is the porridge. */
+  it.each([
+    ["50g porridge oats", 188],
+    ["50g rolled oats", 188],
+    ["50g oats", 188],
+    ["50g porridge", 32],
+  ] as const)("%s", (text, calories) => {
+    expect(parseFoodText(text)[0]).toMatchObject({ calories });
+  });
+
+  it("a bowl of porridge and a portion of porridge oats are the same food", () => {
+    expect(parseFoodText("porridge")[0].calories).toBe(
+      parseFoodText("porridge oats")[0].calories
+    );
+  });
+});

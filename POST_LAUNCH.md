@@ -131,6 +131,45 @@ paths (Health Connect app may be absent), and re-run the device checklist on
 Android. The bridge + hook are platform-neutral; only the Android permission
 manifest + the "install Health Connect" recovery UI remain.
 
+### HealthKit beyond steps — check the plugin first
+
+Wanted after steps: active energy, body weight both ways, writing finished
+sessions, heart rate, sleep. Most of it cannot be built on the installed
+`capacitor-health` (read from its `dist/esm/definitions.d.ts`; still so in
+8.1.2 on 2026-10-19):
+
+| Wanted               | On `capacitor-health`? | Why                                                                                                                                                                |
+| -------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Active energy (read) | Yes                    | `READ_ACTIVE_CALORIES` + `queryAggregated`. ADR-0007 refuses it as an input to the target, burn or adaptive TDEE; only a display-only card is open                 |
+| Body weight          | No                     | No weight permission or data type                                                                                                                                  |
+| Write sessions       | No                     | `WRITE_WORKOUTS` is in the permission list, but the plugin has no write method                                                                                     |
+| Heart rate           | Only after the fact    | Only attached to a workout (`queryWorkouts({ includeHeartRate: true })`), so only for runs another app recorded; live heart rate is `docs/heart-rate-healthkit.md` |
+| Sleep                | No                     | No data type                                                                                                                                                       |
+
+Body weight has the most product value: it feeds the adaptive-TDEE slope,
+ADR-0007 Q3 designed the merge, and `isPreferred()` in
+`src/lib/bodyweightLogs.ts` already prefers a manual entry over
+`source: "healthkit"`. Choose a plugin against this table before writing any
+client code.
+
+### Home Screen widgets
+
+Today's calories and protein, the next session, the streak, the week's
+training, and a Start Run shortcut. Each is a WidgetKit extension, the same
+kind of Xcode target as the run's lock-screen card below.
+
+### The run's lock-screen card (Live Activity)
+
+The app's half and the plugin are in (`src/lib/runLiveActivity.ts`,
+`capacitor-live-activities`); the widget extension target is not, so nothing
+shows yet. `docs/run-live-activity.md` has the target's steps and the device
+table.
+
+### Apple Watch companion
+
+Start and stop a run, heart rate, the rest timer, set logging. A separate
+watchOS target and a shared package; nothing of it exists under `ios/`.
+
 ### Font rebrand experiment
 
 **Status:** Numeral half SHIPPED — the brand bake-off replaced JetBrains Mono

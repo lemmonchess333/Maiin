@@ -6,7 +6,6 @@ import {
   sessionFits,
   sessionMinutesFor,
 } from "../sessionFit";
-import { roleRepsFor } from "../roleTable";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
 
 function ex(
@@ -299,8 +298,10 @@ describe("refitSessionsToTime — a plan the person has", () => {
       expect(e.baseSets).toBe(e.sets);
     });
     const long = refitSessionsToTime(short, "hypertrophy", "intermediate", 75);
-    long[0].exercises.forEach((e) =>
-      expect(e.sets).toBe(roleRepsFor("hypertrophy", e, "intermediate").sets)
+    // Build muscle from intermediate up: three sets on every lift, whatever
+    // its role, and the six at three fit in 75 minutes.
+    expect(shape(long[0])).toBe(
+      "bench-press 3, squat 3, lat-pulldown 3, romanian-deadlift 3, cable-crunch 3, standing-calf-raise 3"
     );
   });
 

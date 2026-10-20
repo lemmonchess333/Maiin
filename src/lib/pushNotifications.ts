@@ -15,15 +15,16 @@
  * the installed native Firebase Messaging plugin's FCM token. Neither refresh
  * path requests notification permission.
  */
-import {
-  deleteToken,
-  getMessaging,
-  getToken,
-  isSupported,
-  onMessage,
-} from "firebase/messaging";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { app, auth } from "@/lib/firebaseApp";
+
+/* The web push SDK on first use, not at import. AuthProvider imports this
+   module eagerly, so a static import would put firebase/messaging on every
+   cold start, the iPhone app's included, where push is the native plugin's.
+   Every use below is already async. */
+function messaging() {
+  return import("firebase/messaging");
+}
 
 /* Firestore on first read, not at import. AuthProvider imports this module
    eagerly (it releases the device token on sign-out), so a static Firestore
@@ -134,6 +135,7 @@ export async function isPushSupported(): Promise<boolean> {
     return false;
   }
   try {
+    const { isSupported } = await messaging();
     return await isSupported();
   } catch {
     return false;
@@ -168,6 +170,7 @@ async function hasRemotePushPermission(): Promise<boolean> {
 async function getDevicePushToken(): Promise<string | null> {
   if (isNativePlatform()) return getNativePushToken();
   const registration = await getAppServiceWorkerRegistration();
+  const { getMessaging, getToken } = await messaging();
   return getToken(getMessaging(app), {
     vapidKey: VAPID_KEY,
     serviceWorkerRegistration: registration,
@@ -175,8 +178,12 @@ async function getDevicePushToken(): Promise<string | null> {
 }
 
 async function deleteDevicePushToken(): Promise<void> {
-  if (isNativePlatform()) await deleteNativePushToken();
-  else await deleteToken(getMessaging(app));
+  if (isNativePlatform()) {
+    await deleteNativePushToken();
+    return;
+  }
+  const { deleteToken, getMessaging } = await messaging();
+  await deleteToken(getMessaging(app));
 }
 
 export type PushRegisterResult =
@@ -555,6 +562,7 @@ export async function listenForForegroundPush(): Promise<() => void> {
 
   try {
     const registration = await getAppServiceWorkerRegistration();
+    const { getMessaging, onMessage } = await messaging();
     foregroundUnsub = onMessage(getMessaging(app), (payload) => {
       const data = payload.data || {};
       const title = data.title || payload.notification?.title || "Tropos";

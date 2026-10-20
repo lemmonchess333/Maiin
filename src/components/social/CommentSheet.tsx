@@ -260,6 +260,8 @@ export default function CommentSheet({
       setComments((prev) => applyReaction(prev, commentId, reaction, user.uid));
       haptic("error");
       if (isRestrictedRefusal(err)) showRestrictedToast();
+      // The haptic alone says nothing on the web.
+      else toast.error("Couldn't update your reaction. Try again.");
     }
   };
 

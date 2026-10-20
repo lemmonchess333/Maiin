@@ -100,7 +100,9 @@ describe("hashedUidPrefix", () => {
   });
 
   it("is deterministic for the same uid", () => {
-    expect(hashedUidPrefix("alice")).toBe(hashedUidPrefix("alice"));
+    // The first 8 hex chars of SHA-256("alice"), from coreutils' sha256sum:
+    // 2bd806c97f0e00af1a1fc3328fa763a9269723c8db8fac4f93af71db186d6e90.
+    expect(hashedUidPrefix("alice")).toBe("2bd806c9");
   });
 
   it("differs between two uids", () => {

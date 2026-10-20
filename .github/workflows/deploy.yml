@@ -32,6 +32,11 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    # This job runs the whole unit suite before it builds: 17 minutes on
+    # the release of 19 October, the suite alone 11 to 12. CI's `unit`
+    # job does the same work under a 25-minute limit, so this one has
+    # room for a slow runner on top.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6

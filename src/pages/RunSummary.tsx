@@ -30,6 +30,7 @@ import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { logger } from "../lib/logger";
+import { appErrorMessage } from "@/lib/callableErrors";
 import {
   calculatePace,
   detectBestEfforts,
@@ -51,7 +52,7 @@ import { Button } from "@/components/ui/Button";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { THEME } from "../lib/theme";
 import { calculatePaceTrend, type PaceTrendResult } from "../lib/paceTrends";
-import { fetchSavedRuns } from "../lib/savedRuns";
+import { fetchSavedRuns, type SavedRun } from "../lib/savedRuns";
 import PaceInsightCard from "../components/run/PaceInsightCard";
 import {
   usePaceInsightFromRuns,
@@ -500,10 +501,6 @@ export default function RunSummary() {
     if (!active || active === document.body)
       doneRef.current?.focus({ preventScroll: true });
   }, [doneShown]);
-  const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
-  // The historical run list, reused for BOTH the pace-trend badge and the
-  // Pro pace-insight card — one query, two consumers (no extra Firestore read).
-  const [paceHistory, setPaceHistory] = useState<PaceInsightRun[]>([]);
   const [notes, setNotes] = useState(receipt?.notes ?? "");
   /* RUN-03: optional one-tap post-run effort signal ("how did it feel vs
      what you expected?"). Structured so the engine can later distinguish
@@ -526,65 +523,66 @@ export default function RunSummary() {
     number | null
   >(null);
 
-  // Fetch past runs ONCE — feeds both the pace-trend badge and the Pro
-  // pace-insight card. Hardened with a cancelled flag + try/catch/finally so
-  // an unmount mid-flight or a failed read can't setState on a dead component
-  // or leave the insight loading forever. Depends on user?.uid (not the whole
-  // user object) so it doesn't re-query on unrelated identity changes.
+  // Fetch past runs ONCE per account — feeds both the pace-trend badge and
+  // the Pro pace-insight card, one query for two consumers. Hardened with a
+  // cancelled flag + try/catch so an unmount mid-flight or a failed read
+  // can't setState on a dead component or leave the insight loading
+  // forever. The run on this screen is handed to both separately (and
+  // dropped from the history by id), so the read does not follow it.
+  // Following it would read every run the account has, routes and all,
+  // again on every corrected distance and on the save.
   const uid = user?.uid;
-  /* The inputs the history above was last read for; loading is derived
-     from it. The read restarts whenever the uid, the run or its corrected
-     distance changes, and the insight reads as loading from that same
-     render until the read for THESE inputs settles. */
-  const [paceHistoryFor, setPaceHistoryFor] = useState<{
+  const hasRun = state != null;
+  const [historyRead, setHistoryRead] = useState<{
     uid: string;
-    state: RunData;
-    editedDistanceMeters: number | null;
+    runs: SavedRun[];
   } | null>(null);
-  const paceHistoryLoading =
-    paceHistoryFor === null ||
-    paceHistoryFor.uid !== uid ||
-    paceHistoryFor.state !== state ||
-    paceHistoryFor.editedDistanceMeters !== editedDistanceMeters;
   useEffect(() => {
-    if (!uid || !state) return;
+    if (!uid || !hasRun) return;
     let cancelled = false;
     (async () => {
+      let runs: SavedRun[] = [];
       try {
         /* Saved runs carry their source and validity fields, so
            paceTrends can exclude treadmill / manual / invalid /
            savedAnyway records — a treadmill 2:38/km can't masquerade as
            a PR against historical outdoor runs. */
-        const allRuns = await fetchSavedRuns(uid, { all: true });
-        if (cancelled) return;
-        setPaceHistory(allRuns);
-        const currentRun = {
-          // Once saved, this run is in the history read above.
-          id: state.savedRun?.id,
-          distance: state.distance,
-          avgPace:
-            state.elapsed > 0 && state.distance > 0
-              ? (state.elapsed / state.distance) * 1000
-              : 0,
-          completedAt: new Date(),
-          activityType: state.runConfig?.activityType,
-          // A treadmill run (Pgm8) has no trend, whatever its type.
-          place: state.runConfig?.place,
-          templateId: runTemplateIdOf(state.runConfig?.planMetadata),
-        };
-        setPaceTrend(calculatePaceTrend(currentRun, allRuns));
+        runs = await fetchSavedRuns(uid, { all: true });
       } catch (err) {
         if (cancelled) return;
         logger.error("[RunSummary] pace-history load failed", err);
-        setPaceHistory([]);
-      } finally {
-        if (!cancelled) setPaceHistoryFor({ uid, state, editedDistanceMeters });
       }
+      if (!cancelled) setHistoryRead({ uid, runs });
     })();
     return () => {
       cancelled = true;
     };
-  }, [uid, state, editedDistanceMeters]);
+  }, [uid, hasRun]);
+  const paceHistory = useMemo<PaceInsightRun[]>(
+    () => (historyRead && historyRead.uid === uid ? historyRead.runs : []),
+    [historyRead, uid]
+  );
+  const paceHistoryLoading = !historyRead || historyRead.uid !== uid;
+  const paceTrend = useMemo<PaceTrendResult | null>(() => {
+    if (!state || !historyRead || historyRead.uid !== uid) return null;
+    return calculatePaceTrend(
+      {
+        // Once saved, this run is in the history read above.
+        id: state.savedRun?.id,
+        distance: state.distance,
+        avgPace:
+          state.elapsed > 0 && state.distance > 0
+            ? (state.elapsed / state.distance) * 1000
+            : 0,
+        completedAt: new Date(),
+        activityType: state.runConfig?.activityType,
+        // A treadmill run (Pgm8) has no trend, whatever its type.
+        place: state.runConfig?.place,
+        templateId: runTemplateIdOf(state.runConfig?.planMetadata),
+      },
+      historyRead.runs
+    );
+  }, [state, historyRead, uid]);
 
   // Pace insight (Pro) — reuse the already-fetched history. The just-saved run
   // is the candidate that can cross the threshold; dedupe it out of the
@@ -1120,8 +1118,9 @@ export default function RunSummary() {
          the screen until they tap Done. */
     } catch (error) {
       logger.error("[RunSave] Failed:", error);
-      const message =
-        error instanceof Error ? error.message : "Failed to save run";
+      // The privacy-zone and storage sentences are the app's own; an
+      // SDK error's text is not copy.
+      const message = appErrorMessage(error, "Failed to save run");
       setSaveStatus("error");
       setSaveError(message);
       /* Toast still fires as supplementary feedback for users who

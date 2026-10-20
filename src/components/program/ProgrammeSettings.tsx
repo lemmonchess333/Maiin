@@ -36,12 +36,15 @@
  * ScheduleLayoutSheet — both views link to it.
  */
 import {
+  appErrorMessage,
+  describeRejection,
   isRateLimitedRejection,
   PLAN_SAVES_TOO_OFTEN,
 } from "@/lib/callableErrors";
 import { useId, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { Dialog } from "@/components/ui/Dialog";
 import {
   Target,
   Dumbbell,
@@ -767,8 +770,10 @@ export default function ProgrammeSettings({
         await refreshProfile().catch((error) =>
           logger.warn("Plan refresh failed", error)
         );
+        // The server's sentence says what changed, when it wrote one.
         toast.error(
-          "Your programme changed. Reopen settings to review the latest plan before saving."
+          describeRejection(err) ??
+            "Your programme changed. Reopen settings to review the latest plan before saving."
         );
       } else if (
         code === "functions/invalid-argument" ||
@@ -790,8 +795,15 @@ export default function ProgrammeSettings({
     // from no programme at all.
     if (readiness !== "ready") return;
     setConfirmReset(false);
-    await regenerateProgram();
-    toast.success("Programme reset");
+    try {
+      await regenerateProgram();
+      toast.success("Programme reset");
+    } catch (err) {
+      logger.error("[ProgrammeSettings] reset failed:", err);
+      toast.error(
+        appErrorMessage(err, "Couldn't reset your programme. Try again.")
+      );
+    }
   }
 
   /* The commit buttons (Save changes, and the dialog's Save and Reset) wait
@@ -808,6 +820,7 @@ export default function ProgrammeSettings({
       </p>
     ) : null;
   const dialogLoadFailedId = `${loadFailedId}-dialog`;
+  const confirmTitleId = `${loadFailedId}-confirm-title`;
   function commitWaits(label: string) {
     return {
       disabled: !programReady,
@@ -817,145 +830,128 @@ export default function ProgrammeSettings({
     };
   }
 
-  /* ── Confirmation modal (rebuild on Lift plan, reset on the overview) ── */
+  /* ── Confirmation modal (rebuild on Lift plan, reset on the overview) ──
+     The shared dialog: focus moves in and stays there, Escape and the
+     device's Back cancel, and focus goes back to the button that opened
+     it. Above the settings sheet, as before. */
+  const closeConfirm = () => {
+    setConfirmRebuild(false);
+    setConfirmReset(false);
+  };
   const confirmModal = (
-    <AnimatePresence>
-      {(confirmRebuild || confirmReset) && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => {
-              setConfirmRebuild(false);
-              setConfirmReset(false);
-            }}
-            className="fixed inset-0 bg-black/60 z-[60]"
-          />
-          <motion.div
-            role="alertdialog"
-            aria-modal="true"
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[61] bg-card rounded-2xl p-4 space-y-3 max-w-sm mx-auto shadow-xl"
+    <Dialog
+      open={confirmRebuild || confirmReset}
+      onClose={closeConfirm}
+      role="alertdialog"
+      labelledBy={confirmTitleId}
+      size="md"
+      overlayClassName="bg-black/60 z-[60]"
+      className="z-[61] p-4 max-w-sm"
+    >
+      <div className="space-y-3">
+        <div className="flex items-start gap-3">
+          <div
+            className="size-9 rounded-xl flex items-center justify-center shrink-0"
+            style={{ backgroundColor: `${THEME.amber}1F` }}
           >
-            <div className="flex items-start gap-3">
-              <div
-                className="size-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ backgroundColor: `${THEME.amber}1F` }}
-              >
-                <AlertTriangle
-                  className="size-4"
-                  style={{ color: THEME.amber }}
-                />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-foreground">
-                  {confirmReset ? "Reset programme?" : "Save changes?"}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  {confirmReset
-                    ? "This rebuilds your programme from scratch with your current settings. You start again at Week 1 and past week summaries clear. Your logged workouts and runs stay in History."
-                    : focusChangedSameFrequency
-                      ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal, experience)} reps — weights adjust down where a target rises, and ${sessionMinutesChanged ? "your exercises, history and week number stay, with your sets refitted to the new session length" : "your exercises, sets, history and week number stay"}. Or keep your current sessions and change the focus only.`
-                      : programmePreservationNote({
-                          liftDaysChanged,
-                          weekNumber: programState?.weekNumber,
-                          levelChanged: experience !== saved.experience,
-                          ...(sessionMinutesChanged
-                            ? { sessionMinutesTo: sessionMinutes }
-                            : {}),
-                        })}
-                </p>
-              </div>
-            </div>
+            <AlertTriangle className="size-4" style={{ color: THEME.amber }} />
+          </div>
+          <div className="min-w-0">
+            <h3
+              id={confirmTitleId}
+              className="text-sm font-semibold text-foreground"
+            >
+              {confirmReset ? "Reset programme?" : "Save changes?"}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              {confirmReset
+                ? "This rebuilds your programme from scratch with your current settings. You start again at Week 1 and past week summaries clear. Your logged workouts and runs stay in History."
+                : focusChangedSameFrequency
+                  ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal, experience)} reps — weights adjust down where a target rises, and ${sessionMinutesChanged ? "your exercises, history and week number stay, with your sets refitted to the new session length" : "your exercises, sets, history and week number stay"}. Or keep your current sessions and change the focus only.`
+                  : programmePreservationNote({
+                      liftDaysChanged,
+                      weekNumber: programState?.weekNumber,
+                      levelChanged: experience !== saved.experience,
+                      ...(sessionMinutesChanged
+                        ? { sessionMinutesTo: sessionMinutes }
+                        : {}),
+                    })}
+            </p>
+          </div>
+        </div>
 
-            {/* What's changing — recap of the touched fields (rebuild only). */}
-            {!confirmReset && changes.length > 0 && (
-              <div className="rounded-xl bg-muted/60 px-3 py-2.5">
-                <BaseSectionLabel className="mb-1.5 text-foreground">
-                  Changes
-                </BaseSectionLabel>
-                <ul className="space-y-1 max-h-44 overflow-y-auto">
-                  {changes.map((c) => (
-                    <li
-                      key={c.label}
-                      className="flex items-baseline justify-between gap-2 text-xs"
-                    >
-                      <span className="text-muted-foreground shrink-0">
-                        {c.label}
-                      </span>
-                      <span className="min-w-0 text-right font-medium text-foreground">
-                        <span className="text-muted-foreground">{c.from}</span>
-                        <span className="mx-1 text-muted-foreground">→</span>
-                        {c.to}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {loadFailedLine(dialogLoadFailedId, "leading-relaxed")}
-            {!confirmReset && focusChangedSameFrequency ? (
-              /* LIFT-EV-06: the keep-or-represcribe choice. Two explicit
-                 saves — neither outcome is the silent default. */
-              <div className="space-y-2 pt-1">
-                <Button
-                  fullWidth
-                  {...commitWaits("Save and update sessions")}
-                  onClick={() => void applyRebuild(true)}
+        {/* What's changing — recap of the touched fields (rebuild only). */}
+        {!confirmReset && changes.length > 0 && (
+          <div className="rounded-xl bg-muted/60 px-3 py-2.5">
+            <BaseSectionLabel className="mb-1.5 text-foreground">
+              Changes
+            </BaseSectionLabel>
+            <ul className="space-y-1 max-h-44 overflow-y-auto">
+              {changes.map((c) => (
+                <li
+                  key={c.label}
+                  className="flex items-baseline justify-between gap-2 text-xs"
                 >
-                  Save and update sessions
-                </Button>
-                <Button
-                  variant="secondary"
-                  fullWidth
-                  {...commitWaits("Save, keep current sessions")}
-                  onClick={() => void applyRebuild(false)}
-                >
-                  Save, keep current sessions
-                </Button>
-                <Button
-                  variant="ghost"
-                  fullWidth
-                  onClick={() => {
-                    setConfirmRebuild(false);
-                    setConfirmReset(false);
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            ) : (
-              <div className="flex gap-2 pt-1">
-                <Button
-                  variant="secondary"
-                  className="flex-1"
-                  onClick={() => {
-                    setConfirmRebuild(false);
-                    setConfirmReset(false);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant={confirmReset ? "destructive" : "primary"}
-                  className="flex-1"
-                  {...commitWaits(confirmReset ? "Reset" : "Save")}
-                  onClick={
-                    confirmReset ? applyReset : () => void applyRebuild(false)
-                  }
-                >
-                  {confirmReset ? "Reset" : "Save"}
-                </Button>
-              </div>
-            )}
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+                  <span className="text-muted-foreground shrink-0">
+                    {c.label}
+                  </span>
+                  <span className="min-w-0 text-right font-medium text-foreground">
+                    <span className="text-muted-foreground">{c.from}</span>
+                    <span className="mx-1 text-muted-foreground">→</span>
+                    {c.to}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {loadFailedLine(dialogLoadFailedId, "leading-relaxed")}
+        {!confirmReset && focusChangedSameFrequency ? (
+          /* LIFT-EV-06: the keep-or-represcribe choice. Two explicit
+               saves — neither outcome is the silent default. */
+          <div className="space-y-2 pt-1">
+            <Button
+              fullWidth
+              {...commitWaits("Save and update sessions")}
+              onClick={() => void applyRebuild(true)}
+            >
+              Save and update sessions
+            </Button>
+            <Button
+              variant="secondary"
+              fullWidth
+              {...commitWaits("Save, keep current sessions")}
+              onClick={() => void applyRebuild(false)}
+            >
+              Save, keep current sessions
+            </Button>
+            <Button variant="ghost" fullWidth onClick={closeConfirm}>
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <div className="flex gap-2 pt-1">
+            <Button
+              variant="secondary"
+              className="flex-1"
+              onClick={closeConfirm}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={confirmReset ? "destructive" : "primary"}
+              className="flex-1"
+              {...commitWaits(confirmReset ? "Reset" : "Save")}
+              onClick={
+                confirmReset ? applyReset : () => void applyRebuild(false)
+              }
+            >
+              {confirmReset ? "Reset" : "Save"}
+            </Button>
+          </div>
+        )}
+      </div>
+    </Dialog>
   );
 
   if (variant === "overview") {

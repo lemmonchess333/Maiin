@@ -324,6 +324,27 @@ describe("injected failures", () => {
     expect(errors[0]).toMatchObject({ code: "permission-denied" });
   });
 
+  it("ends a listener that failed, as the SDK does", async () => {
+    failNextFirestore("onSnapshot", { path: "c/d" });
+    const seen: unknown[] = [];
+    const errors: unknown[] = [];
+    onSnapshot(
+      doc(db, "c", "d"),
+      (snap: { data: () => unknown }) => seen.push(snap.data()),
+      (e: unknown) => errors.push(e)
+    );
+    // Anchor: a live listener on the same document does see the write.
+    const live: unknown[] = [];
+    onSnapshot(doc(db, "c", "d"), (snap: { data: () => unknown }) =>
+      live.push(snap.data())
+    );
+    await setDoc(doc(db, "c", "d"), { a: 1 });
+    await Promise.resolve();
+    expect(live.at(-1)).toEqual({ a: 1 });
+    expect(errors).toHaveLength(1);
+    expect(seen).toEqual([]);
+  });
+
   it("reports failures that were armed but never hit", () => {
     failNextFirestore("getDocs", { path: "typoed-collection" });
     expect(unfiredFailures()).toEqual([

@@ -316,6 +316,27 @@ describe("a restricted account (S4e)", () => {
     expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
   });
 
+  it("says so when a reaction fails to save, and puts it back", async () => {
+    H.toggleCommentReaction.mockRejectedValue(
+      Object.assign(new Error("unavailable"), { code: "functions/unavailable" })
+    );
+    await openWith([
+      { id: "c1", authorId: "priya", text: "Strong finish", reactions: {} },
+    ]);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Add fire reaction" })
+      );
+    });
+    expect(H.toggleCommentReaction).toHaveBeenCalledTimes(1);
+    expect(toast.error).toHaveBeenCalledWith(
+      "Couldn't update your reaction. Try again."
+    );
+    expect(
+      screen.getByRole("button", { name: "Add fire reaction" })
+    ).toBeInTheDocument();
+  });
+
   it("cannot add a reaction, but can take one back", async () => {
     restriction.isRestricted = true;
     H.toggleCommentReaction.mockResolvedValue({ reacted: false, count: 0 });

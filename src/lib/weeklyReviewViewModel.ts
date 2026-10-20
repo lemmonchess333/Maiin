@@ -35,6 +35,7 @@ import {
   projectGoalDate,
 } from "@/utils/weightTrend";
 import { computeDataConfidence } from "@/lib/dataConfidence";
+import { ADAPTIVE_TDEE_DEFAULTS } from "@/lib/adaptiveTdee";
 import type { TrainingWeek } from "@/lib/trainingWeek";
 import { parseLocalDate, localDateString } from "@/lib/dateHelpers";
 
@@ -418,13 +419,20 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
       : null;
 
   /* Nutrition — adherence-neutral: days logged + average, never a
-     per-day judgement. Collapses when nothing was logged. */
+     per-day judgement. A day counts once its food reaches the adaptive
+     estimator's floor: a coffee on a rest day is not a day's eating, and
+     averaged in it read 2,000 a day as 1,736. The count and the average are
+     over the same days. Collapses when no day was logged in full. */
+  const fullFoodDays = mealDays.filter(
+    (m) => m.calories >= ADAPTIVE_TDEE_DEFAULTS.plausibilityFloorKcal
+  );
   const nutrition =
-    mealDays.length > 0
+    fullFoodDays.length > 0
       ? {
-          daysLogged: mealDays.length,
+          daysLogged: fullFoodDays.length,
           avgCalories: Math.round(
-            mealDays.reduce((s, m) => s + m.calories, 0) / mealDays.length
+            fullFoodDays.reduce((s, m) => s + m.calories, 0) /
+              fullFoodDays.length
           ),
           target: data.calorieTarget,
           retuned: data.adaptiveRetunedInWeek,

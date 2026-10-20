@@ -277,10 +277,14 @@ export interface NextRunWeek extends Pick<ProgramState, "runDays" | "runPlan"> {
  * week being left, of which only the run plan and its days are read; `next`
  * is the week moved into. Worked out before the lift side moves on, which
  * reads the result to place a race plan's lighter weeks.
+ *
+ * `next.plannedFrom` is today when the week moved into is the one the
+ * person is standing in, part gone: its race runs are planned from today,
+ * as a plan made mid-week is (Run19).
  */
 export function nextRunWeek(
   current: ProgramState,
-  next: { weekStart: string; date: string },
+  next: { weekStart: string; date: string; plannedFrom?: string },
   profile: UserProfile,
   recentLayoff: LayoffClass
 ): NextRunWeek {
@@ -322,6 +326,14 @@ export function nextRunWeek(
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,
       currentDate: next.date,
       weekStart: next.weekStart,
+      // Not past race day. Planned from after it, race day stayed on its
+      // date filed under next week's key, which the rollover reads as the
+      // plan's week; a race already run keeps its week for the race's own
+      // ending (R3).
+      ...(next.plannedFrom &&
+        next.plannedFrom <= profile.raceGoal.targetDate && {
+          plannedFrom: next.plannedFrom,
+        }),
       carry: {
         currentWeek: (runPlan?.currentWeek ?? 0) + 1,
         totalWeeks: runPlan?.totalWeeks,
@@ -373,25 +385,29 @@ export interface RolledOver {
 
 /**
  * The rollover for a plan that follows its runs: each week the run side is
- * behind `todayWeekKey`, the run plan moves first (`nextRunWeek`), so the
- * lift side knows whether the week it moves into is the run plan's
+ * behind the week of `today`, the run plan moves first (`nextRunWeek`), so
+ * the lift side knows whether the week it moves into is the run plan's
  * step-back week, where a race plan puts the lighter week. The lift side's
  * week key moves with the runs, so a plan that later goes freeform doesn't
  * inherit a stale one (D1).
  *
  * The week left behind is not kept on the plan: its run days give way to
  * the next week's, and `advanceWeek` archives its lifts into `weekHistory`
- * only if something in it was done.
+ * only if something in it was done. The week reached, when it is today's,
+ * plans no run before today: a plan caught up on a Thursday had Tuesday's
+ * and Wednesday's runs, shown pending and graded missed on Monday. A week
+ * key passed as `today` reads as its first day.
  */
 export function rollRunWeeks(
   state: ProgramState,
   profile: UserProfile,
-  todayWeekKey: string,
+  today: string,
   recentLayoff: LayoffClass
 ): RolledOver {
   if (weekRolloverAnchor(state, profile)?.side !== "run") {
     return { state, weeks: 0 };
   }
+  const todayWeekKey = localWeekKey(parseLocalDate(today));
   let rolling = state;
   let weeks = 0;
   while (weeks < MAX_ROLLOVER_WEEKS) {
@@ -428,11 +444,13 @@ export function rollRunWeeks(
     // Advance run side: one week step from the current runDay week key.
     // First, so the lift side knows whether the week rolled into is the
     // run plan's step-back week, where a race plan puts the lighter week.
+    const weekStart = localWeekKey(nextRunDate);
     const runs = nextRunWeek(
       rolling,
       {
-        weekStart: localWeekKey(nextRunDate),
+        weekStart,
         date: localDateString(nextRunDate),
+        ...(weekStart === todayWeekKey && { plannedFrom: today }),
       },
       profile,
       recentLayoff
