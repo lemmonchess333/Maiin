@@ -16,6 +16,22 @@
  */
 
 /**
+ * The person closed the sign-in sheet: say nothing. The web SDK reports it
+ * as `auth/popup-closed-by-user` (or `cancelled-popup-request` for a second
+ * tap); the native Google sheet as "The user canceled the sign-in flow.";
+ * Sign in with Apple as AuthorizationError 1001. The Login screen matched
+ * only the web code, so a cancel on the phone showed Apple's or Google's
+ * raw sentence as an error.
+ */
+export function isSignInCancelled(err: unknown): boolean {
+  const code = String((err as { code?: unknown } | null)?.code ?? "");
+  const message = err instanceof Error ? err.message : String(err ?? "");
+  return /popup-closed-by-user|cancelled-popup-request|canceled|cancelled|1001/i.test(
+    `${code} ${message}`
+  );
+}
+
+/**
  * If an email is registered ONLY with a social provider (no password),
  * return a message steering the user to that button — otherwise null (they
  * have a password, or the provider is unknown because Email-Enumeration-

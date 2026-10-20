@@ -30,15 +30,24 @@ vi.mock("@capacitor/app", () => ({
 // Each account gets its own uid: the gates share which account they have
 // seen needing verification, and one test's account must not be another's.
 let accounts = 0;
-function fakeUser(opts: { verifiedAfterReload: boolean; verified?: boolean }) {
+function fakeUser(opts: {
+  verifiedAfterReload: boolean;
+  verified?: boolean;
+  /** The cached token's claim; defaults to the account's state. */
+  tokenClaim?: boolean;
+  providerId?: string;
+}) {
   const user = {
     uid: `account-${++accounts}`,
     emailVerified: opts.verified ?? false,
-    providerData: [{ providerId: "password" }],
+    providerData: [{ providerId: opts.providerId ?? "password" }],
     reload: vi.fn(async () => {
       user.emailVerified = opts.verifiedAfterReload;
     }),
     getIdToken: vi.fn(async () => "fresh-token"),
+    getIdTokenResult: vi.fn(async () => ({
+      claims: { email_verified: opts.tokenClaim ?? user.emailVerified },
+    })),
   };
   return user as unknown as User & typeof user;
 }
@@ -242,5 +251,50 @@ describe("email_verified", () => {
       await expect(result.current.recheck()).resolves.toBe(true);
     });
     expect(verifiedEvents()).toHaveLength(0);
+  });
+
+  describe("verified while the app was closed", () => {
+    /* Startup's reload reads the account verified, so recheck never ran, but
+       the cached token Firestore sends still said email_verified: false and
+       the rules refused posts for up to an hour. */
+    it("refreshes a token whose claim lags the account", async () => {
+      const user = fakeUser({
+        verifiedAfterReload: true,
+        verified: true,
+        tokenClaim: false,
+      });
+      const { result } = renderHook(() => useEmailVerificationGate(user, true));
+      await waitFor(() => expect(user.getIdToken).toHaveBeenCalledWith(true));
+      expect(result.current.needsVerification).toBe(false);
+      // Nothing to recheck: the account already reads verified.
+      expect(user.reload).not.toHaveBeenCalled();
+    });
+
+    it("leaves a token that already carries the claim alone", async () => {
+      const user = fakeUser({ verifiedAfterReload: true, verified: true });
+      renderHook(() => useEmailVerificationGate(user, true));
+      await waitFor(() => expect(user.getIdTokenResult).toHaveBeenCalled());
+      await act(async () => {});
+      expect(user.getIdToken).not.toHaveBeenCalled();
+    });
+
+    it("only the App-level gate does it, and only for a password account", async () => {
+      const surface = fakeUser({
+        verifiedAfterReload: true,
+        verified: true,
+        tokenClaim: false,
+      });
+      renderHook(() => useEmailVerificationGate(surface));
+      const google = fakeUser({
+        verifiedAfterReload: true,
+        verified: true,
+        tokenClaim: false,
+        providerId: "google.com",
+      });
+      renderHook(() => useEmailVerificationGate(google, true));
+      await act(async () => {});
+      expect(surface.getIdTokenResult).not.toHaveBeenCalled();
+      expect(google.getIdTokenResult).not.toHaveBeenCalled();
+    });
   });
 });

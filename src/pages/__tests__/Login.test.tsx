@@ -4,17 +4,27 @@
  * is the first rung of the sign-up funnel (auth_screen_viewed).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  cleanup,
+  act,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
-const h = vi.hoisted(() => ({ signedInBefore: false }));
+const h = vi.hoisted(() => ({
+  signedInBefore: false,
+  signInWithGoogle: vi.fn(),
+  signInWithApple: vi.fn(),
+}));
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     signIn: vi.fn(),
     signUp: vi.fn(),
-    signInWithGoogle: vi.fn(),
-    signInWithApple: vi.fn(),
+    signInWithGoogle: h.signInWithGoogle,
+    signInWithApple: h.signInWithApple,
     resetPassword: vi.fn(),
     fetchSignInMethods: vi.fn(),
   }),
@@ -139,5 +149,57 @@ describe("Login — agreeing to the Terms", () => {
     expect(
       screen.getByRole("link", { name: "Terms of Service" })
     ).toBeInTheDocument();
+  });
+});
+
+describe("Login — closing the Google or Apple sheet", () => {
+  /* Only the web popup's code was silenced, so a cancel on the phone showed
+     Google's or Apple's own sentence as an error. */
+  const tap = async (name: string) => {
+    h.signedInBefore = true;
+    show();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name }));
+    });
+  };
+
+  it.each([
+    [
+      "Continue with Google",
+      "web popup",
+      Object.assign(new Error("Firebase: Error (auth/popup-closed-by-user)."), {
+        code: "auth/popup-closed-by-user",
+      }),
+    ],
+    [
+      "Continue with Google",
+      "native sheet",
+      new Error("The user canceled the sign-in flow."),
+    ],
+    [
+      "Continue with Apple",
+      "Apple sheet",
+      new Error(
+        "The operation couldn’t be completed. (com.apple.AuthenticationServices.AuthorizationError error 1001.)"
+      ),
+    ],
+  ] as const)(
+    "%s, cancelled in the %s, says nothing",
+    async (name, _where, error) => {
+      const signIn = name.includes("Google")
+        ? h.signInWithGoogle
+        : h.signInWithApple;
+      signIn.mockRejectedValueOnce(error);
+      await tap(name);
+      expect(screen.queryByRole("alert")).toBeNull();
+    }
+  );
+
+  it("a sign-in that fails for a reason still says so", async () => {
+    h.signInWithGoogle.mockRejectedValueOnce(
+      new Error("Firebase: Error (auth/network-request-failed).")
+    );
+    await tap("Continue with Google");
+    expect(screen.getByRole("alert")).toHaveTextContent(/Network issue/);
   });
 });

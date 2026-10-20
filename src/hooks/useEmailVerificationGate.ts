@@ -73,6 +73,31 @@ export function useEmailVerificationGate(
     if (needsVerification && uid) awaitingVerification = uid;
   }, [needsVerification, uid]);
 
+  /* Verified while the app was closed. Starting up, the Auth SDK reloads the
+     account, so `emailVerified` already reads true and `recheck` never runs;
+     but the ID token Firestore sends is the one cached from before, still
+     saying `email_verified: false`, and the rules refused every post and
+     comment for up to an hour while the app said nothing was wrong. Read the
+     cached token's claim (no network) and refresh it when it lags. */
+  const verifiedPasswordAccount =
+    !!user?.emailVerified &&
+    needsEmailVerification({
+      providerData: user.providerData,
+      emailVerified: false,
+    });
+  useEffect(() => {
+    if (!checkOnResume || !user || !verifiedPasswordAccount) return;
+    let active = true;
+    void (async () => {
+      const token = await user.getIdTokenResult();
+      if (!active || token.claims.email_verified === true) return;
+      await user.getIdToken(true);
+    })().catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [checkOnResume, user, verifiedPasswordAccount]);
+
   useEffect(() => {
     if (!checkOnResume || !needsVerification) return;
     let active = true;
