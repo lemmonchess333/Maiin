@@ -488,7 +488,8 @@ exports.deleteMyAccount = functions
 exports.resumeAccountDeletions = functions
   .runWith({
     ...SCHEDULED_CAP,
-    secrets: [STRIPE_SECRET_KEY, BILLING_HMAC_SECRET],
+    // RESEND_API_KEY: the email that tells the owner a deletion is stuck.
+    secrets: [STRIPE_SECRET_KEY, BILLING_HMAC_SECRET, RESEND_API_KEY],
   })
   .pubsub.schedule("every 5 minutes")
   .timeZone("UTC")
@@ -510,6 +511,12 @@ exports.resumeAccountDeletions = functions
         auth: admin.auth(),
         storageBucket: admin.storage().bucket(),
         logger: functions.logger,
+        sendAlert: (request) =>
+          require("./lib/deletionAlert").sendStuckDeletionAlert({
+            sendEmail: sendViaResend,
+            request,
+            logger: functions.logger,
+          }),
         deadline,
       });
       return null;
