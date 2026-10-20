@@ -72,6 +72,7 @@ export type SettingsToggle =
   | "ai_analysis_enabled"
   | "hide_shared_route_ends"
   | "approve_followers"
+  | "show_week_on_board"
   | "push_notifications"
   | "push_streak"
   | "push_recap"

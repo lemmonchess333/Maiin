@@ -391,6 +391,10 @@ export interface UserProfileSocial {
    *  Privacy → Approve followers. Absent means yes, the default the rules
    *  apply too (`approvesFollowers` in firestore.rules). */
   approveFollowers?: boolean;
+  /** Whether this person's week shows on their followers' boards (Polish2):
+   *  absent = not asked yet (their own board row offers "Show my week"),
+   *  false = no. Server-written by setBoardSharing, never by the client. */
+  showWeekOnBoard?: boolean;
   /** LEGACY (share composer superseded these, #1416): the saved share
    *  default decides auto-posting now — `shareDefaults` above. Nothing has
    *  READ these three since; the Settings switches that wrote

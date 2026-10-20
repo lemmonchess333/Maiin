@@ -17,14 +17,11 @@ import { THEME, RANK_COLORS } from "@/lib/theme";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
-import { buildLeaderboard, type LeaderboardEntry } from "@/lib/leaderboard";
+import { countMyWeekLifts } from "@/lib/leaderboard";
+import { rankNamedBoard, useFriendsBoard } from "@/hooks/useFriendsBoard";
 import Avatar from "@/components/Avatar";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import RestrictedNotice from "@/components/social/RestrictedNotice";
-
-interface EnrichedEntry extends LeaderboardEntry {
-  photoURL?: string;
-}
 
 export function ChallengeList({
   onFindFriends,
@@ -58,19 +55,19 @@ export function ChallengeList({
     refreshRef.current = refreshProgress;
   }, [refreshRef, refreshProgress]);
 
-  /* This week's standings among people you follow, stamped with the
-     account they were built for. Loading and the list are derived from it
-     against the signed-in uid, so another account reads as loading, with
-     no standings, from its first render. That matters beyond the rows:
-     the accountability card below reads the list even while it loads. */
-  const [rankings, setRankings] = useState<{
-    uid: string;
-    entries: EnrichedEntry[];
-  } | null>(null);
-  const settledRankings =
-    rankings !== null && rankings.uid === user?.uid ? rankings : null;
-  const rankingsLoading = settledRankings === null;
-  const weeklyRankings = settledRankings?.entries ?? [];
+  /* This week's lift standings among you and the people you follow who
+     share their week (the friends board's tallies). The accountability
+     card below reads your own count from your own sessions, so it holds
+     whether or not you share. Both are stamped with the account they were
+     read for, so another account reads as loading from its first render. */
+  const board = useFriendsBoard();
+  const rankingsLoading = board.loading;
+  const weeklyRankings = rankNamedBoard(board.weeks, "weekly_workouts");
+  const [myWeek, setMyWeek] = useState<{ uid: string; lifts: number } | null>(
+    null
+  );
+  const myWeeklyCount =
+    myWeek !== null && myWeek.uid === user?.uid ? myWeek.lifts : 0;
   // SOC-P1e: not-joined challenges collapse behind a disclosure row.
   const [showAllAvailable, setShowAllAvailable] = useState(false);
   const [weeklyBusy, setWeeklyBusy] = useState(false);
@@ -93,57 +90,17 @@ export function ChallengeList({
     }
   }
 
-  // Build friend workout rankings for the weekly card
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    buildLeaderboard(user.uid, "weekly_workouts")
-      .then(async (raw) => {
-        if (cancelled) return;
-        const { getDoc, doc } = await import("firebase/firestore");
-        const { db } = await import("@/lib/firebase");
-        // Source from `users/{uid}/public/profile` (cross-user readable) —
-        // the owner-only `users/{uid}` path silently failed for anyone
-        // other than the current user and left them all rendered as
-        // "Athlete". Same bug + fix as LeaderboardCard / FullLeaderboard.
-        const enriched = await Promise.all(
-          raw.map(async (e) => {
-            try {
-              const snap = await getDoc(
-                doc(db, "users", e.uid, "public", "profile")
-              );
-              const data = snap.data() as
-                | { displayName?: string; photoURL?: string }
-                | undefined;
-              return {
-                ...e,
-                name:
-                  data?.displayName || (e.uid === user.uid ? "You" : "Athlete"),
-                photoURL: data?.photoURL,
-              } as EnrichedEntry;
-            } catch {
-              return {
-                ...e,
-                name: e.uid === user.uid ? "You" : "Athlete",
-              } as EnrichedEntry;
-            }
-          })
-        );
-        if (!cancelled) {
-          setRankings({
-            uid: user.uid,
-            entries: enriched.filter((e) => e.value > 0),
-          });
-        }
-      })
-      .catch(() => {
-        // Settle so the skeleton gives way. A refetch for the same account
-        // that fails keeps the standings it already had.
-        if (!cancelled)
-          setRankings((prev) =>
-            prev?.uid === user.uid ? prev : { uid: user.uid, entries: [] }
-          );
-      });
+    countMyWeekLifts(user.uid).then(
+      (lifts) => {
+        if (!cancelled) setMyWeek({ uid: user.uid, lifts });
+      },
+      // A failed read keeps the count it had: the card's copy then reads
+      // as the week before the read, never as a week of nothing.
+      () => {}
+    );
     return () => {
       cancelled = true;
     };
@@ -243,11 +200,9 @@ export function ChallengeList({
      next useful action, not a ranking — beginners, returning users, and
      anyone with a sparse social graph get a personal consistency loop instead
      of a comparison surface. The leaderboard stays below as secondary detail.
-     Population is the follow graph (buildLeaderboard reads following/{uid}),
+     Population is the follow graph (loadBoardWeeks reads following/{uid}),
      so copy says "people you follow", never "crew". Cold-start (no follows /
      nobody trained) falls back to a PERSONAL goal, not fake social proof. */
-  const myWeeklyCount =
-    weeklyRankings.find((e) => e.uid === user?.uid)?.value ?? 0;
   const othersTrained = weeklyRankings.filter(
     (e) => e.uid !== user?.uid
   ).length;

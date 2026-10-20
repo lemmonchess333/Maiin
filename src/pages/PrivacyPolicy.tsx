@@ -295,6 +295,16 @@ export default function PrivacyPolicy() {
               to other signed-in Tropos users.
             </p>
             <p>
+              <strong className="text-foreground">
+                Friends&rsquo; boards.
+              </strong>{" "}
+              If you choose to show your week, your followers see how many
+              sessions you did this week, how far you ran and how much you
+              lifted, beside theirs. Until you choose, and once you turn it off
+              in Settings &gt; Social &amp; privacy, nothing of your week is
+              kept for them.
+            </p>
+            <p>
               Some data goes to the services listed in section 7, each for the
               purpose stated there.
             </p>

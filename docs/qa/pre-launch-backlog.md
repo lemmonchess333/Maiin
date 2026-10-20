@@ -10,6 +10,34 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Friends board (Polish2, 2026-10-20)
+
+The feed's board ranks this week's sessions for you and the people you
+follow who share their week; the full board adds Distance and Volume. The
+server keeps each tally (`friendsBoard/{uid}`); the unit, rules
+(`firestore.friendsBoard.rules.test.ts`) and trigger tests cover the logic.
+These need the release and two real accounts that follow each other.
+
+- [ ] **The release carries the rules and the callable.** Passing: the
+      Deploy production run's Firestore and Functions stages are green, and
+      Firebase console → Functions lists `setBoardSharing`.
+- [ ] **Show my week starts the tally.** On two TestFlight accounts, A
+      and B, B following A: A logs a workout, then taps Show my week on the
+      feed's board. Passing: Firestore console shows `friendsBoard/{A}`
+      with `sessions: 1` and A's `weekKey` (A's Monday), and B's board
+      lists A.
+- [ ] **A session saved later moves the board.** Passing: A finishes a
+      run; within a minute `friendsBoard/{A}` reads `sessions: 2` and B's
+      Distance tab shows A's km. Deleting the run takes it back off.
+- [ ] **Off leaves nothing to read.** A turns off Settings → Social &
+      privacy → Show my week on friends' boards. Passing: the
+      `friendsBoard/{A}` document is gone, B's board no longer lists A,
+      and A's own board does not ask again.
+- [ ] **The week turns over where the person is.** On a Monday morning,
+      an account in a timezone ahead of UTC (Auckland). Passing: its board
+      reads an empty week before it logs anything that day, not last
+      week's figures.
+
 ## Follow approval (Polish2, 2026-10-20)
 
 An account approves each follower unless it turns that off (Settings →

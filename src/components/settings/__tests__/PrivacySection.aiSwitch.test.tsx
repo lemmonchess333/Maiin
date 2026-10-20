@@ -40,6 +40,7 @@ function renderWith(aiAnalysisEnabled: boolean | undefined) {
       profile={{ aiAnalysisEnabled, hideSharedRouteEnds: false }}
       updateProfile={updateProfile}
       updateShareDefaults={vi.fn().mockResolvedValue({ ok: true })}
+      refreshProfile={vi.fn().mockResolvedValue(undefined)}
       privacyZones={[]}
       addZone={vi.fn().mockResolvedValue(undefined)}
       removeZone={vi.fn().mockResolvedValue(undefined)}

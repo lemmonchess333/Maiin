@@ -12,6 +12,7 @@ import { getBlockedUsers, unblockUser } from "@/lib/socialApi";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import AccordionSection from "@/components/AccordionSection";
 import ShareDefaultsRow from "@/components/settings/ShareDefaultsRow";
+import BoardSharingRow from "@/components/settings/BoardSharingRow";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { AI_SWITCH_DESCRIPTION } from "@/lib/aiConsent";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
@@ -29,6 +30,7 @@ interface PrivacySectionProps {
     | "approveFollowers"
     | "hideSharedRouteEnds"
     | "shareDefaults"
+    | "showWeekOnBoard"
   > | null;
   updateProfile: (
     data: Partial<UserProfile>,
@@ -36,6 +38,9 @@ interface PrivacySectionProps {
   ) => Promise<UpdateProfileResult>;
   /** Saves the Sharing row's answers on the account (AuthProvider). */
   updateShareDefaults: (answers: ShareDefaults) => Promise<UpdateProfileResult>;
+  /** Reads the profile again once the server has stored an answer only it
+   *  writes (the friends board's). */
+  refreshProfile: () => Promise<void>;
   privacyZones: PrivacyZone[];
   addZone: (zone: Omit<PrivacyZone, "id">) => Promise<void>;
   removeZone: (id: string) => Promise<void>;
@@ -51,6 +56,7 @@ export default function PrivacySection({
   profile,
   updateProfile,
   updateShareDefaults,
+  refreshProfile,
   privacyZones,
   addZone,
   removeZone,
@@ -117,6 +123,11 @@ export default function PrivacySection({
             }}
           />
         </div>
+
+        <BoardSharingRow
+          shared={profile?.showWeekOnBoard}
+          refreshProfile={refreshProfile}
+        />
 
         {/* AI food analysis — permission before food goes to Google (App
             Review 5.1.2(i); the rule is in src/lib/aiConsent.ts). On only

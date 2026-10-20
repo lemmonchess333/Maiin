@@ -51,6 +51,7 @@ function renderSignedIn() {
       profile={{ aiAnalysisEnabled: false, hideSharedRouteEnds: false }}
       updateProfile={vi.fn().mockResolvedValue({ ok: true })}
       updateShareDefaults={vi.fn().mockResolvedValue({ ok: true })}
+      refreshProfile={vi.fn().mockResolvedValue(undefined)}
       privacyZones={[]}
       addZone={vi.fn().mockResolvedValue(undefined)}
       removeZone={vi.fn().mockResolvedValue(undefined)}

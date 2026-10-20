@@ -346,17 +346,14 @@ export default function FeedView({
   );
   const peopleSlot = peopleRowActive ? Math.min(2, activeFeed.items.length) : 0;
 
-  /* The points card. With two or more follows it is the friends'
-     leaderboard; with one, your own week against last week, unless the
-     week has nothing in it yet (a card of zeros says nothing).
+  /* The week card. With two or more follows it is the friends' board
+     (this week's sessions); with one, your own week against last week,
+     unless the week has nothing in it yet (a card of zeros says nothing).
      `followingCount === null` is still loading: render nothing rather
      than the wrong card. */
   const pointsCard =
     followingCount === null ? null : followingCount >= 2 ? (
-      <LeaderboardCard
-        challenge="weekly_hybrid"
-        onViewFull={openFullLeaderboard}
-      />
+      <LeaderboardCard onViewFull={openFullLeaderboard} />
     ) : weekOpen ? null : (
       <TrajectoryCard data={trajectory} loading={trajectoryLoading} />
     );

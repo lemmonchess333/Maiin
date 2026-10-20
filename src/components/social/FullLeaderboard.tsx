@@ -1,107 +1,43 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ChevronLeft, Zap } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { useAuth } from "../../lib/auth";
-import { getDoc, doc } from "firebase/firestore";
-import { db } from "../../lib/firebase";
 import {
-  buildLeaderboard,
   CHALLENGE_LABELS,
   boardFigure,
-  type LeaderboardEntry,
   type ChallengeType,
 } from "../../lib/leaderboard";
+import { rankNamedBoard, useFriendsBoard } from "@/hooks/useFriendsBoard";
 import { Skeleton } from "../LoadingSkeleton";
 import LeaderboardRow from "./LeaderboardRow";
+import ShowMyWeekRow from "./ShowMyWeekRow";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import EmptyState from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
 import { SOCIAL_GATES, shouldShowLeaderboard } from "@/lib/socialGates";
 import { topPercent } from "@/features/challenges/useChallengePercentile";
 
-interface EnrichedEntry extends LeaderboardEntry {
-  photoURL?: string;
-}
-
-/* Tab ORDER is this surface's own (hybrid first, the one the card shows);
+/* Tab ORDER is this surface's own (sessions first, the one the card shows);
    the name and unit are not — they come from `CHALLENGE_LABELS` (the unit
    through `boardFigure`), which is the only copy. Two surfaces each carrying their own table is what let
    two of the four names drift apart unnoticed. */
 const TAB_ORDER: ChallengeType[] = [
-  "weekly_hybrid",
-  "weekly_volume",
+  "weekly_sessions",
   "weekly_distance",
-  "weekly_workouts",
+  "weekly_volume",
 ];
 const TABS = TAB_ORDER.map((key) => ({
   key,
   label: CHALLENGE_LABELS[key].title,
 }));
 
-/** One board's entries with activity this week, each named from the
- *  cross-user-readable `users/{uid}/public/profile` — pre-W1d this read
- *  `users/{uid}` (owner-only), which silently failed for everyone except
- *  the current user and left them all rendered as "Athlete". */
-async function loadEntries(
-  uid: string,
-  type: ChallengeType
-): Promise<EnrichedEntry[]> {
-  const raw = await buildLeaderboard(uid, type);
-  const enriched = await Promise.all(
-    raw.map(async (e) => {
-      try {
-        const snap = await getDoc(doc(db, "users", e.uid, "public", "profile"));
-        const data = snap.data() as
-          | { displayName?: string; photoURL?: string }
-          | undefined;
-        return {
-          ...e,
-          name: data?.displayName || (e.uid === uid ? "You" : "Athlete"),
-          photoURL: data?.photoURL,
-        } as EnrichedEntry;
-      } catch {
-        return {
-          ...e,
-          name: e.uid === uid ? "You" : "Athlete",
-        } as EnrichedEntry;
-      }
-    })
-  );
-  return enriched.filter((e) => e.value > 0);
-}
-
+/** The friends board in full (Polish2 call 5): one read of the week's
+ *  tallies, ranked per tab, so a tab switch reads nothing new. */
 export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
   const { user, profile } = useAuth();
-  const [activeTab, setActiveTab] = useState<ChallengeType>("weekly_hybrid");
-
-  /* The loaded board, stamped with the account and tab it was built for.
-     `loading` and `entries` are derived from it, so a tab switch reads as
-     loading from the new tab's first render, and a slower read for a tab
-     already left can't land under the one on screen. A failed read
-     settles as an empty board rather than keeping the previous tab's. */
-  const boardKey = user ? `${user.uid}:${activeTab}` : null;
-  const [board, setBoard] = useState<{
-    key: string;
-    entries: EnrichedEntry[];
-  } | null>(null);
-  const settledBoard = board !== null && board.key === boardKey ? board : null;
-  const loading = settledBoard === null;
-  const entries = settledBoard?.entries ?? [];
-
-  useEffect(() => {
-    if (!user || boardKey === null) return;
-    let cancelled = false;
-    loadEntries(user.uid, activeTab).then(
-      (loaded) => {
-        if (!cancelled) setBoard({ key: boardKey, entries: loaded });
-      },
-      () => {
-        if (!cancelled) setBoard({ key: boardKey, entries: [] });
-      }
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [user, activeTab, boardKey]);
+  const [activeTab, setActiveTab] = useState<ChallengeType>("weekly_sessions");
+  const { loading, failed, weeks, reload } = useFriendsBoard();
+  const entries = rankNamedBoard(weeks, activeTab);
 
   const liftUnit = useLiftUnit();
   const figure = (value: number) => boardFigure(activeTab, value, liftUnit);
@@ -173,11 +109,22 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
             W7 — these were the folder's only raw rgba(123,114,233,0.12)
             tiles, and its sibling card tinted the SAME tile a different
             purple). One primitive, one accent. */}
-        {!loading && cohortSize === 0 && (
+        {!loading && failed && (
+          <div className="flex flex-wrap items-center justify-between gap-3 py-1">
+            <p className="text-sm text-muted-foreground">
+              Couldn&rsquo;t load the board.
+            </p>
+            <Button variant="secondary" onClick={reload}>
+              Try again
+            </Button>
+          </div>
+        )}
+
+        {!loading && !failed && cohortSize === 0 && (
           <EmptyState
             icon={Zap}
             headline="No activity this week"
-            sub="Follow athletes and start training to see rankings."
+            sub="People you follow show here once they share their week."
             accent={THEME.brand}
           />
         )}
@@ -223,6 +170,8 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
               }
             />
           ))}
+
+        {!loading && !failed && <ShowMyWeekRow onShared={reload} />}
       </div>
     </div>
   );

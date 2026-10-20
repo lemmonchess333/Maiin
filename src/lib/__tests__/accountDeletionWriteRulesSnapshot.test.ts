@@ -180,6 +180,10 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   "match /users/{uid}/performance/{doc}",
   "match /{path=**}/public/{doc}",
   "match /scanUsage/{uid}",
+  // Polish2: the week on followers' boards. Read-only for clients; the
+  // setBoardSharing callable (actor-locked) and the session triggers
+  // (system-writer guard) write it, and the executor deletes it.
+  "match /friendsBoard/{uid}",
   // S4e (PR #722) — restricted-user marker. Admin SDK writes only
   // (Cloud Function resolveReport sets the doc); clients can read
   // their own doc but cannot write. R1A cleanup is wired via the
