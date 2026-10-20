@@ -1750,19 +1750,27 @@ export const RELEASED_FORM_PLACARDS = {
   "lu-raise": placard(
     "lu-raise",
     ["Deltoids"],
-    ["Front delts", "Side delts"],
+    ["Traps"],
     [
       [0, "Start", "Stand tall, weights at your sides."],
-      [0.25, "Raise laterally", "Raise both arms out to the sides."],
-      [0.5, "Shoulder height", "Reach shoulder height with soft elbows."],
-      [
-        1,
-        "Sweep forward",
-        "Sweep forward, bringing the weights close together.",
-      ],
-      [0.5, "Open laterally", "Open back out at shoulder height."],
+      [0.25, "Raise laterally", "Raise outward; keep elbows softly fixed."],
+      [0.5, "Shoulder height", "Pass shoulder height with thumbs up."],
+      [1, "Reach overhead", "Reach overhead without leaning back."],
+      [0.5, "Lower laterally", "Lower out to shoulder height under control."],
       [0.25, "Lower", "Lower steadily; continue to your sides."],
-    ]
+    ],
+    [
+      "Stand tall with light dumbbells at your sides and palms facing in.",
+      "Keep a slight elbow bend and raise outward in a comfortable plane just in front of your shoulders.",
+      "Allow natural arm and shoulder-blade rotation as you continue overhead; lower along the same arc.",
+    ],
+    {
+      tip: "Use light weights, stay tall and control the full outward arc.",
+      commonMistakes: [
+        "Bending the elbows to press the weights overhead.",
+        "Leaning backward or swinging the hips to lift.",
+      ],
+    }
   ),
   "arnold-press": placard(
     "arnold-press",
@@ -2275,23 +2283,26 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Reset", "Return low while maintaining both hand supports."],
     ]
   ),
-  "turkish-get-up": placard(
-    "turkish-get-up",
-    ["Shoulders", "Core"],
-    ["Triceps", "Upper Back", "Glutes", "Quads"],
-    [
-      [0, "Press", "Press the bell up; eyes on it."],
-      [0.2, "Elbow", "Roll onto your free elbow, arm locked."],
-      [0.4, "Hand", "Push up onto your free hand."],
-      [0.6, "Bridge", "Lift your hips high off the floor."],
-      [0.8, "Kneel", "Sweep your leg back into a half-kneel."],
-      [1, "Stand", "Stand tall, then reverse each step down."],
-    ],
-    [
-      "Lie on your back with the bell beside your shoulder.",
-      "Press it up with both hands to a locked arm, then free one hand.",
-    ]
-  ),
+  "turkish-get-up": {
+    ...placard(
+      "turkish-get-up",
+      ["Shoulders", "Core"],
+      ["Triceps", "Upper Back", "Glutes", "Quads"],
+      [
+        [0, "Press", "Press the bell up; eyes on it."],
+        [0.2, "Elbow", "Roll onto your free elbow, arm locked."],
+        [0.4, "Hand", "Push up onto your free hand."],
+        [0.6, "Bridge", "Lift your hips high off the floor."],
+        [0.8, "Kneel", "Sweep your leg back into a half-kneel."],
+        [1, "Stand", "Stand tall, then reverse each step down."],
+      ],
+      [
+        "Lie on your back with the bell beside your shoulder.",
+        "Press it up with both hands to a locked arm, then free one hand.",
+      ]
+    ),
+    playback: "sequence" as const,
+  },
   "assault-bike": placard(
     "assault-bike",
     ["Quads", "Glutes"],
@@ -2328,14 +2339,14 @@ export const RELEASED_FORM_PLACARDS = {
   ),
   stairmaster: placard(
     "stairmaster",
-    ["Quads", "Glutes", "Calves"],
-    ["Hamstrings", "Core"],
+    ["Glutes"],
+    ["Hamstrings", "Calves"],
     [
       [0, "Step", "Stand tall; shoulders stacked over hips."],
       [0, "Drive", "Drive the whole foot down each step."],
-      [1, "Knee up", "Bring the other knee through to climb."],
+      [0.7, "Knee up", "Bring the other knee through to climb."],
       [1, "Grip", "Keep a light grip on the rails."],
-      [0, "Land", "Land the whole foot on the step."],
+      [1, "Land", "Land the whole foot on the step."],
       [0, "Steady", "Hold a pace you can sustain."],
     ],
     [

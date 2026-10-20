@@ -44,18 +44,18 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/assault-bike/1.webp",
     sourceSha256:
-      "9ff463d8f00fb6621b87eb272c183ab7477442e75377b04635da94c4a75cc675",
-    sha256: "bad9cb198c02eaf20e7ff7b6b633bdb3e892faf11f6599ce5e54136d507ffe88",
+      "2914452590cf2d834ea0c4c8dc25e0cbce5680b8eebf97acd47dcca4a9383a7e",
+    sha256: "9b0d9f0778801167407b29e2ac46496212f3a564be1a5c85c4d0213eafc2b321",
   },
   "barbell-curl": {
     src: "form-art/barbell-curl.webp",
-    width: 275,
+    width: 278,
     height: 480,
     keyed: true,
     source: "form-frames/barbell-curl/4.webp",
     sourceSha256:
-      "929b4b2c9b1ab9f3a47ed097ed5731f20468c46096bcd98e8bf7e6842d9a1e63",
-    sha256: "5a3861358414681bf382850f5cc91a3048354a3ae368f61f575746e61853e19d",
+      "4da03f12f518a7961d6ce0a903431ef6647444455795d4da920b476447c1f014",
+    sha256: "501b25222afda50114df4f94636b287a7d0836f7fb07ba37eb9de248100f7ea8",
   },
   "barbell-floor-press": {
     src: "form-art/barbell-floor-press.webp",
@@ -70,12 +70,12 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   "barbell-row": {
     src: "form-art/barbell-row.webp",
     width: 480,
-    height: 438,
+    height: 439,
     keyed: true,
     source: "form-frames/barbell-row/4.webp",
     sourceSha256:
-      "89d5812fc5e0168144ae8a5148c99e10a4eeb7579fdbe2cf9d36172f9a3fbb81",
-    sha256: "1ae58ed1e517ef175aab3fcd82ec1c9cce452e228d5408e972e88c12b0c1682b",
+      "9ed1076fc250c1e12778cf7438d8b402cd16f0501be5ce0a2e5a5fc15aea7730",
+    sha256: "1032da23d31653846d76ce337cf5ef45346c49990ed3ea8e7af44aaf655cb126",
   },
   "barbell-shrug": {
     src: "form-art/barbell-shrug.webp",
@@ -509,13 +509,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   dips: {
     src: "form-art/dips.webp",
-    width: 422,
+    width: 421,
     height: 480,
     keyed: true,
     source: "form-frames/dips/4.webp",
     sourceSha256:
-      "75a13530bf854620789b4dc106f20a12fe3576a5419fda3fa537d40976a44f08",
-    sha256: "584c5345336e4cce881e0d0e962db0d41422f263043eb4fb6cdb09acd9ba455f",
+      "aec984bed1f2db0aa37c8db9fd5fb3783486b4053d9be89db1f130d234f61feb",
+    sha256: "8f3a1a812502ec91eb80c18bbf4ffb5f3964c5581364b38e054553ed380273bd",
   },
   "donkey-calf-raise": {
     src: "form-art/donkey-calf-raise.webp",
@@ -624,8 +624,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/goblet-squat/4.webp",
     sourceSha256:
-      "7edf39e04009a0a708ead73f76be1b25160a4927afdb4eb473c1eb630051d688",
-    sha256: "d93fa59a30dcd6dc83c0d2ad7c83959c831480b7accf2b1c23384dc48e90f7b2",
+      "094f6fe821f13d15244cfb025850b9ef19e38adef361023d8f18d4a86deb9335",
+    sha256: "4d10f10eb1de34a0d14a0fae50269cc174636b5d0d4e77bb924c410c2aaaa32b",
   },
   "hack-squat": {
     src: "form-art/hack-squat.webp",
@@ -834,8 +834,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/leg-press/1.webp",
     sourceSha256:
-      "6b62168b71386ac22edf1e64c9871b2cd45b5047379ed1cf1d6c58ecef931d77",
-    sha256: "5b022378837920ecbbfecffc3c2eac7366a59db9e11275e134dfe7e1117b4272",
+      "914544786909e8c84e7c6d9d1029ec9aeb565f88f8b16824b353eacc864fb863",
+    sha256: "09fad9f3a85d5e96d055742f044ecdb9b65ac4ea0c0bb050412cd8448a359823",
   },
   "leg-raise": {
     src: "form-art/leg-raise.webp",
@@ -849,13 +849,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   "lu-raise": {
     src: "form-art/lu-raise.webp",
-    width: 410,
+    width: 180,
     height: 480,
     keyed: true,
-    source: "form-frames/lu-raise/3.webp",
+    source: "form-frames/lu-raise/4.webp",
     sourceSha256:
-      "68a393cd64a3fcf84860740f8edb41218477a5f49497df1da9ee5f8a3757a9fe",
-    sha256: "97fc608629777f788b9188a913471305723b9497b0be96472aa1f08e74661e8d",
+      "791f568184a3fbfa56b9e18e5e398bec9599b80a0abf527d48b6050674744ec2",
+    sha256: "457e786f1a188cac656eff02b230f4048832e4b638840fa3db047e69e270182a",
   },
   lunges: {
     src: "form-art/lunges.webp",
@@ -939,13 +939,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   "overhead-extension": {
     src: "form-art/overhead-extension.webp",
-    width: 163,
+    width: 159,
     height: 480,
     keyed: true,
     source: "form-frames/overhead-extension/3.webp",
     sourceSha256:
-      "a116abf8ca0115651e2f3e4a3cfb1ac600e0848ef5b7e1f39201f8ca2c3a1ce7",
-    sha256: "c3453eee07f245f0f4aa117e69364f570b91cb67ff375a6aa13c9b61ccd76e7d",
+      "04aaf33df96a6fd4cfd9e7130d615e639c47f528322ae290f302f52944465428",
+    sha256: "17f7c4572f69d3d8ed4fc7edd935093d3a131c558e62875d7cdf918e0f2231d3",
   },
   "overhead-press": {
     src: "form-art/overhead-press.webp",
@@ -1134,8 +1134,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/rowing-machine/3.webp",
     sourceSha256:
-      "8c7385705a8396f4068e2ffbf6571509e6764a61efa91a30373d64578cce2aae",
-    sha256: "06c0b4a713879eff74fcc5b6f5a9ee8fbfd0047c3a3782dbe4c6fd9ba7019fe5",
+      "da6997e4fc48e388991798cb2b7691c32e5a34796d04b00fa059f9f096470d01",
+    sha256: "c473e15283d009fff85c569abd26b2d4319327405d0b88de2ddabcfc80cf60a5",
   },
   "russian-twist": {
     src: "form-art/russian-twist.webp",
@@ -1201,11 +1201,11 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     src: "form-art/side-plank.webp",
     width: 480,
     height: 226,
-    keyed: true,
+    keyed: false,
     source: "form-frames/side-plank/3.webp",
     sourceSha256:
       "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
-    sha256: "fafcaa0f236b7309ccd75c57370493e8192e2b786fa9821f37dfee847bcb3c1a",
+    sha256: "bdd17f243ecb7b77362a2abcad11089b508243c7880f7e88340822db5091aedd",
   },
   "single-arm-cable-pushdown": {
     src: "form-art/single-arm-cable-pushdown.webp",
@@ -1234,8 +1234,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/single-leg-calf-raise/3.webp",
     sourceSha256:
-      "1d9a123655b12cd30e9dd25fc102acbe8c3a0b6519489da14339114d61b57fa3",
-    sha256: "bf19def08b9fcbcd4e97243c22fb8fbc2c7d4ac7b98d25c2fb86bd17dfab1298",
+      "b685d64b0d358b65c0bc7e78b48077430c94ca96153b53f08c57531ce7f1b7f1",
+    sha256: "d0d4c73e0c51acb2c37bd5eaa6fbe3eb57fd00918a539811e833ed06c6f43e06",
   },
   "sissy-squat": {
     src: "form-art/sissy-squat.webp",
@@ -1334,18 +1334,18 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/squat/4.webp",
     sourceSha256:
-      "ff8c9e3966701e83295ac40acb5e4c976d466bb5c2007e062278cda22ecfb407",
-    sha256: "94c2a54fe5e3f7ed7d85e2d6aa8a59d81f51661a2fe3a06ecb1ea780b31958ab",
+      "506e5698c794f6afce17c31f2dc74866a27eee404d130d14d47ea4258c85ca23",
+    sha256: "c5747d104bdb280a7f4c6d6776cbbe93f754c08991c0330a6ee72d6572ad6c4f",
   },
   stairmaster: {
     src: "form-art/stairmaster.webp",
-    width: 388,
+    width: 240,
     height: 480,
     keyed: true,
     source: "form-frames/stairmaster/1.webp",
     sourceSha256:
-      "62a945275bd8c65c36992878dbc6bf6e24128760a2d6e25e50a345970c074e67",
-    sha256: "17efad8187b9d08f4085691372ce16bbce5dc9816d6cb489e21aca2fdcca9952",
+      "32277420a65c9ac788afe3e9de9741fe25b3fbc4f088ee57caa2d9d6abd14658",
+    sha256: "be4cb180a29b34380e08988a461cde800eb6a3e32d8ad4e0218c731e5fae0be1",
   },
   "standing-calf-raise": {
     src: "form-art/standing-calf-raise.webp",
@@ -1394,18 +1394,18 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: false,
     source: "form-frames/swimming/2.webp",
     sourceSha256:
-      "f63e3fd3e9882676ab137d67d88f77ce2b94a212743b9e094138826dc6162bc0",
-    sha256: "648d24c1eefe43fe1d0e7ecd739aebe178fd21e98787521028e239d900d3feea",
+      "915b47aa2432fc7b9334c5d981c1931e4c24804ab3ac8e9ca9147747c4fda7ca",
+    sha256: "ee5b0a2d710c6f8678525aa194bb0f716bf9a345a72237cf450084c132fb7d01",
   },
   "t-bar-row": {
     src: "form-art/t-bar-row.webp",
-    width: 424,
+    width: 425,
     height: 480,
     keyed: true,
     source: "form-frames/t-bar-row/3.webp",
     sourceSha256:
-      "04776e18e6ea03f6772056901fd78840a801572ff940cc74c53eaf59628966e4",
-    sha256: "cbea2d8c8b5b2d1937f51abad848b59a5f459d1a9dc81351c955115c1b6d794d",
+      "bb76be9f97caee89138d583af15e4540b8986c02b0b138f54b20d41754bf7145",
+    sha256: "109c20d140bcb0899927b67451daa42e0fa109a201f836877ec68fed5732fd98",
   },
   thrusters: {
     src: "form-art/thrusters.webp",
@@ -1469,13 +1469,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   "turkish-get-up": {
     src: "form-art/turkish-get-up.webp",
-    width: 412,
+    width: 321,
     height: 480,
     keyed: true,
     source: "form-frames/turkish-get-up/5.webp",
     sourceSha256:
-      "43a541aaca73fff5c113e8a29723de6709035a8b633954a713117414e39ba2c1",
-    sha256: "9ced9e7def43f9f08f40b42a1f638fd410181b57511bd9d36682cba828d0ee8f",
+      "7e705ce5a72feefb363062c7517a692f495fc14e05129d06603e23fa071f4971",
+    sha256: "d63b993dcc6d66b8c7ec5c7c9844100421dd7c8dbf7209825252c2d87bf74174",
   },
   "walking-dumbbell-lunges": {
     src: "form-art/walking-dumbbell-lunges.webp",

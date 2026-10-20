@@ -1,0 +1,86 @@
+[
+  {
+    "frame": 1,
+    "scope": "Read-only neutral-dark connected-component candidates inside the held weight ROI; root distinguishes actual equipment from outlines.",
+    "candidates": [
+      {
+        "pixels": 6041,
+        "bbox": [375, 397, 486, 458],
+        "extent": [111, 61]
+      },
+      {
+        "pixels": 4848,
+        "bbox": [373, 246, 463, 315],
+        "extent": [90, 69]
+      },
+      {
+        "pixels": 2110,
+        "bbox": [417, 307, 443, 393],
+        "extent": [26, 86]
+      }
+    ]
+  },
+  {
+    "frame": 2,
+    "scope": "Read-only neutral-dark connected-component candidates inside the held weight ROI; root distinguishes actual equipment from outlines.",
+    "candidates": [
+      {
+        "pixels": 5907,
+        "bbox": [374, 562, 486, 621],
+        "extent": [112, 59]
+      },
+      {
+        "pixels": 4648,
+        "bbox": [371, 412, 462, 479],
+        "extent": [91, 67]
+      },
+      {
+        "pixels": 2008,
+        "bbox": [419, 472, 443, 557],
+        "extent": [24, 85]
+      }
+    ]
+  },
+  {
+    "frame": 3,
+    "scope": "Read-only neutral-dark connected-component candidates inside the held weight ROI; root distinguishes actual equipment from outlines.",
+    "candidates": [
+      {
+        "pixels": 5607,
+        "bbox": [377, 711, 486, 771],
+        "extent": [109, 60]
+      },
+      {
+        "pixels": 4437,
+        "bbox": [377, 563, 463, 631],
+        "extent": [86, 68]
+      },
+      {
+        "pixels": 1979,
+        "bbox": [420, 622, 444, 706],
+        "extent": [24, 84]
+      }
+    ]
+  },
+  {
+    "frame": 4,
+    "scope": "Read-only neutral-dark connected-component candidates inside the held weight ROI; root distinguishes actual equipment from outlines.",
+    "candidates": [
+      {
+        "pixels": 5380,
+        "bbox": [377, 798, 486, 856],
+        "extent": [109, 58]
+      },
+      {
+        "pixels": 4246,
+        "bbox": [377, 651, 463, 716],
+        "extent": [86, 65]
+      },
+      {
+        "pixels": 1945,
+        "bbox": [420, 710, 444, 793],
+        "extent": [24, 83]
+      }
+    ]
+  }
+]

@@ -1,0 +1,2487 @@
+{
+  "duration": 9000,
+  "samples": [
+    {
+      "elapsed": 0,
+      "active": "1Stay seated; pedal with controlled resistance.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Seated drive",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/1.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/2.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 266,
+      "active": "1Stay seated; pedal with controlled resistance.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Seated drive",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/1.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/2.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 527,
+      "active": "1Stay seated; pedal with controlled resistance.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Seated drive",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/1.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/2.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 787,
+      "active": "1Stay seated; pedal with controlled resistance.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Seated drive",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/1.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/2.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 1054,
+      "active": "1Stay seated; pedal with controlled resistance.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Seated drive",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/1.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/2.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 1327,
+      "active": "2Keep your knees tracking over your feet.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Seated recovery",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/2.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/3.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 1593,
+      "active": "2Keep your knees tracking over your feet.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Seated recovery",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/2.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/3.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 1860,
+      "active": "2Keep your knees tracking over your feet.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Seated recovery",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/2.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/3.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 2120,
+      "active": "2Keep your knees tracking over your feet.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Seated recovery",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/2.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/3.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 2381,
+      "active": "3Keep a relaxed hold on the bars.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Hold seated",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/3.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/4.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 2647,
+      "active": "3Keep a relaxed hold on the bars.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Hold seated",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/3.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/4.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 2914,
+      "active": "3Keep a relaxed hold on the bars.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Hold seated",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/3.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/4.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 3181,
+      "active": "3Keep a relaxed hold on the bars.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Hold seated",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/3.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/4.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 3455,
+      "active": "3Keep a relaxed hold on the bars.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Hold seated",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/3.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/4.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 3720,
+      "active": "4Rise from the saddle; keep pedalling controlled.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Standing drive",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/4.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/5.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 3981,
+      "active": "4Rise from the saddle; keep pedalling controlled.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Standing drive",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/4.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/5.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 4248,
+      "active": "4Rise from the saddle; keep pedalling controlled.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Standing drive",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/4.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/5.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 4517,
+      "active": "4Rise from the saddle; keep pedalling controlled.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Standing drive",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/4.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/5.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 4778,
+      "active": "4Rise from the saddle; keep pedalling controlled.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Standing drive",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/4.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/5.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 5041,
+      "active": "5Support yourself through the pedals and bars.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Hold standing",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/5.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/6.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 5308,
+      "active": "5Support yourself through the pedals and bars.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Hold standing",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/5.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/6.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 5569,
+      "active": "5Support yourself through the pedals and bars.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Hold standing",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/5.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/6.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 5830,
+      "active": "5Support yourself through the pedals and bars.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Hold standing",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/5.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/6.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 6096,
+      "active": "6Sit back onto the saddle smoothly.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Return seated",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/6.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/1.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 6362,
+      "active": "6Sit back onto the saddle smoothly.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Return seated",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/6.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/1.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 6629,
+      "active": "6Sit back onto the saddle smoothly.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Return seated",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/6.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/1.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 6890,
+      "active": "6Sit back onto the saddle smoothly.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Return seated",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/6.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/1.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 7157,
+      "active": "6Sit back onto the saddle smoothly.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Return seated",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/6.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/1.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 7417,
+      "active": "1Stay seated; pedal with controlled resistance.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Seated drive",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/1.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/2.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 7678,
+      "active": "1Stay seated; pedal with controlled resistance.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Seated drive",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/1.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/2.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 7945,
+      "active": "1Stay seated; pedal with controlled resistance.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Seated drive",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/1.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/2.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 8217,
+      "active": "1Stay seated; pedal with controlled resistance.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Seated drive",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/1.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/2.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 8483,
+      "active": "2Keep your knees tracking over your feet.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Seated recovery",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/2.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/3.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    },
+    {
+      "elapsed": 8750,
+      "active": "2Keep your knees tracking over your feet.",
+      "cards": [
+        {
+          "box": {
+            "height": 112,
+            "width": 324
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 40,
+            "width": 40
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 48,
+            "width": 48
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        },
+        {
+          "box": {
+            "height": 64,
+            "width": 64
+          },
+          "complete": true,
+          "filter": "drop-shadow(rgba(9, 9, 11, 0.5) 0px 0px 0.65px)",
+          "height": 480,
+          "src": "/Maiin/form-art/spin-bike.webp",
+          "width": 304
+        }
+      ],
+      "dark": false,
+      "id": "spin-bike",
+      "images": [
+        {
+          "alt": "spin-bike, Seated recovery",
+          "complete": true,
+          "height": 707,
+          "hidden": "false",
+          "src": "/Maiin/form-frames/spin-bike/2.webp",
+          "width": 432
+        },
+        {
+          "alt": "",
+          "complete": true,
+          "height": 707,
+          "hidden": "true",
+          "src": "/Maiin/form-frames/spin-bike/3.webp",
+          "width": 432
+        }
+      ],
+      "innerWidth": 390,
+      "scrollWidth": 380,
+      "width": 380
+    }
+  ]
+}

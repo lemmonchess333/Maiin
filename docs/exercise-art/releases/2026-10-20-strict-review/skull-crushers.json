@@ -1,0 +1,163 @@
+{
+  "exerciseId": "skull-crushers",
+  "version": "anatomy-v3-2026-10-18-equipment-correction-v1",
+  "width": 870,
+  "height": 1072,
+  "reference": {
+    "path": "form-frames/skull-crushers/3.webp",
+    "sha256": "606a2b6ca2a5b1643568826cd815770237bcc2fa8640bf73e99261f8a995f0fc"
+  },
+  "cueSha256": "097c3bfef70fc221a6e41855c4da9ff39b8daf6f2b548cc18283ed65fec36e4f",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:54.185900+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Supported bench posture and both closed grips remain intact; forearms fold behind the head and extend while upper arms stay raised. The bar stays clear of the face/head. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Compact native cast-disc plates, compact collars/sleeves and continuous shaft; earlier detached plate remnant is absent. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Supported bench posture and both closed grips remain intact; forearms fold behind the head and extend while upper arms stay raised. The bar stays clear of the face/head. Actual named native supports are measured in all six frames: leftImageSupportLowestContourMidpoint, rightImageSupportLowestContourMidpoint. Maximum axis drift 0px. Dimensions: leftImageSupportProjectedHorizontalSpan, rightImageSupportProjectedHorizontalSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Supported bench posture and both closed grips remain intact; forearms fold behind the head and extend while upper arms stay raised. The bar stays clear of the face/head. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Triceps #7B72E9; secondary Chest, Front deltoids #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Start: Hold bar high; upper arms angled back. / Initiate lower: Unlock elbows slowly; keep upper arms raised. / Mid lower: Fold forearms back; keep elbows raised. / Bottom: Keep the bar clear of your head. / Extend: Extend elbows; keep upper arms steady. / Return to lockout: Finish with straight elbows and controlled load.. Preparation remains [\"Lie supported on a flat bench with both feet planted.\", \"Use a narrow overhand grip and angle your upper arms slightly toward your head.\", \"Bend your elbows to lower the bar past your forehead toward the top of your skull; extend to return.\"]. Supported bench posture and both closed grips remain intact; forearms fold behind the head and extend while upper arms stay raised. The bar stays clear of the face/head."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Earlier actual registered all-six normal/slower loop and manual-wrap observations retained for this unchanged motion; no fresh complete mobile run is invented. Supported bench posture and both closed grips remain intact; forearms fold behind the head and extend while upper arms stay raised. The bar stays clear of the face/head. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Exact unchanged art retains the earlier registered all-six light/dark visual evidence; current capture artefacts are explicitly excluded. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-18/skull-crushers.json (sha256 e6c50a4313ae3d3ddb740e9a773cbb87d42ad12f604bcff9a2e651128bc86425). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Exact unchanged art retains the earlier registered all-six light/dark visual evidence; current capture artefacts are explicitly excluded. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-18/skull-crushers.json (sha256 e6c50a4313ae3d3ddb740e9a773cbb87d42ad12f604bcff9a2e651128bc86425). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/skull-crushers/1.webp",
+      "sha256": "ccfccc28762088232fceca143df55b9c02b0e54813ece16df9cb7a562bd1e093",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 506, "y": 991 },
+        "rightImageSupportLowestContourMidpoint": { "x": 787, "y": 893 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 78,
+        "rightImageSupportProjectedHorizontalSpan": 127
+      }
+    },
+    {
+      "path": "form-frames/skull-crushers/2.webp",
+      "sha256": "02c6af1f80944dd6ba1aef18b4a62b65b94fba83831c221d5543718366b87323",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 506, "y": 991 },
+        "rightImageSupportLowestContourMidpoint": { "x": 787, "y": 893 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 78,
+        "rightImageSupportProjectedHorizontalSpan": 127
+      }
+    },
+    {
+      "path": "form-frames/skull-crushers/3.webp",
+      "sha256": "606a2b6ca2a5b1643568826cd815770237bcc2fa8640bf73e99261f8a995f0fc",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 506, "y": 991 },
+        "rightImageSupportLowestContourMidpoint": { "x": 787, "y": 893 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 78,
+        "rightImageSupportProjectedHorizontalSpan": 127
+      }
+    },
+    {
+      "path": "form-frames/skull-crushers/4.webp",
+      "sha256": "50833f00e3cddb12597589b010ce83ac0f11e114727d78abf3ec8091280cc739",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 506, "y": 991 },
+        "rightImageSupportLowestContourMidpoint": { "x": 787, "y": 893 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 78,
+        "rightImageSupportProjectedHorizontalSpan": 127
+      }
+    },
+    {
+      "path": "form-frames/skull-crushers/5.webp",
+      "sha256": "606a2b6ca2a5b1643568826cd815770237bcc2fa8640bf73e99261f8a995f0fc",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 506, "y": 991 },
+        "rightImageSupportLowestContourMidpoint": { "x": 787, "y": 893 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 78,
+        "rightImageSupportProjectedHorizontalSpan": 127
+      }
+    },
+    {
+      "path": "form-frames/skull-crushers/6.webp",
+      "sha256": "ccfccc28762088232fceca143df55b9c02b0e54813ece16df9cb7a562bd1e093",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 506, "y": 991 },
+        "rightImageSupportLowestContourMidpoint": { "x": 787, "y": 893 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 78,
+        "rightImageSupportProjectedHorizontalSpan": 127
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-18/skull-crushers.json",
+    "sha256": "e6c50a4313ae3d3ddb740e9a773cbb87d42ad12f604bcff9a2e651128bc86425"
+  },
+  "historicalFindings": [
+    "Equipment-only correction: compact grey cast-disc plates, compact collars and sleeves replace the previous oversized flat plates and long sleeves. Constant490px shaft length and390px plate spacing, with110/104px projected plate heights, retain one coherent camera depth and the unchanged grip line.",
+    "All original non-equipment OpenRaster layers and all final native hand/arm, muscle-palette and visible neutral-athlete foreground pixels remain byte-exact. Native proof binds every changed pixel to the equipment replacement plus one isolated old-equipment remnant cleanup.",
+    "PoseB's detached old plate remnant is removed only within native rectangle[330,105,405,127]. No anatomical generation, fitting, warping, resampling or head/shoe grafts.",
+    "The existing four physical poses and A/B/C/D/C/A order, qualitative0/.3/.8/1/.8/0 coordinates, cues, setup,870x1072 delivered crop, triceps primary and chest/front-deltoid secondary remain unchanged.",
+    "Original supported-scene head/arm occlusion and minor projected upper-scene variation remain; the lower scene, planted white trainers and fixed bench are retained. This is an illustrative2D load, not calibrated factory or anatomical geometry.",
+    "Strict certification is not claimed. Scoped native source, actual registered390x844 light/dark normal/slower playback, manual wrap and normal-card reviews passed. Small48px light cards retain faint white athlete contours; equipment silhouettes remain identifiable. Original source/anatomical findings remain."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": null,
+  "mobileEvidenceReusedForUnchangedArt": true
+}

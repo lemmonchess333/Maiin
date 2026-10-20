@@ -1,0 +1,230 @@
+{
+  "id": "turkish-get-up",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Turkish Get-Up, Press",
+              "decoded": true,
+              "height": 1152,
+              "src": "/Maiin/.strict33.local/candidate/turkish-get-up/1.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Press 1/6",
+          "id": "turkish-get-up",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Turkish Get-Up, Elbow",
+              "decoded": true,
+              "height": 1152,
+              "src": "/Maiin/.strict33.local/candidate/turkish-get-up/2.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Elbow 2/6",
+          "id": "turkish-get-up",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Turkish Get-Up, Hand",
+              "decoded": true,
+              "height": 1152,
+              "src": "/Maiin/.strict33.local/candidate/turkish-get-up/3.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Hand 3/6",
+          "id": "turkish-get-up",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Turkish Get-Up, Bridge",
+              "decoded": true,
+              "height": 1152,
+              "src": "/Maiin/.strict33.local/candidate/turkish-get-up/4.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Bridge 4/6",
+          "id": "turkish-get-up",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Turkish Get-Up, Kneel",
+              "decoded": true,
+              "height": 1152,
+              "src": "/Maiin/.strict33.local/candidate/turkish-get-up/5.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Kneel 5/6",
+          "id": "turkish-get-up",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Turkish Get-Up, Stand",
+              "decoded": true,
+              "height": 1152,
+              "src": "/Maiin/.strict33.local/candidate/turkish-get-up/6.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Stand 6/6",
+          "id": "turkish-get-up",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 88,\n    \"alt\": \"Turkish Get-Up, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1204,\n    \"alt\": \"Turkish Get-Up, Elbow\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1762,\n    \"alt\": \"Turkish Get-Up, Hand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2325,\n    \"alt\": \"Turkish Get-Up, Bridge\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2883,\n    \"alt\": \"Turkish Get-Up, Kneel\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3441,\n    \"alt\": \"Turkish Get-Up, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5121,\n    \"alt\": \"Turkish Get-Up, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Turkish Get-Up, Stand",
+            "decoded": true,
+            "height": 1152,
+            "src": "/Maiin/.strict33.local/candidate/turkish-get-up/6.webp",
+            "width": 1024
+          }
+        ],
+        "caption": "Stand 6/6",
+        "id": "turkish-get-up",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / turkish-get-up\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nTurkish Get-Up\nFull Body\nKettlebell\n\nSTAND 6/6\n\nReplay\nNormal\nPRIMARY\nShoulders, Core\nSECONDARY\nTriceps, Upper Back, Glutes, Quads\n\nInstructions\n\nPreparation: Lie on your back with the bell beside your shoulder. Press it up with both hands to a locked arm, then free one hand.\n\n1\n\nPress the bell up; eyes on it.\n\n2\n\nRoll onto your free elbow, arm locked.\n\n3\n\nPush up onto your free hand.\n\n4\n\nLift your hips high off the floor.\n\n5\n\nSweep your leg back into a half-kneel.\n\n6\n\nStand tall, then reverse each step down.\n\nWatch out\n\nEyes lock on the bell from start to finish. If you lose sight of it or the arm bends, stop the set — a falling bell on a shoulder ends seasons.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 88,\n    \"alt\": \"Turkish Get-Up, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1204,\n    \"alt\": \"Turkish Get-Up, Elbow\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1762,\n    \"alt\": \"Turkish Get-Up, Hand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2325,\n    \"alt\": \"Turkish Get-Up, Bridge\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2883,\n    \"alt\": \"Turkish Get-Up, Kneel\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3441,\n    \"alt\": \"Turkish Get-Up, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5121,\n    \"alt\": \"Turkish Get-Up, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6564,\n    \"alt\": \"Turkish Get-Up, Elbow\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7840,\n    \"alt\": \"Turkish Get-Up, Hand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9041,\n    \"alt\": \"Turkish Get-Up, Bridge\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10242,\n    \"alt\": \"Turkish Get-Up, Kneel\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11605,\n    \"alt\": \"Turkish Get-Up, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/6.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Turkish Get-Up, Press",
+              "decoded": true,
+              "height": 1152,
+              "src": "/Maiin/.strict33.local/candidate/turkish-get-up/1.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Press 1/6",
+          "id": "turkish-get-up",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Turkish Get-Up, Elbow",
+              "decoded": true,
+              "height": 1152,
+              "src": "/Maiin/.strict33.local/candidate/turkish-get-up/2.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Elbow 2/6",
+          "id": "turkish-get-up",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Turkish Get-Up, Hand",
+              "decoded": true,
+              "height": 1152,
+              "src": "/Maiin/.strict33.local/candidate/turkish-get-up/3.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Hand 3/6",
+          "id": "turkish-get-up",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Turkish Get-Up, Bridge",
+              "decoded": true,
+              "height": 1152,
+              "src": "/Maiin/.strict33.local/candidate/turkish-get-up/4.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Bridge 4/6",
+          "id": "turkish-get-up",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Turkish Get-Up, Kneel",
+              "decoded": true,
+              "height": 1152,
+              "src": "/Maiin/.strict33.local/candidate/turkish-get-up/5.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Kneel 5/6",
+          "id": "turkish-get-up",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Turkish Get-Up, Stand",
+              "decoded": true,
+              "height": 1152,
+              "src": "/Maiin/.strict33.local/candidate/turkish-get-up/6.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Stand 6/6",
+          "id": "turkish-get-up",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 88,\n    \"alt\": \"Turkish Get-Up, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1204,\n    \"alt\": \"Turkish Get-Up, Elbow\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1762,\n    \"alt\": \"Turkish Get-Up, Hand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2325,\n    \"alt\": \"Turkish Get-Up, Bridge\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2883,\n    \"alt\": \"Turkish Get-Up, Kneel\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3441,\n    \"alt\": \"Turkish Get-Up, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5121,\n    \"alt\": \"Turkish Get-Up, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6564,\n    \"alt\": \"Turkish Get-Up, Elbow\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7840,\n    \"alt\": \"Turkish Get-Up, Hand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9041,\n    \"alt\": \"Turkish Get-Up, Bridge\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10242,\n    \"alt\": \"Turkish Get-Up, Kneel\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11605,\n    \"alt\": \"Turkish Get-Up, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 14721,\n    \"alt\": \"Turkish Get-Up, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15399,\n    \"alt\": \"Turkish Get-Up, Elbow\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15921,\n    \"alt\": \"Turkish Get-Up, Hand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16483,\n    \"alt\": \"Turkish Get-Up, Bridge\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17050,\n    \"alt\": \"Turkish Get-Up, Kneel\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17605,\n    \"alt\": \"Turkish Get-Up, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19283,\n    \"alt\": \"Turkish Get-Up, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Turkish Get-Up, Stand",
+            "decoded": true,
+            "height": 1152,
+            "src": "/Maiin/.strict33.local/candidate/turkish-get-up/6.webp",
+            "width": 1024
+          }
+        ],
+        "caption": "Stand 6/6",
+        "id": "turkish-get-up",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / turkish-get-up\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nTurkish Get-Up\nFull Body\nKettlebell\n\nSTAND 6/6\n\nReplay\nNormal\nPRIMARY\nShoulders, Core\nSECONDARY\nTriceps, Upper Back, Glutes, Quads\n\nInstructions\n\nPreparation: Lie on your back with the bell beside your shoulder. Press it up with both hands to a locked arm, then free one hand.\n\n1\n\nPress the bell up; eyes on it.\n\n2\n\nRoll onto your free elbow, arm locked.\n\n3\n\nPush up onto your free hand.\n\n4\n\nLift your hips high off the floor.\n\n5\n\nSweep your leg back into a half-kneel.\n\n6\n\nStand tall, then reverse each step down.\n\nWatch out\n\nEyes lock on the bell from start to finish. If you lose sight of it or the arm bends, stop the set — a falling bell on a shoulder ends seasons.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 88,\n    \"alt\": \"Turkish Get-Up, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1204,\n    \"alt\": \"Turkish Get-Up, Elbow\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1762,\n    \"alt\": \"Turkish Get-Up, Hand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2325,\n    \"alt\": \"Turkish Get-Up, Bridge\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2883,\n    \"alt\": \"Turkish Get-Up, Kneel\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3441,\n    \"alt\": \"Turkish Get-Up, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5121,\n    \"alt\": \"Turkish Get-Up, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6564,\n    \"alt\": \"Turkish Get-Up, Elbow\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7840,\n    \"alt\": \"Turkish Get-Up, Hand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9041,\n    \"alt\": \"Turkish Get-Up, Bridge\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10242,\n    \"alt\": \"Turkish Get-Up, Kneel\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11605,\n    \"alt\": \"Turkish Get-Up, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 14721,\n    \"alt\": \"Turkish Get-Up, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15399,\n    \"alt\": \"Turkish Get-Up, Elbow\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15921,\n    \"alt\": \"Turkish Get-Up, Hand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16483,\n    \"alt\": \"Turkish Get-Up, Bridge\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17050,\n    \"alt\": \"Turkish Get-Up, Kneel\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17605,\n    \"alt\": \"Turkish Get-Up, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19283,\n    \"alt\": \"Turkish Get-Up, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 20727,\n    \"alt\": \"Turkish Get-Up, Elbow\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22004,\n    \"alt\": \"Turkish Get-Up, Hand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23204,\n    \"alt\": \"Turkish Get-Up, Bridge\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24405,\n    \"alt\": \"Turkish Get-Up, Kneel\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25603,\n    \"alt\": \"Turkish Get-Up, Stand\",\n    \"src\": \"/Maiin/.strict33.local/candidate/turkish-get-up/6.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

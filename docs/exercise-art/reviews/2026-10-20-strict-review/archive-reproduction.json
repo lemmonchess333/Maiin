@@ -1,0 +1,255 @@
+{
+  "reviewedAt": "2026-10-20T11:40:15.825056+00:00",
+  "scope": "Extract each delivered source archive into a fresh directory, run its portable entry point into a different fresh directory and compare all six encoded WebP bytes to the activated public set.",
+  "allEightExact": true,
+  "sets": [
+    {
+      "id": "leg-press",
+      "archiveSha256": "a117b4bd30c645958d5b0ffec6208faa83d83eff83a41b6ee10d368a3dd9db15",
+      "allSixPublicFramesByteExact": true,
+      "frames": [
+        {
+          "frame": 1,
+          "sha256": "914544786909e8c84e7c6d9d1029ec9aeb565f88f8b16824b353eacc864fb863"
+        },
+        {
+          "frame": 2,
+          "sha256": "914544786909e8c84e7c6d9d1029ec9aeb565f88f8b16824b353eacc864fb863"
+        },
+        {
+          "frame": 3,
+          "sha256": "53eea11671983d8a56282077ccc0a82bce710713db7dc23b162d1aed121887d7"
+        },
+        {
+          "frame": 4,
+          "sha256": "53eea11671983d8a56282077ccc0a82bce710713db7dc23b162d1aed121887d7"
+        },
+        {
+          "frame": 5,
+          "sha256": "914544786909e8c84e7c6d9d1029ec9aeb565f88f8b16824b353eacc864fb863"
+        },
+        {
+          "frame": 6,
+          "sha256": "914544786909e8c84e7c6d9d1029ec9aeb565f88f8b16824b353eacc864fb863"
+        }
+      ]
+    },
+    {
+      "id": "rowing-machine",
+      "archiveSha256": "8be7a7d901a06bbdcb594780662ec26f4fccae5ffff1fc3a4cc567550a760e3b",
+      "allSixPublicFramesByteExact": true,
+      "frames": [
+        {
+          "frame": 1,
+          "sha256": "a1fa9793f679c2406885ba5782c111658bed16c0c49bc9482200b579111b15e2"
+        },
+        {
+          "frame": 2,
+          "sha256": "2c4d033e55298b8382f78c1d89e1c8945ddc603e21d6bacdc781275e1319b771"
+        },
+        {
+          "frame": 3,
+          "sha256": "da6997e4fc48e388991798cb2b7691c32e5a34796d04b00fa059f9f096470d01"
+        },
+        {
+          "frame": 4,
+          "sha256": "da6997e4fc48e388991798cb2b7691c32e5a34796d04b00fa059f9f096470d01"
+        },
+        {
+          "frame": 5,
+          "sha256": "2c4d033e55298b8382f78c1d89e1c8945ddc603e21d6bacdc781275e1319b771"
+        },
+        {
+          "frame": 6,
+          "sha256": "a1fa9793f679c2406885ba5782c111658bed16c0c49bc9482200b579111b15e2"
+        }
+      ]
+    },
+    {
+      "id": "overhead-extension",
+      "archiveSha256": "67351e4a6aee88554c9aa5adfca2aadd6ffcf0e79d3650d1641e0ff698aa0202",
+      "allSixPublicFramesByteExact": true,
+      "frames": [
+        {
+          "frame": 1,
+          "sha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9"
+        },
+        {
+          "frame": 2,
+          "sha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9"
+        },
+        {
+          "frame": 3,
+          "sha256": "04aaf33df96a6fd4cfd9e7130d615e639c47f528322ae290f302f52944465428"
+        },
+        {
+          "frame": 4,
+          "sha256": "04aaf33df96a6fd4cfd9e7130d615e639c47f528322ae290f302f52944465428"
+        },
+        {
+          "frame": 5,
+          "sha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9"
+        },
+        {
+          "frame": 6,
+          "sha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9"
+        }
+      ]
+    },
+    {
+      "id": "t-bar-row",
+      "archiveSha256": "c49f611fa4bc517f329f1211aaeb447a2dee81364308297695063b9083f42dd7",
+      "allSixPublicFramesByteExact": true,
+      "frames": [
+        {
+          "frame": 1,
+          "sha256": "58b885dccced01e25ca695724629d027745374e4a7138a94ff9bb4d503306340"
+        },
+        {
+          "frame": 2,
+          "sha256": "58b885dccced01e25ca695724629d027745374e4a7138a94ff9bb4d503306340"
+        },
+        {
+          "frame": 3,
+          "sha256": "bb76be9f97caee89138d583af15e4540b8986c02b0b138f54b20d41754bf7145"
+        },
+        {
+          "frame": 4,
+          "sha256": "bb76be9f97caee89138d583af15e4540b8986c02b0b138f54b20d41754bf7145"
+        },
+        {
+          "frame": 5,
+          "sha256": "58b885dccced01e25ca695724629d027745374e4a7138a94ff9bb4d503306340"
+        },
+        {
+          "frame": 6,
+          "sha256": "58b885dccced01e25ca695724629d027745374e4a7138a94ff9bb4d503306340"
+        }
+      ]
+    },
+    {
+      "id": "bike",
+      "archiveSha256": "9fe43af7edd10ee083a1dfd50b13f808d195aba80be58b50bb00ab3ce014b30a",
+      "allSixPublicFramesByteExact": true,
+      "frames": [
+        {
+          "frame": 1,
+          "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6"
+        },
+        {
+          "frame": 2,
+          "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6"
+        },
+        {
+          "frame": 3,
+          "sha256": "8c1cb083d7040982b6bb8cbd48370c32ef393ad4d7efc20afbc4792966e50e6f"
+        },
+        {
+          "frame": 4,
+          "sha256": "8c1cb083d7040982b6bb8cbd48370c32ef393ad4d7efc20afbc4792966e50e6f"
+        },
+        {
+          "frame": 5,
+          "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6"
+        },
+        {
+          "frame": 6,
+          "sha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6"
+        }
+      ]
+    },
+    {
+      "id": "barbell-row",
+      "archiveSha256": "964f45d007115e27be6a11af260d50c1f759bbd2c320cfc9ddde2b44b3b296a9",
+      "allSixPublicFramesByteExact": true,
+      "frames": [
+        {
+          "frame": 1,
+          "sha256": "3d1708536445f65a0734b51d596830fabbc5824ff904d42128a687aeefe1ecf8"
+        },
+        {
+          "frame": 2,
+          "sha256": "8175ecc0681f0e2eb5c7621abe6ec0a1f00e9b79ba95efb876c9e3925621b70a"
+        },
+        {
+          "frame": 3,
+          "sha256": "998e34786cac216ab057c7e26d219a97111231edf31100b1c12acf4cc95bd9e6"
+        },
+        {
+          "frame": 4,
+          "sha256": "9ed1076fc250c1e12778cf7438d8b402cd16f0501be5ce0a2e5a5fc15aea7730"
+        },
+        {
+          "frame": 5,
+          "sha256": "998e34786cac216ab057c7e26d219a97111231edf31100b1c12acf4cc95bd9e6"
+        },
+        {
+          "frame": 6,
+          "sha256": "3d1708536445f65a0734b51d596830fabbc5824ff904d42128a687aeefe1ecf8"
+        }
+      ]
+    },
+    {
+      "id": "dips",
+      "archiveSha256": "a7ae49f9efaeecb00680f31065d44d318f0e71a0c5f8e82983b920e4a9fa9f82",
+      "allSixPublicFramesByteExact": true,
+      "frames": [
+        {
+          "frame": 1,
+          "sha256": "6550488aa4409c1fe6e83b86dfe2f5f1003c2d5c4bb29e88b4bfcb18b8bb2cde"
+        },
+        {
+          "frame": 2,
+          "sha256": "66b8958cdfc9e611499cbd4b3d6245151e86736070fb456387b4d278411177b7"
+        },
+        {
+          "frame": 3,
+          "sha256": "66b8958cdfc9e611499cbd4b3d6245151e86736070fb456387b4d278411177b7"
+        },
+        {
+          "frame": 4,
+          "sha256": "aec984bed1f2db0aa37c8db9fd5fb3783486b4053d9be89db1f130d234f61feb"
+        },
+        {
+          "frame": 5,
+          "sha256": "66b8958cdfc9e611499cbd4b3d6245151e86736070fb456387b4d278411177b7"
+        },
+        {
+          "frame": 6,
+          "sha256": "6550488aa4409c1fe6e83b86dfe2f5f1003c2d5c4bb29e88b4bfcb18b8bb2cde"
+        }
+      ]
+    },
+    {
+      "id": "lu-raise",
+      "archiveSha256": "08adae3585e8b103d34e7258e7ea4c236e61957126a71ab541c33213ba1714cc",
+      "allSixPublicFramesByteExact": true,
+      "frames": [
+        {
+          "frame": 1,
+          "sha256": "b6c3499e5ba03e9c4752b6518b3bc3d33bde18078f906a7ee6877d9f07c1d947"
+        },
+        {
+          "frame": 2,
+          "sha256": "20027691446c265af027ddc2737fff1243f889ab6a2ffd2f7503393f822c12fa"
+        },
+        {
+          "frame": 3,
+          "sha256": "3c7ad7fdfa6ebb93580cfbf5dc4231dd1e1d69b1e2f393cca2613abc761ab9d6"
+        },
+        {
+          "frame": 4,
+          "sha256": "791f568184a3fbfa56b9e18e5e398bec9599b80a0abf527d48b6050674744ec2"
+        },
+        {
+          "frame": 5,
+          "sha256": "3c7ad7fdfa6ebb93580cfbf5dc4231dd1e1d69b1e2f393cca2613abc761ab9d6"
+        },
+        {
+          "frame": 6,
+          "sha256": "20027691446c265af027ddc2737fff1243f889ab6a2ffd2f7503393f822c12fa"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "exerciseId": "assault-bike",
+  "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+  "width": 1024,
+  "height": 1024,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex native illustration polish review",
+  "reviewedAt": "2026-10-19T19:53:56.256041+00:00",
+  "reference": {
+    "path": "form-frames/assault-bike/1.webp",
+    "sha256": "94c40ddb45446b465696c37a79489e005b1d7071988f9955a24d8b8235e46590"
+  },
+  "cueSha256": "737487eec3e7f81638e8753c748e07f302944d2e31bc2af785e29b045c8f0de6",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/assault-bike/1.webp",
+      "sha256": "94c40ddb45446b465696c37a79489e005b1d7071988f9955a24d8b8235e46590",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-19-illustration-polish/1.png",
+        "sha256": "ebf22588fc7347d4d738ceb6f8fc060044d02f4a29bdf9d681c01da4e303e321"
+      }
+    },
+    {
+      "path": "form-frames/assault-bike/2.webp",
+      "sha256": "94c40ddb45446b465696c37a79489e005b1d7071988f9955a24d8b8235e46590",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-19-illustration-polish/2.png",
+        "sha256": "ebf22588fc7347d4d738ceb6f8fc060044d02f4a29bdf9d681c01da4e303e321"
+      }
+    },
+    {
+      "path": "form-frames/assault-bike/3.webp",
+      "sha256": "8e5896294c0c22c6e2fbfd20547641f3740f4707078a20dc13e2502bc3d10bab",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-19-illustration-polish/3.png",
+        "sha256": "a630bf39ab952cd73f0d0670868612b3875b89231b8cc5d7466064779a698fd6"
+      }
+    },
+    {
+      "path": "form-frames/assault-bike/4.webp",
+      "sha256": "8e5896294c0c22c6e2fbfd20547641f3740f4707078a20dc13e2502bc3d10bab",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-19-illustration-polish/4.png",
+        "sha256": "a630bf39ab952cd73f0d0670868612b3875b89231b8cc5d7466064779a698fd6"
+      }
+    },
+    {
+      "path": "form-frames/assault-bike/5.webp",
+      "sha256": "94c40ddb45446b465696c37a79489e005b1d7071988f9955a24d8b8235e46590",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-19-illustration-polish/5.png",
+        "sha256": "ebf22588fc7347d4d738ceb6f8fc060044d02f4a29bdf9d681c01da4e303e321"
+      }
+    },
+    {
+      "path": "form-frames/assault-bike/6.webp",
+      "sha256": "94c40ddb45446b465696c37a79489e005b1d7071988f9955a24d8b8235e46590",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-19-illustration-polish/6.png",
+        "sha256": "ebf22588fc7347d4d738ceb6f8fc060044d02f4a29bdf9d681c01da4e303e321"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "What minor illustration issues are still left? Fix those too, same model and colours, no shorts, and get them merged. Stop asking for approval.",
+    "context": "Explicit authority for scoped native colour/equipment/cutout corrections, local registration, verification and normal merge. Not strict certification."
+  },
+  "findings": [
+    "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers.",
+    "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+  ],
+  "resolvedIllustrationIssues": [
+    "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers."
+  ],
+  "priorFindings": {
+    "record": "docs/exercise-art/releases/2026-10-17/assault-bike.json",
+    "sha256": "785df3af33810b9dfdd32484fc9ab34027335e447f07b3d4d69220cef096efd6",
+    "disposition": "Historical record preserved verbatim. Cosmetic issues addressed here are described separately; prior strict-measurement and source-provenance statements are not erased.",
+    "hashScope": "Exact repository blob bytes, independent of Windows checkout CRLF."
+  },
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/assault-bike/2026-10-19-illustration-polish",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/assault-bike/2026-10-19-illustration-polish/assault-bike-native-polish.zip",
+      "sha256": "874688e96ed98c8cd493f57bd39e4652eb7a689349d4de7460a402035fd913f1",
+      "bytes": 12383886
+    },
+    "priorRelease": "docs/exercise-art/releases/2026-10-17/assault-bike.json",
+    "method": "Exact native original drawings plus sparse editable colour/equipment pixels; alpha-only stray-mark cleanup for prepared cards. Portable source layers and deterministic lossless exports independently re-executed byte-for-byte.",
+    "reproductionScope": "Same-layer composition and export reproduction; no independent anatomy/physics certification.",
+    "newImageGenerationCalls": 0,
+    "anatomicalTransforms": []
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-19-illustration-polish/review.json"
+}

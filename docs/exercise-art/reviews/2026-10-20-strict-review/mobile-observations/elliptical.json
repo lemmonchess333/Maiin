@@ -1,0 +1,230 @@
+{
+  "id": "elliptical",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Elliptical, Stride A",
+              "decoded": true,
+              "height": 1072,
+              "src": "/Maiin/.strict33.local/candidate/elliptical/1.webp",
+              "width": 1047
+            }
+          ],
+          "caption": "Stride A 1/6",
+          "id": "elliptical",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Elliptical, Hold A",
+              "decoded": true,
+              "height": 1072,
+              "src": "/Maiin/.strict33.local/candidate/elliptical/2.webp",
+              "width": 1047
+            }
+          ],
+          "caption": "Hold A 2/6",
+          "id": "elliptical",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Elliptical, Stride B",
+              "decoded": true,
+              "height": 1072,
+              "src": "/Maiin/.strict33.local/candidate/elliptical/3.webp",
+              "width": 1047
+            }
+          ],
+          "caption": "Stride B 3/6",
+          "id": "elliptical",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Elliptical, Hold B",
+              "decoded": true,
+              "height": 1072,
+              "src": "/Maiin/.strict33.local/candidate/elliptical/4.webp",
+              "width": 1047
+            }
+          ],
+          "caption": "Hold B 4/6",
+          "id": "elliptical",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Elliptical, Return A",
+              "decoded": true,
+              "height": 1072,
+              "src": "/Maiin/.strict33.local/candidate/elliptical/5.webp",
+              "width": 1047
+            }
+          ],
+          "caption": "Return A 5/6",
+          "id": "elliptical",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Elliptical, Reset",
+              "decoded": true,
+              "height": 1072,
+              "src": "/Maiin/.strict33.local/candidate/elliptical/6.webp",
+              "width": 1047
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "elliptical",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 80,\n    \"alt\": \"Elliptical, Stride A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1203,\n    \"alt\": \"Elliptical, Hold A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1761,\n    \"alt\": \"Elliptical, Stride B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2324,\n    \"alt\": \"Elliptical, Hold B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2882,\n    \"alt\": \"Elliptical, Return A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3445,\n    \"alt\": \"Elliptical, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5124,\n    \"alt\": \"Elliptical, Stride A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Elliptical, Hold A",
+            "decoded": true,
+            "height": 1072,
+            "src": "/Maiin/.strict33.local/candidate/elliptical/2.webp",
+            "width": 1047
+          }
+        ],
+        "caption": "Hold A 2/6",
+        "id": "elliptical",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / elliptical\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nElliptical\nCardio\nMachine\n\nHOLD A 2/6\n\nPause\nNormal\nPRIMARY\nQuads, Glutes\nSECONDARY\nFront Delts, Upper Back, Hamstrings\n\nInstructions\n\nPreparation: Step on the pedals with feet evenly placed, grip the moving handles. Start with a smooth easy pace to find the stride rhythm.\n\n1\n\nStand tall; keep both feet on pedals.\n\n2\n\nKeep both feet planted in the pedals.\n\n3\n\nCoordinate your push and pull with legs.\n\n4\n\nHold both grips; keep your chest tall.\n\n5\n\nReturn smoothly to the first shown stride.\n\n6\n\nKeep your torso tall without leaning forward.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 80,\n    \"alt\": \"Elliptical, Stride A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1203,\n    \"alt\": \"Elliptical, Hold A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1761,\n    \"alt\": \"Elliptical, Stride B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2324,\n    \"alt\": \"Elliptical, Hold B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2882,\n    \"alt\": \"Elliptical, Return A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3445,\n    \"alt\": \"Elliptical, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5124,\n    \"alt\": \"Elliptical, Stride A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6645,\n    \"alt\": \"Elliptical, Hold A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7840,\n    \"alt\": \"Elliptical, Stride B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9045,\n    \"alt\": \"Elliptical, Hold B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10245,\n    \"alt\": \"Elliptical, Return A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11445,\n    \"alt\": \"Elliptical, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12645,\n    \"alt\": \"Elliptical, Stride A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13844,\n    \"alt\": \"Elliptical, Hold A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Elliptical, Stride A",
+              "decoded": true,
+              "height": 1072,
+              "src": "/Maiin/.strict33.local/candidate/elliptical/1.webp",
+              "width": 1047
+            }
+          ],
+          "caption": "Stride A 1/6",
+          "id": "elliptical",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Elliptical, Hold A",
+              "decoded": true,
+              "height": 1072,
+              "src": "/Maiin/.strict33.local/candidate/elliptical/2.webp",
+              "width": 1047
+            }
+          ],
+          "caption": "Hold A 2/6",
+          "id": "elliptical",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Elliptical, Stride B",
+              "decoded": true,
+              "height": 1072,
+              "src": "/Maiin/.strict33.local/candidate/elliptical/3.webp",
+              "width": 1047
+            }
+          ],
+          "caption": "Stride B 3/6",
+          "id": "elliptical",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Elliptical, Hold B",
+              "decoded": true,
+              "height": 1072,
+              "src": "/Maiin/.strict33.local/candidate/elliptical/4.webp",
+              "width": 1047
+            }
+          ],
+          "caption": "Hold B 4/6",
+          "id": "elliptical",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Elliptical, Return A",
+              "decoded": true,
+              "height": 1072,
+              "src": "/Maiin/.strict33.local/candidate/elliptical/5.webp",
+              "width": 1047
+            }
+          ],
+          "caption": "Return A 5/6",
+          "id": "elliptical",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Elliptical, Reset",
+              "decoded": true,
+              "height": 1072,
+              "src": "/Maiin/.strict33.local/candidate/elliptical/6.webp",
+              "width": 1047
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "elliptical",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 80,\n    \"alt\": \"Elliptical, Stride A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1203,\n    \"alt\": \"Elliptical, Hold A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1761,\n    \"alt\": \"Elliptical, Stride B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2324,\n    \"alt\": \"Elliptical, Hold B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2882,\n    \"alt\": \"Elliptical, Return A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3445,\n    \"alt\": \"Elliptical, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5124,\n    \"alt\": \"Elliptical, Stride A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6645,\n    \"alt\": \"Elliptical, Hold A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7840,\n    \"alt\": \"Elliptical, Stride B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9045,\n    \"alt\": \"Elliptical, Hold B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10245,\n    \"alt\": \"Elliptical, Return A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11445,\n    \"alt\": \"Elliptical, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12645,\n    \"alt\": \"Elliptical, Stride A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13844,\n    \"alt\": \"Elliptical, Hold A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15045,\n    \"alt\": \"Elliptical, Stride A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15603,\n    \"alt\": \"Elliptical, Hold A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16160,\n    \"alt\": \"Elliptical, Stride B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16724,\n    \"alt\": \"Elliptical, Hold B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17282,\n    \"alt\": \"Elliptical, Return A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17924,\n    \"alt\": \"Elliptical, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19524,\n    \"alt\": \"Elliptical, Stride A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Elliptical, Hold A",
+            "decoded": true,
+            "height": 1072,
+            "src": "/Maiin/.strict33.local/candidate/elliptical/2.webp",
+            "width": 1047
+          }
+        ],
+        "caption": "Hold A 2/6",
+        "id": "elliptical",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / elliptical\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nElliptical\nCardio\nMachine\n\nHOLD A 2/6\n\nPause\nNormal\nPRIMARY\nQuads, Glutes\nSECONDARY\nFront Delts, Upper Back, Hamstrings\n\nInstructions\n\nPreparation: Step on the pedals with feet evenly placed, grip the moving handles. Start with a smooth easy pace to find the stride rhythm.\n\n1\n\nStand tall; keep both feet on pedals.\n\n2\n\nKeep both feet planted in the pedals.\n\n3\n\nCoordinate your push and pull with legs.\n\n4\n\nHold both grips; keep your chest tall.\n\n5\n\nReturn smoothly to the first shown stride.\n\n6\n\nKeep your torso tall without leaning forward.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 80,\n    \"alt\": \"Elliptical, Stride A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1203,\n    \"alt\": \"Elliptical, Hold A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1761,\n    \"alt\": \"Elliptical, Stride B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2324,\n    \"alt\": \"Elliptical, Hold B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2882,\n    \"alt\": \"Elliptical, Return A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3445,\n    \"alt\": \"Elliptical, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5124,\n    \"alt\": \"Elliptical, Stride A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6645,\n    \"alt\": \"Elliptical, Hold A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7840,\n    \"alt\": \"Elliptical, Stride B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9045,\n    \"alt\": \"Elliptical, Hold B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10245,\n    \"alt\": \"Elliptical, Return A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11445,\n    \"alt\": \"Elliptical, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12645,\n    \"alt\": \"Elliptical, Stride A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13844,\n    \"alt\": \"Elliptical, Hold A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15045,\n    \"alt\": \"Elliptical, Stride A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15603,\n    \"alt\": \"Elliptical, Hold A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16160,\n    \"alt\": \"Elliptical, Stride B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16724,\n    \"alt\": \"Elliptical, Hold B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17282,\n    \"alt\": \"Elliptical, Return A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17924,\n    \"alt\": \"Elliptical, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19524,\n    \"alt\": \"Elliptical, Stride A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21045,\n    \"alt\": \"Elliptical, Hold A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22244,\n    \"alt\": \"Elliptical, Stride B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23444,\n    \"alt\": \"Elliptical, Hold B\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24644,\n    \"alt\": \"Elliptical, Return A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25844,\n    \"alt\": \"Elliptical, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27045,\n    \"alt\": \"Elliptical, Stride A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28245,\n    \"alt\": \"Elliptical, Hold A\",\n    \"src\": \"/Maiin/.strict33.local/candidate/elliptical/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

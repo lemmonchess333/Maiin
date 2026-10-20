@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import Button from "@/components/ui/Button";
 import { Beef, Plus, Wheat } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { THEME } from "@/lib/theme";
@@ -44,6 +45,8 @@ export default function TodayEnergy({
   fat,
   targets,
   mealsLoading = false,
+  mealsError = null,
+  onRetryMeals,
   postWorkoutNudge,
 }: {
   calories: number;
@@ -52,6 +55,8 @@ export default function TodayEnergy({
   fat: number;
   targets: EffectiveTargets;
   mealsLoading?: boolean;
+  mealsError?: string | null;
+  onRetryMeals?: () => void;
   postWorkoutNudge?: {
     type: "lift" | "run" | "both";
     proteinRemaining: number;
@@ -74,6 +79,8 @@ export default function TodayEnergy({
    * already has a figure keeps showing it instead of flickering back to a
    * skeleton. Same shape as WeightStepsTiles' `pending`.
    */
+  const hasIntake = [calories, protein, carbs, fat].some((value) => value > 0);
+  const hideUnknownTotals = Boolean(mealsError) && !hasIntake;
   const caloriesPending = mealsLoading && calories === 0;
   const logged = Math.round(calories || 0);
 
@@ -139,57 +146,78 @@ export default function TodayEnergy({
           the same size, so the card does not grow when the meals land.
           Under 12em of card (larger text on the phone) the macros go
           under the ring instead: beside it they ran into each other. */}
-      <div className="mt-3 flex items-center gap-2.5 @max-[12em]:flex-col">
-        {caloriesPending ? (
-          <span
-            role="status"
-            aria-label="Today's calories still loading"
-            className="shrink-0"
-          >
-            <Skeleton className="size-26 rounded-full" />
-          </span>
-        ) : (
-          <CalorieRing
-            size="compact"
-            consumed={logged}
-            target={tCal}
-            mode={mode}
-            onToggleMode={toggleMode}
-            trajectoryLabel={null}
-          />
-        )}
-        <div className="grid min-w-0 flex-1 grid-cols-3 gap-1.5 @max-[12em]:w-full">
-          {macros.map((m) => (
-            <div key={m.key} className="flex min-w-0 px-0.5 py-1">
-              {caloriesPending ? (
-                <div
-                  role="group"
-                  aria-label={`${m.label} loading`}
-                  className="flex w-full flex-col items-center gap-1.5"
-                >
-                  <Skeleton className="size-5 rounded-md" />
-                  <Skeleton className="h-5 w-10" />
-                  <Skeleton className="h-3 w-8" />
-                  <Skeleton className="mt-1 h-1.5 w-full rounded-full" />
-                  <Skeleton className="h-3 w-12" />
-                </div>
-              ) : (
-                <MacroColumn
-                  size="compact"
-                  macroKey={m.key}
-                  Icon={m.Icon}
-                  consumed={m.value}
-                  target={m.target}
-                  label={m.label}
-                  color={THEME.macros[m.key]}
-                  mode={mode}
-                  onTap={toggleMode}
-                />
-              )}
-            </div>
-          ))}
+      {mealsError && (
+        <div role="alert" className="mt-3 space-y-2">
+          <p className="text-sm">Couldn't load your food diary.</p>
+          {hasIntake && (
+            <p className="text-xs text-muted-foreground">
+              Showing last available totals.
+            </p>
+          )}
+          {onRetryMeals && (
+            <Button
+              variant="secondary"
+              disabled={mealsLoading}
+              onClick={onRetryMeals}
+            >
+              {mealsLoading ? "Retrying…" : "Retry"}
+            </Button>
+          )}
         </div>
-      </div>
+      )}
+      {!hideUnknownTotals && (
+        <div className="mt-3 flex items-center gap-2.5 @max-[12em]:flex-col">
+          {caloriesPending ? (
+            <span
+              role="status"
+              aria-label="Today's calories still loading"
+              className="shrink-0"
+            >
+              <Skeleton className="size-26 rounded-full" />
+            </span>
+          ) : (
+            <CalorieRing
+              size="compact"
+              consumed={logged}
+              target={tCal}
+              mode={mode}
+              onToggleMode={toggleMode}
+              trajectoryLabel={null}
+            />
+          )}
+          <div className="grid min-w-0 flex-1 grid-cols-3 gap-1.5 @max-[12em]:w-full">
+            {macros.map((m) => (
+              <div key={m.key} className="flex min-w-0 px-0.5 py-1">
+                {caloriesPending ? (
+                  <div
+                    role="group"
+                    aria-label={`${m.label} loading`}
+                    className="flex w-full flex-col items-center gap-1.5"
+                  >
+                    <Skeleton className="size-5 rounded-md" />
+                    <Skeleton className="h-5 w-10" />
+                    <Skeleton className="h-3 w-8" />
+                    <Skeleton className="mt-1 h-1.5 w-full rounded-full" />
+                    <Skeleton className="h-3 w-12" />
+                  </div>
+                ) : (
+                  <MacroColumn
+                    size="compact"
+                    macroKey={m.key}
+                    Icon={m.Icon}
+                    consumed={m.value}
+                    target={m.target}
+                    label={m.label}
+                    color={THEME.macros[m.key]}
+                    mode={mode}
+                    onTap={toggleMode}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* A target below the essential-fat floor's own cost: the tiles
           above would otherwise read as if 0 g were the goal. Same sentence
@@ -205,7 +233,7 @@ export default function TodayEnergy({
       )}
 
       {/* Situational note — never a second way into the food log. */}
-      {nudgeText && (
+      {nudgeText && !mealsError && (
         <p className="mt-3 text-xs font-medium text-nutrition-strong">
           {nudgeText}
         </p>

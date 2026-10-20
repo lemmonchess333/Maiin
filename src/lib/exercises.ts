@@ -909,14 +909,14 @@ export const EXERCISES: Exercise[] = [
     category: "Shoulders",
     muscleGroup: "Deltoids",
     mechanic: "isolation",
-    secondaryMuscles: ["Front Delts", "Side Delts"],
+    secondaryMuscles: ["Traps"],
     equipment: "Dumbbells",
     caloriesPerMinute: 5,
     instructions: [
       "Stand tall with light dumbbells at your sides, palms facing in.",
       "Raise your arms out to shoulder height like a lateral raise.",
-      "At the top, rotate forward and bring the dumbbells together in front.",
-      "Reverse through both segments back to the starting position.",
+      "Continue out and up overhead, allowing your arms to rotate naturally.",
+      "Lower through the same lateral arc under control to your sides.",
     ],
   },
   {

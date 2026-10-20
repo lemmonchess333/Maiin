@@ -1,0 +1,28 @@
+{
+  "startedAt": "2026-10-20T08:51:54.791807+00:00",
+  "finishedAt": "2026-10-20T09:02:57.544869+00:00",
+  "normalCommand": "npm run verify",
+  "exitCode": 1,
+  "durationSeconds": 660.7029999999795,
+  "headBefore": "a97944f5d8a6350d114e18bba2a18bb1d243ae35",
+  "headAfter": "a97944f5d8a6350d114e18bba2a18bb1d243ae35",
+  "headUnchanged": true,
+  "statusBefore": "",
+  "statusAfterTestBeforeSnapshotRestore": " M src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap\n",
+  "statusAfter": "",
+  "statusRestored": true,
+  "snapshotRestores": [
+    {
+      "path": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+      "originalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "testOutputSha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "restoredExact": true
+    }
+  ],
+  "inputCount": 2757,
+  "changedInputsAfterRestoration": [],
+  "allInputsUnchanged": true,
+  "log": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining19-execution-20261015\\checks\\strict33-baseline-a97944f5-20261020\\verify.log",
+  "logSha256": "4ddddd42d156942f69122ea5dba8bfdbc1e1599a9615a3bfb088c0daf737c89e",
+  "fullVerificationPassed": false
+}

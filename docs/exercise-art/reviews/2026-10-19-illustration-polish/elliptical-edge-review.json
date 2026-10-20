@@ -1,0 +1,50 @@
+{
+  "scope": "Exact native coordinate inspection of the five earlier comparison pixels. Existing current pixels already differ from removed old equipment; not a claim of missing fingers or a new anatomy repair.",
+  "pixels": [
+    {
+      "x": 771,
+      "y": 293,
+      "sourceRGBA": [40, 39, 39, 255],
+      "newEquipmentRGBA": [16, 18, 20, 239],
+      "sourcePixelStillPreserved": false,
+      "currentRegisteredRGBA": [15, 17, 19, 255],
+      "currentMatchesOldSource": false
+    },
+    {
+      "x": 771,
+      "y": 294,
+      "sourceRGBA": [37, 36, 35, 255],
+      "newEquipmentRGBA": [16, 18, 20, 239],
+      "sourcePixelStillPreserved": false,
+      "currentRegisteredRGBA": [15, 17, 19, 255],
+      "currentMatchesOldSource": false
+    },
+    {
+      "x": 772,
+      "y": 294,
+      "sourceRGBA": [37, 35, 35, 255],
+      "newEquipmentRGBA": [15, 15, 15, 16],
+      "sourcePixelStillPreserved": false,
+      "currentRegisteredRGBA": [1, 1, 1, 255],
+      "currentMatchesOldSource": false
+    },
+    {
+      "x": 771,
+      "y": 295,
+      "sourceRGBA": [34, 33, 32, 255],
+      "newEquipmentRGBA": [16, 18, 20, 238],
+      "sourcePixelStillPreserved": false,
+      "currentRegisteredRGBA": [15, 17, 19, 255],
+      "currentMatchesOldSource": false
+    },
+    {
+      "x": 772,
+      "y": 295,
+      "sourceRGBA": [37, 36, 35, 255],
+      "newEquipmentRGBA": [15, 15, 15, 16],
+      "sourcePixelStillPreserved": false,
+      "currentRegisteredRGBA": [1, 1, 1, 255],
+      "currentMatchesOldSource": false
+    }
+  ]
+}

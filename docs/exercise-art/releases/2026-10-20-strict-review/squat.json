@@ -1,0 +1,162 @@
+{
+  "exerciseId": "squat",
+  "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+  "width": 1024,
+  "height": 1536,
+  "reference": {
+    "path": "form-frames/squat/1.webp",
+    "sha256": "c3f99a5813f8337762865f228b65fcea6b1ef13f66a6097e0a0eba58f6fa8b41"
+  },
+  "cueSha256": "15a77017a96c711906ca3593af36f81d09e43710aac4cc51827135178bcbd322",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:52.319318+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 1px; independent invariant dimensions maximum relative drift 0.006092821. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Controlled descent/bottom/rise with heels planted and knees tracking over feet; bar travels with shoulders, without a detached load. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Grey bar with one modest plate per end, resting across upper back and held by both hands. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Controlled descent/bottom/rise with heels planted and knees tracking over feet; bar travels with shoulders, without a detached load. Actual named native supports are measured in all six frames: plantedFarTrainerMaterialFeature1, plantedFarTrainerMaterialFeature2. Maximum axis drift 1px. Dimensions: plantedFarTrainerProjectedFeatureSpan, oppositeFixedSupportProjectedFeatureSpan; max 0.60928%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Controlled descent/bottom/rise with heels planted and knees tracking over feet; bar travels with shoulders, without a detached load. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary quadriceps #7B72E9; secondary gluteals #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Set up: Brace with the bar across upper traps. / Descend: Bend hips and knees; keep heels grounded. / Continue descent: Keep knees tracking with your toes. / Bottom: Stay braced at your comfortable squat depth. / Drive: Push through your whole feet to rise. / Stand: Stand tall without leaning back.. Preparation remains null. Controlled descent/bottom/rise with heels planted and knees tracking over feet; bar travels with shoulders, without a detached load."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Controlled descent/bottom/rise with heels planted and knees tracking over feet; bar travels with shoulders, without a detached load. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-19-illustration-polish/squat.json (sha256 3d5f057ad45485c992c1ca6b0abeefcee0a1cfb376356c31ef63d091a0529058). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-19-illustration-polish/squat.json (sha256 3d5f057ad45485c992c1ca6b0abeefcee0a1cfb376356c31ef63d091a0529058). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/squat/1.webp",
+      "sha256": "c3f99a5813f8337762865f228b65fcea6b1ef13f66a6097e0a0eba58f6fa8b41",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 269, "y": 1352 },
+        "plantedFarTrainerMaterialFeature2": { "x": 482, "y": 1336 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 213.60009363293827,
+        "oppositeFixedSupportProjectedFeatureSpan": 187.2591786802452
+      }
+    },
+    {
+      "path": "form-frames/squat/2.webp",
+      "sha256": "bcdfcbd9f01d8872acae9908d5fd8056b99a3b625b6ac2e19ad0da297f982b9c",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 269, "y": 1352 },
+        "plantedFarTrainerMaterialFeature2": { "x": 482, "y": 1336 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 213.60009363293827,
+        "oppositeFixedSupportProjectedFeatureSpan": 187.2591786802452
+      }
+    },
+    {
+      "path": "form-frames/squat/3.webp",
+      "sha256": "a4837b8cc84276be8ad124a9b96b85ab5078c89b364fc6e141462f44b712ba27",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 269, "y": 1351 },
+        "plantedFarTrainerMaterialFeature2": { "x": 482, "y": 1336 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 213.52751579129094,
+        "oppositeFixedSupportProjectedFeatureSpan": 186.11824198610947
+      }
+    },
+    {
+      "path": "form-frames/squat/4.webp",
+      "sha256": "506e5698c794f6afce17c31f2dc74866a27eee404d130d14d47ea4258c85ca23",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 269, "y": 1351 },
+        "plantedFarTrainerMaterialFeature2": { "x": 482, "y": 1336 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 213.52751579129094,
+        "oppositeFixedSupportProjectedFeatureSpan": 186.11824198610947
+      }
+    },
+    {
+      "path": "form-frames/squat/5.webp",
+      "sha256": "c5417f6ec9b6a095151f31d8e74162872a59b90655e5d76d2bf654f372bd59c8",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 269, "y": 1352 },
+        "plantedFarTrainerMaterialFeature2": { "x": 482, "y": 1336 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 213.60009363293827,
+        "oppositeFixedSupportProjectedFeatureSpan": 187.1069213043708
+      }
+    },
+    {
+      "path": "form-frames/squat/6.webp",
+      "sha256": "c3f99a5813f8337762865f228b65fcea6b1ef13f66a6097e0a0eba58f6fa8b41",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 269, "y": 1352 },
+        "plantedFarTrainerMaterialFeature2": { "x": 482, "y": 1336 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 213.60009363293827,
+        "oppositeFixedSupportProjectedFeatureSpan": 187.2591786802452
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 1,
+    "maxInvariantRelativeDrift": 0.006092821202019483,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-19-illustration-polish/squat.json",
+    "sha256": "3d5f057ad45485c992c1ca6b0abeefcee0a1cfb376356c31ef63d091a0529058"
+  },
+  "historicalFindings": [
+    "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers.",
+    "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/squat.json",
+    "sha256": "b61da1e0d05dd968e87a100677de17d2b361fc7a4d9b5b801b8b618eb131faff"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false
+}

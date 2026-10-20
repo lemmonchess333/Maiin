@@ -55,7 +55,10 @@ vi.mock("@/lib/bodyRig", () => ({
   },
 }));
 
-vi.mock("@/lib/formGuides", () => ({ getFormBeats: () => beatsRef.current }));
+vi.mock("@/lib/formGuides", () => ({
+  getFormBeats: () => beatsRef.current,
+  getFormPlayback: () => "cycle",
+}));
 
 import { PLACARD_TIMING } from "@/lib/exerciseTempo";
 import ExerciseRigDemo from "../ExerciseRigDemo";

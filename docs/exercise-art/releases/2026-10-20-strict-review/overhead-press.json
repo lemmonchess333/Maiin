@@ -1,0 +1,159 @@
+{
+  "exerciseId": "overhead-press",
+  "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+  "width": 1024,
+  "height": 1536,
+  "reference": {
+    "path": "form-frames/overhead-press/4.webp",
+    "sha256": "b37c0fca9825a423d9539adb63394174b86bc749e9b45656639f02361238bc45"
+  },
+  "cueSha256": "71159924512ffce704dbea114fdc96b785ef5bc496dff0549629253c15f4cbbd",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:54.168123+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Bar rises from shoulders as elbows extend, then returns with stance braced. Anterior-deltoid primary and upper-chest/triceps/core secondary fields retain their corrected contour boundaries. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One modest grey plate per end of a continuous bar; both grips remain closed. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Bar rises from shoulders as elbows extend, then returns with stance braced. Anterior-deltoid primary and upper-chest/triceps/core secondary fields retain their corrected contour boundaries. Actual named native supports are measured in all six frames: plantedFarTrainerMaterialFeature1, plantedFarTrainerMaterialFeature2. Maximum axis drift 0px. Dimensions: plantedFarTrainerProjectedFeatureSpan, oppositeFixedSupportProjectedFeatureSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Bar rises from shoulders as elbows extend, then returns with stance braced. Anterior-deltoid primary and upper-chest/triceps/core secondary fields retain their corrected contour boundaries. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Anterior deltoids #7B72E9; secondary Triceps, Upper chest, Core #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Set: Rest bar high; keep elbows underneath. / Brace: Brace the core; keep ribs down. / Press: Press upward; keep wrists over elbows. / Overhead: Finish with the bar centred overhead. / Hold: Straight arms; keep the trunk braced. / Lower: Lower the bar slowly toward shoulders.. Preparation remains [\"Stand with feet planted and the bar on the front shoulders.\", \"Grip just outside shoulder width, brace and press without leg drive.\"]. Bar rises from shoulders as elbows extend, then returns with stance braced. Anterior-deltoid primary and upper-chest/triceps/core secondary fields retain their corrected contour boundaries."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Earlier actual registered all-six normal/slower loop and manual-wrap observations retained for this unchanged motion; no fresh complete mobile run is invented. Bar rises from shoulders as elbows extend, then returns with stance braced. Anterior-deltoid primary and upper-chest/triceps/core secondary fields retain their corrected contour boundaries. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Exact unchanged art retains the earlier registered all-six light/dark visual evidence; current capture artefacts are explicitly excluded. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-19-illustration-polish/overhead-press.json (sha256 ab2cdb0cc72b0b4604b495538aa355497d559ead82ef2c65c66fef9b9af74f7f). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Exact unchanged art retains the earlier registered all-six light/dark visual evidence; current capture artefacts are explicitly excluded. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-19-illustration-polish/overhead-press.json (sha256 ab2cdb0cc72b0b4604b495538aa355497d559ead82ef2c65c66fef9b9af74f7f). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/overhead-press/1.webp",
+      "sha256": "2e6f286cf0c46ec3f0943b77fc50c1b76d5b2307a85bce6ce00ac9749e48ddcc",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 331, "y": 1381 },
+        "plantedFarTrainerMaterialFeature2": { "x": 431, "y": 1350 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 104.69479452198185,
+        "oppositeFixedSupportProjectedFeatureSpan": 76.23647421018367
+      }
+    },
+    {
+      "path": "form-frames/overhead-press/2.webp",
+      "sha256": "2e6f286cf0c46ec3f0943b77fc50c1b76d5b2307a85bce6ce00ac9749e48ddcc",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 331, "y": 1381 },
+        "plantedFarTrainerMaterialFeature2": { "x": 431, "y": 1350 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 104.69479452198185,
+        "oppositeFixedSupportProjectedFeatureSpan": 76.23647421018367
+      }
+    },
+    {
+      "path": "form-frames/overhead-press/3.webp",
+      "sha256": "216e9680f3dd3b7bb0d1991bc3bb77c782d17bcae955772ee2d06a547117a3d4",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 331, "y": 1381 },
+        "plantedFarTrainerMaterialFeature2": { "x": 431, "y": 1350 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 104.69479452198185,
+        "oppositeFixedSupportProjectedFeatureSpan": 76.23647421018367
+      }
+    },
+    {
+      "path": "form-frames/overhead-press/4.webp",
+      "sha256": "b37c0fca9825a423d9539adb63394174b86bc749e9b45656639f02361238bc45",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 331, "y": 1381 },
+        "plantedFarTrainerMaterialFeature2": { "x": 431, "y": 1350 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 104.69479452198185,
+        "oppositeFixedSupportProjectedFeatureSpan": 76.23647421018367
+      }
+    },
+    {
+      "path": "form-frames/overhead-press/5.webp",
+      "sha256": "b37c0fca9825a423d9539adb63394174b86bc749e9b45656639f02361238bc45",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 331, "y": 1381 },
+        "plantedFarTrainerMaterialFeature2": { "x": 431, "y": 1350 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 104.69479452198185,
+        "oppositeFixedSupportProjectedFeatureSpan": 76.23647421018367
+      }
+    },
+    {
+      "path": "form-frames/overhead-press/6.webp",
+      "sha256": "216e9680f3dd3b7bb0d1991bc3bb77c782d17bcae955772ee2d06a547117a3d4",
+      "anchors": {
+        "plantedFarTrainerMaterialFeature1": { "x": 331, "y": 1381 },
+        "plantedFarTrainerMaterialFeature2": { "x": 431, "y": 1350 }
+      },
+      "invariantDimensions": {
+        "plantedFarTrainerProjectedFeatureSpan": 104.69479452198185,
+        "oppositeFixedSupportProjectedFeatureSpan": 76.23647421018367
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-19-illustration-polish/overhead-press.json",
+    "sha256": "ab2cdb0cc72b0b4604b495538aa355497d559ead82ef2c65c66fef9b9af74f7f"
+  },
+  "historicalFindings": [
+    "Replaced the straight secondary-triceps tint boundary in the middle pose with a bounded curved tint edge, preserving native geometry and neutral source shading.",
+    "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": null,
+  "mobileEvidenceReusedForUnchangedArt": true
+}

@@ -1,0 +1,164 @@
+{
+  "exerciseId": "assault-bike",
+  "version": "anatomy-v3-2026-10-20-native-final-v1",
+  "width": 1024,
+  "height": 1024,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex native source and mobile review",
+  "reviewedAt": "2026-10-20T00:07:59.079182+00:00",
+  "reference": {
+    "path": "form-frames/assault-bike/1.webp",
+    "sha256": "2914452590cf2d834ea0c4c8dc25e0cbce5680b8eebf97acd47dcca4a9383a7e"
+  },
+  "cueSha256": "737487eec3e7f81638e8753c748e07f302944d2e31bc2af785e29b045c8f0de6",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Native source, staged and registered390x844 light/dark review completed. All settled images decode with correct source paths/captions, normal cards and visible muscle labels. Normal dark and slower light cycle playback checked; see reviewEvidence. No strict certificate asserted."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/assault-bike/1.webp",
+      "sha256": "2914452590cf2d834ea0c4c8dc25e0cbce5680b8eebf97acd47dcca4a9383a7e",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-20-remaining33-final/1.png",
+        "sha256": "6af85e995ebbc31e9b6938292e3950a310dff44c6b78a185f878b05df966e1ec"
+      },
+      "sourcePose": "A"
+    },
+    {
+      "path": "form-frames/assault-bike/2.webp",
+      "sha256": "2914452590cf2d834ea0c4c8dc25e0cbce5680b8eebf97acd47dcca4a9383a7e",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-20-remaining33-final/2.png",
+        "sha256": "6af85e995ebbc31e9b6938292e3950a310dff44c6b78a185f878b05df966e1ec"
+      },
+      "sourcePose": "A"
+    },
+    {
+      "path": "form-frames/assault-bike/3.webp",
+      "sha256": "b1069eb71aea4f2123ba0b81b5780be8f49da889faeec8f277e8dc81575e2052",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-20-remaining33-final/3.png",
+        "sha256": "019a1a70d5857df6a772ffc974958211c287059f53530b1e9872eca5aec9ae2d"
+      },
+      "sourcePose": "B"
+    },
+    {
+      "path": "form-frames/assault-bike/4.webp",
+      "sha256": "b1069eb71aea4f2123ba0b81b5780be8f49da889faeec8f277e8dc81575e2052",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-20-remaining33-final/4.png",
+        "sha256": "019a1a70d5857df6a772ffc974958211c287059f53530b1e9872eca5aec9ae2d"
+      },
+      "sourcePose": "B"
+    },
+    {
+      "path": "form-frames/assault-bike/5.webp",
+      "sha256": "2914452590cf2d834ea0c4c8dc25e0cbce5680b8eebf97acd47dcca4a9383a7e",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-20-remaining33-final/5.png",
+        "sha256": "6af85e995ebbc31e9b6938292e3950a310dff44c6b78a185f878b05df966e1ec"
+      },
+      "sourcePose": "A"
+    },
+    {
+      "path": "form-frames/assault-bike/6.webp",
+      "sha256": "2914452590cf2d834ea0c4c8dc25e0cbce5680b8eebf97acd47dcca4a9383a7e",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/assault-bike/2026-10-20-remaining33-final/6.png",
+        "sha256": "6af85e995ebbc31e9b6938292e3950a310dff44c6b78a185f878b05df966e1ec"
+      },
+      "sourcePose": "A"
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "Fix the remaining illustration issues in those33 sets too, same model and colours, no shorts, and get it all merged. Stop asking for approval.",
+    "context": "Authorization for correction, local registration, verification and normal merge, not human certification of these pixels or strict geometry."
+  },
+  "findings": [
+    "Original rider and opposite arm/leg phases retained. Native grey fan, base, foot rests and two fixed lever pivots replace mirrored drifting apparatus; connected lever channels meet the same pivots in both phases. No anatomy transforms.",
+    "Discrete source poses and small illustrative contour/projection differences remain qualitative. Historical findings are preserved separately; no calibrated3D or strict certificate is asserted."
+  ],
+  "resolvedIllustrationIssues": [
+    "Original rider and opposite arm/leg phases retained. Native grey fan, base, foot rests and two fixed lever pivots replace mirrored drifting apparatus; connected lever channels meet the same pivots in both phases. No anatomy transforms."
+  ],
+  "priorFindings": {
+    "record": "docs/exercise-art/releases/2026-10-19-illustration-polish/assault-bike.json",
+    "sha256": "a56c0256ab543270f6dcd7c1a2e0095ef347ada0987da39f357a38ef8c52ea69",
+    "hashScope": "Exact Git blob bytes, independent of checkout line endings.",
+    "disposition": "Historical source findings retained verbatim in the prior release and portable archive; corrected items are identified separately."
+  },
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/assault-bike/2026-10-20-remaining33-final",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/assault-bike/2026-10-20-remaining33-final/assault-bike-native-correction.zip",
+      "sha256": "15b5fcc75118f17b0e64cdb166397014f427007cd923899efb47f5c85e89fa57",
+      "bytes": 15249607
+    },
+    "priorRelease": "docs/exercise-art/releases/2026-10-19-illustration-polish/assault-bike.json",
+    "method": "Original rider and opposite arm/leg phases retained. Native grey fan, base, foot rests and two fixed lever pivots replace mirrored drifting apparatus; connected lever channels meet the same pivots in both phases. No anatomy transforms.",
+    "reproductionScope": "Independent byte-exact re-execution of frozen native editable composition and exports, not independent anatomical re-authoring.",
+    "anatomicalTransforms": []
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-20-remaining33-final/review.json",
+  "physicalPoses": 2,
+  "sourcePoseOrder": ["A", "A", "B", "B", "A", "A"],
+  "playback": "cycle"
+}

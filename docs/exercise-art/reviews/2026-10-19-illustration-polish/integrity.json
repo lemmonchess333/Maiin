@@ -1,0 +1,26 @@
+{
+  "baseline": "c9a3ec3aad3229ef61c58bc21e4a325b4f40c751",
+  "guideCount": 152,
+  "decodedFrames": 912,
+  "changedFrames": 48,
+  "unchangedFrames": 864,
+  "changedCards": [
+    "assault-bike",
+    "barbell-curl",
+    "goblet-squat",
+    "side-plank",
+    "squat",
+    "stairmaster",
+    "swimming",
+    "turkish-get-up"
+  ],
+  "unchangedCards": 144,
+  "historical33CurrentOwnerRecordsPreserved": true,
+  "canonicalFA56Unchanged": true,
+  "catalogueCuesAndPlaybackCodeUnchanged": true,
+  "manualChangedGuideObservations": 154,
+  "allLibraryThumbnailThemeObservations": 304,
+  "realThumbnailSizes": [40, 48, 64],
+  "css": "Token-derived neutral0.65px edge only in light; dark filter none. Native drawing palette/alpha unaffected by CSS.",
+  "scope": "Owner-release status retained:119 strict approved,33 owner-with-findings. No new strict certificate."
+}

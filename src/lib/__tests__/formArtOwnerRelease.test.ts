@@ -9,40 +9,7 @@ import {
   validateArtworkReview,
 } from "../formArtReview";
 
-const ids = [
-  "calf-raise",
-  "standing-calf-raise",
-  "skull-crushers",
-  "dips",
-  "barbell-row",
-  "bench-press",
-  "overhead-press",
-  "rope-tricep-pushdown",
-  "goblet-squat",
-  "squat",
-  "barbell-curl",
-  "bike",
-  "t-bar-row",
-  "face-pulls",
-  "overhead-extension",
-  "single-leg-calf-raise",
-  "side-plank",
-  "leg-extension",
-  "pendlay-row",
-  "rowing-machine",
-  "elliptical",
-  "spin-bike",
-  "seated-row",
-  "front-squat",
-  "straight-arm-pulldown",
-  "handstand-push-ups",
-  "leg-press",
-  "incline-db-curl",
-  "turkish-get-up",
-  "assault-bike",
-  "swimming",
-  "stairmaster",
-];
+const ids = ["swimming", "turkish-get-up"];
 const sha = (bytes: string | Buffer) =>
   createHash("sha256").update(bytes).digest("hex");
 /** A set's release record, and what it must say about the set as it ships:
@@ -72,7 +39,7 @@ describe("owner-authorized artwork activation", () => {
      I/O, and raising it further would be treating the symptom. If this
      starts failing regularly rather than occasionally, the thing to
      look at is suite concurrency, not this number. */
-  it("ships exactly thirty-two owner-authorized guides bound to source, delivered assets and cues", () => {
+  it("ships the two remaining owner-authorized guides bound to source, delivered assets and cues", () => {
     expect(
       Object.keys(FORM_ARTWORK)
         .filter(
@@ -122,8 +89,8 @@ describe("owner-authorized artwork activation", () => {
        barbell-shrug, which has since been re-released under strict
        review: its record failed the owner contract before any change, so
        every case below passed without testing anything. */
-    const { review, expected } = evidence("goblet-squat");
-    expect(FORM_ARTWORK["goblet-squat"].status).toBe(
+    const { review, expected } = evidence("turkish-get-up");
+    expect(FORM_ARTWORK["turkish-get-up"].status).toBe(
       "owner-released-with-findings"
     );
     expect(validateOwnerArtworkRelease(review, expected)).toEqual([]);

@@ -1,0 +1,171 @@
+{
+  "exerciseId": "t-bar-row",
+  "version": "anatomy-v3-2026-10-20-strict-native-correction-v1",
+  "width": 918,
+  "height": 1036,
+  "reference": {
+    "path": "form-frames/t-bar-row/1.webp",
+    "sha256": "58b885dccced01e25ca695724629d027745374e4a7138a94ff9bb4d503306340"
+  },
+  "cueSha256": "2928161d4adcb9829744c193e75aa84c9836d16a8bd373ba5e2a5dfc3b0f0493",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:51.368417+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 1px; independent invariant dimensions maximum relative drift 0.006109546. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. Replace only the load with one modest grey plate, collar and closed sleeve, using the existing native skull-crusher equipment renderer. Both original complete athlete poses and grips remain unchanged."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Both grips remain on the original handle, feet planted and hinge braced. Load pivots about the original floor mount; return/hold slots reuse two real endpoints. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One modest native-rendered cast disc, collar, steel sleeve and closed end in both poses. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both grips remain on the original handle, feet planted and hinge braced. Load pivots about the original floor mount; return/hold slots reuse two real endpoints. Actual named native supports are measured in all six frames: frontApex, rightCorner. Maximum axis drift 1px. Dimensions: leftSlopingMountPlateEdge, rightSlopingMountPlateEdge; max 0.61095%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Both grips remain on the original handle, feet planted and hinge braced. Load pivots about the original floor mount; return/hold slots reuse two real endpoints. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Mid Back #7B72E9; secondary Lats, Rhomboids, Biceps #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Stretch: Let your arms reach full extension. / Hinge: Keep your back flat and hips still. / Top: Draw the handle toward your lower chest. / Squeeze: Keep elbows back and both grips closed. / Return: Return to straight arms without rounding. / Reset: Stay hinged; keep both feet planted.. Preparation remains [\"Straddle the loaded bar or landmine and grip the handles at your shins.\", \"Hinge forward to about 45\\u00b0, chest up, back flat, core braced.\"]. Both grips remain on the original handle, feet planted and hinge braced. Load pivots about the original floor mount; return/hold slots reuse two real endpoints."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Both grips remain on the original handle, feet planted and hinge braced. Load pivots about the original floor mount; return/hold slots reuse two real endpoints. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-15/t-bar-row.json (sha256 31ac0588db8e3717e5fde743897047948fcc296b73ae6e705723a6c34ea77e62). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-15/t-bar-row.json (sha256 31ac0588db8e3717e5fde743897047948fcc296b73ae6e705723a6c34ea77e62). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/t-bar-row/1.webp",
+      "sha256": "58b885dccced01e25ca695724629d027745374e4a7138a94ff9bb4d503306340",
+      "anchors": {
+        "frontApex": { "x": 73, "y": 886 },
+        "rightCorner": { "x": 152, "y": 871 }
+      },
+      "invariantDimensions": {
+        "leftSlopingMountPlateEdge": 53.50934497823721,
+        "rightSlopingMountPlateEdge": 80.4114419718985
+      }
+    },
+    {
+      "path": "form-frames/t-bar-row/2.webp",
+      "sha256": "58b885dccced01e25ca695724629d027745374e4a7138a94ff9bb4d503306340",
+      "anchors": {
+        "frontApex": { "x": 73, "y": 886 },
+        "rightCorner": { "x": 152, "y": 871 }
+      },
+      "invariantDimensions": {
+        "leftSlopingMountPlateEdge": 53.50934497823721,
+        "rightSlopingMountPlateEdge": 80.4114419718985
+      }
+    },
+    {
+      "path": "form-frames/t-bar-row/3.webp",
+      "sha256": "bb76be9f97caee89138d583af15e4540b8986c02b0b138f54b20d41754bf7145",
+      "anchors": {
+        "frontApex": { "x": 73.5, "y": 886 },
+        "rightCorner": { "x": 153, "y": 871 }
+      },
+      "invariantDimensions": {
+        "leftSlopingMountPlateEdge": 53.25645500782041,
+        "rightSlopingMountPlateEdge": 80.9027193609708
+      }
+    },
+    {
+      "path": "form-frames/t-bar-row/4.webp",
+      "sha256": "bb76be9f97caee89138d583af15e4540b8986c02b0b138f54b20d41754bf7145",
+      "anchors": {
+        "frontApex": { "x": 73.5, "y": 886 },
+        "rightCorner": { "x": 153, "y": 871 }
+      },
+      "invariantDimensions": {
+        "leftSlopingMountPlateEdge": 53.25645500782041,
+        "rightSlopingMountPlateEdge": 80.9027193609708
+      }
+    },
+    {
+      "path": "form-frames/t-bar-row/5.webp",
+      "sha256": "58b885dccced01e25ca695724629d027745374e4a7138a94ff9bb4d503306340",
+      "anchors": {
+        "frontApex": { "x": 73, "y": 886 },
+        "rightCorner": { "x": 152, "y": 871 }
+      },
+      "invariantDimensions": {
+        "leftSlopingMountPlateEdge": 53.50934497823721,
+        "rightSlopingMountPlateEdge": 80.4114419718985
+      }
+    },
+    {
+      "path": "form-frames/t-bar-row/6.webp",
+      "sha256": "58b885dccced01e25ca695724629d027745374e4a7138a94ff9bb4d503306340",
+      "anchors": {
+        "frontApex": { "x": 73, "y": 886 },
+        "rightCorner": { "x": 152, "y": 871 }
+      },
+      "invariantDimensions": {
+        "leftSlopingMountPlateEdge": 53.50934497823721,
+        "rightSlopingMountPlateEdge": 80.4114419718985
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Actual floor-mount plate external silhouette maxRGB>30 within original source ROI60,1080,200,1120. Corners are observed material outline features, not ROI/canvas coordinates.",
+    "maxAnchorAxisDriftPx": 1,
+    "maxInvariantRelativeDrift": 0.006109545818665962,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-15/t-bar-row.json",
+    "sha256": "31ac0588db8e3717e5fde743897047948fcc296b73ae6e705723a6c34ea77e62"
+  },
+  "historicalFindings": [
+    "Both retained original endpoints show two consistent grey plates instead of the later one-plate default. This departure is accepted explicitly under existing slight-requirements relaxation; no one/two-plate mixing or removal is supplied.",
+    "Actual fixed floor-base measurements pass within1px/1%, but articulated yoke pin/projected rotating shaft geometry is not calibrated3D invariance and is not certified.",
+    "Two physical start/top drawings repeat across six paths; illustrated intermediate/continuous trajectory/six unique poses are not supplied.",
+    "Exact original master prompt was unavailable in retained files. Exact successful master bytes, framing record generation31e3e68c, plan, peak prompt and original history are preserved; no prompt text is invented."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/t-bar-row.json",
+    "sha256": "436fb0423e693538d5402d0da976c6bfa9c517b3f09d25a5553d43475d1c9fef"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false,
+  "nativeSourceArchive": {
+    "path": "docs/exercise-art/sources/t-bar-row/2026-10-20-strict-review/native-source.zip",
+    "sha256": "c49f611fa4bc517f329f1211aaeb447a2dee81364308297695063b9083f42dd7",
+    "bytes": 9049316,
+    "scope": "Replace only the load with one modest grey plate, collar and closed sleeve, using the existing native skull-crusher equipment renderer. Both original complete athlete poses and grips remain unchanged.",
+    "independentReproductionExact": true
+  }
+}

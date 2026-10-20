@@ -1,0 +1,773 @@
+{
+  "schemaVersion": 1,
+  "scope": "Measured completed-run evidence, not failure disposition or release approval",
+  "folder": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining19-execution-20261015\\checks\\strict33-baseline-a97944f5-20261020",
+  "result": {
+    "startedAt": "2026-10-20T08:51:54.791807+00:00",
+    "finishedAt": "2026-10-20T09:02:57.544869+00:00",
+    "normalCommand": "npm run verify",
+    "exitCode": 1,
+    "durationSeconds": 660.7029999999795,
+    "headBefore": "a97944f5d8a6350d114e18bba2a18bb1d243ae35",
+    "headAfter": "a97944f5d8a6350d114e18bba2a18bb1d243ae35",
+    "headUnchanged": true,
+    "statusBefore": "",
+    "statusAfterTestBeforeSnapshotRestore": " M src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap\n",
+    "statusAfter": "",
+    "statusRestored": true,
+    "snapshotRestores": [
+      {
+        "path": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+        "originalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "testOutputSha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "restoredExact": true
+      }
+    ],
+    "inputCount": 2757,
+    "changedInputsAfterRestoration": [],
+    "allInputsUnchanged": true,
+    "log": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining19-execution-20261015\\checks\\strict33-baseline-a97944f5-20261020\\verify.log",
+    "logSha256": "4ddddd42d156942f69122ea5dba8bfdbc1e1599a9615a3bfb088c0daf737c89e",
+    "fullVerificationPassed": false
+  },
+  "sourceProofHashes": {
+    "result.json": "3311fb48194d62b6f84569df818e7b079308bba42685ac116e01cc4c6b58ce75",
+    "verify.log": "4ddddd42d156942f69122ea5dba8bfdbc1e1599a9615a3bfb088c0daf737c89e",
+    "inputs-before.json": "e93dd743f5a6933cd615deddefb54c33bd6487f2f569b98a3a0363cd2dbb1417",
+    "inputs-after.json": "e93dd743f5a6933cd615deddefb54c33bd6487f2f569b98a3a0363cd2dbb1417",
+    "start.json": "7f0ee0f4a5bed766ef99dd2b8df1165679ff143ff2eae24b3b1a609e7517677b"
+  },
+  "snapshotProofHashes": {
+    "snapshot-before-0.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-1.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-2.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-3.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-4.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-5.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-6.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-7.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-8.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-9.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-10.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-11.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-12.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-13.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-14.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-15.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-16.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-17.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-18.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-19.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-20.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-21.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-22.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-23.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-24.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-25.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-26.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-27.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-28.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-29.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-30.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-31.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-32.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-33.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-34.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-35.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-36.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-37.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-38.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-39.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-40.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-41.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-42.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-test-output-42.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f"
+  },
+  "capturedSnapshots": [
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-0.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-1.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-2.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-3.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/checks/branch-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-4.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/checks/branch-planSweep-before.snap",
+      "capturedFile": "snapshot-before-5.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-6.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-7.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+      "capturedFile": "snapshot-before-8.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+      "capturedFile": "snapshot-before-9.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-10.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+      "capturedFile": "snapshot-before-11.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-12.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+      "capturedFile": "snapshot-before-13.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+      "capturedFile": "snapshot-before-14.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+      "capturedFile": "snapshot-before-15.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+      "capturedFile": "snapshot-before-16.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+      "capturedFile": "snapshot-before-17.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-18.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-19.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+      "capturedFile": "snapshot-before-20.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+      "capturedFile": "snapshot-before-21.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-22.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+      "capturedFile": "snapshot-before-23.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-24.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+      "capturedFile": "snapshot-before-25.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+      "capturedFile": "snapshot-before-26.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+      "capturedFile": "snapshot-before-27.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+      "capturedFile": "snapshot-before-28.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+      "capturedFile": "snapshot-before-29.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-30.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-31.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+      "capturedFile": "snapshot-before-32.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+      "capturedFile": "snapshot-before-33.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-34.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+      "capturedFile": "snapshot-before-35.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-36.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+      "capturedFile": "snapshot-before-37.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+      "capturedFile": "snapshot-before-38.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+      "capturedFile": "snapshot-before-39.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+      "capturedFile": "snapshot-before-40.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+      "capturedFile": "snapshot-before-41.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+      "capturedFile": "snapshot-before-42.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": true
+    }
+  ],
+  "inputCount": 2757,
+  "inputBytesPreserved": true,
+  "overallGreen": false,
+  "diagnosticHashMethod": "Exact UTF8 raw byte range after last grouped FAIL header and before separator, trimming blank padding only; header, padding and separator also separately hash-pinned. No diagnostic is borrowed from a later unrelated failure.",
+  "allNormalVerifyStagesPresent": true,
+  "normalStages": [
+    {
+      "name": "lint",
+      "proof": {
+        "startLine": 6,
+        "endLineInclusive": 6,
+        "byteStart": 179,
+        "byteEndExclusive": 199,
+        "rawSha256": "a4f8b2c8d32b2439915ecf707c8d49fd71ce6fd6760ee2d53a796f1982f9c4ea",
+        "byteLength": 20
+      }
+    },
+    {
+      "name": "check:form-art",
+      "proof": {
+        "startLine": 10,
+        "endLineInclusive": 10,
+        "byteStart": 229,
+        "byteEndExclusive": 259,
+        "rawSha256": "ba7411a844c779a0015926b5c9fd8bf0a41b02dff43a0f199ba0726701c8e78e",
+        "byteLength": 30
+      }
+    },
+    {
+      "name": "check:form-drafts",
+      "proof": {
+        "startLine": 23,
+        "endLineInclusive": 23,
+        "byteStart": 474,
+        "byteEndExclusive": 507,
+        "rawSha256": "bad0a19101177e5e2d4acd32919d491f1e36c5d8bacfc6087d049463aab2ce17",
+        "byteLength": 33
+      }
+    },
+    {
+      "name": "check:cycles",
+      "proof": {
+        "startLine": 35,
+        "endLineInclusive": 35,
+        "byteStart": 699,
+        "byteEndExclusive": 727,
+        "rawSha256": "56262e88261c728e32576536d83f3052f363020ecf2a01b320e6d2d0adbedc98",
+        "byteLength": 28
+      }
+    },
+    {
+      "name": "build",
+      "proof": {
+        "startLine": 44,
+        "endLineInclusive": 44,
+        "byteStart": 896,
+        "byteEndExclusive": 917,
+        "rawSha256": "deb23f2fda5594fe5e10eb8cf5665853fe255092698f42d7e7ca1172206d4e1f",
+        "byteLength": 21
+      }
+    },
+    {
+      "name": "check:dist-size",
+      "proof": {
+        "startLine": 556,
+        "endLineInclusive": 556,
+        "byteStart": 54276,
+        "byteEndExclusive": 54307,
+        "rawSha256": "4dd3ee7775ae72deb97c38996d78fe403165c1a6ec767a9b9e3654a200148256",
+        "byteLength": 31
+      }
+    },
+    {
+      "name": "test",
+      "proof": {
+        "startLine": 566,
+        "endLineInclusive": 566,
+        "byteStart": 54619,
+        "byteEndExclusive": 54639,
+        "rawSha256": "d6b835dac15e4af35a81a747c41de8d6cd16b9c84642bafc5ec35c7015702dc8",
+        "byteLength": 20
+      }
+    }
+  ],
+  "testFiles": {
+    "failed": 4,
+    "passed": 1202,
+    "skipped": 10,
+    "total": 1216,
+    "verbatim": "Test Files  4 failed | 1202 passed | 10 skipped (1216)",
+    "proof": {
+      "startLine": 641,
+      "endLineInclusive": 641,
+      "byteStart": 59019,
+      "byteEndExclusive": 59075,
+      "rawSha256": "6e9abb7d69c0368d4bf9789be34cee69b9cb2b2c38fea25c71d1caeb3c9faedd",
+      "byteLength": 56
+    }
+  },
+  "tests": {
+    "failed": 2,
+    "passed": 13948,
+    "skipped": 418,
+    "total": 14368,
+    "verbatim": "Tests  2 failed | 13948 passed | 418 skipped (14368)",
+    "proof": {
+      "startLine": 642,
+      "endLineInclusive": 642,
+      "byteStart": 59075,
+      "byteEndExclusive": 59134,
+      "rawSha256": "5cb149037078e904b7770c34a390ff50319cedddf1f0d86034536c8763b62634",
+      "byteLength": 59
+    }
+  },
+  "unitSummaryComplete": true,
+  "failureHeaderCount": 4,
+  "testFailureHeaders": 2,
+  "suiteFailureHeaders": 2,
+  "diagnosticGroupCount": 4,
+  "sharedDiagnosticGroups": 0,
+  "failureAccountingComplete": true,
+  "unhandledErrorMarkers": [],
+  "indexComplete": true,
+  "groups": [
+    {
+      "id": "diagnostic-group-1",
+      "headerCount": 1,
+      "identities": ["root-node|scripts/write-functions-env.test.ts|[suite]"],
+      "headersAndDiagnostic": {
+        "startLine": 603,
+        "endLineInclusive": 604,
+        "byteStart": 57089,
+        "byteEndExclusive": 57225,
+        "rawSha256": "908fb6ccd481f5a4c45f51bcbae30d88ef97750732b895a54b23e878de84f676",
+        "byteLength": 136
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 604,
+        "endLineInclusive": 604,
+        "byteStart": 57184,
+        "byteEndExclusive": 57225,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41
+      },
+      "diagnostic": {
+        "startLine": 604,
+        "endLineInclusive": 604,
+        "byteStart": 57184,
+        "byteEndExclusive": 57225,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": ["SyntaxError: Invalid or unexpected token"]
+      },
+      "separator": {
+        "startLine": 605,
+        "endLineInclusive": 605,
+        "byteStart": 57225,
+        "byteEndExclusive": 57306,
+        "rawSha256": "4080c3337f677d02cda2f2efac5ec756692cdce8408c5bb6c45afb1ad022630c",
+        "byteLength": 81,
+        "reportedOrdinal": 1,
+        "reportedTotal": 4
+      }
+    },
+    {
+      "id": "diagnostic-group-2",
+      "headerCount": 1,
+      "identities": ["root-node|scripts/ios/asc-signing.test.ts|[suite]"],
+      "headersAndDiagnostic": {
+        "startLine": 607,
+        "endLineInclusive": 608,
+        "byteStart": 57307,
+        "byteEndExclusive": 57435,
+        "rawSha256": "102e6df0abebb61e0eb4bbec996e397b962dba23442ab197a7aa12bbafbf17a0",
+        "byteLength": 128
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 608,
+        "endLineInclusive": 608,
+        "byteStart": 57394,
+        "byteEndExclusive": 57435,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41
+      },
+      "diagnostic": {
+        "startLine": 608,
+        "endLineInclusive": 608,
+        "byteStart": 57394,
+        "byteEndExclusive": 57435,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": ["SyntaxError: Invalid or unexpected token"]
+      },
+      "separator": {
+        "startLine": 609,
+        "endLineInclusive": 609,
+        "byteStart": 57435,
+        "byteEndExclusive": 57516,
+        "rawSha256": "c3cbf01e5c2c2fe47de5a6deaba9bfbb1c6970611c8dae468a77baaa5a91f5df",
+        "byteLength": 81,
+        "reportedOrdinal": 2,
+        "reportedTotal": 4
+      }
+    },
+    {
+      "id": "diagnostic-group-3",
+      "headerCount": 1,
+      "identities": [
+        "dom|src/components/__tests__/FoodCameraModal.photoLock.test.tsx|FoodCameraModal — photo scanning not on the tier > names the offer the way the Pro line under the composer does once the trial is used"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 614,
+        "endLineInclusive": 624,
+        "byteStart": 57578,
+        "byteEndExclusive": 58247,
+        "rawSha256": "50684f359ce7e59c2a3ecd62c7c530a41992f15f36a3cd0ce730bead67bcdf1a",
+        "byteLength": 669
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 615,
+        "endLineInclusive": 624,
+        "byteStart": 57790,
+        "byteEndExclusive": 58247,
+        "rawSha256": "7501d6b6d54c29aefad8dcf4a1e5f0dfbafb3495c58d35162e8ef3fc54080a0d",
+        "byteLength": 457
+      },
+      "diagnostic": {
+        "startLine": 615,
+        "endLineInclusive": 623,
+        "byteStart": 57790,
+        "byteEndExclusive": 58246,
+        "rawSha256": "2990d90ace885773c296209e5cf3a1cb860f218eeb30b7a72beb2dc2d6d21c52",
+        "byteLength": 456,
+        "firstOwnLine": "Error: Hook timed out in 10000ms.",
+        "firstThreeLines": [
+          "Error: Hook timed out in 10000ms.",
+          "If this is a long-running hook, pass a timeout value as the last argument or configure it globally with \"hookTimeout\".",
+          " ❯ src/test/setup.ts:41:3"
+        ]
+      },
+      "separator": {
+        "startLine": 625,
+        "endLineInclusive": 625,
+        "byteStart": 58247,
+        "byteEndExclusive": 58328,
+        "rawSha256": "ab48184c5db3b81815cf4c2a21b0840a8955e99b978b4570475f0a4ff2524e23",
+        "byteLength": 81,
+        "reportedOrdinal": 3,
+        "reportedTotal": 4
+      }
+    },
+    {
+      "id": "diagnostic-group-4",
+      "headerCount": 1,
+      "identities": [
+        "node|src/lib/__tests__/noDisabledTests.test.ts|no test is switched off outright > finds no unconditional skip in src/ or functions/"
+      ],
+      "headersAndDiagnostic": {
+        "startLine": 627,
+        "endLineInclusive": 637,
+        "byteStart": 58329,
+        "byteEndExclusive": 58936,
+        "rawSha256": "b67faaf63063abdace6945638117759f09b313950acdb5109de6b459d5d9f763",
+        "byteLength": 607
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 628,
+        "endLineInclusive": 637,
+        "byteStart": 58472,
+        "byteEndExclusive": 58936,
+        "rawSha256": "28094b5121aca76cb9030e81ddca1a84877eb136d531a7a994a67d46e81b68b3",
+        "byteLength": 464
+      },
+      "diagnostic": {
+        "startLine": 628,
+        "endLineInclusive": 636,
+        "byteStart": 58472,
+        "byteEndExclusive": 58935,
+        "rawSha256": "661366c2c55a6f5d11ec18de3ca7ada9f2db570e7d3131479bfd87951fbfad3e",
+        "byteLength": 463,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/lib/__tests__/noDisabledTests.test.ts:65:3"
+        ]
+      },
+      "separator": {
+        "startLine": 638,
+        "endLineInclusive": 638,
+        "byteStart": 58936,
+        "byteEndExclusive": 59017,
+        "rawSha256": "63e6f74fd767f12ce38c79573c9e353d904c7bc205e76ba8646fca31ca8551d0",
+        "byteLength": 81,
+        "reportedOrdinal": 4,
+        "reportedTotal": 4
+      }
+    }
+  ],
+  "failures": [
+    {
+      "canonicalId": "root-node|scripts/write-functions-env.test.ts|[suite]",
+      "project": "root-node",
+      "file": "scripts/write-functions-env.test.ts",
+      "kind": "suite",
+      "case": null,
+      "headerLine": 603,
+      "headerVerbatim": " FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]",
+      "header": {
+        "startLine": 603,
+        "endLineInclusive": 603,
+        "byteStart": 57089,
+        "byteEndExclusive": 57184,
+        "rawSha256": "106d0a219ee689c698953dc2b9e6acf09062b42c7f63335d24834d628db3254b",
+        "byteLength": 95
+      },
+      "diagnosticGroupId": "diagnostic-group-1",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 604,
+        "endLineInclusive": 604,
+        "byteStart": 57184,
+        "byteEndExclusive": 57225,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": ["SyntaxError: Invalid or unexpected token"]
+      }
+    },
+    {
+      "canonicalId": "root-node|scripts/ios/asc-signing.test.ts|[suite]",
+      "project": "root-node",
+      "file": "scripts/ios/asc-signing.test.ts",
+      "kind": "suite",
+      "case": null,
+      "headerLine": 607,
+      "headerVerbatim": " FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]",
+      "header": {
+        "startLine": 607,
+        "endLineInclusive": 607,
+        "byteStart": 57307,
+        "byteEndExclusive": 57394,
+        "rawSha256": "e0a80464cefd95fa376b838268c66668b45caacf35a16a4ac1f7a17466737263",
+        "byteLength": 87
+      },
+      "diagnosticGroupId": "diagnostic-group-2",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 608,
+        "endLineInclusive": 608,
+        "byteStart": 57394,
+        "byteEndExclusive": 57435,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": ["SyntaxError: Invalid or unexpected token"]
+      }
+    },
+    {
+      "canonicalId": "dom|src/components/__tests__/FoodCameraModal.photoLock.test.tsx|FoodCameraModal — photo scanning not on the tier > names the offer the way the Pro line under the composer does once the trial is used",
+      "project": "dom",
+      "file": "src/components/__tests__/FoodCameraModal.photoLock.test.tsx",
+      "kind": "test",
+      "case": "FoodCameraModal — photo scanning not on the tier > names the offer the way the Pro line under the composer does once the trial is used",
+      "headerLine": 614,
+      "headerVerbatim": " FAIL  |dom| src/components/__tests__/FoodCameraModal.photoLock.test.tsx > FoodCameraModal — photo scanning not on the tier > names the offer the way the Pro line under the composer does once the trial is used",
+      "header": {
+        "startLine": 614,
+        "endLineInclusive": 614,
+        "byteStart": 57578,
+        "byteEndExclusive": 57790,
+        "rawSha256": "88bf9c5e01fdac6866262882daaa66cab379b492200a1989b613fb5458ab195e",
+        "byteLength": 212
+      },
+      "diagnosticGroupId": "diagnostic-group-3",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 615,
+        "endLineInclusive": 623,
+        "byteStart": 57790,
+        "byteEndExclusive": 58246,
+        "rawSha256": "2990d90ace885773c296209e5cf3a1cb860f218eeb30b7a72beb2dc2d6d21c52",
+        "byteLength": 456,
+        "firstOwnLine": "Error: Hook timed out in 10000ms.",
+        "firstThreeLines": [
+          "Error: Hook timed out in 10000ms.",
+          "If this is a long-running hook, pass a timeout value as the last argument or configure it globally with \"hookTimeout\".",
+          " ❯ src/test/setup.ts:41:3"
+        ]
+      }
+    },
+    {
+      "canonicalId": "node|src/lib/__tests__/noDisabledTests.test.ts|no test is switched off outright > finds no unconditional skip in src/ or functions/",
+      "project": "node",
+      "file": "src/lib/__tests__/noDisabledTests.test.ts",
+      "kind": "test",
+      "case": "no test is switched off outright > finds no unconditional skip in src/ or functions/",
+      "headerLine": 627,
+      "headerVerbatim": " FAIL  |node| src/lib/__tests__/noDisabledTests.test.ts > no test is switched off outright > finds no unconditional skip in src/ or functions/",
+      "header": {
+        "startLine": 627,
+        "endLineInclusive": 627,
+        "byteStart": 58329,
+        "byteEndExclusive": 58472,
+        "rawSha256": "2f54ab7134e1e7dda5b8a5e73539e51f24ecd153022f888a0014f01db1042e8c",
+        "byteLength": 143
+      },
+      "diagnosticGroupId": "diagnostic-group-4",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 628,
+        "endLineInclusive": 636,
+        "byteStart": 58472,
+        "byteEndExclusive": 58935,
+        "rawSha256": "661366c2c55a6f5d11ec18de3ca7ada9f2db570e7d3131479bfd87951fbfad3e",
+        "byteLength": 463,
+        "firstOwnLine": "Error: Test timed out in 5000ms.",
+        "firstThreeLines": [
+          "Error: Test timed out in 5000ms.",
+          "If this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".",
+          " ❯ src/lib/__tests__/noDisabledTests.test.ts:65:3"
+        ]
+      }
+    }
+  ]
+}

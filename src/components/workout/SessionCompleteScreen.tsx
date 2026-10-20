@@ -392,7 +392,7 @@ export default function SessionCompleteScreen({
                 draggable={false}
                 decoding="async"
                 data-lead-drawing={leadArt.exerciseName}
-                className="h-32 w-28 shrink-0 object-contain"
+                className="exercise-drawing h-32 w-28 shrink-0 object-contain"
               />
             ) : (
               <MiniMuscleFigure

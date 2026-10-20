@@ -39,6 +39,8 @@ export interface FormBeat {
  *  rather than the rig's own figure — the key that describes THAT art. */
 export interface FormPlacard {
   beats: readonly FormBeat[];
+  /** A lesson that ends at a different position stops instead of jumping back. */
+  playback?: "cycle" | "sequence";
   /** Preparation before the depicted movement cycle, kept separate from cues. */
   authoredSetupInstructions?: readonly string[];
   /** Advice specific to the explicitly named variation in this artwork. */
@@ -141,6 +143,13 @@ export function getFormSetup(exerciseId: string): readonly string[] | null {
   return getFormBeats(exerciseId)
     ? (FORM_BEATS[exerciseId]?.authoredSetupInstructions ?? null)
     : null;
+}
+
+/** Ordinary reps cycle; an ascent-only lesson stops on its final drawing. */
+export function getFormPlayback(exerciseId: string): "cycle" | "sequence" {
+  return getFormBeats(exerciseId)
+    ? (FORM_BEATS[exerciseId]?.playback ?? "cycle")
+    : "cycle";
 }
 
 /** Variation advice is active only with its exact released six-frame guide. */

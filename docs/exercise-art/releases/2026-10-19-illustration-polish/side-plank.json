@@ -1,0 +1,164 @@
+{
+  "exerciseId": "side-plank",
+  "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+  "width": 1480,
+  "height": 696,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex native illustration polish review",
+  "reviewedAt": "2026-10-19T19:53:57.995198+00:00",
+  "reference": {
+    "path": "form-frames/side-plank/3.webp",
+    "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032"
+  },
+  "cueSha256": "8798276e69dd97eb3b30b42cc6441e9c02e26a123dee04a0d02fe6d0a3b69e6d",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged. Actual registered component checks are recorded separately; no strict certificate asserted."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/side-plank/1.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/side-plank/2026-10-19-illustration-polish/1.png",
+        "sha256": "c287fda2095940e6023aaabac153432da29591a626ee15ba18c2f5294e1448da"
+      },
+      "sourcePose": 1
+    },
+    {
+      "path": "form-frames/side-plank/2.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/side-plank/2026-10-19-illustration-polish/2.png",
+        "sha256": "c287fda2095940e6023aaabac153432da29591a626ee15ba18c2f5294e1448da"
+      },
+      "sourcePose": 1
+    },
+    {
+      "path": "form-frames/side-plank/3.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/side-plank/2026-10-19-illustration-polish/3.png",
+        "sha256": "c287fda2095940e6023aaabac153432da29591a626ee15ba18c2f5294e1448da"
+      },
+      "sourcePose": 1
+    },
+    {
+      "path": "form-frames/side-plank/4.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/side-plank/2026-10-19-illustration-polish/4.png",
+        "sha256": "c287fda2095940e6023aaabac153432da29591a626ee15ba18c2f5294e1448da"
+      },
+      "sourcePose": 1
+    },
+    {
+      "path": "form-frames/side-plank/5.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/side-plank/2026-10-19-illustration-polish/5.png",
+        "sha256": "c287fda2095940e6023aaabac153432da29591a626ee15ba18c2f5294e1448da"
+      },
+      "sourcePose": 1
+    },
+    {
+      "path": "form-frames/side-plank/6.webp",
+      "sha256": "a7c2c9e47b4021896918a7709a1026bf6833bc1a7e6cba5de026c3b824938032",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/side-plank/2026-10-19-illustration-polish/6.png",
+        "sha256": "c287fda2095940e6023aaabac153432da29591a626ee15ba18c2f5294e1448da"
+      },
+      "sourcePose": 1
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "What minor illustration issues are still left? Fix those too, same model and colours, no shorts, and get them merged. Stop asking for approval.",
+    "context": "Explicit authority for scoped native colour/equipment/cutout corrections, local registration, verification and normal merge. Not strict certification."
+  },
+  "findings": [
+    "Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged.",
+    "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+  ],
+  "resolvedIllustrationIssues": [
+    "Removed the detached 659-pixel floor-shadow island in the native transparent card source. Guide drawings and legitimate hand/foot contact shadows are unchanged."
+  ],
+  "priorFindings": {
+    "record": "docs/exercise-art/releases/2026-10-15/side-plank.json",
+    "sha256": "382df3525945ae4a3888d72f2a36c3d1c05ba462c292686ad2d327b1de76e4d2",
+    "disposition": "Historical record preserved verbatim. Cosmetic issues addressed here are described separately; prior strict-measurement and source-provenance statements are not erased.",
+    "hashScope": "Exact repository blob bytes, independent of Windows checkout CRLF."
+  },
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/side-plank/2026-10-19-illustration-polish",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/side-plank/2026-10-19-illustration-polish/side-plank-native-polish.zip",
+      "sha256": "af47d52e6c8577877d9f798974bbdddad1bcfa9030153a15e7087e1a2eb7e677",
+      "bytes": 11026637
+    },
+    "priorRelease": "docs/exercise-art/releases/2026-10-15/side-plank.json",
+    "method": "Exact native original drawings plus sparse editable colour/equipment pixels; alpha-only stray-mark cleanup for prepared cards. Portable source layers and deterministic lossless exports independently re-executed byte-for-byte.",
+    "reproductionScope": "Same-layer composition and export reproduction; no independent anatomy/physics certification.",
+    "newImageGenerationCalls": 0,
+    "anatomicalTransforms": []
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-19-illustration-polish/review.json",
+  "physicalPoses": 1,
+  "sourcePoseOrder": [1, 1, 1, 1, 1, 1]
+}

@@ -51,6 +51,107 @@ describe("SegmentedControl", () => {
     expect(onChange).toHaveBeenCalledWith(5);
   });
 
+  it.each(["click", " ", "Enter"])(
+    "does not change an already-selected radio on %j by default",
+    (activation) => {
+      const onChange = vi.fn();
+      render(
+        <SegmentedControl
+          options={DAYS}
+          value={4}
+          onChange={onChange}
+          ariaLabel="Lift days"
+        />
+      );
+      const selected = screen.getByRole("radio", { name: "4" });
+      if (activation === "click") fireEvent.click(selected);
+      else fireEvent.keyDown(selected, { key: activation });
+      expect(onChange).not.toHaveBeenCalled();
+      expect(selected).toHaveAttribute("aria-checked", "true");
+    }
+  );
+
+  it.each(["click", " ", "Enter"])(
+    "calls the opt-in reselect action once on %j",
+    (activation) => {
+      const onChange = vi.fn();
+      const onReselect = vi.fn();
+      render(
+        <SegmentedControl
+          options={DAYS}
+          value={4}
+          onChange={onChange}
+          onReselect={onReselect}
+          ariaLabel="Lift days"
+        />
+      );
+      const selected = screen.getByRole("radio", { name: "4" });
+      if (activation === "click") fireEvent.click(selected);
+      else fireEvent.keyDown(selected, { key: activation });
+      expect(onReselect).toHaveBeenCalledExactlyOnceWith(4);
+      expect(onChange).not.toHaveBeenCalled();
+      expect(selected).toHaveFocus();
+    }
+  );
+
+  it("does not call the reselect action when changing to another option", () => {
+    const onChange = vi.fn();
+    const onReselect = vi.fn();
+    render(
+      <SegmentedControl
+        options={DAYS}
+        value={4}
+        onChange={onChange}
+        onReselect={onReselect}
+        ariaLabel="Lift days"
+      />
+    );
+    fireEvent.click(screen.getByRole("radio", { name: "5" }));
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(5);
+    expect(onReselect).not.toHaveBeenCalled();
+  });
+
+  it.each(["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown", "Home", "End"])(
+    "does not reselect with %s when only the selected option is enabled",
+    (key) => {
+      const onChange = vi.fn();
+      const onReselect = vi.fn();
+      render(
+        <SegmentedControl
+          options={DAYS.map((day) => ({ ...day, disabled: day.value !== 4 }))}
+          value={4}
+          onChange={onChange}
+          onReselect={onReselect}
+          ariaLabel="Lift days"
+        />
+      );
+      fireEvent.keyDown(screen.getByRole("radio", { name: "4" }), { key });
+      expect(onChange).not.toHaveBeenCalled();
+      expect(onReselect).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each([false, true])(
+    "never reselects a disabled option (whole-group disable: %s)",
+    (disabled) => {
+      const onReselect = vi.fn();
+      render(
+        <SegmentedControl
+          options={DAYS.map((day) => ({ ...day, disabled: day.value === 4 }))}
+          value={4}
+          onChange={vi.fn()}
+          onReselect={onReselect}
+          ariaLabel="Lift days"
+          disabled={disabled}
+        />
+      );
+      const selected = screen.getByRole("radio", { name: "4" });
+      fireEvent.click(selected);
+      fireEvent.keyDown(selected, { key: "Enter" });
+      expect(onReselect).not.toHaveBeenCalled();
+    }
+  );
+
   it("uses roving tabindex — only the selected radio is tabbable", () => {
     render(
       <SegmentedControl

@@ -1,0 +1,154 @@
+{
+  "exerciseId": "barbell-curl",
+  "version": "anatomy-v3-2026-10-19-native-followup-v1",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex native illustration and mobile source review",
+  "reviewedAt": "2026-10-19T22:30:10.116788+00:00",
+  "reference": {
+    "path": "form-frames/barbell-curl/1.webp",
+    "sha256": "c90649761627eaaa6da742d67cd8d3873817409b44890b975ed79ac9d4995e2f"
+  },
+  "cueSha256": "be3c8aab267aaf3ff369ada3e64af668f4c366b0988bcedae25bf871e2671a75",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Native scoped correction, staged and registered 390x844 manual light/dark review completed. Registered source paths, settled image decoding, normal card cutouts and normal/slower playback checked; see reviewEvidence. No strict certificate asserted."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/barbell-curl/1.webp",
+      "sha256": "c90649761627eaaa6da742d67cd8d3873817409b44890b975ed79ac9d4995e2f",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-curl/2026-10-19-remaining33-batch1/1.png",
+        "sha256": "26dbf037df78ccb1fb300c60f7482f24fd5c7e872ee1f3a94f282371da9bfde2"
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/2.webp",
+      "sha256": "9d4bfcdb02a7d35404532ecb9d798b9ee17a220ba8b348a32fa062a4583e496c",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-curl/2026-10-19-remaining33-batch1/2.png",
+        "sha256": "d52b649af112f988fed157056111d0291746e64a7dbb7ceab740d230ee47e76c"
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/3.webp",
+      "sha256": "86f3d5a68c5779a0948940d1d83daff6858ed2bac4bfc0da7ae734919fdb6c10",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-curl/2026-10-19-remaining33-batch1/3.png",
+        "sha256": "2b4ca151acbadd25a895fc03448e06b9c852e866a7ae3c2e942c7a1d3faa36de"
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/4.webp",
+      "sha256": "4da03f12f518a7961d6ce0a903431ef6647444455795d4da920b476447c1f014",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-curl/2026-10-19-remaining33-batch1/4.png",
+        "sha256": "2220708c8920761a76da8e52afd1d810637f76bf8b098a4154991f61f9522949"
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/5.webp",
+      "sha256": "86f3d5a68c5779a0948940d1d83daff6858ed2bac4bfc0da7ae734919fdb6c10",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-curl/2026-10-19-remaining33-batch1/5.png",
+        "sha256": "2b4ca151acbadd25a895fc03448e06b9c852e866a7ae3c2e942c7a1d3faa36de"
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/6.webp",
+      "sha256": "9d4bfcdb02a7d35404532ecb9d798b9ee17a220ba8b348a32fa062a4583e496c",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-curl/2026-10-19-remaining33-batch1/6.png",
+        "sha256": "d52b649af112f988fed157056111d0291746e64a7dbb7ceab740d230ee47e76c"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "Fix the remaining illustration issues in those33 sets too, same model and colours, no shorts, and get it all merged. Stop asking for approval.",
+    "context": "Explicit authority for source corrections, local activation, final checks and normal merge. Does not replace passing strict evidence."
+  },
+  "findings": [
+    "Same original athlete and grips. Reuse native reference equipment at integer offsets; rigid modest plate/collar/sleeve geometry no longer shrinks through the curl.",
+    "Existing discrete source poses and minor inherited source contour/projection differences remain qualitative. This scoped correction does not claim calibrated3D or blanket strict certification."
+  ],
+  "resolvedIllustrationIssues": [
+    "Same original athlete and grips. Reuse native reference equipment at integer offsets; rigid modest plate/collar/sleeve geometry no longer shrinks through the curl."
+  ],
+  "priorFindings": {
+    "record": "docs/exercise-art/releases/2026-10-19-illustration-polish/barbell-curl.json",
+    "sha256": "5b840013b433a8755b771f29f07bed3be2440cdee8ce2274203f082fd423b9b8",
+    "disposition": "Historical source findings preserved verbatim in prior record and portable archive. Corrected issues are described separately; no blanket erasure of source/strict limitations."
+  },
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/barbell-curl/2026-10-19-remaining33-batch1",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/barbell-curl/2026-10-19-remaining33-batch1/barbell-curl-native-correction.zip",
+      "sha256": "1831bf95b30412d5232b331610f58d79d07b53de255ec689b3463877c5dd688c",
+      "bytes": 6040103
+    },
+    "priorRelease": "docs/exercise-art/releases/2026-10-19-illustration-polish/barbell-curl.json",
+    "method": "Same original athlete and grips. Reuse native reference equipment at integer offsets; rigid modest plate/collar/sleeve geometry no longer shrinks through the curl.",
+    "reproductionScope": "Independent byte-exact re-execution of frozen native editable sources and exports, not independent anatomy certification.",
+    "anatomicalTransforms": []
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-19-remaining33-batch1/review.json"
+}

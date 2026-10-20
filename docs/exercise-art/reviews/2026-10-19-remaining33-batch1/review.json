@@ -1,0 +1,78 @@
+{
+  "scope": "Three concrete illustration fixes from33-set review. Same FA56 anatomical athlete and palette; no shorts. Owner status and all strict flags preserved.",
+  "baseline": "1d100f0f2d85efd4f70874e61306a2278edcf105",
+  "sets": [
+    {
+      "id": "barbell-curl",
+      "scope": "Same original athlete and grips. Reuse native reference equipment at integer offsets; rigid modest plate/collar/sleeve geometry no longer shrinks through the curl.",
+      "changedFrames": [2, 3, 4, 5, 6],
+      "priorRecord": "docs/exercise-art/releases/2026-10-19-illustration-polish/barbell-curl.json",
+      "priorRecordSha256": "5b840013b433a8755b771f29f07bed3be2440cdee8ce2274203f082fd423b9b8",
+      "newRecord": "docs/exercise-art/releases/2026-10-19-remaining33-batch1/barbell-curl.json",
+      "sourceArchive": {
+        "id": "barbell-curl",
+        "archive": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining33-illustration-fixes-20261019\\batch1-archives\\barbell-curl-native-correction.zip",
+        "sha256": "1831bf95b30412d5232b331610f58d79d07b53de255ec689b3463877c5dd688c",
+        "bytes": 6040103,
+        "independentFiles": 17
+      }
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "scope": "Same original athlete/trainers/hand and calf timing. Reference fixed support pixels, native2px visible-step registration and grey tread-only texture repair remove support drift and displaced contact-shadow double edge.",
+      "changedFrames": [3, 4],
+      "priorRecord": "docs/exercise-art/releases/2026-10-15/single-leg-calf-raise.json",
+      "priorRecordSha256": "e4c8f2f21096ff5fe75fe403a5517b54aa01b9c17e49ab45059da2f67af13cc8",
+      "newRecord": "docs/exercise-art/releases/2026-10-19-remaining33-batch1/single-leg-calf-raise.json",
+      "sourceArchive": {
+        "id": "single-leg-calf-raise",
+        "archive": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining33-illustration-fixes-20261019\\batch1-archives\\single-leg-calf-raise-native-correction.zip",
+        "sha256": "9601a7cd1512dec0daf80c5b0a58542f60fd8d356fa42a75f1a36991ce68711a",
+        "bytes": 8156199,
+        "independentFiles": 15
+      }
+    },
+    {
+      "id": "turkish-get-up",
+      "scope": "Retain original frames1-4 pixel-exact at common y+100 padding. New full connected half-kneel and standing sources keep front foot on right and far loaded arm consistent, correcting wrong facing and flat-profile camera change. Entire source5/6 uniformly normalized, no individual anatomical transforms or head/shoe grafts.",
+      "changedFrames": [1, 2, 3, 4, 5, 6],
+      "priorRecord": "docs/exercise-art/releases/2026-10-19-illustration-polish/turkish-get-up.json",
+      "priorRecordSha256": "ec2102019fedc356ffce8876a2e7509f5e3651c84abc3e0fb3501c402d1e3bcb",
+      "newRecord": "docs/exercise-art/releases/2026-10-19-remaining33-batch1/turkish-get-up.json",
+      "sourceArchive": {
+        "id": "turkish-get-up",
+        "archive": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining33-illustration-fixes-20261019\\batch1-archives\\turkish-get-up-native-correction.zip",
+        "sha256": "8c5704a94ebf7db40c96e3439fe79b6f1dc89ad3584846eabc147a57b14e1e54",
+        "bytes": 6791969,
+        "independentFiles": 19
+      }
+    }
+  ],
+  "stagedReview": {
+    "record": "batch1-staged-review.json",
+    "sha256": "77d7a9b8fcf73ee1d16647d0e282d6f5812797d12dbb1ffae95bbd6f3781e6f4",
+    "manualPositions": 36,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  "registeredIntegratedReview": {
+    "record": "batch1-registered-review.json",
+    "manualPositions": 36,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "allSourcePathsAndLabelsVerified": true,
+    "allSettledImagesDecoded": true,
+    "normalAndSlowerPlaybackReviewed": true
+  },
+  "normalVerification": {
+    "command": "npm run verify",
+    "execution": "Full frozen candidate run required before merge; exact commit, results and measured baseline comparison will be reported in the pull request. No test command or thresholds modified.",
+    "baseline": "baseline-index.json",
+    "baselineResult": "1203 files and 13921 tests passed; two suite-load failures reproduced on unchanged main: scripts/write-functions-env.test.ts and scripts/ios/asc-signing.test.ts; SyntaxError: Invalid or unexpected token."
+  },
+  "remaining33Task": "In progress. Other failed/blocked pose drafts are not activated; this release does not claim all33 findings resolved."
+}

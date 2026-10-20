@@ -1,0 +1,230 @@
+{
+  "id": "leg-press",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Leg Press, Bend",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-press/1.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Bend 1/6",
+          "id": "leg-press",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Leg Press, Brace",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-press/2.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Brace 2/6",
+          "id": "leg-press",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Leg Press, Press",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-press/3.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Press 3/6",
+          "id": "leg-press",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Leg Press, Finish",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-press/4.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Finish 4/6",
+          "id": "leg-press",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Leg Press, Return",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-press/5.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Return 5/6",
+          "id": "leg-press",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Leg Press, Reset",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-press/6.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "leg-press",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 81,\n    \"alt\": \"Leg Press, Bend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1280,\n    \"alt\": \"Leg Press, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1764,\n    \"alt\": \"Leg Press, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2401,\n    \"alt\": \"Leg Press, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2960,\n    \"alt\": \"Leg Press, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3523,\n    \"alt\": \"Leg Press, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5201,\n    \"alt\": \"Leg Press, Bend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Leg Press, Brace",
+            "decoded": true,
+            "height": 1056,
+            "src": "/Maiin/.strict33.local/candidate/leg-press/2.webp",
+            "width": 1264
+          }
+        ],
+        "caption": "Brace 2/6",
+        "id": "leg-press",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / leg-press\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nLeg Press\nLegs\nMachine\n\nBRACE 2/6\n\nPause\nNormal\nPRIMARY\nQuads\nSECONDARY\nGlutes, Hamstrings\n\nInstructions\n\nPreparation: Sit against the back pad and hold the side handles. Place both feet on the plate; keep heels supported. Control the return and stop before your back rounds.\n\n1\n\nSet both feet flat on the plate.\n\n2\n\nBrace; keep your back against the pad.\n\n3\n\nPush the plate away through both feet.\n\n4\n\nKeep knees soft at the finish.\n\n5\n\nBend hips and knees under control.\n\n6\n\nKeep your heels down before pressing again.\n\nWatch out\n\nKeep your back supported and press through both feet without snapping your knees straight.\n\nCOMMON MISTAKES\n\nRounding the lower back off the pad.\nLifting the heels off the plate.\nSnapping the knees straight.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 81,\n    \"alt\": \"Leg Press, Bend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1280,\n    \"alt\": \"Leg Press, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1764,\n    \"alt\": \"Leg Press, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2401,\n    \"alt\": \"Leg Press, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2960,\n    \"alt\": \"Leg Press, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3523,\n    \"alt\": \"Leg Press, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5201,\n    \"alt\": \"Leg Press, Bend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6642,\n    \"alt\": \"Leg Press, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7922,\n    \"alt\": \"Leg Press, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9122,\n    \"alt\": \"Leg Press, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10322,\n    \"alt\": \"Leg Press, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11521,\n    \"alt\": \"Leg Press, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12801,\n    \"alt\": \"Leg Press, Bend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 14001,\n    \"alt\": \"Leg Press, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Leg Press, Bend",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-press/1.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Bend 1/6",
+          "id": "leg-press",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Leg Press, Brace",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-press/2.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Brace 2/6",
+          "id": "leg-press",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Leg Press, Press",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-press/3.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Press 3/6",
+          "id": "leg-press",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Leg Press, Finish",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-press/4.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Finish 4/6",
+          "id": "leg-press",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Leg Press, Return",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-press/5.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Return 5/6",
+          "id": "leg-press",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Leg Press, Reset",
+              "decoded": true,
+              "height": 1056,
+              "src": "/Maiin/.strict33.local/candidate/leg-press/6.webp",
+              "width": 1264
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "leg-press",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 81,\n    \"alt\": \"Leg Press, Bend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1280,\n    \"alt\": \"Leg Press, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1764,\n    \"alt\": \"Leg Press, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2401,\n    \"alt\": \"Leg Press, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2960,\n    \"alt\": \"Leg Press, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3523,\n    \"alt\": \"Leg Press, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5201,\n    \"alt\": \"Leg Press, Bend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6642,\n    \"alt\": \"Leg Press, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7922,\n    \"alt\": \"Leg Press, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9122,\n    \"alt\": \"Leg Press, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10322,\n    \"alt\": \"Leg Press, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11521,\n    \"alt\": \"Leg Press, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12801,\n    \"alt\": \"Leg Press, Bend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 14001,\n    \"alt\": \"Leg Press, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15046,\n    \"alt\": \"Leg Press, Bend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15680,\n    \"alt\": \"Leg Press, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16244,\n    \"alt\": \"Leg Press, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16801,\n    \"alt\": \"Leg Press, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17360,\n    \"alt\": \"Leg Press, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18002,\n    \"alt\": \"Leg Press, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19601,\n    \"alt\": \"Leg Press, Bend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Leg Press, Brace",
+            "decoded": true,
+            "height": 1056,
+            "src": "/Maiin/.strict33.local/candidate/leg-press/2.webp",
+            "width": 1264
+          }
+        ],
+        "caption": "Brace 2/6",
+        "id": "leg-press",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / leg-press\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nLeg Press\nLegs\nMachine\n\nBRACE 2/6\n\nPause\nNormal\nPRIMARY\nQuads\nSECONDARY\nGlutes, Hamstrings\n\nInstructions\n\nPreparation: Sit against the back pad and hold the side handles. Place both feet on the plate; keep heels supported. Control the return and stop before your back rounds.\n\n1\n\nSet both feet flat on the plate.\n\n2\n\nBrace; keep your back against the pad.\n\n3\n\nPush the plate away through both feet.\n\n4\n\nKeep knees soft at the finish.\n\n5\n\nBend hips and knees under control.\n\n6\n\nKeep your heels down before pressing again.\n\nWatch out\n\nKeep your back supported and press through both feet without snapping your knees straight.\n\nCOMMON MISTAKES\n\nRounding the lower back off the pad.\nLifting the heels off the plate.\nSnapping the knees straight.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 81,\n    \"alt\": \"Leg Press, Bend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1280,\n    \"alt\": \"Leg Press, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1764,\n    \"alt\": \"Leg Press, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2401,\n    \"alt\": \"Leg Press, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2960,\n    \"alt\": \"Leg Press, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3523,\n    \"alt\": \"Leg Press, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5201,\n    \"alt\": \"Leg Press, Bend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6642,\n    \"alt\": \"Leg Press, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7922,\n    \"alt\": \"Leg Press, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9122,\n    \"alt\": \"Leg Press, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10322,\n    \"alt\": \"Leg Press, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11521,\n    \"alt\": \"Leg Press, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12801,\n    \"alt\": \"Leg Press, Bend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 14001,\n    \"alt\": \"Leg Press, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15046,\n    \"alt\": \"Leg Press, Bend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15680,\n    \"alt\": \"Leg Press, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16244,\n    \"alt\": \"Leg Press, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16801,\n    \"alt\": \"Leg Press, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17360,\n    \"alt\": \"Leg Press, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 18002,\n    \"alt\": \"Leg Press, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19601,\n    \"alt\": \"Leg Press, Bend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21044,\n    \"alt\": \"Leg Press, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22322,\n    \"alt\": \"Leg Press, Press\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23522,\n    \"alt\": \"Leg Press, Finish\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24723,\n    \"alt\": \"Leg Press, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25921,\n    \"alt\": \"Leg Press, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27123,\n    \"alt\": \"Leg Press, Bend\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28322,\n    \"alt\": \"Leg Press, Brace\",\n    \"src\": \"/Maiin/.strict33.local/candidate/leg-press/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

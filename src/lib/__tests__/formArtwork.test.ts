@@ -11,8 +11,18 @@ import {
   formFramePaths,
 } from "../formArtwork";
 import { APPROVED_FORM_ART_RELEASES } from "../formArtReleases.data";
+import { getFormPlayback } from "../formGuides";
 
 describe("the artwork registry", () => {
+  it("stops the ascent-only get-up while ordinary exercise reps keep cycling", () => {
+    expect(getFormPlayback("turkish-get-up")).toBe("sequence");
+    expect(
+      Object.keys(FORM_ARTWORK).filter(
+        (id) => getFormPlayback(id) === "sequence"
+      )
+    ).toEqual(["turkish-get-up"]);
+    expect(getFormPlayback("lu-raise")).toBe("cycle");
+  });
   it("lists no set both by hand and from an approved record", () => {
     const approved = Object.keys(APPROVED_FORM_ART_RELEASES);
     expect(approved.length).toBeGreaterThan(0);
