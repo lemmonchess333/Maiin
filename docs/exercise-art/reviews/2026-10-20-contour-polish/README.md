@@ -53,11 +53,19 @@ reconstruction or continuous animation.
   The separate registered card gallery has a 390 by 844 returned raster.
   `timed-loop-proof.json` extracts a complete six-slot cycle and wrap in each
   guide at the unchanged normal 1200 ms and slower 2400 ms player timers.
-- `project-checks/` preserves the fresh clean `f9eb8107` baseline. The normal
-  Windows verification reaches the `python3` Microsoft Store launcher and
-  exits 9009. This is a measured local tooling limitation, not a green local
-  full run. The final frozen candidate is run through the same command and
-  the unmodified Linux CI checks before merge.
+- `project-checks/` preserves the initial clean `f9eb8107` baseline and the
+  original artwork candidate's successful local build, bundle-size check
+  and focused tests. Main subsequently advanced to `d41b9d95`, including new
+  app code and a dependency. After exact `npm ci`, that clean main was
+  measured again: all 2,803 runtime inputs stayed frozen and the normal
+  verification reached the same `python3` Microsoft Store launcher stop,
+  exit 9009, with an identical raw verification log. The independent raw
+  current-main records and input manifests are byte-preserved in
+  `project-checks/current-main-baseline.zip`, indexed by the adjacent JSON.
+  Current main was integrated normally; all reviewed frame/card bytes remain
+  unchanged. The final frozen combined candidate is run through the same
+  command and unmodified full Linux CI verification before merge. No local
+  full green run is claimed.
 
 The existing strict validator, artwork tolerances, tests, CI commands, timeouts
 and skips were not weakened. These corrections preserve all 152 strict sets.
