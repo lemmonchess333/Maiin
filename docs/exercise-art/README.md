@@ -1,6 +1,17 @@
 # Exercise artwork migration
 
-## Current checkpoint — 17 October 2026
+## Current checkpoint — 20 October 2026
+
+All **152 exercise sets** now have strict release records under the unchanged
+project review contract, with zero owner-only releases. The
+[final two strict reviews](reviews/2026-10-20-final-two-strict/README.md) cover
+swimming and Turkish get-up. The subsequent
+[contour follow-up](reviews/2026-10-20-contour-polish/README.md) corrects three
+specific cosmetic findings in face pulls, incline dumbbell curl and overhead
+tricep extension. The canonical athlete, original muscle palette and no-shorts
+design remain unchanged. Older checkpoints below are historical.
+
+## Previous checkpoint — 17 October 2026
 
 Turkish Get-Up and Assault Bike are owner-released with findings ([get-up](releases/2026-10-17/turkish-get-up.json), [bike](releases/2026-10-17/assault-bike.json)), both generated with Gemini through `scripts/art/gemini-image.py`.
 

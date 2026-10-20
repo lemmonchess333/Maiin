@@ -1,0 +1,878 @@
+[
+  {
+    "id": "face-pulls",
+    "frame": 1,
+    "originalSha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+    "finalSha256": "8fbd7988188c866d260ae28e919ebb1667ff6f6f34c76bebe1a969ec5be18335",
+    "changedPixels": 13705,
+    "changedBounds": [118, 240, 364, 438],
+    "outsideScopedLayerExact": true,
+    "method": "Finish existing violet field interiors with the unchanged primary/secondary bases and source per-pixel value. Native two-pixel inset preserves all open anatomical boundaries, silhouette, neutral spine and equipment; isolated pale interior gaps no longer break pigment continuity.",
+    "islands": [
+      {
+        "pixels": 10,
+        "boundsInclusive": [181, 256, 183, 262]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [187, 259, 187, 260]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [185, 269, 185, 270]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [183, 276, 183, 277]
+      },
+      {
+        "pixels": 76,
+        "boundsInclusive": [220, 280, 229, 290]
+      },
+      {
+        "pixels": 7,
+        "boundsInclusive": [162, 296, 164, 299]
+      },
+      {
+        "pixels": 7,
+        "boundsInclusive": [158, 307, 159, 310]
+      },
+      {
+        "pixels": 4,
+        "boundsInclusive": [362, 309, 364, 310]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [159, 312, 159, 313]
+      },
+      {
+        "pixels": 8,
+        "boundsInclusive": [354, 315, 357, 319]
+      },
+      {
+        "pixels": 6,
+        "boundsInclusive": [242, 327, 246, 328]
+      },
+      {
+        "pixels": 7,
+        "boundsInclusive": [167, 335, 169, 339]
+      },
+      {
+        "pixels": 4,
+        "boundsInclusive": [268, 342, 270, 343]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [272, 345, 273, 345]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [274, 346, 275, 346]
+      },
+      {
+        "pixels": 21,
+        "boundsInclusive": [238, 353, 242, 359]
+      },
+      {
+        "pixels": 11,
+        "boundsInclusive": [270, 356, 277, 357]
+      },
+      {
+        "pixels": 17,
+        "boundsInclusive": [123, 357, 127, 363]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [263, 359, 264, 359]
+      },
+      {
+        "pixels": 3,
+        "boundsInclusive": [259, 360, 261, 360]
+      },
+      {
+        "pixels": 3,
+        "boundsInclusive": [256, 361, 258, 361]
+      },
+      {
+        "pixels": 38,
+        "boundsInclusive": [245, 368, 251, 374]
+      },
+      {
+        "pixels": 15,
+        "boundsInclusive": [211, 390, 214, 394]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [198, 428, 198, 429]
+      }
+    ],
+    "nativeFieldInteriorPixels": 13687
+  },
+  {
+    "id": "face-pulls",
+    "frame": 2,
+    "originalSha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+    "finalSha256": "8fbd7988188c866d260ae28e919ebb1667ff6f6f34c76bebe1a969ec5be18335",
+    "changedPixels": 13705,
+    "changedBounds": [118, 240, 364, 438],
+    "outsideScopedLayerExact": true,
+    "method": "Finish existing violet field interiors with the unchanged primary/secondary bases and source per-pixel value. Native two-pixel inset preserves all open anatomical boundaries, silhouette, neutral spine and equipment; isolated pale interior gaps no longer break pigment continuity.",
+    "islands": [
+      {
+        "pixels": 10,
+        "boundsInclusive": [181, 256, 183, 262]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [187, 259, 187, 260]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [185, 269, 185, 270]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [183, 276, 183, 277]
+      },
+      {
+        "pixels": 76,
+        "boundsInclusive": [220, 280, 229, 290]
+      },
+      {
+        "pixels": 7,
+        "boundsInclusive": [162, 296, 164, 299]
+      },
+      {
+        "pixels": 7,
+        "boundsInclusive": [158, 307, 159, 310]
+      },
+      {
+        "pixels": 4,
+        "boundsInclusive": [362, 309, 364, 310]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [159, 312, 159, 313]
+      },
+      {
+        "pixels": 8,
+        "boundsInclusive": [354, 315, 357, 319]
+      },
+      {
+        "pixels": 6,
+        "boundsInclusive": [242, 327, 246, 328]
+      },
+      {
+        "pixels": 7,
+        "boundsInclusive": [167, 335, 169, 339]
+      },
+      {
+        "pixels": 4,
+        "boundsInclusive": [268, 342, 270, 343]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [272, 345, 273, 345]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [274, 346, 275, 346]
+      },
+      {
+        "pixels": 21,
+        "boundsInclusive": [238, 353, 242, 359]
+      },
+      {
+        "pixels": 11,
+        "boundsInclusive": [270, 356, 277, 357]
+      },
+      {
+        "pixels": 17,
+        "boundsInclusive": [123, 357, 127, 363]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [263, 359, 264, 359]
+      },
+      {
+        "pixels": 3,
+        "boundsInclusive": [259, 360, 261, 360]
+      },
+      {
+        "pixels": 3,
+        "boundsInclusive": [256, 361, 258, 361]
+      },
+      {
+        "pixels": 38,
+        "boundsInclusive": [245, 368, 251, 374]
+      },
+      {
+        "pixels": 15,
+        "boundsInclusive": [211, 390, 214, 394]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [198, 428, 198, 429]
+      }
+    ],
+    "nativeFieldInteriorPixels": 13687
+  },
+  {
+    "id": "face-pulls",
+    "frame": 3,
+    "originalSha256": "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65",
+    "finalSha256": "e95aef45a354b1941c35716c9100543d409ab7a35ad640d8419e03ffae312568",
+    "changedPixels": 15315,
+    "changedBounds": [109, 236, 362, 437],
+    "outsideScopedLayerExact": true,
+    "method": "Finish existing violet field interiors with the unchanged primary/secondary bases and source per-pixel value. Native two-pixel inset preserves all open anatomical boundaries, silhouette, neutral spine and equipment; isolated pale interior gaps no longer break pigment continuity.",
+    "islands": [
+      {
+        "pixels": 2,
+        "boundsInclusive": [189, 260, 189, 261]
+      },
+      {
+        "pixels": 3,
+        "boundsInclusive": [187, 269, 187, 271]
+      },
+      {
+        "pixels": 3,
+        "boundsInclusive": [194, 273, 194, 275]
+      },
+      {
+        "pixels": 12,
+        "boundsInclusive": [224, 283, 228, 286]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [166, 295, 166, 296]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [180, 295, 180, 296]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [179, 297, 179, 298]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [365, 297, 366, 297]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [360, 299, 361, 299]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [82, 300, 82, 301]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [358, 300, 359, 300]
+      },
+      {
+        "pixels": 15,
+        "boundsInclusive": [344, 305, 351, 311]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [125, 328, 126, 328]
+      },
+      {
+        "pixels": 7,
+        "boundsInclusive": [187, 332, 189, 335]
+      },
+      {
+        "pixels": 4,
+        "boundsInclusive": [114, 333, 116, 334]
+      },
+      {
+        "pixels": 5,
+        "boundsInclusive": [172, 335, 173, 338]
+      },
+      {
+        "pixels": 11,
+        "boundsInclusive": [175, 343, 175, 353]
+      },
+      {
+        "pixels": 5,
+        "boundsInclusive": [125, 351, 126, 354]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [241, 351, 242, 351]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [269, 351, 270, 351]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [267, 352, 268, 352]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [264, 353, 265, 353]
+      },
+      {
+        "pixels": 7,
+        "boundsInclusive": [174, 355, 175, 359]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [125, 357, 126, 357]
+      },
+      {
+        "pixels": 5,
+        "boundsInclusive": [124, 364, 125, 366]
+      },
+      {
+        "pixels": 25,
+        "boundsInclusive": [246, 365, 252, 369]
+      },
+      {
+        "pixels": 10,
+        "boundsInclusive": [188, 374, 188, 383]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [175, 375, 175, 376]
+      },
+      {
+        "pixels": 4,
+        "boundsInclusive": [189, 390, 189, 393]
+      },
+      {
+        "pixels": 3,
+        "boundsInclusive": [179, 391, 179, 393]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [150, 410, 151, 410]
+      }
+    ],
+    "nativeFieldInteriorPixels": 15290
+  },
+  {
+    "id": "face-pulls",
+    "frame": 4,
+    "originalSha256": "af16b0651ad11f807f9e6df5ac9aeaf1f5c72c458e73a6302ad00c6cb8a5df65",
+    "finalSha256": "e95aef45a354b1941c35716c9100543d409ab7a35ad640d8419e03ffae312568",
+    "changedPixels": 15315,
+    "changedBounds": [109, 236, 362, 437],
+    "outsideScopedLayerExact": true,
+    "method": "Finish existing violet field interiors with the unchanged primary/secondary bases and source per-pixel value. Native two-pixel inset preserves all open anatomical boundaries, silhouette, neutral spine and equipment; isolated pale interior gaps no longer break pigment continuity.",
+    "islands": [
+      {
+        "pixels": 2,
+        "boundsInclusive": [189, 260, 189, 261]
+      },
+      {
+        "pixels": 3,
+        "boundsInclusive": [187, 269, 187, 271]
+      },
+      {
+        "pixels": 3,
+        "boundsInclusive": [194, 273, 194, 275]
+      },
+      {
+        "pixels": 12,
+        "boundsInclusive": [224, 283, 228, 286]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [166, 295, 166, 296]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [180, 295, 180, 296]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [179, 297, 179, 298]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [365, 297, 366, 297]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [360, 299, 361, 299]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [82, 300, 82, 301]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [358, 300, 359, 300]
+      },
+      {
+        "pixels": 15,
+        "boundsInclusive": [344, 305, 351, 311]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [125, 328, 126, 328]
+      },
+      {
+        "pixels": 7,
+        "boundsInclusive": [187, 332, 189, 335]
+      },
+      {
+        "pixels": 4,
+        "boundsInclusive": [114, 333, 116, 334]
+      },
+      {
+        "pixels": 5,
+        "boundsInclusive": [172, 335, 173, 338]
+      },
+      {
+        "pixels": 11,
+        "boundsInclusive": [175, 343, 175, 353]
+      },
+      {
+        "pixels": 5,
+        "boundsInclusive": [125, 351, 126, 354]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [241, 351, 242, 351]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [269, 351, 270, 351]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [267, 352, 268, 352]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [264, 353, 265, 353]
+      },
+      {
+        "pixels": 7,
+        "boundsInclusive": [174, 355, 175, 359]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [125, 357, 126, 357]
+      },
+      {
+        "pixels": 5,
+        "boundsInclusive": [124, 364, 125, 366]
+      },
+      {
+        "pixels": 25,
+        "boundsInclusive": [246, 365, 252, 369]
+      },
+      {
+        "pixels": 10,
+        "boundsInclusive": [188, 374, 188, 383]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [175, 375, 175, 376]
+      },
+      {
+        "pixels": 4,
+        "boundsInclusive": [189, 390, 189, 393]
+      },
+      {
+        "pixels": 3,
+        "boundsInclusive": [179, 391, 179, 393]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [150, 410, 151, 410]
+      }
+    ],
+    "nativeFieldInteriorPixels": 15290
+  },
+  {
+    "id": "face-pulls",
+    "frame": 5,
+    "originalSha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+    "finalSha256": "8fbd7988188c866d260ae28e919ebb1667ff6f6f34c76bebe1a969ec5be18335",
+    "changedPixels": 13705,
+    "changedBounds": [118, 240, 364, 438],
+    "outsideScopedLayerExact": true,
+    "method": "Finish existing violet field interiors with the unchanged primary/secondary bases and source per-pixel value. Native two-pixel inset preserves all open anatomical boundaries, silhouette, neutral spine and equipment; isolated pale interior gaps no longer break pigment continuity.",
+    "islands": [
+      {
+        "pixels": 10,
+        "boundsInclusive": [181, 256, 183, 262]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [187, 259, 187, 260]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [185, 269, 185, 270]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [183, 276, 183, 277]
+      },
+      {
+        "pixels": 76,
+        "boundsInclusive": [220, 280, 229, 290]
+      },
+      {
+        "pixels": 7,
+        "boundsInclusive": [162, 296, 164, 299]
+      },
+      {
+        "pixels": 7,
+        "boundsInclusive": [158, 307, 159, 310]
+      },
+      {
+        "pixels": 4,
+        "boundsInclusive": [362, 309, 364, 310]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [159, 312, 159, 313]
+      },
+      {
+        "pixels": 8,
+        "boundsInclusive": [354, 315, 357, 319]
+      },
+      {
+        "pixels": 6,
+        "boundsInclusive": [242, 327, 246, 328]
+      },
+      {
+        "pixels": 7,
+        "boundsInclusive": [167, 335, 169, 339]
+      },
+      {
+        "pixels": 4,
+        "boundsInclusive": [268, 342, 270, 343]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [272, 345, 273, 345]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [274, 346, 275, 346]
+      },
+      {
+        "pixels": 21,
+        "boundsInclusive": [238, 353, 242, 359]
+      },
+      {
+        "pixels": 11,
+        "boundsInclusive": [270, 356, 277, 357]
+      },
+      {
+        "pixels": 17,
+        "boundsInclusive": [123, 357, 127, 363]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [263, 359, 264, 359]
+      },
+      {
+        "pixels": 3,
+        "boundsInclusive": [259, 360, 261, 360]
+      },
+      {
+        "pixels": 3,
+        "boundsInclusive": [256, 361, 258, 361]
+      },
+      {
+        "pixels": 38,
+        "boundsInclusive": [245, 368, 251, 374]
+      },
+      {
+        "pixels": 15,
+        "boundsInclusive": [211, 390, 214, 394]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [198, 428, 198, 429]
+      }
+    ],
+    "nativeFieldInteriorPixels": 13687
+  },
+  {
+    "id": "face-pulls",
+    "frame": 6,
+    "originalSha256": "08dcbbb028450e5c8fcfd55a1db18d88e1adfda6774548df7021e7cf25f6f300",
+    "finalSha256": "8fbd7988188c866d260ae28e919ebb1667ff6f6f34c76bebe1a969ec5be18335",
+    "changedPixels": 13705,
+    "changedBounds": [118, 240, 364, 438],
+    "outsideScopedLayerExact": true,
+    "method": "Finish existing violet field interiors with the unchanged primary/secondary bases and source per-pixel value. Native two-pixel inset preserves all open anatomical boundaries, silhouette, neutral spine and equipment; isolated pale interior gaps no longer break pigment continuity.",
+    "islands": [
+      {
+        "pixels": 10,
+        "boundsInclusive": [181, 256, 183, 262]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [187, 259, 187, 260]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [185, 269, 185, 270]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [183, 276, 183, 277]
+      },
+      {
+        "pixels": 76,
+        "boundsInclusive": [220, 280, 229, 290]
+      },
+      {
+        "pixels": 7,
+        "boundsInclusive": [162, 296, 164, 299]
+      },
+      {
+        "pixels": 7,
+        "boundsInclusive": [158, 307, 159, 310]
+      },
+      {
+        "pixels": 4,
+        "boundsInclusive": [362, 309, 364, 310]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [159, 312, 159, 313]
+      },
+      {
+        "pixels": 8,
+        "boundsInclusive": [354, 315, 357, 319]
+      },
+      {
+        "pixels": 6,
+        "boundsInclusive": [242, 327, 246, 328]
+      },
+      {
+        "pixels": 7,
+        "boundsInclusive": [167, 335, 169, 339]
+      },
+      {
+        "pixels": 4,
+        "boundsInclusive": [268, 342, 270, 343]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [272, 345, 273, 345]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [274, 346, 275, 346]
+      },
+      {
+        "pixels": 21,
+        "boundsInclusive": [238, 353, 242, 359]
+      },
+      {
+        "pixels": 11,
+        "boundsInclusive": [270, 356, 277, 357]
+      },
+      {
+        "pixels": 17,
+        "boundsInclusive": [123, 357, 127, 363]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [263, 359, 264, 359]
+      },
+      {
+        "pixels": 3,
+        "boundsInclusive": [259, 360, 261, 360]
+      },
+      {
+        "pixels": 3,
+        "boundsInclusive": [256, 361, 258, 361]
+      },
+      {
+        "pixels": 38,
+        "boundsInclusive": [245, 368, 251, 374]
+      },
+      {
+        "pixels": 15,
+        "boundsInclusive": [211, 390, 214, 394]
+      },
+      {
+        "pixels": 2,
+        "boundsInclusive": [198, 428, 198, 429]
+      }
+    ],
+    "nativeFieldInteriorPixels": 13687
+  },
+  {
+    "id": "incline-db-curl",
+    "frame": 1,
+    "originalSha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+    "finalSha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+    "changedPixels": 0,
+    "changedBounds": null,
+    "outsideScopedLayerExact": true
+  },
+  {
+    "id": "incline-db-curl",
+    "frame": 2,
+    "originalSha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+    "finalSha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+    "changedPixels": 0,
+    "changedBounds": null,
+    "outsideScopedLayerExact": true
+  },
+  {
+    "id": "incline-db-curl",
+    "frame": 3,
+    "originalSha256": "25451a1d061e3436f5e592e1a57f52350fdd7847b22d4c4dd135fd22ef96c19a",
+    "finalSha256": "402fe0ca44c4bc53f1d77880b7b6ac5082b33cd52f318cc20b5f20431872b0f5",
+    "changedPixels": 344,
+    "changedBounds": [394, 157, 431, 174],
+    "outsideScopedLayerExact": true,
+    "method": "Repair the small native source-mask step at the far-shoulder silhouette with one antialiased contour, retaining same-coordinate original fixed shoulder pixels underneath. No arm, grip, dumbbell or body fitting.",
+    "roi": [394, 156, 431, 174],
+    "outerContour": [
+      [394, 169],
+      [398, 167],
+      [402, 165],
+      [406, 164],
+      [410, 164],
+      [414, 165],
+      [418, 166],
+      [422, 167],
+      [426, 169],
+      [430, 170]
+    ]
+  },
+  {
+    "id": "incline-db-curl",
+    "frame": 4,
+    "originalSha256": "25451a1d061e3436f5e592e1a57f52350fdd7847b22d4c4dd135fd22ef96c19a",
+    "finalSha256": "402fe0ca44c4bc53f1d77880b7b6ac5082b33cd52f318cc20b5f20431872b0f5",
+    "changedPixels": 344,
+    "changedBounds": [394, 157, 431, 174],
+    "outsideScopedLayerExact": true,
+    "method": "Repair the small native source-mask step at the far-shoulder silhouette with one antialiased contour, retaining same-coordinate original fixed shoulder pixels underneath. No arm, grip, dumbbell or body fitting.",
+    "roi": [394, 156, 431, 174],
+    "outerContour": [
+      [394, 169],
+      [398, 167],
+      [402, 165],
+      [406, 164],
+      [410, 164],
+      [414, 165],
+      [418, 166],
+      [422, 167],
+      [426, 169],
+      [430, 170]
+    ]
+  },
+  {
+    "id": "incline-db-curl",
+    "frame": 5,
+    "originalSha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+    "finalSha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+    "changedPixels": 0,
+    "changedBounds": null,
+    "outsideScopedLayerExact": true
+  },
+  {
+    "id": "incline-db-curl",
+    "frame": 6,
+    "originalSha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+    "finalSha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+    "changedPixels": 0,
+    "changedBounds": null,
+    "outsideScopedLayerExact": true
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 1,
+    "originalSha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+    "finalSha256": "575d48c589d54295c50f72d263886f9cb7aade3ed0e627316ed255069f752f6f",
+    "changedPixels": 7242,
+    "changedBounds": [217, 24, 322, 204],
+    "outsideScopedLayerExact": true,
+    "method": "One complete native round dumbbell master reused at integer translations behind the original pale hand/forearm foreground; no new body shading or anatomy edits.",
+    "masterDimensions": [86, 171],
+    "position": [223, 29],
+    "roi": [217, 24, 322, 204],
+    "paleForegroundExact": true
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 2,
+    "originalSha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+    "finalSha256": "575d48c589d54295c50f72d263886f9cb7aade3ed0e627316ed255069f752f6f",
+    "changedPixels": 7242,
+    "changedBounds": [217, 24, 322, 204],
+    "outsideScopedLayerExact": true,
+    "method": "One complete native round dumbbell master reused at integer translations behind the original pale hand/forearm foreground; no new body shading or anatomy edits.",
+    "masterDimensions": [86, 171],
+    "position": [223, 29],
+    "roi": [217, 24, 322, 204],
+    "paleForegroundExact": true
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 3,
+    "originalSha256": "04aaf33df96a6fd4cfd9e7130d615e639c47f528322ae290f302f52944465428",
+    "finalSha256": "c77362ad26bb293c64300f1f237ce727c7ab404c75634235f32f95c0bf29ef97",
+    "changedPixels": 7321,
+    "changedBounds": [338, 201, 435, 381],
+    "outsideScopedLayerExact": true,
+    "method": "One complete native round dumbbell master reused at integer translations behind the original pale hand/forearm foreground; no new body shading or anatomy edits.",
+    "masterDimensions": [86, 171],
+    "position": [342, 204],
+    "roi": [338, 201, 435, 381],
+    "paleForegroundExact": true
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 4,
+    "originalSha256": "04aaf33df96a6fd4cfd9e7130d615e639c47f528322ae290f302f52944465428",
+    "finalSha256": "c77362ad26bb293c64300f1f237ce727c7ab404c75634235f32f95c0bf29ef97",
+    "changedPixels": 7321,
+    "changedBounds": [338, 201, 435, 381],
+    "outsideScopedLayerExact": true,
+    "method": "One complete native round dumbbell master reused at integer translations behind the original pale hand/forearm foreground; no new body shading or anatomy edits.",
+    "masterDimensions": [86, 171],
+    "position": [342, 204],
+    "roi": [338, 201, 435, 381],
+    "paleForegroundExact": true
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 5,
+    "originalSha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+    "finalSha256": "575d48c589d54295c50f72d263886f9cb7aade3ed0e627316ed255069f752f6f",
+    "changedPixels": 7242,
+    "changedBounds": [217, 24, 322, 204],
+    "outsideScopedLayerExact": true,
+    "method": "One complete native round dumbbell master reused at integer translations behind the original pale hand/forearm foreground; no new body shading or anatomy edits.",
+    "masterDimensions": [86, 171],
+    "position": [223, 29],
+    "roi": [217, 24, 322, 204],
+    "paleForegroundExact": true
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 6,
+    "originalSha256": "33fe620f60cee7e23e05b98ea9ad3de199299323c88125e14ba12ea20fb7c2d9",
+    "finalSha256": "575d48c589d54295c50f72d263886f9cb7aade3ed0e627316ed255069f752f6f",
+    "changedPixels": 7242,
+    "changedBounds": [217, 24, 322, 204],
+    "outsideScopedLayerExact": true,
+    "method": "One complete native round dumbbell master reused at integer translations behind the original pale hand/forearm foreground; no new body shading or anatomy edits.",
+    "masterDimensions": [86, 171],
+    "position": [223, 29],
+    "roi": [217, 24, 322, 204],
+    "paleForegroundExact": true
+  }
+]

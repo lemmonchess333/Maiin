@@ -1,0 +1,1010 @@
+[
+  {
+    "id": "face-pulls",
+    "frame": 1,
+    "anchors": [
+      {
+        "name": "fixedTowerTopCrossmemberMaterialFeature1",
+        "point": {
+          "x": 776,
+          "y": 35
+        },
+        "roi": [768, 27, 785, 44],
+        "beforeAndAfterSha256": "ceeede90abf699198f79402afca61300aa5d7eb98c0b701f188f44540de25757",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "fixedTowerTopCrossmemberMaterialFeature2",
+        "point": {
+          "x": 918,
+          "y": 31
+        },
+        "roi": [910, 23, 927, 40],
+        "beforeAndAfterSha256": "72967c6ca36620072bd37af3cf0c5121fa45d3391cbe2593203d3c8abae4e129",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [700, 0, 982, 1258],
+        "beforeAndAfterSha256": "a2543968e8577659205661c2a31e10767eb9e4b41b33a70c17fd43e02bdbe434",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 650, 700, 1258],
+        "beforeAndAfterSha256": "faf6f972146bcd81dd94414a103e834199e58e4e74c40cdd7d6098df5f19565c",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": {
+          "x": 776,
+          "y": 35
+        },
+        "fixedTowerTopCrossmemberMaterialFeature2": {
+          "x": 918,
+          "y": 31
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+        "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "face-pulls",
+    "frame": 2,
+    "anchors": [
+      {
+        "name": "fixedTowerTopCrossmemberMaterialFeature1",
+        "point": {
+          "x": 776,
+          "y": 35
+        },
+        "roi": [768, 27, 785, 44],
+        "beforeAndAfterSha256": "ceeede90abf699198f79402afca61300aa5d7eb98c0b701f188f44540de25757",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "fixedTowerTopCrossmemberMaterialFeature2",
+        "point": {
+          "x": 918,
+          "y": 31
+        },
+        "roi": [910, 23, 927, 40],
+        "beforeAndAfterSha256": "72967c6ca36620072bd37af3cf0c5121fa45d3391cbe2593203d3c8abae4e129",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [700, 0, 982, 1258],
+        "beforeAndAfterSha256": "a2543968e8577659205661c2a31e10767eb9e4b41b33a70c17fd43e02bdbe434",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 650, 700, 1258],
+        "beforeAndAfterSha256": "faf6f972146bcd81dd94414a103e834199e58e4e74c40cdd7d6098df5f19565c",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": {
+          "x": 776,
+          "y": 35
+        },
+        "fixedTowerTopCrossmemberMaterialFeature2": {
+          "x": 918,
+          "y": 31
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+        "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "face-pulls",
+    "frame": 3,
+    "anchors": [
+      {
+        "name": "fixedTowerTopCrossmemberMaterialFeature1",
+        "point": {
+          "x": 776,
+          "y": 35
+        },
+        "roi": [768, 27, 785, 44],
+        "beforeAndAfterSha256": "eb731cc3bc37a2871962d904d90c2f4187088babf1724936a1054dffb5834785",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "fixedTowerTopCrossmemberMaterialFeature2",
+        "point": {
+          "x": 918,
+          "y": 31
+        },
+        "roi": [910, 23, 927, 40],
+        "beforeAndAfterSha256": "e2570ff4c99fdae725afeb48f1a18d8a5626ae59091df3fe1e41844087f1aa4e",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [700, 0, 982, 1258],
+        "beforeAndAfterSha256": "336c9151d7c101598fd397968608540664e78b45c3fb64c412f44de8228feb3f",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 650, 700, 1258],
+        "beforeAndAfterSha256": "045a5dfce2c4b2f18e4a53b7f0facbd80165e9eef6c0a53c9de4b8539308c717",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": {
+          "x": 776,
+          "y": 35
+        },
+        "fixedTowerTopCrossmemberMaterialFeature2": {
+          "x": 918,
+          "y": 31
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+        "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "face-pulls",
+    "frame": 4,
+    "anchors": [
+      {
+        "name": "fixedTowerTopCrossmemberMaterialFeature1",
+        "point": {
+          "x": 776,
+          "y": 35
+        },
+        "roi": [768, 27, 785, 44],
+        "beforeAndAfterSha256": "eb731cc3bc37a2871962d904d90c2f4187088babf1724936a1054dffb5834785",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "fixedTowerTopCrossmemberMaterialFeature2",
+        "point": {
+          "x": 918,
+          "y": 31
+        },
+        "roi": [910, 23, 927, 40],
+        "beforeAndAfterSha256": "e2570ff4c99fdae725afeb48f1a18d8a5626ae59091df3fe1e41844087f1aa4e",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [700, 0, 982, 1258],
+        "beforeAndAfterSha256": "336c9151d7c101598fd397968608540664e78b45c3fb64c412f44de8228feb3f",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 650, 700, 1258],
+        "beforeAndAfterSha256": "045a5dfce2c4b2f18e4a53b7f0facbd80165e9eef6c0a53c9de4b8539308c717",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": {
+          "x": 776,
+          "y": 35
+        },
+        "fixedTowerTopCrossmemberMaterialFeature2": {
+          "x": 918,
+          "y": 31
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+        "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "face-pulls",
+    "frame": 5,
+    "anchors": [
+      {
+        "name": "fixedTowerTopCrossmemberMaterialFeature1",
+        "point": {
+          "x": 776,
+          "y": 35
+        },
+        "roi": [768, 27, 785, 44],
+        "beforeAndAfterSha256": "ceeede90abf699198f79402afca61300aa5d7eb98c0b701f188f44540de25757",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "fixedTowerTopCrossmemberMaterialFeature2",
+        "point": {
+          "x": 918,
+          "y": 31
+        },
+        "roi": [910, 23, 927, 40],
+        "beforeAndAfterSha256": "72967c6ca36620072bd37af3cf0c5121fa45d3391cbe2593203d3c8abae4e129",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [700, 0, 982, 1258],
+        "beforeAndAfterSha256": "a2543968e8577659205661c2a31e10767eb9e4b41b33a70c17fd43e02bdbe434",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 650, 700, 1258],
+        "beforeAndAfterSha256": "faf6f972146bcd81dd94414a103e834199e58e4e74c40cdd7d6098df5f19565c",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": {
+          "x": 776,
+          "y": 35
+        },
+        "fixedTowerTopCrossmemberMaterialFeature2": {
+          "x": 918,
+          "y": 31
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+        "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "face-pulls",
+    "frame": 6,
+    "anchors": [
+      {
+        "name": "fixedTowerTopCrossmemberMaterialFeature1",
+        "point": {
+          "x": 776,
+          "y": 35
+        },
+        "roi": [768, 27, 785, 44],
+        "beforeAndAfterSha256": "ceeede90abf699198f79402afca61300aa5d7eb98c0b701f188f44540de25757",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "fixedTowerTopCrossmemberMaterialFeature2",
+        "point": {
+          "x": 918,
+          "y": 31
+        },
+        "roi": [910, 23, 927, 40],
+        "beforeAndAfterSha256": "72967c6ca36620072bd37af3cf0c5121fa45d3391cbe2593203d3c8abae4e129",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [700, 0, 982, 1258],
+        "beforeAndAfterSha256": "a2543968e8577659205661c2a31e10767eb9e4b41b33a70c17fd43e02bdbe434",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 650, 700, 1258],
+        "beforeAndAfterSha256": "faf6f972146bcd81dd94414a103e834199e58e4e74c40cdd7d6098df5f19565c",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "fixedTowerTopCrossmemberMaterialFeature1": {
+          "x": 776,
+          "y": 35
+        },
+        "fixedTowerTopCrossmemberMaterialFeature2": {
+          "x": 918,
+          "y": 31
+        }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCrossmemberProjectedFeatureSpan": 142.0563268566381,
+        "oppositeFixedSupportProjectedFeatureSpan": 246.0894146443524
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "incline-db-curl",
+    "frame": 1,
+    "anchors": [
+      {
+        "name": "leftImageSupportLowestContourMidpoint",
+        "point": {
+          "x": 642.5,
+          "y": 721
+        },
+        "roi": [634, 713, 651, 730],
+        "beforeAndAfterSha256": "e47da0431e6e6811119d607fd437e4246eabfcd2af6d6d922cb17ee49880acf7",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "rightImageSupportLowestContourMidpoint",
+        "point": {
+          "x": 875.5,
+          "y": 648
+        },
+        "roi": [868, 640, 885, 657],
+        "beforeAndAfterSha256": "d5bae21f3fc8449efdc826a342bcaf2dbc8dcd676c05dc703dda2b09ea5df0bf",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [0, 550, 992, 784],
+        "beforeAndAfterSha256": "72fd8daa02f2a54f42e799d4886317e77bc76df4dfc88b799dba31e9ddd96a80",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 0, 370, 140],
+        "beforeAndAfterSha256": "d979719ead33ac981cf5cad626a0abae12422c58861e43726697c84db81871bb",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": {
+          "x": 642.5,
+          "y": 721
+        },
+        "rightImageSupportLowestContourMidpoint": {
+          "x": 875.5,
+          "y": 648
+        }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 258,
+        "rightImageSupportProjectedHorizontalSpan": 180
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "incline-db-curl",
+    "frame": 2,
+    "anchors": [
+      {
+        "name": "leftImageSupportLowestContourMidpoint",
+        "point": {
+          "x": 642.5,
+          "y": 721
+        },
+        "roi": [634, 713, 651, 730],
+        "beforeAndAfterSha256": "e47da0431e6e6811119d607fd437e4246eabfcd2af6d6d922cb17ee49880acf7",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "rightImageSupportLowestContourMidpoint",
+        "point": {
+          "x": 875.5,
+          "y": 648
+        },
+        "roi": [868, 640, 885, 657],
+        "beforeAndAfterSha256": "d5bae21f3fc8449efdc826a342bcaf2dbc8dcd676c05dc703dda2b09ea5df0bf",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [0, 550, 992, 784],
+        "beforeAndAfterSha256": "72fd8daa02f2a54f42e799d4886317e77bc76df4dfc88b799dba31e9ddd96a80",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 0, 370, 140],
+        "beforeAndAfterSha256": "d979719ead33ac981cf5cad626a0abae12422c58861e43726697c84db81871bb",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": {
+          "x": 642.5,
+          "y": 721
+        },
+        "rightImageSupportLowestContourMidpoint": {
+          "x": 875.5,
+          "y": 648
+        }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 258,
+        "rightImageSupportProjectedHorizontalSpan": 180
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "incline-db-curl",
+    "frame": 3,
+    "anchors": [
+      {
+        "name": "leftImageSupportLowestContourMidpoint",
+        "point": {
+          "x": 642.5,
+          "y": 721
+        },
+        "roi": [634, 713, 651, 730],
+        "beforeAndAfterSha256": "e47da0431e6e6811119d607fd437e4246eabfcd2af6d6d922cb17ee49880acf7",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "rightImageSupportLowestContourMidpoint",
+        "point": {
+          "x": 875.5,
+          "y": 648
+        },
+        "roi": [868, 640, 885, 657],
+        "beforeAndAfterSha256": "d5bae21f3fc8449efdc826a342bcaf2dbc8dcd676c05dc703dda2b09ea5df0bf",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [0, 550, 992, 784],
+        "beforeAndAfterSha256": "72fd8daa02f2a54f42e799d4886317e77bc76df4dfc88b799dba31e9ddd96a80",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 0, 370, 140],
+        "beforeAndAfterSha256": "d979719ead33ac981cf5cad626a0abae12422c58861e43726697c84db81871bb",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": {
+          "x": 642.5,
+          "y": 721
+        },
+        "rightImageSupportLowestContourMidpoint": {
+          "x": 875.5,
+          "y": 648
+        }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 258,
+        "rightImageSupportProjectedHorizontalSpan": 180
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "incline-db-curl",
+    "frame": 4,
+    "anchors": [
+      {
+        "name": "leftImageSupportLowestContourMidpoint",
+        "point": {
+          "x": 642.5,
+          "y": 721
+        },
+        "roi": [634, 713, 651, 730],
+        "beforeAndAfterSha256": "e47da0431e6e6811119d607fd437e4246eabfcd2af6d6d922cb17ee49880acf7",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "rightImageSupportLowestContourMidpoint",
+        "point": {
+          "x": 875.5,
+          "y": 648
+        },
+        "roi": [868, 640, 885, 657],
+        "beforeAndAfterSha256": "d5bae21f3fc8449efdc826a342bcaf2dbc8dcd676c05dc703dda2b09ea5df0bf",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [0, 550, 992, 784],
+        "beforeAndAfterSha256": "72fd8daa02f2a54f42e799d4886317e77bc76df4dfc88b799dba31e9ddd96a80",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 0, 370, 140],
+        "beforeAndAfterSha256": "d979719ead33ac981cf5cad626a0abae12422c58861e43726697c84db81871bb",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": {
+          "x": 642.5,
+          "y": 721
+        },
+        "rightImageSupportLowestContourMidpoint": {
+          "x": 875.5,
+          "y": 648
+        }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 258,
+        "rightImageSupportProjectedHorizontalSpan": 180
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "incline-db-curl",
+    "frame": 5,
+    "anchors": [
+      {
+        "name": "leftImageSupportLowestContourMidpoint",
+        "point": {
+          "x": 642.5,
+          "y": 721
+        },
+        "roi": [634, 713, 651, 730],
+        "beforeAndAfterSha256": "e47da0431e6e6811119d607fd437e4246eabfcd2af6d6d922cb17ee49880acf7",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "rightImageSupportLowestContourMidpoint",
+        "point": {
+          "x": 875.5,
+          "y": 648
+        },
+        "roi": [868, 640, 885, 657],
+        "beforeAndAfterSha256": "d5bae21f3fc8449efdc826a342bcaf2dbc8dcd676c05dc703dda2b09ea5df0bf",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [0, 550, 992, 784],
+        "beforeAndAfterSha256": "72fd8daa02f2a54f42e799d4886317e77bc76df4dfc88b799dba31e9ddd96a80",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 0, 370, 140],
+        "beforeAndAfterSha256": "d979719ead33ac981cf5cad626a0abae12422c58861e43726697c84db81871bb",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": {
+          "x": 642.5,
+          "y": 721
+        },
+        "rightImageSupportLowestContourMidpoint": {
+          "x": 875.5,
+          "y": 648
+        }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 258,
+        "rightImageSupportProjectedHorizontalSpan": 180
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "incline-db-curl",
+    "frame": 6,
+    "anchors": [
+      {
+        "name": "leftImageSupportLowestContourMidpoint",
+        "point": {
+          "x": 642.5,
+          "y": 721
+        },
+        "roi": [634, 713, 651, 730],
+        "beforeAndAfterSha256": "e47da0431e6e6811119d607fd437e4246eabfcd2af6d6d922cb17ee49880acf7",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "rightImageSupportLowestContourMidpoint",
+        "point": {
+          "x": 875.5,
+          "y": 648
+        },
+        "roi": [868, 640, 885, 657],
+        "beforeAndAfterSha256": "d5bae21f3fc8449efdc826a342bcaf2dbc8dcd676c05dc703dda2b09ea5df0bf",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [0, 550, 992, 784],
+        "beforeAndAfterSha256": "72fd8daa02f2a54f42e799d4886317e77bc76df4dfc88b799dba31e9ddd96a80",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 0, 370, 140],
+        "beforeAndAfterSha256": "d979719ead33ac981cf5cad626a0abae12422c58861e43726697c84db81871bb",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": {
+          "x": 642.5,
+          "y": 721
+        },
+        "rightImageSupportLowestContourMidpoint": {
+          "x": 875.5,
+          "y": 648
+        }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 258,
+        "rightImageSupportProjectedHorizontalSpan": 180
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 1,
+    "anchors": [
+      {
+        "name": "plantedFarTrainerHeelContour",
+        "point": {
+          "x": 216,
+          "y": 1409
+        },
+        "roi": [208, 1401, 225, 1418],
+        "beforeAndAfterSha256": "a2411d648d3125c7ca3ef4bc4998fb72620abf3eec93a7ff9a3003cf253b7921",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "plantedNearTrainerHeelContour",
+        "point": {
+          "x": 394,
+          "y": 1475
+        },
+        "roi": [386, 1467, 403, 1484],
+        "beforeAndAfterSha256": "be02246bb1fa13ba758c0ae3a87b0eb6842a9a2b5478afe9fae070d9fba15932",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [0, 1200, 461, 1547],
+        "beforeAndAfterSha256": "393f9f059c7b3b94284e1ce3bdea5fb6f5be21f17ddd316b4aa12afedcbcb7db",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 400, 110, 1200],
+        "beforeAndAfterSha256": "2ae52e62ea4527be630bebe0d7942353323b1ad2ef8254f7fc5b494d0f62d440",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "plantedFarTrainerHeelContour": {
+          "x": 216,
+          "y": 1409
+        },
+        "plantedNearTrainerHeelContour": {
+          "x": 394,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelProjectedSpan": 184.45595680270128,
+        "nearTrainerToeHeelProjectedSpan": 158.8238017426859
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 2,
+    "anchors": [
+      {
+        "name": "plantedFarTrainerHeelContour",
+        "point": {
+          "x": 216,
+          "y": 1409
+        },
+        "roi": [208, 1401, 225, 1418],
+        "beforeAndAfterSha256": "a2411d648d3125c7ca3ef4bc4998fb72620abf3eec93a7ff9a3003cf253b7921",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "plantedNearTrainerHeelContour",
+        "point": {
+          "x": 394,
+          "y": 1475
+        },
+        "roi": [386, 1467, 403, 1484],
+        "beforeAndAfterSha256": "be02246bb1fa13ba758c0ae3a87b0eb6842a9a2b5478afe9fae070d9fba15932",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [0, 1200, 461, 1547],
+        "beforeAndAfterSha256": "393f9f059c7b3b94284e1ce3bdea5fb6f5be21f17ddd316b4aa12afedcbcb7db",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 400, 110, 1200],
+        "beforeAndAfterSha256": "2ae52e62ea4527be630bebe0d7942353323b1ad2ef8254f7fc5b494d0f62d440",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "plantedFarTrainerHeelContour": {
+          "x": 216,
+          "y": 1409
+        },
+        "plantedNearTrainerHeelContour": {
+          "x": 394,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelProjectedSpan": 184.45595680270128,
+        "nearTrainerToeHeelProjectedSpan": 158.8238017426859
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 3,
+    "anchors": [
+      {
+        "name": "plantedFarTrainerHeelContour",
+        "point": {
+          "x": 216,
+          "y": 1410
+        },
+        "roi": [208, 1402, 225, 1419],
+        "beforeAndAfterSha256": "1d008fafa29d84b2177b02290045be82eda76a27cbce808fbdf452b13c3c1b9b",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "plantedNearTrainerHeelContour",
+        "point": {
+          "x": 394,
+          "y": 1475
+        },
+        "roi": [386, 1467, 403, 1484],
+        "beforeAndAfterSha256": "5e117a5a58812dec63e599418ca2e6b0254808a319bee7a37bbfe32ccc041e8c",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [0, 1200, 461, 1547],
+        "beforeAndAfterSha256": "f97d87b5fd140bdd8014e296a6a4cd27e281c3103bb4b5bb37b282d53c00018f",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 400, 110, 1200],
+        "beforeAndAfterSha256": "c26a4f65322663e34c5a7b18e4d92c8db01ab74c8a40451e6b6d03f5e3e6c124",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "plantedFarTrainerHeelContour": {
+          "x": 216,
+          "y": 1410
+        },
+        "plantedNearTrainerHeelContour": {
+          "x": 394,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelProjectedSpan": 184.29595763336752,
+        "nearTrainerToeHeelProjectedSpan": 159.66527487215245
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 4,
+    "anchors": [
+      {
+        "name": "plantedFarTrainerHeelContour",
+        "point": {
+          "x": 216,
+          "y": 1410
+        },
+        "roi": [208, 1402, 225, 1419],
+        "beforeAndAfterSha256": "1d008fafa29d84b2177b02290045be82eda76a27cbce808fbdf452b13c3c1b9b",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "plantedNearTrainerHeelContour",
+        "point": {
+          "x": 394,
+          "y": 1475
+        },
+        "roi": [386, 1467, 403, 1484],
+        "beforeAndAfterSha256": "5e117a5a58812dec63e599418ca2e6b0254808a319bee7a37bbfe32ccc041e8c",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [0, 1200, 461, 1547],
+        "beforeAndAfterSha256": "f97d87b5fd140bdd8014e296a6a4cd27e281c3103bb4b5bb37b282d53c00018f",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 400, 110, 1200],
+        "beforeAndAfterSha256": "c26a4f65322663e34c5a7b18e4d92c8db01ab74c8a40451e6b6d03f5e3e6c124",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "plantedFarTrainerHeelContour": {
+          "x": 216,
+          "y": 1410
+        },
+        "plantedNearTrainerHeelContour": {
+          "x": 394,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelProjectedSpan": 184.29595763336752,
+        "nearTrainerToeHeelProjectedSpan": 159.66527487215245
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 5,
+    "anchors": [
+      {
+        "name": "plantedFarTrainerHeelContour",
+        "point": {
+          "x": 216,
+          "y": 1409
+        },
+        "roi": [208, 1401, 225, 1418],
+        "beforeAndAfterSha256": "a2411d648d3125c7ca3ef4bc4998fb72620abf3eec93a7ff9a3003cf253b7921",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "plantedNearTrainerHeelContour",
+        "point": {
+          "x": 394,
+          "y": 1475
+        },
+        "roi": [386, 1467, 403, 1484],
+        "beforeAndAfterSha256": "be02246bb1fa13ba758c0ae3a87b0eb6842a9a2b5478afe9fae070d9fba15932",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [0, 1200, 461, 1547],
+        "beforeAndAfterSha256": "393f9f059c7b3b94284e1ce3bdea5fb6f5be21f17ddd316b4aa12afedcbcb7db",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 400, 110, 1200],
+        "beforeAndAfterSha256": "2ae52e62ea4527be630bebe0d7942353323b1ad2ef8254f7fc5b494d0f62d440",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "plantedFarTrainerHeelContour": {
+          "x": 216,
+          "y": 1409
+        },
+        "plantedNearTrainerHeelContour": {
+          "x": 394,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelProjectedSpan": 184.45595680270128,
+        "nearTrainerToeHeelProjectedSpan": 158.8238017426859
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  },
+  {
+    "id": "overhead-extension",
+    "frame": 6,
+    "anchors": [
+      {
+        "name": "plantedFarTrainerHeelContour",
+        "point": {
+          "x": 216,
+          "y": 1409
+        },
+        "roi": [208, 1401, 225, 1418],
+        "beforeAndAfterSha256": "a2411d648d3125c7ca3ef4bc4998fb72620abf3eec93a7ff9a3003cf253b7921",
+        "decodedPixelsExact": true
+      },
+      {
+        "name": "plantedNearTrainerHeelContour",
+        "point": {
+          "x": 394,
+          "y": 1475
+        },
+        "roi": [386, 1467, 403, 1484],
+        "beforeAndAfterSha256": "be02246bb1fa13ba758c0ae3a87b0eb6842a9a2b5478afe9fae070d9fba15932",
+        "decodedPixelsExact": true
+      }
+    ],
+    "fixedSceneRegions": [
+      {
+        "roi": [0, 1200, 461, 1547],
+        "beforeAndAfterSha256": "393f9f059c7b3b94284e1ce3bdea5fb6f5be21f17ddd316b4aa12afedcbcb7db",
+        "decodedPixelsExact": true
+      },
+      {
+        "roi": [0, 400, 110, 1200],
+        "beforeAndAfterSha256": "2ae52e62ea4527be630bebe0d7942353323b1ad2ef8254f7fc5b494d0f62d440",
+        "decodedPixelsExact": true
+      }
+    ],
+    "unchangedMeasurements": {
+      "anchors": {
+        "plantedFarTrainerHeelContour": {
+          "x": 216,
+          "y": 1409
+        },
+        "plantedNearTrainerHeelContour": {
+          "x": 394,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelProjectedSpan": 184.45595680270128,
+        "nearTrainerToeHeelProjectedSpan": 158.8238017426859
+      }
+    },
+    "entireNativeCanvasUnchanged": true,
+    "anatomicalTransforms": []
+  }
+]

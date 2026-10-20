@@ -398,8 +398,8 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     reference: 1,
   },
   "face-pulls": {
-    folder: "2026-10-20-strict-review",
-    version: "anatomy-v3-2026-10-15-ergonomic-rope-two-endpoint-v1",
+    folder: "2026-10-20-contour-polish",
+    version: "anatomy-v3-2026-10-20-contour-polish-v1",
     width: 982,
     height: 1258,
     reference: 1,
@@ -496,8 +496,8 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     reference: 1,
   },
   "incline-db-curl": {
-    folder: "2026-10-20-strict-review",
-    version: "anatomy-v3-2026-10-16-native-moving-source-v1",
+    folder: "2026-10-20-contour-polish",
+    version: "anatomy-v3-2026-10-20-contour-polish-v1",
     width: 992,
     height: 784,
     reference: 1,
@@ -664,8 +664,8 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     reference: 1,
   },
   "overhead-extension": {
-    folder: "2026-10-20-strict-review",
-    version: "anatomy-v3-2026-10-20-strict-native-correction-v1",
+    folder: "2026-10-20-contour-polish",
+    version: "anatomy-v3-2026-10-20-contour-polish-v1",
     width: 461,
     height: 1547,
     reference: 3,

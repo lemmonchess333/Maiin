@@ -1,0 +1,17 @@
+{
+  "head": "d41b9d9586dbf76a829eb5208f57a9c36c800c11",
+  "normalCommand": "npm run verify",
+  "exitCode": 9009,
+  "all2803RuntimeInputsFrozenAndClean": true,
+  "fullVerificationPassed": false,
+  "archive": "project-checks/current-main-baseline.zip",
+  "archiveSha256": "d6e2ad7e038a9c6758b99d0b812ca1091803cef779964d802d5c07455c644eab",
+  "files": {
+    "start.json": "809ea3ad2afc3a876e7793deab1f17be7f93b8768818174b4b0082dc1e309c85",
+    "result.json": "279758faac353d106bb63b8ea128eddaa6e8213646dc2377dc112c5c63dfd0a5",
+    "verify.log": "384c7f81862a19a3f1dcb5df8b87636d0bed1a8cbee7cd6a1d1e74af2d2c0aba",
+    "inputs-before.json": "4961cc7ad641177efe07f37af84cef7cb4d5a73d78ef4cfd5f4fc8ac73893da2",
+    "inputs-after.json": "4961cc7ad641177efe07f37af84cef7cb4d5a73d78ef4cfd5f4fc8ac73893da2"
+  },
+  "interpretation": "Fresh clean baseline after main advanced and exact npm ci. Same measured Windows python3 Store launcher stop; original f9eb baseline remains historical. No local full green claim."
+}

@@ -39,3 +39,11 @@
 /docs/exercise-art/reviews/2026-10-20-final-two-strict/**/*.png -text
 /docs/exercise-art/reviews/2026-10-20-final-two-strict/project-checks/*.json.txt -text
 /docs/exercise-art/reviews/2026-10-20-final-two-strict/project-checks/*.log.txt -text
+
+/docs/exercise-art/releases/2026-10-20-contour-polish/*.json text eol=lf
+/docs/exercise-art/reviews/2026-10-20-contour-polish/** text eol=lf
+/docs/exercise-art/reviews/2026-10-20-contour-polish/**/*.png -text
+/docs/exercise-art/reviews/2026-10-20-contour-polish/*.png -text
+/docs/exercise-art/reviews/2026-10-20-contour-polish/project-checks/*.log.txt -text
+/docs/exercise-art/reviews/2026-10-20-contour-polish/project-checks/*.json.txt -text
+/docs/exercise-art/reviews/2026-10-20-contour-polish/project-checks/*.zip -text

@@ -1,0 +1,221 @@
+{
+  "exerciseId": "incline-db-curl",
+  "version": "anatomy-v3-2026-10-20-contour-polish-v1",
+  "width": 992,
+  "height": 784,
+  "reference": {
+    "path": "form-frames/incline-db-curl/1.webp",
+    "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac"
+  },
+  "cueSha256": "ab4685bf7f13c67744126b45d550b3959d8a1ae0681ca0d43b43ae6f6fea8f32",
+  "decision": "approved",
+  "reviewer": "Codex scoped native contour review, source-preservation proof, actual mobile light/dark review",
+  "reviewedAt": "2026-10-20T19:00:00.159600+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved. Current scoped correction: The raised near-arm state had a small stepped far-shoulder outline where the native moving-region edge met the fixed shoulder. One 37x18 native-coordinate correction uses the original fixed shoulder pixels under a continuous antialiased contour. The complete working arm, grip, dumbbell, head, bench, lower body and trainers remain exact."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review. Current fixed-material proof confirms original same-coordinate anchor patches and complete measured support/hardware regions are decoded-pixel exact. Existing coordinates and dimensions remain valid with unchanged limits."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. The near arm curls while the far arm holds; setup and Alternate cue explicitly request opposite-side repetition. No simultaneous bilateral movement is claimed. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed. Current scoped correction: The raised near-arm state had a small stepped far-shoulder outline where the native moving-region edge met the fixed shoulder. One 37x18 native-coordinate correction uses the original fixed shoulder pixels under a continuous antialiased contour. The complete working arm, grip, dumbbell, head, bench, lower body and trainers remain exact."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Stable incline bench and one grey hex dumbbell in each grip. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors. Current scoped correction: The raised near-arm state had a small stepped far-shoulder outline where the native moving-region edge met the fixed shoulder. One 37x18 native-coordinate correction uses the original fixed shoulder pixels under a continuous antialiased contour. The complete working arm, grip, dumbbell, head, bench, lower body and trainers remain exact."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "The near arm curls while the far arm holds; setup and Alternate cue explicitly request opposite-side repetition. No simultaneous bilateral movement is claimed. Actual named native supports are measured in all six frames: leftImageSupportLowestContourMidpoint, rightImageSupportLowestContourMidpoint. Maximum axis drift 0px. Dimensions: leftImageSupportProjectedHorizontalSpan, rightImageSupportProjectedHorizontalSpan; max 0.00000%. Current fixed-material proof confirms original same-coordinate anchor patches and complete measured support/hardware regions are decoded-pixel exact. Existing coordinates and dimensions remain valid with unchanged limits."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "The near arm curls while the far arm holds; setup and Alternate cue explicitly request opposite-side repetition. No simultaneous bilateral movement is claimed. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification. Current fixed-material proof confirms original same-coordinate anchor patches and complete measured support/hardware regions are decoded-pixel exact. Existing coordinates and dimensions remain valid with unchanged limits."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Biceps #7B72E9; secondary Forearms #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region. Current scoped correction: The raised near-arm state had a small stepped far-shoulder outline where the native moving-region edge met the fixed shoulder. One 37x18 native-coordinate correction uses the original fixed shoulder pixels under a continuous antialiased contour. The complete working arm, grip, dumbbell, head, bench, lower body and trainers remain exact."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Set: Let the near arm hang beside you. / Brace: Keep your upper arm beside the bench. / Curl: Curl toward your shoulder; keep wrist straight. / Squeeze: Pause without swinging your upper arm. / Lower: Lower the weight under control. / Alternate: Repeat with the opposite arm.. Preparation remains [\"Lie back on a low incline bench with both feet planted.\", \"Hold one dumbbell in each hand and curl one arm at a time.\", \"The near arm is demonstrated; repeat the same controlled curl on the other side.\"]. The near arm curls while the far arm holds; setup and Alternate cue explicitly request opposite-side repetition. No simultaneous bilateral movement is claimed. Exact existing cues, physical pose order and playback mode retained; actual current playback/manual wrap reviewed."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. The near arm curls while the far arm holds; setup and Alternate cue explicitly request opposite-side repetition. No simultaneous bilateral movement is claimed. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted. Exact existing cues, physical pose order and playback mode retained; actual current playback/manual wrap reviewed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual 390x844 production ExerciseFormContent/ExerciseThumb with staged then registered current assets reviewed in light theme. All six decoded frame paths, manual wraps, corrected native pose, captions, legend, preparation and three normal card sizes inspected; current observations and screenshots retained in this review bundle."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual 390x844 production ExerciseFormContent/ExerciseThumb with staged then registered current assets reviewed in dark theme. All six decoded frame paths, manual wraps, corrected native pose, captions, legend, preparation and three normal card sizes inspected; current observations and screenshots retained in this review bundle."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/incline-db-curl/1.webp",
+      "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": {
+          "x": 642.5,
+          "y": 721
+        },
+        "rightImageSupportLowestContourMidpoint": {
+          "x": 875.5,
+          "y": 648
+        }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 258,
+        "rightImageSupportProjectedHorizontalSpan": 180
+      }
+    },
+    {
+      "path": "form-frames/incline-db-curl/2.webp",
+      "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": {
+          "x": 642.5,
+          "y": 721
+        },
+        "rightImageSupportLowestContourMidpoint": {
+          "x": 875.5,
+          "y": 648
+        }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 258,
+        "rightImageSupportProjectedHorizontalSpan": 180
+      }
+    },
+    {
+      "path": "form-frames/incline-db-curl/3.webp",
+      "sha256": "402fe0ca44c4bc53f1d77880b7b6ac5082b33cd52f318cc20b5f20431872b0f5",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": {
+          "x": 642.5,
+          "y": 721
+        },
+        "rightImageSupportLowestContourMidpoint": {
+          "x": 875.5,
+          "y": 648
+        }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 258,
+        "rightImageSupportProjectedHorizontalSpan": 180
+      }
+    },
+    {
+      "path": "form-frames/incline-db-curl/4.webp",
+      "sha256": "402fe0ca44c4bc53f1d77880b7b6ac5082b33cd52f318cc20b5f20431872b0f5",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": {
+          "x": 642.5,
+          "y": 721
+        },
+        "rightImageSupportLowestContourMidpoint": {
+          "x": 875.5,
+          "y": 648
+        }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 258,
+        "rightImageSupportProjectedHorizontalSpan": 180
+      }
+    },
+    {
+      "path": "form-frames/incline-db-curl/5.webp",
+      "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": {
+          "x": 642.5,
+          "y": 721
+        },
+        "rightImageSupportLowestContourMidpoint": {
+          "x": 875.5,
+          "y": 648
+        }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 258,
+        "rightImageSupportProjectedHorizontalSpan": 180
+      }
+    },
+    {
+      "path": "form-frames/incline-db-curl/6.webp",
+      "sha256": "8538498818b06215b954fde1dfcc8d5186adb911d2f37bcc2442a1ee7f4998ac",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": {
+          "x": 642.5,
+          "y": 721
+        },
+        "rightImageSupportLowestContourMidpoint": {
+          "x": 875.5,
+          "y": 648
+        }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 258,
+        "rightImageSupportProjectedHorizontalSpan": 180
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": {
+      "anchorAxisPx": 1,
+      "invariantRelative": 0.01
+    },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json",
+    "currentPreservationProof": "docs/exercise-art/reviews/2026-10-20-contour-polish/fixed-material-proof.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-20-strict-review/incline-db-curl.json",
+    "sha256": "51e46de9ca30e4db56f76d53590889c90d350f3474f31cc6795974ba4a242b97"
+  },
+  "historicalFindings": [
+    "This is an alternating variation: one complete near-arm curl is demonstrated and the setup/cues explicitly say to repeat the opposite side. The far arm holds its weight stationary beside the body; a simultaneous bilateral curl is not claimed.",
+    "The older bilateral hang request remains closed. The retained complete near-arm endpoint is reused for a new actual elbow-flexed source, authored with the canonical identity reference. The earlier rough projected-arm-shortening concern was not a measured3D result; intact native chains are reviewed directly.",
+    "One connected near-arm/weight region is inserted from the new native B at unchanged coordinates. All source pixels outside this documented moving region are taken from A, including the head, lower body, trainers, far grip and bench. No anatomy warp, fitted limb or head/shoe graft.",
+    "The same restrained-grey near hex dumbbell and closed grip are visible at both endpoints. Minor local contour/shading joins at the moving-region edge remain qualitative; exact3D joint positions are unverified.",
+    "Biceps primary#7B72E9 and forearms secondary#9590E0 use the original source tone and saturation. No additional spatial body shading.",
+    "Two genuine near-arm elbow endpoints occupy six cue slots; no six-unique-pose or continuous-animation claim. Strict certification remains unverified.",
+    "Two genuine physical endpoints occupy six cue slots; no continuous-motion or six-unique-pose certificate.",
+    "Normal cards use the established lossy export and transparent-background treatment. The white athlete has reduced contrast against the light card; at160px the complete apparatus/athlete is small. No strict readability certificate.",
+    "Actual native-coordinate source joins, anatomical colour boundaries and projected contact depth are qualitative findings. Strict visual checks remain null.",
+    "Alternating variation demonstrates the near-arm cycle; opposite-side repetition is stated in setup and cues. Far arm and its weight remain stationary. Exact3D elbow coordinates are unverified; minor local contour/projection differences remain findings."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete authored stills and normal pose-dependent foreshortening; no calibrated three-dimensional body reconstruction or continuous animation is claimed."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-contour-polish/mobile/observations.json",
+    "sha256": "2b659fd8804e38950bbf248d00df820329dfcb0a09a04c3c58e418c2c5a2af6f"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false,
+  "correctionScope": "The raised near-arm state had a small stepped far-shoulder outline where the native moving-region edge met the fixed shoulder. One 37x18 native-coordinate correction uses the original fixed shoulder pixels under a continuous antialiased contour. The complete working arm, grip, dumbbell, head, bench, lower body and trainers remain exact.",
+  "currentContourReview": {
+    "path": "docs/exercise-art/reviews/2026-10-20-contour-polish/README.md",
+    "scope": "The raised near-arm state had a small stepped far-shoulder outline where the native moving-region edge met the fixed shoulder. One 37x18 native-coordinate correction uses the original fixed shoulder pixels under a continuous antialiased contour. The complete working arm, grip, dumbbell, head, bench, lower body and trainers remain exact."
+  },
+  "nativeSourceArchive": {
+    "path": "docs/exercise-art/sources/incline-db-curl/2026-10-20-contour-polish/native-source.zip",
+    "sha256": "359a34161a0ffccaa1826a87efd07feff9d61d873a78819b5ff3417b282dbbf3",
+    "bytes": 2665691,
+    "scope": "The raised near-arm state had a small stepped far-shoulder outline where the native moving-region edge met the fixed shoulder. One 37x18 native-coordinate correction uses the original fixed shoulder pixels under a continuous antialiased contour. The complete working arm, grip, dumbbell, head, bench, lower body and trainers remain exact.",
+    "independentReproductionExact": true
+  }
+}
