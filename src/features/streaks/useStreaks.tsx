@@ -287,24 +287,6 @@ function yesterdayKey(now: Date): string {
   return format(y, "yyyy-MM-dd");
 }
 
-/**
- * Today/yesterday rule — the streak does NOT drop to zero at midnight.
- * - If today is active: streak ends on today (live).
- * - Else if yesterday is active: streak ends on yesterday (at risk).
- * - Else: streak = 0 (broken).
- * Walks backwards from the ending date, incrementing while days are in the
- * set, bridging isolated non-active days per the grace rule above.
- *
- * `now` is injectable for deterministic tests; production callers omit it.
- */
-// eslint-disable-next-line react-refresh/only-export-components
-export function computeCurrentStreak(
-  activeDates: Set<string>,
-  now: Date = new Date()
-): number {
-  return computeStreakSpan(activeDates, now).streak;
-}
-
 export interface StreakSpan {
   /** Streak length including any bridged grace days. */
   streak: number;
@@ -336,8 +318,17 @@ export interface StreakAnchor {
 }
 
 /**
- * Walk the streak once and return both the length and the grace days it
- * bridged. `computeCurrentStreak` is the thin number-only wrapper over this.
+ * Walk the streak once and return its length, the grace days it bridged and
+ * the day it ends on.
+ *
+ * Today/yesterday rule — the streak does NOT drop to zero at midnight.
+ * - If today is active: streak ends on today (live).
+ * - Else if yesterday is active: streak ends on yesterday (at risk).
+ * - Else: streak = 0 (broken).
+ * Walks backwards from the ending date, incrementing while days are in the
+ * set, bridging isolated non-active days per the grace rule above.
+ *
+ * `now` is injectable for deterministic tests; production callers omit it.
  *
  * `anchor` (optional) is what makes long streaks computable from a bounded
  * window — see `computeStreakSpanAnchored`, which is the entry point that

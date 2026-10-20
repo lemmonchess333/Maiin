@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { format } from "date-fns";
 import {
-  computeCurrentStreak,
   computeStreakSpan,
   computeStreakSpanAnchored,
   computeStreakState,
@@ -16,11 +15,11 @@ const dayKey = (offset: number) =>
   format(new Date(NOW.getTime() - offset * 86400000), "yyyy-MM-dd");
 const activeSet = (...offsets: number[]) => new Set(offsets.map(dayKey));
 const streak = (...offsets: number[]) =>
-  computeCurrentStreak(activeSet(...offsets), NOW);
+  computeStreakSpan(activeSet(...offsets), NOW).streak;
 
-describe("computeCurrentStreak — base behaviour", () => {
+describe("the streak walk — base behaviour", () => {
   it("returns 0 for an empty set", () => {
-    expect(computeCurrentStreak(new Set(), NOW)).toBe(0);
+    expect(computeStreakSpan(new Set(), NOW).streak).toBe(0);
   });
 
   it("counts a single active today as 1", () => {
@@ -40,7 +39,7 @@ describe("computeCurrentStreak — base behaviour", () => {
   });
 });
 
-describe("computeCurrentStreak — grace forgiveness", () => {
+describe("the streak walk — grace forgiveness", () => {
   it("bridges a single isolated gap (active–gap–active)", () => {
     // today active, yesterday missed, day-2 active → 3-day span
     expect(streak(0, 2)).toBe(3);
@@ -115,7 +114,7 @@ describe("backfill rescue mechanism (Tier B) — simulation property", () => {
   const withYesterday = (...offsets: number[]) => {
     const set = activeSet(...offsets);
     set.add(dayKey(1));
-    return computeCurrentStreak(set, NOW);
+    return computeStreakSpan(set, NOW).streak;
   };
 
   it("is broken when the last active day is 2 days ago", () => {
