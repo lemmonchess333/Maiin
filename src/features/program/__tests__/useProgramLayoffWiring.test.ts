@@ -18,7 +18,7 @@
  * every other read through, so the window is somewhere the test can stand
  * rather than something it has to catch by timing.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 
 import { generateSchedule } from "@/lib/scheduleUtils";
@@ -93,7 +93,12 @@ import { useProgram } from "../useProgram";
 
 /* ── fixtures ──────────────────────────────────────────────────────── */
 
-const TODAY = localDateString(new Date());
+// A full local week: Run19 correctly drops past days on a midweek rollover,
+// including this fixture's Tuesday quality session. These tests compare a
+// trained runner's whole week with a returner's, not the days left when CI
+// happens to run. Keep the clock, race and run history on the same Monday.
+// Midweek catch-up remains covered explicitly in weekRollover.test.ts.
+const TODAY = "2026-10-19";
 /** "YYYY-MM-DD" + n days, back to "YYYY-MM-DD". */
 const shift = (key: string, n: number) =>
   localDateString(addLocalDays(parseLocalDate(key), n));
@@ -177,10 +182,18 @@ const longestKm = (days: { templateId: string }[]) =>
   );
 
 beforeEach(() => {
+  const monday = parseLocalDate(TODAY);
+  monday.setHours(12);
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(monday);
   resetFirestore();
   resumeReads();
   currentUid = "userA";
   mockProfile = raceProfile();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 /**
