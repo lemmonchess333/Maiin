@@ -1,0 +1,241 @@
+{
+  "exerciseId": "swimming",
+  "version": "anatomy-v3-2026-10-20-swim-fixed-poolside-v1",
+  "width": 1472,
+  "height": 848,
+  "frames": [
+    {
+      "path": "form-frames/swimming/1.webp",
+      "sha256": "ddea3ccdcbffc4b5da60ed0b00055c1575fb80756f496377ed53dc542e09b12d",
+      "anchors": {
+        "poolTileTopLeft": {
+          "x": 128,
+          "y": 214
+        },
+        "poolTileTopRight": {
+          "x": 336,
+          "y": 214
+        },
+        "poolTileBottomLeft": {
+          "x": 128,
+          "y": 279
+        },
+        "poolTileBottomRight": {
+          "x": 336,
+          "y": 279
+        }
+      },
+      "invariantDimensions": {
+        "copingTileWidth": 208,
+        "copingVisibleDepth": 65
+      }
+    },
+    {
+      "path": "form-frames/swimming/2.webp",
+      "sha256": "12dc95ebf1cb96a5185c08fa71e02007668669615d83610fe1c3f2580ee0d28e",
+      "anchors": {
+        "poolTileTopLeft": {
+          "x": 128,
+          "y": 214
+        },
+        "poolTileTopRight": {
+          "x": 336,
+          "y": 214
+        },
+        "poolTileBottomLeft": {
+          "x": 128,
+          "y": 279
+        },
+        "poolTileBottomRight": {
+          "x": 336,
+          "y": 279
+        }
+      },
+      "invariantDimensions": {
+        "copingTileWidth": 208,
+        "copingVisibleDepth": 65
+      }
+    },
+    {
+      "path": "form-frames/swimming/3.webp",
+      "sha256": "19e08456cb4fd7b958b4f68aeaa621eb45aaa9144e745d2aecafceed6a0f9a37",
+      "anchors": {
+        "poolTileTopLeft": {
+          "x": 128,
+          "y": 214
+        },
+        "poolTileTopRight": {
+          "x": 336,
+          "y": 214
+        },
+        "poolTileBottomLeft": {
+          "x": 128,
+          "y": 279
+        },
+        "poolTileBottomRight": {
+          "x": 336,
+          "y": 279
+        }
+      },
+      "invariantDimensions": {
+        "copingTileWidth": 208,
+        "copingVisibleDepth": 65
+      }
+    },
+    {
+      "path": "form-frames/swimming/4.webp",
+      "sha256": "da30a0c84df06d8350d92cee4d392d2a17550eb8a7a7c4b355a6ceb37871bd5d",
+      "anchors": {
+        "poolTileTopLeft": {
+          "x": 128,
+          "y": 214
+        },
+        "poolTileTopRight": {
+          "x": 336,
+          "y": 214
+        },
+        "poolTileBottomLeft": {
+          "x": 128,
+          "y": 279
+        },
+        "poolTileBottomRight": {
+          "x": 336,
+          "y": 279
+        }
+      },
+      "invariantDimensions": {
+        "copingTileWidth": 208,
+        "copingVisibleDepth": 65
+      }
+    },
+    {
+      "path": "form-frames/swimming/5.webp",
+      "sha256": "1cbeec91bda7005b484ee5b040431dcb4e4ba3d5eb0b645291f79666afe5a1b7",
+      "anchors": {
+        "poolTileTopLeft": {
+          "x": 128,
+          "y": 214
+        },
+        "poolTileTopRight": {
+          "x": 336,
+          "y": 214
+        },
+        "poolTileBottomLeft": {
+          "x": 128,
+          "y": 279
+        },
+        "poolTileBottomRight": {
+          "x": 336,
+          "y": 279
+        }
+      },
+      "invariantDimensions": {
+        "copingTileWidth": 208,
+        "copingVisibleDepth": 65
+      }
+    },
+    {
+      "path": "form-frames/swimming/6.webp",
+      "sha256": "ae845c638287cd07be7c997705dc6c7bc67fbfdb5362fc06c75010ffc46b6217",
+      "anchors": {
+        "poolTileTopLeft": {
+          "x": 128,
+          "y": 214
+        },
+        "poolTileTopRight": {
+          "x": 336,
+          "y": 214
+        },
+        "poolTileBottomLeft": {
+          "x": 128,
+          "y": 279
+        },
+        "poolTileBottomRight": {
+          "x": 336,
+          "y": 279
+        }
+      },
+      "invariantDimensions": {
+        "copingTileWidth": 208,
+        "copingVisibleDepth": 65
+      }
+    }
+  ],
+  "reference": {
+    "path": "form-frames/swimming/2.webp",
+    "sha256": "12dc95ebf1cb96a5185c08fa71e02007668669615d83610fe1c3f2580ee0d28e"
+  },
+  "cueSha256": "60548b24bd9b3eda0ab2599b265566400acaf265040d907262991d71f3df3153",
+  "decision": "approved",
+  "reviewer": "Codex native source, physical material measurement and actual mobile visual review",
+  "reviewedAt": "2026-10-20T16:29:33.745Z",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Native complete sources and final six drawings compared with the canonical FA56 athlete: adult bald faceless pale anatomy model, smooth featureless pelvis, no shorts, original fine grey contours and white trainers (swimming is barefoot). No new athlete generation. All retained native athlete/grip RGB pixels are exact; no anatomical warping, individual limb fitting or head/shoe grafts."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed poolside camera, 1472x848; six complete native athletes receive only integer horizontal translations 20/52/88/124/160/196px. Real coping tile junctions, located independently by unique raw RGB patch matches in delivered frames, remain fixed. Tile width and coping depth remain invariant. The moving swimmer is not incorrectly treated as a fixed anchor."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Six native stroke states inspected: continuous shoulder/elbow/wrist and hip/knee/ankle chains, long body line, alternating arms and small kicks; side-breath head turns with the torso. All exposed body regions are original intact drawings. No doubled or detached limbs; inherited minor illustrative contour differences are not calibrated anatomy."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Ordinary front-crawl pool setting with actual far coping material and tile joints. No added tether, harness or flume changes the catalogue exercise. Bare feet and hands stay free; no fabricated fitness equipment."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Water-supported prone stroke; no planted-floor contacts are asserted. Body stays aligned across the stroke and partially submerged head turns to the side during Breathe. Fixed geometry uses genuine pool coping material. Forward travel is illustrative and is not a measured swimming speed or distance."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Compared against primary Swim England front-crawl and breathing guidance: long body line, natural body roll, side inhalation, recovery/catch progression and small continuous kicks. Whole athlete moves forward past fixed coping. One six-state traversal stops at frame6; no automatic backwards jump to frame1. Not a continuous fluid simulation."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Existing primary #7B72E9 and secondary #9590E0 fields and inherited shading are preserved without a new gradient. Live legend agrees with the catalogue muscle groups. Neutral skin/contours and equipment remain neutral. No painted highlight crosses an occluded surface."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound six labels/cues visually checked against their corresponding positions: Catch: Reach long and catch the water. / Pull: Pull under your body, elbow high. / Breathe: Turn with the body; breathe to the side. / Switch: Return face down; catch with the other arm. / Drive: Pull through; keep your hips high. / Enter: Enter fingertips first; kick small and steady. Preparation now specifies a long level body, side breathing, underwater exhalation and a small kick."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Actual production ExerciseFormContent at 390x844: all six decoded native source paths reviewed manually, normal and slower playback observed, final frame holds with Replay, Replay starts frame1, and both manual 6-to-1/1-to-6 wraps work. Sequence playback deliberately avoids a physical discontinuity. Staged and final registered traces and settled screenshots retained in the review bundle. All current public paths match final-asset-binding.json."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual production guide and ExerciseThumb at 390x844 in light mode: all six frames decode at native dimensions, visible body/equipment fits the stage, captions/cues/legend match and normal transparent cutouts decode in all three card sizes. Settled separate-call stage and card screenshots reviewed. Final registered source paths and all three normal drawing card sizes were separately checked and retained in the review bundle."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual production guide and ExerciseThumb at 390x844 in dark mode: all six frames decode at native dimensions, body/equipment remains readable, captions/cues/legend match and all three normal card sizes use the athlete drawing. Settled separate-call stage and card screenshots reviewed. Final registered source paths and all three normal drawing card sizes were separately checked and retained in the review bundle."
+    }
+  },
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Manually scoped genuine material corners, unique 15x15 raw native RGB patch match searched independently within +/-6px in every lossless delivered frame. Two independent physical edge lengths derived from located corners. No canvas, padding, crosshair or artificial marker is measured. This scene measurement is separate from visual anatomy/contact/physics review.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": {
+      "anchorAxisPx": 1,
+      "invariantRelative": 0.01
+    },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-final-two-strict/swimming/strict-proof.json"
+  },
+  "nativeSourceArchive": {
+    "path": "docs/exercise-art/sources/swimming/2026-10-20-final-two-strict/native-source.zip",
+    "sha256": "bb1541328c58bf938edf99252020683a5fe5637a60b1c7d7df1896b339baaabc",
+    "bytes": 8066797,
+    "independentReproductionExact": true,
+    "archiveExtractionReproductionExact": true
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-20-final-two-strict/review.json",
+  "limits": "Strict current project visual/evidence contract, not a calibrated biomechanical or engineering certification. Small inherited illustrative contours remain. Physical scene measurements supplement independent visual anatomy, contact and movement review."
+}

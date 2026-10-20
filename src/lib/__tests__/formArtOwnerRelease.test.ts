@@ -9,7 +9,6 @@ import {
   validateArtworkReview,
 } from "../formArtReview";
 
-const ids = ["swimming", "turkish-get-up"];
 const sha = (bytes: string | Buffer) =>
   createHash("sha256").update(bytes).digest("hex");
 /** A set's release record, and what it must say about the set as it ships:
@@ -39,27 +38,18 @@ describe("owner-authorized artwork activation", () => {
      I/O, and raising it further would be treating the symptom. If this
      starts failing regularly rather than occasionally, the thing to
      look at is suite concurrency, not this number. */
-  it("ships the two remaining owner-authorized guides bound to source, delivered assets and cues", () => {
+  it("ships no guides under owner-only approval after the final two strict reviews", () => {
     expect(
-      Object.keys(FORM_ARTWORK)
-        .filter(
-          (id) => FORM_ARTWORK[id].status === "owner-released-with-findings"
-        )
-        .sort()
-    ).toEqual([...ids].sort());
-    for (const id of ids) {
-      expect(getFormBeats(id), id).toHaveLength(6);
-      const { review, expected } = evidence(id);
-      expect(validateOwnerArtworkRelease(review, expected), id).toEqual([]);
-      // Owner permission must never masquerade as passing strict visual QA.
+      Object.values(FORM_ARTWORK).filter(
+        (art) => art.status === "owner-released-with-findings"
+      )
+    ).toEqual([]);
+    for (const id of ["swimming", "turkish-get-up"]) {
+      expect(FORM_ARTWORK[id].status, id).toBe("approved");
       expect(
-        validateArtworkReview(review, expected).length,
+        validateArtworkReview(evidence(id).review, evidence(id).expected),
         id
-      ).toBeGreaterThan(0);
-      for (const frame of review.frames)
-        expect(sha(readFileSync(frame.source.path)), frame.source.path).toBe(
-          frame.source.sha256
-        );
+      ).toEqual([]);
     }
   }, 30_000);
   it("keeps draft and unregistered sets inactive", () => {
@@ -76,7 +66,7 @@ describe("owner-authorized artwork activation", () => {
     const approved = Object.keys(FORM_ARTWORK).filter(
       (id) => FORM_ARTWORK[id].status === "approved"
     );
-    expect(approved.length).toBeGreaterThan(0);
+    expect(approved).toHaveLength(152);
     for (const id of approved) {
       expect(getReleasedFormArtwork(id)?.status, id).toBe("approved");
       expect(getFormBeats(id), id).toHaveLength(6);
@@ -85,14 +75,64 @@ describe("owner-authorized artwork activation", () => {
     }
   }, 30_000);
   it("rejects missing permission, erased findings, certified checks and stale release data", () => {
-    /* An owner release whose record passes as it stands. This used
-       barbell-shrug, which has since been re-released under strict
-       review: its record failed the owner contract before any change, so
-       every case below passed without testing anything. */
-    const { review, expected } = evidence("turkish-get-up");
-    expect(FORM_ARTWORK["turkish-get-up"].status).toBe(
-      "owner-released-with-findings"
+    // The last active owner record has now passed strict review. Keep an
+    // immutable historical owner fixture so negative contract cases still
+    // start from a valid owner record, independently of today's activation.
+    const review = JSON.parse(
+      readFileSync(
+        "docs/exercise-art/releases/2026-10-19-remaining33-batch1/turkish-get-up.json",
+        "utf8"
+      )
     );
+    const expected = {
+      exerciseId: "turkish-get-up",
+      version: "anatomy-v3-2026-10-19-native-followup-v1",
+      width: 1024,
+      height: 1152,
+      reference: {
+        path: "form-frames/turkish-get-up/1.webp",
+        sha256:
+          "09af983678602258edaad79b70ef2791b8ffef99d00cabb53c81831b7d71b9c9",
+      },
+      cueSha256:
+        "ef47e27eedd522dc2a95f35480974a7805650cdbb6dc8dff207b1ea406262925",
+      frames: [
+        {
+          path: "form-frames/turkish-get-up/1.webp",
+          sha256:
+            "09af983678602258edaad79b70ef2791b8ffef99d00cabb53c81831b7d71b9c9",
+        },
+        {
+          path: "form-frames/turkish-get-up/2.webp",
+          sha256:
+            "b9a49e9c834f84b06f42bc8c22b5bfc92f3beea5b9cefc3f52ce291c501a812e",
+        },
+        {
+          path: "form-frames/turkish-get-up/3.webp",
+          sha256:
+            "7dd32179c3d2547a8521fb4c9161d89e81bbe80797ce47975c7f6041d79feece",
+        },
+        {
+          path: "form-frames/turkish-get-up/4.webp",
+          sha256:
+            "643fc1b60c4d9f0a809bf4b134f056580992bd9e6e5c7a083fe31bf7d6e33abe",
+        },
+        {
+          path: "form-frames/turkish-get-up/5.webp",
+          sha256:
+            "7e705ce5a72feefb363062c7517a692f495fc14e05129d06603e23fa071f4971",
+        },
+        {
+          path: "form-frames/turkish-get-up/6.webp",
+          sha256:
+            "7f0ad1540c87d2a12bdde4442174321caa4c82dbaecc5fedf82de271a09c2b10",
+        },
+      ],
+    };
+    for (const frame of review.frames)
+      expect(sha(readFileSync(frame.source.path)), frame.source.path).toBe(
+        frame.source.sha256
+      );
     expect(validateOwnerArtworkRelease(review, expected)).toEqual([]);
     for (const mutate of [
       (r: typeof review) => {

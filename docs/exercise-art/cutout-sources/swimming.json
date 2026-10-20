@@ -3,7 +3,7 @@
   "image": "swimming.png",
   "imageSha256": "f8d29e4d8cc11e2e5a4d736231fd12f75bc514a3180b9e254623592e6738a31d",
   "reference": "form-frames/swimming/2.webp",
-  "referenceSha256": "915b47aa2432fc7b9334c5d981c1931e4c24804ab3ac8e9ca9147747c4fda7ca",
-  "method": "Mapped inherited violet/pink muscle fields to the established palette with original lightness, and removed the 13-pixel water-line stub at the toes in the prepared card source. Native RGBA edit mask retained in the portable source archive; normal keying/cutout exporter supplies app derivative.",
-  "reviewEvidence": "Native source on light/dark reviewed; normal exported card and integrated component evidence: docs/exercise-art/reviews/2026-10-19-illustration-polish/review.json"
+  "referenceSha256": "12dc95ebf1cb96a5185c08fa71e02007668669615d83610fe1c3f2580ee0d28e",
+  "method": "Existing reviewed native athlete alpha source remains byte-exact. New registered frame2 uses the same intact athlete with whole-body integer translation and a separate physical coping scene. Card isolates the same athlete without pool material or water-line remnants. Normal cutout exporter supplies the derivative.",
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-20-final-two-strict/review.json"
 }

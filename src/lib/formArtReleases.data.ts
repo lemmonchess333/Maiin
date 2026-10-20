@@ -978,6 +978,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1024,
     reference: 1,
   },
+  swimming: {
+    folder: "2026-10-20-final-two-strict",
+    version: "anatomy-v3-2026-10-20-swim-fixed-poolside-v1",
+    width: 1472,
+    height: 848,
+    reference: 2,
+  },
   "t-bar-row": {
     folder: "2026-10-20-strict-review",
     version: "anatomy-v3-2026-10-20-strict-native-correction-v1",
@@ -1026,6 +1033,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     width: 1536,
     height: 1024,
     reference: 1,
+  },
+  "turkish-get-up": {
+    folder: "2026-10-20-final-two-strict",
+    version: "anatomy-v3-2026-10-20-tgu-fixed-mat-rigid-bell-v1",
+    width: 1024,
+    height: 1152,
+    reference: 5,
   },
   "walking-dumbbell-lunges": {
     folder: "2026-10-12",

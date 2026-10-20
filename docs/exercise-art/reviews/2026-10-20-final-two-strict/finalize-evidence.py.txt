@@ -1,0 +1,19 @@
+from pathlib import Path
+import json,shutil,hashlib
+H=Path(__file__).resolve().parent;R=H.parent/'Maiin-burpees';F='2026-10-20-final-two-strict';D=R/'docs/exercise-art/reviews'/F
+shutil.copytree(H/'mobile',D/'mobile',dirs_exist_ok=True)
+for p in (R/'docs/exercise-art/releases'/F).glob('*.json'):
+ v=json.loads(p.read_bytes())
+ for key in ['sequenceAndLoop','mobileLight','mobileDark']:
+  v['checks'][key]['evidence']=v['checks'][key]['evidence'].replace('Staged trace retained; final registered evidence is added after activation.','Staged and final registered traces and settled screenshots retained in the review bundle. All current public paths match final-asset-binding.json.').replace('Final registered source paths are checked after activation.','Final registered source paths and all three normal drawing card sizes were separately checked and retained in the review bundle.')
+ p.write_text(json.dumps(v,indent=2)+'\n',encoding='utf-8')
+p=D/'review.json';v=json.loads(p.read_bytes());v['registeredMobileEvidence']='mobile/registered-observations.json';v['finalAssetBinding']='final-asset-binding.json';v['registeredReviewCompleted']=True;p.write_text(json.dumps(v,indent=2)+'\n',encoding='utf-8')
+C=D/'project-checks';C.mkdir(exist_ok=True);B=H.parent/'remaining19-execution-20261015/checks/strict2-baseline-d4acc7f9-20261020'
+shutil.copyfile(H/'baseline-index.json',C/'baseline-index.json');shutil.copyfile(B/'result.json',C/'baseline-result.json')
+for s in ['proof-and-archive.py','register.mts','bind-final-evidence.mts','stage-review.mts']:
+ shutil.copyfile(H/s,D/(s+'.txt'))
+S=R/'.strict2.local';T=H/'retired-fixture'
+assert S.resolve().parent==R.resolve() and T.resolve().parent==H.resolve() and not T.exists()
+shutil.copyfile(S/'main.tsx',D/'mobile-review-fixture.tsx.txt');shutil.move(str(S),str(T))
+assert not S.exists()
+print('Final registered evidence frozen and fixture retired outside the repository')

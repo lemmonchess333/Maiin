@@ -2297,7 +2297,7 @@ export const RELEASED_FORM_PLACARDS = {
         [1, "Stand", "Stand tall, then reverse each step down."],
       ],
       [
-        "Lie on your back with the bell beside your shoulder.",
+        "Use clear, non-slip floor space or a mat; start on your back.",
         "Press it up with both hands to a locked arm, then free one hand.",
       ]
     ),
@@ -2320,23 +2320,26 @@ export const RELEASED_FORM_PLACARDS = {
       "Hold the moving handles and put both feet on the pedals.",
     ]
   ),
-  swimming: placard(
-    "swimming",
-    ["Lats", "Shoulders", "Triceps"],
-    ["Core", "Glutes", "Quads"],
-    [
-      [0, "Catch", "Reach long and catch the water."],
-      [1 / 6, "Pull", "Pull under your body, elbow high."],
-      [2 / 6, "Breathe", "Roll and breathe as the arm enters."],
-      [3 / 6, "Switch", "Catch with the other arm, face down."],
-      [4 / 6, "Drive", "Pull through; keep your hips high."],
-      [5 / 6, "Enter", "Enter fingertips first; kick small and steady."],
-    ],
-    [
-      "Push off the wall in a long, flat line.",
-      "Swim an easy length first to settle your breathing.",
-    ]
-  ),
+  swimming: {
+    ...placard(
+      "swimming",
+      ["Lats", "Shoulders", "Triceps"],
+      ["Core", "Glutes", "Quads"],
+      [
+        [0, "Catch", "Reach long and catch the water."],
+        [1 / 6, "Pull", "Pull under your body, elbow high."],
+        [2 / 6, "Breathe", "Turn with the body; breathe to the side."],
+        [3 / 6, "Switch", "Return face down; catch with the other arm."],
+        [4 / 6, "Drive", "Pull through; keep your hips high."],
+        [5 / 6, "Enter", "Enter fingertips first; kick small and steady."],
+      ],
+      [
+        "Swim front crawl with a long, level body line.",
+        "Turn to the side to inhale; exhale underwater and keep the kick small.",
+      ]
+    ),
+    playback: "sequence" as const,
+  },
   stairmaster: placard(
     "stairmaster",
     ["Glutes"],

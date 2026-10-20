@@ -53,42 +53,8 @@ const approved = (
  * here: it comes from its record, and formArtwork.test.ts fails if an ID
  * is listed in both places.
  */
-export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
-  swimming: {
-    version: "anatomy-v3-2026-10-20-native-final-v1",
-    status: "owner-released-with-findings",
-    width: 1264,
-    height: 848,
-    frames: [
-      "form-frames/swimming/1.webp",
-      "form-frames/swimming/2.webp",
-      "form-frames/swimming/3.webp",
-      "form-frames/swimming/4.webp",
-      "form-frames/swimming/5.webp",
-      "form-frames/swimming/6.webp",
-    ],
-    reference: "form-frames/swimming/2.webp",
-    reviewFile:
-      "docs/exercise-art/releases/2026-10-20-remaining33-final/swimming.json",
-  },
-  "turkish-get-up": {
-    version: "anatomy-v3-2026-10-19-native-followup-v1",
-    status: "owner-released-with-findings",
-    width: 1024,
-    height: 1152,
-    frames: [
-      "form-frames/turkish-get-up/1.webp",
-      "form-frames/turkish-get-up/2.webp",
-      "form-frames/turkish-get-up/3.webp",
-      "form-frames/turkish-get-up/4.webp",
-      "form-frames/turkish-get-up/5.webp",
-      "form-frames/turkish-get-up/6.webp",
-    ],
-    reference: "form-frames/turkish-get-up/1.webp",
-    reviewFile:
-      "docs/exercise-art/releases/2026-10-19-remaining33-batch1/turkish-get-up.json",
-  },
-};
+export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> =
+  {};
 
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
   ...HAND_LISTED_FORM_ARTWORK,

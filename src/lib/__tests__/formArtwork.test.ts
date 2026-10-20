@@ -14,13 +14,14 @@ import { APPROVED_FORM_ART_RELEASES } from "../formArtReleases.data";
 import { getFormPlayback } from "../formGuides";
 
 describe("the artwork registry", () => {
-  it("stops the ascent-only get-up while ordinary exercise reps keep cycling", () => {
+  it("stops forward swimming and the ascent-only get-up while ordinary reps keep cycling", () => {
     expect(getFormPlayback("turkish-get-up")).toBe("sequence");
+    expect(getFormPlayback("swimming")).toBe("sequence");
     expect(
-      Object.keys(FORM_ARTWORK).filter(
-        (id) => getFormPlayback(id) === "sequence"
-      )
-    ).toEqual(["turkish-get-up"]);
+      Object.keys(FORM_ARTWORK)
+        .filter((id) => getFormPlayback(id) === "sequence")
+        .sort()
+    ).toEqual(["swimming", "turkish-get-up"]);
     expect(getFormPlayback("lu-raise")).toBe("cycle");
   });
   it("lists no set both by hand and from an approved record", () => {
@@ -33,10 +34,8 @@ describe("the artwork registry", () => {
     ).toEqual([]);
   });
 
-  it("lists by hand only the sets released without a strict review", () => {
-    expect(Object.keys(HAND_LISTED_FORM_ARTWORK).length).toBeGreaterThan(0);
-    for (const [id, art] of Object.entries(HAND_LISTED_FORM_ARTWORK))
-      expect(art.status, id).not.toBe("approved");
+  it("has no owner-only sets left after the final two strict reviews", () => {
+    expect(HAND_LISTED_FORM_ARTWORK).toEqual({});
   });
 
   it("builds every approved set from its record", () => {

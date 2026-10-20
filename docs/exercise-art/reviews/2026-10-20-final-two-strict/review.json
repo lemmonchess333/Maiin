@@ -1,0 +1,15 @@
+{
+  "scope": ["swimming", "turkish-get-up"],
+  "standard": "Unchanged strict contract: all eleven checks, >=2 genuine material anchors <=1px, >=2 genuine physical invariant dimensions <=1%; independent visual review of body, contacts and movement. No shorts or athlete redesign.",
+  "primarySources": [
+    "https://www.swimming.org/masters/improving-front-crawl-technique/",
+    "https://www.swimming.org/justswim/improving-your-breathing-in-front-crawl/",
+    "https://www.strongfirst.com/the-get-up-change-your-perspective-to-build-strength/"
+  ],
+  "nativeReproduction": "All twelve encoded exports and native RGBA independently reproduced; six native ORA files per set (three physical layers each) reopened and exactly recomposed. Both deterministic archives extracted into fresh directories and all twelve frame hashes reproduced exactly.",
+  "stagedMobileEvidence": "mobile/staged-observations.json",
+  "registeredMobileEvidence": "mobile/registered-observations.json",
+  "noRelaxation": true,
+  "finalAssetBinding": "final-asset-binding.json",
+  "registeredReviewCompleted": true
+}

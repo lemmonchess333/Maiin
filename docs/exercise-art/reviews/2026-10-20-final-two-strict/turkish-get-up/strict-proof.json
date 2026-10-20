@@ -1,0 +1,207 @@
+{
+  "id": "turkish-get-up",
+  "method": "Manually scoped genuine material corners, unique 15x15 raw native RGB patch match searched independently within +/-6px in every lossless delivered frame. Two independent physical edge lengths derived from located corners. No canvas, padding, crosshair or artificial marker is measured. This scene measurement is separate from visual anatomy/contact/physics review.",
+  "frames": [
+    {
+      "frame": 1,
+      "anchors": {
+        "matFarLeft": {
+          "x": 20,
+          "y": 935
+        },
+        "matFarRight": {
+          "x": 870,
+          "y": 885
+        },
+        "matNearRight": {
+          "x": 1000,
+          "y": 1085
+        },
+        "matNearLeft": {
+          "x": 150,
+          "y": 1135
+        }
+      },
+      "invariantDimensions": {
+        "matLongEdge": 851.46931829632,
+        "matShortEdge": 238.53720883753127
+      },
+      "uniqueRawMaterialPatchMatches": true
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "matFarLeft": {
+          "x": 20,
+          "y": 935
+        },
+        "matFarRight": {
+          "x": 870,
+          "y": 885
+        },
+        "matNearRight": {
+          "x": 1000,
+          "y": 1085
+        },
+        "matNearLeft": {
+          "x": 150,
+          "y": 1135
+        }
+      },
+      "invariantDimensions": {
+        "matLongEdge": 851.46931829632,
+        "matShortEdge": 238.53720883753127
+      },
+      "uniqueRawMaterialPatchMatches": true
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "matFarLeft": {
+          "x": 20,
+          "y": 935
+        },
+        "matFarRight": {
+          "x": 870,
+          "y": 885
+        },
+        "matNearRight": {
+          "x": 1000,
+          "y": 1085
+        },
+        "matNearLeft": {
+          "x": 150,
+          "y": 1135
+        }
+      },
+      "invariantDimensions": {
+        "matLongEdge": 851.46931829632,
+        "matShortEdge": 238.53720883753127
+      },
+      "uniqueRawMaterialPatchMatches": true
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "matFarLeft": {
+          "x": 20,
+          "y": 935
+        },
+        "matFarRight": {
+          "x": 870,
+          "y": 885
+        },
+        "matNearRight": {
+          "x": 1000,
+          "y": 1085
+        },
+        "matNearLeft": {
+          "x": 150,
+          "y": 1135
+        }
+      },
+      "invariantDimensions": {
+        "matLongEdge": 851.46931829632,
+        "matShortEdge": 238.53720883753127
+      },
+      "uniqueRawMaterialPatchMatches": true
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "matFarLeft": {
+          "x": 20,
+          "y": 935
+        },
+        "matFarRight": {
+          "x": 870,
+          "y": 885
+        },
+        "matNearRight": {
+          "x": 1000,
+          "y": 1085
+        },
+        "matNearLeft": {
+          "x": 150,
+          "y": 1135
+        }
+      },
+      "invariantDimensions": {
+        "matLongEdge": 851.46931829632,
+        "matShortEdge": 238.53720883753127
+      },
+      "uniqueRawMaterialPatchMatches": true
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "matFarLeft": {
+          "x": 20,
+          "y": 935
+        },
+        "matFarRight": {
+          "x": 870,
+          "y": 885
+        },
+        "matNearRight": {
+          "x": 1000,
+          "y": 1085
+        },
+        "matNearLeft": {
+          "x": 150,
+          "y": 1135
+        }
+      },
+      "invariantDimensions": {
+        "matLongEdge": 851.46931829632,
+        "matShortEdge": 238.53720883753127
+      },
+      "uniqueRawMaterialPatchMatches": true
+    }
+  ],
+  "maxAnchorAxisDriftPx": 0,
+  "maxInvariantRelativeDrift": 0.0,
+  "limitsUnchanged": {
+    "anchorAxisPx": 1,
+    "invariantRelative": 0.01
+  },
+  "reproduction": [
+    {
+      "frame": 1,
+      "webpSha256": "49eb3272aca92b4bf760fc88edd62c0dfaf504db6c6c7823991e22b60c8b84c8",
+      "oraLayersRecomposeExactly": true,
+      "freshIndependentReproductionExact": true
+    },
+    {
+      "frame": 2,
+      "webpSha256": "9fc1e694eb08c7c0214731e9f5489e8ec048985c6b977de9feb82e47b6ac68a1",
+      "oraLayersRecomposeExactly": true,
+      "freshIndependentReproductionExact": true
+    },
+    {
+      "frame": 3,
+      "webpSha256": "8b73cfcc69ea94713322076822758a945039c2209c9201622e10f8e18de0ad8b",
+      "oraLayersRecomposeExactly": true,
+      "freshIndependentReproductionExact": true
+    },
+    {
+      "frame": 4,
+      "webpSha256": "daf883d61517fba8c876fc504a4f346172ac5c3537520af3b9e51bddd9c80452",
+      "oraLayersRecomposeExactly": true,
+      "freshIndependentReproductionExact": true
+    },
+    {
+      "frame": 5,
+      "webpSha256": "23026d00607a2aad0ad45a8f214c0ae0904600f2c4bb9e6870c10539438a2dd5",
+      "oraLayersRecomposeExactly": true,
+      "freshIndependentReproductionExact": true
+    },
+    {
+      "frame": 6,
+      "webpSha256": "d904cc714188b802becf191dfacbe52b34a091bb4b6fb3e468dec264195f6851",
+      "oraLayersRecomposeExactly": true,
+      "freshIndependentReproductionExact": true
+    }
+  ],
+  "equipment": "One complete generated charcoal kettlebell master, 91x108px, rigid integer placement behind exact native grip/forearm pixels in all six poses. Its movement is not misused as a fixed scene anchor."
+}

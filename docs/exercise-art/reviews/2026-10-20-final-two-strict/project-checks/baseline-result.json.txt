@@ -1,0 +1,28 @@
+{
+  "startedAt": "2026-10-20T15:53:35.366302+00:00",
+  "finishedAt": "2026-10-20T16:08:10.381042+00:00",
+  "normalCommand": "npm run verify",
+  "exitCode": 1,
+  "durationSeconds": 873.063000000082,
+  "headBefore": "d4acc7f99748e4613f53b226805627563285746f",
+  "headAfter": "d4acc7f99748e4613f53b226805627563285746f",
+  "headUnchanged": true,
+  "statusBefore": "",
+  "statusAfterTestBeforeSnapshotRestore": " M src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap\n",
+  "statusAfter": "",
+  "statusRestored": true,
+  "snapshotRestores": [
+    {
+      "path": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+      "originalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "testOutputSha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "restoredExact": true
+    }
+  ],
+  "inputCount": 2757,
+  "changedInputsAfterRestoration": [],
+  "allInputsUnchanged": true,
+  "log": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining19-execution-20261015\\checks\\strict2-baseline-d4acc7f9-20261020\\verify.log",
+  "logSha256": "a4bce07de4c08c018491623582ba8fd7d9f21421ddf7c78f780ee3a78fc0d2a8",
+  "fullVerificationPassed": false
+}

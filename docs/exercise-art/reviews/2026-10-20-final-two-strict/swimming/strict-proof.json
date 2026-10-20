@@ -1,0 +1,206 @@
+{
+  "id": "swimming",
+  "method": "Manually scoped genuine material corners, unique 15x15 raw native RGB patch match searched independently within +/-6px in every lossless delivered frame. Two independent physical edge lengths derived from located corners. No canvas, padding, crosshair or artificial marker is measured. This scene measurement is separate from visual anatomy/contact/physics review.",
+  "frames": [
+    {
+      "frame": 1,
+      "anchors": {
+        "poolTileTopLeft": {
+          "x": 128,
+          "y": 214
+        },
+        "poolTileTopRight": {
+          "x": 336,
+          "y": 214
+        },
+        "poolTileBottomLeft": {
+          "x": 128,
+          "y": 279
+        },
+        "poolTileBottomRight": {
+          "x": 336,
+          "y": 279
+        }
+      },
+      "invariantDimensions": {
+        "copingTileWidth": 208.0,
+        "copingVisibleDepth": 65.0
+      },
+      "uniqueRawMaterialPatchMatches": true
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "poolTileTopLeft": {
+          "x": 128,
+          "y": 214
+        },
+        "poolTileTopRight": {
+          "x": 336,
+          "y": 214
+        },
+        "poolTileBottomLeft": {
+          "x": 128,
+          "y": 279
+        },
+        "poolTileBottomRight": {
+          "x": 336,
+          "y": 279
+        }
+      },
+      "invariantDimensions": {
+        "copingTileWidth": 208.0,
+        "copingVisibleDepth": 65.0
+      },
+      "uniqueRawMaterialPatchMatches": true
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "poolTileTopLeft": {
+          "x": 128,
+          "y": 214
+        },
+        "poolTileTopRight": {
+          "x": 336,
+          "y": 214
+        },
+        "poolTileBottomLeft": {
+          "x": 128,
+          "y": 279
+        },
+        "poolTileBottomRight": {
+          "x": 336,
+          "y": 279
+        }
+      },
+      "invariantDimensions": {
+        "copingTileWidth": 208.0,
+        "copingVisibleDepth": 65.0
+      },
+      "uniqueRawMaterialPatchMatches": true
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "poolTileTopLeft": {
+          "x": 128,
+          "y": 214
+        },
+        "poolTileTopRight": {
+          "x": 336,
+          "y": 214
+        },
+        "poolTileBottomLeft": {
+          "x": 128,
+          "y": 279
+        },
+        "poolTileBottomRight": {
+          "x": 336,
+          "y": 279
+        }
+      },
+      "invariantDimensions": {
+        "copingTileWidth": 208.0,
+        "copingVisibleDepth": 65.0
+      },
+      "uniqueRawMaterialPatchMatches": true
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "poolTileTopLeft": {
+          "x": 128,
+          "y": 214
+        },
+        "poolTileTopRight": {
+          "x": 336,
+          "y": 214
+        },
+        "poolTileBottomLeft": {
+          "x": 128,
+          "y": 279
+        },
+        "poolTileBottomRight": {
+          "x": 336,
+          "y": 279
+        }
+      },
+      "invariantDimensions": {
+        "copingTileWidth": 208.0,
+        "copingVisibleDepth": 65.0
+      },
+      "uniqueRawMaterialPatchMatches": true
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "poolTileTopLeft": {
+          "x": 128,
+          "y": 214
+        },
+        "poolTileTopRight": {
+          "x": 336,
+          "y": 214
+        },
+        "poolTileBottomLeft": {
+          "x": 128,
+          "y": 279
+        },
+        "poolTileBottomRight": {
+          "x": 336,
+          "y": 279
+        }
+      },
+      "invariantDimensions": {
+        "copingTileWidth": 208.0,
+        "copingVisibleDepth": 65.0
+      },
+      "uniqueRawMaterialPatchMatches": true
+    }
+  ],
+  "maxAnchorAxisDriftPx": 0,
+  "maxInvariantRelativeDrift": 0.0,
+  "limitsUnchanged": {
+    "anchorAxisPx": 1,
+    "invariantRelative": 0.01
+  },
+  "reproduction": [
+    {
+      "frame": 1,
+      "webpSha256": "ddea3ccdcbffc4b5da60ed0b00055c1575fb80756f496377ed53dc542e09b12d",
+      "oraLayersRecomposeExactly": true,
+      "freshIndependentReproductionExact": true
+    },
+    {
+      "frame": 2,
+      "webpSha256": "12dc95ebf1cb96a5185c08fa71e02007668669615d83610fe1c3f2580ee0d28e",
+      "oraLayersRecomposeExactly": true,
+      "freshIndependentReproductionExact": true
+    },
+    {
+      "frame": 3,
+      "webpSha256": "19e08456cb4fd7b958b4f68aeaa621eb45aaa9144e745d2aecafceed6a0f9a37",
+      "oraLayersRecomposeExactly": true,
+      "freshIndependentReproductionExact": true
+    },
+    {
+      "frame": 4,
+      "webpSha256": "da30a0c84df06d8350d92cee4d392d2a17550eb8a7a7c4b355a6ceb37871bd5d",
+      "oraLayersRecomposeExactly": true,
+      "freshIndependentReproductionExact": true
+    },
+    {
+      "frame": 5,
+      "webpSha256": "1cbeec91bda7005b484ee5b040431dcb4e4ba3d5eb0b645291f79666afe5a1b7",
+      "oraLayersRecomposeExactly": true,
+      "freshIndependentReproductionExact": true
+    },
+    {
+      "frame": 6,
+      "webpSha256": "ae845c638287cd07be7c997705dc6c7bc67fbfdb5362fc06c75010ffc46b6217",
+      "oraLayersRecomposeExactly": true,
+      "freshIndependentReproductionExact": true
+    }
+  ]
+}
