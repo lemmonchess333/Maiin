@@ -87,6 +87,8 @@ function makeStubs(opts = {}) {
     });
 
     const topLevelDocStub = (parent, uid) => ({
+      // No such document: here, an account that is not restricted.
+      get: async () => ({ exists: false, data: () => undefined }),
       collection: (sub) => ({
         get: async () => {
           calls.push(`firestore.${parent}.${uid}.${sub}.get`);
@@ -294,6 +296,9 @@ function makeStubs(opts = {}) {
 
   const firestore = makeBatchAndCollectionGraph(opts);
   const auth = {
+    // A restricted account's identities are read before cleanup (S4e,
+    // STATUS 2026-10-20); this account has none to keep.
+    getUser: async (uid) => ({ uid, email: null, providerData: [] }),
     deleteUser: async (uid) => {
       calls.push(`auth.deleteUser(${uid})`);
       if (opts.authDeleteThrows) throw new Error(opts.authDeleteThrows);

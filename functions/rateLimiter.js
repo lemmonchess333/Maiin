@@ -29,15 +29,25 @@ const admin = require("firebase-admin");
  * Fail-closed: a transaction error returns `true` (rate limited).
  * The rate limiter gates cost-sensitive AI invocations; a transient
  * Firestore error must never silently grant unlimited paid calls.
+ * `failOpen` turns that round for a caller whose refusal costs the person
+ * something they made (a Circle event), not a paid call.
  *
  * @param {FirebaseFirestore.Firestore} db
  * @param {string} uid
  * @param {string} action
  * @param {number} maxCalls
  * @param {number} windowMs
+ * @param {{ failOpen?: boolean }} [options]
  * @returns {Promise<boolean>} true if rate-limited (should block)
  */
-async function isRateLimited(db, uid, action, maxCalls, windowMs) {
+async function isRateLimited(
+  db,
+  uid,
+  action,
+  maxCalls,
+  windowMs,
+  { failOpen = false } = {}
+) {
   const rl = db.collection("rateLimits").doc(`${uid}_${action}`);
   const now = Date.now();
   try {
@@ -61,7 +71,7 @@ async function isRateLimited(db, uid, action, maxCalls, windowMs) {
     });
   } catch (err) {
     console.error(`Rate limiter error for ${uid}/${action}:`, err.message);
-    return true;
+    return !failOpen;
   }
 }
 

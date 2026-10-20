@@ -1314,6 +1314,20 @@
       "minimisationRule": "Replaced with action, reason, activityId, commentId, createdAt and authorId null. textRedacted (the comment, masked) is dropped.",
       "reviewedBy": "improvement-pass-2026-10-20",
       "reason": "onCommentCreated writes one record per comment the profanity filter removes, with the author's uid and the comment's text, masked but still theirs. Kept for good and reached by no deletion until 2026-10-20. The count of removals stays useful to moderation without the author or the words."
+    },
+    {
+      "key": "restrictedIdentities",
+      "domain": "Z_operational",
+      "type": "topLevelByAuto",
+      "path": "restrictedIdentities",
+      "containsPersonalData": true,
+      "piiCategory": "uid",
+      "recordPurpose": "moderation",
+      "strategy": "retain",
+      "retentionWindow": "13 months from deletion (expiresAt, the billing tombstone's window)",
+      "minimisationRule": "Written only when the account being deleted is restricted. Only fields permitted: reason, createdAt, expiresAt. The document id is an HMAC (BILLING_HMAC_SECRET, domain-separated as restriction-email / restriction-google.com / restriction-apple.com) of the email or sign-in subject, never the raw value; no uid, name or report is kept.",
+      "reviewedBy": "S4e STATUS 2026-10-20",
+      "reason": "A restriction is keyed by uid, and a deleted account's uid never returns, so deleting a restricted account and signing in again with the same email, Google or Apple account lifted the restriction. These hashed identities let onAuthUserCreated restrict the new account (lib/restrictedIdentities.js); liftRestriction forgets them. The Privacy Policy names what is kept and for how long."
     }
   ]
 }

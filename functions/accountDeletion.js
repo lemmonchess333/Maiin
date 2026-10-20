@@ -22,6 +22,7 @@
 const crypto = require("crypto");
 const ledger = require("./lib/accountDeletionLedger");
 const accountDeletionSocial = require("./lib/accountDeletionSocial");
+const restrictedIdentities = require("./lib/restrictedIdentities");
 const { queueAndCancelSubscription } = require("./lib/accountDeletionRetry");
 const goalSpaceCleanup = require("./lib/goalSpaceCleanup");
 const spacesCleanup = require("./lib/spacesCleanup");
@@ -325,6 +326,20 @@ async function deleteAccount({
       cancelStripeSubscription,
       logger,
       now,
+    });
+
+    // A restricted account's sign-in identities are kept, hashed, before
+    // the restriction itself goes with the social cleanup below (S4e;
+    // lib/restrictedIdentities.js): a new account with any of them is
+    // restricted as it is created. Before, not after: a retry that finds the
+    // restriction already gone keeps nothing, so this attempt must.
+    stage = "restricted_identities";
+    await restrictedIdentities.keepRestrictedIdentities({
+      firestore,
+      auth,
+      uid,
+      now,
+      logger,
     });
 
     stage = "cross_user_social";

@@ -222,7 +222,8 @@ suite("firestore.rules — a restricted account", () => {
           uid,
           kind: "needs_support",
           text: "Struggling this week",
-          createdAt: serverTimestamp(),
+          // The writer's clock in ms, as the app writes it.
+          createdAt: Date.now(),
         }),
     },
   ];

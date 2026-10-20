@@ -382,7 +382,27 @@ const EXPECTED = {
   liftRestriction: {
     kind: "callable",
     maxInstances: 10,
+    // S4e, STATUS 2026-10-20: forgets the hashed identities a deleted
+    // restricted account left.
+    secrets: ["BILLING_HMAC_SECRET"],
+  },
+  // Survey item 18: the public name held to the word filter on the server.
+  onPublicProfileWritten: {
+    kind: "event",
+    maxInstances: 50,
     secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/public/{docId}",
+  },
+  // S4e, STATUS 2026-10-20: a new account carrying a deleted restricted
+  // account's email or sign-in id is restricted as it is created.
+  onAuthUserCreated: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: ["BILLING_HMAC_SECRET"],
+    eventType: "providers/firebase.auth/eventTypes/user.create",
+    resource: "projects/{project}",
   },
   toggleKudosCallable: {
     kind: "callable",
@@ -545,6 +565,8 @@ function endpointSummary(fn) {
               ""
             )
               .replace(/^projects\/[^/]+\//, "projects/{project}/")
+              // An Auth trigger's resource is the project alone.
+              .replace(/^projects\/[^/]+$/, "projects/{project}")
               // A Storage trigger's default bucket is named after the
               // project too.
               .replace(/\/buckets\/[^/]+$/, "/buckets/{default}") || null,

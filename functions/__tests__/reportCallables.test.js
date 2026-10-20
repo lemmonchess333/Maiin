@@ -466,7 +466,29 @@ describe("resolveReport — Restrict user (S4e)", () => {
 });
 
 describe("listRestrictedUsers and liftRestriction (S4e)", () => {
-  beforeEach(() => vi.stubEnv("ADMIN_UIDS", "admin-1"));
+  /* Lift reads the account's sign-ins to forget the identities a deleted
+     restricted account left (S4e, STATUS 2026-10-20): an Auth stand-in,
+     and the secret those identities are hashed with. */
+  const SECRET = "test-secret-0123456789abcdef";
+  beforeEach(() => {
+    vi.stubEnv("ADMIN_UIDS", "admin-1");
+    vi.stubEnv("BILLING_HMAC_SECRET", SECRET);
+    Object.defineProperty(admin, "auth", {
+      value: () => ({
+        getUser: async (uid) => ({
+          uid,
+          email: `${uid}@example.com`,
+          providerData: [],
+        }),
+      }),
+      configurable: true,
+      writable: true,
+    });
+  });
+  afterEach(() => {
+    // The own property shadowed firebase-admin's prototype getter.
+    delete admin.auth;
+  });
 
   const restricted = (uid, report) => ({
     [`globalRestrictedUids/${uid}`]: {
@@ -526,6 +548,27 @@ describe("listRestrictedUsers and liftRestriction (S4e)", () => {
       ok: true,
       lifted: false,
     });
+  });
+
+  it("forgets the identities that would restrict the account's next one", async () => {
+    const { computeBillingHash } = require("../lib/billingIdentityHash");
+    const kept = `restrictedIdentities/${computeBillingHash(
+      "restriction-email",
+      "u1@example.com",
+      SECRET
+    )}`;
+    const db = useMemoryFirestore({
+      ...restricted("u1", "r1"),
+      [kept]: { reason: "restricted-account-deleted" },
+      "restrictedIdentities/someone-else": {
+        reason: "restricted-account-deleted",
+      },
+    });
+
+    await liftRestriction.run({ uid: "u1" }, ADMIN);
+
+    expect(db.data.has(kept)).toBe(false);
+    expect(db.data.has("restrictedIdentities/someone-else")).toBe(true);
   });
 
   it("still lifts when the report has gone", async () => {

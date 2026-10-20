@@ -720,7 +720,46 @@ service cloud.firestore {
           || request.resource.data.photoStoragePath == null
           || request.resource.data.photoStoragePath == ''
           || request.resource.data.photoStoragePath.matches('^profile-photos/' + uid + '/.*')
+        )
+        /* The figures other people read on a profile (survey item 18).
+           They are the owner's own device's to write, so these gates bound
+           the shape, not the truth: a joined date that is the server's or
+           left as it was (no backdated account), streaks that are whole
+           days, and a badge summary the size of the catalogue whose count
+           is its own. A stored value the write leaves as it is passes, as
+           the name gate's does. */
+        && (
+          !('createdAt' in request.resource.data)
+          || request.resource.data.createdAt == request.time
+          || (resource != null
+              && request.resource.data.createdAt
+                   == resource.data.get('createdAt', null))
+        )
+        && publicProfileDaysValid('currentStreak')
+        && publicProfileDaysValid('longestStreak')
+        && (
+          !('badgeSummary' in request.resource.data)
+          || (resource != null
+              && request.resource.data.badgeSummary
+                   == resource.data.get('badgeSummary', null))
+          || (request.resource.data.badgeSummary is map
+              && request.resource.data.badgeSummary.keys().hasOnly(['earnedMap', 'count'])
+              && request.resource.data.badgeSummary.earnedMap is map
+              && request.resource.data.badgeSummary.earnedMap.size() <= 100
+              && request.resource.data.badgeSummary.count
+                   == request.resource.data.badgeSummary.earnedMap.size())
         );
+    }
+
+    /* A streak on the public profile: whole days, at most a century, or the
+       stored value left as it is. */
+    function publicProfileDaysValid(field) {
+      return !(field in request.resource.data)
+        || (request.resource.data[field] is int
+            && request.resource.data[field] >= 0
+            && request.resource.data[field] <= 36600)
+        || (resource != null
+            && request.resource.data[field] == resource.data.get(field, null));
     }
 
     // Collection-group read access: user search (`searchUsers`) runs a
@@ -1933,7 +1972,14 @@ service cloud.firestore {
         // payload into a member-readable feed.
         && (!('id' in request.resource.data)
             || (request.resource.data.id is string
-                && request.resource.data.id.size() <= 64));
+                && request.resource.data.id.size() <= 64))
+        // createdAt is the writer's clock in ms, which the timeline orders
+        // by (survey item 20): a number, and never ahead of the server's
+        // by more than a clock's drift, so an event cannot pin itself
+        // above the rest. An event queued offline and sent later is older
+        // than the server's time, which is true of it.
+        && request.resource.data.createdAt is number
+        && request.resource.data.createdAt <= request.time.toMillis() + 300000;
       allow update, delete: if false;
     }
 
@@ -2036,6 +2082,12 @@ service cloud.firestore {
     match /deletedBillingIdentities/{identifierHash} {
       // Hashed billing-identifier tombstone for webhook guards.
       // Server-only.
+      allow read, write: if false;
+    }
+
+    match /restrictedIdentities/{identityHash} {
+      // A deleted restricted account's hashed sign-in identities (S4e,
+      // STATUS 2026-10-20), read by onAuthUserCreated. Server-only.
       allow read, write: if false;
     }
 
