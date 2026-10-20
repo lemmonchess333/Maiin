@@ -419,17 +419,13 @@ describe("a layoff never crosses an account switch", () => {
     // wearing a race-condition's clothes.
     expect(heldSightings).toBeGreaterThan(0);
 
-    // B's FIRST plan still materializes while their layoff is unknown (the
-    // load effect is not gated — week 0 is base-shaped either way)…
-    await firstPlanWritten("userB");
-    await ageIntoMidBlock("userB", 9);
-    rerender();
-    // RUN-EV-03 changed the mid-block contract here: the ROLLOVER now WAITS
-    // for B's own read instead of proceeding with the uid-paired seed. Keep
-    // the window open long enough to prove it stayed shut…
-    await pumpHolding("users/userB/runs");
+    // B's first plan waits for B's own read (a returner's first week has
+    // no strides), so nothing of B's is written while it is held…
+    expect(readDoc("users/userB/programState/current")).toBeUndefined();
     releaseAllReads();
     resumeReads();
+    await firstPlanWritten("userB");
+    await ageIntoMidBlock("userB", 9);
     rerender();
 
     // …then the advance runs with B's OWN resolved class ("trained
@@ -633,4 +629,208 @@ describe("what else a regenerated week is built from", () => {
     expect(days.every((d) => d.date < thisMonday)).toBe(true);
     expect(stored().runPlan?.raceGoal?.targetDate).toBe(lastWeek(sunday));
   });
+});
+
+/**
+ * The rollover waits for today's read (RUN-EV-03); the rebuilds a person
+ * asks for did not. Realign, "Start next week", a run-plan edit and a
+ * regenerate each read the held value, which is the "none" seed until the
+ * read lands, so a returner who tapped one before it answered got the full
+ * week a trained runner gets. That week carries this week's key, so the
+ * rollover never revisits it. Each now waits for the same read.
+ *
+ * On this week's Monday, so a rebuild from today plans the whole week.
+ */
+describe("a rebuild the person asks for waits for the layoff read", () => {
+  const PROGRAM = "users/userA/programState/current";
+  const RUNS = "users/userA/runs";
+
+  function onMonday<T>(body: () => Promise<T>): Promise<T> {
+    const monday = parseLocalDate(String(localWeekKey()));
+    monday.setHours(12);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(monday);
+    return body().finally(() => vi.useRealTimers());
+  }
+
+  /** A history ending `daysAway` days before the pinned day. */
+  function seedHistoryBefore(daysAway: number): void {
+    const today = localDateString(new Date());
+    const tree: Record<string, Record<string, unknown>> = {};
+    for (let i = 0; i < 10; i++) {
+      tree[`${RUNS}/r${i}`] = savedRunDoc(shift(today, -(daysAway + i * 3)), {
+        distance: 9000,
+        duration: 3000,
+      });
+    }
+    seedFirestore(tree);
+  }
+
+  /**
+   * This week's plan, nine weeks into a sixteen-week block, then a cold
+   * mount with only the run-history read held. Nothing rolls over: the
+   * plan is already this week's.
+   */
+  async function midBlockWithTheReadHeld(
+    daysAway: number,
+    shape?: (doc: Record<string, unknown>) => Record<string, unknown>
+  ) {
+    seedHistoryBefore(daysAway);
+    const first = renderHook(() => useProgram());
+    await firstPlanWritten("userA");
+    first.unmount();
+    const doc = readDoc(PROGRAM) as Record<string, unknown>;
+    const placed = {
+      ...doc,
+      runPlan: {
+        ...(doc.runPlan as object),
+        currentWeek: 9,
+        totalWeeks: CARRIED_BLOCK_WEEKS,
+      },
+    };
+    // The profile too: a regenerate commits a profile patch against it.
+    seedFirestore({
+      [PROGRAM]: shape ? shape(placed) : placed,
+      "users/userA": raceProfile(),
+    });
+    mockProfile = raceProfile();
+
+    deferReads();
+    const hook = renderHook(() => useProgram());
+    const sightings = await pumpHolding(RUNS);
+    expect(sightings).toBeGreaterThan(0);
+    expect(hook.result.current.programState?.runPlan?.currentWeek).toBe(9);
+    return hook;
+  }
+
+  const programWrites = (from: number) =>
+    writeLog()
+      .slice(from)
+      .filter((w) => w.path === PROGRAM);
+
+  /** Start `act`, hold the read a while longer, then let it land. Returns
+   *  whether anything was written, or the action settled, while held. */
+  async function tapWhileHeld(action: () => Promise<unknown>) {
+    const from = writeLog().length;
+    let settled = false;
+    let running!: Promise<unknown>;
+    act(() => {
+      running = action().finally(() => {
+        settled = true;
+      });
+    });
+    await pumpHolding(RUNS, 20);
+    const early = { settled, writes: programWrites(from).length };
+    releaseAllReads();
+    resumeReads();
+    await act(async () => {
+      await running;
+    });
+    return { early, writes: programWrites(from).length };
+  }
+
+  const weekAfter = async (
+    daysAway: number,
+    action: (
+      hook: ReturnType<
+        typeof renderHook<ReturnType<typeof useProgram>, unknown>
+      >
+    ) => Promise<unknown>,
+    shape?: (doc: Record<string, unknown>) => Record<string, unknown>
+  ) => {
+    const hook = await midBlockWithTheReadHeld(daysAway, shape);
+    const tapped = await tapWhileHeld(() => action(hook));
+    expect(tapped.early).toEqual({ settled: false, writes: 0 });
+    expect(tapped.writes).toBeGreaterThan(0);
+    return persistedRunDays("userA");
+  };
+
+  const realign = (hook: {
+    result: { current: ReturnType<typeof useProgram> };
+  }) => hook.result.current.realignRacePlan();
+  const refresh = (hook: {
+    result: { current: ReturnType<typeof useProgram> };
+  }) => hook.result.current.refreshRunSchedule();
+
+  it("Realign: a trained runner gets a build week (the anchor)", () =>
+    onMonday(async () => {
+      const week = await weekAfter(1, realign);
+      expect(hardCount(week)).toBeGreaterThan(0);
+      expect(longestKm(week)).toBeGreaterThan(14);
+    }));
+
+  it("Realign: a returner gets a re-entry week", () =>
+    onMonday(async () => {
+      const week = await weekAfter(70, realign);
+      expect(hardCount(week)).toBe(0);
+      expect(longestKm(week)).toBeLessThanOrEqual(14);
+    }));
+
+  it("a run-plan edit: a returner gets a re-entry week", () =>
+    onMonday(async () => {
+      const week = await weekAfter(70, refresh);
+      expect(hardCount(week)).toBe(0);
+      expect(longestKm(week)).toBeLessThanOrEqual(14);
+    }));
+
+  const strides = (days: { templateId: string }[]) =>
+    days.filter((d) => d.templateId.endsWith("_strides")).length;
+  const regenerate = (hook: {
+    result: { current: ReturnType<typeof useProgram> };
+  }) => hook.result.current.regenerateProgram();
+
+  it("a regenerate: a trained runner's first week has strides (the anchor)", () =>
+    onMonday(async () => {
+      expect(strides(await weekAfter(1, regenerate))).toBeGreaterThan(0);
+    }));
+
+  it("a regenerate: a returner's first week has none", () =>
+    onMonday(async () => {
+      const week = await weekAfter(70, regenerate);
+      expect(week.length).toBeGreaterThan(0);
+      expect(strides(week)).toBe(0);
+    }));
+
+  it("a first plan waits for the read: a returner's has no strides", () =>
+    onMonday(async () => {
+      // The anchor first: a trained runner's first plan has them.
+      seedHistoryBefore(1);
+      const trained = renderHook(() => useProgram());
+      await firstPlanWritten("userA");
+      expect(strides(persistedRunDays("userA"))).toBeGreaterThan(0);
+      trained.unmount();
+
+      resetFirestore();
+      seedHistoryBefore(70);
+      deferReads();
+      renderHook(() => useProgram());
+      expect(await pumpHolding(RUNS)).toBeGreaterThan(0);
+      expect(readDoc(PROGRAM)).toBeUndefined();
+      releaseAllReads();
+      resumeReads();
+      await firstPlanWritten("userA");
+      const week = persistedRunDays("userA");
+      expect(week.length).toBeGreaterThan(0);
+      expect(strides(week)).toBe(0);
+    }));
+
+  it("Start next week: a returner's next week is a re-entry week", () =>
+    onMonday(async () => {
+      // Every lift session done, so the week can be advanced.
+      const allDone = (doc: Record<string, unknown>) => ({
+        ...doc,
+        workouts: (doc.workouts as Record<string, unknown>[]).map((w) => ({
+          ...w,
+          completed: true,
+        })),
+      });
+      const week = await weekAfter(
+        70,
+        (hook) => hook.result.current.advanceToNextWeek(),
+        allDone
+      );
+      expect(week.length).toBeGreaterThan(0);
+      expect(hardCount(week)).toBe(0);
+      expect(longestKm(week)).toBeLessThanOrEqual(14);
+    }));
 });
