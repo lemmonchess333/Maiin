@@ -205,6 +205,7 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   "match /deletedCommentEvidence/{id}",
   "match /deletedAccounts/{uid}",
   "match /deletedBillingIdentities/{identifierHash}",
+  "match /restrictedIdentities/{identityHash}",
   "match /paymentEventsPostDeletion/{eventId}",
   // Durable trial-eligibility tombstone (money-path audit F1). Admin SDK
   // writes only (`allow read, write: if false`), written by completeOnboarding

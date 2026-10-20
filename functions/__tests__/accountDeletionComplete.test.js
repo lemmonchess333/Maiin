@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
@@ -148,7 +148,14 @@ function setup(extra = {}) {
   });
   return {
     firestore,
-    auth: { deleteUser: vi.fn().mockResolvedValue(undefined) },
+    auth: {
+      getUser: vi.fn().mockResolvedValue({
+        uid: "alice",
+        email: "alice@example.com",
+        providerData: [{ providerId: "google.com", uid: "alice-google" }],
+      }),
+      deleteUser: vi.fn().mockResolvedValue(undefined),
+    },
     storageBucket: { deleteFiles: vi.fn().mockResolvedValue(undefined) },
     uid: "alice",
     logger,
@@ -174,6 +181,18 @@ function setup(extra = {}) {
 // smoke::topLevelOwn::followRequests
 // smoke::followRequests::sent
 // smoke::topLevelOwn::friendsBoard
+/* The billing tombstone's secret, which a restricted account's kept
+   identities are hashed with. */
+let priorSecret;
+beforeEach(() => {
+  priorSecret = process.env.BILLING_HMAC_SECRET;
+  process.env.BILLING_HMAC_SECRET = "test-secret-0123456789abcdef";
+});
+afterEach(() => {
+  if (priorSecret === undefined) delete process.env.BILLING_HMAC_SECRET;
+  else process.env.BILLING_HMAC_SECRET = priorSecret;
+});
+
 describe("complete account erasure", () => {
   it("removes nested personal data and cross-user copies, preserving other accounts and bounded private evidence", async () => {
     const ctx = setup();
@@ -285,6 +304,22 @@ describe("complete account erasure", () => {
     expect(
       data.get("accountDeletionRequests/alice").cleanupAfter
     ).toBeInstanceOf(Date);
+    // Alice was restricted, so her sign-in identities are kept, hashed,
+    // for a new account to meet (S4e, STATUS 2026-10-20): nothing that
+    // names her, and an expiry.
+    const keptIdentities = [...data].filter(([path]) =>
+      path.startsWith("restrictedIdentities/")
+    );
+    expect(keptIdentities).toHaveLength(2);
+    for (const [, row] of keptIdentities) {
+      expect(Object.keys(row).sort()).toEqual([
+        "createdAt",
+        "expiresAt",
+        "reason",
+      ]);
+      expect(row.expiresAt).toBeInstanceOf(Date);
+    }
+    expect(JSON.stringify(keptIdentities)).not.toMatch(/alice/);
     expect(ctx.auth.deleteUser).toHaveBeenCalledOnce();
   });
 

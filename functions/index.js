@@ -36,6 +36,7 @@ const programCommands = require("./lib/programCommands");
 const { reconcileWorkoutMetrics } = require("./lib/workoutCorrections");
 const challengeParticipation = require("./lib/challengeParticipationProgress");
 const friendsBoard = require("./lib/friendsBoard");
+const restrictedIdentities = require("./lib/restrictedIdentities");
 const {
   mergeChangedFields,
   ProgrammeConflictError,
@@ -6564,7 +6565,7 @@ exports.listRestrictedUsers = functions
  * succeeds with `lifted: false`, so a second tap is harmless.
  */
 exports.liftRestriction = functions
-  .runWith(ADMIN_HTTP_CAP)
+  .runWith({ ...ADMIN_HTTP_CAP, secrets: [BILLING_HMAC_SECRET] })
   .https.onCall(async (data, context) => {
     if (!context.auth) {
       throw new functions.https.HttpsError(
@@ -6590,6 +6591,17 @@ exports.liftRestriction = functions
     }
 
     const firestore = admin.firestore();
+    // The identities a deleted restricted account left, which would
+    // restrict this account's next one (S4e; lib/restrictedIdentities.js),
+    // go first:
+    // a lift that fails after this is retried, one that lifted and kept
+    // them would restrict a person a moderator meant to clear.
+    await restrictedIdentities.forgetRestrictedIdentities({
+      firestore,
+      auth: admin.auth(),
+      uid,
+      logger: functions.logger,
+    });
     const restrictionRef = firestore
       .collection("globalRestrictedUids")
       .doc(uid);
@@ -6618,6 +6630,74 @@ exports.liftRestriction = functions
       lifted,
     });
     return { ok: true, lifted };
+  });
+
+/**
+ * A person's public name, held to the word filter on the server (survey
+ * item 18). The Settings name field writes users/{uid}/public/profile
+ * straight to Firestore and checks the name on the device
+ * (src/lib/displayName.ts), so a client that skipped the check published a
+ * name every other writer refuses. One that trips the filter is taken back
+ * to none: profiles, search and the boards then show the person unnamed
+ * until they choose another, which a restricted person may still do (P11).
+ */
+exports.onPublicProfileWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("users/{uid}/public/{docId}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    if (!change.after.exists) return null;
+    const name = (change.after.data() || {}).displayName;
+    const before = change.before.exists ? change.before.data() || {} : {};
+    if (name === before.displayName) return null;
+    if (!objectionableText.displayNameRefusal(name)) return null;
+    const { uid } = context.params;
+    if (
+      !(await accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        uid,
+        "onPublicProfileWritten"
+      ))
+    )
+      return null;
+    try {
+      // update, not set: a profile deleted since is not written back.
+      await change.after.ref.update({
+        displayName: null,
+        displayNameLower: null,
+      });
+    } catch (err) {
+      if (err && err.code === 5) return null; // NOT_FOUND
+      throw err;
+    }
+    functions.logger.info("onPublicProfileWritten.name_removed", { uid });
+    return null;
+  });
+
+/**
+ * A new Auth account (any sign-in: email, Google, Apple). When its email
+ * or sign-in id belonged to a restricted account that was deleted within
+ * 13 months, the restriction is back before the person reaches anyone
+ * (S4e; lib/restrictedIdentities.js). Every other
+ * account is a read of one or two keys and nothing written. Retried: the
+ * restriction it writes is the same document each time.
+ */
+exports.onAuthUserCreated = functions
+  .runWith({
+    ...TRIGGER_CAP,
+    failurePolicy: true,
+    secrets: [BILLING_HMAC_SECRET],
+  })
+  .auth.user()
+  .onCreate(async (user, context) => {
+    if (pastRetryWindow(context)) return null;
+    await restrictedIdentities.carryRestriction({
+      firestore: db,
+      userRecord: user,
+      now: Date.now(),
+      logger: functions.logger,
+    });
+    return null;
   });
 
 // ══════════════════════════════════════════════
@@ -7779,6 +7859,9 @@ exports.resolveGoalSpaceTarget = functions
 // so naming the actor is consistent, not a leak. No push (matches the
 // SOCIAL-FOCUS-01 lock). Deterministic notification id per recipient
 // (`${spaceId}_${eventId}`) makes the at-least-once trigger idempotent.
+/** How many events one member may add to one Circle in an hour. */
+const CIRCLE_EVENTS_PER_HOUR = 20;
+
 const CIRCLE_EVENT_NOTIFICATION_TYPES = {
   milestone: "circle_milestone",
   needs_support: "circle_needs_support",
@@ -7808,8 +7891,7 @@ exports.onGoalSpaceEventCreated = functions
       return null;
     }
     const authorUid = event.uid;
-    const notifType = CIRCLE_EVENT_NOTIFICATION_TYPES[event.kind];
-    if (!authorUid || !notifType) return null; // non-notifying kind
+    if (!authorUid) return null;
 
     // R1A — if the author is mid-deletion, skip the fan-out. Do NOT
     // delete the event (unlike onActivityCreated): it's a legitimate
@@ -7821,6 +7903,35 @@ exports.onGoalSpaceEventCreated = functions
       "onGoalSpaceEventCreated"
     );
     if (!proceed) return null;
+
+    // A member writes events straight to Firestore, as fast as a client can
+    // send them, and each notifying one reaches every co-member (survey
+    // item 20). Past twenty an hour in one Circle, far past a real day's
+    // sessions and milestones, an event comes out before anyone is told of
+    // it. The weekly check-in is the callable's, one per week, so it is not
+    // counted. A failed count keeps the event: losing what a member wrote
+    // costs more than one extra notice.
+    if (
+      event.kind !== "weekly_check_in" &&
+      (await rateLimiter.isRateLimited(
+        db,
+        authorUid,
+        `circleEvent_${spaceId}`,
+        CIRCLE_EVENTS_PER_HOUR,
+        3_600_000,
+        { failOpen: true }
+      ))
+    ) {
+      await snap.ref.delete();
+      functions.logger.info("onGoalSpaceEventCreated.over_rate", {
+        spaceId,
+        eventId,
+      });
+      return null;
+    }
+
+    const notifType = CIRCLE_EVENT_NOTIFICATION_TYPES[event.kind];
+    if (!notifType) return null; // non-notifying kind
 
     try {
       const [membersSnap, authorSnap] = await Promise.all([

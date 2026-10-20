@@ -10,6 +10,36 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Restriction and identity rows (survey items 18 and 20, 2026-10-20)
+
+A restriction now outlives deleting the account (S4e, STATUS 2026-10-20),
+a public name the filter refuses is taken back on the server, and a
+member's Circle events are held to twenty an hour. The unit, rules and
+emulator suites cover the logic; these need the release and real sign-ins.
+
+- [ ] **The release carries the two triggers and the bound secret.**
+      Passing: the Deploy production run's Functions stage is green, and
+      Firebase console → Functions lists `onAuthUserCreated` and
+      `onPublicProfileWritten`, each with `BILLING_HMAC_SECRET` bound where
+      the trigger metadata test says (`onAuthUserCreated`, `liftRestriction`),
+      and Firestore console → TTL policies lists
+      `restrictedIdentities.expiresAt`.
+- [ ] **A restriction follows the same Google account.** On a TestFlight
+      account signed in with Google: restrict it from the moderation page,
+      delete it from Settings → Account, then sign in again with the same
+      Google account. Passing: Firestore console shows
+      `globalRestrictedUids/{new uid}` with `carriedFromDeletedAccount:
+  true`, the app shows the restricted notice before a post, and
+      `restrictedIdentities` holds two documents with only `reason`,
+      `createdAt` and `expiresAt`.
+- [ ] **Lift clears it for good.** Lift that account's restriction, delete
+      it again and sign in with the same Google account. Passing: no
+      `globalRestrictedUids` document for the newest uid.
+- [ ] **A name past the filter comes back to none.** Passing: a name the
+      filter refuses, written to `users/{uid}/public/profile` from the
+      Firestore console, reads null within a minute and the profile shows
+      the person unnamed.
+
 ## Friends board (Polish2, 2026-10-20)
 
 The feed's board ranks this week's sessions for you and the people you

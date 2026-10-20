@@ -389,13 +389,17 @@ export default function PrivacyPolicy() {
                 for 90 days. Non-public comment text and minimised moderation
                 records may be retained for up to 365 days for safety review.
                 Protected billing identifiers are retained for 13 months to
-                prevent purchase theft. Expired records are removed by scheduled
-                retention policies; removal is not instantaneous. An outstanding
-                subscription cancellation request is kept until it is resolved.
-                Deletion also leaves records of password-reset requests, which
-                hold the email address a reset was asked for, and the records of
-                Apple&apos;s subscription notifications, kept so each is handled
-                once. Outside Tropos, RevenueCat keeps its subscription records,
+                prevent purchase theft. If a moderator had restricted your
+                account, we keep a coded form of its email address and its Apple
+                or Google sign-in for 13 months, which can&apos;t be read back,
+                so that a new account made with them is restricted too. Expired
+                records are removed by scheduled retention policies; removal is
+                not instantaneous. An outstanding subscription cancellation
+                request is kept until it is resolved. Deletion also leaves
+                records of password-reset requests, which hold the email address
+                a reset was asked for, and the records of Apple&apos;s
+                subscription notifications, kept so each is handled once.
+                Outside Tropos, RevenueCat keeps its subscription records,
                 Stripe keeps its records of any purchase made on the web, and
                 Google keeps analytics data under its Google Analytics retention
                 settings, each under its own policy.

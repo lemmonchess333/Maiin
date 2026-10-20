@@ -50,7 +50,11 @@ const CHALLENGE = "july-rejoin-wc";
 const tsFromIso = (iso) => admin.firestore.Timestamp.fromDate(new Date(iso));
 
 const participantRef = () =>
-  db.collection("challenges").doc(CHALLENGE).collection("participants").doc(UID);
+  db
+    .collection("challenges")
+    .doc(CHALLENGE)
+    .collection("participants")
+    .doc(UID);
 
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
@@ -72,7 +76,11 @@ async function wipe() {
     for (const m of markers) await m.delete().catch(() => {});
     await p.delete().catch(() => {});
   }
-  await db.collection("challenges").doc(CHALLENGE).delete().catch(() => {});
+  await db
+    .collection("challenges")
+    .doc(CHALLENGE)
+    .delete()
+    .catch(() => {});
   const workouts = await db
     .collection("users")
     .doc(UID)
@@ -199,7 +207,11 @@ suite("challenge progress survives leave → re-join", () => {
     await join("2026-07-01T00:00:00Z");
     await logWorkout("w-1", "2026-07-02");
 
-    const ref = db.collection("users").doc(UID).collection("workouts").doc("w-1");
+    const ref = db
+      .collection("users")
+      .doc(UID)
+      .collection("workouts")
+      .doc("w-1");
     const snap = await ref.get();
     await onWorkoutCreated.run(snap, {
       params: { uid: UID, workoutId: "w-1" },

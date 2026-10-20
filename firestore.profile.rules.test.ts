@@ -28,7 +28,13 @@ import {
   assertSucceeds,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, setDoc, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
+  updateDoc,
+} from "firebase/firestore";
 import { readFileSync } from "node:fs";
 import {
   PROFILE_FIELD_REGISTRY,
@@ -340,6 +346,112 @@ suite("users/{uid}/public/profile — the uid identity gate", () => {
     );
   });
 });
+
+/**
+ * The figures other people read on a profile (survey item 18): the joined
+ * date, the two streaks and the badge summary. The owner's device writes
+ * them, so the rules bound their shape rather than their truth.
+ */
+suite(
+  "users/{uid}/public/profile — the joined date, streaks and badges",
+  () => {
+    const ME = "pub-figures";
+    const ref = () =>
+      doc(
+        env.authenticatedContext(ME).firestore(),
+        `users/${ME}/public/profile`
+      );
+
+    it("takes the server's time for the joined date, never a backdated one", async () => {
+      await assertFails(
+        setDoc(ref(), {
+          uid: ME,
+          displayName: "Me",
+          createdAt: Timestamp.fromDate(new Date("2020-01-01")),
+        })
+      );
+      await assertSucceeds(
+        setDoc(ref(), {
+          uid: ME,
+          displayName: "Me",
+          createdAt: serverTimestamp(),
+        })
+      );
+    });
+
+    it("keeps the joined date: a write may leave it, not move it", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `users/${ME}/public/profile`), {
+          uid: ME,
+          createdAt: Timestamp.fromDate(new Date("2026-03-01")),
+        });
+      });
+      await assertSucceeds(
+        setDoc(ref(), { currentStreak: 4 }, { merge: true })
+      );
+      await assertFails(
+        updateDoc(ref(), {
+          createdAt: Timestamp.fromDate(new Date("2021-01-01")),
+        })
+      );
+    });
+
+    it("holds a streak to whole days within a century", async () => {
+      for (const bad of ["12", -1, 2.5, 40000, { days: 3 }]) {
+        await assertFails(
+          setDoc(ref(), { currentStreak: bad }, { merge: true })
+        );
+        await assertFails(
+          setDoc(ref(), { longestStreak: bad }, { merge: true })
+        );
+      }
+      await assertSucceeds(
+        setDoc(
+          ref(),
+          { uid: ME, currentStreak: 12, longestStreak: 30 },
+          { merge: true }
+        )
+      );
+    });
+
+    it("lets a profile holding an odd stored streak write its other fields", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `users/${ME}/public/profile`), {
+          uid: ME,
+          currentStreak: 2.5,
+        });
+      });
+      await assertSucceeds(
+        setDoc(ref(), { displayName: "Sam" }, { merge: true })
+      );
+    });
+
+    it("takes the badge summary the app writes, and nothing larger or inconsistent", async () => {
+      await assertSucceeds(
+        setDoc(
+          ref(),
+          {
+            badgeSummary: { earnedMap: { first_step: "2026-06-07" }, count: 1 },
+          },
+          { merge: true }
+        )
+      );
+      const many = Object.fromEntries(
+        Array.from({ length: 101 }, (_, i) => [`b${i}`, "2026-06-07"])
+      );
+      for (const bad of [
+        { earnedMap: { first_step: "2026-06-07" }, count: 40 },
+        { earnedMap: many, count: 101 },
+        { earnedMap: {}, count: 0, extra: "payload" },
+        { earnedMap: "first_step", count: 1 },
+      ]) {
+        await assertFails(
+          setDoc(ref(), { badgeSummary: bad }, { merge: true })
+        );
+      }
+    });
+  }
+);
 
 suite("users/{uid}/public/profile — the other two value gates", () => {
   const ME = "pub-gates";
