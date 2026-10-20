@@ -8,6 +8,42 @@
  */
 
 /**
+ * One number as a model writes it: "1,240" and "1,234.5" group thousands
+ * with commas, "1.234,5" with dots, and otherwise a comma is a decimal
+ * point ("12,5"). A dot alone is always a decimal point: "1.250" is 1.25.
+ */
+function readModelSeparators(digits: string): number {
+  if (/^-?\d{1,3}(?:,\d{3})+(?:\.\d+)?$/.test(digits)) {
+    return Number(digits.replace(/,/g, ""));
+  }
+  if (/^-?\d{1,3}(?:\.\d{3})+,\d+$/.test(digits)) {
+    return Number(digits.replace(/\./g, "").replace(",", "."));
+  }
+  return Number(digits.replace(",", "."));
+}
+
+/**
+ * The number in a figure a model wrote: 240, "240", "~200 kcal", "1,240",
+ * "12,5". Null when there is none. `Number()` read every one of those
+ * strings but the plain one as NaN, so a scanned item's "~200 kcal" logged
+ * 0 and a typed meal's became a NaN total. For the model's English only:
+ * Open Food Facts writes "1,250" for 1.25 (see `parseServingGrams`).
+ */
+export function parseModelNumber(val: unknown): number | null {
+  if (typeof val === "number") return Number.isFinite(val) ? val : null;
+  if (typeof val !== "string") return null;
+  const m = val.match(/-?\d+(?:[.,]\d+)*/);
+  if (!m) return null;
+  const n = readModelSeparators(m[0]);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** A model's figure, 0 when it wrote none (a macro it left out). */
+export function modelNumber(val: unknown): number {
+  return parseModelNumber(val) ?? 0;
+}
+
+/**
  * Coerce an unknown value to a finite number, returning 0 on
  * NaN/Infinity/null/undefined. Used to normalise the Open Food Facts
  * nutriments payload (whose fields can be missing, strings, or null
@@ -51,7 +87,21 @@ export function safeNum(val: unknown): number {
  */
 export function parseServingGrams(servingSize?: string): number | null {
   if (!servingSize) return null;
-  const m = servingSize.match(/(\d+(?:[.,]\d+)?)\s*g/i);
+  // A count of a weight, "2 x 25g": the serving is both. Read as the first
+  // weight it found, it logged half the pack at high confidence.
+  const counted = servingSize.match(
+    /(\d+)\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*(?:gram\p{L}*|gr|g)(?!\p{L})/iu
+  );
+  if (counted) {
+    const grams = Number(counted[1]) * Number(counted[2].replace(",", "."));
+    return Number.isFinite(grams) && grams > 0 ? grams : null;
+  }
+  // The unit is "g", "gr" or a spelled-out gram word, and no letter may
+  // follow it: "2 granola bars (42 g)" is 42 g, not the "2 g" of
+  // "granola", and "1 glass (250 ml)" has no gram serving at all.
+  const m = servingSize.match(
+    /(\d+(?:[.,]\d+)?)\s*(?:gram\p{L}*|gr|g)(?!\p{L})/iu
+  );
   if (!m) return null;
   const grams = Number(m[1].replace(",", "."));
   return Number.isFinite(grams) && grams > 0 ? grams : null;

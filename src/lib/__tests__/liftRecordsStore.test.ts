@@ -16,6 +16,7 @@ import {
   commitLiftRecords,
   invalidateLiftRecords,
   loadLiftRecords,
+  markLiftRecordsStale,
 } from "../liftRecordsStore";
 import { deleteLoggedSession } from "../sessionDelete";
 import { fetchSavedWorkouts } from "../savedWorkouts";
@@ -203,6 +204,37 @@ describe("commitLiftRecords", () => {
       invalidated: true,
       map: { kept: {} },
     });
+  });
+});
+
+describe("a records save that failed", () => {
+  it("leaves the map stale, so the next session counts the saved workout", async () => {
+    // The map as the failed session found it: complete, so it would be
+    // used as it is, and without that session's 130.
+    const STORED = {
+      revision: 3,
+      map: {
+        "Bench Press": { "5rm": { weight: 120, reps: 5, date: "2026-01-01" } },
+      },
+      sessionCounts: { "Bench Press": 1 },
+      volumeBest: {},
+    };
+    seedFirestore({
+      [RECORDS]: STORED,
+      "users/u1/workouts/old": bench("2026-01-01", 120),
+      "users/u1/workouts/failed-records": bench("2026-06-01", 130),
+    });
+    const window = await fetchSavedWorkouts("u1", { latest: 1 });
+
+    // Anchor: unmarked, the next session takes the stored map as it is.
+    expect(benchBest(await loadLiftRecords("u1", window))).toBe(120);
+
+    await markLiftRecordsStale("u1");
+
+    const next = await loadLiftRecords("u1", window);
+    expect(benchBest(next)).toBe(130);
+    expect(next.sessionCounts).toEqual({ "Bench Press": 2 });
+    expect(next.revision).toBe(4);
   });
 });
 

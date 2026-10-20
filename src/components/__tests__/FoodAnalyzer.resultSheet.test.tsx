@@ -100,6 +100,8 @@ vi.mock("@/hooks/useFoodFavourites", () => ({
 }));
 
 import FoodAnalyzer from "../FoodAnalyzer";
+import { createMealEntry } from "@/lib/mealEntry";
+import { toast } from "@/lib/toast";
 import { AI_ALLOWED } from "@/test/aiConsentFixtures";
 
 const MEAL = {
@@ -158,11 +160,12 @@ const sheet = () => screen.getByTestId("scan-result-sheet");
 
 async function scan(
   meal: string | null = "breakfast",
-  button = "stub-capture"
+  button = "stub-capture",
+  result: unknown = MEAL
 ) {
   h.analyzeFood.mockImplementation(async () => {
-    h.state.result = MEAL;
-    return { data: MEAL, errorMessage: null };
+    h.state.result = result;
+    return { data: result, errorMessage: null };
   });
   render(<FoodAnalyzer date="2026-09-23" meal={meal} aiConsent={AI_ALLOWED} />);
   await waitFor(() => expect(modal().dataset.open).toBe("true"));
@@ -199,6 +202,31 @@ describe("FoodAnalyzer — the result sheet", () => {
     expect(
       within(sheet()).getByText("AI estimate · check the portions")
     ).toBeTruthy();
+  });
+
+  it.each([
+    [
+      "the app's own sentence",
+      new Error("Sign in again to log food."),
+      "Sign in again to log food.",
+    ],
+    [
+      "not an SDK error's text",
+      Object.assign(new Error("Missing or insufficient permissions."), {
+        code: "permission-denied",
+      }),
+      "Couldn't save — please try again.",
+    ],
+    [
+      "not a browser's error text",
+      new TypeError("Failed to fetch"),
+      "Couldn't save — please try again.",
+    ],
+  ])("a failed log says %s", async (_label, err, shown) => {
+    vi.mocked(createMealEntry).mockRejectedValueOnce(err);
+    await scan("breakfast");
+    fireEvent.click(screen.getByRole("button", { name: "Log to Breakfast" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(shown));
   });
 
   it("names the meal on its Log button, in food orange", async () => {
@@ -295,6 +323,25 @@ describe("FoodAnalyzer — the result sheet", () => {
       key: "Escape",
     });
     await waitFor(() => expect(h.reset).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(screen.queryByTestId("scan-result-sheet")).toBeNull()
+    );
+  });
+
+  it("logs a figure the model wrote as text, not 0 for it", async () => {
+    // "~248 kcal" was NaN to Number(), so the chicken logged at 0 and the
+    // plate at 264 of its 512.
+    const [chicken, ...rest] = MEAL.items;
+    await scan("breakfast", "stub-capture", {
+      ...MEAL,
+      items: [{ ...chicken, calories: "~248 kcal", protein: "46 g" }, ...rest],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Log to Breakfast" }));
+    await waitFor(() => expect(createMealEntry).toHaveBeenCalledOnce());
+    expect(vi.mocked(createMealEntry).mock.calls[0][1]).toMatchObject({
+      totalCalories: 512,
+      totalProtein: 49,
+    });
     await waitFor(() =>
       expect(screen.queryByTestId("scan-result-sheet")).toBeNull()
     );

@@ -65,7 +65,9 @@ describe("Run9 materialization invariant (property-based)", () => {
       const patch = setRaceGoalPatch(g);
       // The write always materializes both fields.
       expect("raceGoal" in patch).toBe(true);
-      expect(patch.runMode).toBe(deriveRunMode(g));
+      // race_prep iff a goal was set: the rule written out, so a wrong
+      // deriveRunMode cannot agree with itself here.
+      expect(patch.runMode).toBe(g ? "race_prep" : "freeform");
       // And the materialized mode matches the raceGoal it co-writes.
       expect(patch.runMode).toBe(patch.raceGoal ? "race_prep" : "freeform");
     }
@@ -92,7 +94,9 @@ describe("Run9 materialization invariant (property-based)", () => {
       } else {
         // 3. The goal is preserved → mode is derived from the CURRENT goal,
         //    never silently flipped.
-        expect(patch.runMode).toBe(deriveRunMode(ctx.currentRaceGoal));
+        expect(patch.runMode).toBe(
+          ctx.currentRaceGoal ? "race_prep" : "freeform"
+        );
       }
     }
   });

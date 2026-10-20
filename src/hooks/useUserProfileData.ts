@@ -39,7 +39,11 @@ export type ProfileStatus = "loading" | "missing" | "error" | "ready";
 interface PostsState {
   items: FeedItem[];
   loading: boolean;
+  /** The read failed: no items is not "nothing shared". */
+  failed: boolean;
 }
+
+const POSTS_LOADING: PostsState = { items: [], loading: true, failed: false };
 
 function postsQuery(uid: string, visibility: string | string[]) {
   return query(
@@ -125,8 +129,12 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
   );
   const [followers, setFollowers] = useState<number | null>(null);
   const [followingCount, setFollowingCount] = useState<number | null>(null);
+  // A count that couldn't be read stays null, not 0: "0 followers" is a
+  // claim about the person.
+  const [countsFailed, setCountsFailed] = useState(false);
   const [badges, setBadges] = useState<EarnedBadge[]>([]);
-  const [posts, setPosts] = useState<PostsState>({ items: [], loading: true });
+  const [badgesFailed, setBadgesFailed] = useState(false);
+  const [posts, setPosts] = useState<PostsState>(POSTS_LOADING);
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
@@ -186,12 +194,16 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
       setStatus(failed ? "error" : "missing");
     });
 
+    const countFailed = (err: unknown) => {
+      logger.warn(`[profile] follow counts read failed for ${uid}`, err);
+      if (live()) setCountsFailed(true);
+    };
     getFollowerCount(uid)
       .then((n) => live() && setFollowers(n))
-      .catch(() => live() && setFollowers(0));
+      .catch(countFailed);
     getFollowingCount(uid)
       .then((n) => live() && setFollowingCount(n))
-      .catch(() => live() && setFollowingCount(0));
+      .catch(countFailed);
 
     // Your own badges come from the live record (owner-only), so their
     // dates are the real ones rather than the public summary's copy.
@@ -205,7 +217,10 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
             )
           );
         })
-        .catch(() => {});
+        .catch((err) => {
+          logger.warn(`[profile] badges read failed for ${uid}`, err);
+          if (live()) setBadgesFailed(true);
+        });
     }
 
     readPosts(uid, isOwn)
@@ -220,10 +235,12 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
           liked: liked[i.activityId] || false,
         }));
       })
-      .then((items) => live() && setPosts({ items, loading: false }))
+      .then(
+        (items) => live() && setPosts({ items, loading: false, failed: false })
+      )
       .catch((err) => {
         logger.warn(`[profile] posts read failed for ${uid}`, err);
-        if (live()) setPosts({ items: [], loading: false });
+        if (live()) setPosts({ items: [], loading: false, failed: true });
       });
 
     return () => {
@@ -233,7 +250,11 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
 
   const retry = useCallback(() => {
     setStatus("loading");
-    setPosts({ items: [], loading: true });
+    setPosts(POSTS_LOADING);
+    setFollowers(null);
+    setFollowingCount(null);
+    setCountsFailed(false);
+    setBadgesFailed(false);
     setAttempt((n) => n + 1);
   }, []);
 
@@ -249,9 +270,12 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
     trainingForSpaceId,
     followers,
     followingCount,
+    countsFailed,
     badges,
+    badgesFailed,
     posts: posts.items,
     postsLoading: posts.loading,
+    postsFailed: posts.failed,
     retry,
     adjustFollowers,
   };

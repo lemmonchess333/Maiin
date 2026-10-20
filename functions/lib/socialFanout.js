@@ -410,9 +410,31 @@ async function createNotification({
   });
 }
 
+/**
+ * The name a notification shows for whoever caused it: the sender's own
+ * public profile name, read here, never one the caller sends. The props
+ * and space-post-like callables took `data.fromName` from the client and
+ * put it in the recipient's tray as written ("{name} gave you props"),
+ * unfiltered and uncut in the message, so any text could appear there in
+ * the app's own words. The follow notification reads the same document.
+ * Falls back to "Someone", as those callers did, when there is no name or
+ * the read fails: a notification is never worth failing the props for.
+ */
+async function senderDisplayName(firestore, uid) {
+  try {
+    const snap = await firestore.doc(`users/${uid}/public/profile`).get();
+    const name = snap.exists ? snap.data().displayName : null;
+    if (typeof name !== "string" || !name.trim()) return "Someone";
+    return name.trim().slice(0, MAX_DISPLAY_NAME_LENGTH);
+  } catch {
+    return "Someone";
+  }
+}
+
 module.exports = {
   fanoutActivityToFeeds,
   removeActivityFromFeeds,
   createNotification,
+  senderDisplayName,
   VALID_NOTIFICATION_TYPES,
 };

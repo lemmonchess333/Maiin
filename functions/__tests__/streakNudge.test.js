@@ -3,7 +3,9 @@
  * Pure eligibility predicate for the streak-at-risk push.
  */
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
 import {
+  savableStreak,
   shouldSendStreakNudge,
   shouldSendFirstWeekNudge,
   localDateKeyInTz,
@@ -15,6 +17,8 @@ const NOW = new Date("2026-06-01T20:00:00Z");
 function base(over = {}) {
   return {
     currentStreak: 5,
+    // The streak's last active day: yesterday, London time.
+    lastActiveDate: "2026-05-31",
     remindersOptedIn: true,
     timezone: "Europe/London",
     activeDateKeys: [],
@@ -82,6 +86,7 @@ describe("shouldSendStreakNudge", () => {
 function fwBase(over = {}) {
   return {
     currentStreak: 1,
+    lastActiveDate: "2026-05-31",
     remindersOptedIn: true,
     timezone: "Europe/London",
     activeDateKeys: ["2026-05-31"], // logged yesterday, not today
@@ -90,6 +95,78 @@ function fwBase(over = {}) {
     ...over,
   };
 }
+
+describe("the streak a log today keeps", () => {
+  /* The stored currentStreak is the streak as shown, and the morning after a
+     rest day shows 0, so the nudge skipped the one evening it is for. Read
+     on its own, a streak that died weeks ago was nudged every evening. */
+  it("the evening after a rest day: the certificate through the day before → sent", () => {
+    // Shown 0 since this morning; 100 days ended on 30 May; 31 May rested.
+    const input = base({
+      currentStreak: 0,
+      lastActiveDate: "2026-05-30",
+      anchorStreak: 100,
+      anchorDate: "2026-05-30",
+    });
+    expect(savableStreak(input, NOW)).toBe(100);
+    expect(shouldSendStreakNudge(input, NOW)).toBe(true);
+  });
+
+  it("a certificate ending yesterday is the ordinary evening", () => {
+    const input = base({ anchorStreak: 12, anchorDate: "2026-05-31" });
+    expect(savableStreak(input, NOW)).toBe(12);
+  });
+
+  it("a streak that ended three days ago is already broken → not sent", () => {
+    for (const input of [
+      base({ anchorStreak: 40, anchorDate: "2026-05-29" }),
+      // A document from before the certificate: its pair, read the same way.
+      base({ currentStreak: 40, lastActiveDate: "2026-05-20" }),
+    ]) {
+      expect(savableStreak(input, NOW)).toBe(0);
+      expect(shouldSendStreakNudge(input, NOW)).toBe(false);
+    }
+  });
+
+  it("an older document's pair stands in for the certificate", () => {
+    expect(savableStreak(base(), NOW)).toBe(5);
+    expect(
+      savableStreak(
+        base({ anchorStreak: Number.NaN, anchorDate: "2026-05-31" }),
+        NOW
+      )
+    ).toBe(5);
+  });
+
+  it("the day is the user's local day, not UTC's", () => {
+    // 01:30 UTC on 2 June is still 1 June in Los Angeles: yesterday there is
+    // 31 May, so a streak ending 30 May is still savable.
+    const late = new Date("2026-06-02T01:30:00Z");
+    const input = base({
+      timezone: "America/Los_Angeles",
+      anchorStreak: 9,
+      anchorDate: "2026-05-30",
+    });
+    expect(savableStreak(input, late)).toBe(9);
+  });
+});
+
+describe("the cron hands the certificate to the predicate", () => {
+  // No test runs maybeSendStreakNudge; without the two fields the predicate
+  // falls back to the shown streak and the morning-after evening is skipped.
+  it("maybeSendStreakNudge passes the stored pair and the certificate", () => {
+    const src = readFileSync(new URL("../index.js", import.meta.url), "utf8");
+    const body = src.slice(src.indexOf("async function maybeSendStreakNudge"));
+    const fn = body.slice(0, body.indexOf("\n}\n"));
+    for (const field of [
+      "lastActiveDate: streak.lastActiveDate",
+      "anchorStreak: streak.anchorStreak",
+      "anchorDate: streak.anchorDate",
+    ]) {
+      expect(fn).toContain(field);
+    }
+  });
+});
 
 describe("shouldSendFirstWeekNudge", () => {
   it("day-2 base case → true (logged yesterday, not today, streak 1, never sent)", () => {

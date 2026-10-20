@@ -248,17 +248,17 @@
 	</array>
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
-		<!-- UserDefaults. CA92.1: preferences only this app reads, written by
-		     @capacitor/preferences (UserDefaults.standard). 1C8F.1: the App
-		     Group defaults capacitor-live-activities shares with the Live
-		     Activity widget. Neither plugin ships a privacy manifest of its
-		     own, so the app declares their reasons. -->
+		<!-- UserDefaults. 1C8F.1: the App Group defaults
+		     capacitor-live-activities shares with the Live Activity widget.
+		     The plugin ships no privacy manifest of its own, so the app
+		     declares its reason. Nothing in the app writes
+		     UserDefaults.standard, so CA92.1 is not declared; it went with
+		     @capacitor/preferences, which nothing imported. -->
 		<dict>
 			<key>NSPrivacyAccessedAPIType</key>
 			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
 			<key>NSPrivacyAccessedAPITypeReasons</key>
 			<array>
-				<string>CA92.1</string>
 				<string>1C8F.1</string>
 			</array>
 		</dict>

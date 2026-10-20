@@ -28,6 +28,7 @@ import {
   type SetOptions,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { setDocGuarded } from "./firestoreWrite";
 import {
   buildPRMap,
   buildVolumeBest,
@@ -190,6 +191,21 @@ export async function commitLiftRecords(
     );
     return "saved";
   });
+}
+
+/**
+ * Mark the map stale on its own, for a session whose workout saved but
+ * whose records did not. Left as it was, the map is complete and at the
+ * revision the next session loads, so that session would build on it
+ * without this one's sets, for good. Stale, it is rebuilt from the whole
+ * history, which holds the saved workout.
+ */
+export function markLiftRecordsStale(uid: string): Promise<void> {
+  return setDocGuarded(
+    recordsRef(uid),
+    { invalidated: true, revision: increment(1) },
+    { merge: true }
+  );
 }
 
 /**

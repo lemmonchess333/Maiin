@@ -483,6 +483,22 @@ const FOOD_DB: Record<string, Macros> = {
     fat: 3,
     serving: "40g dry",
   },
+  // Oats by their packet names, weighed dry. Without these rows "50g porridge
+  // oats" found "porridge", a cooked bowl, and logged 32 kcal for 187.
+  "porridge oats": {
+    calories: 150,
+    protein: 5,
+    carbs: 27,
+    fat: 3,
+    serving: "40g dry",
+  },
+  "rolled oats": {
+    calories: 150,
+    protein: 5,
+    carbs: 27,
+    fat: 3,
+    serving: "40g dry",
+  },
   oatmeal: {
     calories: 150,
     protein: 5,
@@ -1673,6 +1689,8 @@ const FOOD_ALIASES: Record<string, string> = {
   toast: "bread", // toasted ↔ untoasted (DB treats equal)
   oatmeal: "oats",
   porridge: "oats",
+  "porridge oats": "oats",
+  "rolled oats": "oats",
   chips: "fries", // UK chips are fries
   "potato chips": "crisps", // US ↔ UK (the snack)
   mash: "mashed potato",
@@ -1733,6 +1751,86 @@ function pieceGrams(key: string, rest: string): number | null {
 
 /** A British (imperial) pint. */
 const PINT_ML = 568;
+
+const NUMBER_WORDS: Record<string, number> = {
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+  eleven: 11,
+  twelve: 12,
+};
+const NUMBER_WORD_RE = new RegExp(
+  `^(${Object.keys(NUMBER_WORDS).join("|")})\\s+(.+)`,
+  "i"
+);
+const UNICODE_FRACTIONS: Record<string, number> = {
+  "½": 1 / 2,
+  "¼": 1 / 4,
+  "¾": 3 / 4,
+  "⅓": 1 / 3,
+  "⅔": 2 / 3,
+};
+
+/** "of", "of a", "an" between a fraction and its food: "half of an avocado". */
+function afterFraction(rest: string): string {
+  return rest.replace(/^(?:of\s+)?(?:an?\s+|the\s+)?/i, "").trim();
+}
+
+/**
+ * A count written as a fraction or a word: "1/2 avocado", "1 1/2 cups",
+ * "½ avocado", "half an avocado", "a quarter of a pizza", "two eggs".
+ * Before this a fraction was no count at all (the whole avocado was
+ * logged for half) and a number word was part of the name ("two eggs"
+ * found one egg). A segment that is itself a food's name is left alone,
+ * so a dish named with a number keeps its name.
+ */
+function fractionOrWordCount(
+  segment: string
+): { qty: number; rest: string } | null {
+  if (FOOD_DB[segment.toLowerCase()]) return null;
+  let m = segment.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)\s+(.+)/);
+  if (m && Number(m[3]) > 0) {
+    return {
+      qty: Number(m[1]) + Number(m[2]) / Number(m[3]),
+      rest: afterFraction(m[4]),
+    };
+  }
+  m = segment.match(/^(\d+)\s*\/\s*(\d+)\s+(.+)/);
+  if (m && Number(m[2]) > 0) {
+    return { qty: Number(m[1]) / Number(m[2]), rest: afterFraction(m[3]) };
+  }
+  m = segment.match(/^(\d+)?\s*([½¼¾⅓⅔])\s*(.+)/);
+  if (m) {
+    return {
+      qty: (m[1] ? Number(m[1]) : 0) + UNICODE_FRACTIONS[m[2]],
+      rest: afterFraction(m[3]),
+    };
+  }
+  m = segment.match(/^(?:an?\s+)?(half|quarter)\s+(.+)/i);
+  if (m) {
+    return {
+      qty: m[1].toLowerCase() === "half" ? 1 / 2 : 1 / 4,
+      rest: afterFraction(m[2]),
+    };
+  }
+  m = segment.match(NUMBER_WORD_RE);
+  if (m) return { qty: NUMBER_WORDS[m[1].toLowerCase()], rest: m[2].trim() };
+  return null;
+}
+
+/** The row's name for a count: "eggs (x2)", "avocado (x0.5)", "avocado". */
+function countedName(rest: string, qty: number): string {
+  return qty > 0 && qty !== 1
+    ? `${rest} (x${Math.round(qty * 100) / 100})`
+    : rest;
+}
 
 /**
  * Attempt to extract a quantity prefix like "2 eggs" → { qty: 2, rest: "eggs" }
@@ -1815,6 +1913,25 @@ function extractQty(segment: string): {
       rest: pintMatch[3].trim(),
     };
   }
+  // "1/2 avocado", "half an avocado", "two eggs"; "two pints of lager".
+  const written = fractionOrWordCount(segment);
+  if (written) {
+    const pints = written.rest.match(/^pints?\s+(?:of\s+)?(.+)/i);
+    if (pints) {
+      const portionLabel =
+        written.qty === 0.5
+          ? "half a pint"
+          : `${Math.round(written.qty * 100) / 100} ${written.qty === 1 ? "pint" : "pints"}`;
+      return {
+        qty: 1,
+        ml: written.qty * PINT_ML,
+        portionLabel,
+        namePrefix: `${portionLabel} of`,
+        rest: pints[1].trim(),
+      };
+    }
+    return { qty: written.qty, counted: true, rest: written.rest };
+  }
   // "2 eggs" or "2.5 servings"
   const match = segment.match(/^(\d+(?:\.\d+)?)\s+(.+)/);
   if (match) {
@@ -1828,6 +1945,25 @@ function extractQty(segment: string): {
       counted: true,
       rest: gluedMatch[2].trim(),
     };
+  }
+  // A measure written after the food: "chicken breast 200g", "milk 300ml".
+  // Read only from the start before, so the serving was logged and the row
+  // still said "200g".
+  const trailing = segment.match(/^(.+?)\s+(\d+(?:\.\d+)?)\s*(kg|g|ml|l)$/i);
+  if (trailing) {
+    const num = parseFloat(trailing[2]);
+    const unit = trailing[3].toLowerCase();
+    const rest = trailing[1].replace(/^an?\s+/i, "").trim();
+    const portionLabel = `${num}${unit}`;
+    if (unit === "kg" || unit === "g") {
+      return {
+        qty: 1,
+        grams: unit === "kg" ? num * 1000 : num,
+        portionLabel,
+        rest,
+      };
+    }
+    return { qty: 1, ml: unit === "l" ? num * 1000 : num, portionLabel, rest };
   }
   // "a slice of toast" → qty=1, rest="slice of toast"
   const aMatch = segment.match(/^an?\s+(.+)/i);
@@ -2214,9 +2350,7 @@ function unresolvedFood(
   const displayName =
     grams !== undefined || ml !== undefined
       ? `${namePrefix ?? portionLabel} ${rest}`
-      : qty > 1
-        ? `${rest} (x${qty})`
-        : rest;
+      : countedName(rest, qty);
   if (!quantityIssue) logger.warn("[nlFoodParser] Unrecognized food:", rest);
   return {
     name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
@@ -2282,8 +2416,17 @@ export function parseFoodText(input: string): ParsedFood[] {
         // itself still applies once through `qty` below. Bare foods and
         // containers keep their normal serving because pieceGrams checks
         // that the remaining wording names only the food itself.
+        // A measure typed after the base ("chicken 200g with rice") is in
+        // the part, not the segment, so the part's own measure stands then.
         const amount =
-          i === 0 ? { ...extracted, counted, grams, ml } : extracted;
+          i === 0
+            ? {
+                ...extracted,
+                counted,
+                grams: grams ?? extracted.grams,
+                ml: ml ?? extracted.ml,
+              }
+            : extracted;
         const key = findBestMatch(amount.rest);
         if (key) {
           const multiplier = foodMultiplier(key, amount);
@@ -2337,7 +2480,7 @@ export function parseFoodText(input: string): ParsedFood[] {
             : rest;
         const hasKnownBase = matchedParts[0].index === 0;
         // A whole-meal xN suffix would imply that explicit sides repeat too.
-        let displayName = qty > 1 ? `${knownRest} (x${qty})` : knownRest;
+        let displayName = countedName(knownRest, qty);
         if (hasExplicitSide) {
           displayName =
             unresolved.length > 0
@@ -2382,9 +2525,7 @@ export function parseFoodText(input: string): ParsedFood[] {
       // and the portionLabel carries the unit.
       const displayName = hasUnitPrefix
         ? `${namePrefix ?? portionLabel} ${rest}`
-        : qty > 1
-          ? `${rest} (x${qty})`
-          : rest;
+        : countedName(rest, qty);
       results.push({
         name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
         calories: Math.round(item.calories * multiplier),
@@ -2407,7 +2548,7 @@ export function parseFoodText(input: string): ParsedFood[] {
     // A measured single-food portion cannot safely scale a sum of foods.
     const compound = hasUnitPrefix ? null : findCompoundMatch(rest);
     if (compound && compound.macros.calories > 0) {
-      const displayName = qty > 1 ? `${rest} (x${qty})` : rest;
+      const displayName = countedName(rest, qty);
       results.push({
         name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
         calories: Math.round(compound.macros.calories * qty),

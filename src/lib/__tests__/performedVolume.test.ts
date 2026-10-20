@@ -7,7 +7,6 @@ import {
   rollingWindowStart,
   startOfLocalWeek,
 } from "../dateHelpers";
-import { judgementLandmark } from "@/features/program/volumeModel";
 
 /* "today" is handed in, never read from the clock, so these hold on any
    calendar day; every date below is derived from it. */
@@ -100,7 +99,9 @@ describe("performedWeeklyVolume", () => {
       primaryGoal: goal,
     });
     const chest = chestOf(rows)!;
-    expect(chest.landmark).toEqual(judgementLandmark(goal, "Chest"));
+    // Chest has no band of its own, so it takes Build muscle's generic one
+    // (`volumeLandmark`): MV 5, and 12 to 20 sets.
+    expect(chest.landmark).toEqual({ mv: 5, low: 12, high: 20 });
     expect(chest.setsPerWeek).toBeLessThan(chest.landmark.low);
     expect(chest.status).toBe("low");
   });
@@ -117,7 +118,7 @@ describe("performedWeeklyVolume", () => {
     expect(chestOf(rows)).toMatchObject({ landmark: fits, status: "optimal" });
     // A muscle the targets don't name keeps the goal's band.
     const triceps = rows.find((r) => r.muscle === "Triceps")!;
-    expect(triceps.landmark).toEqual(judgementLandmark(goal, "Triceps"));
+    expect(triceps.landmark).toEqual({ mv: 5, low: 12, high: 20 });
   });
 
   it("counts working sets, not warm-ups or empty rows", () => {

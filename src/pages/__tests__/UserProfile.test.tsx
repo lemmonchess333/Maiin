@@ -22,13 +22,17 @@ import type { FeedItem } from "@/hooks/useSocialFeed";
 const H = vi.hoisted(() => ({
   viewer: "viewer" as string | null,
   followers: {} as Record<string, number>,
+  countsFail: false,
 }));
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/auth", () => ({ useUid: () => H.viewer }));
 vi.mock("@/lib/socialApi", () => ({
-  getFollowerCount: async (uid: string) => H.followers[uid] ?? 0,
+  getFollowerCount: async (uid: string) => {
+    if (H.countsFail) throw new Error("unavailable");
+    return H.followers[uid] ?? 0;
+  },
   getFollowingCount: async () => 0,
   batchGetKudos: async () => ({}),
   blockUser: vi.fn(),
@@ -128,6 +132,7 @@ beforeEach(() => {
   resetFirestore();
   H.viewer = "viewer";
   H.followers = {};
+  H.countsFail = false;
 });
 afterEach(() => {
   resumeReads();
@@ -289,6 +294,56 @@ describe("a profile that isn't there", () => {
     expect(
       await screen.findByRole("heading", { level: 1, name: "Alice" })
     ).toBeInTheDocument();
+  });
+});
+
+describe("a read that failed is not an empty profile", () => {
+  it("says the counts couldn't load, rather than 0 followers", async () => {
+    H.countsFail = true;
+    seedFirestore({ "users/alice/public/profile": { displayName: "Alice" } });
+    renderAt("/user/alice");
+    expect(
+      await screen.findByText("Couldn't load follower counts.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/followers?$/)).toBeNull();
+  });
+
+  it("says the sessions couldn't load, rather than none shared, and tries again", async () => {
+    seedFirestore({
+      "users/alice/public/profile": { displayName: "Alice" },
+      ...post("r1", "alice", { distance: 5000 }),
+    });
+    failNextFirestore("getDocs", { path: "activities" });
+    renderAt("/user/alice");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Couldn't load sessions"
+    );
+    expect(unfiredFailures()).toEqual([]);
+    expect(
+      screen.getByText("Couldn't load this week's sessions.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("No shared sessions yet")).toBeNull();
+    expect(screen.queryByText("Nothing yet.")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(
+      await screen.findByRole("article", { name: "Post r1" })
+    ).toBeInTheDocument();
+  });
+
+  it("says your badges couldn't load on your own profile", async () => {
+    H.viewer = "alice";
+    seedFirestore({
+      "users/alice": { displayName: "Alice" },
+      "users/alice/public/profile": { displayName: "Alice" },
+    });
+    failNextFirestore("getDoc", { path: "users/alice/streaks/data" });
+    renderAt("/user/alice");
+    expect(
+      await screen.findByText("Couldn't load badges.")
+    ).toBeInTheDocument();
+    expect(unfiredFailures()).toEqual([]);
   });
 });
 

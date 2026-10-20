@@ -137,7 +137,11 @@ export default function MacroDistribution({
                    with value === 0 short-circuits via the falsy
                    guard below (`!e?.value`). */
                 onClick={(entry) => {
-                  const e = entry as MacroSlice | undefined;
+                  /* The sector's `payload` is this slice's datum, as the
+                     tooltip's `item.payload` is above: recharts types it
+                     `any` and the sector itself as `PieSectorDataItem`,
+                     which no cast to MacroSlice survives from 3.10 on. */
+                  const e = entry?.payload as MacroSlice | undefined;
                   if (!e?.value) return;
                   trackHistoryEvent("history_chart_tap_attempted", {
                     chart: "macro",

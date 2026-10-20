@@ -43,6 +43,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import {
   spaceDef,
@@ -296,6 +297,9 @@ export default function Space() {
     setComposer({ open: true, attachLatest });
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [reloadNonce, setReloadNonce] = useState(0);
+  // A failed read is not an empty space: "No posts from members yet" is a
+  // claim about the space.
+  const [postsFailed, setPostsFailed] = useState(false);
 
   /* Races plan PR4 — `?compose=1` (the post-race share hand-off from
    * RunSummary) opens the composer as soon as membership allows, with the
@@ -334,9 +338,15 @@ export default function Space() {
           )
         );
         if (cancelled) return;
+        // Offline, the read answers from this phone's cache instead of
+        // failing, and an empty cache says nothing about the space.
+        if (snap.empty && snap.metadata.fromCache)
+          throw new Error("No posts cached on this device");
         setPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PostItem));
+        setPostsFailed(false);
       } catch {
-        if (!cancelled) setPosts([]);
+        // Posts already on screen stay; a first read that failed says so.
+        if (!cancelled) setPostsFailed(true);
       }
     })();
     return () => {
@@ -568,7 +578,18 @@ export default function Space() {
               </Button>
             )}
           </div>
-          {posts === null ? (
+          {posts === null && postsFailed ? (
+            <ErrorState
+              title="Couldn't load posts"
+              description="Check your connection and try again."
+              retry={{
+                onClick: () => {
+                  setPostsFailed(false);
+                  setReloadNonce((n) => n + 1);
+                },
+              }}
+            />
+          ) : posts === null ? (
             <div
               className="h-24 rounded-2xl bg-muted/40 motion-safe:animate-pulse"
               aria-hidden

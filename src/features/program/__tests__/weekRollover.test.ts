@@ -12,7 +12,9 @@
  *
  * Each case runs the passes the app makes: the run-side effect, then the
  * lift-side one, each running again on the plan the last one saved, until
- * neither moves.
+ * neither moves. Each catches up on a Wednesday, so since G3-6 the week
+ * reached plans its runs from Wednesday: the Monday and Tuesday runs the
+ * traces had are gone from them, and nothing else changed.
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { buildOnboardingPlan } from "@/lib/onboardingPlan";
@@ -132,7 +134,7 @@ function catchUp(
   const lines: string[] = [];
   let s = state;
   for (let pass = 0; pass < 6; pass++) {
-    const run = onDay(today, () => rollRunWeeks(s, profile, todayKey, layoff));
+    const run = onDay(today, () => rollRunWeeks(s, profile, today, layoff));
     if (run.weeks > 0) {
       lines.push(`run  ${trace(run)}`);
       s = run.state;
@@ -195,7 +197,7 @@ const cases: {
     edit: allDone,
     weeksBehind: 2,
     expected: [
-      "run  moved 2 | week 2 progression | lifts 2026-09-21 | history 1 | sets 39 load 1879.5 | runs 2026-09-21 easy_30,easy_30_strides,long_6k | plan race_prep 2/13",
+      "run  moved 2 | week 2 progression | lifts 2026-09-21 | history 1 | sets 39 load 1879.5 | runs 2026-09-21 easy_30_strides,long_6k | plan race_prep 2/13",
     ],
   },
   {
@@ -204,7 +206,7 @@ const cases: {
     weeksBehind: 2,
     layoff: "detrained",
     expected: [
-      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 39 load 1879.5 | runs 2026-09-21 easy_30,easy_30,long_6k | plan race_prep 2/13",
+      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 39 load 1879.5 | runs 2026-09-21 easy_30,long_6k | plan race_prep 2/13",
     ],
   },
   {
@@ -219,7 +221,7 @@ const cases: {
     edit: allDone,
     weeksBehind: 5,
     expected: [
-      "run  moved 5 | week 2 progression | lifts 2026-10-12 | history 1 | sets 39 load 1879.5 | runs 2026-10-12 easy_50,easy_30_strides,easy_30,long_15k | plan race_prep 5/17",
+      "run  moved 5 | week 2 progression | lifts 2026-10-12 | history 1 | sets 39 load 1879.5 | runs 2026-10-12 easy_30_strides,easy_30,long_15k | plan race_prep 5/17",
     ],
   },
   {
@@ -253,7 +255,7 @@ const cases: {
     }),
     weeksBehind: 2,
     expected: [
-      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 39 load 1879.5 | runs 2026-09-21 easy_30,easy_30_strides,long_6k | plan race_prep 1/13",
+      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 39 load 1879.5 | runs 2026-09-21 easy_30_strides,long_6k | plan race_prep 1/13",
     ],
   },
   {
@@ -262,7 +264,7 @@ const cases: {
     edit: (s) => ({ ...s, liftWeekKey: shift(s.liftWeekKey ?? START, 7) }),
     weeksBehind: 2,
     expected: [
-      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 39 load 1879.5 | runs 2026-09-21 easy_30,easy_30_strides,long_6k | plan race_prep 2/13",
+      "run  moved 2 | week 1 progression | lifts 2026-09-21 | history 0 | sets 39 load 1879.5 | runs 2026-09-21 easy_30_strides,long_6k | plan race_prep 2/13",
     ],
   },
 ];
@@ -420,6 +422,61 @@ describe("a race week built mid-week (Run19, R21)", () => {
     ]);
     expect(rebuilt.runDays.some((d) => d.id === lastWeek.id)).toBe(false);
     expect(rebuilt.manualCompletions).toEqual(manualCompletions);
+  });
+});
+
+/* G3-6 (20 October): a plan caught up partway through the week was planned
+   from the week's Monday, so a 10K plan returned to on a Thursday had
+   Tuesday's and Wednesday's runs, shown pending and graded missed by the
+   Monday check. The week reached is today's, so it plans from today, as a
+   plan made mid-week does (Run19). */
+describe("a plan caught up partway through the week", () => {
+  const thursday = shift(START, 2 * 7 + 3);
+  const caughtUp = (today: string) => {
+    const { state, profile } = build(race10k);
+    return onDay(today, () => rollRunWeeks(state, profile, today, "none")).state
+      .runDays;
+  };
+
+  it("plans no run before today", () => {
+    // The anchor: from the week's Monday the same week has runs before
+    // Thursday, so the cut below is not vacuous.
+    const fromMonday = caughtUp(weekOf(thursday)) ?? [];
+    expect(fromMonday.some((d) => (d.date ?? "") < thursday)).toBe(true);
+    const fromThursday = caughtUp(thursday) ?? [];
+    expect(fromThursday.filter((d) => (d.date ?? "") < thursday)).toEqual([]);
+    // From today on, it is the week the Monday rollover plans.
+    expect(fromThursday).toEqual(
+      fromMonday.filter((d) => (d.date ?? "") >= thursday)
+    );
+  });
+
+  it("starts on next week's runs when none of this week's run days is left", () => {
+    const sunday = shift(thursday, 3);
+    const fromMonday = caughtUp(weekOf(sunday)) ?? [];
+    // The week's runs all fall before Sunday here; if one is on Sunday this
+    // case says nothing, so it is checked first.
+    expect(fromMonday.every((d) => (d.date ?? "") < sunday)).toBe(true);
+    const fromSunday = caughtUp(sunday) ?? [];
+    expect(fromSunday.length).toBeGreaterThan(0);
+    expect(fromSunday.every((d) => (d.date ?? "") > sunday)).toBe(true);
+  });
+
+  it("keeps race day for the race's own ending when the race was this week", () => {
+    // Raced on Tuesday, back on Thursday: race prep is the race's to end,
+    // from race week's days, so the day stays planned.
+    const tuesday = shift(thursday, -2);
+    const { state, profile } = build({ ...race10k, raceTargetDate: tuesday });
+    const days =
+      onDay(thursday, () => rollRunWeeks(state, profile, thursday, "none"))
+        .state.runDays ?? [];
+    expect(days.some((d) => d.date === tuesday)).toBe(true);
+    // In race week: planned from Thursday, the race day was kept on its
+    // date but filed under next week, which the rollover reads as the
+    // plan's week.
+    expect(days.map((d) => d.weekKey)).toEqual(
+      days.map(() => weekOf(thursday))
+    );
   });
 });
 

@@ -2674,8 +2674,8 @@ export function getExercisesByCategory(category: string): Exercise[] {
 
 // O(1) id → exercise lookup. getExerciseById is called inside the
 // render path of WorkoutSession + Program tab (typically 8-12 calls
-// per render against a 2400-entry array) — replacing the linear
-// `find` with a Map cuts ~20k string comparisons per render to one.
+// per render), so each call is one Map lookup rather than a scan of
+// the whole catalogue.
 const EXERCISES_BY_ID = new Map(EXERCISES.map((e) => [e.id, e]));
 
 export function getExerciseById(id: string): Exercise | undefined {

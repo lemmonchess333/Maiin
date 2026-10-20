@@ -25,9 +25,11 @@ import {
   containsProfanity,
   OBJECTIONABLE_NAME_MESSAGE,
 } from "@/lib/profanityFilter";
+import { DISPLAY_NAME_MAX } from "@/lib/displayNameLimit";
+
+export { DISPLAY_NAME_MAX };
 
 export const DISPLAY_NAME_MIN = 2;
-export const DISPLAY_NAME_MAX = 50;
 
 export const DISPLAY_NAME_LENGTH_MESSAGE = `Enter a name between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters.`;
 

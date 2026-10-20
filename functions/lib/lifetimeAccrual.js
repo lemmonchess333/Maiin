@@ -1,6 +1,10 @@
 "use strict";
 
 const { workoutVolumeKg } = require("./workoutVolume");
+const {
+  creditableRunMeters,
+  creditableVolumeKg,
+} = require("./sharedCreditBounds");
 
 /**
  * The ONE mapping from a source activity doc to the lifetime total it
@@ -36,7 +40,9 @@ function liftVolumeKgFor(data) {
   /* Same omission as the challenge path: `totalVolume` was absent from
      every workout doc, so lifetime lift volume never moved and any
      volume-gated badge could never award. */
-  return workoutVolumeKg(data);
+  // Lifetime totals unlock public badges: past the shared-credit bound a
+  // session adds nothing (sharedCreditBounds).
+  return creditableVolumeKg(workoutVolumeKg(data));
 }
 
 /**
@@ -48,9 +54,12 @@ function liftVolumeKgFor(data) {
  * through to the km field.
  */
 function runMetersFor(data) {
-  const meters = Number(data && data.distance) || 0;
-  if (meters) return meters;
-  return (Number(data && data.distanceKm) || 0) * 1000;
+  const stated =
+    Number(data && data.distance) ||
+    (Number(data && data.distanceKm) || 0) * 1000;
+  // Bounded as liftVolumeKgFor is, and shared with the challenge mapping
+  // (challengeBackfill.runChallengeIncrements), so both read one figure.
+  return creditableRunMeters(stated, data && data.duration);
 }
 
 /** Dispatch by the `kind` used in the lifetime marker path. */

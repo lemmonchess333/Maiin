@@ -1,5 +1,11 @@
 import { vi, expect, it, afterEach, beforeEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import PeopleView from "@/components/social/views/PeopleView";
 
@@ -44,6 +50,8 @@ vi.mock("@/components/social/PartnerReadyBadge", () => ({
   default: () => null,
 }));
 vi.mock("@/lib/socialAnalytics", () => ({ track: vi.fn() }));
+const toasts = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+vi.mock("@/lib/toast", () => ({ toast: toasts }));
 
 afterEach(cleanup);
 beforeEach(() => {
@@ -122,4 +130,23 @@ it("waits for the joined spaces too, so the list is asked for once", () => {
   expect(H.activeArgs.every((a) => a === false)).toBe(true);
   expect(screen.getByLabelText("Loading suggested people")).toBeInTheDocument();
   expect(screen.queryByText("No suggestions yet")).toBeNull();
+});
+
+it("says so when the invite link can't be copied", async () => {
+  // No share sheet (desktop web), so the link goes to the clipboard, which
+  // can refuse.
+  vi.stubGlobal("navigator", {
+    ...navigator,
+    share: undefined,
+    clipboard: { writeText: vi.fn().mockRejectedValue(new Error("denied")) },
+  });
+  renderPeople(true);
+  fireEvent.click(screen.getByRole("button", { name: "Share invite link" }));
+  await waitFor(() =>
+    expect(toasts.error).toHaveBeenCalledWith(
+      "Couldn't copy the invite link. Try again."
+    )
+  );
+  expect(toasts.success).not.toHaveBeenCalled();
+  vi.unstubAllGlobals();
 });

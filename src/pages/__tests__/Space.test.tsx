@@ -75,9 +75,11 @@ vi.mock("@/features/spaces/SpacePostComposer", () => ({
 import Space from "../Space";
 import { Timestamp } from "firebase/firestore";
 import {
+  failNextFirestore,
   readDoc,
   resetFirestore,
   seedFirestore,
+  setSnapshotMetadata,
   unfiredFailures,
 } from "@/test/firestoreHarness";
 import { toast } from "@/lib/toast";
@@ -279,6 +281,31 @@ describe("Space page", () => {
     expect(screen.getByTestId("composer")).toHaveAttribute(
       "data-attach-latest",
       "true"
+    );
+  });
+
+  it("says the posts couldn't load, rather than that there are none, and tries again", async () => {
+    failNextFirestore("getDocs", { path: `${SPACE}/posts` });
+    seedFirestore({ [`${SPACE}/posts/coach-2026-09-21`]: COACH });
+    renderSpace();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Couldn't load posts"
+    );
+    expect(unfiredFailures()).toEqual([]);
+    expect(screen.queryByText("No posts from members yet")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    // The retry reads again; the space really has no member posts.
+    await screen.findByText("No posts from members yet");
+    expect(screen.queryByText("Couldn't load posts")).toBeNull();
+  });
+
+  it("an empty answer from this phone's cache is not an empty space", async () => {
+    setSnapshotMetadata(`${SPACE}/posts`, { fromCache: true });
+    renderSpace();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Couldn't load posts"
     );
   });
 

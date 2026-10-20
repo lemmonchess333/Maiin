@@ -397,7 +397,7 @@ These are yours; none of them can be done from the code.
    The app is iPhone-only, so no iPad set is needed. Apple runs iPhone
    apps on an iPad too, and buying there now goes through the App Store
    as it does on an iPhone.
-6. **Moderation and email settings** (`docs/LAUNCH_TODO.md`, section 19):
+6. **Moderation and email settings** (`docs/launch/owner-steps-2026-10-14.md`, Part 1):
    `ADMIN_UIDS`, `MODERATION_ALERT_EMAIL`, `RESEND_FROM` and
    `PUBLIC_APP_BASE_URL` as repository variables on GitHub, then a
    Deploy production run. `ADMIN_UIDS` opens the moderation page in the

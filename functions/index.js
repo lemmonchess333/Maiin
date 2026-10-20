@@ -1,10 +1,8 @@
-// Deploy note (2026-06-03): all SEVEN bound Secret Manager secrets
-// (APPLE_KEY_ID/ISSUER_ID/PRIVATE_KEY, BILLING_HMAC_SECRET,
-// BILLING_PREVIOUS_HMAC_SECRET, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET)
-// are provisioned AND the runtime SA (appspot.gserviceaccount.com) was granted
-// Secret Accessor on each (the deploy SA can't setIamPolicy, so the binding was
-// added manually). This change re-triggers deploy-functions so the push senders
-// + sendTestPush finally ship.
+// Bound Secret Manager secrets: `npm run secrets:check` lists every one and
+// the files that bind it. Each must be provisioned, and the runtime account
+// (appspot.gserviceaccount.com) granted Secret Accessor on it, before the
+// first deploy that binds it: the deploy account cannot setIamPolicy. See
+// docs/agents/functions-deploy.md.
 //
 // firebase-functions v6+ repointed the bare `require("firebase-functions")`
 // at the 2nd-gen API. Every export in this file is 1st-gen
@@ -147,6 +145,8 @@ const challengeDefs = require("./lib/challengeDefs");
 const {
   sourceActivityDateKey,
   challengeContainsActivityDate,
+  openOnDayBound,
+  isValidDateKey,
 } = require("./lib/challengeActivityWindow");
 // Source-doc → challenge-increment mapping, shared by the live activity
 // triggers and the join-time backfill so the crediting VALUES have one
@@ -1345,6 +1345,25 @@ exports.analyzeFood = functions
           return;
         }
 
+        // The request is checked BEFORE the quota, because the quota check
+        // spends a scan (checkDailyAiQuota increments as it checks), and a
+        // malformed request would otherwise cost one of the day's scans and
+        // then be refused.
+        const { imageBase64 } = req.body || {};
+        if (!imageBase64) {
+          res.status(400).json({ error: "No image provided" });
+          return;
+        }
+        // Cap input size to prevent token-cost inflation. A normal
+        // compressed food photo is well under this ceiling; the limit
+        // blocks padding the payload toward the 10MB request size purely
+        // to inflate Vertex token cost within an otherwise-legitimate
+        // quota.
+        if (typeof imageBase64 !== "string" || imageBase64.length > 5000000) {
+          res.status(400).json({ error: "Image too large" });
+          return;
+        }
+
         // F1b — daily AI scan quota with per-action counters.
         // Image-AI is Pro-only (free=0/day, pro=100/day).
         // Fail-closed via `error: "quota-check-failed"`; the client
@@ -1372,23 +1391,6 @@ exports.analyzeFood = functions
             remaining: 0,
             limit: quota.limit,
           });
-          return;
-        }
-
-        const { imageBase64 } = req.body;
-        if (!imageBase64) {
-          res.status(400).json({ error: "No image provided" });
-          return;
-        }
-        // Cap input size to prevent token-cost inflation. (This used to
-        // read "mirrors the askGeminiText prompt cap"; that endpoint was
-        // retired — the cap stands on its own reasoning below.) A normal
-        // compressed food photo is
-        // well under this ceiling; the limit blocks padding the payload
-        // toward the 10MB request size purely to inflate Vertex token
-        // cost within an otherwise-legitimate quota.
-        if (typeof imageBase64 !== "string" || imageBase64.length > 5000000) {
-          res.status(400).json({ error: "Image too large" });
           return;
         }
 
@@ -1569,6 +1571,23 @@ exports.analyzeFoodText = functions
           return;
         }
 
+        // Checked before the quota, which spends a scan; see analyzeFood.
+        // The type check comes first: `text.trim()` on a number throws,
+        // which would answer 500 instead of 400.
+        const { text } = req.body || {};
+        if (typeof text !== "string" || !text.trim()) {
+          res.status(400).json({ error: "No text provided" });
+          return;
+        }
+        // Input cap — the reasoning lives with the constant in
+        // lib/foodTextRequest.js.
+        if (text.length > FOOD_TEXT_MAX_CHARS) {
+          res.status(400).json({
+            error: `Text too long (max ${FOOD_TEXT_MAX_CHARS} characters)`,
+          });
+          return;
+        }
+
         // F1b — daily text-AI scan quota. Independent of image_ai
         // (lock pin #7). Free=0 (no AI on the free plan),
         // Pro=100/day server-side cap.
@@ -1589,20 +1608,6 @@ exports.analyzeFoodText = functions
             error: "Daily text-AI limit reached. Upgrade to Pro for more.",
             remaining: 0,
             limit: quota.limit,
-          });
-          return;
-        }
-
-        const { text } = req.body;
-        if (!text || !text.trim()) {
-          res.status(400).json({ error: "No text provided" });
-          return;
-        }
-        // Input cap — the reasoning lives with the constant in
-        // lib/foodTextRequest.js.
-        if (typeof text !== "string" || text.length > FOOD_TEXT_MAX_CHARS) {
-          res.status(400).json({
-            error: `Text too long (max ${FOOD_TEXT_MAX_CHARS} characters)`,
           });
           return;
         }
@@ -2401,8 +2406,8 @@ const {
   acquireCooldownLock,
   releaseLock,
   getWeekKey,
-  isInRollingWindow,
-  triggerComputeKey,
+  inTriggerReach,
+  runDayKey,
 } = require("./performanceEngine");
 
 const db = admin.firestore();
@@ -2431,7 +2436,15 @@ exports.computePerformanceWeek = functions
       );
     }
 
-    const weekKey = data.weekKey || null;
+    // `weekKey` becomes the id of the performance document this writes, so
+    // it has to be a real day (and `data` may be absent altogether).
+    const weekKey = (data && data.weekKey) || null;
+    if (weekKey !== null && !isValidDateKey(weekKey)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "weekKey must be a YYYY-MM-DD date."
+      );
+    }
 
     try {
       const result = await computeAndWritePerformanceForUser(uid, weekKey);
@@ -2935,7 +2948,7 @@ async function maybeSendStreakNudge(uid, now) {
   // Consent: streak push must be opted in.
   if (!mayTargetUserConsent(consentSnap.data() || null, "streak")) return false;
 
-  const currentStreak = (streakSnap.data() || {}).currentStreak || 0;
+  const streak = streakSnap.data() || {};
   const pushState = stateSnap.data() || {};
   const lastNudgeDateKey = pushState.lastStreakNudgeDateKey || null;
   const firstWeekNudgeDateKey = pushState.firstWeekNudgeDateKey || null;
@@ -2989,7 +3002,10 @@ async function maybeSendStreakNudge(uid, now) {
   // nudge above it, the once-ever first-week return nudge (D-1 day-1→day-2
   // fix) below it.
   const decisionInput = {
-    currentStreak,
+    currentStreak: streak.currentStreak || 0,
+    lastActiveDate: streak.lastActiveDate,
+    anchorStreak: streak.anchorStreak,
+    anchorDate: streak.anchorDate,
     remindersOptedIn: true,
     timezone,
     activeDateKeys,
@@ -3994,7 +4010,13 @@ async function awardMilestoneBadges(uid, ids) {
  * transaction, idempotent via `earnedAt`), so re-passing an already-crossed
  * total is harmless. `kind` is "run" (metres) or "lift" (kg).
  */
-async function accrueLifetimeStat(uid, kind, incrementBy, sourceId) {
+async function accrueLifetimeStat(
+  uid,
+  kind,
+  incrementBy,
+  sourceId,
+  sourceRef = null
+) {
   const inc = Number(incrementBy) || 0;
   if (inc <= 0 || (kind !== "run" && kind !== "lift")) return;
 
@@ -4005,9 +4027,10 @@ async function accrueLifetimeStat(uid, kind, incrementBy, sourceId) {
   let newTotal = 0;
   try {
     newTotal = await db.runTransaction(async (tx) => {
-      const [totalsSnap, markerSnap] = await Promise.all([
+      const [totalsSnap, markerSnap, sourceSnap] = await Promise.all([
         tx.get(totalsRef),
         tx.get(markerRef),
+        sourceRef ? tx.get(sourceRef) : null,
       ]);
       const current = Number(
         (totalsSnap.exists && totalsSnap.data()[field]) || 0
@@ -4017,6 +4040,12 @@ async function accrueLifetimeStat(uid, kind, incrementBy, sourceId) {
         // award step below is still a (no-op) idempotent re-check.
         return current;
       }
+      // The session is gone: its delete can run before its create (trigger
+      // delivery is unordered), find no marker and reverse nothing, so a
+      // credit now would stand forever. Read here, inside the transaction,
+      // a delete either lands first (nothing credits) or after (its
+      // reversal finds this marker).
+      if (sourceSnap && !sourceSnap.exists) return current;
       const updated = current + inc;
       tx.set(totalsRef, { [field]: updated }, { merge: true });
       tx.set(markerRef, {
@@ -4057,7 +4086,8 @@ async function applyChallengeProgressIncrement(
   metric,
   incrementBy,
   sourceId,
-  activityDateKey
+  activityDateKey,
+  sourceRef = null
 ) {
   if (challenge.metric !== metric) return;
   // Credit this challenge only if the SOURCE ACTIVITY DAY is inside its
@@ -4108,6 +4138,8 @@ async function applyChallengeProgressIncrement(
       );
     const marker = await tx.get(markerRef);
     if (marker.exists) return; // already applied this activity — idempotent no-op
+    // A deleted session credits nothing; see accrueLifetimeStat.
+    if (sourceRef && !(await tx.get(sourceRef)).exists) return;
     const current = snap.data().currentValue || 0;
     const newValue = current + incrementBy;
     const tierAchieved = challengeTiers.resolveTier(newValue, tiers, metric);
@@ -4133,7 +4165,8 @@ async function syncChallengeProgress(
   metric,
   incrementBy,
   sourceId,
-  activityDateKey
+  activityDateKey,
+  sourceRef = null
 ) {
   try {
     // Fail closed: without a source activity day we cannot decide which
@@ -4148,7 +4181,16 @@ async function syncChallengeProgress(
       return;
     }
 
-    const challengesSnap = await db.collection("challenges").get();
+    // Only the challenges still open on the activity day: this runs for
+    // every logged session, and challenges are never deleted, so a read of
+    // the whole collection grew with every week and month that passed.
+    // The apply helper still checks the window.
+    const dayBound = openOnDayBound(activityDateKey);
+    if (!dayBound) return;
+    const challengesSnap = await db
+      .collection("challenges")
+      .where("endDate", ">", dayBound)
+      .get();
 
     for (const doc of challengesSnap.docs) {
       await applyChallengeProgressIncrement(
@@ -4158,7 +4200,8 @@ async function syncChallengeProgress(
         metric,
         incrementBy,
         sourceId,
-        activityDateKey
+        activityDateKey,
+        sourceRef
       );
     }
   } catch (err) {
@@ -4184,7 +4227,8 @@ async function syncFastestEffortProgress(
   runDistanceMeters,
   runDurationSeconds,
   sourceId,
-  activityDateKey
+  activityDateKey,
+  sourceRef = null
 ) {
   try {
     if (!(runDistanceMeters > 0) || !(runDurationSeconds > 0)) return;
@@ -4212,7 +4256,8 @@ async function syncFastestEffortProgress(
         runDistanceMeters,
         runDurationSeconds,
         sourceId,
-        activityDateKey
+        activityDateKey,
+        sourceRef
       );
     }
   } catch (err) {
@@ -4234,7 +4279,8 @@ async function applyFastestEffortToChallenge(
   runDistanceMeters,
   runDurationSeconds,
   sourceId,
-  activityDateKey
+  activityDateKey,
+  sourceRef = null
 ) {
   // Same [start, end) window predicate as the SUM path.
   if (!challengeContainsActivityDate(challenge, activityDateKey)) return;
@@ -4283,6 +4329,8 @@ async function applyFastestEffortToChallenge(
       );
     const marker = await tx.get(markerRef);
     if (marker.exists) return; // already applied this run — idempotent no-op
+    // A deleted run credits nothing; see accrueLifetimeStat.
+    if (sourceRef && !(await tx.get(sourceRef)).exists) return;
     const existingBest = snap.data().currentValue || 0;
     // 0 = no best yet, so first qualifying run always wins; else keep faster.
     const newBest =
@@ -4385,7 +4433,8 @@ async function backfillChallengeProgressForParticipant(challengeId, uid) {
             inc.metric,
             inc.value,
             d.id,
-            dayKey
+            dayKey,
+            d.ref
           );
         }
       }
@@ -4414,7 +4463,8 @@ async function backfillChallengeProgressForParticipant(challengeId, uid) {
               inc.meters,
               inc.seconds,
               d.id,
-              dayKey
+              dayKey,
+              d.ref
             );
           } else {
             await applyChallengeProgressIncrement(
@@ -4424,7 +4474,8 @@ async function backfillChallengeProgressForParticipant(challengeId, uid) {
               inc.metric,
               inc.value,
               d.id,
-              dayKey
+              dayKey,
+              d.ref
             );
           }
         }
@@ -4630,7 +4681,8 @@ exports.onWorkoutCreated = functions
           inc.metric,
           inc.value,
           workoutId,
-          activityDateKey
+          activityDateKey,
+          snap.ref
         );
       }
 
@@ -4655,7 +4707,8 @@ exports.onWorkoutCreated = functions
         uid,
         "lift",
         lifetimeAccrual.liftVolumeKgFor(data),
-        workoutId
+        workoutId,
+        snap.ref
       );
       // A correction may have landed before this create event credited its
       // original snapshot. Repair those ledgers using the current workout.
@@ -4672,25 +4725,16 @@ exports.onWorkoutCreated = functions
       );
       await applyPartnerActivity(db, uid, workoutStreakDay);
 
-      let workoutComputeKey = null;
-      if (data.date) {
-        // PI1a: skip recompute when the workout falls outside the rolling
-        // 7-day window. Unlike the run trigger below — whose date is
-        // derived from `completedAt` in UTC, the same frame as the gate —
-        // `data.date` is the USER'S LOCAL day, so triggerComputeKey also
-        // handles the east-of-UTC case: a label one day ahead of the
-        // server's date is a same-day session, recomputed against the
-        // window ending on ITS day instead of skipped as backdated.
-        workoutComputeKey = triggerComputeKey(
-          data.date,
-          getWeekKey(new Date())
+      // PI1a: skip recompute when the workout falls outside the rolling
+      // 7-day window. `data.date` is the person's local day and the window
+      // ends on their today, which the compute reads from their timezone;
+      // the gate allows a day either side of the server's, so a session
+      // in the window is never skipped wherever they are.
+      if (data.date && !inTriggerReach(data.date, getWeekKey(new Date()))) {
+        console.log(
+          `onWorkoutCreated: skipping recompute for ${uid}, workout on ${data.date} outside rolling window`
         );
-        if (workoutComputeKey === null) {
-          console.log(
-            `onWorkoutCreated: skipping recompute for ${uid}, workout on ${data.date} outside rolling window`
-          );
-          return null;
-        }
+        return null;
       }
 
       const canRun = await acquireCooldownLock(uid);
@@ -4700,7 +4744,9 @@ exports.onWorkoutCreated = functions
       }
 
       try {
-        await computeAndWritePerformanceForUser(uid, workoutComputeKey);
+        await computeAndWritePerformanceForUser(uid, null, {
+          sessionDay: data.date || null,
+        });
         await releaseLock(uid, true);
         console.log(`onWorkoutCreated: computed performance for ${uid}`);
       } catch (err) {
@@ -4820,7 +4866,7 @@ exports.onRunCreated = functions
         // the cumulative distance counter idempotently (per-run marker) and
         // awards once the lifetime total crosses 100 km. Gated by isCountable
         // (the enclosing block) so isInvalid / savedAnyway runs don't inflate.
-        await accrueLifetimeStat(uid, "run", runMeters, runId);
+        await accrueLifetimeStat(uid, "run", runMeters, runId, snap.ref);
 
         // Auto-progress the challenge metrics this run feeds: total_km +
         // the hybrid_score distance term (km×100, SOCIAL S4 Soc8), and
@@ -4836,7 +4882,8 @@ exports.onRunCreated = functions
               inc.meters,
               inc.seconds,
               runId,
-              activityDateKey
+              activityDateKey,
+              snap.ref
             );
           } else {
             await syncChallengeProgress(
@@ -4844,7 +4891,8 @@ exports.onRunCreated = functions
               inc.metric,
               inc.value,
               runId,
-              activityDateKey
+              activityDateKey,
+              snap.ref
             );
           }
         }
@@ -4866,17 +4914,17 @@ exports.onRunCreated = functions
       // performance write surface), so failures here can't cascade.
       await _maybeWriteRecoveryEntryForRun(uid, data);
 
-      if (data.completedAt) {
-        const runDate = data.completedAt.toDate
-          ? data.completedAt.toDate()
-          : new Date(data.completedAt);
-        const runDateStr = runDate.toISOString().split("T")[0];
+      // The run's day (the day it started, as the compute dates it), or
+      // null for a run with neither a day nor a finish time.
+      const runDay = runDayKey(data, null);
+      if (runDay) {
         const currentKey = getWeekKey(new Date());
         // PI1a: skip recompute when the run falls outside the rolling
-        // 7-day window (was: outside the current Sunday-week).
-        if (!isInRollingWindow(runDateStr, currentKey)) {
+        // 7-day window, a day either side of the server's (see
+        // onWorkoutCreated).
+        if (!inTriggerReach(runDay, currentKey)) {
           console.log(
-            `onRunCreated: skipping recompute for ${uid}, run on ${runDateStr} outside rolling window ending ${currentKey}`
+            `onRunCreated: skipping recompute for ${uid}, run on ${runDay} outside rolling window ending ${currentKey}`
           );
           return null;
         }
@@ -4889,7 +4937,9 @@ exports.onRunCreated = functions
       }
 
       try {
-        await computeAndWritePerformanceForUser(uid, null);
+        await computeAndWritePerformanceForUser(uid, null, {
+          sessionDay: runDay,
+        });
         await releaseLock(uid, true);
         console.log(`onRunCreated: computed performance for ${uid}`);
       } catch (err) {
@@ -4938,10 +4988,11 @@ exports.onWorkoutUpdated = functions
     await reconcileWorkoutMetrics(db, uid, workoutId);
     const current = await change.after.ref.get();
     if (!current.exists) return null;
-    // Older corrections can change the 28-day baseline as well as the current window.
-    const todayKey = getWeekKey(new Date());
-    const key = triggerComputeKey(current.data().date, todayKey) ?? todayKey;
-    await computeAndWritePerformanceForUser(uid, key);
+    // Older corrections can change the 28-day baseline as well as the
+    // current window, so this always recomputes, for the person's today.
+    await computeAndWritePerformanceForUser(uid, null, {
+      sessionDay: current.data().date || null,
+    });
     return null;
   });
 
@@ -5415,12 +5466,12 @@ exports.recreditMyLiftVolume = functions
     for (const docSnap of workoutsSnap.docs) {
       scanned++;
       const workout = docSnap.data();
-      const volume = workoutVolume.workoutVolumeKg(workout);
+      const volume = lifetimeAccrual.liftVolumeKgFor(workout);
       if (!(volume > 0)) continue;
       withVolume++;
       lifetimeKg += volume;
 
-      await accrueLifetimeStat(uid, "lift", volume, docSnap.id);
+      await accrueLifetimeStat(uid, "lift", volume, docSnap.id, docSnap.ref);
 
       const activityDateKey = sourceActivityDateKey(workout);
       if (!activityDateKey) continue;
@@ -5434,7 +5485,8 @@ exports.recreditMyLiftVolume = functions
             inc.metric,
             inc.value,
             docSnap.id,
-            activityDateKey
+            activityDateKey,
+            docSnap.ref
           );
           challengeApplies++;
         }
@@ -5819,6 +5871,15 @@ exports.screenPhoto = functions
       throw new functions.https.HttpsError(
         "invalid-argument",
         "Which photo? Send the path of one you uploaded."
+      );
+    }
+    // Every call is a paid Cloud Vision request, and the same photo can be
+    // sent again and again. Thirty in ten minutes is far past any real
+    // upload pace; the upload trigger screens every file either way.
+    if (await isRateLimited(context.auth.uid, "screenPhoto", 30, 600_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many photos checked at once. Wait a few minutes and try again."
       );
     }
     try {
@@ -6469,9 +6530,10 @@ exports.toggleKudosCallable = functions
           // re-read (which would also re-expose a now-private activity).
           const activityAuthorId = result && result.activityAuthorId;
           if (activityAuthorId && activityAuthorId !== context.auth.uid) {
-            const fromName =
-              (data && typeof data.fromName === "string" && data.fromName) ||
-              "Someone";
+            const fromName = await socialFanout.senderDisplayName(
+              admin.firestore(),
+              context.auth.uid
+            );
             await socialFanout.createNotification({
               firestore: admin.firestore(),
               fromUid: context.auth.uid,
@@ -6589,9 +6651,10 @@ exports.toggleSpacePostLikeCallable = functions
             postAuthorId !== context.auth.uid &&
             postAuthorId !== spacePostEngagement.COACH_AUTHOR_ID
           ) {
-            const fromName =
-              (data && typeof data.fromName === "string" && data.fromName) ||
-              "Someone";
+            const fromName = await socialFanout.senderDisplayName(
+              admin.firestore(),
+              context.auth.uid
+            );
             await socialFanout.createNotification({
               firestore: admin.firestore(),
               fromUid: context.auth.uid,

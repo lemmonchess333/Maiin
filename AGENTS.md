@@ -7,7 +7,7 @@ Guidance for AI agents (Codex et al.) working in this repo. Claude Code reads
 
 An adaptive fitness PWA: React 19 + TypeScript 5.9 + Vite 7, Tailwind CSS v4,
 React Router v7, Firebase 12 (Auth/Firestore/Functions/Storage), Recharts,
-MapLibre, Framer Motion, Capacitor (iOS/Android). Path alias `@/` → `src/`.
+MapLibre, Framer Motion, Capacitor (iOS; Android planned). Path alias `@/` → `src/`.
 
 ## Commands
 

@@ -131,7 +131,7 @@ suite("firestore.rules — a restricted account", () => {
     body: "Long run done.",
     likeCount: 0,
     commentCount: 0,
-    createdAt: new Date(),
+    createdAt: serverTimestamp(),
   });
 
   /**
@@ -192,7 +192,10 @@ suite("firestore.rules — a restricted account", () => {
     },
     {
       name: "starting a partner streak",
-      write: (uid, c) => {
+      write: async (uid, c) => {
+        // The two follow each other, which a bond needs.
+        await seed(`following/${uid}/users/${OTHER}`, { at: 1 });
+        await seed(`following/${OTHER}/users/${uid}`, { at: 1 });
         const members = [uid, OTHER].sort();
         return setDoc(doc(c, "partnerBonds", members.join("__")), {
           members,

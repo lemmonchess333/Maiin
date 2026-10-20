@@ -119,7 +119,20 @@ function store() {
         if (path.split("/").slice(0, -1).join("/") !== ref.path) return false;
         return ref.filters.every(([field, operator, value]) => {
           const actual = view.get(path)[field];
-          return operator === ">=" ? actual >= value : actual < value;
+          // Firestore leaves out a document that lacks the field.
+          if (actual === undefined) return false;
+          switch (operator) {
+            case ">=":
+              return actual >= value;
+            case ">":
+              return actual > value;
+            case "<":
+              return actual < value;
+            case "<=":
+              return actual <= value;
+            default:
+              throw new Error(`fake query: unsupported operator ${operator}`);
+          }
         });
       })
       .map((path) => snapshot(path, view)),

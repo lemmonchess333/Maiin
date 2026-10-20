@@ -1,7 +1,8 @@
 /**
  * One display-name limit — the app, the server and the rules agree.
  *
- * The app refuses a name past DISPLAY_NAME_MAX (src/lib/displayName.ts);
+ * The app refuses a name past DISPLAY_NAME_MAX (src/lib/displayNameLimit.ts,
+ * re-exported by displayName.ts, which validates against it);
  * the server cleans a profile's name to MAX_DISPLAY_NAME_LENGTH
  * (functions/profileSanitizer.js); the feed fan-out cuts a copied name to
  * it (functions/lib/socialFanout.js); and firestore.rules caps every place
@@ -36,9 +37,10 @@ describe("display-name limit — one number everywhere", () => {
     const caps = [
       ...rules.matchAll(/\.(?:authorName|displayName)\.size\(\) <= (\d+)/g),
     ].map((m) => Number(m[1]));
-    // Activities, space posts, and challenge participants and space
-    // members on create and update. Fewer means a cap went missing.
-    expect(caps).toHaveLength(6);
+    // Activities, space posts, challenge participants and space members
+    // on create and update, and the public profile. Fewer means a cap
+    // went missing.
+    expect(caps).toHaveLength(7);
     for (const cap of caps) expect(cap).toBe(DISPLAY_NAME_MAX);
   });
 

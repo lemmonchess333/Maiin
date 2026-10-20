@@ -162,7 +162,7 @@ describe("runChallengeIncrements", () => {
     ]);
   });
 
-  it("prefers distanceKm when present, deriving meters from it for fastest_effort", () => {
+  it("falls back to the legacy distanceKm when there is no distance", () => {
     expect(runChallengeIncrements({ distanceKm: 10 })).toEqual([
       { metric: "total_km", value: 10 },
       { metric: "hybrid_score", value: 1000 },
