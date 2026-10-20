@@ -140,7 +140,7 @@ beforeEach(() => {
   social.restricted = false;
   social.people = [];
   social.suggestionsActive = [];
-  mockGetPersonalTrajectory.mockResolvedValue(trajectory(500));
+  mockGetPersonalTrajectory.mockResolvedValue(trajectory(2));
   mockCommunitiesFeed.mockReturnValue({
     items: [],
     loading: false,
@@ -149,13 +149,13 @@ beforeEach(() => {
   });
 });
 
-/** Minimal PersonalTrajectory fixture — score drives the zero-week branch. */
-function trajectory(thisWeekScore: number, lastWeekScore = 230) {
+/** Minimal PersonalTrajectory fixture — sessions drive the zero-week branch. */
+function trajectory(thisWeekSessions: number, lastWeekSessions = 1) {
   return {
-    thisWeek: { km: 0, kg: 0, score: thisWeekScore },
-    lastWeek: { km: 2.3, kg: 0, score: lastWeekScore },
-    lastWeekToDate: { km: 0, kg: 0, score: 0 },
-    deltaPct: null,
+    thisWeek: { sessions: thisWeekSessions, km: 0, kg: 0 },
+    lastWeek: { sessions: lastWeekSessions, km: 2.3, kg: 0 },
+    lastWeekToDate: { sessions: 0, km: 0, kg: 0 },
+    delta: thisWeekSessions,
   };
 }
 
@@ -350,7 +350,7 @@ describe("FeedView — posts first (2026-10-01)", () => {
     /* The slot re-reads every time it turns back on. Until that read
        lands, the previous answer must not decide the slot. */
     mockGetPersonalTrajectory
-      .mockResolvedValueOnce(trajectory(500))
+      .mockResolvedValueOnce(trajectory(2))
       .mockReturnValueOnce(new Promise(() => {}));
     feedItems = ["a"].map(post);
     const { rerender } = setup(thinGraph);

@@ -1,27 +1,67 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, afterEach } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
 import TrajectoryCard from "../TrajectoryCard";
 import { LiftUnitContext } from "@/hooks/useLiftUnit";
 import type { LiftUnit } from "@/lib/liftLoad";
 import type { PersonalTrajectory } from "@/lib/personalTrajectory";
 import { groupText } from "@/test/localeGrouping";
 
+afterEach(cleanup);
+
 /* Lift18: the week's lifting figure is the reader's own, so it reads in
    their unit. Stored as kg. */
-const week = (kg: number) => ({ km: 0, kg, score: Math.round(kg * 0.1) });
+const week = (sessions: number, kg: number) => ({ sessions, km: 0, kg });
 const data: PersonalTrajectory = {
-  thisWeek: week(4500),
-  lastWeek: week(4000),
-  lastWeekToDate: week(3000),
-  deltaPct: 50,
+  thisWeek: week(3, 4500),
+  lastWeek: week(4, 4000),
+  lastWeekToDate: week(2, 3000),
+  delta: 1,
 };
 
-const renderIn = (unit: LiftUnit) =>
+const renderIn = (unit: LiftUnit, trajectory: PersonalTrajectory = data) =>
   render(
     <LiftUnitContext value={unit}>
-      <TrajectoryCard data={data} loading={false} />
+      <TrajectoryCard data={trajectory} loading={false} />
     </LiftUnitContext>
   );
+
+/* Polish2 call 5: the slot reads in sessions, as the friends board does,
+   never in points. */
+describe("TrajectoryCard's week", () => {
+  it("counts sessions against last week at the same point", () => {
+    renderIn("kg");
+    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText("sessions")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /\+1/ })).toBeInTheDocument();
+    expect(screen.getByText("4 sessions")).toBeInTheDocument();
+    expect(screen.queryByText(/pts/)).toBeNull();
+  });
+
+  it("one session is one session, and a level week says so", () => {
+    renderIn("kg", {
+      thisWeek: week(1, 0),
+      lastWeek: week(1, 0),
+      lastWeekToDate: week(1, 0),
+      delta: 0,
+    });
+    expect(screen.getByText("session")).toBeInTheDocument();
+    expect(screen.getByText("1 session")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Same/ })).toBeInTheDocument();
+  });
+
+  it("an empty week asks for the first session, with no delta in red", () => {
+    renderIn("kg", {
+      thisWeek: week(0, 0),
+      lastWeek: week(2, 0),
+      lastWeekToDate: week(1, 0),
+      delta: -1,
+    });
+    expect(
+      screen.getByText("Start your week — beat last week")
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+});
 
 describe("TrajectoryCard's lifting figure", () => {
   it("reads in kg by default", () => {

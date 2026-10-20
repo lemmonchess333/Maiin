@@ -284,7 +284,7 @@ export default function FeedView({
     trajectoryEnabled &&
     !trajectoryLoading &&
     trajectory !== null &&
-    trajectory.thisWeek.score === 0;
+    trajectory.thisWeek.sessions === 0;
 
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
   // SOCIAL-HOME-01: the feed-source picker is a compact menu now.
