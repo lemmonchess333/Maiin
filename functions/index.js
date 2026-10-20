@@ -896,12 +896,44 @@ exports.completeOnboarding = functions
       // tab crashed on its first render. A batch commits both or
       // neither, matching the contract the spec expects.
       const programRef = userRef.collection("programState").doc("current");
+      // The public profile carries the name every other person sees. The
+      // app writes it too (Onboarding.tsx), best-effort, and a copy that
+      // failed left "Athlete" in every feed, space and board; written here,
+      // it lands with the profile. Merged, so sign-up's photo and the
+      // streak mirror stay, and the name only when one was sent.
+      const publicRef = userRef.collection("public").doc("profile");
+      const publicSnap = await publicRef.get();
+      const publicName =
+        typeof profileData.displayName === "string" && profileData.displayName
+          ? profileData.displayName
+          : null;
       const batch = db.batch();
       if (existing.exists) {
         batch.set(userRef, profileData, { merge: true });
       } else {
         batch.set(userRef, profileData);
       }
+      batch.set(
+        publicRef,
+        {
+          uid,
+          ...(publicName && {
+            displayName: publicName,
+            // searchUsers matches on this; the app's onboarding copy left
+            // it out, so a new account was not found by name.
+            displayNameLower: publicName.toLowerCase(),
+          }),
+          ...(typeof profileData.athleteType === "string" && {
+            athleteType: profileData.athleteType,
+          }),
+          ...(!publicSnap.exists && {
+            currentStreak: 0,
+            longestStreak: 0,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          }),
+        },
+        { merge: true }
+      );
       // Allow-list the programState doc before persisting. validatePlanPayload
       // gates SHAPE (and only for v7 payloads); this strips arbitrary
       // top-level fields a client could inject into its own programState doc.
