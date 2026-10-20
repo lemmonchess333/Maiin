@@ -411,6 +411,12 @@
       "indexes": []
     },
     {
+      "collectionGroup": "rateLimits",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
       "collectionGroup": "posts",
       "fieldPath": "authorId",
       "indexes": [

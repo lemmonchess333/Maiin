@@ -144,9 +144,11 @@ async function cleanupSocial({ firestore, uid, now, checkpoint }) {
       if (parts.length !== 4 || doc.id !== uid) return;
       if (collection === "members" && ["groups", "goalSpaces"].includes(parts[0])) {
         await removeCountedEdge({ firestore, ref: doc.ref, parent: doc.ref.parent.parent, counter: "memberCount" });
-      } else if ((collection === "members" && parts[0] === "spaces") ||
-                 (collection === "participants" && parts[0] === "challenges")) {
+      } else if (collection === "members" && parts[0] === "spaces") {
         await doc.ref.delete();
+      } else if (collection === "participants" && parts[0] === "challenges") {
+        // With its progress markers (challengeParticipationCleanup.js).
+        await firestore.recursiveDelete(doc.ref);
       }
     });
   }
@@ -194,6 +196,31 @@ async function cleanupSocial({ firestore, uid, now, checkpoint }) {
       await batch.commit();
     });
   }
+  // Where this account started a Stripe checkout (auditLog.js). A record
+  // of a checkout begun, not of a payment: that is Stripe's, and the
+  // billing tombstones keep what refunds need.
+  await scan("checkout_audit", firestore.collection("audit_checkout_sessions")
+    .where("uid", "==", uid), (doc) => doc.ref.delete());
+  // The Apple webhook's record of each notification it applied to this
+  // account (appleIAP.js), kept so a redelivery is skipped. Without it a
+  // late redelivery finds no binding and is recorded without a uid.
+  await scan("apple_notifications", firestore.collection("appleNotifications")
+    .where("uid", "==", uid), (doc) => doc.ref.delete());
+  // A comment the profanity filter removed (onCommentCreated) kept its
+  // author and its text, masked but still theirs. The moderation count
+  // keeps the rest.
+  await scan("comment_moderation", firestore.collection("commentModeration")
+    .where("authorId", "==", uid), (doc) => {
+    const data = doc.data();
+    return doc.ref.set({
+      action: data.action || null,
+      reason: data.reason || null,
+      activityId: data.activityId || null,
+      commentId: data.commentId || null,
+      createdAt: data.createdAt || now,
+      authorId: null,
+    });
+  });
   await scan("rate_limits", firestore.collection("rateLimits")
     .where(FieldPath.documentId(), ">=", `${uid}_`)
     .where(FieldPath.documentId(), "<", `${uid}_\uf8ff`), (doc) => doc.ref.delete());

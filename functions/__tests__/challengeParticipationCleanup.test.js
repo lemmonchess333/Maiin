@@ -25,8 +25,10 @@ function makeFirestore({
   readThrows = null,
   commitThrowsOnBatch = null,
   withSelect = true,
+  recursiveThrows = null,
 } = {}) {
   const deletedPaths = [];
+  const recursivePaths = [];
   const selectCalls = { count: 0 };
   let batchIndex = -1;
 
@@ -60,7 +62,12 @@ function makeFirestore({
 
   return {
     deletedPaths,
+    recursivePaths,
     selectCalls,
+    async recursiveDelete(ref) {
+      if (recursiveThrows) throw new Error(recursiveThrows);
+      recursivePaths.push(ref.path);
+    },
     get batchCount() {
       return batchIndex + 1;
     },
@@ -102,6 +109,27 @@ describe("removeChallengeParticipationsForUser", () => {
       `challenges/weekly-2026-08-10/participants/${UID}`,
     ]);
     expect(result).toEqual({ challenges: 2, deleted: 2, failedBatches: 0 });
+  });
+
+  it("removes each participation's progress markers, a left challenge's too", async () => {
+    // Deletes do not cascade. Before, every applied/{key} marker (the
+    // session counted, its day and amount) outlived the account.
+    const firestore = makeFirestore({ challengeIds: ["weekly", "left"] });
+    await removeChallengeParticipationsForUser({ firestore, uid: UID });
+    expect(firestore.recursivePaths.sort()).toEqual([
+      `challenges/left/participants/${UID}`,
+      `challenges/weekly/participants/${UID}`,
+    ]);
+  });
+
+  it("rejects a failed marker sweep so Auth cannot be deleted prematurely", async () => {
+    const firestore = makeFirestore({
+      challengeIds: ["weekly"],
+      recursiveThrows: "unavailable",
+    });
+    await expect(
+      removeChallengeParticipationsForUser({ firestore, uid: UID })
+    ).rejects.toThrow("unavailable");
   });
 
   it("never addresses another user's participant doc", async () => {

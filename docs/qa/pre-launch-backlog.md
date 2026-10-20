@@ -10,6 +10,26 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## What a deletion used to leave behind (2026-10-20)
+
+Four records outlived the account they named, and the password-reset
+limiter kept every address anyone typed. The executor and
+`firestore.indexes.json` now handle them, and
+`accountDeletionCollections.test.ts` fails on the next unlisted collection.
+Two steps happen only in production.
+
+- [ ] **The address-keyed reset records are gone.** Once the functions
+      deploy carrying the hashed key is live, run
+      `DRY_RUN=true node functions/scripts/purgeLegacyResetLimiterDocs.js`
+      from the repo root, then again without `DRY_RUN`. Passing: the second
+      run's report shows `deleted` equal to the dry run's `legacy`, and a
+      third dry run shows `legacy: 0`. It prints counts only, never an id.
+- [ ] **Rate-limit records expire.** Passing: the Deploy production run's
+      Firestore readiness gate (`scripts/verify-firestore-readiness.py`,
+      which fails while any TTL policy in `firestore.indexes.json` is not
+      active) is green, and Firestore console → Time-to-live lists
+      `rateLimits` / `expiresAt` as Serving.
+
 ## What says a server job failed (2026-10-20)
 
 - [ ] **Every scheduled job leaves its last run.** Passing: a day after the
