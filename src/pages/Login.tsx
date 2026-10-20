@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { readString, remove } from "@/lib/localStore";
+import { pendingEmailChange } from "@/lib/emailChangeNote";
 import { hasSignedInOnThisDevice, useAuth } from "@/lib/auth";
 import {
   friendlyAuthError,
@@ -45,8 +46,11 @@ export default function Login() {
     resetPassword,
     fetchSignInMethods,
   } = useAuth();
+  /* An email change, once confirmed, signs this phone out; say so, and
+     offer the new address (emailChangeNote.ts). */
+  const [changedEmail] = useState(() => pendingEmailChange());
   const [view, setView] = useState<View>(() =>
-    hasSignedInOnThisDevice() ? "signIn" : "welcome"
+    changedEmail || hasSignedInOnThisDevice() ? "signIn" : "welcome"
   );
   const isSignUp = view === "signUp";
   // The first rungs of the funnel: who sees the welcome screen, and who
@@ -62,7 +66,7 @@ export default function Login() {
     });
   }, [view]);
   const setIsSignUp = (next: boolean) => setView(next ? "signUp" : "signIn");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => changedEmail ?? "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -81,6 +85,13 @@ export default function Login() {
   // Neutral confirmation for the password-reset flow (shown in a calm banner,
   // not the destructive error one).
   const [notice, setNotice] = useState("");
+  // An email change that ended the session says so until anything else
+  // has something to say.
+  const shownNotice =
+    notice ||
+    (changedEmail && !isSignUp
+      ? `Changing your email signs you out once the change is confirmed. Sign in with ${changedEmail}.`
+      : "");
   const [loadingAction, setLoadingAction] = useState<LoadingAction>(null);
 
   const isLoading = loadingAction !== null;
@@ -354,7 +365,7 @@ export default function Login() {
             </div>
           )}
 
-          {notice && (
+          {shownNotice && (
             <div
               role="status"
               className="flex items-start gap-2.5 p-3 rounded-xl bg-primary/8 border border-primary/15 text-foreground text-sm font-medium"
@@ -363,7 +374,7 @@ export default function Login() {
                 className="size-4 shrink-0 mt-0.5 text-primary"
                 aria-hidden="true"
               />
-              <span>{notice}</span>
+              <span>{shownNotice}</span>
             </div>
           )}
 

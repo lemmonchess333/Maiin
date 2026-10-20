@@ -49,6 +49,8 @@ const DEVICE_SCOPED: Record<string, string> = {
   "bk-font-combo": "dev-only font bake-off switch (src/dev)",
   "tropos.account_deleted":
     "written precisely when there is no longer an account to scope to",
+  "tropos-email-change-pending":
+    "the address an email change is going to, read by the signed-out Login after the change ends the session; there is no account to scope it to there, and any sign-in clears it",
   "tropos.signed_in_before":
     "whether ANY account has signed in on this phone: the signed-out screen reads it to choose the welcome screen or Sign in, and there is no account to scope it to there",
   "tropos.food.calorieRingMode":

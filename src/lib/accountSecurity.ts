@@ -27,6 +27,7 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 import { auth } from "./firebase";
 import { reauthWithPassword } from "./reauth";
 import { readString, remove, writeString } from "./localStore";
+import { noteEmailChange } from "./emailChangeNote";
 
 /* Whether the link sign-up sent reached the mail provider, as far as this
    phone knows. Home said "We sent a link" either way; a send that failed
@@ -128,4 +129,6 @@ export async function requestEmailChange(
 ): Promise<void> {
   await reauthWithPassword(user, currentPassword);
   await verifyBeforeUpdateEmail(user, newEmail.trim());
+  // Confirming it signs this phone out; Login reads this to say so.
+  noteEmailChange(newEmail.trim());
 }

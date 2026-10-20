@@ -169,7 +169,13 @@ function AccountSectionContent({
       await signOut();
     } catch (error) {
       logger.error("AccountSection sign-out failed", error);
-      toast.error("Couldn't sign out. Please try again.");
+      // Offline is the usual reason: signing out first stops this phone
+      // getting the account's notifications, which needs the server.
+      toast.error(
+        navigator.onLine === false
+          ? "Signing out needs a connection, so this phone stops getting this account's notifications. Try again when you're online."
+          : "Couldn't sign out. Please try again."
+      );
     }
   };
 
