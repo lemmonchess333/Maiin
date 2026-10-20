@@ -564,6 +564,29 @@ describe("functions trigger metadata snapshot", () => {
     }
   });
 
+  /* Every Firestore trigger is delivered again when it throws
+     (failurePolicy), and its header says why a second delivery is safe.
+     Until 2026-10-20 the six social triggers and the participant recount
+     had no retry, and the session triggers caught their own failures, so
+     a transient error lost the work for good (lib/triggerRetry.js). A
+     trigger that cannot safely run twice goes here, with its reason. */
+  const NO_RETRY = {};
+
+  it("every Firestore trigger is retried unless listed with a reason", () => {
+    const noRetry = Object.entries(fns)
+      .filter(([, fn]) => {
+        const trigger = fn && fn.__endpoint && fn.__endpoint.eventTrigger;
+        return (
+          trigger &&
+          /cloud\.firestore/.test(trigger.eventType) &&
+          trigger.retry !== true
+        );
+      })
+      .map(([name]) => name)
+      .sort();
+    expect(noRetry).toEqual(Object.keys(NO_RETRY).sort());
+  });
+
   it("monthly announcements keep a UTC hourly schedule", () => {
     expect(
       fns.hourlyChallengeAnnouncements.__endpoint.scheduleTrigger.timeZone

@@ -173,6 +173,10 @@ const objectionableText = require("./lib/objectionableText");
 const spacePostModeration = require("./lib/spacePostModeration");
 // The email that tells the owner a report has come in (createReport).
 const reportAlert = require("./lib/reportAlert");
+// Retried triggers: the window an event is retried in, and the side
+// effects run as steps that throw together (the session and social
+// triggers).
+const { pastRetryWindow, triggerSteps } = require("./lib/triggerRetry");
 const { sendViaResend } = require("./email/accountEmails");
 // Admin-uid allowlist for moderation callables. Trust boundary for
 // the listPendingReports / resolveReport / hideActivity surfaces.
@@ -3937,57 +3941,55 @@ async function awardMilestoneBadges(uid, ids) {
   }
   const ref = db.doc(`users/${uid}/streaks/data`);
   const publicRef = db.doc(`users/${uid}/public/profile`);
-  try {
-    await db.runTransaction(async (tx) => {
-      const snap = await tx.get(ref);
-      const stored = snap.exists ? snap.data().badges : null;
-      const badges = Array.isArray(stored) ? stored.slice() : [];
-      const nowIso = new Date().toISOString();
-      let changed = false;
+  // A failure is the caller's: the session triggers retry it (idempotent
+  // through `earnedAt`), where a catch here lost the badge for good.
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const stored = snap.exists ? snap.data().badges : null;
+    const badges = Array.isArray(stored) ? stored.slice() : [];
+    const nowIso = new Date().toISOString();
+    let changed = false;
 
-      for (const id of ids) {
-        const idx = badges.findIndex((b) => b && b.id === id);
-        if (idx === -1) {
-          // Def absent from an older stored array — append the minimal pair;
-          // the client fills the rest from BADGE_DEFINITIONS by id.
-          badges.push({ id, earnedAt: nowIso });
-          changed = true;
-        } else if (!badges[idx].earnedAt) {
-          badges[idx] = { ...badges[idx], earnedAt: nowIso };
-          changed = true;
-        }
-        // else: already earned → idempotent no-op.
+    for (const id of ids) {
+      const idx = badges.findIndex((b) => b && b.id === id);
+      if (idx === -1) {
+        // Def absent from an older stored array — append the minimal pair;
+        // the client fills the rest from BADGE_DEFINITIONS by id.
+        badges.push({ id, earnedAt: nowIso });
+        changed = true;
+      } else if (!badges[idx].earnedAt) {
+        badges[idx] = { ...badges[idx], earnedAt: nowIso };
+        changed = true;
       }
+      // else: already earned → idempotent no-op.
+    }
 
-      if (!changed) return;
+    if (!changed) return;
 
-      // Recompute the public badge-summary mirror (same shape as the client).
-      const earnedMap = {};
-      for (const b of badges) {
-        if (!b || !b.earnedAt) continue;
-        earnedMap[b.id] =
-          typeof b.earnedAt === "string"
-            ? b.earnedAt
-            : b.earnedAt && typeof b.earnedAt.toDate === "function"
-              ? b.earnedAt.toDate().toISOString()
-              : nowIso;
-      }
+    // Recompute the public badge-summary mirror (same shape as the client).
+    const earnedMap = {};
+    for (const b of badges) {
+      if (!b || !b.earnedAt) continue;
+      earnedMap[b.id] =
+        typeof b.earnedAt === "string"
+          ? b.earnedAt
+          : b.earnedAt && typeof b.earnedAt.toDate === "function"
+            ? b.earnedAt.toDate().toISOString()
+            : nowIso;
+    }
 
-      tx.set(ref, { badges }, { merge: true });
-      tx.set(
-        publicRef,
-        {
-          badgeSummary: {
-            earnedMap,
-            count: Object.keys(earnedMap).length,
-          },
+    tx.set(ref, { badges }, { merge: true });
+    tx.set(
+      publicRef,
+      {
+        badgeSummary: {
+          earnedMap,
+          count: Object.keys(earnedMap).length,
         },
-        { merge: true }
-      );
-    });
-  } catch (err) {
-    console.error(`awardMilestoneBadges: error for ${uid}:`, err.message);
-  }
+      },
+      { merge: true }
+    );
+  });
 }
 
 /**
@@ -4024,50 +4026,46 @@ async function accrueLifetimeStat(
   const totalsRef = db.doc(`users/${uid}/lifetime/totals`);
   const markerRef = db.doc(`users/${uid}/lifetime/applied_${kind}_${sourceId}`);
 
-  let newTotal = 0;
-  try {
-    newTotal = await db.runTransaction(async (tx) => {
-      const [totalsSnap, markerSnap, sourceSnap] = await Promise.all([
-        tx.get(totalsRef),
-        tx.get(markerRef),
-        sourceRef ? tx.get(sourceRef) : null,
-      ]);
-      const current = Number(
-        (totalsSnap.exists && totalsSnap.data()[field]) || 0
-      );
-      if (markerSnap.exists) {
-        // Already applied this source — return the unchanged total so the
-        // award step below is still a (no-op) idempotent re-check.
-        return current;
-      }
-      // The session is gone: its delete can run before its create (trigger
-      // delivery is unordered), find no marker and reverse nothing, so a
-      // credit now would stand forever. Read here, inside the transaction,
-      // a delete either lands first (nothing credits) or after (its
-      // reversal finds this marker).
-      if (sourceSnap && !sourceSnap.exists) return current;
-      const updated = current + inc;
-      tx.set(totalsRef, { [field]: updated }, { merge: true });
-      tx.set(markerRef, {
-        kind,
-        sourceId,
-        // The amount this marker applied. Read back by the delete-side
-        // reversal (lib/activityReversal), which would otherwise have to
-        // re-derive it from the deleted document — and a document with a
-        // deterministic id can be OVERWRITTEN after the accrual (a resumed
-        // programme Finish reuses `programme-{completionId}`), so the
-        // re-derivation and the applied figure are not always the same
-        // number. The challenge marker has recorded its `incrementBy` all
-        // along; this is the lifetime marker catching up.
-        appliedValue: inc,
-        appliedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-      return updated;
+  // A failure is the caller's to retry, as in awardMilestoneBadges; the
+  // marker makes the retry credit once.
+  const newTotal = await db.runTransaction(async (tx) => {
+    const [totalsSnap, markerSnap, sourceSnap] = await Promise.all([
+      tx.get(totalsRef),
+      tx.get(markerRef),
+      sourceRef ? tx.get(sourceRef) : null,
+    ]);
+    const current = Number(
+      (totalsSnap.exists && totalsSnap.data()[field]) || 0
+    );
+    if (markerSnap.exists) {
+      // Already applied this source — return the unchanged total so the
+      // award step below is still a (no-op) idempotent re-check.
+      return current;
+    }
+    // The session is gone: its delete can run before its create (trigger
+    // delivery is unordered), find no marker and reverse nothing, so a
+    // credit now would stand forever. Read here, inside the transaction,
+    // a delete either lands first (nothing credits) or after (its
+    // reversal finds this marker).
+    if (sourceSnap && !sourceSnap.exists) return current;
+    const updated = current + inc;
+    tx.set(totalsRef, { [field]: updated }, { merge: true });
+    tx.set(markerRef, {
+      kind,
+      sourceId,
+      // The amount this marker applied. Read back by the delete-side
+      // reversal (lib/activityReversal), which would otherwise have to
+      // re-derive it from the deleted document — and a document with a
+      // deterministic id can be OVERWRITTEN after the accrual (a resumed
+      // programme Finish reuses `programme-{completionId}`), so the
+      // re-derivation and the applied figure are not always the same
+      // number. The challenge marker has recorded its `incrementBy` all
+      // along; this is the lifetime marker catching up.
+      appliedValue: inc,
+      appliedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
-  } catch (err) {
-    console.error(`accrueLifetimeStat: error for ${uid}/${kind}:`, err.message);
-    return;
-  }
+    return updated;
+  });
 
   await awardMilestoneBadges(uid, lifetimeMilestoneBadges(kind, newTotal));
 }
@@ -4168,46 +4166,41 @@ async function syncChallengeProgress(
   activityDateKey,
   sourceRef = null
 ) {
-  try {
-    // Fail closed: without a source activity day we cannot decide which
-    // window this belongs to. Skip (and warn) rather than fall back to
-    // execution time — that fallback IS the bug this fixes.
-    if (!activityDateKey) {
-      console.warn("challenge_progress_missing_activity_date", {
-        uid,
-        metric,
-        sourceId,
-      });
-      return;
-    }
+  // A failure is the caller's to retry; each challenge's marker makes the
+  // retry credit once.
+  // Fail closed: without a source activity day we cannot decide which
+  // window this belongs to. Skip (and warn) rather than fall back to
+  // execution time — that fallback IS the bug this fixes.
+  if (!activityDateKey) {
+    console.warn("challenge_progress_missing_activity_date", {
+      uid,
+      metric,
+      sourceId,
+    });
+    return;
+  }
 
-    // Only the challenges still open on the activity day: this runs for
-    // every logged session, and challenges are never deleted, so a read of
-    // the whole collection grew with every week and month that passed.
-    // The apply helper still checks the window.
-    const dayBound = openOnDayBound(activityDateKey);
-    if (!dayBound) return;
-    const challengesSnap = await db
-      .collection("challenges")
-      .where("endDate", ">", dayBound)
-      .get();
+  // Only the challenges still open on the activity day: this runs for
+  // every logged session, and challenges are never deleted, so a read of
+  // the whole collection grew with every week and month that passed.
+  // The apply helper still checks the window.
+  const dayBound = openOnDayBound(activityDateKey);
+  if (!dayBound) return;
+  const challengesSnap = await db
+    .collection("challenges")
+    .where("endDate", ">", dayBound)
+    .get();
 
-    for (const doc of challengesSnap.docs) {
-      await applyChallengeProgressIncrement(
-        doc.id,
-        doc.data(),
-        uid,
-        metric,
-        incrementBy,
-        sourceId,
-        activityDateKey,
-        sourceRef
-      );
-    }
-  } catch (err) {
-    console.error(
-      `syncChallengeProgress: error for ${uid}/${metric}:`,
-      err.message
+  for (const doc of challengesSnap.docs) {
+    await applyChallengeProgressIncrement(
+      doc.id,
+      doc.data(),
+      uid,
+      metric,
+      incrementBy,
+      sourceId,
+      activityDateKey,
+      sourceRef
     );
   }
 }
@@ -4230,38 +4223,35 @@ async function syncFastestEffortProgress(
   activityDateKey,
   sourceRef = null
 ) {
-  try {
-    if (!(runDistanceMeters > 0) || !(runDurationSeconds > 0)) return;
+  // A failure is the caller's to retry, as in syncChallengeProgress.
+  if (!(runDistanceMeters > 0) || !(runDurationSeconds > 0)) return;
 
-    // Fail closed on a missing source day — same rationale as the SUM path.
-    if (!activityDateKey) {
-      console.warn("challenge_progress_missing_activity_date", {
-        uid,
-        metric: "fastest_effort",
-        sourceId,
-      });
-      return;
-    }
+  // Fail closed on a missing source day — same rationale as the SUM path.
+  if (!activityDateKey) {
+    console.warn("challenge_progress_missing_activity_date", {
+      uid,
+      metric: "fastest_effort",
+      sourceId,
+    });
+    return;
+  }
 
-    const challengesSnap = await db
-      .collection("challenges")
-      .where("metric", "==", "fastest_effort")
-      .get();
+  const challengesSnap = await db
+    .collection("challenges")
+    .where("metric", "==", "fastest_effort")
+    .get();
 
-    for (const doc of challengesSnap.docs) {
-      await applyFastestEffortToChallenge(
-        doc.id,
-        doc.data(),
-        uid,
-        runDistanceMeters,
-        runDurationSeconds,
-        sourceId,
-        activityDateKey,
-        sourceRef
-      );
-    }
-  } catch (err) {
-    console.error(`syncFastestEffortProgress: error for ${uid}:`, err.message);
+  for (const doc of challengesSnap.docs) {
+    await applyFastestEffortToChallenge(
+      doc.id,
+      doc.data(),
+      uid,
+      runDistanceMeters,
+      runDurationSeconds,
+      sourceId,
+      activityDateKey,
+      sourceRef
+    );
   }
 }
 
@@ -4608,9 +4598,12 @@ exports.onChallengeParticipantCreated = functions
   });
 
 exports.onChallengeParticipantDeleted = functions
-  .runWith(TRIGGER_CAP)
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("challenges/{challengeId}/participants/{uid}")
   .onDelete(async (_snap, context) => {
+    // A recount, so a retry is safe; without one a failed recount left the
+    // number one too high until the next join or leave.
+    if (pastRetryWindow(context)) return null;
     await recomputeParticipantCount(
       context.params.challengeId,
       context.timestamp
@@ -4625,6 +4618,13 @@ exports.onWorkoutCreated = functions
   .firestore.document("users/{uid}/workouts/{workoutId}")
   .onCreate(async (snap, context) => {
     const { uid, workoutId } = context.params;
+    if (pastRetryWindow(context)) {
+      console.error("onWorkoutCreated: retry window closed, dropping", {
+        uid,
+        workoutId,
+      });
+      return null;
+    }
     // R1A-Deletion: system-writer guard + compensating delete.
     // Triggers fire AFTER the source write commits — they cannot
     // pre-block the original write. Pattern per Blocker 6 trigger
@@ -4656,112 +4656,120 @@ exports.onWorkoutCreated = functions
       uid,
       challengeParticipation.affectedActivityDays(snap.data())
     );
-    try {
-      const data = snap.data();
-      // Which day this session belongs to — the workout's own local date,
-      // NOT trigger delivery time. Drives challenge-window attribution.
-      const activityDateKey = sourceActivityDateKey(data);
+    const data = snap.data();
+    // Which day this session belongs to — the workout's own local date,
+    // NOT trigger delivery time. Drives challenge-window attribution.
+    const activityDateKey = sourceActivityDateKey(data);
 
-      await db
+    // Each side effect runs whatever happens to the others, and any that
+    // failed fail the event, so failurePolicy delivers it again. Every
+    // step is idempotent on this workout (markers, `earnedAt`, the
+    // partner engine's MAX per day), so the retry repeats only what did
+    // not land. Caught and logged, as they all were, a transient error
+    // lost that credit for good.
+    const steps = triggerSteps(`onWorkoutCreated ${uid}/${workoutId}`);
+
+    await steps.run("lastActiveAt", () =>
+      db
         .collection("users")
         .doc(uid)
         .set(
           { lastActiveAt: admin.firestore.FieldValue.serverTimestamp() },
           { merge: true }
-        );
+        )
+    );
 
-      // Auto-progress challenge metrics this workout feeds: workout_count
-      // always; total_volume + the hybrid_score volume term (kg×0.1,
-      // SOCIAL S4 Soc8) when volume data is available. The increment
-      // mapping lives in lib/challengeBackfill so the join-time backfill
-      // credits history with the SAME values (idempotent on workoutId).
-      for (const inc of challengeBackfill.workoutChallengeIncrements(data)) {
-        await syncChallengeProgress(
+    // Auto-progress challenge metrics this workout feeds: workout_count
+    // always; total_volume + the hybrid_score volume term (kg×0.1,
+    // SOCIAL S4 Soc8) when volume data is available. The increment
+    // mapping lives in lib/challengeBackfill so the join-time backfill
+    // credits history with the SAME values (idempotent on workoutId).
+    for (const inc of challengeBackfill.workoutChallengeIncrements(data)) {
+      await steps.run(`challenge ${inc.metric}`, () =>
+        syncChallengeProgress(
           uid,
           inc.metric,
           inc.value,
           workoutId,
           activityDateKey,
           snap.ref
-        );
-      }
-
-      // Plate-Club weight badges (plate_club / two_plate / three_plate) — the
-      // heaviest compound set in THIS workout. Single-doc determinable, so
-      // awarded here off the full doc (the client's windowed snapshots can't
-      // see an old PR). Idempotent via earnedAt inside awardMilestoneBadges.
-      await awardMilestoneBadges(
-        uid,
-        liftWeightMilestoneBadges(data.exercises)
+        )
       );
+    }
 
-      // Lifetime-aggregate badge: tonnage_100 (move 100 tonnes total).
-      // Maintains the cumulative volume counter idempotently (per-workout
-      // marker) and awards the badge once the lifetime total crosses 100 t.
-      // The amount comes from lib/lifetimeAccrual so the delete-side
-      // reversal can derive it through the SAME function rather than a
-      // copy (ADR-0012). accrueLifetimeStat itself returns early on a
-      // non-positive amount, so the old `if (data.totalVolume)` gate is
-      // redundant rather than load-bearing.
-      await accrueLifetimeStat(
+    // Plate-Club weight badges (plate_club / two_plate / three_plate) — the
+    // heaviest compound set in THIS workout. Single-doc determinable, so
+    // awarded here off the full doc (the client's windowed snapshots can't
+    // see an old PR). Idempotent via earnedAt inside awardMilestoneBadges.
+    await steps.run("weight badges", () =>
+      awardMilestoneBadges(uid, liftWeightMilestoneBadges(data.exercises))
+    );
+
+    // Lifetime-aggregate badge: tonnage_100 (move 100 tonnes total).
+    // Maintains the cumulative volume counter idempotently (per-workout
+    // marker) and awards the badge once the lifetime total crosses 100 t.
+    // The amount comes from lib/lifetimeAccrual so the delete-side
+    // reversal can derive it through the SAME function rather than a
+    // copy (ADR-0012). accrueLifetimeStat itself returns early on a
+    // non-positive amount, so the old `if (data.totalVolume)` gate is
+    // redundant rather than load-bearing.
+    await steps.run("lifetime volume", () =>
+      accrueLifetimeStat(
         uid,
         "lift",
         lifetimeAccrual.liftVolumeKgFor(data),
         workoutId,
         snap.ref
-      );
-      // A correction may have landed before this create event credited its
-      // original snapshot. Repair those ledgers using the current workout.
+      )
+    );
+    // A correction may have landed before this create event credited its
+    // original snapshot. Repair those ledgers using the current workout.
+    await steps.run("correction", async () => {
       if ((await snap.ref.get()).data()?.revision > 0)
         await reconcileWorkoutMetrics(db, uid, workoutId);
+    });
 
-      // SOCIAL S3 (Soc7) — advance partner-streak bonds. BEFORE the
-      // rolling-window / cooldown early-returns below so a workout always
-      // counts toward the streak even when it's outside the perf window.
+    // SOCIAL S3 (Soc7) — advance partner-streak bonds. BEFORE the
+    // rolling-window / cooldown early-returns below so a workout always
+    // counts toward the streak even when it's outside the perf window.
+    await steps.run("partner streak", async () => {
       const workoutStreakDay = await resolvePartnerActivityDay(
         db,
         uid,
         data.date
       );
       await applyPartnerActivity(db, uid, workoutStreakDay);
+    });
 
-      // PI1a: skip recompute when the workout falls outside the rolling
-      // 7-day window. `data.date` is the person's local day and the window
-      // ends on their today, which the compute reads from their timezone;
-      // the gate allows a day either side of the server's, so a session
-      // in the window is never skipped wherever they are.
-      if (data.date && !inTriggerReach(data.date, getWeekKey(new Date()))) {
-        console.log(
-          `onWorkoutCreated: skipping recompute for ${uid}, workout on ${data.date} outside rolling window`
-        );
-        return null;
-      }
+    steps.settle();
 
-      const canRun = await acquireCooldownLock(uid);
-      if (!canRun) {
-        console.log(`onWorkoutCreated: cooldown active for ${uid}, skipping`);
-        return null;
-      }
+    // PI1a: skip recompute when the workout falls outside the rolling
+    // 7-day window. `data.date` is the person's local day and the window
+    // ends on their today, which the compute reads from their timezone;
+    // the gate allows a day either side of the server's, so a session
+    // in the window is never skipped wherever they are.
+    if (data.date && !inTriggerReach(data.date, getWeekKey(new Date()))) {
+      console.log(
+        `onWorkoutCreated: skipping recompute for ${uid}, workout on ${data.date} outside rolling window`
+      );
+      return null;
+    }
 
-      try {
-        await computeAndWritePerformanceForUser(uid, null, {
-          sessionDay: data.date || null,
-        });
-        await releaseLock(uid, true);
-        console.log(`onWorkoutCreated: computed performance for ${uid}`);
-      } catch (err) {
-        await releaseLock(uid, false, err.message);
-        console.error(
-          `onWorkoutCreated: compute error for ${uid}:`,
-          err.message
-        );
-      }
-    } catch (err) {
-      console.error("onWorkoutCreated: fatal error:", {
-        uid,
-        message: err.message,
-        stack: err.stack,
+    const canRun = await acquireCooldownLock(uid);
+    if (!canRun) {
+      console.log(`onWorkoutCreated: cooldown active for ${uid}, skipping`);
+      return null;
+    }
+
+    try {
+      await computeAndWritePerformanceForUser(uid, null, {
+        sessionDay: data.date || null,
       });
+      await releaseLock(uid, true);
+      console.log(`onWorkoutCreated: computed performance for ${uid}`);
+    } catch (err) {
+      await releaseLock(uid, false, err.message);
+      console.error(`onWorkoutCreated: compute error for ${uid}:`, err.message);
     }
     return null;
   });
@@ -4773,6 +4781,13 @@ exports.onRunCreated = functions
   .firestore.document("users/{uid}/runs/{runId}")
   .onCreate(async (snap, context) => {
     const { uid, runId } = context.params;
+    if (pastRetryWindow(context)) {
+      console.error("onRunCreated: retry window closed, dropping", {
+        uid,
+        runId,
+      });
+      return null;
+    }
     // R1A-Deletion: system-writer guard + compensating delete. Same
     // Blocker 6 trigger pattern as onWorkoutCreated — delete the
     // source run doc and skip downstream writes if the user is
@@ -4798,160 +4813,166 @@ exports.onRunCreated = functions
       uid,
       challengeParticipation.affectedActivityDays(snap.data())
     );
-    try {
-      const data = snap.data();
-      // The run's own local day — drives challenge-window attribution, so a
-      // run flushed offline in a later month still credits the right window.
-      const activityDateKey = sourceActivityDateKey(data);
+    const data = snap.data();
+    // The run's own local day — drives challenge-window attribution, so a
+    // run flushed offline in a later month still credits the right window.
+    const activityDateKey = sourceActivityDateKey(data);
 
-      // `lastActiveAt` keeps bumping even for isInvalid / savedAnyway
-      // runs — "user interacted with the app" is a reasonable read,
-      // and tightening this would make the active-users pipeline
-      // (weeklyPerformanceRollup / dailyPerformanceRefresh) drop
-      // users who only ever save-anyway short runs. Out of scope
-      // per the P0.5 plan.
-      await db
+    // Each side effect as a retried step, as in onWorkoutCreated: every
+    // one is idempotent on this run.
+    const steps = triggerSteps(`onRunCreated ${uid}/${runId}`);
+
+    // `lastActiveAt` keeps bumping even for isInvalid / savedAnyway
+    // runs — "user interacted with the app" is a reasonable read,
+    // and tightening this would make the active-users pipeline
+    // (weeklyPerformanceRollup / dailyPerformanceRefresh) drop
+    // users who only ever save-anyway short runs. Out of scope
+    // per the P0.5 plan.
+    await steps.run("lastActiveAt", () =>
+      db
         .collection("users")
         .doc(uid)
         .set(
           { lastActiveAt: admin.firestore.FieldValue.serverTimestamp() },
           { merge: true }
-        );
+        )
+    );
 
-      // P0.5 follow-up: gate challenge + fastest-effort updates on
-      // the same volume-eligibility predicate the app-side
-      // aggregations use. Pre-fix, the trigger only checked
-      // `distance > 0` / `duration > 0`, which let a fat-fingered
-      // "too-fast" save (e.g. 20km / 0:08, isInvalid + savedAnyway
-      // both true with positive distance) bump km challenges and
-      // fastest-effort PRs. Missing flags default to "not flagged" so
-      // pre-PR-#480 legacy writes still progress as before.
-      //
-      // Was an inline re-implementation until 2026-08-02, under a comment
-      // claiming a direct import "isn't available" — `./lib/runEligibility`
-      // is required at the top of this file and re-exported as
-      // `_isVolumeEligibleRun`, and that module's own header already said
-      // this duplicate had been consolidated. Two copies of the declared
-      // mirror of `src/lib/runStatsEligibility.ts:isVolumeEligible`, in the
-      // one file the mirror gate deliberately exempts, is exactly the
-      // "tested copy does not prove the running copy" shape.
-      const isCountable = isVolumeEligibleRun(data);
+    // P0.5 follow-up: gate challenge + fastest-effort updates on
+    // the same volume-eligibility predicate the app-side
+    // aggregations use. Pre-fix, the trigger only checked
+    // `distance > 0` / `duration > 0`, which let a fat-fingered
+    // "too-fast" save (e.g. 20km / 0:08, isInvalid + savedAnyway
+    // both true with positive distance) bump km challenges and
+    // fastest-effort PRs. Missing flags default to "not flagged" so
+    // pre-PR-#480 legacy writes still progress as before.
+    //
+    // Was an inline re-implementation until 2026-08-02, under a comment
+    // claiming a direct import "isn't available" — `./lib/runEligibility`
+    // is required at the top of this file and re-exported as
+    // `_isVolumeEligibleRun`, and that module's own header already said
+    // this duplicate had been consolidated. Two copies of the declared
+    // mirror of `src/lib/runStatsEligibility.ts:isVolumeEligible`, in the
+    // one file the mirror gate deliberately exempts, is exactly the
+    // "tested copy does not prove the running copy" shape.
+    const isCountable = isVolumeEligibleRun(data);
 
-      if (isCountable) {
-        // SOCIAL S3 (Soc7) — advance partner-streak bonds. Gated on the
-        // same eligibility predicate as challenges so isInvalid /
-        // savedAnyway / sub-threshold runs don't count toward a streak.
+    if (isCountable) {
+      // SOCIAL S3 (Soc7) — advance partner-streak bonds. Gated on the
+      // same eligibility predicate as challenges so isInvalid /
+      // savedAnyway / sub-threshold runs don't count toward a streak.
+      await steps.run("partner streak", async () => {
         const runStreakDay = await resolvePartnerActivityDay(
           db,
           uid,
           data.date
         );
         await applyPartnerActivity(db, uid, runStreakDay);
+      });
 
-        // Server-side milestone badges (running distances + speed). The client
-        // can't compute these from its WINDOWED streak snapshots, so they're
-        // awarded here off the full run doc — gated by the same isCountable
-        // eligibility as challenges, idempotent + transactional inside the
-        // helper. distance is metres on the doc; fall back to distanceKm.
-        // Via lib/lifetimeAccrual (an exact transcription of the
-        // expression that used to be inline here) so the delete-side
-        // reversal derives the same figure through the same function
-        // rather than restating it — ADR-0012's load-bearing constraint.
-        const runMeters = lifetimeAccrual.runMetersFor(data);
-        await awardMilestoneBadges(
+      // Server-side milestone badges (running distances + speed). The client
+      // can't compute these from its WINDOWED streak snapshots, so they're
+      // awarded here off the full run doc — gated by the same isCountable
+      // eligibility as challenges, idempotent + transactional inside the
+      // helper. distance is metres on the doc; fall back to distanceKm.
+      // Via lib/lifetimeAccrual (an exact transcription of the
+      // expression that used to be inline here) so the delete-side
+      // reversal derives the same figure through the same function
+      // rather than restating it — ADR-0012's load-bearing constraint.
+      const runMeters = lifetimeAccrual.runMetersFor(data);
+      await steps.run("run badges", () =>
+        awardMilestoneBadges(
           uid,
           runMilestoneBadges(runMeters, Number(data.duration) || 0)
-        );
-        // Lifetime-aggregate badge: century_km (run 100 km lifetime). Maintains
-        // the cumulative distance counter idempotently (per-run marker) and
-        // awards once the lifetime total crosses 100 km. Gated by isCountable
-        // (the enclosing block) so isInvalid / savedAnyway runs don't inflate.
-        await accrueLifetimeStat(uid, "run", runMeters, runId, snap.ref);
+        )
+      );
+      // Lifetime-aggregate badge: century_km (run 100 km lifetime). Maintains
+      // the cumulative distance counter idempotently (per-run marker) and
+      // awards once the lifetime total crosses 100 km. Gated by isCountable
+      // (the enclosing block) so isInvalid / savedAnyway runs don't inflate.
+      await steps.run("lifetime distance", () =>
+        accrueLifetimeStat(uid, "run", runMeters, runId, snap.ref)
+      );
 
-        // Auto-progress the challenge metrics this run feeds: total_km +
-        // the hybrid_score distance term (km×100, SOCIAL S4 Soc8), and
-        // fastest_effort (MIN-update semantics, separate sync path with a
-        // targetDistance gate). The increment mapping lives in
-        // lib/challengeBackfill so the join-time backfill credits history
-        // with the SAME values — all gated by isCountable (the enclosing
-        // block), idempotent on runId.
-        for (const inc of challengeBackfill.runChallengeIncrements(data)) {
-          if (inc.metric === "fastest_effort") {
-            await syncFastestEffortProgress(
-              uid,
-              inc.meters,
-              inc.seconds,
-              runId,
-              activityDateKey,
-              snap.ref
-            );
-          } else {
-            await syncChallengeProgress(
-              uid,
-              inc.metric,
-              inc.value,
-              runId,
-              activityDateKey,
-              snap.ref
-            );
-          }
-        }
-      } else {
+      // Auto-progress the challenge metrics this run feeds: total_km +
+      // the hybrid_score distance term (km×100, SOCIAL S4 Soc8), and
+      // fastest_effort (MIN-update semantics, separate sync path with a
+      // targetDistance gate). The increment mapping lives in
+      // lib/challengeBackfill so the join-time backfill credits history
+      // with the SAME values — all gated by isCountable (the enclosing
+      // block), idempotent on runId.
+      for (const inc of challengeBackfill.runChallengeIncrements(data)) {
+        await steps.run(`challenge ${inc.metric}`, () =>
+          inc.metric === "fastest_effort"
+            ? syncFastestEffortProgress(
+                uid,
+                inc.meters,
+                inc.seconds,
+                runId,
+                activityDateKey,
+                snap.ref
+              )
+            : syncChallengeProgress(
+                uid,
+                inc.metric,
+                inc.value,
+                runId,
+                activityDateKey,
+                snap.ref
+              )
+        );
+      }
+    } else {
+      console.log(
+        `onRunCreated: skipping challenge/fastest-effort sync for ${uid} ` +
+          `(isInvalid=${data.isInvalid === true}, savedAnyway=${data.savedAnyway === true}, ` +
+          `distance=${data.distance}, duration=${data.duration})`
+      );
+    }
+
+    // PR-L L2: recovery-entry write. Runs BEFORE the rolling-window
+    // and cooldown gates because recovery entry is independent of
+    // the performance recompute — a race run logged late (poor
+    // connectivity, Garmin sync delay) or arriving while another
+    // run holds the per-user cooldown lock still needs to flip the
+    // user into the recovery phase. The wrapper catches its own
+    // errors and reads/writes only programState (not the
+    // performance write surface), so failures here can't cascade.
+    await _maybeWriteRecoveryEntryForRun(uid, data);
+
+    steps.settle();
+
+    // The run's day (the day it started, as the compute dates it), or
+    // null for a run with neither a day nor a finish time.
+    const runDay = runDayKey(data, null);
+    if (runDay) {
+      const currentKey = getWeekKey(new Date());
+      // PI1a: skip recompute when the run falls outside the rolling
+      // 7-day window, a day either side of the server's (see
+      // onWorkoutCreated).
+      if (!inTriggerReach(runDay, currentKey)) {
         console.log(
-          `onRunCreated: skipping challenge/fastest-effort sync for ${uid} ` +
-            `(isInvalid=${data.isInvalid === true}, savedAnyway=${data.savedAnyway === true}, ` +
-            `distance=${data.distance}, duration=${data.duration})`
+          `onRunCreated: skipping recompute for ${uid}, run on ${runDay} outside rolling window ending ${currentKey}`
         );
-      }
-
-      // PR-L L2: recovery-entry write. Runs BEFORE the rolling-window
-      // and cooldown gates because recovery entry is independent of
-      // the performance recompute — a race run logged late (poor
-      // connectivity, Garmin sync delay) or arriving while another
-      // run holds the per-user cooldown lock still needs to flip the
-      // user into the recovery phase. The wrapper catches its own
-      // errors and reads/writes only programState (not the
-      // performance write surface), so failures here can't cascade.
-      await _maybeWriteRecoveryEntryForRun(uid, data);
-
-      // The run's day (the day it started, as the compute dates it), or
-      // null for a run with neither a day nor a finish time.
-      const runDay = runDayKey(data, null);
-      if (runDay) {
-        const currentKey = getWeekKey(new Date());
-        // PI1a: skip recompute when the run falls outside the rolling
-        // 7-day window, a day either side of the server's (see
-        // onWorkoutCreated).
-        if (!inTriggerReach(runDay, currentKey)) {
-          console.log(
-            `onRunCreated: skipping recompute for ${uid}, run on ${runDay} outside rolling window ending ${currentKey}`
-          );
-          return null;
-        }
-      }
-
-      const canRun = await acquireCooldownLock(uid);
-      if (!canRun) {
-        console.log(`onRunCreated: cooldown active for ${uid}, skipping`);
         return null;
       }
+    }
 
-      try {
-        await computeAndWritePerformanceForUser(uid, null, {
-          sessionDay: runDay,
-        });
-        await releaseLock(uid, true);
-        console.log(`onRunCreated: computed performance for ${uid}`);
-      } catch (err) {
-        await releaseLock(uid, false, err.message);
-        console.error(`onRunCreated: compute error for ${uid}:`, err.message);
-      }
-    } catch (err) {
-      console.error("onRunCreated: fatal error:", {
-        uid,
-        message: err.message,
-        stack: err.stack,
+    const canRun = await acquireCooldownLock(uid);
+    if (!canRun) {
+      console.log(`onRunCreated: cooldown active for ${uid}, skipping`);
+      return null;
+    }
+
+    try {
+      await computeAndWritePerformanceForUser(uid, null, {
+        sessionDay: runDay,
       });
+      await releaseLock(uid, true);
+      console.log(`onRunCreated: computed performance for ${uid}`);
+    } catch (err) {
+      await releaseLock(uid, false, err.message);
+      console.error(`onRunCreated: compute error for ${uid}:`, err.message);
     }
     return null;
   });
@@ -5570,10 +5591,18 @@ exports.recreditMyLiftVolume = functions
  * appeal and a moderator can review.
  */
 exports.onActivityCreated = functions
-  .runWith(TRIGGER_CAP)
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("activities/{activityId}")
   .onCreate(async (snap, context) => {
     const activityId = context.params.activityId;
+    // Retried (lib/triggerRetry): the flag is the same update each time and
+    // a feed copy's id is the activity's, so a retry adds nothing twice.
+    if (pastRetryWindow(context)) {
+      functions.logger.error("onActivityCreated.retry_window_closed", {
+        activityId,
+      });
+      return null;
+    }
     const data = snap.data();
     const authorId = data && data.authorId;
 
@@ -5631,9 +5660,10 @@ exports.onActivityCreated = functions
         activityId,
         message: err.message,
       });
-      // Fall through to fanout — a profanity-scan failure shouldn't
-      // strand the activity. Re-flag manually via the report queue
-      // if false-positive.
+      // Retried before anything fans out. Falling through, as this once
+      // did, published to every follower a post the scan had just found
+      // objectionable whenever the flag's write failed.
+      throw err;
     }
 
     // 2026-05-26 audit PR 3 — server-side fan-out. Replaces the
@@ -5676,6 +5706,8 @@ exports.onActivityCreated = functions
         authorId,
         message: err.message,
       });
+      // Retried: the followers a failed pass missed get the post.
+      throw err;
     }
   });
 
@@ -5691,10 +5723,12 @@ exports.onActivityCreated = functions
  * executor has to erase.
  */
 exports.onActivityDeleted = functions
-  .runWith(TRIGGER_CAP)
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("activities/{activityId}")
   .onDelete(async (_snap, context) => {
     const { activityId } = context.params;
+    // Retried: removing copies already gone removes nothing.
+    if (pastRetryWindow(context)) return null;
     try {
       const { removed } = await socialFanout.removeActivityFromFeeds({
         firestore: admin.firestore(),
@@ -5709,6 +5743,7 @@ exports.onActivityDeleted = functions
         activityId,
         message: err.message,
       });
+      throw err;
     }
     return null;
   });
@@ -5724,10 +5759,13 @@ exports.onActivityDeleted = functions
  * so the report queue can audit deletion volume.
  */
 exports.onCommentCreated = functions
-  .runWith(TRIGGER_CAP)
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("comments/{activityId}/items/{commentId}")
   .onCreate(async (snap, context) => {
     const { activityId, commentId } = context.params;
+    // Retried: the transaction below already makes a second delivery a
+    // no-op, and without a retry a failed one left the comment up.
+    if (pastRetryWindow(context)) return null;
     try {
       const data = snap.data();
       if (!profanityFilter.containsProfanity(data.text)) return;
@@ -5779,6 +5817,7 @@ exports.onCommentCreated = functions
         commentId,
         message: err.message,
       });
+      throw err;
     }
   });
 
@@ -5792,10 +5831,12 @@ exports.onCommentCreated = functions
  * account-deletion guard is needed (the reasoning onActivityDeleted gives).
  */
 exports.onSpacePostWritten = functions
-  .runWith(TRIGGER_CAP)
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("spaces/{spaceId}/posts/{postId}")
   .onWrite(async (change, context) => {
     const { spaceId, postId } = context.params;
+    // Retried: the removal re-reads the post in its transaction.
+    if (pastRetryWindow(context)) return null;
     try {
       await spacePostModeration.removeObjectionableSpacePost({
         firestore: admin.firestore(),
@@ -5810,6 +5851,7 @@ exports.onSpacePostWritten = functions
         postId,
         message: err && err.message,
       });
+      throw err;
     }
     return null;
   });
@@ -7597,10 +7639,13 @@ const CIRCLE_EVENT_NOTIFICATION_TYPES = {
 };
 
 exports.onGoalSpaceEventCreated = functions
-  .runWith(TRIGGER_CAP)
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("goalSpaces/{spaceId}/events/{eventId}")
   .onCreate(async (snap, context) => {
     const { spaceId, eventId } = context.params;
+    // Retried: each member's notification has a fixed id, so a retry
+    // rewrites the ones that landed and adds the ones that did not.
+    if (pastRetryWindow(context)) return null;
     const event = snap.data() || {};
     // A member writes an event's note straight to Firestore, where the
     // rules can bound its length but cannot read it. One the word filter
@@ -7660,6 +7705,7 @@ exports.onGoalSpaceEventCreated = functions
         eventId,
         message: err && err.message,
       });
+      throw err;
     }
     return null;
   });
@@ -7678,11 +7724,13 @@ exports.onGoalSpaceEventCreated = functions
  * account that is being deleted.
  */
 exports.onFollowerCreated = functions
-  .runWith(TRIGGER_CAP)
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
   .firestore.document("followers/{uid}/users/{followerUid}")
   .onCreate(async (snap, context) => {
     const { uid, followerUid } = context.params;
     if (!uid || !followerUid || uid === followerUid) return null;
+    // Retried: the notification's id is fixed per follower (above).
+    if (pastRetryWindow(context)) return null;
     try {
       const profileSnap = await db
         .doc(`users/${followerUid}/public/profile`)
@@ -7707,6 +7755,7 @@ exports.onFollowerCreated = functions
         followerUid,
         message: err && err.message,
       });
+      throw err;
     }
     return null;
   });

@@ -10,6 +10,25 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Triggers that retry, and saves that will not land (2026-10-20)
+
+Group 5 of the 20 October list. The emulator tests drive the run trigger
+and the follower trigger through a failure and its retry; only the console
+shows what the deploy set.
+
+- [ ] **The seven triggers that never retried now do.** After the release
+      that carries this, Cloud console → Functions shows "Retry on failure"
+      on onActivityCreated, onActivityDeleted, onCommentCreated,
+      onSpacePostWritten, onGoalSpaceEventCreated, onFollowerCreated and
+      onChallengeParticipantDeleted (`functions/__tests__/triggerMetadata.test.js`
+      pins every Firestore trigger as retried). Passing: all seven read
+      enabled, and onRunCreated's deployed source contains `triggerSteps`.
+- [ ] **A retry storm would show in the logs.** A step that fails every time
+      is retried for a day, then dropped with a `retry window closed` line
+      (`functions/lib/triggerRetry.js`). Passing: a week after the release,
+      Logs Explorer shows no `will be retried` line repeating for one event,
+      and no `retry window closed` line.
+
 ## Reminders, sign-in and posting on the phone (2026-10-20)
 
 Fixed with tests that mock the plugins (lemmonchess333/Maiin#2900, group 1);
