@@ -7,7 +7,7 @@
  * Firestore, no admin SDK, no clock (nowUtc is injected).
  *
  * Locked design (#961 grill). Send iff ALL hold:
- *   - currentStreak >= 2
+ *   - the streak logging today keeps is >= 2 (`savableStreak`)
  *   - reminders opted in
  *   - timezone known (null → SKIP — locked invariant: no overnight pings)
  *   - NOT logged today
@@ -24,6 +24,8 @@
  */
 
 const STREAK_NUDGE_MIN_STREAK = 2;
+const DAY_MS = 86400000;
+const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * The user's local "YYYY-MM-DD" for a UTC instant in an IANA timezone.
@@ -45,8 +47,45 @@ function localDateKeyInTz(nowUtc, timezone) {
 }
 
 /**
+ * The streak logging today keeps, from streaks/data's certificate
+ * (`anchorStreak` days ending on `anchorDate`; documents from before
+ * 2026-10-20 carry only {currentStreak, lastActiveDate}). Kept when it ends
+ * yesterday, or the day before: yesterday is then its one forgiven day,
+ * bridged by a log today. Older is already broken, so 0.
+ *
+ * The stored `currentStreak` is the streak as shown, and the morning after a
+ * rest day shows 0 (the today/yesterday rule), so a nudge gated on it was
+ * skipped on exactly the evening it exists for. Gated on nothing but it, a
+ * person who stopped coming back was nudged about a dead streak every day.
+ */
+function savableStreak(input, nowUtc) {
+  const { anchorStreak, anchorDate, timezone = null } = input || {};
+  const hasAnchor =
+    Number.isFinite(anchorStreak) &&
+    anchorStreak > 0 &&
+    typeof anchorDate === "string" &&
+    DATE_KEY.test(anchorDate);
+  const count = hasAnchor ? anchorStreak : input?.currentStreak;
+  const endsOn = hasAnchor ? anchorDate : input?.lastActiveDate;
+  if (!Number.isFinite(count) || count <= 0 || typeof endsOn !== "string") {
+    return 0;
+  }
+  // "now - 24h / 48h formatted in tz" stays on the right local calendar day
+  // across DST shifts at any daytime send hour (as shouldSendFirstWeekNudge).
+  const yesterday = localDateKeyInTz(new Date(nowUtc.getTime() - DAY_MS), timezone);
+  const dayBefore = localDateKeyInTz(
+    new Date(nowUtc.getTime() - 2 * DAY_MS),
+    timezone
+  );
+  return endsOn === yesterday || endsOn === dayBefore ? count : 0;
+}
+
+/**
  * @param {{
- *   currentStreak?: number,
+ *   currentStreak?: number,      // streaks/data: the streak as shown
+ *   lastActiveDate?: string,     // streaks/data: its last active day
+ *   anchorStreak?: number,       // streaks/data: the certificate's count
+ *   anchorDate?: string,         // streaks/data: the day it ends on
  *   remindersOptedIn?: boolean,
  *   timezone?: string | null,
  *   activeDateKeys?: string[],   // local YYYY-MM-DD days the user was active (streaks/data)
@@ -57,7 +96,6 @@ function localDateKeyInTz(nowUtc, timezone) {
  */
 function shouldSendStreakNudge(input, nowUtc) {
   const {
-    currentStreak = 0,
     remindersOptedIn = false,
     timezone = null,
     activeDateKeys = [],
@@ -65,7 +103,7 @@ function shouldSendStreakNudge(input, nowUtc) {
   } = input || {};
 
   if (!remindersOptedIn) return false;
-  if (currentStreak < STREAK_NUDGE_MIN_STREAK) return false;
+  if (savableStreak(input, nowUtc) < STREAK_NUDGE_MIN_STREAK) return false;
 
   const localToday = localDateKeyInTz(nowUtc, timezone);
   if (!localToday) return false; // skip-on-null-tz invariant
@@ -103,7 +141,6 @@ function shouldSendStreakNudge(input, nowUtc) {
  */
 function shouldSendFirstWeekNudge(input, nowUtc) {
   const {
-    currentStreak = 0,
     remindersOptedIn = false,
     timezone = null,
     activeDateKeys = [],
@@ -113,7 +150,8 @@ function shouldSendFirstWeekNudge(input, nowUtc) {
 
   if (!remindersOptedIn) return false;
   if (firstWeekNudgeDateKey) return false; // once EVER
-  if (currentStreak >= STREAK_NUDGE_MIN_STREAK) return false; // regular nudge owns >= 2
+  // The regular nudge owns >= 2, read the same way, so the two stay disjoint.
+  if (savableStreak(input, nowUtc) >= STREAK_NUDGE_MIN_STREAK) return false;
 
   const localToday = localDateKeyInTz(nowUtc, timezone);
   if (!localToday) return false; // skip-on-null-tz invariant
@@ -136,6 +174,7 @@ function shouldSendFirstWeekNudge(input, nowUtc) {
 }
 
 module.exports = {
+  savableStreak,
   shouldSendStreakNudge,
   shouldSendFirstWeekNudge,
   localDateKeyInTz,

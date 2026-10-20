@@ -2948,7 +2948,7 @@ async function maybeSendStreakNudge(uid, now) {
   // Consent: streak push must be opted in.
   if (!mayTargetUserConsent(consentSnap.data() || null, "streak")) return false;
 
-  const currentStreak = (streakSnap.data() || {}).currentStreak || 0;
+  const streak = streakSnap.data() || {};
   const pushState = stateSnap.data() || {};
   const lastNudgeDateKey = pushState.lastStreakNudgeDateKey || null;
   const firstWeekNudgeDateKey = pushState.firstWeekNudgeDateKey || null;
@@ -3002,7 +3002,10 @@ async function maybeSendStreakNudge(uid, now) {
   // nudge above it, the once-ever first-week return nudge (D-1 day-1→day-2
   // fix) below it.
   const decisionInput = {
-    currentStreak,
+    currentStreak: streak.currentStreak || 0,
+    lastActiveDate: streak.lastActiveDate,
+    anchorStreak: streak.anchorStreak,
+    anchorDate: streak.anchorDate,
     remindersOptedIn: true,
     timezone,
     activeDateKeys,
