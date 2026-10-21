@@ -1,4 +1,4 @@
-import { useState, memo } from "react";
+import { useState, memo, useEffect, useRef } from "react";
 import { formatClock } from "@/utils/formatters";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Link } from "react-router-dom";
@@ -96,6 +96,15 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
   const [kudosCount, setKudosCount] = useState(feedItem.kudosCount ?? 0);
   const [showCommentSheet, setShowCommentSheet] = useState(false);
   const [flameAnimating, setFlameAnimating] = useState(false);
+  // The flame's pulse ends on a timer; a card that goes away first clears
+  // it, so it never sets state on an unmounted card.
+  const flameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (flameTimer.current) clearTimeout(flameTimer.current);
+    },
+    []
+  );
   const [showKudosList, setShowKudosList] = useState(false);
   const [kudosUsers, setKudosUsers] = useState<
     { userId: string; userName: string; photoURL?: string }[]
@@ -163,7 +172,8 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
     setKudosCount((c) => c + 1);
     // Animate
     setFlameAnimating(true);
-    setTimeout(() => setFlameAnimating(false), 200);
+    if (flameTimer.current) clearTimeout(flameTimer.current);
+    flameTimer.current = setTimeout(() => setFlameAnimating(false), 200);
     haptic("light");
 
     try {

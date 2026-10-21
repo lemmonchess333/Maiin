@@ -57,12 +57,14 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 const purchaseMock = vi.fn();
 const manageSubscriptionMock = vi.fn();
 const isNativeIOSMock = vi.fn();
+const canSellMock = vi.fn();
 
 vi.mock("@/lib/purchaseProvider", () => ({
   purchase: (...args: unknown[]) => purchaseMock(...args),
   restorePurchases: vi.fn(),
   manageSubscription: (...args: unknown[]) => manageSubscriptionMock(...args),
   isNativeIOS: () => isNativeIOSMock(),
+  canSellInThisBuild: () => canSellMock(),
 }));
 
 const useSubscriptionMock = vi.fn<
@@ -149,6 +151,9 @@ beforeEach(() => {
   authProfileMock.mockReset();
   useSubscriptionMock.mockReset();
   isNativeIOSMock.mockReturnValue(false);
+  // A build with the store, unless a test says otherwise.
+  canSellMock.mockReset();
+  canSellMock.mockReturnValue(true);
   plansMock.mockReset();
   plansMock.mockReturnValue(PRO_PLANS);
   storeTrialMock.mockReturnValue(null);
@@ -540,6 +545,26 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     renderPage();
     expect(screen.getByText(/Already purchased/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Restore" })).toBeInTheDocument();
+  });
+
+  /* An iPhone build without the store (deploy-ios.yml leaves RevenueCat's
+     key out until its activation order is done) can only refuse a
+     purchase. Showing prices and a button there is a Guideline 2.1
+     rejection, so the page shows neither, and no Restore. */
+  it("in a build that cannot sell, shows no price, checkout or Restore", () => {
+    isNativeIOSMock.mockReturnValue(true);
+    canSellMock.mockReturnValue(false);
+    renderPage();
+    expect(screen.getByRole("note")).toHaveTextContent(
+      "Pro isn't on sale in this version of the app yet."
+    );
+    expect(screen.queryByText(/£/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Continue" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Restore" })).toBeNull();
+    expect(screen.queryByText(/Renews automatically/)).toBeNull();
+    // The way out stays, and so do the legal links.
+    expect(screen.getByRole("button", { name: "Not now" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Terms" })).toBeInTheDocument();
   });
 
   it("on iOS, both beats say where to cancel: the Apple Account", () => {

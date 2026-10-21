@@ -39,7 +39,8 @@ import {
   type PlanId,
 } from "@/lib/proPlans";
 import { getProFeature, type ProFeatureKey } from "@/lib/proFeatures";
-import { isNativeIOS } from "@/lib/purchaseProvider";
+import { canSellInThisBuild, isNativeIOS } from "@/lib/purchaseProvider";
+import ProNotOnSale from "@/components/paywall/ProNotOnSale";
 import { useProCheckout } from "@/hooks/useProCheckout";
 import TrialTimeline from "@/components/TrialTimeline";
 import { useProPlanPrices } from "@/hooks/useProPlanPrices";
@@ -168,7 +169,10 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   );
 
   const platform: "web" | "ios" = isNativeIOS() ? "ios" : "web";
-  const showRestore = isNativeIOS();
+  // A build that cannot take a purchase shows no price, no checkout and no
+  // Restore (`canSellInThisBuild`).
+  const onSale = canSellInThisBuild();
+  const showRestore = isNativeIOS() && onSale;
 
   const feature = getProFeature(featureKey);
   const featurePreview = featureKey ? FEATURE_PREVIEWS[featureKey] : undefined;
@@ -311,12 +315,16 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
         </ul>
 
         {/* Plan selector — shared with the Upgrade page. */}
-        <PlanPicker
-          plans={plans}
-          selectedPlan={selectedPlan}
-          onSelect={handlePlanSelect}
-          disabled={loading}
-        />
+        {onSale ? (
+          <PlanPicker
+            plans={plans}
+            selectedPlan={selectedPlan}
+            onSelect={handlePlanSelect}
+            disabled={loading}
+          />
+        ) : (
+          <ProNotOnSale />
+        )}
       </div>
 
       {/* Sticky footer — CTA + disclosure + optional restore. */}
@@ -330,29 +338,46 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
           </p>
         ) : null}
 
-        {/* Sub1a trial transparency — what actually happens, before the ask. */}
-        {withTrial ? <TrialTimeline plan={selected} /> : null}
+        {onSale ? (
+          <>
+            {/* Sub1a trial transparency — what actually happens, before the ask. */}
+            {withTrial ? <TrialTimeline plan={selected} /> : null}
 
-        {/* The app's primary button, as Upgrade's are: it was a
-            purple-to-teal gradient. */}
-        <Button size="lg" fullWidth onClick={handleCheckout} disabled={loading}>
-          {loading ? (
-            <>
-              <Spinner size="sm" variant="inverse" label="Starting checkout" />
-              <span>Starting checkout…</span>
-            </>
-          ) : (
-            <span>{ctaLabel}</span>
-          )}
-        </Button>
+            {/* The app's primary button, as Upgrade's are: it was a
+                purple-to-teal gradient. */}
+            <Button
+              size="lg"
+              fullWidth
+              onClick={handleCheckout}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Spinner
+                    size="sm"
+                    variant="inverse"
+                    label="Starting checkout"
+                  />
+                  <span>Starting checkout…</span>
+                </>
+              ) : (
+                <span>{ctaLabel}</span>
+              )}
+            </Button>
 
-        {/* Directly beneath the button: what it charges, after the trial
-            when there is one, and that it renews. */}
-        <RenewalDisclosure
-          plan={selected}
-          platform={platform}
-          withTrial={withTrial}
-        />
+            {/* Directly beneath the button: what it charges, after the trial
+                when there is one, and that it renews. */}
+            <RenewalDisclosure
+              plan={selected}
+              platform={platform}
+              withTrial={withTrial}
+            />
+          </>
+        ) : (
+          <Button size="lg" variant="secondary" fullWidth onClick={onClose}>
+            Close
+          </Button>
+        )}
 
         {showRestore ? (
           <button
