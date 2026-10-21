@@ -10,6 +10,25 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## App cost rows (survey items 41, 42, 45 and 46, 2026-10-20)
+
+Home reads this week's meals and 60 weigh-ins, the daily logs read covers
+this month and week, the challenges listener reaches back eight days and
+its reads follow the challenges' ids, the Spaces directory reads each Space
+once for every copy open, the training-load curve reads only on the
+Performance page, and a return to the app re-claims an unchanged push token
+twice a day rather than every time. The unit suites cover the logic; these
+need a device.
+
+- [ ] **Push survives a day of returns, and sign-out still works.** On a
+      TestFlight build with push on: leave and return to the app thirty or
+      more times over a day, then sign out. Passing: sign-out completes, and
+      a test push sent after signing back in arrives.
+- [ ] **A new account's first-meal prompt and first-week card.** On a new
+      account, log one meal, then open Home the next day. Passing: the
+      first-meal prompt is gone and the first-week card shows the meal
+      done.
+
 ## Server cost rows (survey items 43 to 46, 2026-10-20)
 
 A post reaches its followers a page of 100 at a time, with five minutes

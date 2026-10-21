@@ -82,7 +82,7 @@ function firestoreHooks(): HookFile[] {
  * upstream of the test, and a gap can legitimately close by the surface
  * disappearing rather than by being covered.
  */
-const EXEMPT = ["DailyLogsProvider"];
+const EXEMPT: string[] = [];
 
 /**
  * Suites where an inline SDK factory is CORRECT and permanent — not debt.

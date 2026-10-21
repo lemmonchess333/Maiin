@@ -198,7 +198,7 @@ export function soonestEndingChallenge<
  *  time, in list order. */
 async function readMyProgress(
   uid: string,
-  tracked: readonly Challenge[]
+  tracked: readonly TrackedChallenge[]
 ): Promise<Record<string, ChallengeParticipant>> {
   const prog: Record<string, ChallengeParticipant> = {};
   for (const ch of tracked) {
@@ -208,6 +208,29 @@ async function readMyProgress(
     if (snap.exists()) prog[ch.id] = snap.data() as ChallengeParticipant;
   }
   return prog;
+}
+
+/** What the progress and leaderboard reads need from a challenge. */
+type TrackedChallenge = Pick<Challenge, "id" | "metric">;
+
+/** How far back the listener reaches: the finale window's seven days, and
+ *  one more, since a challenge ends at local midnight of its UTC end day,
+ *  up to half a day after its stored `endDate`. Challenges are never
+ *  deleted, so an unbounded listener grew by a hundred-odd a year, and
+ *  every one of them changing re-ran the reads below for every viewer. */
+const CHALLENGE_LOOKBACK_MS = 8 * 86_400_000;
+
+/** A stable key for a list of challenges: their ids and metrics, sorted.
+ *  The reads below follow it, so a snapshot that changes only a
+ *  challenge's `participantCount` (every join or leave, anywhere) starts
+ *  none of them. */
+function trackedKeyOf(lists: readonly (readonly Challenge[])[]): string {
+  return JSON.stringify(
+    lists
+      .flat()
+      .map((c) => [c.id, c.metric])
+      .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+  );
 }
 
 export function useChallenges() {
@@ -291,7 +314,14 @@ export function useChallenges() {
       if (subscribed) setLoading(false);
     }, 3000);
     const unsub = onSnapshot(
-      collection(db, "challenges"),
+      query(
+        collection(db, "challenges"),
+        where(
+          "endDate",
+          ">",
+          Timestamp.fromMillis(Date.now() - CHALLENGE_LOOKBACK_MS)
+        )
+      ),
       (snap) => {
         if (!subscribed) return;
         clearTimeout(timeout);
@@ -302,12 +332,9 @@ export function useChallenges() {
         // Active = an activity logged TODAY (local day) would credit it —
         // the server's own predicate, so the card never promises counting
         // the server will refuse, and the rollover's one-day-early docs
-        // stay hidden until their day arrives locally. Docs with no dates
-        // are kept in the active list, matching the old lenient behaviour
-        // for malformed defs.
-        const active = all.filter((c) =>
-          c.endDate ? isChallengeActiveOnDay(c, todayKey) : true
-        );
+        // stay hidden until their day arrives locally. A doc with no end
+        // date is not in the query, and the server credits none.
+        const active = all.filter((c) => isChallengeActiveOnDay(c, todayKey));
         const FINALE_WINDOW_MS = 7 * 86_400_000;
         const ended = all.filter((c) => {
           const endMs = challengeLocalEndMs(c.endDate);
@@ -335,11 +362,27 @@ export function useChallenges() {
     };
   }, [uid, todayKey]);
 
+  const trackedKey = trackedKeyOf([challenges, endedChallenges]);
+  const tracked = useMemo(
+    (): TrackedChallenge[] =>
+      (JSON.parse(trackedKey) as [string, Challenge["metric"]][]).map(
+        ([id, metric]) => ({ id, metric })
+      ),
+    [trackedKey]
+  );
+  /* The person's own values, as a key: the boards are read again when
+     their own standing moves, not when anything else in the snapshot
+     does. */
+  const ownValuesKey = JSON.stringify(
+    tracked.map(({ id }) => myProgress[id]?.currentValue ?? null)
+  );
+  /* Bumped by pull-to-refresh, so the boards are read again with it. */
+  const [boardsNonce, setBoardsNonce] = useState(0);
+
   /* Pull-to-refresh still reloads every goal (SOC-P1d). Participation goals
      additionally receive live server backfill/edit results; those snapshots
      override this one-shot read, including observed membership deletions. */
   const loadMyProgress = useCallback((): Promise<void> => {
-    const tracked = [...challenges, ...endedChallenges];
     const session = sessionRef.current;
     if (!uid || !session?.active || session.uid !== uid || tracked.length === 0)
       return Promise.resolve();
@@ -349,14 +392,18 @@ export function useChallenges() {
       if (session.active && sessionRef.current === session)
         setProgressState({ uid, values });
     });
-  }, [uid, challenges, endedChallenges]);
+  }, [uid, tracked]);
 
   useEffect(() => {
     void loadMyProgress();
   }, [loadMyProgress]);
 
+  const refreshProgress = useCallback((): Promise<void> => {
+    setBoardsNonce((n) => n + 1);
+    return loadMyProgress();
+  }, [loadMyProgress]);
+
   useEffect(() => {
-    const tracked = [...challenges, ...endedChallenges];
     if (!uid || tracked.length === 0) return;
     let active = true;
     const load = async () => {
@@ -398,7 +445,7 @@ export function useChallenges() {
     return () => {
       active = false;
     };
-  }, [uid, challenges, endedChallenges, myProgress]);
+  }, [uid, tracked, ownValuesKey, boardsNonce]);
 
   const joinChallenge = useCallback(
     async (challengeId: string) => {
@@ -530,7 +577,7 @@ export function useChallenges() {
     leaveChallenge,
     /** SOC-P1d: on-demand progress refetch, preserving newer live participation
      *  snapshots and cascading leaderboard reads — the pull-to-refresh handle. */
-    refreshProgress: loadMyProgress,
+    refreshProgress,
     restricted: isRestricted,
   };
 }

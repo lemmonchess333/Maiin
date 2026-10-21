@@ -553,8 +553,11 @@ export default function History() {
     coverage: "complete",
   });
   // Training-load curve feed — self-fetching (needs warmup history beyond
-  // the visible range, so it can't reuse the range-scoped runs above).
-  const trainingLoad = useTrainingLoadSeries(rangeDays);
+  // the visible range, so it can't reuse the range-scoped runs above), and
+  // only while the Performance page that draws it is open.
+  const trainingLoad = useTrainingLoadSeries(rangeDays, {
+    enabled: filter === "analytics" && view === "performance",
+  });
   const uid = useUid();
   const { meals, loading: mealsLoading } = useMeals();
   /* The nutrition section reads its OWN range-scoped query rather than
