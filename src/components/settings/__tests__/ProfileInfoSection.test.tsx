@@ -19,11 +19,15 @@ import { localDateString } from "@/lib/dateHelpers";
 
 afterEach(() => cleanup());
 
-const { queueWeightEntry } = vi.hoisted(() => ({
+const { queueWeightEntry, flushQueuedWeights } = vi.hoisted(() => ({
   queueWeightEntry: vi.fn(),
+  flushQueuedWeights: vi.fn(async () => {}),
 }));
-vi.mock("@/lib/weightQueue", () => ({ queueWeightEntry }));
-beforeEach(() => queueWeightEntry.mockClear());
+vi.mock("@/lib/weightQueue", () => ({ queueWeightEntry, flushQueuedWeights }));
+beforeEach(() => {
+  queueWeightEntry.mockClear();
+  flushQueuedWeights.mockClear();
+});
 
 function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   return {
@@ -38,7 +42,10 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   } as UserProfile;
 }
 
-function renderSection(profile: UserProfile) {
+function renderSection(
+  profile: UserProfile,
+  refreshProfile?: () => Promise<void>
+) {
   const updateProfile = vi.fn(
     async (_patch: Partial<UserProfile>) =>
       ({ ok: true }) as UpdateProfileResult
@@ -49,6 +56,7 @@ function renderSection(profile: UserProfile) {
       name={profile.displayName ?? ""}
       setName={vi.fn()}
       updateProfile={updateProfile}
+      refreshProfile={refreshProfile}
       inline
     />
   );
@@ -174,6 +182,30 @@ describe("ProfileInfoSection — cleared-field guards on weight/height blur", ()
     // profile's weight and macros together, as a weigh-in from Home does.
     expect(queueWeightEntry).toHaveBeenCalledWith("u-1", localDateString(), 82);
     expect(updateProfile).not.toHaveBeenCalled();
+  });
+
+  it("putting a mistaken weight back saves it: it compares against what was just saved", async () => {
+    // The queue writes the profile on the server, not the one this screen
+    // holds, which still says 75: putting 82 back to 75 matched it and
+    // saved nothing, leaving 82 stored and 75 on screen.
+    renderSection(makeProfile());
+    type(/weight/i, "82");
+    type(/weight/i, "75");
+    await Promise.resolve();
+    expect(queueWeightEntry).toHaveBeenNthCalledWith(
+      2,
+      "u-1",
+      localDateString(),
+      75
+    );
+  });
+
+  it("re-reads the profile once the weight is written", async () => {
+    const refreshProfile = vi.fn(async () => {});
+    renderSection(makeProfile(), refreshProfile);
+    type(/weight/i, "82");
+    await vi.waitFor(() => expect(refreshProfile).toHaveBeenCalledTimes(1));
+    expect(flushQueuedWeights).toHaveBeenCalledWith("u-1");
   });
 
   it("rejects a cleared (0) height: no write, value restored", async () => {

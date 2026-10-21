@@ -231,6 +231,28 @@ describe("computeStreakSpanAnchored — long streaks survive a bounded window", 
     expect(span.bridgedDates).toContain(key(5));
   });
 
+  it("deleting the anchor day's only log keeps the certificate, one day shorter", () => {
+    // 200 days saved through today, then today's one log deleted: the
+    // window shows 90 days ending yesterday. The span still certifies 199
+    // through yesterday; the plain walk alone reads 90, and the save would
+    // store that over the 200.
+    const set = new Set(Array.from({ length: 90 }, (_, i) => key(i + 1)));
+    const anchor = { streak: 200, lastActiveDate: key(0) };
+    expect(computeStreakSpanAnchored(set, anchor, NOW).streak).toBe(199);
+    expect(computeStreakState(set, anchor, NOW).anchor).toEqual({
+      streak: 199,
+      lastActiveDate: key(1),
+    });
+  });
+
+  it("deleting three days of logs still ends the streak", () => {
+    // Three days of logs deleted: the span certifies 197 through key(3),
+    // but today and the two days before are empty, so the streak is over.
+    const set = new Set(Array.from({ length: 60 }, (_, i) => key(i + 3)));
+    const anchor = { streak: 200, lastActiveDate: key(0) };
+    expect(computeStreakSpanAnchored(set, anchor, NOW).streak).toBe(0);
+  });
+
   it("garbage anchors fall back to the pure walk", () => {
     const set = activeBack(3);
     for (const anchor of [

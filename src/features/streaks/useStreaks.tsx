@@ -451,6 +451,29 @@ export function computeStreakSpan(
 }
 
 /**
+ * The anchor as the active set can attest it. The anchor's span counts
+ * every calendar day through its last one, so when that day is no longer
+ * active (its only log deleted) the same span still certifies the streak
+ * through the latest active day inside it, that many days shorter: 200
+ * ending today is 199 ending yesterday. Without this the walk fell back to
+ * what the window can see, and the save then stored that over the
+ * certificate. Null when no active day inside the span is left.
+ */
+function attestedAnchor(
+  activeDates: Set<string>,
+  anchor: StreakAnchor
+): StreakAnchor | null {
+  if (activeDates.has(anchor.lastActiveDate)) return anchor;
+  const end = parseLocalDate(anchor.lastActiveDate);
+  for (let back = 1; back < anchor.streak; back++) {
+    const day = localDateString(addLocalDays(end, -back));
+    if (activeDates.has(day))
+      return { streak: anchor.streak - back, lastActiveDate: day };
+  }
+  return null;
+}
+
+/**
  * The anchored entry point: the better of the anchored and pure walks.
  *
  * WHY THIS EXISTS (probe sweep 2026-08-05, verifier-confirmed): the live
@@ -483,12 +506,13 @@ export function computeStreakSpanAnchored(
   if (!anchor) return pure;
   if (!Number.isFinite(anchor.streak) || anchor.streak <= 0) return pure;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(anchor.lastActiveDate)) return pure;
+  const attested = attestedAnchor(activeDates, anchor);
   // Early-out, not a guard: the walk credits the anchor only on a day the
   // active set already attests (the branch lives inside the has() check),
   // so an unattested anchor can never alter the result — skipping the
   // second walk here just saves the work of proving that.
-  if (!activeDates.has(anchor.lastActiveDate)) return pure;
-  const anchored = computeStreakSpan(activeDates, now, anchor);
+  if (!attested) return pure;
+  const anchored = computeStreakSpan(activeDates, now, attested);
   return anchored.streak >= pure.streak ? anchored : pure;
 }
 
