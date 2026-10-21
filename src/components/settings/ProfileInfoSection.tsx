@@ -7,7 +7,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { kgToLb, lbToKg } from "@/lib/weightUnits";
 import { HEIGHT_CM } from "@/lib/bodyMetrics";
 import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
-import { queueWeightEntry } from "@/lib/weightQueue";
+import { flushQueuedWeights, queueWeightEntry } from "@/lib/weightQueue";
 import { localDateString } from "@/lib/dateHelpers";
 import { toast } from "@/lib/toast";
 
@@ -55,6 +55,8 @@ interface ProfileInfoSectionProps {
   name: string;
   setName: (v: string) => void;
   updateProfile: (data: Partial<UserProfile>) => Promise<UpdateProfileResult>;
+  /** Re-reads the profile once a weight saved here has been written. */
+  refreshProfile?: () => Promise<void>;
   /** Set1.2 — skip the AccordionSection shell when rendered inside a
    *  SettingsSection nested page (which provides its own chrome). */
   inline?: boolean;
@@ -65,11 +67,23 @@ export default function ProfileInfoSection({
   name,
   setName,
   updateProfile,
+  refreshProfile,
   inline = false,
 }: ProfileInfoSectionProps) {
   const weightUnit = profile.preferredWeightUnit === "lbs" ? "lbs" : "kg";
   const heightUnit = profile.preferredHeightUnit === "ft" ? "ft" : "cm";
-  const savedKg = profile.weightKg ?? 70;
+  /* The weight a change here last saved. The weigh-in queue writes the
+     profile on the server, not the profile this screen was handed, so
+     without it a second change compared against the old weight: putting a
+     mistake back to it saved nothing. Dropped when the profile itself
+     moves. */
+  const [savedHereKg, setSavedHereKg] = useState<number | null>(null);
+  const [seenProfileKg, setSeenProfileKg] = useState(profile.weightKg);
+  if (profile.weightKg !== seenProfileKg) {
+    setSeenProfileKg(profile.weightKg);
+    setSavedHereKg(null);
+  }
+  const savedKg = savedHereKg ?? profile.weightKg ?? 70;
   const savedCm = profile.heightCm ?? 170;
 
   // What each field shows, in the chosen unit. Compared as text on blur, so
@@ -103,6 +117,9 @@ export default function ProfileInfoSection({
     // macro targets on the old one.
     try {
       queueWeightEntry(profile.uid, localDateString(), kg);
+      setSavedHereKg(kg);
+      if (refreshProfile)
+        void flushQueuedWeights(profile.uid).then(refreshProfile, () => {});
     } catch (err) {
       setWeight(shown);
       toast.error(
