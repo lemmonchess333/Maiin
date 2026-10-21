@@ -186,6 +186,20 @@ describe("uploadProfilePhoto", () => {
     });
   });
 
+  it("saves for an account with no public profile yet", async () => {
+    // An update of a missing document failed the whole batch, after the
+    // photo was already uploaded and screened.
+    seedFirestore({ [MAIN]: { displayName: "Sam" } });
+
+    await uploadProfilePhoto(UID, PHOTO);
+
+    expect(readDoc(PUBLIC)).toMatchObject({
+      photoURL: NEW_URL,
+      photoStoragePath: NEW_PATH,
+    });
+    expect(readDoc(MAIN)).toMatchObject({ photoURL: NEW_URL });
+  });
+
   it("stores the photo as a JPEG that may be cached for good, under a new name", async () => {
     seedUploadedPhoto();
 

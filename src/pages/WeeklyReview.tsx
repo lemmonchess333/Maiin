@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Share2, Sparkles, Trophy } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -466,18 +466,22 @@ function WeekAhead({
 export default function WeeklyReview() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { loading, review, weekKey } = useWeeklyReview();
+  const { loading, review, weekKey, failed, retry } = useWeeklyReview();
   const [shareOpen, setShareOpen] = useState(false);
 
   // D16 — the personal "why", resurfaced. Empty/whitespace = no why set.
   const trainingWhy = profile?.trainingWhy?.trim() || undefined;
 
-  // Opening the page IS the "viewed" event — it retires the Home entry.
+  // Seeing the review IS the "viewed" event — it retires the Home entry.
+  // A read that failed showed nothing, so the entry stays.
   const { dismiss } = useDismissOnce(reviewViewedKey(weekKey));
+  const viewedRef = useRef(false);
   useEffect(() => {
+    if (loading || failed || viewedRef.current) return;
+    viewedRef.current = true;
     dismiss();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: opening the page IS the viewed event; `dismiss` takes a new identity per render and must not re-fire
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once: `dismiss` takes a new identity per render and must not re-fire
+  }, [loading, failed]);
 
   /* Back to wherever the recap was opened from; opened directly (a
      notification, a bookmark), there is nowhere to go back to, so Home. */
@@ -502,6 +506,31 @@ export default function WeeklyReview() {
         render: () => (
           <div className="flex flex-1 items-center justify-center">
             <Spinner />
+          </div>
+        ),
+      },
+    ];
+  } else if (failed) {
+    slides = [
+      {
+        key: "failed",
+        label: "Couldn't load",
+        render: () => (
+          <div className="flex flex-1 flex-col" role="alert">
+            <h2 className="text-h1 font-extrabold text-foreground">
+              Couldn&rsquo;t load your review
+            </h2>
+            <p className="mt-3 text-base text-muted-foreground">
+              Check your connection and try again.
+            </p>
+            <div className="mt-auto space-y-2 pt-8">
+              <Button fullWidth onClick={retry}>
+                Try again
+              </Button>
+              <Button fullWidth variant="ghost" onClick={close}>
+                Done
+              </Button>
+            </div>
           </div>
         ),
       },

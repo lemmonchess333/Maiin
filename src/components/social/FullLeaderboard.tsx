@@ -16,6 +16,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { SOCIAL_GATES, shouldShowLeaderboard } from "@/lib/socialGates";
 import { topPercent } from "@/features/challenges/useChallengePercentile";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 
 /* Tab ORDER is this surface's own (sessions first, the one the card shows);
    the name and unit are not — they come from `CHALLENGE_LABELS` (the unit
@@ -74,25 +75,14 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
         <h2 className="text-lg font-extrabold">Leaderboard</h2>
       </div>
 
-      {/* Tab row */}
-      <div
-        data-no-page-swipe
-        className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1"
-      >
-        {TABS.map((t) => (
-          <button
-            type="button"
-            key={t.key}
-            onClick={() => setActiveTab(t.key)}
-            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              activeTab === t.key
-                ? "bg-primary-strong text-primary-foreground"
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      {/* Which board: one choice of three, as a radiogroup. */}
+      <div data-no-page-swipe>
+        <SegmentedControl
+          ariaLabel="Board"
+          value={activeTab}
+          onChange={setActiveTab}
+          options={TABS.map((t) => ({ value: t.key, label: t.label }))}
+        />
       </div>
 
       {/* Entry list */}

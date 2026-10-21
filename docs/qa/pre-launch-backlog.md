@@ -10,6 +10,23 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Failed reads, loading and tap targets (survey items 52 to 57, 2026-10-21)
+
+A read that fails now says so with Try again instead of an empty state
+(an exercise's history, the Circle share sheet, the weekly review, who you
+follow); Settings → Health and Home's steps tile wait for the first read;
+eight controls under 44 px are full size; a weight changed in Settings is
+today's weigh-in; a photo saves for an account with no public profile;
+taking a drink back just after midnight takes it from the day it was drunk.
+The unit and rules suites cover the logic; these need a device.
+
+- [ ] **Settings → Health opens without a guess.** On a TestFlight build
+      connected to Apple Health, open Settings → Health. Passing: a
+      placeholder, then today's steps; never a 0 or "No steps yet" first.
+- [ ] **A weight changed in Settings reaches Home.** Change the weight in
+      Settings → Profile, then open Home. Passing: the weight tile shows the
+      new weight dated today, and the weight chart has today's point.
+
 ## App cost rows (survey items 41, 42, 45 and 46, 2026-10-20)
 
 Home reads this week's meals and 60 weigh-ins, the daily logs read covers

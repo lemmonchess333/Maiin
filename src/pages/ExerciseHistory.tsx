@@ -15,6 +15,7 @@ import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import {
   localDateString,
   parseLocalDate,
@@ -83,7 +84,12 @@ export default function ExerciseHistory() {
   const params = useParams<{ name: string }>();
   const decodedName = params.name ? decodeURIComponent(params.name) : "";
   // All-range sessions / all-time PRs need EVERY workout, not just the newest 50.
-  const { workouts, loading } = useWorkouts({ coverage: "complete" });
+  const {
+    workouts,
+    loading,
+    failed,
+    refresh: retryWorkouts,
+  } = useWorkouts({ coverage: "complete" });
   const navigate = useNavigate();
   const location = useLocation();
   // Loads are kg in the log; the lifter reads them in their unit (Lift18).
@@ -294,6 +300,19 @@ export default function ExerciseHistory() {
         <div className="h-8 bg-muted/50 rounded motion-safe:animate-pulse" />
         <div className="h-24 bg-muted/50 rounded-2xl motion-safe:animate-pulse" />
         <div className="h-48 bg-muted/50 rounded-2xl motion-safe:animate-pulse" />
+      </div>
+    );
+  }
+
+  // A failed read is not an exercise nobody has logged: both empty states
+  // below would tell the person something untrue.
+  if (failed && (tab !== "form" || !exercise)) {
+    return (
+      <div className="pt-2">
+        <ErrorState
+          title="Couldn't load your sessions"
+          retry={{ onClick: retryWorkouts }}
+        />
       </div>
     );
   }

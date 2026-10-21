@@ -89,6 +89,7 @@ import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramOutcome } from "@/features/program/programOutcome";
 import { Collapse } from "@/components/ui/Collapse";
+import { IconButton } from "@/components/ui/IconButton";
 
 interface DayActionSheetProps {
   open: boolean;
@@ -341,14 +342,12 @@ export default function DayActionSheet({
               {dayLabel}
             </p>
           </div>
-          <button
-            type="button"
+          <IconButton
             onClick={onClose}
             aria-label="Close"
-            className="p-2 -m-2 rounded-lg text-muted-foreground transition-transform active:scale-95"
-          >
-            <X className="size-4" />
-          </button>
+            icon={<X />}
+            className="-m-1.5 text-muted-foreground"
+          />
         </div>
 
         {/* Empty state — nothing to manage in this scope. */}

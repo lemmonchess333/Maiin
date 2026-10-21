@@ -165,7 +165,7 @@ describe("Show my week", () => {
 describe("FullLeaderboard", () => {
   const openTab = (type: ChallengeType) =>
     fireEvent.click(
-      screen.getByRole("button", { name: CHALLENGE_LABELS[type].title })
+      screen.getByRole("radio", { name: CHALLENGE_LABELS[type].title })
     );
 
   it("has a Sessions, a Distance and a Volume board, and no points", () => {
@@ -174,7 +174,7 @@ describe("FullLeaderboard", () => {
 
     expect(
       ["weekly_sessions", "weekly_distance", "weekly_volume"].map((type) =>
-        screen.getByRole("button", {
+        screen.getByRole("radio", {
           name: CHALLENGE_LABELS[type as ChallengeType].title,
         })
       )
@@ -209,5 +209,11 @@ describe("FullLeaderboard", () => {
       await screen.findByText("Couldn’t load the board.")
     ).toBeInTheDocument();
     expect(screen.queryByText("No activity this week")).toBeNull();
+
+    // Try again reads it again: four athletes this week, under the cohort
+    // gate, so the board says how many rather than ranking them.
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText(/active this week/)).toBeInTheDocument();
+    expect(screen.queryByText("Couldn’t load the board.")).toBeNull();
   });
 });

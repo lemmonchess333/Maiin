@@ -109,7 +109,12 @@ export function useWorkouts(options: UseWorkoutsOptions = {}) {
      a failed read keeps the rows already shown (so a transient rule or
      network error doesn't empty the history view), and a workout finished
      offline shows at once. */
-  const { items: workouts, loading } = useSavedSessions(
+  const {
+    items: workouts,
+    loading,
+    failed,
+    refresh,
+  } = useSavedSessions(
     SAVED_WORKOUTS,
     uid,
     COVERAGE_WINDOW[coverage],
@@ -184,6 +189,9 @@ export function useWorkouts(options: UseWorkoutsOptions = {}) {
   return {
     workouts,
     loading,
+    /** The read failed with nothing to show: not the same as no workouts. */
+    failed,
+    refresh,
     saveWorkout,
     getWorkoutsForDate,
   };

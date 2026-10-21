@@ -19,6 +19,7 @@ import { toast } from "@/lib/toast";
 import { THEME } from "@/lib/theme";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
+import { IconButton } from "@/components/ui/IconButton";
 
 export interface PeopleViewProps {
   /** True when the People (find) tab is the active top-level tab.
@@ -280,14 +281,12 @@ export default function PeopleView({
               /* Inline clear affordance — quicker than holding
            backspace on mobile and clears results in one tap
            via the empty-input branch of handleSearchInputChange. */
-              <button
-                type="button"
+              <IconButton
                 onClick={() => handleSearchInputChange("")}
                 aria-label="Clear search"
-                className="absolute right-1 top-1 size-10 flex items-center justify-center text-muted-foreground hover:text-foreground"
-              >
-                <X className="size-4" />
-              </button>
+                icon={<X />}
+                className="absolute right-0.5 top-0.5 text-muted-foreground hover:text-foreground"
+              />
             ) : null}
           </div>
           {searchResults.length > 0 && (

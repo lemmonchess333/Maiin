@@ -27,6 +27,7 @@ export default function WeightStepsTiles({
   weightTrend = null,
   stepsStatus = "unavailable",
   steps = null,
+  stepsPending = false,
   onConnectSteps,
   loading = false,
 }: {
@@ -48,6 +49,9 @@ export default function WeightStepsTiles({
      web the tile shows its Connect state whatever the status. */
   stepsStatus?: StepsStatus;
   steps?: number | null;
+  /** Today's steps are still being read: the figure is a placeholder,
+   *  not a 0. */
+  stepsPending?: boolean;
   onConnectSteps?: () => void;
   /* True while the home data that carries the last weight is still
      loading. The tile then shows a skeleton, not the "not yet logged"
@@ -107,7 +111,9 @@ export default function WeightStepsTiles({
     stepsStatus === "connected" || stepsStatus === "ambiguous";
   const stepsValue = steps ?? 0;
   const stepsAriaLabel = stepsConnected
-    ? `${stepsValue.toLocaleString()} steps today.`
+    ? stepsPending
+      ? "Steps today, loading."
+      : `${stepsValue.toLocaleString()} steps today.`
     : "Steps not yet connected. Connect Apple Health to track steps.";
 
   const stepsBody = (
@@ -134,9 +140,13 @@ export default function WeightStepsTiles({
                 tiles stacked in one column, so the same size and weight
                 (DESIGN_GUIDE: never mix 700 and 800 in one tier). Only
                 the phone shows this state; the web shows Connect. */}
-            <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
-              {stepsValue.toLocaleString()}
-            </p>
+            {stepsPending ? (
+              <Skeleton className="h-6 w-16" />
+            ) : (
+              <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
+                {stepsValue.toLocaleString()}
+              </p>
+            )}
           </div>
           <p
             className="text-micro mt-1"

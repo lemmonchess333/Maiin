@@ -126,7 +126,14 @@ export async function uploadProfilePhoto(
      user can retry and the prior-path deletion below won't have
      happened yet. */
   const batch = writeBatch(db);
-  batch.update(profileRef, { photoURL, photoStoragePath: newPath });
+  // A set with merge: an account can reach here with no public profile
+  // yet, and an update of a missing document fails the whole batch after
+  // the photo is already uploaded.
+  batch.set(
+    profileRef,
+    { photoURL, photoStoragePath: newPath },
+    { merge: true }
+  );
   batch.update(doc(db, "users", uid), { photoURL });
   await batch.commit();
 
@@ -187,7 +194,11 @@ export async function removeProfilePhoto(uid: string): Promise<void> {
      If Storage delete fails after this, the user already sees the
      change and can retry later. */
   const batch = writeBatch(db);
-  batch.update(profileRef, { photoURL: "", photoStoragePath: null });
+  batch.set(
+    profileRef,
+    { photoURL: "", photoStoragePath: null },
+    { merge: true }
+  );
   batch.update(doc(db, "users", uid), { photoURL: "" });
   await batch.commit();
   try {

@@ -17,6 +17,9 @@ import type { UserProfile } from "@/lib/auth";
 let mockProfile: Partial<UserProfile> | null = null;
 let mockReview: unknown = null;
 let mockLoading = false;
+let mockFailed = false;
+const mockRetry = vi.fn();
+const mockDismiss = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: { uid: "u-1" }, profile: mockProfile }),
@@ -28,6 +31,8 @@ vi.mock("@/hooks/useWeeklyReview", () => ({
     loading: mockLoading,
     review: mockReview,
     weekKey: "2026-W27",
+    failed: mockFailed,
+    retry: mockRetry,
   }),
   reviewViewedKey: (weekKey: string) => `tropos-review-viewed:${weekKey}`,
 }));
@@ -44,7 +49,7 @@ vi.mock("@/hooks/useReducedMotion", () => ({
 vi.mock("firebase/firestore");
 
 vi.mock("@/hooks/useDismissOnce", () => ({
-  useDismissOnce: () => ({ dismiss: vi.fn(), dismissed: false }),
+  useDismissOnce: () => ({ dismiss: mockDismiss, dismissed: false }),
 }));
 
 /* The share sheet renders the card off-screen to export it; here it only
@@ -113,6 +118,29 @@ afterEach(() => {
   mockProfile = null;
   mockReview = null;
   mockLoading = false;
+  mockFailed = false;
+  mockRetry.mockClear();
+  mockDismiss.mockClear();
+});
+
+describe("WeeklyReview — a review that could not be read", () => {
+  it("says so, offers Try again, and leaves Home's entry in place", () => {
+    mockFailed = true;
+    renderRecap();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Couldn’t load your review"
+    );
+    expect(screen.queryByText("Your first review")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(mockRetry).toHaveBeenCalledTimes(1);
+    expect(mockDismiss).not.toHaveBeenCalled();
+  });
+
+  it("a review that was read retires Home's entry", () => {
+    mockReview = normal();
+    renderRecap();
+    expect(mockDismiss).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("WeeklyReview — the recap as cards", () => {

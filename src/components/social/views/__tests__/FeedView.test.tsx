@@ -271,6 +271,25 @@ function feedOrder(): string[] {
   );
 }
 
+describe("FeedView — who you follow could not be read", () => {
+  it("Following says so and reads it again, instead of showing nothing", () => {
+    const retryFollowingCount = vi.fn();
+    setup({
+      feedSubTab: "following",
+      followingCount: null,
+      followingCountFailed: true,
+      retryFollowingCount,
+      followingFeedUnlocked: false,
+    });
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Couldn’t load who you follow."
+    );
+    expect(screen.queryByText("You don't follow anyone yet")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(retryFollowingCount).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("FeedView — posts first (2026-10-01)", () => {
   /* The points card only arms on Following with a thin graph (<2
      follows) — exactly where TrajectoryCard used to self-fetch. */
