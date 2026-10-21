@@ -2,7 +2,10 @@ import { useMemo } from "react";
 import { useTrainingFuelData } from "./useTrainingFuelData";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { useAuth } from "@/lib/auth";
-import { getAdjustedTargets } from "@/lib/phaseNutrition";
+import {
+  getAdjustedTargets,
+  programForNutrition as nutritionProgramOf,
+} from "@/lib/phaseNutrition";
 import {
   classifyDayIntensity,
   describeDayIntensity,
@@ -242,11 +245,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
   // ── Derive effective targets ──────────────────────────────────────────
   return useMemo<EffectiveTargets>(() => {
     const targetDate = date ?? parseLocalDate(today);
-    // Ensure primaryGoal is populated for the translator: pre-W1a programState
-    // docs lack it, but profile.primaryGoal is its backfill source.
-    const programForNutrition: ProgramState | undefined = program
-      ? { ...program, primaryGoal: program.primaryGoal ?? profile?.primaryGoal }
-      : undefined;
+    const programForNutrition = nutritionProgramOf(program, profile);
     // Day-load intensity drives the macro fast-loop. Use the REAL weekSchedule
     // (not a generated fallback) so a planless user (FREE_RUN) classifies REST
     // every day instead of fabricated training. Computed once and shared by the

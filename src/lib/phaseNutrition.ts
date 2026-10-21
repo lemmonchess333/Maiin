@@ -1,5 +1,5 @@
 import type { UserProfile } from "./auth";
-import type { DayType } from "./types";
+import type { DayType, Goal } from "./types";
 import type { ProgramState } from "@/features/program/programTypes";
 import {
   resolveProteinMultiplier,
@@ -37,6 +37,9 @@ export interface AdjustedTargets {
   /** Essential fat kcal at this bodyweight — the smallest reconcilable
    *  target. */
   minFeasibleKcal: number;
+  /** Bodyweight × the day's protein multiplier, before the cap: what
+   *  `protein` would be if the budget held it. */
+  proteinUncapped: number;
 }
 
 /**
@@ -108,7 +111,8 @@ export function getAdjustedTargets(
   // Protein anchored to bodyweight, capped so protein + fat fit the budget
   // (carbs ≥ 0). A cap means the cut is too aggressive to hit both → flag it.
   let aggressive = false;
-  let protein = Math.round(multiplier * weightKg);
+  const proteinUncapped = Math.round(multiplier * weightKg);
+  let protein = proteinUncapped;
   const proteinRoomCals = calories - fat * 9;
   if (protein * 4 > proteinRoomCals) {
     protein = Math.max(0, Math.floor(proteinRoomCals / 4));
@@ -135,5 +139,47 @@ export function getAdjustedTargets(
     // these grams.
     infeasible: fat * 9 > calories,
     minFeasibleKcal: essentialFatG * 9,
+    proteinUncapped,
   };
+}
+
+/** The programme as the nutrition path reads it: pre-W1a programState docs
+ *  lack `primaryGoal`, and `profile.primaryGoal` is its backfill source. */
+export function programForNutrition(
+  program: ProgramState | null | undefined,
+  profile: UserProfile | null | undefined
+): ProgramState | undefined {
+  return program
+    ? { ...program, primaryGoal: program.primaryGoal ?? profile?.primaryGoal }
+    : undefined;
+}
+
+/** Below this many grams of carbs a day the split is flagged (Nutr5). */
+export const LOW_CARB_G = 50;
+
+/**
+ * The split Settings → Nutrition shows for the plan being edited (Nutr5):
+ * the display split on a rest day, at the draft's calories, weight and goal.
+ * Its protein is the figure Home shows every day, because protein follows the
+ * training block, not the day; its carbs and fat are Home's on a rest day.
+ */
+export function restDaySplit(
+  profile: UserProfile,
+  draft: { targetCalories: number; weightKg: number; goal: Goal },
+  program: ProgramState | null | undefined
+): AdjustedTargets {
+  return getAdjustedTargets(
+    {
+      ...profile,
+      targetCalories: draft.targetCalories,
+      weightKg: draft.weightKg,
+      program: {
+        startWeight: profile.program?.startWeight ?? draft.weightKg,
+        currentPhase: profile.program?.currentPhase ?? "base",
+        goal: draft.goal,
+      },
+    },
+    "rest",
+    programForNutrition(program, profile)
+  );
 }
