@@ -423,6 +423,12 @@
       "indexes": []
     },
     {
+      "collectionGroup": "items",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
       "collectionGroup": "posts",
       "fieldPath": "authorId",
       "indexes": [

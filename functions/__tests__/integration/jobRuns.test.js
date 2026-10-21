@@ -34,13 +34,20 @@ beforeAll(() => {
   db = require("firebase-admin").firestore();
 });
 
-/** Answer only the sweep's `users where lastActiveAt >=` query. */
+/** Answer only the sweep's `users where lastActiveAt >=` query, read a
+ *  page at a time. */
 function answerActiveUsers(answer) {
   const collection = db.collection.bind(db);
+  const query = {
+    orderBy: () => query,
+    limit: () => query,
+    startAfter: () => query,
+    get: answer,
+  };
   return vi
     .spyOn(db, "collection")
     .mockImplementation((name) =>
-      name === "users" ? { where: () => ({ get: answer }) } : collection(name)
+      name === "users" ? { where: () => query } : collection(name)
     );
 }
 
