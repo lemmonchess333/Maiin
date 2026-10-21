@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 /**
- * The native Apple sign-in keeps the name Apple shares (survey 22), and
- * every sign-in remembers its method for Login's "Last used" (Polish2
- * call 3), through the real AuthProvider and the one Firestore fake.
+ * The native Apple sign-in keeps the name Apple shares (survey 22), and a
+ * set-up account's sign-in remembers its method for Login's "Last used"
+ * (Polish2 call 3), through the real AuthProvider and the one Firestore
+ * fake.
  *
  * Apple gives the name only on the first sign-in and only to the app: the
  * identity token carries none. Signing in with the credential alone made
@@ -106,7 +107,11 @@ vi.mock("@/lib/captureTimezone", () => ({
 }));
 
 import { AuthProvider, useAuth } from "../auth";
-import { readDoc, resetFirestore } from "@/test/firestoreHarness";
+import {
+  readDoc,
+  resetFirestore,
+  seedFirestore,
+} from "@/test/firestoreHarness";
 import { readLastSignInMethod } from "../signInMethod";
 
 function Probe() {
@@ -158,14 +163,28 @@ describe("native Apple sign-in", () => {
 });
 
 describe("the method a sign-in used", () => {
-  it("is remembered for Login's Last used", async () => {
+  const signInAs = async (uid: string) => {
     await act(async () => {
       H.mockAuth.currentUser = {
-        uid: "apple-uid",
+        uid,
         getIdTokenResult: async () => ({ signInProvider: "apple.com" }),
       };
       H.authCb?.(H.mockAuth.currentUser);
     });
+  };
+
+  it("is remembered for Login's Last used once the account is set up", async () => {
+    seedFirestore({ "users/set-up": { onboardingComplete: true } });
+    await signInAs("set-up");
     await waitFor(() => expect(readLastSignInMethod()).toBe("apple"));
+  });
+
+  it("is not remembered for a new account the person may back out of", async () => {
+    seedFirestore({ "users/brand-new": { onboardingComplete: false } });
+    await signInAs("brand-new");
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(readLastSignInMethod()).toBeNull();
   });
 });

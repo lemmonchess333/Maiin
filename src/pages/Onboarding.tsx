@@ -183,6 +183,16 @@ export default function Onboarding() {
   const [displayName, setDisplayName] = useState(() =>
     startingDisplayName(draft?.displayName, user)
   );
+  /* The name Apple shares is set on the account just after it is made,
+     and setup can open before it lands; it is taken when it arrives, while
+     the person has not typed one of their own. */
+  const [nameTyped, setNameTyped] = useState(draft?.displayName !== undefined);
+  const arrivedName = profile?.displayName?.trim() ?? "";
+  const [seenArrivedName, setSeenArrivedName] = useState(arrivedName);
+  if (arrivedName !== seenArrivedName) {
+    setSeenArrivedName(arrivedName);
+    if (arrivedName && !nameTyped) setDisplayName(arrivedName);
+  }
   const [goalConfirmed, setGoalConfirmed] = useState(
     draft?.goalConfirmed ?? Boolean(draft && draft.step > 0)
   );
@@ -1871,7 +1881,10 @@ export default function Onboarding() {
                   value={displayName}
                   maxLength={DISPLAY_NAME_MAX}
                   aria-invalid={!displayNameValidation.valid}
-                  onChange={(event) => setDisplayName(event.target.value)}
+                  onChange={(event) => {
+                    setNameTyped(true);
+                    setDisplayName(event.target.value);
+                  }}
                 />
                 <p className="text-sm text-muted-foreground">
                   Other people can see this name on your profile. You can change

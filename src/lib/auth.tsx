@@ -960,6 +960,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const authEpochRef = useRef(0);
   const activeUidRef = useRef<string | null>(null);
 
+  // The method this session signed in with, which Login marks "Last used"
+  // (signInMethod.ts); the token names it whichever path signed in. Only
+  // for an account that has finished setup: a new one the person backs out
+  // of ("Sign in another way") is not the account to steer them back to.
+  const onboarded = profile?.onboardingComplete === true;
+  useEffect(() => {
+    if (!user || !onboarded) return;
+    Promise.resolve()
+      .then(() => user.getIdTokenResult())
+      .then((token) =>
+        rememberSignInMethod(signInMethodOf(token?.signInProvider))
+      )
+      .catch(() => {});
+  }, [user, onboarded]);
+
   // Dark mode sync — dark is the default, so a null profile (signed out /
   // still loading) and a profile without an explicit choice both resolve dark.
   useEffect(() => {
@@ -995,17 +1010,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // This device has had an account: the signed-out screen greets the
       // person as returning, not as new (Login's welcome screen).
       if (firebaseUser) writeString(SIGNED_IN_BEFORE_KEY, "1");
-      // The method this session signed in with, which Login marks "Last
-      // used" (signInMethod.ts). The token names it whichever path signed
-      // in: popup, redirect or native.
-      if (firebaseUser) {
-        Promise.resolve()
-          .then(() => firebaseUser.getIdTokenResult())
-          .then((token) =>
-            rememberSignInMethod(signInMethodOf(token?.signInProvider))
-          )
-          .catch(() => {});
-      }
       // Track the current UID on errorReporting so the Firestore sink
       // writes critical errors under the correct user doc. Null clears it
       // on sign-out so orphaned errors don't leak to a stale UID.
