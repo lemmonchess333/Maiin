@@ -149,8 +149,14 @@ async function applySubscriptionToUser({
             originalTransactionId,
             boundTo: lookupData.uid,
           });
-          throw new Error(
-            "Apple transaction is bound to a different account. Sign in with that account to restore Pro, or contact support."
+          // Said to the person as it is (appleIAP.js passes this code's
+          // message on); every other failure here reaches them as a
+          // fixed sentence.
+          throw Object.assign(
+            new Error(
+              "Apple transaction is bound to a different account. Sign in with that account to restore Pro, or contact support."
+            ),
+            { code: "transaction-bound-elsewhere" }
           );
         }
       }

@@ -155,10 +155,19 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
   });
 
   it("D14: a rebuild threads the SAVED race plan through unchanged", async () => {
+    // Whole, with the race link and goal time: configurePlan stores the goal
+    // it is sent in place of the one there.
+    const raceGoal = {
+      distance: "half" as const,
+      targetDate: "2027-03-01",
+      eventName: "The Big Half",
+      eventSpaceId: "the-big-half",
+      targetTimeS: 6300,
+    };
     setup(
       {
         runMode: "race_prep",
-        raceGoal: { distance: "half", targetDate: "2027-03-01" },
+        raceGoal,
         weeklyRunDaysTarget: 3,
         runVolume: "lighter",
         runDifficulty: "harder",
@@ -173,10 +182,7 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
       profileUpdates?: Record<string, unknown>;
     };
     expect(arg.profileUpdates?.runMode).toBe("race_prep");
-    expect(arg.profileUpdates?.raceGoal).toMatchObject({
-      distance: "half",
-      targetDate: "2027-03-01",
-    });
+    expect(arg.profileUpdates?.raceGoal).toEqual(raceGoal);
   });
 
   it("a save refused for coming too often says to wait, and keeps the change", async () => {

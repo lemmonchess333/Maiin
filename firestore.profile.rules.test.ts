@@ -472,6 +472,24 @@ suite(
 suite("users/{uid}/public/profile — the other two value gates", () => {
   const ME = "pub-gates";
 
+  it("takes the streak's last day as a day key, and nothing else there", async () => {
+    const db = env.authenticatedContext(ME).firestore();
+    const ref = doc(db, `users/${ME}/public/profile`);
+    await assertSucceeds(
+      setDoc(
+        ref,
+        { currentStreak: 5, lastActiveDate: "2026-10-21" },
+        { merge: true }
+      )
+    );
+    await assertFails(
+      setDoc(ref, { lastActiveDate: "yesterday" }, { merge: true })
+    );
+    await assertFails(
+      setDoc(ref, { lastActiveDate: 20261021 }, { merge: true })
+    );
+  });
+
   it("refuses an arbitrary string in trainingForSpaceId", async () => {
     // SOC-P2f: closed vocabulary. An arbitrary string would ride a public,
     // cross-user-readable field.

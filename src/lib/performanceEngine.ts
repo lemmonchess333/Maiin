@@ -2,7 +2,9 @@
 /* ─────────────────────────────────────────────
    Performance Engine — Computation
    Pure functions. No Firebase imports.
-   Can be extracted to Cloud Functions as-is.
+   The index the app shows is the server's (functions/lib/perfScoring.js).
+   This copy of it runs in tests and the seed scripts; the app itself uses
+   only the load bands and week keys.
    ───────────────────────────────────────────── */
 
 import type {

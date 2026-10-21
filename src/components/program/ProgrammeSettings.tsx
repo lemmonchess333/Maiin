@@ -707,6 +707,13 @@ export default function ProgrammeSettings({
         preserveHistory: true,
       });
 
+      // This editor never changes the race. configurePlan stores the goal it
+      // is sent whole, so it gets the stored one, with the race link and goal
+      // time buildPlan does not carry.
+      if (plan.profileUpdates.raceGoal && profile.raceGoal) {
+        plan.profileUpdates.raceGoal = profile.raceGoal;
+      }
+
       // LIFT-EV-06: the user chose "update my sessions" — apply the block
       // transform to the preserved workouts before they travel. buildPlan's
       // preserve branch has handed back the verbatim prescription, so this

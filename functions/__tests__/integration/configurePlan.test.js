@@ -313,6 +313,95 @@ suite("configurePlan — emulator integration", () => {
     for (const key of Object.keys(preferences)) expect(cleared[key]).toBeNull();
   });
 
+  /* A plan save is sent the race goal whole. Merged, a goal moved off a
+     listed race kept that race's link, and the public "Training for" chip
+     kept naming the race. */
+  const london = {
+    distance: "marathon",
+    targetDate: "2027-04-25",
+    eventName: "London Marathon",
+    eventSpaceId: "london-marathon",
+    targetTimeS: 14400,
+  };
+  const racePlan = (raceGoal) => ({
+    profileUpdates: validProfileUpdates({ runMode: "race_prep", raceGoal }),
+    programState: validProgramState({
+      runPlan: { mode: "race_prep", raceGoal },
+    }),
+    weekSchedule: validWeekSchedule(),
+  });
+  async function seedLondon() {
+    const user = db.collection("users").doc(TEST_UID);
+    const publicRef = user.collection("public").doc("profile");
+    await user.set(validProfileUpdates({ runMode: "race_prep", raceGoal: london }));
+    await publicRef.set({ uid: TEST_UID, trainingForSpaceId: "london-marathon" });
+    return { user, publicRef };
+  }
+
+  it("stores a new race goal whole and takes the old race's chip off", async () => {
+    const { user, publicRef } = await seedLondon();
+    const own = { distance: "10k", targetDate: "2026-12-20" };
+    await configurePlan.run(
+      {
+        baseProgramState: null,
+        baseProfile: validProfileUpdates({
+          runMode: "race_prep",
+          raceGoal: london,
+        }),
+        ...racePlan(own),
+      },
+      { auth: { uid: TEST_UID } }
+    );
+    expect((await user.get()).data().raceGoal).toEqual(own);
+    expect((await publicRef.get()).data().trainingForSpaceId).toBeNull();
+  });
+
+  it("keeps the chip while the goal links to its race, and drops it with the goal", async () => {
+    const { user, publicRef } = await seedLondon();
+    // The older clients' save, with no baseline.
+    await configurePlan.run(racePlan(london), { auth: { uid: TEST_UID } });
+    expect((await user.get()).data().raceGoal).toEqual(london);
+    expect((await publicRef.get()).data().trainingForSpaceId).toBe(
+      "london-marathon"
+    );
+
+    await db.collection("rateLimits").doc(`${TEST_UID}_configurePlan`).delete();
+    await configurePlan.run(
+      {
+        profileUpdates: validProfileUpdates({ raceGoal: null }),
+        programState: validProgramState(),
+        weekSchedule: validWeekSchedule(),
+      },
+      { auth: { uid: TEST_UID } }
+    );
+    expect((await user.get()).data().raceGoal).toBeNull();
+    expect((await publicRef.get()).data().trainingForSpaceId).toBeNull();
+  });
+
+  it("onboarding again with another race takes the old race's chip off", async () => {
+    const { user, publicRef } = await seedLondon();
+    const own = { distance: "half", targetDate: "2026-11-29" };
+    await completeOnboarding.run(
+      {
+        profileData: {
+          ...validProfileUpdates({ runMode: "race_prep", raceGoal: own }),
+          weightKg: 72,
+          heightCm: 180,
+          age: 28,
+          sex: "male",
+          activityLevel: "active",
+        },
+        programState: validProgramState({
+          runPlan: { mode: "race_prep", raceGoal: own },
+        }),
+        weekSchedule: validWeekSchedule(),
+      },
+      { auth: { uid: TEST_UID } }
+    );
+    expect((await getDocSettled(user)).data().raceGoal).toEqual(own);
+    expect((await publicRef.get()).data().trainingForSpaceId).toBeNull();
+  });
+
   it("rejects payload missing programSchemaVersion (invalid-argument)", async () => {
     const ps = validProgramState();
     delete ps.programSchemaVersion;

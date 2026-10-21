@@ -41,6 +41,7 @@ const {
   mergeChangedFields,
   ProgrammeConflictError,
 } = require("./lib/stateTransition");
+const { wholeRaceGoal, raceIdentityIsStale } = require("./lib/raceGoalWrite");
 const {
   runProgramCommandTransaction,
 } = require("./lib/programCommandTransaction");
@@ -909,9 +910,29 @@ exports.completeOnboarding = functions
         typeof profileData.displayName === "string" && profileData.displayName
           ? profileData.displayName
           : null;
+      const storedRaceGoal = existing.exists
+        ? existing.data().raceGoal
+        : undefined;
+      const raceGoalAfter =
+        profileData.raceGoal !== undefined
+          ? profileData.raceGoal
+          : storedRaceGoal;
       const batch = db.batch();
       if (existing.exists) {
-        batch.set(userRef, profileData, { merge: true });
+        batch.set(
+          userRef,
+          profileData.raceGoal !== undefined
+            ? {
+                ...profileData,
+                raceGoal: wholeRaceGoal(
+                  profileData.raceGoal,
+                  storedRaceGoal,
+                  admin.firestore.FieldValue.delete()
+                ),
+              }
+            : profileData,
+          { merge: true }
+        );
       } else {
         batch.set(userRef, profileData);
       }
@@ -919,6 +940,11 @@ exports.completeOnboarding = functions
         publicRef,
         {
           uid,
+          ...(publicSnap.exists &&
+            raceIdentityIsStale(
+              publicSnap.data().trainingForSpaceId,
+              raceGoalAfter
+            ) && { trainingForSpaceId: null }),
           ...(publicName && {
             displayName: publicName,
             // searchUsers matches on this; the app's onboarding copy left
@@ -1112,6 +1138,32 @@ exports.configurePlan = functions
       const db = admin.firestore();
       const userRef = db.collection("users").doc(uid);
       const programRef = userRef.collection("programState").doc("current");
+      const publicRef = userRef.collection("public").doc("profile");
+      // The race goal is sent whole, and the chip naming it goes with it
+      // (raceGoalWrite.js).
+      const withRaceGoal = (patch, storedProfile, publicSnap, write) => {
+        const stored = storedProfile.raceGoal;
+        const after = "raceGoal" in patch ? patch.raceGoal : stored;
+        write(
+          userRef,
+          "raceGoal" in patch
+            ? {
+                ...patch,
+                raceGoal: wholeRaceGoal(
+                  patch.raceGoal,
+                  stored,
+                  admin.firestore.FieldValue.delete()
+                ),
+              }
+            : patch
+        );
+        if (
+          publicSnap.exists &&
+          raceIdentityIsStale(publicSnap.data().trainingForSpaceId, after)
+        ) {
+          write(publicRef, { trainingForSpaceId: null });
+        }
+      };
 
       // Allow-list the programState doc before persisting (same rationale as
       // completeOnboarding) — validatePlanPayload above gates shape but never
@@ -1152,10 +1204,12 @@ exports.configurePlan = functions
         }
         try {
           await db.runTransaction(async (transaction) => {
-            const [currentPlan, currentProfile] = await Promise.all([
-              transaction.get(programRef),
-              transaction.get(userRef),
-            ]);
+            const [currentPlan, currentProfile, currentPublic] =
+              await Promise.all([
+                transaction.get(programRef),
+                transaction.get(userRef),
+                transaction.get(publicRef),
+              ]);
             if (!!base !== currentPlan.exists)
               throw new ProgrammeConflictError();
             const next = base
@@ -1175,7 +1229,12 @@ exports.configurePlan = functions
             const patch = Object.fromEntries(
               Object.keys(profileUpdates).map((key) => [key, merged[key]])
             );
-            transaction.set(userRef, patch, { merge: true });
+            withRaceGoal(
+              patch,
+              currentProfile.data() || {},
+              currentPublic,
+              (ref, value) => transaction.set(ref, value, { merge: true })
+            );
             transaction.set(programRef, { ...next, updatedAt: Date.now() });
           });
         } catch (error) {
@@ -1188,8 +1247,17 @@ exports.configurePlan = functions
         }
       } else {
         // Compatibility for installed clients preceding the baseline contract.
+        const [storedProfile, storedPublic] = await Promise.all([
+          userRef.get(),
+          publicRef.get(),
+        ]);
         const batch = db.batch();
-        batch.set(userRef, profileUpdates, { merge: true });
+        withRaceGoal(
+          profileUpdates,
+          storedProfile.data() || {},
+          storedPublic,
+          (ref, value) => batch.set(ref, value, { merge: true })
+        );
         batch.set(programRef, cfgProgram.value);
         await batch.commit();
       }
@@ -2534,7 +2602,11 @@ exports.computePerformanceWeek = functions
       return result;
     } catch (err) {
       console.error("computePerformanceWeek error:", err);
-      throw new functions.https.HttpsError("internal", err.message);
+      // A fixed sentence: the error's own text names internals.
+      throw new functions.https.HttpsError(
+        "internal",
+        "Couldn't work out this week. Try again later."
+      );
     }
   });
 

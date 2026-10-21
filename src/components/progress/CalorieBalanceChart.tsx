@@ -41,16 +41,27 @@ import {
 const WINDOW_DAYS = 14;
 const PAST_DAYS = WINDOW_DAYS - 1;
 
-export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
+export default function CalorieBalanceChart({
+  meals,
+  learnedMaintenance = null,
+}: {
+  meals: Meal[];
+  /** The maintenance the person's targets are learned from, when they are:
+   *  the balance is then measured against the same number the targets use,
+   *  not the formula's. */
+  learnedMaintenance?: number | null;
+}) {
   const { profile } = useAuth();
-  const maintenance = calculateTDEE(
-    profile?.weightKg ?? 70,
-    profile?.heightCm ?? 175,
-    profile?.age ?? 30,
-    (profile?.activityLevel as ActivityLevel) ?? "moderate",
-    "recomp",
-    (profile?.sex as "male" | "female") ?? "male"
-  ).tdee;
+  const maintenance =
+    learnedMaintenance ??
+    calculateTDEE(
+      profile?.weightKg ?? 70,
+      profile?.heightCm ?? 175,
+      profile?.age ?? 30,
+      (profile?.activityLevel as ActivityLevel) ?? "moderate",
+      "recomp",
+      (profile?.sex as "male" | "female") ?? "male"
+    ).tdee;
   const today = format(new Date(), "yyyy-MM-dd");
   const data = useMemo(() => {
     const now = new Date(today + "T12:00:00");

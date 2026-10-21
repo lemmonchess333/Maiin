@@ -38,6 +38,7 @@ import {
   unfiredFailures,
 } from "@/test/firestoreHarness";
 import { logger } from "@/lib/logger";
+import { localDateString } from "@/lib/dateHelpers";
 
 const post = (
   id: string,
@@ -91,6 +92,21 @@ describe("useUserProfileData — someone else's profile", () => {
     ]);
     await waitFor(() => expect(result.current.followers).toBe(2));
     expect(result.current.followingCount).toBe(1);
+  });
+
+  it("shows a lapsed streak as 0, not what it was when they stopped", async () => {
+    // Derived from the clock: a week ago is lapsed whatever today is.
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    seedFirestore({
+      "users/alice/public/profile": {
+        displayName: "Alice",
+        currentStreak: 40,
+        lastActiveDate: localDateString(weekAgo),
+      },
+    });
+    const { result } = await settled("alice", "viewer");
+    expect(result.current.streak).toBe(0);
   });
 
   it("shows their newest badges from the public summary, at most four", async () => {

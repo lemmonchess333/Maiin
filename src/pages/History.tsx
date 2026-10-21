@@ -1768,7 +1768,10 @@ export default function History() {
                     />
 
                     <SectionErrorBoundary sectionName="calorie-balance">
-                      <CalorieBalanceChart meals={meals} />
+                      <CalorieBalanceChart
+                        meals={meals}
+                        learnedMaintenance={effectiveTargets.learnedMaintenance}
+                      />
                     </SectionErrorBoundary>
                   </>
                 )}

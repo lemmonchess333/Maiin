@@ -91,6 +91,9 @@ export interface EffectiveTargets {
   finalTarget: number;
   /** Which number `finalTarget` came from: "formula" (default) or "learned". */
   adaptiveSource: TargetSource;
+  /** The learned maintenance behind a learned `finalTarget`; null while the
+   *  formula wins. */
+  learnedMaintenance: number | null;
   /** Nutr2 #981 — render the "personalizing" warmup bar (Pro/trial, pre-gate). */
   showWarmup: boolean;
   /** 0..1 warmup bar fill (latched). */
@@ -224,6 +227,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     showWarmup,
     warmupFraction,
     stalled: adaptiveStalled,
+    maintenance: learnedMaintenance,
   } = useAdaptiveTdee();
 
   // The training-aware macro MOVEMENT (fat↔carb shift + taper) is a Pro/trial
@@ -418,6 +422,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       hasCompletedActivity: actualBurn > 0,
       finalTarget,
       adaptiveSource,
+      learnedMaintenance,
       showWarmup,
       warmupFraction,
       adaptiveStalled,
@@ -442,6 +447,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     today,
     adaptiveSource,
     adaptiveValue,
+    learnedMaintenance,
     showWarmup,
     warmupFraction,
     adaptiveStalled,

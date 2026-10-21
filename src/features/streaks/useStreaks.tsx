@@ -1346,12 +1346,18 @@ function useStreaksInternal() {
     );
     // Mirror onto the cross-user-readable public profile doc.
     // Readable by any authenticated user per firestore.rules match /users/{uid}/public/{doc}.
+    // With the day it last counted, so a reader can tell a streak that has
+    // lapsed since this device last wrote it (publicStreakAsOf).
     batch.set(
       publicProfileRef,
       {
         uid,
         currentStreak,
         longestStreak: nextLongest,
+        ...(typeof lastActiveDate === "string" &&
+        /^\d{4}-\d{2}-\d{2}$/.test(lastActiveDate)
+          ? { lastActiveDate }
+          : {}),
       },
       { merge: true }
     );
