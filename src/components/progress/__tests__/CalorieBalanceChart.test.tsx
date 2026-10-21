@@ -159,6 +159,26 @@ describe("the chart draws only once there are bars to compare", () => {
   });
 });
 
+describe("whose maintenance the balance is measured against", () => {
+  it("the learned one, when the targets are learned from it", () => {
+    render(
+      <CalorieBalanceChart
+        meals={loggedPast(ENOUGH, 2100)}
+        learnedMaintenance={2400}
+      />
+    );
+    const logged = points().filter((point) => point.balance !== null);
+    expect(logged).toHaveLength(ENOUGH);
+    expect(logged.every((point) => point.balance === 300)).toBe(true);
+  });
+
+  it("the formula's otherwise", () => {
+    render(<CalorieBalanceChart meals={loggedPast(ENOUGH, 2100)} />);
+    const logged = points().filter((point) => point.balance !== null);
+    expect(logged.every((point) => point.balance === 300)).toBe(false);
+  });
+});
+
 describe("nutrition evidence limits", () => {
   it("does not chart unlogged days as zero-intake deficits", () => {
     /* Was asserted against an EMPTY account, where the T5 gate now

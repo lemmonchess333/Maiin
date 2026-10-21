@@ -67,6 +67,7 @@ function targets(o: Partial<EffectiveTargets> = {}): EffectiveTargets {
     hasCompletedActivity: false,
     finalTarget: 2500,
     adaptiveSource: "formula",
+    learnedMaintenance: null,
     showWarmup: false,
     warmupFraction: 0,
     adaptiveStalled: false,

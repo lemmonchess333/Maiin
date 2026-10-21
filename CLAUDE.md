@@ -131,7 +131,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 
 | File                    | Purpose                                                        |
 | ----------------------- | -------------------------------------------------------------- |
-| `performanceEngine.ts`  | Weekly performance index (0-100), load bands, deload detection |
+| `performanceEngine.ts`  | Load bands, week keys; a mirror of the server index, for tests |
 | `tdee.ts`               | Base TDEE calculation                                          |
 | `phaseNutrition.ts`     | Day-type specific macro adjustments (lift/run/rest)            |
 | `savedRuns.ts`          | The one saved-run reader: query, parse, Lift3 day, queued runs |

@@ -19,6 +19,8 @@ import { activityToFeedItem, createdAtMs } from "@/lib/activityFeedItem";
 import { BADGE_DEFINITIONS, type EarnedBadge } from "@/features/streaks/badges";
 import { logger } from "@/lib/logger";
 import type { FeedItem } from "@/hooks/useSocialFeed";
+import { publicStreakAsOf } from "@/features/streaks/publicStreak";
+import { localDateString } from "@/lib/dateHelpers";
 
 /** Posts the profile lists, newest first. Also the window "This week"
  *  is counted from, so it is larger than a week's sessions for anyone. */
@@ -159,7 +161,15 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
           ? pub.value.data()
           : null;
       if (pubData) {
-        setStreak((pubData.currentStreak as number) ?? 0);
+        // The count the person's device last wrote, as of today: a lapsed
+        // streak reads 0 rather than what it was when they stopped.
+        setStreak(
+          publicStreakAsOf(
+            pubData.currentStreak,
+            pubData.lastActiveDate,
+            localDateString()
+          )
+        );
         // SOC-P2f — the chip validates kind + upcoming date itself.
         setTrainingForSpaceId(
           typeof pubData.trainingForSpaceId === "string"
