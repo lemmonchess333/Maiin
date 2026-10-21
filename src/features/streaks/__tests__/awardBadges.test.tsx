@@ -49,8 +49,16 @@ function mount() {
   return view;
 }
 
-async function loaded(view: ReturnType<typeof mount>) {
+async function loaded(view: ReturnType<typeof mount>, uid: string) {
   await waitFor(() => expect(view.result.current.loading).toBe(false));
+  // A document without early_bird's days is counted once, in its own
+  // write; let it land before counting the award's.
+  await waitFor(() =>
+    expect(
+      (readDoc(streaksPath(uid)) as { earlyLogDays?: unknown } | undefined)
+        ?.earlyLogDays
+    ).toBeDefined()
+  );
 }
 
 type Stored = { badges: { id: string; earnedAt: string | null }[] };
@@ -77,7 +85,7 @@ describe("awardEventBadges — transactional, against the live document", () => 
       },
     });
     const view = mount();
-    await loaded(view);
+    await loaded(view, "u1");
     const writesBefore = writeLog().length;
 
     await act(async () => {
@@ -103,7 +111,7 @@ describe("awardEventBadges — transactional, against the live document", () => 
     h.uid = "u2";
     seedFirestore({ [streaksPath("u2")]: { badges: [] } });
     const view = mount();
-    await loaded(view);
+    await loaded(view, "u2");
 
     await act(async () => {
       // Same closure, same stale local state, no await between them: the
@@ -128,7 +136,7 @@ describe("awardEventBadges — transactional, against the live document", () => 
       },
     });
     const view = mount();
-    await loaded(view);
+    await loaded(view, "u3");
     const writesBefore = writeLog().length;
 
     await act(async () => {
@@ -160,7 +168,7 @@ describe("awardEventBadges — transactional, against the live document", () => 
     h.uid = "u4";
     seedFirestore({ [streaksPath("u4")]: { badges: [] } });
     const view = mount();
-    await loaded(view);
+    await loaded(view, "u4");
 
     // Captured while the client believes nothing is earned.
     const staleAward = view.result.current.awardEventBadges;

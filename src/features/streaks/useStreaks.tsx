@@ -1,5 +1,9 @@
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
-import { parseLocalDate } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import {
   pendingBadgeIds,
   subscribePendingBadges,
@@ -24,6 +28,7 @@ import {
   orderBy,
   query,
   runTransaction,
+  where,
   writeBatch,
   limit,
   Timestamp,
@@ -33,6 +38,7 @@ import { useUid } from "@/lib/auth";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import type { RunWindow } from "@/lib/savedRuns";
 import { SAVED_WORKOUTS, type WorkoutWindow } from "@/lib/savedWorkouts";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { useSavedRuns } from "@/hooks/useSavedRuns";
 import { useSavedSessions } from "@/hooks/useSavedSessions";
 import { BADGE_DEFINITIONS, initBadges, type EarnedBadge } from "./badges";
@@ -47,6 +53,7 @@ import { format } from "date-fns";
 import { logger } from "@/lib/logger";
 import { cancelNotification } from "@/lib/notifications";
 import { STREAK_NOTIFICATION_ID } from "@/hooks/streakNotificationId";
+import { earlyDaysOf, keptEarlyDays, storedEarlyDays } from "./earlyLogDays";
 
 export interface StreakData {
   /** The streak as shown: the today/yesterday rule, 0 when neither is active. */
@@ -65,16 +72,13 @@ export interface StreakData {
   anchorDate?: string;
   /**
    * WINDOWED, not lifetime (D13). Recomputed each load as the size of the
-   * active-date set built from the recent-window subscriptions (≤400 workout /
-   * 400 run / 500 meal docs), so it saturates around ~400 distinct days — a
-   * 2-year daily user does NOT see 730 here. NOTE the window is DOC-bounded,
-   * and meals are several docs per day, so the meal horizon is
-   * ~500/mealsPerDay days (~167 at three meals a day) — this count saturates
-   * EARLIER for meal-driven users. `currentStreak` survives the window via
+   * active-date set built from the subscriptions' window
+   * (STREAK_WINDOW_DAYS), so it stays near 90 at most — a 2-year daily
+   * user does NOT see 730 here. `currentStreak` survives the window via
    * the persisted anchor (`computeStreakSpanAnchored` — the stored
    * {count, lastActiveDate} pair certifies days that aged out);
-   * `longestStreak` is persisted monotonically. This count alone is
-   * genuinely capped.
+   * `longestStreak` is persisted monotonically, and early_bird's days are
+   * kept in `earlyLogDays`. This count alone is genuinely capped.
    *
    * HONESTY CONTRACT: any UI that renders this MUST label it as recent/windowed
    * ("active days", "active days · last 400") — NEVER "total" or "lifetime"
@@ -83,6 +87,12 @@ export interface StreakData {
    * `streakWindowing.test.ts`.
    */
   totalActiveDays: number;
+  /**
+   * Up to five distinct days with a log before 07:00 (`earlyLogDays.ts`),
+   * so early_bird's count outlives the window. Absent on a document that
+   * predates it, which is seeded once from a deeper read.
+   */
+  earlyLogDays?: string[];
   badges: EarnedBadge[];
 }
 
@@ -94,30 +104,32 @@ const DEFAULT_STREAKS: StreakData = {
   badges: initBadges(),
 };
 
-// ── Subscription window sizes ────────────────────────────────────────────
-// DOC-bounded, not day-bounded — and meals are the one source with several
-// documents per day, so the 500-doc meal window covers only ~500/mealsPerDay
-// DAYS (~167 at three meals a day). This comment used to claim "any
-// realistic streak fits the window", which was true only at ≤1.37 meals/day:
-// the windowed recompute truncated a meal-driven streak at the horizon and
-// PERSISTED the truncation back, freezing the display while the user kept
-// logging (probe sweep 2026-08-05, verifier-confirmed). Long streaks now
-// survive via the persisted anchor instead of via window size
-// (computeStreakSpanAnchored) — which is why these limits do NOT need to
-// grow: the window only has to cover the days since the streak state was
-// last persisted, plus grace. totalActiveDays remains
-// windowed, not truly lifetime (D13 — the saturation is a DELIBERATE accepted
-// limit, documented on the StreakData.totalActiveDays field; any consumer that
-// displays it must label it as windowed, never "total/lifetime"). The honest
-// alternative — a server-maintained lifetime aggregate — is deferred until a
-// surface actually needs a true-lifetime number.
-const WORKOUT_LIMIT = 400;
-const RUN_LIMIT = 400;
-/** The newest RUN_LIMIT runs: the streak's run window. */
-const STREAK_RUN_WINDOW: RunWindow = { latest: RUN_LIMIT };
-/** The newest WORKOUT_LIMIT workouts: the streak's workout window. */
-const STREAK_WORKOUT_WINDOW: WorkoutWindow = { latest: WORKOUT_LIMIT };
-const MEAL_LIMIT = 500;
+// ── Subscription windows ─────────────────────────────────────────────────
+// The streak reads STREAK_WINDOW_DAYS back: as far as Food lets a meal be
+// added (its FOOD_TAP_BACK_DAYS), so a meal logged today for any day the
+// diary reaches still counts. Meals are bounded by when they were logged,
+// so a backfilled meal is read whatever its date. A long streak outlives
+// the window through the persisted anchor (computeStreakSpanAnchored): the
+// window only has to reach the last save plus grace, and every active day
+// saves. Earned badges stay earned, and the one rule that counts over all
+// time, early_bird, keeps its days on the streak document (earlyLogDays).
+// The caps are a backstop for a heavy logger, not the bound.
+// totalActiveDays remains windowed, not truly lifetime (D13 — the
+// saturation is a DELIBERATE accepted limit, documented on the
+// StreakData.totalActiveDays field; any consumer that displays it must
+// label it as windowed, never "total/lifetime"). The honest alternative — a
+// server-maintained lifetime aggregate — is deferred until a surface
+// actually needs a true-lifetime number.
+export const STREAK_WINDOW_DAYS = 90;
+const WORKOUT_CAP = 400;
+const RUN_CAP = 400;
+const MEAL_CAP = 500;
+/** The first day the streak reads. */
+function streakWindowStart(todayKey: string): string {
+  return localDateString(
+    addLocalDays(parseLocalDate(todayKey), -STREAK_WINDOW_DAYS)
+  );
+}
 
 // ── Timezone notes ───────────────────────────────────────────────────────
 // All date math uses date-fns format() which respects the device timezone.
@@ -577,10 +589,19 @@ function useStreaksInternal() {
      signed-in account and settles out of loading on a failed read. */
   /* Workouts the same way, through the one workout reader: the day each
      belongs to and workouts finished on this phone but not yet synced. */
+  const windowStart = streakWindowStart(todayKey);
+  const workoutWindow = useMemo<WorkoutWindow>(
+    () => ({ since: windowStart, cap: WORKOUT_CAP }),
+    [windowStart]
+  );
+  const runWindow = useMemo<RunWindow>(
+    () => ({ since: windowStart, cap: RUN_CAP }),
+    [windowStart]
+  );
   const savedWorkouts = useSavedSessions(
     SAVED_WORKOUTS,
     uid,
-    uid ? STREAK_WORKOUT_WINDOW : null
+    uid ? workoutWindow : null
   );
   const workoutsLoaded = !!uid && savedWorkouts.answered;
   const workouts = useMemo<WorkoutRow[]>(
@@ -592,7 +613,7 @@ function useStreaksInternal() {
       })),
     [savedWorkouts.items]
   );
-  const savedRuns = useSavedRuns(uid ? STREAK_RUN_WINDOW : null);
+  const savedRuns = useSavedRuns(uid ? runWindow : null);
   // The run list itself, not a run waiting to sync: the streak is saved
   // once everything has loaded, and a streak counted from that one run
   // would overwrite the saved one.
@@ -787,6 +808,7 @@ function useStreaksInternal() {
             totalActiveDays: sanitizedTotal,
             anchorStreak,
             anchorDate,
+            earlyLogDays: storedEarlyDays(data.earlyLogDays),
             badges: merged,
           });
 
@@ -822,8 +844,9 @@ function useStreaksInternal() {
     const mealsRef = collection(db, "users", uid, "meals");
     const mealsQ = query(
       mealsRef,
+      where("createdAt", ">=", Timestamp.fromDate(parseLocalDate(windowStart))),
       orderBy("createdAt", "desc"),
-      limit(MEAL_LIMIT)
+      limit(MEAL_CAP)
     );
     const unsubMeals = onSnapshot(
       mealsQ,
@@ -872,7 +895,7 @@ function useStreaksInternal() {
       unsubStreaks();
       unsubMeals();
     };
-  }, [uid, streamsAttempt]);
+  }, [uid, streamsAttempt, windowStart]);
 
   const allLoaded =
     streaksDocLoaded && workoutsLoaded && runsLoaded && mealsLoaded;
@@ -967,28 +990,91 @@ function useStreaksInternal() {
     [meals]
   );
 
-  // Distinct dates with a log before 7am LOCAL — feeds early_bird. Uses the
+  // Distinct dates with a log before 7am LOCAL in the window. Uses the
   // best per-source timestamp: run completedAt (event time), workout + meal
   // createdAt (log time). Hour is read in the device timezone, consistent with
   // every other date key in this hook.
-  const earlyLogDays = useMemo(() => {
+  const windowEarlyDays = useMemo(() => {
     if (!allLoaded) return [] as string[];
-    const EARLY_HOUR = 7;
-    const set = new Set<string>();
-    const addIfEarly = (ts: Timestamp | Date | null | undefined) => {
-      if (!ts) return;
-      try {
-        const d = ts instanceof Date ? ts : ts.toDate();
-        if (d.getHours() < EARLY_HOUR) set.add(format(d, "yyyy-MM-dd"));
-      } catch {
-        // unparseable timestamp — skip
-      }
-    };
-    for (const w of workouts) addIfEarly(w.createdAt);
-    for (const r of runs) addIfEarly(r.completedAt);
-    for (const m of meals) addIfEarly(m.createdAt);
-    return Array.from(set);
+    return earlyDaysOf([
+      ...workouts.map((w) => w.createdAt),
+      ...runs.map((r) => r.completedAt),
+      ...meals.map((m) => m.createdAt),
+    ]);
   }, [allLoaded, workouts, runs, meals]);
+
+  // early_bird's days: the window's, with the ones kept on the streak
+  // document and, for a document that predates them, the seed's. The
+  // badge counts over all time, so a day that ages out of the window stays
+  // counted.
+  const earlyBirdEarned = streakData.badges.some(
+    (b) => b.id === "early_bird" && !!b.earnedAt
+  );
+  const storedEarly = streakData.earlyLogDays;
+  const [seededEarly, setSeededEarly] = useState<{
+    uid: string;
+    days: string[];
+  } | null>(null);
+  const seededDays = seededEarly?.uid === uid ? seededEarly.days : null;
+  const earlyLogDays = useMemo(
+    () =>
+      allLoaded ? keptEarlyDays(storedEarly, seededDays, windowEarlyDays) : [],
+    [allLoaded, storedEarly, seededDays, windowEarlyDays]
+  );
+
+  // The seed: a document without the field gets one deeper read, so early
+  // days older than the window are kept. Once per account and mount; a
+  // failed read writes nothing, and the next load tries again.
+  const seedTriedForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!allLoaded || !uid || readFailed) return;
+    if (storedEarly !== undefined || earlyBirdEarned) return;
+    if (seedTriedForRef.current === uid) return;
+    seedTriedForRef.current = uid;
+    void (async () => {
+      try {
+        const { readSeedEarlyDays } = await import("./earlyBirdSeed");
+        const days = await readSeedEarlyDays(uid, {
+          meals: MEAL_CAP,
+          workouts: WORKOUT_CAP,
+          runs: RUN_CAP,
+        });
+        setSeededEarly({ uid, days });
+      } catch (err) {
+        logger.error("[useStreaks] early-bird seed read failed", err);
+      }
+    })();
+  }, [allLoaded, uid, readFailed, storedEarly, earlyBirdEarned]);
+
+  // Keep the days on the streak document when they grow, or once the seed
+  // has counted a document that had none. Never with a read failed: the
+  // window's days would be missing, not absent.
+  const lastWrittenEarlyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!allLoaded || !uid || readFailed || earlyBirdEarned) return;
+    if (storedEarly === undefined && seededDays === null) return;
+    if (storedEarly !== undefined && earlyLogDays.length <= storedEarly.length)
+      return;
+    const signature = `${uid}:${earlyLogDays.join(",")}`;
+    if (signature === lastWrittenEarlyRef.current) return;
+    lastWrittenEarlyRef.current = signature;
+    setDocGuarded(
+      doc(db, "users", uid, "streaks", "data"),
+      { earlyLogDays },
+      { merge: true }
+    ).catch((err) => {
+      lastWrittenEarlyRef.current = null;
+      logger.error("[useStreaks] early-bird days save failed", err);
+    });
+  }, [
+    allLoaded,
+    uid,
+    readFailed,
+    earlyBirdEarned,
+    storedEarly,
+    seededDays,
+    earlyLogDays,
+  ]);
 
   // Earned badge count (excl. ultimate_athlete itself) — drives the
   // ultimate_athlete progress ring; the earning pass derives the same number
