@@ -237,6 +237,19 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     );
   });
 
+  it("turns with the phone only to portrait", () => {
+    // Every screen is laid out for a phone held upright, and the large-text
+    // capture spec checks them at portrait widths only. A landscape phone
+    // is a 393-point-tall window none of them was drawn for.
+    const list = infoPlist.match(
+      /<key>UISupportedInterfaceOrientations<\/key>\s*<array>([\s\S]*?)<\/array>/
+    );
+    expect(list).not.toBeNull();
+    expect(
+      [...list![1].matchAll(/<string>([^<]+)<\/string>/g)].map((m) => m[1])
+    ).toEqual(["UIInterfaceOrientationPortrait"]);
+  });
+
   it("answers the export-compliance question in the bundle", () => {
     // Tropos uses only HTTPS (exempt). Without this key every CI upload sits
     // in "Missing Compliance" until someone answers the question in App

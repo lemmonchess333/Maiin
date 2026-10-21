@@ -43,6 +43,7 @@ vi.mock("@/lib/revenuecat", () => ({
 
 import {
   APPLE_PRODUCT_IDS,
+  canSellInThisBuild,
   isNativeIOS,
   manageSubscription,
   purchase,
@@ -106,6 +107,29 @@ describe("isNativeIOS — the shell, not the user agent", () => {
   it("is false in the Android shell", () => {
     onDevice("android", ANDROID_UA);
     expect(isNativeIOS()).toBe(false);
+  });
+});
+
+describe("canSellInThisBuild — whether a paywall may show a price", () => {
+  it("is false in the iOS app without RevenueCat, where purchase() can only refuse", async () => {
+    onDevice("ios", IPHONE_SAFARI_UA);
+    rcEnabled.mockReturnValue(false);
+    expect(canSellInThisBuild()).toBe(false);
+    // The pair this guards: what the paywall would have offered.
+    expect(await purchase("yearly", "u1", "a@b.c")).toMatchObject({
+      success: false,
+    });
+  });
+
+  it("is true in the iOS app with RevenueCat", () => {
+    onDevice("ios", IPHONE_SAFARI_UA);
+    expect(canSellInThisBuild()).toBe(true);
+  });
+
+  it("is true on the web, which takes the Stripe path", () => {
+    onDevice("web", IPHONE_SAFARI_UA);
+    rcEnabled.mockReturnValue(false);
+    expect(canSellInThisBuild()).toBe(true);
   });
 });
 

@@ -10,6 +10,24 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## A paywall with no store, portrait only (survey items 39 and 40, 2026-10-21)
+
+An iPhone build without RevenueCat's key (the state `deploy-ios.yml` builds
+until its activation order is done) can only refuse a purchase, so the
+Upgrade page and ProModal now show no price, no checkout and no Restore
+there, and say Pro isn't on sale in this version yet. The app turns with the
+phone only to portrait. HealthKit, the run's location watcher and the
+native reminders' permission and cancel paths are now unit-tested with
+their plugins faked. These need a device.
+
+- [ ] **The paywall in a build with no store.** On a TestFlight build made
+      without `VITE_REVENUECAT_IOS_KEY`, open Pro from Home and from a
+      Pro-gated feature. Passing: both say "Pro isn't on sale in this
+      version of the app yet", with no price, no Continue, no Restore, and
+      the sheet and page close.
+- [ ] **Portrait only.** Turn the phone sideways on Home, a run and a
+      workout. Passing: the app stays upright.
+
 ## Failed reads, loading and tap targets (survey items 52 to 57, 2026-10-21)
 
 A read that fails now says so with Try again instead of an empty state

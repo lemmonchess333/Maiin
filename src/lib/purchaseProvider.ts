@@ -91,6 +91,17 @@ export function isNativeIOS(): boolean {
   return Capacitor.getPlatform() === "ios";
 }
 
+/**
+ * Whether this build can take a purchase. On the iPhone that needs
+ * RevenueCat, whose key `deploy-ios.yml` leaves out until its activation
+ * order is done; without it `purchase()` can only refuse. A paywall that
+ * shows prices and a button which cannot work is what App Review rejects
+ * (Guideline 2.1), so the paywalls show neither in that build.
+ */
+export function canSellInThisBuild(): boolean {
+  return !isNativeIOS() || isRevenueCatEnabled();
+}
+
 // Apple IAP product IDs — configure these in App Store Connect
 // WARNING: These must match the bundle ID in capacitor.config.ts (appId)
 // and the product IDs registered in App Store Connect. If you change the
