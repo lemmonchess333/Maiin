@@ -20,6 +20,7 @@ import {
   getRedirectResult,
   signInWithCredential,
   fetchSignInMethodsForEmail,
+  updateProfile as updateAuthProfile,
   type User,
   type UserCredential,
 } from "firebase/auth";
@@ -30,7 +31,7 @@ import { clearEmailChange } from "./emailChangeNote";
 import { isNativePlatform } from "@/lib/platform";
 import {
   getGoogleCredentialNative,
-  getAppleCredentialNative,
+  getAppleSignInNative,
 } from "@/lib/nativeAuth";
 import { setErrorReportingUid } from "./errorReporting";
 import { readString, remove, writeString } from "@/lib/localStore";
@@ -59,6 +60,7 @@ import type { ShareType } from "@/lib/shareComposer";
 import type { NotificationPreferences } from "@/lib/notificationPreferences";
 import { auth } from "./firebaseApp";
 import { logger } from "./logger";
+import { rememberSignInMethod, signInMethodOf } from "./signInMethod";
 import type { Goal } from "./types";
 import type { PreferredSplit } from "@/features/program/programTypes";
 
@@ -958,6 +960,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const authEpochRef = useRef(0);
   const activeUidRef = useRef<string | null>(null);
 
+  // The method this session signed in with, which Login marks "Last used"
+  // (signInMethod.ts); the token names it whichever path signed in. Only
+  // for an account that has finished setup: a new one the person backs out
+  // of ("Sign in another way") is not the account to steer them back to.
+  const onboarded = profile?.onboardingComplete === true;
+  useEffect(() => {
+    if (!user || !onboarded) return;
+    Promise.resolve()
+      .then(() => user.getIdTokenResult())
+      .then((token) =>
+        rememberSignInMethod(signInMethodOf(token?.signInProvider))
+      )
+      .catch(() => {});
+  }, [user, onboarded]);
+
   // Dark mode sync — dark is the default, so a null profile (signed out /
   // still loading) and a profile without an explicit choice both resolve dark.
   useEffect(() => {
@@ -1299,9 +1316,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithApple = useCallback(async () => {
     if (isNativePlatform()) {
-      const credential = await getAppleCredentialNative();
+      const { credential, displayName } = await getAppleSignInNative();
       await revokeOutgoingAccountDeviceState();
       const cred = await signInWithCredential(auth, credential);
+      // The name Apple shares on the first sign-in, kept before the new
+      // profile is made from the account. Never over a name it has.
+      if (displayName && !cred.user.displayName) {
+        try {
+          await updateAuthProfile(cred.user, { displayName });
+        } catch (err) {
+          logger.warn("Keeping the Apple name on the account failed", err);
+        }
+      }
       await finishOAuthSignIn(cred, "apple");
       return;
     }

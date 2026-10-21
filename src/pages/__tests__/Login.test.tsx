@@ -223,3 +223,35 @@ describe("Login — closing the Google or Apple sheet", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(/Network issue/);
   });
 });
+
+describe("Login — the way in this phone last used (Polish2 call 3)", () => {
+  it("marks it, and only it", () => {
+    h.signedInBefore = true;
+    localStorage.setItem("tropos.last_sign_in_method", "apple");
+    show();
+    expect(
+      screen.getByRole("button", { name: /Continue with Apple/ })
+    ).toHaveTextContent("Last used");
+    expect(
+      screen.getByRole("button", { name: /Continue with Google/ })
+    ).not.toHaveTextContent("Last used");
+    expect(
+      screen.getByRole("button", { name: /^Sign In/ })
+    ).not.toHaveTextContent("Last used");
+  });
+
+  it("marks the email form for a password sign-in", () => {
+    h.signedInBefore = true;
+    localStorage.setItem("tropos.last_sign_in_method", "password");
+    show();
+    expect(screen.getByRole("button", { name: /^Sign In/ })).toHaveTextContent(
+      "Last used"
+    );
+  });
+
+  it("marks nothing on a phone that has none", () => {
+    h.signedInBefore = true;
+    show();
+    expect(screen.queryByText("Last used")).toBeNull();
+  });
+});

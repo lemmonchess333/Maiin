@@ -10,6 +10,26 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Apple's name, and the second account made visible (survey item 22, Polish2 call 3, 2026-10-21)
+
+Native Apple sign-in now keeps the name Apple shares on the first
+sign-in, setup never names a person from a Hide My Email address, Login
+marks the way in this phone last used "Last used", and setup's first
+screen says how the new account was made with a way to sign in another
+way. The unit suite covers each with the plugin and Firebase faked; only
+a phone and a real Apple ID can confirm what Apple sends.
+
+- [ ] **The name Apple shares.** On a TestFlight build, delete the app's
+      entry under Settings → Apple ID → Sign in with Apple, then sign in
+      with Apple choosing Hide My Email. Passing: setup's name field and
+      the public profile show the Apple ID's name, not a random string.
+- [ ] **Last used.** Sign out and open Sign in. Passing: Continue with
+      Apple reads "Last used", and nothing else does.
+- [ ] **Sign in another way.** Sign in with Google on the same phone.
+      Passing: setup's first screen says "Setting up a new account with
+      Google (your address)", and "Used Tropos before? Sign in another
+      way" returns to Sign in.
+
 ## A paywall with no store, portrait only (survey items 39 and 40, 2026-10-21)
 
 An iPhone build without RevenueCat's key (the state `deploy-ios.yml` builds

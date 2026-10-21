@@ -73,6 +73,9 @@ import { runDoseLine } from "@/lib/runDose";
 import { smallPlatesHint } from "@/lib/liftRules";
 import { liftUnitForBodyWeight } from "@/lib/liftLoad";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
+import NewAccountMethodNote from "@/components/onboarding/NewAccountMethodNote";
+import { startingDisplayName } from "@/lib/onboardingName";
+import { signInMethodOf } from "@/lib/signInMethod";
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
@@ -147,7 +150,7 @@ const GOALS = [
 ] as const;
 
 export default function Onboarding() {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, signOut } = useAuth();
   const navigate = useNavigate();
   const [draft] = useState(() =>
     user ? loadOnboardingDraft(user.uid, 7) : null
@@ -177,12 +180,19 @@ export default function Onboarding() {
   const [returnToReview, setReturnToReview] = useState(
     draft?.returnToReview ?? false
   );
-  const [displayName, setDisplayName] = useState(
-    draft?.displayName ??
-      user?.displayName ??
-      user?.email?.split("@")[0]?.trim() ??
-      "Athlete"
+  const [displayName, setDisplayName] = useState(() =>
+    startingDisplayName(draft?.displayName, user)
   );
+  /* The name Apple shares is set on the account just after it is made,
+     and setup can open before it lands; it is taken when it arrives, while
+     the person has not typed one of their own. */
+  const [nameTyped, setNameTyped] = useState(draft?.displayName !== undefined);
+  const arrivedName = profile?.displayName?.trim() ?? "";
+  const [seenArrivedName, setSeenArrivedName] = useState(arrivedName);
+  if (arrivedName !== seenArrivedName) {
+    setSeenArrivedName(arrivedName);
+    if (arrivedName && !nameTyped) setDisplayName(arrivedName);
+  }
   const [goalConfirmed, setGoalConfirmed] = useState(
     draft?.goalConfirmed ?? Boolean(draft && draft.step > 0)
   );
@@ -1029,6 +1039,11 @@ export default function Onboarding() {
                   ? "This sets your training focus. You can add a goal weight when you get to About you."
                   : "Choose one to continue. You can revisit it before creating your plan."}
               </p>
+              <NewAccountMethodNote
+                method={signInMethodOf(user?.providerData?.[0]?.providerId)}
+                email={user?.email ?? null}
+                onSignInAnotherWay={() => void signOut()}
+              />
             </div>
           )}
           {step === 1 && (
@@ -1866,7 +1881,10 @@ export default function Onboarding() {
                   value={displayName}
                   maxLength={DISPLAY_NAME_MAX}
                   aria-invalid={!displayNameValidation.valid}
-                  onChange={(event) => setDisplayName(event.target.value)}
+                  onChange={(event) => {
+                    setNameTyped(true);
+                    setDisplayName(event.target.value);
+                  }}
                 />
                 <p className="text-sm text-muted-foreground">
                   Other people can see this name on your profile. You can change
