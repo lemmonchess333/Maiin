@@ -16,6 +16,17 @@ import { IconButton } from "@/components/ui/IconButton";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
 import { FoodTabIcon } from "@/components/icons/TabIcons";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
+import { readLastSignInMethod, type SignInMethod } from "@/lib/signInMethod";
+
+/** The mark on the way in this phone last used (Polish2 call 3): with Hide
+ *  My Email, signing in another way makes a second, empty account. */
+function LastUsed() {
+  return (
+    <span className="ml-2 shrink-0 whitespace-nowrap rounded-full border border-current/30 px-2 py-0.5 text-xs font-semibold">
+      Last used
+    </span>
+  );
+}
 
 // Pre-recovery this page tracked a single `loading: boolean` shared
 // across the email submit, the Apple button, and the Google button.
@@ -49,6 +60,9 @@ export default function Login() {
   /* An email change, once confirmed, signs this phone out; say so, and
      offer the new address (emailChangeNote.ts). */
   const [changedEmail] = useState(() => pendingEmailChange());
+  const [lastMethod] = useState<SignInMethod | null>(() =>
+    readLastSignInMethod()
+  );
   const [view, setView] = useState<View>(() =>
     changedEmail || hasSignedInOnThisDevice() ? "signIn" : "welcome"
   );
@@ -461,6 +475,7 @@ export default function Login() {
             size="md"
           >
             {isSignUp ? "Create account" : "Sign In"}
+            {!isSignUp && lastMethod === "password" && <LastUsed />}
           </Button>
         </form>
 
@@ -489,6 +504,7 @@ export default function Login() {
             }
           >
             Continue with Apple
+            {lastMethod === "apple" && <LastUsed />}
           </Button>
 
           <Button
@@ -499,6 +515,7 @@ export default function Login() {
             variant="outline"
           >
             Continue with Google
+            {lastMethod === "google" && <LastUsed />}
           </Button>
         </div>
 

@@ -44,17 +44,34 @@ export async function getGoogleCredentialNative(): Promise<AuthCredential> {
   );
 }
 
-/** Native Apple sign-in → Firebase credential for `signInWithCredential`. */
-export async function getAppleCredentialNative(): Promise<AuthCredential> {
+/**
+ * Native Apple sign-in → Firebase credential, and the name Apple shared.
+ *
+ * Apple gives the person's name only on the first sign-in, and only to the
+ * app: the identity token carries none, so a credential alone leaves the
+ * account nameless (with Hide My Email, the address is no help either).
+ * The plugin passes it as `user.displayName` with native auth skipped.
+ */
+export async function getAppleSignInNative(): Promise<{
+  credential: AuthCredential;
+  displayName: string | null;
+}> {
   const { FirebaseAuthentication } =
     await import("@capacitor-firebase/authentication");
   const result = await FirebaseAuthentication.signInWithApple();
   // Apple needs the raw nonce that was hashed into the idToken request so
   // Firebase can verify the token wasn't replayed.
-  return new OAuthProvider("apple.com").credential({
+  const credential = new OAuthProvider("apple.com").credential({
     idToken: result.credential?.idToken ?? undefined,
     rawNonce: result.credential?.nonce ?? undefined,
   });
+  const name = result.user?.displayName?.trim();
+  return { credential, displayName: name ? name : null };
+}
+
+/** Native Apple sign-in → Firebase credential for `signInWithCredential`. */
+export async function getAppleCredentialNative(): Promise<AuthCredential> {
+  return (await getAppleSignInNative()).credential;
 }
 
 /** Apple requires token revocation when deleting an account. Keep the native

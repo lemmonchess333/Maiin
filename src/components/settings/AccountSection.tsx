@@ -24,6 +24,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth";
+import { isAppleRelayEmail } from "@/lib/appleRelay";
 
 /** Apple manage-subscriptions deep-link. Works on iOS (opens
  *  Settings → Apple ID → Subscriptions) and on web (opens the
@@ -56,23 +57,11 @@ function listSupportedProviders(user: User): SupportedReauthProviderId[] {
   return out;
 }
 
-/**
- * Apple's private-relay addresses are random@privaterelay.appleid.com, and
- * from late 2026 random@private.icloud.com for new ones (Apple developer
- * news, 24 August 2026; the old domain keeps working). Showing one in the
- * "Re-enter password for <email>" line would be confusing; the user can't
- * recognise it. Hide and show a generic fallback instead.
- */
-const APPLE_RELAY_DOMAINS = [
-  "@privaterelay.appleid.com",
-  "@private.icloud.com",
-];
-
+/** A relay address in the "Re-enter password for <email>" line would be
+ *  confusing (`appleRelay.ts`); a generic fallback shows instead. */
 function displayEmail(user: User): string | null {
   const email = user.email;
-  if (!email) return null;
-  const lower = email.toLowerCase();
-  if (APPLE_RELAY_DOMAINS.some((domain) => lower.endsWith(domain))) return null;
+  if (!email || isAppleRelayEmail(email)) return null;
   return email;
 }
 

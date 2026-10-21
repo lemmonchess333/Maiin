@@ -51,6 +51,8 @@ const DEVICE_SCOPED: Record<string, string> = {
     "written precisely when there is no longer an account to scope to",
   "tropos-email-change-pending":
     "the address an email change is going to, read by the signed-out Login after the change ends the session; there is no account to scope it to there, and any sign-in clears it",
+  "tropos.last_sign_in_method":
+    'the sign-in method this phone used last, which the signed-out Login marks "Last used"; there is no account to scope it to there',
   "tropos.signed_in_before":
     "whether ANY account has signed in on this phone: the signed-out screen reads it to choose the welcome screen or Sign in, and there is no account to scope it to there",
   "tropos.food.calorieRingMode":
