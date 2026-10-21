@@ -9,14 +9,19 @@
  *
  * Robustness decisions (all locked in the #976 grill — read before changing):
  *
- * - SLOPE, not endpoints. Δweight is the least-squares SLOPE of the weigh-ins
- *   in kg/DAY against real date offsets — NOT `end − start`, which is
- *   endpoint-sensitive and was the naive trap. The regression IS the de-noiser:
- *   over the window, symmetric water/glycogen noise averages out of the fit.
- *   (We deliberately do NOT also EWMA-smooth first — empirically the EWMA warmup
- *   lag attenuates the fitted slope ~35% and biases the estimate toward intake.
- *   `calculateEMA` stays the DISPLAY trend for the chart; the SLOPE uses the raw
- *   regression. Outlier-robust fits — Theil-Sen — are a v2 refinement.)
+ * - SLOPE, not endpoints. Δweight is the SLOPE of the weigh-ins in kg/DAY
+ *   against real date offsets — NOT `end − start`, which is endpoint-sensitive
+ *   and was the naive trap. The fit IS the de-noiser: over the window,
+ *   symmetric water/glycogen noise averages out of it. (We deliberately do NOT
+ *   also EWMA-smooth first — empirically the EWMA warmup lag attenuates the
+ *   fitted slope ~35% and biases the estimate toward intake. `calculateEMA`
+ *   stays the DISPLAY trend for the chart; the SLOPE uses the raw weigh-ins.)
+ * - ROBUST to one bad weigh-in (Nutr5). The slope is the median of the
+ *   pairwise slopes (Theil-Sen), not least squares. Least squares gives the
+ *   window's first and last weigh-ins all the leverage: one reading 2 kg high
+ *   at the end of a minimum window takes a 2,000 kcal maintenance to 1,358
+ *   under it. The median reads 2,000, for a slightly wider spread on ordinary
+ *   noise (`adaptiveTdeeRobustness.test.ts` has both).
  * - WARMUP GATE. Returns `ready: false` (and `learnedTDEE: null`) until there is
  *   enough data — a min trusted-intake-day count, a min weigh-in count, and a min
  *   elapsed span. Below the gate the caller shows the static formula target; we
@@ -62,7 +67,7 @@ export interface AdaptiveTdeeResult {
   weighInCount: number;
   /** Elapsed span in days, first→last weigh-in (0 if <2). Always present — drives the warmup bar pre-gate. */
   spanDays: number;
-  /** Smoothed-trend slope in kg/day; null when not ready. */
+  /** The fitted weight slope in kg/day; null when not ready. */
   slopeKgPerDay: number | null;
 }
 
@@ -96,21 +101,24 @@ function dayEpoch(dateKey: string): number {
   return Date.parse(`${dateKey}T00:00:00Z`);
 }
 
-/** Least-squares slope of y against day-offset x. Returns 0 when x has no spread. */
+/** Theil-Sen slope of y against day-offset x: the median of the slopes
+ *  between every two points on different days. Returns 0 when no two
+ *  points are on different days. */
 function slopePerDay(points: { dateKey: string; value: number }[]): number {
-  const x0 = dayEpoch(points[0].dateKey);
-  const xs = points.map((p) => (dayEpoch(p.dateKey) - x0) / 86_400_000);
-  const ys = points.map((p) => p.value);
-  const n = xs.length;
-  const meanX = xs.reduce((s, v) => s + v, 0) / n;
-  const meanY = ys.reduce((s, v) => s + v, 0) / n;
-  let num = 0;
-  let den = 0;
-  for (let i = 0; i < n; i++) {
-    num += (xs[i] - meanX) * (ys[i] - meanY);
-    den += (xs[i] - meanX) ** 2;
+  const xs = points.map((p) => dayEpoch(p.dateKey) / 86_400_000);
+  const slopes: number[] = [];
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const dx = xs[j] - xs[i];
+      if (dx !== 0) slopes.push((points[j].value - points[i].value) / dx);
+    }
   }
-  return den === 0 ? 0 : num / den;
+  if (slopes.length === 0) return 0;
+  slopes.sort((a, b) => a - b);
+  const mid = slopes.length >> 1;
+  return slopes.length % 2 === 1
+    ? slopes[mid]
+    : (slopes[mid - 1] + slopes[mid]) / 2;
 }
 
 export function estimateAdaptiveTDEE(
@@ -155,8 +163,8 @@ export function estimateAdaptiveTDEE(
 
   if (spanDays < minSpanDays) return notReady;
 
-  // Least-squares slope of the raw weigh-ins (the regression is the de-noiser;
-  // see header — EWMA-then-regress biases the slope via warmup lag).
+  // Theil-Sen slope of the raw weigh-ins (the fit is the de-noiser; see
+  // header — EWMA-then-fit biases the slope via warmup lag).
   const slopeKgPerDay = slopePerDay(
     sortedWeighIns.map((w) => ({ dateKey: w.dateKey, value: w.weightKg }))
   );

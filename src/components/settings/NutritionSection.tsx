@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 import { motion } from "framer-motion";
 import { formatWeightInUnit, kgToLb, lbToKg } from "@/lib/weightUnits";
@@ -24,6 +24,8 @@ import {
   adaptiveCalorieStatusLabel,
 } from "@/lib/adaptiveStatus";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
+import type { ProgramState } from "@/features/program/programTypes";
+import { LOW_CARB_G, restDaySplit } from "@/lib/phaseNutrition";
 
 interface NutritionSectionProps {
   profile: UserProfile;
@@ -50,6 +52,9 @@ interface NutritionSectionProps {
    *  payload its reactive save writes, so a recalculation and an edit cannot
    *  drift apart. */
   onRecalculate?: () => void;
+  /** The programme Home's targets read, for the protein the training block
+   *  sets. Absent, protein follows the goal's phase alone. */
+  program?: ProgramState | null;
   inline?: boolean;
 }
 
@@ -68,6 +73,7 @@ export default function NutritionSection({
   tdee,
   updateProfile,
   onRecalculate,
+  program,
   inline = false,
 }: NutritionSectionProps) {
   // Contrast-safe macro colours from the shared palette — protein=pink,
@@ -128,6 +134,26 @@ export default function NutritionSection({
      mentions it. Surfaced, never silently applied: the recalculation is the
      user's tap. */
   const adaptiveStatus = adaptiveCalorieStatus(profile);
+
+  /* The grams shown are the ones Home shows (Nutr5): the display split at
+     this plan's calories, on a rest day. The stored baseline
+     (`profile.targetProtein`) is the goal's alone, and Settings showing it
+     put two protein figures in front of the same person. */
+  const split = useMemo(
+    () =>
+      restDaySplit(
+        profile,
+        {
+          targetCalories: tdee.targetCalories,
+          weightKg: currentKg,
+          goal: goalPlan.fitnessGoal,
+        },
+        program
+      ),
+    [profile, tdee.targetCalories, currentKg, goalPlan.fitnessGoal, program]
+  );
+  const lowCarb =
+    !split.aggressive && !split.infeasible && split.carbs < LOW_CARB_G;
   const drift = resolveTargetDrift(
     profile?.targetCalories,
     tdee.tdee,
@@ -455,7 +481,7 @@ export default function NutritionSection({
 
           <div className="flex items-center justify-between pt-1">
             <motion.div
-              key={`protein-${tdee.protein}`}
+              key={`protein-${split.protein}`}
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
               className="text-center flex-1"
@@ -464,13 +490,13 @@ export default function NutritionSection({
                 className="text-sm font-bold font-mono tabular-nums"
                 style={{ color: macroText.protein }}
               >
-                {tdee.protein} g
+                {split.protein} g
               </p>
               <p className="text-xs text-muted-foreground">protein</p>
             </motion.div>
             <div className="w-px h-6 bg-border/50" />
             <motion.div
-              key={`carbs-${tdee.carbs}`}
+              key={`carbs-${split.carbs}`}
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
               className="text-center flex-1"
@@ -479,13 +505,13 @@ export default function NutritionSection({
                 className="text-sm font-bold font-mono tabular-nums"
                 style={{ color: macroText.carbs }}
               >
-                {tdee.carbs} g
+                {split.carbs} g
               </p>
               <p className="text-xs text-muted-foreground">carbs</p>
             </motion.div>
             <div className="w-px h-6 bg-border/50" />
             <motion.div
-              key={`fat-${tdee.fat}`}
+              key={`fat-${split.fat}`}
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
               className="text-center flex-1"
@@ -494,7 +520,7 @@ export default function NutritionSection({
                 className="text-sm font-bold font-mono tabular-nums"
                 style={{ color: macroText.fat }}
               >
-                {tdee.fat} g
+                {split.fat} g
               </p>
               <p className="text-xs text-muted-foreground">fat</p>
             </motion.div>
@@ -507,16 +533,21 @@ export default function NutritionSection({
               a 168 g figure where the plan intends 242 g reads as a plan
               choice rather than a shortfall. Say it, at the point the pace is
               chosen. */}
-          {tdee.proteinCapped && (
+          <p className="text-caption text-muted-foreground leading-snug pt-2">
+            Protein follows your training block. Carbs and fat are a rest
+            day&apos;s; training days move some fat to carbs.
+          </p>
+
+          {split.aggressive && !split.infeasible && (
             <p
               className="text-caption leading-snug pt-2"
               style={{ color: "hsl(var(--warning-strong))" }}
             >
               This pace leaves room for{" "}
-              <span className="font-mono tabular-nums">{tdee.protein} g</span>{" "}
+              <span className="font-mono tabular-nums">{split.protein} g</span>{" "}
               protein, not the{" "}
               <span className="font-mono tabular-nums">
-                {tdee.proteinUncapped} g
+                {split.proteinUncapped} g
               </span>{" "}
               your plan aims for — essential fat has to fit too. A slower pace
               holds protein.
@@ -526,13 +557,31 @@ export default function NutritionSection({
           {/* Below the essential-fat floor's own cost nothing reconciles —
               the grams above show 0 g protein and carbs. Same sentence Home
               and Food render (macroInfeasibility.ts). */}
-          {tdee.infeasible && (
+          {split.infeasible && (
             <p
               role="status"
               className="text-caption leading-snug pt-2"
               style={{ color: "hsl(var(--warning-strong))" }}
             >
-              {macroInfeasibilityMessage(tdee.minFeasibleKcal)}
+              {macroInfeasibilityMessage(split.minFeasibleKcal)}
+            </p>
+          )}
+
+          {/* Carbs balance the split, so a heavy body on a cut pace can be
+              left almost none. Said, not changed (Nutr5): the pace and the
+              number stay the person's, as for a target under 1,200. */}
+          {lowCarb && (
+            <p
+              className="text-caption leading-snug pt-2"
+              style={{ color: "hsl(var(--warning-strong))" }}
+            >
+              {adaptiveStatus.kind === "manual" ? "Your target" : "This pace"}{" "}
+              leaves{" "}
+              <span className="font-mono tabular-nums">{split.carbs} g</span>{" "}
+              of carbs a day, which is little to train on.{" "}
+              {adaptiveStatus.kind === "manual"
+                ? "A higher target leaves more."
+                : "A gentler pace leaves more."}
             </p>
           )}
 

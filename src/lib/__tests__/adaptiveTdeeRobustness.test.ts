@@ -1,57 +1,32 @@
 /**
  * What one bad weigh-in costs the learned TDEE.
  *
- * `adaptiveTdee.ts`'s header makes three claims about noise, and they are
- * not equally covered:
- *
- *   1. first-vs-last differencing is "endpoint-sensitive and was the naive
- *      trap" — avoided, and the least-squares fit is what avoids it;
- *   2. "the regression IS the de-noiser: over the window, symmetric
- *      water/glycogen noise averages out of the fit";
- *   3. "Outlier-robust fits — Theil-Sen — are a v2 refinement."
- *
- * Claim 2 is true and is asserted below. Claim 3 concedes that a single
- * ASYMMETRIC outlier is a different problem, and nothing measured how much
- * of one. Least squares averages symmetric noise away; it does not resist
- * leverage, and in a short window the first and last weigh-ins carry all
- * of it.
- *
- * Measured 2026-08-11 on an engaged user — 21 days of intake, 11 weigh-ins
- * across 20 days, weight genuinely flat:
+ * The estimator's slope was least squares until Nutr5 (2026-10-21). Least
+ * squares averages symmetric noise away, but it does not resist leverage,
+ * and in a short window the first and last weigh-ins carry all of it.
+ * Measured on an engaged user (21 days of intake, 11 weigh-ins across 20
+ * days, weight genuinely flat), least squares read:
  *
  *   outlier size    at an endpoint     in the middle
  *   +0.5 kg         ±88 kcal/day       0
  *   +1.0 kg         ±175 kcal/day      0
  *   +2.0 kg         ±350 kcal/day      0
  *
- * A 1-2 kg single-day swing is not exotic — hydration, sodium, glycogen,
- * time of day, a different scale. It is the reason this app keeps a
- * smoothed trend weight for display at all.
+ * and at the warmup minimum (8 weigh-ins over 14 days) one reading 2 kg
+ * high at the end took a 2,000 kcal maintenance to 1,358. A 1-2 kg
+ * single-day swing is not exotic — hydration, sodium, glycogen, time of
+ * day, a different scale — and the sign is the bad one: a high final
+ * weigh-in reads as weight gain, so maintenance reads LOWER and the target
+ * comes DOWN after a heavy weekend.
  *
- * Note the SIGN. A high final weigh-in makes the fitted slope look like
- * weight gain, so the estimator concludes maintenance is LOWER and the
- * target comes DOWN. The direction that shows up after a heavy weekend is
- * the direction that cuts calories.
+ * The slope is now the median of the pairwise slopes (Theil-Sen). These
+ * tests pin what that buys and what it costs:
  *
- * This does NOT implement Theil-Sen. The header defers it deliberately and
- * that is a product decision; what was missing is the number the decision
- * should be made against. What these tests do:
- *
- *   - pin the leverage, so any change to the estimator shows its effect on
- *     robustness rather than only on the happy path;
- *   - assert the header's actual claim (symmetric noise averages out), so
- *     it stops being prose;
- *   - assert the mitigation that really bounds this — the target's
- *     per-window step clamp — because that, not the fit, is what stands
- *     between a bad weigh-in and the user's calories.
- *
- * IF THE v2 REFINEMENT LANDS, THE LEVERAGE TESTS BELOW SHOULD FAIL. That
- * is the intended behaviour, not a regression: swapping in a median-of-
- * pairwise-slopes fit drops the endpoint leverage to roughly nothing, and
- * these numbers should be rewritten to the new measurements rather than
- * deleted. Checked by doing it — a Theil-Sen substitution fails exactly
- * the four leverage cases and leaves the clean-data and symmetric-noise
- * ones passing, which is the shape a real improvement has.
+ *   - one bad weigh-in, anywhere and of any size, moves nothing;
+ *   - a run of high readings long enough to be a real change is followed,
+ *     and the target's per-window step clamp is what paces it;
+ *   - on symmetric noise it is a little noisier than least squares, by a
+ *     bounded amount (`leastSquaresTdee` below is the reference).
  */
 import { describe, it, expect } from "vitest";
 import { estimateAdaptiveTDEE } from "../adaptiveTdee";
@@ -81,6 +56,39 @@ function learned(weights: number[]): number {
   return r.learnedTDEE!;
 }
 
+/** FLAT with `kg` added to the weigh-ins at `indexes`. */
+function withOutliers(indexes: number[], kg: number): number[] {
+  return FLAT.map((w, i) => (indexes.includes(i) ? w + kg : w));
+}
+
+/** The fit the estimator replaced, kept as the yardstick for its cost. */
+function leastSquaresTdee(weights: number[]): number {
+  const xs = weights.map((_, i) => i * 2);
+  const n = weights.length;
+  const meanX = xs.reduce((s, v) => s + v, 0) / n;
+  const meanY = weights.reduce((s, v) => s + v, 0) / n;
+  let num = 0;
+  let den = 0;
+  for (let i = 0; i < n; i++) {
+    num += (xs[i] - meanX) * (weights[i] - meanY);
+    den += (xs[i] - meanX) ** 2;
+  }
+  return Math.round(2500 - (num / den) * 7700);
+}
+
+/** A fixed sequence of ±0.4 kg noise, so the spread below is one number. */
+function noisyFixtures(count: number): number[][] {
+  let seed = 23;
+  const next = () =>
+    (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  return Array.from({ length: count }, () =>
+    FLAT.map((w) => w + (next() - 0.5) * 0.8)
+  );
+}
+
+const rms = (errors: number[]) =>
+  Math.sqrt(errors.reduce((s, e) => s + e * e, 0) / errors.length);
+
 describe("adaptive TDEE — the estimator is right on clean data", () => {
   it("reads maintenance when weight is flat", () => {
     expect(learned(FLAT)).toBe(2500);
@@ -93,67 +101,72 @@ describe("adaptive TDEE — the estimator is right on clean data", () => {
   });
 });
 
-describe("adaptive TDEE — what the fit does and does not absorb", () => {
-  it("absorbs SYMMETRIC noise, as the header claims", () => {
-    /* The claim under test, made executable: alternating ±0.6 kg on every
-       weigh-in is far more total noise than any single outlier below, and
-       it moves the answer barely at all. This is the half least squares
-       genuinely handles. */
+describe("adaptive TDEE — one bad weigh-in moves nothing", () => {
+  it("absorbs SYMMETRIC noise", () => {
     const jittered = FLAT.map((w, i) => w + (i % 2 === 0 ? 0.6 : -0.6));
     expect(Math.abs(learned(jittered) - 2500)).toBeLessThan(60);
   });
 
-  it("does NOT resist a single outlier at the END of the window", () => {
-    // The measurement. 1 kg on the last weigh-in reads as weight gain, so
-    // maintenance reads LOW — and the target follows it down.
-    const heavyLast = [...FLAT];
-    heavyLast[heavyLast.length - 1] = 81;
-    expect(learned(heavyLast)).toBe(2325);
-    expect(2500 - learned(heavyLast)).toBe(175);
+  it("ignores one outlier at the end, at the start or in the middle", () => {
+    // Least squares read 2325, 2675 and 2500 for these.
+    expect(learned(withOutliers([10], 1))).toBe(2500);
+    expect(learned(withOutliers([0], 1))).toBe(2500);
+    expect(learned(withOutliers([5], 2))).toBe(2500);
   });
 
-  it("does NOT resist one at the START either, with the sign flipped", () => {
-    const heavyFirst = [...FLAT];
-    heavyFirst[0] = 81;
-    expect(learned(heavyFirst)).toBe(2675);
+  it("ignores it whatever its size", () => {
+    // Least squares lost 87, 175 and 350 kcal: linear in the outlier.
+    for (const kg of [0.5, 1, 2]) {
+      expect(learned(withOutliers([10], kg))).toBe(2500);
+    }
   });
 
-  it("scales linearly with the size of the outlier", () => {
-    /* Pinning the slope of the exposure, not one point on it — a change
-       that halved the leverage should be visible here as a changed
-       relationship, not just a changed number. */
-    const at = (kg: number) => {
-      const w = [...FLAT];
-      w[w.length - 1] = 80 + kg;
-      return 2500 - learned(w);
-    };
-    expect(at(0.5)).toBe(87);
-    expect(at(1.0)).toBe(175);
-    expect(at(2.0)).toBe(350);
+  it("holds a real deficit through a bad final weigh-in", () => {
+    const losing = FLAT.map((w, i) => w - i * 2 * (0.5 / 7));
+    losing[10] += 2;
+    expect(learned(losing)).toBe(3050);
   });
 
-  it("is blind to an outlier in the MIDDLE — that is leverage, not noise", () => {
-    /* Same 2 kg error, zero effect, because the midpoint has no leverage
-       on a least-squares slope. It is the clearest statement of what the
-       fit is actually vulnerable to: not the size of an error but where
-       it lands. */
-    const heavyMiddle = [...FLAT];
-    heavyMiddle[5] = 82;
-    expect(learned(heavyMiddle)).toBe(2500);
+  it("holds at the warmup minimum, where least squares read 1,358", () => {
+    const intake = Array.from({ length: 15 }, (_, i) => ({
+      dateKey: day(i),
+      kcal: 2000,
+    }));
+    const sparse = (high: number) =>
+      Array.from({ length: 8 }, (_, i) => ({
+        dateKey: day(i * 2),
+        weightKg: i === high ? 82 : 80,
+      }));
+    for (const high of [0, 7]) {
+      const r = estimateAdaptiveTDEE({
+        intakeByDay: intake,
+        weighIns: sparse(high),
+      });
+      expect(r.ready).toBe(true);
+      expect(r.learnedTDEE).toBe(2000);
+    }
   });
 });
 
-describe("adaptive TDEE — what bounds the damage", () => {
-  it("the per-window step clamp is smaller than a 1 kg outlier's error", () => {
-    /* This is the load-bearing mitigation, and it is worth stating as a
-       relationship rather than trusting the constant to stay put: a single
-       bad weigh-in can move the ESTIMATE by 175 kcal, and the TARGET can
-       only follow by 150 in that window. If the clamp were ever raised
-       past the leverage, one weigh-in would move a user's calories in full
-       in a single step. */
-    const heavyLast = [...FLAT];
-    heavyLast[heavyLast.length - 1] = 81;
-    const estimateError = 2500 - learned(heavyLast);
-    expect(MAX_WEEKLY_STEP_KCAL).toBeLessThan(estimateError);
+describe("adaptive TDEE — what a real change, and noise, cost", () => {
+  it("follows a run of high readings long enough to be a change, at the clamp's pace", () => {
+    /* Three of the last eleven weigh-ins a kilo up are still outliers; the
+       last four (a week) read as weight gained. That is the fit working,
+       and the per-window step clamp is what stops a week's change moving
+       the target in full in one step. */
+    expect(learned(withOutliers([8, 9, 10], 1))).toBe(2500);
+    const followed = 2500 - learned(withOutliers([7, 8, 9, 10], 1));
+    expect(followed).toBe(385);
+    expect(MAX_WEEKLY_STEP_KCAL).toBeLessThan(followed);
+  });
+
+  it("is a little noisier than least squares on symmetric noise, and no more", () => {
+    // Measured: 94 kcal against least squares' 87 over these 200 fixtures.
+    const fixtures = noisyFixtures(200);
+    const theilSen = rms(fixtures.map((w) => learned(w) - 2500));
+    const leastSquares = rms(fixtures.map((w) => leastSquaresTdee(w) - 2500));
+    expect(Math.round(theilSen)).toBe(94);
+    expect(Math.round(leastSquares)).toBe(87);
+    expect(theilSen / leastSquares).toBeLessThan(1.15);
   });
 });

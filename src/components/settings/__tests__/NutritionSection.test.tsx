@@ -28,6 +28,7 @@ import {
   MIN_TARGET_CALORIES,
 } from "@/lib/macroConstants";
 import type { TDEEResult } from "@/lib/tdee";
+import { getAdjustedTargets, LOW_CARB_G } from "@/lib/phaseNutrition";
 
 afterEach(() => cleanup());
 
@@ -214,23 +215,40 @@ describe("NutritionSection — editing the calorie override", () => {
   });
 });
 
-function renderSection(weeklyRateKg = 0.5, tdee: TDEEResult = DEFAULT_TDEE) {
+/** The body a tdee fixture was computed for: the grams shown are split from
+ *  it, so a fixture rendered against another body shows another body's. */
+interface Body {
+  currentKg: number;
+  fitnessGoal: GoalWeightPlan["fitnessGoal"];
+  customCalorieTarget?: number;
+}
+
+function renderSection(
+  weeklyRateKg = 0.5,
+  tdee: TDEEResult = DEFAULT_TDEE,
+  body: Body = { currentKg: 75, fitnessGoal: goalPlan.fitnessGoal }
+) {
   const setWeeklyRateKg = vi.fn();
   render(
     <NutritionSection
       profile={
-        { uid: "u-1", displayName: "T", email: "t@e.com" } as UserProfile
+        {
+          uid: "u-1",
+          displayName: "T",
+          email: "t@e.com",
+          customCalorieTarget: body.customCalorieTarget,
+        } as UserProfile
       }
       age={25}
       setAge={vi.fn()}
       activityLevel={"moderate" as ActivityLevel}
       setActivityLevel={vi.fn()}
-      currentKg={75}
+      currentKg={body.currentKg}
       goalWeightKg={76.5}
       setGoalWeightKg={vi.fn()}
       weeklyRateKg={weeklyRateKg}
       setWeeklyRateKg={setWeeklyRateKg}
-      goalPlan={goalPlan}
+      goalPlan={{ ...goalPlan, fitnessGoal: body.fitnessGoal }}
       tdee={tdee}
       updateProfile={vi.fn(async () => ({ ok: true }) as UpdateProfileResult)}
       inline
@@ -319,7 +337,7 @@ describe("NutritionSection — capped-protein notice", () => {
     expect(HEAVY_FAST_CUT.proteinCapped).toBe(true);
     expect(HEAVY_FAST_CUT.targetCalories).toBeGreaterThan(1200);
 
-    renderSection(0.75, HEAVY_FAST_CUT);
+    renderSection(0.75, HEAVY_FAST_CUT, { currentKg: 110, fitnessGoal: "cut" });
     const notice = screen.getByText(/A slower pace holds protein/);
     // Both numbers are present: what fits, and what the plan wanted.
     expect(notice.textContent).toContain(String(HEAVY_FAST_CUT.protein));
@@ -330,8 +348,99 @@ describe("NutritionSection — capped-protein notice", () => {
 
   it("stays silent on a pace that fits", () => {
     expect(ORDINARY_CUT.proteinCapped).toBe(false);
-    renderSection(0.5, ORDINARY_CUT);
+    renderSection(0.5, ORDINARY_CUT, { currentKg: 75, fitnessGoal: "cut" });
     expect(screen.queryByText(/A slower pace holds protein/)).toBeNull();
+  });
+});
+
+/**
+ * Nutr5. Settings showed the stored split, whose protein is the goal's
+ * baseline (lean bulk 1.8 g/kg), while Home showed the day's, from the
+ * training block (2.0): 126 g here, 140 g there, for one person. The grams
+ * are now the display split on a rest day, and a cut pace that leaves almost
+ * no carbs says so. Fixtures come from the real `calculateTDEE`, with their
+ * preconditions asserted, as above.
+ */
+const LEAN_BULK_70 = calculateTDEE(
+  70,
+  178,
+  30,
+  "moderate",
+  "lean bulk",
+  "male",
+  offsetFromWeeklyRate(0.25)
+);
+
+/** Steady pace, protein not capped, carbs left at 17 g. */
+const HEAVY_STEADY_CUT = calculateTDEE(
+  105,
+  175,
+  45,
+  "sedentary",
+  "cut",
+  "female",
+  offsetFromWeeklyRate(-0.5)
+);
+
+describe("NutritionSection — the grams Home shows", () => {
+  it("shows the training block's protein, not the stored baseline", () => {
+    expect(LEAN_BULK_70.protein).toBe(126);
+    const home = getAdjustedTargets(
+      {
+        uid: "u-1",
+        targetCalories: LEAN_BULK_70.targetCalories,
+        weightKg: 70,
+        program: { goal: "lean bulk", startWeight: 70, currentPhase: "base" },
+      } as UserProfile,
+      "rest"
+    );
+    expect(home.protein).toBe(140);
+
+    renderSection(0.25, LEAN_BULK_70, {
+      currentKg: 70,
+      fitnessGoal: "lean bulk",
+    });
+    expect(screen.getByText("140 g")).toBeInTheDocument();
+    expect(screen.queryByText("126 g")).toBeNull();
+    expect(screen.getByText(`${home.carbs} g`)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Protein follows your training block/)
+    ).toBeInTheDocument();
+  });
+
+  it("says when a pace leaves little carbs to train on", () => {
+    expect(HEAVY_STEADY_CUT.proteinCapped).toBe(false);
+    expect(HEAVY_STEADY_CUT.carbs).toBeLessThan(LOW_CARB_G);
+    renderSection(0.5, HEAVY_STEADY_CUT, {
+      currentKg: 105,
+      fitnessGoal: "cut",
+    });
+    const notice = screen.getByText(/of carbs a day/);
+    expect(notice.textContent).toBe(
+      `This pace leaves ${HEAVY_STEADY_CUT.carbs} g of carbs a day, which is little to train on. A gentler pace leaves more.`
+    );
+  });
+
+  it("names the target, not the pace, when the target is the person's own", () => {
+    renderSection(0.5, HEAVY_STEADY_CUT, {
+      currentKg: 105,
+      fitnessGoal: "cut",
+      customCalorieTarget: HEAVY_STEADY_CUT.targetCalories,
+    });
+    expect(screen.getByText(/of carbs a day/).textContent).toMatch(
+      /^Your target leaves .* A higher target leaves more\.$/
+    );
+  });
+
+  it("says nothing of carbs on an ordinary cut, or when protein is the one capped", () => {
+    expect(ORDINARY_CUT.carbs).toBeGreaterThanOrEqual(LOW_CARB_G);
+    renderSection(0.5, ORDINARY_CUT, { currentKg: 75, fitnessGoal: "cut" });
+    expect(screen.queryByText(/of carbs a day/)).toBeNull();
+    cleanup();
+    // Capped protein has its own sentence; one warning, not two.
+    renderSection(0.75, HEAVY_FAST_CUT, { currentKg: 110, fitnessGoal: "cut" });
+    expect(screen.getByText(/A slower pace holds protein/)).toBeInTheDocument();
+    expect(screen.queryByText(/of carbs a day/)).toBeNull();
   });
 });
 
