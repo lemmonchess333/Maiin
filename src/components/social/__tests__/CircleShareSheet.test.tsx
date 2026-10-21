@@ -119,6 +119,22 @@ describe("no circles", () => {
   });
 });
 
+describe("a failed read", () => {
+  it("says so and offers Try again, not the no-Circles prompt", () => {
+    const hook = hookValue({ loadFailed: true });
+    mockUseGoalSpaces.mockReturnValue(hook);
+    renderSheet();
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Couldn’t load your Circles."
+    );
+    expect(screen.queryByText(/Circles are small/i)).toBeNull();
+    expect(screen.queryByRole("button", { name: /open together/i })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(hook.reload).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("with circles", () => {
   it("preselects the first ACTIVE circle and shares (id, session_completed, note) — only those args", async () => {
     const hook = hookValue({

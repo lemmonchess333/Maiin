@@ -61,6 +61,42 @@ beforeEach(() => {
   getTodayStepTotal.mockResolvedValue(0);
 });
 
+describe("useSteps pending", () => {
+  /* Settings → Health showed 0 and "No steps yet" while it loaded: the
+     status reads "ambiguous" for a connected account until the first
+     step read lands. */
+  it("stays pending until a connected account's first step read lands", async () => {
+    isHealthAvailable.mockResolvedValue(true);
+    seedFirestore({ [FLAG_DOC]: { connected: true, primingShown: true } });
+    let answer!: (n: number) => void;
+    getTodayStepTotal.mockReturnValue(
+      new Promise<number>((resolve) => {
+        answer = resolve;
+      })
+    );
+    const { result } = renderHook(() => useSteps());
+    expect(result.current.pending).toBe(true);
+    await waitFor(() => expect(getTodayStepTotal).toHaveBeenCalled());
+    expect(result.current.status).toBe("ambiguous");
+    expect(result.current.pending).toBe(true);
+    await act(async () => answer(4200));
+    expect(result.current.pending).toBe(false);
+    expect(result.current.status).toBe("connected");
+  });
+
+  it("settles where Health is not available, and when the read fails", async () => {
+    isHealthAvailable.mockResolvedValue(false);
+    const web = renderHook(() => useSteps());
+    await waitFor(() => expect(web.result.current.pending).toBe(false));
+
+    isHealthAvailable.mockResolvedValue(true);
+    seedFirestore({ [FLAG_DOC]: { connected: true, primingShown: true } });
+    getTodayStepTotal.mockRejectedValue(new Error("no health"));
+    const phone = renderHook(() => useSteps());
+    await waitFor(() => expect(phone.result.current.pending).toBe(false));
+  });
+});
+
 describe("useSteps status", () => {
   it("is 'unavailable' when Health isn't available", async () => {
     isHealthAvailable.mockResolvedValue(false);

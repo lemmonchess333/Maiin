@@ -50,6 +50,7 @@ import { cn } from "@/lib/utils";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import type { FeedSubTab } from "./socialTabs";
+import { Button } from "@/components/ui/Button";
 
 export interface FeedViewProps {
   /** True when the Feed tab is the active top-level tab. Gates the
@@ -62,6 +63,10 @@ export interface FeedViewProps {
   /** URL-writing callback — stays in the shell since it owns searchParams. */
   selectFeedSubTab: (next: FeedSubTab) => void;
   followingCount: number | null;
+  /** Who the person follows could not be read; `retryFollowingCount`
+   *  reads it again. */
+  followingCountFailed?: boolean;
+  retryFollowingCount?: () => void;
   followingFeedUnlocked: boolean;
   blockedUsers: Set<string>;
   /** SOCIAL-PRIVACY-01: true once the block list has loaded. Feed reads
@@ -90,6 +95,8 @@ export default function FeedView({
   feedSubTab,
   selectFeedSubTab,
   followingCount,
+  followingCountFailed = false,
+  retryFollowingCount,
   followingFeedUnlocked,
   blockedUsers,
   blockedReady,
@@ -553,6 +560,26 @@ export default function FeedView({
                 Sessions people shared publicly. Follow anyone to see theirs
                 under Following.
               </p>
+            )}
+
+            {/* Following, when who the person follows could not be read:
+                neither the posts nor "You don't follow anyone yet" is
+                known, so say so and read it again. */}
+            {feedSubTab === "following" && followingCountFailed && (
+              <div
+                role="alert"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card p-4"
+              >
+                <p className="text-small text-muted-foreground">
+                  Couldn&rsquo;t load who you follow.
+                </p>
+                <Button
+                  variant="secondary"
+                  onClick={() => retryFollowingCount?.()}
+                >
+                  Try again
+                </Button>
+              </div>
             )}
 
             {/* Following, with nobody followed yet: say so, and where to

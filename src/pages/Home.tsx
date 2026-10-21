@@ -1109,6 +1109,7 @@ export default function Home() {
             weightTrend={weightTrend}
             stepsStatus={stepsData.status}
             steps={stepsData.steps}
+            stepsPending={stepsData.pending}
             onConnectSteps={function () {
               void stepsData.connect();
             }}

@@ -46,7 +46,8 @@ export default function CircleShareSheet({
   onOpenChange,
   uid,
 }: CircleShareSheetProps) {
-  const { loading, circles, publishEvent } = useGoalSpaces(uid);
+  const { loading, circles, loadFailed, reload, publishEvent } =
+    useGoalSpaces(uid);
   // A restricted account shares nothing with a Circle (S4e).
   const { isRestricted } = useRestrictedStatus(uid);
   const navigate = useNavigate();
@@ -106,7 +107,22 @@ export default function CircleShareSheet({
           </div>
         )}
 
-        {!loading && circles.length === 0 && (
+        {/* A failed read is not having no Circles. */}
+        {!loading && loadFailed && circles.length === 0 && (
+          <div
+            role="alert"
+            className="flex items-center justify-between gap-3 rounded-xl bg-card p-3"
+          >
+            <p className="text-small text-muted-foreground">
+              Couldn&rsquo;t load your Circles.
+            </p>
+            <Button variant="secondary" onClick={() => void reload()}>
+              Try again
+            </Button>
+          </div>
+        )}
+
+        {!loading && !loadFailed && circles.length === 0 && (
           <>
             <EmptyState
               compact

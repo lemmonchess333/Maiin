@@ -932,25 +932,26 @@ export default function FoodAnalyzer({
           <p className="text-sm text-destructive-strong">
             Couldn't identify food.
           </p>
-          <div className="flex gap-3">
-            <button
-              type="button"
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="secondary"
               onClick={handleResetAll}
-              aria-label="Try food analysis again"
-              className="text-sm text-destructive-strong font-medium flex items-center gap-1"
+              leftIcon={<RotateCcw className="size-4" />}
             >
-              <RotateCcw className="size-3.5" /> Try again
-            </button>
-            <button
-              type="button"
+              Try again
+            </Button>
+            <Button
+              variant="ghost"
               onClick={() => {
+                // As the empty result's Log manually: hand off to the
+                // parent's manual logger, not just close the camera.
                 handleResetAll();
                 setCameraOpen(false);
+                onRequestManualLog?.();
               }}
-              className="text-sm text-lifting-strong font-medium"
             >
-              Switch to manual entry
-            </button>
+              Log manually
+            </Button>
           </div>
         </div>
       )}

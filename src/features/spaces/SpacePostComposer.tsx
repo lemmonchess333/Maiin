@@ -42,6 +42,7 @@ import { distanceLabel } from "@/lib/runLabels";
 import { clipRouteEnds, DEFAULT_CLIP_METERS } from "@/lib/shareCard/polyline";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { IconButton } from "@/components/ui/IconButton";
 
 const TITLE_MAX = 120;
 const BODY_MAX = 4000;
@@ -320,14 +321,12 @@ export default function SpacePostComposer({
                 alt="Attachment preview"
                 className="w-full max-h-64 object-cover"
               />
-              <button
-                type="button"
+              <IconButton
                 onClick={() => pickPhoto(null)}
                 aria-label="Remove photo"
-                className="absolute top-2 right-2 size-9 rounded-full bg-card/90 flex items-center justify-center text-foreground active:scale-90 transition-transform"
-              >
-                <X className="size-4" />
-              </button>
+                icon={<X />}
+                className="absolute top-2 right-2 rounded-full bg-card/90 hover:bg-card"
+              />
             </div>
           ) : (
             <Button
@@ -364,17 +363,15 @@ export default function SpacePostComposer({
                 <span className="shrink-0 text-xs text-muted-foreground">
                   {recentSessionDay(attached)}
                 </span>
-                <button
-                  type="button"
+                <IconButton
                   onClick={() => {
                     setPicked(null);
                     setLatestRemoved(true);
                   }}
                   aria-label="Remove attached session"
-                  className="p-3 -m-2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="size-4" />
-                </button>
+                  icon={<X />}
+                  className="-m-2 text-muted-foreground hover:text-foreground"
+                />
               </div>
             ) : (
               <div className="space-y-1.5">

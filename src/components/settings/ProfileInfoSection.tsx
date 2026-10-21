@@ -7,6 +7,9 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { kgToLb, lbToKg } from "@/lib/weightUnits";
 import { HEIGHT_CM } from "@/lib/bodyMetrics";
 import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
+import { queueWeightEntry } from "@/lib/weightQueue";
+import { localDateString } from "@/lib/dateHelpers";
+import { toast } from "@/lib/toast";
 
 type Gender = "male" | "female" | "unspecified";
 type AgeRange = "16-24" | "25-34" | "35-44" | "45-54" | "55+";
@@ -94,8 +97,18 @@ export default function ProfileInfoSection({
       setWeight(shown);
       return;
     }
-    const result = await updateProfile({ weightKg: kg });
-    if (!result.ok) setWeight(shown);
+    // A weight changed here is today's weigh-in, as one from Home is: the
+    // log, Home's tile and trend, and the macros all follow it. A bare
+    // profile write left Home showing the last logged weight and the stored
+    // macro targets on the old one.
+    try {
+      queueWeightEntry(profile.uid, localDateString(), kg);
+    } catch (err) {
+      setWeight(shown);
+      toast.error(
+        err instanceof Error ? err.message : "Couldn't save your weight."
+      );
+    }
   }
 
   /** The bounds are profileSanitizer.js's heightCm range (bodyMetrics),

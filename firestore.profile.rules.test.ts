@@ -337,6 +337,22 @@ suite("users/{uid}/public/profile — the uid identity gate", () => {
     );
   });
 
+  it("creates a public profile from the photo fields alone", async () => {
+    // A photo saved before any other public field: the upload writes these
+    // two with a merge set, which is a create when no profile exists yet.
+    const db = env.authenticatedContext(ME).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(db, `users/${ME}/public/profile`),
+        {
+          photoURL: `https://firebasestorage.googleapis.com/v0/b/demo/o/profile-photos%2F${ME}%2Fp.jpg`,
+          photoStoragePath: `profile-photos/${ME}/p.jpg`,
+        },
+        { merge: true }
+      )
+    );
+  });
+
   it("refuses another user writing your public profile at all", async () => {
     const db = env.authenticatedContext(VICTIM).firestore();
     await assertFails(

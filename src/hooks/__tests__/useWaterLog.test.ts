@@ -305,6 +305,25 @@ describe("navigation and account boundaries", () => {
     expect(view.result.current.ml).toBe(250);
     vi.restoreAllMocks();
   });
+  it("takes a drink back from the day it was drunk, just past midnight", async () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-05T23:59:00"));
+    const view = renderHook(() => useWaterLog());
+    await flushSnapshots();
+    act(() => view.result.current.logWater(500));
+    const drink = view.result.current.drinks[0];
+    // Midnight passes before the hook's day moves on: the list still
+    // shows the 5th's drinks.
+    vi.setSystemTime(new Date("2026-09-06T00:00:30"));
+    act(() => {
+      view.result.current.removeDrink(drink.id);
+    });
+    const undo = pendingWater("u1").find((a) => a.undoOf === drink.id);
+    expect(undo?.date).toBe("2026-09-05");
+    vi.restoreAllMocks();
+  });
+
   it("does not display another account's optimistic entries or serving preference", async () => {
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
     const view = renderHook(() => useWaterLog());

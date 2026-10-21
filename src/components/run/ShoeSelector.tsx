@@ -54,9 +54,10 @@ export default function ShoeSelector({ selectedShoeId, onSelect }: Props) {
     <div className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card">
       <Footprints className="size-4 text-muted-foreground shrink-0" />
       <select
+        aria-label="Shoe"
         value={selected?.id ?? ""}
         onChange={(e) => onSelect(e.target.value)}
-        className="flex-1 bg-transparent text-sm text-foreground appearance-none cursor-pointer focus:outline-none"
+        className="flex-1 min-h-11 bg-transparent text-sm text-foreground appearance-none cursor-pointer"
       >
         {activeShoes.map((shoe) => (
           <option key={shoe.id} value={shoe.id}>

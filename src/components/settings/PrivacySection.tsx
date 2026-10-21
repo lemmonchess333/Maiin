@@ -238,6 +238,7 @@ export default function PrivacySection({
               className="min-w-[min(100%,8em)] flex-1 min-h-11 px-3 rounded-lg bg-card border border-border text-sm"
             />
             <select
+              aria-label="Privacy zone radius"
               value={newZoneRadius}
               onChange={(e) => setNewZoneRadius(Number(e.target.value))}
               className="min-h-11 max-w-full px-3 rounded-lg bg-card border border-border text-sm"

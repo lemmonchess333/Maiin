@@ -9,7 +9,7 @@
  * ENTRY eligibility check is a handful of limit(1) probes, cached in
  * sessionStorage per (uid, week) so Home/Analytics mounts don't re-read.
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   collection,
   doc,
@@ -292,21 +292,33 @@ export function useReviewEligibility(): {
 
 /* ── Full review fetch (the page) ─────────────────────────────── */
 
-interface UseWeeklyReviewResult {
+interface WeeklyReviewState {
   loading: boolean;
   review: WeeklyReview | null;
   weekKey: string;
+  /** The read failed: not the same as a week with nothing to review. */
+  failed: boolean;
+}
+
+interface UseWeeklyReviewResult extends WeeklyReviewState {
+  retry: () => void;
 }
 
 export function useWeeklyReview(): UseWeeklyReviewResult {
   const { user, profile } = useAuth();
   const { isPro } = useSubscription();
   const weekKey = reviewedWeekKey();
-  const [state, setState] = useState<UseWeeklyReviewResult>({
+  const [state, setState] = useState<WeeklyReviewState>({
     loading: true,
     review: null,
     weekKey,
+    failed: false,
   });
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => {
+    setState((s) => ({ ...s, loading: true, failed: false }));
+    setAttempt((n) => n + 1);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -547,10 +559,16 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
             : null,
         };
 
-        setState({ loading: false, review: buildWeeklyReview(data), weekKey });
+        setState({
+          loading: false,
+          review: buildWeeklyReview(data),
+          weekKey,
+          failed: false,
+        });
       } catch (err) {
         logger.error("[useWeeklyReview] fetch failed", err);
-        if (!cancelled) setState({ loading: false, review: null, weekKey });
+        if (!cancelled)
+          setState({ loading: false, review: null, weekKey, failed: true });
       }
     })();
     return () => {
@@ -558,7 +576,7 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
     };
     // profile identity churns; the review is a point-in-time snapshot per week.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uid, weekKey]);
+  }, [user?.uid, weekKey, attempt]);
 
-  return state;
+  return { ...state, retry };
 }
