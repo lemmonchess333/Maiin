@@ -78,6 +78,10 @@ interface VariantStyle {
   background?: string;
   /** Inline accent — paired with `background` on the no-token path. */
   accent?: string;
+  /** The description's colour. The secondary grey misses 4.5:1 on the
+   *  coral and amber washes, so a tinted banner's body is foreground; the
+   *  neutral banner sits on the muted tile, where the grey passes. */
+  descriptionClass: string;
   /** WAI-ARIA role for the live region. */
   role: "status" | "alert";
   /** Default icon rendered when `icon` prop is not supplied. */
@@ -100,18 +104,21 @@ const VARIANT_STYLES: Record<BannerVariant, VariantStyle> = {
     // now the --running token (DS1b). Theme-invariant coral identity.
     surfaceClass: "bg-running/6 border-running/19",
     accentClass: "text-running-strong",
+    descriptionClass: "text-foreground",
     role: "status",
     DefaultIcon: Info,
   },
   warning: {
     background: `${THEME.amber}14`, // 8% in hex
     accent: THEME.amber,
+    descriptionClass: "text-foreground",
     role: "alert",
     DefaultIcon: AlertTriangle,
   },
   neutral: {
     surfaceClass: "bg-muted/60 border-border/40",
     accentClass: "text-muted-foreground",
+    descriptionClass: "text-muted-foreground",
     role: "status",
     DefaultIcon: Info,
   },
@@ -173,7 +180,7 @@ export function Banner({
           <p className="font-semibold text-foreground">{title}</p>
         ) : null}
         {description ? (
-          <div className="text-muted-foreground">{description}</div>
+          <div className={style.descriptionClass}>{description}</div>
         ) : null}
       </div>
       {action ? (

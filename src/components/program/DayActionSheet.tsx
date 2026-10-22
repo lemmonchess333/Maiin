@@ -449,13 +449,7 @@ export default function DayActionSheet({
                       : null;
                     const isManual = completionKind === "manual";
                     return (
-                      <span
-                        className={cn(
-                          "text-xs font-medium",
-                          isManual && "opacity-70"
-                        )}
-                        style={{ color: THEME.success }}
-                      >
+                      <span className="text-xs font-medium text-success-strong">
                         {isManual ? "Marked complete" : "Completed"}
                       </span>
                     );
@@ -784,10 +778,7 @@ export default function DayActionSheet({
               </div>
               <div className="shrink-0 pt-1">
                 {lift.status === "completed" && (
-                  <span
-                    className="text-xs font-medium"
-                    style={{ color: THEME.success }}
-                  >
+                  <span className="text-xs font-medium text-success-strong">
                     Completed
                   </span>
                 )}

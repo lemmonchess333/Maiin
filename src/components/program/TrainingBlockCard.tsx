@@ -438,7 +438,14 @@ export default function TrainingBlockCard({
                   <span className="text-sm font-semibold text-foreground text-left">
                     {focusLabel(g)}
                     {g === currentFocus && (
-                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                      <span
+                        className={cn(
+                          "ml-2 text-xs font-normal",
+                          focus === g
+                            ? "text-foreground"
+                            : "text-muted-foreground"
+                        )}
+                      >
                         Your focus now
                       </span>
                     )}

@@ -465,7 +465,10 @@ export default function Space() {
             <div
               className="absolute inset-0"
               style={{
-                background: `linear-gradient(to top, ${THEME.scrim} 0%, ${THEME.scrimSoft} 45%, transparent 70%)`,
+                /* Full scrim through the band the name and caption sit in
+                   (the bottom 40% of the 176px hero), so white words hold
+                   4.5:1 over even a white photo; it thins only above them. */
+                background: `linear-gradient(to top, ${THEME.scrim} 0%, ${THEME.scrim} 40%, ${THEME.scrimSoft} 62%, transparent 80%)`,
               }}
             />
           </>
@@ -507,7 +510,7 @@ export default function Space() {
             </h1>
             <p
               className={`text-caption font-medium mt-1 ${
-                photo ? "text-white/85" : "text-muted-foreground"
+                photo ? "text-white" : "text-muted-foreground"
               }`}
             >
               <InlineNumerals>{meta}</InlineNumerals>

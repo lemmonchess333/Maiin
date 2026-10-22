@@ -68,6 +68,12 @@ export default function ProgrammeWeekSelector({
   // Sport colour drives the today/selected circle — purple for lifting,
   // coral for running — so the selector reads as belonging to its tab.
   const SPORT = sport === "run" ? THEME.running : THEME.brand;
+  /* The identity fills the dot and draws its ring; words take the AA
+     text step, which the bare identity misses on the page canvas. */
+  const SPORT_TEXT =
+    sport === "run"
+      ? "hsl(var(--running-strong))"
+      : "hsl(var(--lifting-strong))";
   /* A done day is filled with its sport at 30%, the way Home's week strip
      fills a logged day (DS3), not the success green: the strips read as
      one control, and green is kept for status that is not a sport. The
@@ -138,18 +144,18 @@ export default function ProgrammeWeekSelector({
           content = (
             <span className="text-sm font-bold text-white">{cell.center}</span>
           );
-          labelColor = SPORT;
+          labelColor = SPORT_TEXT;
         } else if (isToday) {
           fill = "transparent";
           bWidth = 2;
           bColor = SPORT;
           glow = `0 0 0 4px ${SPORT}1A`;
           content = (
-            <span className="text-sm font-bold" style={{ color: SPORT }}>
+            <span className="text-sm font-bold" style={{ color: SPORT_TEXT }}>
               {cell.center}
             </span>
           );
-          labelColor = SPORT;
+          labelColor = SPORT_TEXT;
         } else if (isSelected) {
           fill = SPORT;
           bWidth = 0;
@@ -157,7 +163,7 @@ export default function ProgrammeWeekSelector({
           content = (
             <span className="text-sm font-bold text-white">{cell.center}</span>
           );
-          labelColor = SPORT;
+          labelColor = SPORT_TEXT;
         } else {
           // Upcoming + rest share the calm outline; rest fades a touch more
           // so a run-scope empty day reads as "nothing here" not "to do".

@@ -656,3 +656,154 @@ describe("token contrast — text tokens on the media stage", () => {
     expect(ratio).toBeGreaterThan(3);
   });
 });
+
+/** `fg` at `alpha` laid over `bg`. */
+function over(
+  fg: [number, number, number],
+  bg: [number, number, number],
+  alpha: number
+): [number, number, number] {
+  return [0, 1, 2].map((i) => fg[i] * alpha + bg[i] * (1 - alpha)) as [
+    number,
+    number,
+    number,
+  ];
+}
+
+function readFile(path: string): string {
+  return readFileSync(resolve(process.cwd(), path), "utf8");
+}
+
+describe("placeholders — the secondary grey at full strength", () => {
+  const rule = CSS.match(/(^|\n)::placeholder\s*\{([^}]*)\}/);
+  const opacity = () =>
+    Number(rule?.[2].match(/opacity:\s*([\d.]+)/)?.[1] ?? 1);
+
+  it("the global rule paints --muted-foreground and does not thin it", () => {
+    expect(rule, "the global ::placeholder rule is missing").not.toBeNull();
+    expect(rule![2]).toMatch(/color:\s*hsl\(var\(--muted-foreground\)\)/);
+    // An opacity under 1 multiplies into every placeholder, `.ds-input`'s
+    // included, since that rule sets only the colour.
+    expect(opacity()).toBe(1);
+  });
+
+  it.each([
+    ["light", lightBlock],
+    ["dark", darkBlock],
+  ] as const)("clears AA on the field fill and the card (%s)", (_n, block) => {
+    const fg = hslToRgb(...readHsl(block(), "muted-foreground"));
+    for (const surface of ["input-fill", "card"]) {
+      const bg = hslToRgb(...readHsl(block(), surface));
+      const ratio = contrast(over(fg, bg, opacity()), bg);
+      expect(
+        ratio,
+        `placeholder is ${ratio.toFixed(2)}:1 on --${surface}`
+      ).toBeGreaterThanOrEqual(AA_NORMAL);
+    }
+  });
+});
+
+describe("small secondary text on a tint", () => {
+  /* On a wash, small secondary words take text-foreground or a tint-aware
+     -strong step. The secondary grey is measured against the plain
+     surfaces and misses AA once a light-mode wash darkens the ground under
+     it. Each case is a wash a real surface paints over the page. */
+  const WASHES = [
+    { what: "Banner info", tint: "running", alpha: 0.06 },
+    { what: "Run tile picker repeat row", tint: "running", alpha: 0.12 },
+    { what: "selected focus row", tint: "primary", alpha: 0.1 },
+  ] as const;
+
+  it.each(WASHES)(
+    "the grey misses AA on the $what wash; foreground clears it",
+    ({ tint, alpha }) => {
+      const block = lightBlock();
+      const bg = over(
+        hslToRgb(...readHsl(block, tint)),
+        hslToRgb(...readHsl(block, "background")),
+        alpha
+      );
+      const grey = contrast(
+        hslToRgb(...readHsl(block, "muted-foreground")),
+        bg
+      );
+      const fg = contrast(hslToRgb(...readHsl(block, "foreground")), bg);
+      expect(grey).toBeLessThan(AA_NORMAL);
+      expect(fg).toBeGreaterThanOrEqual(AA_NORMAL);
+    }
+  );
+
+  it("the tinted Banner bodies are foreground; the neutral one keeps the grey", () => {
+    const src = readFile("src/components/ui/Banner.tsx");
+    expect(src).not.toMatch(
+      /<div className="text-muted-foreground">\{description\}/
+    );
+    const classes = [...src.matchAll(/descriptionClass: "([^"]+)"/g)].map(
+      (m) => m[1]
+    );
+    expect(classes).toEqual([
+      "text-foreground",
+      "text-foreground",
+      "text-muted-foreground",
+    ]);
+  });
+
+  it("the run tiles, Food's Details and the selected focus row paint no grey", () => {
+    expect(readFile("src/components/run/RunTilePicker.tsx")).not.toMatch(
+      /text-micro text-muted-foreground/
+    );
+    expect(readFile("src/components/food/FoodHeroCard.tsx")).not.toMatch(
+      /transition-all text-muted-foreground"/
+    );
+    expect(readFile("src/components/program/TrainingBlockCard.tsx")).toMatch(
+      /focus === g\s*\?\s*"text-foreground"/
+    );
+  });
+
+  it.each([
+    ["light", lightBlock],
+    ["dark", darkBlock],
+  ] as const)(
+    "brand words on a brand /10 chip take --lifting-strong, not --primary-strong (%s)",
+    (_n, block) => {
+      const b = block();
+      const bg = over(
+        hslToRgb(...readHsl(b, "primary")),
+        hslToRgb(...readHsl(b, "background")),
+        0.1
+      );
+      expect(
+        contrast(hslToRgb(...readHsl(b, "primary-strong")), bg)
+      ).toBeLessThan(AA_NORMAL);
+      expect(
+        contrast(hslToRgb(...readHsl(b, "lifting-strong")), bg)
+      ).toBeGreaterThanOrEqual(AA_NORMAL);
+      expect(readFile("src/components/share/ShareCardSheet.tsx")).not.toMatch(
+        /bg-primary\/10 text-primary-strong/
+      );
+    }
+  );
+});
+
+describe("medal ranks — the numeral is text, the metal is a marker", () => {
+  it.each([
+    "src/components/social/LeaderboardRow.tsx",
+    "src/features/challenges/ChallengeList.tsx",
+  ])("%s never colours the rank numeral with a medal", (path) => {
+    const src = readFile(path);
+    // Gold is 1.40:1 and silver 1.82:1 as text on the white card.
+    expect(src).not.toMatch(/color:\s*[^;]{0,60}RANK_COLORS/);
+    expect(src).toMatch(/inset 0 0 0 2px \$\{RANK_COLORS/);
+  });
+});
+
+describe("photo captions — the scrim holds through the words", () => {
+  it("Space's hero keeps the full scrim through its caption band, in white", () => {
+    const src = readFile("src/pages/Space.tsx");
+    expect(src).toMatch(/\$\{THEME\.scrim\} 0%, \$\{THEME\.scrim\} 40%/);
+    expect(src).not.toMatch(/text-white\/85/);
+    // White over a 0.55 black scrim over a white photo, the worst ground.
+    const ground = over([0, 0, 0], [1, 1, 1], 0.55);
+    expect(contrast([1, 1, 1], ground)).toBeGreaterThanOrEqual(AA_NORMAL);
+  });
+});

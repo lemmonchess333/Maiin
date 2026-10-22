@@ -350,14 +350,17 @@ export function ChallengeList({
                       : ""
                   }`}
                 >
+                  {/* Numeral in the text colour, the medal metal as its
+                      ring (see LeaderboardRow). */}
                   <span
-                    className="w-5 text-xs font-bold text-center shrink-0"
-                    style={{
-                      color:
-                        entry.rank <= 3
-                          ? RANK_COLORS[entry.rank - 1]
-                          : undefined,
-                    }}
+                    className="min-w-5 h-5 px-0.5 rounded-full inline-flex items-center justify-center text-xs font-bold text-foreground shrink-0"
+                    style={
+                      entry.rank <= 3
+                        ? {
+                            boxShadow: `inset 0 0 0 2px ${RANK_COLORS[entry.rank - 1]}`,
+                          }
+                        : undefined
+                    }
                   >
                     {entry.rank}
                   </span>

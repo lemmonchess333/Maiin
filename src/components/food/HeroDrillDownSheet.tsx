@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { useSubscription } from "@/lib/subscription";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
+import { cn } from "@/lib/utils";
 import {
   formatCalories,
   formatMacro,
@@ -159,8 +160,10 @@ function MicroRow({
         </SectionLabel>
         <span className="font-mono tabular-nums text-sm">
           <span
-            className="font-semibold text-foreground"
-            style={warn ? { color: THEME.amber } : undefined}
+            className={cn(
+              "font-semibold",
+              warn ? "text-warning-strong" : "text-foreground"
+            )}
           >
             {formatMacro(consumed)}
           </span>
@@ -178,8 +181,10 @@ function MicroRow({
         />
       </div>
       <p
-        className="text-caption text-muted-foreground font-mono tabular-nums"
-        style={warn ? { color: THEME.amber } : undefined}
+        className={cn(
+          "text-caption font-mono tabular-nums",
+          warn ? "text-warning-strong" : "text-muted-foreground"
+        )}
       >
         {note}
       </p>
