@@ -20,7 +20,7 @@ const KNOWN = [
   },
   {
     test: /: not authorized$/,
-    code: "permission-denied",
+    code: "failed-precondition",
     message: "You can only delete your own comments.",
   },
   {
@@ -45,7 +45,7 @@ const DELETION_IN_PROGRESS = "Account deletion is in progress.";
 function commentRejection(err, { functions, isAccessError, accessMessage }) {
   const { HttpsError } = functions.https;
   if (err instanceof HttpsError) return err;
-  if (isAccessError) return new HttpsError("permission-denied", accessMessage);
+  if (isAccessError) return new HttpsError("failed-precondition", accessMessage);
   if (err && err.code === RESTRICTED_REASON) {
     return new HttpsError("permission-denied", RESTRICTED_MESSAGE, {
       reason: RESTRICTED_REASON,

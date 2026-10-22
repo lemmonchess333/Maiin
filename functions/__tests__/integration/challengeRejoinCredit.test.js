@@ -119,7 +119,9 @@ async function leave() {
 async function fireJoinTrigger() {
   await onChallengeParticipantCreated.run(null, {
     params: { challengeId: CHALLENGE, uid: UID },
-    timestamp: new Date().toISOString(),
+    // The join happens while the challenge runs: one after it closed
+    // credits nothing.
+    timestamp: "2026-07-20T12:00:00Z",
   });
 }
 

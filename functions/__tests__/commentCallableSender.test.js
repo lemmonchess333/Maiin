@@ -177,11 +177,11 @@ describe.each([
     expect(err.message).not.toMatch(/abc123/);
   });
 
-  it("refuses someone else's comment as permission-denied in words", async () => {
+  it("refuses someone else's comment in words the app shows", async () => {
     useMemoryFirestore();
     spyWriter().mockRejectedValue(new Error(`${prefix}: not authorized`));
     await expect(callable.run(ids, VERIFIED)).rejects.toMatchObject({
-      code: "permission-denied",
+      code: "failed-precondition",
       message: "You can only delete your own comments.",
     });
   });
