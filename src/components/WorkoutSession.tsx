@@ -40,6 +40,10 @@ import {
   SkipForward,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import {
+  FIELD_EDGE,
+  SECONDARY_ON_CARD_EDGE,
+} from "@/components/ui/buttonClasses";
 import { Card } from "@/components/ui/Card";
 import SectionLabel from "@/components/ui/SectionLabel";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
@@ -1747,6 +1751,7 @@ export default function WorkoutSession({
           {finishEarlyOffered && (
             <Button
               variant="secondary"
+              className={SECONDARY_ON_CARD_EDGE}
               aria-label="Finish workout"
               onClick={() => setShowFinishEarly(true)}
             >
@@ -2226,7 +2231,10 @@ export default function WorkoutSession({
                             )
                           }
                           disabled={set.completed}
-                          className="min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground placeholder:text-muted-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor]"
+                          className={cn(
+                            FIELD_EDGE,
+                            "min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground placeholder:text-muted-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor] disabled:border-transparent"
+                          )}
                         />
                         <input
                           type="number"
@@ -2244,7 +2252,10 @@ export default function WorkoutSession({
                             )
                           }
                           disabled={set.completed}
-                          className="min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor]"
+                          className={cn(
+                            FIELD_EDGE,
+                            "min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor] disabled:border-transparent"
+                          )}
                         />
                         {/* Keyed by exercise as well as set: a return to an
                             earlier exercise remounts its checks, so only a
@@ -2320,7 +2331,7 @@ export default function WorkoutSession({
             <Button
               variant="secondary"
               size="sm"
-              className="min-w-fit flex-1"
+              className={cn("min-w-fit flex-1", SECONDARY_ON_CARD_EDGE)}
               leftIcon={<Plus className="size-4" aria-hidden="true" />}
               onClick={() => addSet(currentExIndex)}
             >

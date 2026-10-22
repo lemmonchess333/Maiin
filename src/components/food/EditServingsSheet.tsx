@@ -5,6 +5,7 @@ import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
+import { FIELD_FOCUS_RING } from "@/components/ui/buttonClasses";
 import SectionLabel from "@/components/ui/SectionLabel";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import {
@@ -316,7 +317,8 @@ function EditServingsSheet({
         className={cn(
           "w-full text-center font-mono tabular-nums text-foreground bg-muted/50",
           "rounded-xl border border-border/70 placeholder:text-muted-foreground",
-          "focus:outline-none focus:border-border focus:bg-card transition-colors",
+          "focus:bg-card transition-colors",
+          FIELD_FOCUS_RING,
           "disabled:opacity-60",
           sizeClass,
           /* The field the user has to go back to. Without it the only
@@ -370,7 +372,8 @@ function EditServingsSheet({
             className={cn(
               "w-full text-center text-base font-semibold text-foreground bg-transparent",
               "rounded-lg px-3 py-1.5 border border-transparent",
-              "focus:outline-none focus:border-border focus:bg-muted/50 transition-colors",
+              "focus:bg-muted/50 transition-colors",
+              FIELD_FOCUS_RING,
               "disabled:opacity-60"
             )}
           />

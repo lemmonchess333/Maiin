@@ -57,7 +57,7 @@ export default function SetCheck({
         onClick={onComplete}
         className="group mx-auto flex size-[44px] items-center justify-center transition-transform active:scale-90"
       >
-        <span className="size-[32px] rounded-lg border-2 border-border transition-colors group-hover:border-primary/60" />
+        <span className="size-[32px] rounded-lg border-2 border-muted-foreground/80 transition-colors group-hover:border-primary/60" />
       </button>
     );
   }

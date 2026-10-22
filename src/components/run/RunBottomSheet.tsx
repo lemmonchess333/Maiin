@@ -495,7 +495,10 @@ export default function RunBottomSheet({
         {/* Drag handle — the whole sheet is draggable now, but the handle
             stays as the visible affordance + a keyboard target. */}
         <div
-          className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing select-none flex-shrink-0"
+          // The sheet is the run's dark stage in both themes, so its focus
+          // ring is the running coral (5:1 on it), not the lifting purple
+          // with a page-coloured offset.
+          className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing select-none flex-shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-running"
           role="button"
           tabIndex={0}
           aria-label="Drag to resize the run panel"
@@ -967,7 +970,7 @@ export default function RunBottomSheet({
                 }
                 haptic("medium");
               }}
-              className="size-12 rounded-full flex items-center justify-center active:scale-[0.92] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className="size-12 rounded-full flex items-center justify-center active:scale-[0.92] transition-transform duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-running"
               style={{
                 background: isPaused ? THEME.running : "rgba(255,255,255,0.1)",
                 border: "2px solid rgba(255,255,255,0.18)",
