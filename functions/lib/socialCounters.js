@@ -29,6 +29,7 @@ const {
 } = require("./activityAccess");
 const { refusedAddError } = require("./restriction");
 const { publicPhotoUrl } = require("./publicPhotoUrl");
+const { MAX_DISPLAY_NAME_LENGTH } = require("../profileSanitizer");
 
 /**
  * Toggle kudos: if the kudos sub-doc exists for {uid} on
@@ -107,7 +108,7 @@ async function toggleKudos({
  *
  * Validation:
  *   - text trimmed length 1..1000
- *   - authorName length 1..100
+ *   - authorName length 1..MAX_DISPLAY_NAME_LENGTH
  *
  * Caller (the CF wrapper in index.js) translates throw → HttpsError.
  */
@@ -130,7 +131,7 @@ async function addComment({
   }
   const name =
     typeof authorName === "string" && authorName.trim().length > 0
-      ? authorName.trim().slice(0, 100)
+      ? authorName.trim().slice(0, MAX_DISPLAY_NAME_LENGTH)
       : "Athlete";
 
   const activityRef = firestore.collection("activities").doc(activityId);

@@ -75,6 +75,47 @@ export interface ChallengeParticipant {
    */
   photoURL?: string;
   uid?: string;
+  /** Place on the board, shared by a tie (1, 1, 3). Set by
+   *  `rankLeaderboard`, never stored. */
+  rank?: number;
+}
+
+/**
+ * A board in the order it is shown, each entry with its place. Equal
+ * values share a place and the next value skips the places they took
+ * (1, 1, 3). Within a tie entries go by name, so who sits first is not
+ * decided by how account ids happen to sort. A time-based metric
+ * (fastest_effort) ranks the lowest value first.
+ */
+export function rankLeaderboard(
+  entries: readonly ChallengeParticipant[],
+  metric: string
+): ChallengeParticipant[] {
+  const ascending = metric === "fastest_effort";
+  const sorted = [...entries].sort((a, b) => {
+    const byValue = ascending
+      ? a.currentValue - b.currentValue
+      : b.currentValue - a.currentValue;
+    if (byValue !== 0) return byValue;
+    const byName = (a.displayName ?? "").localeCompare(
+      b.displayName ?? "",
+      "en-GB",
+      { sensitivity: "base" }
+    );
+    if (byName !== 0) return byName;
+    return (a.uid ?? "") < (b.uid ?? "")
+      ? -1
+      : (a.uid ?? "") > (b.uid ?? "")
+        ? 1
+        : 0;
+  });
+  let rank = 0;
+  return sorted.map((entry, i) => {
+    if (i === 0 || entry.currentValue !== sorted[i - 1].currentValue) {
+      rank = i + 1;
+    }
+    return { ...entry, rank };
+  });
 }
 
 /* ── Local-day challenge window (mirror of the server's crediting rule) ──
@@ -435,8 +476,11 @@ export function useChallenges() {
           );
         }
         const snap = await getDocs(qRef);
-        boards[ch.id] = snap.docs.map(
-          (d) => ({ uid: d.id, ...d.data() }) as ChallengeParticipant
+        boards[ch.id] = rankLeaderboard(
+          snap.docs.map(
+            (d) => ({ uid: d.id, ...d.data() }) as ChallengeParticipant
+          ),
+          ch.metric
         );
       }
       if (active) setLeaderboards(boards);

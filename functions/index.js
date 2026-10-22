@@ -172,6 +172,7 @@ const profanityFilter = require("./profanityFilter");
 // The same filter's decisions for the callables that write public text
 // (comments, display names) and the sentences a refused person reads.
 const objectionableText = require("./lib/objectionableText");
+const { commentRejection } = require("./lib/commentRejection");
 // The same filter over Community Space posts (onSpacePostWritten).
 const spacePostModeration = require("./lib/spacePostModeration");
 // The email that tells the owner a report has come in (createReport).
@@ -4617,7 +4618,11 @@ async function applyFastestEffortToChallenge(
  *     challenges are never touched, so concluded leaderboards can't be
  *     rewritten by a later join elsewhere.
  */
-async function backfillChallengeProgressForParticipant(challengeId, uid) {
+async function backfillChallengeProgressForParticipant(
+  challengeId,
+  uid,
+  joinedAtMs
+) {
   if (
     !(await accountDeletionLocks.shouldSystemWriteProceed(
       db,
@@ -4634,6 +4639,9 @@ async function backfillChallengeProgressForParticipant(challengeId, uid) {
   const metric = challenge.metric;
   const window = challengeBackfill.backfillQueryWindow(challenge);
   if (!metric || !window) return; // fail closed on malformed defs
+  // A join after the challenge closed credits nothing: its leaderboard is
+  // final. The rules refuse such a join; this holds for one that got in.
+  if (challengeBackfill.challengeJoinClosed(challenge, joinedAtMs)) return;
 
   // New projections propagate errors to the retryable join trigger. Keep
   // the legacy per-source backfill's existing error policy below.
@@ -4837,7 +4845,9 @@ exports.onChallengeParticipantCreated = functions
     // converge; a no-history user is a no-op.
     await backfillChallengeProgressForParticipant(
       context.params.challengeId,
-      context.params.uid
+      context.params.uid,
+      // The event's own time, the same on every redelivery.
+      Date.parse(context.timestamp)
     );
     return null;
   });
@@ -7195,6 +7205,12 @@ exports.addSpacePostCommentCallable = functions
         "Too many comments. Slow down."
       );
     }
+    // The name on the comment and in the notification is the commenter's
+    // public profile name; the request's authorName is never written.
+    const fromName = await socialFanout.senderDisplayName(
+      admin.firestore(),
+      context.auth.uid
+    );
     try {
       const result = await spacePostEngagement.addSpacePostComment({
         firestore: admin.firestore(),
@@ -7202,7 +7218,7 @@ exports.addSpacePostCommentCallable = functions
         spaceId,
         postId,
         text,
-        authorName,
+        authorName: fromName,
         authorPhotoURL,
         increment: admin.firestore.FieldValue.increment,
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
@@ -7214,8 +7230,6 @@ exports.addSpacePostCommentCallable = functions
           postAuthorId !== context.auth.uid &&
           postAuthorId !== spacePostEngagement.COACH_AUTHOR_ID
         ) {
-          const fromName =
-            (typeof authorName === "string" && authorName) || "Someone";
           await socialFanout.createNotification({
             firestore: admin.firestore(),
             fromUid: context.auth.uid,
@@ -7249,14 +7263,12 @@ exports.addSpacePostCommentCallable = functions
         postId,
         error: err && err.message,
       });
-      const isAccessError =
-        err && err.code === spacePostEngagement.POST_NOT_ACCESSIBLE;
-      throw new functions.https.HttpsError(
-        isAccessError ? "permission-denied" : "failed-precondition",
-        isAccessError
-          ? "This post is unavailable."
-          : (err && err.message) || "Comment create failed."
-      );
+      throw commentRejection(err, {
+        functions,
+        isAccessError:
+          !!err && err.code === spacePostEngagement.POST_NOT_ACCESSIBLE,
+        accessMessage: "This post is unavailable.",
+      });
     }
   });
 
@@ -7305,14 +7317,12 @@ exports.deleteSpacePostCommentCallable = functions
         commentId,
         error: err && err.message,
       });
-      const isAccessError =
-        err && err.code === spacePostEngagement.POST_NOT_ACCESSIBLE;
-      throw new functions.https.HttpsError(
-        isAccessError ? "permission-denied" : "failed-precondition",
-        isAccessError
-          ? "This post is unavailable."
-          : (err && err.message) || "Comment delete failed."
-      );
+      throw commentRejection(err, {
+        functions,
+        isAccessError:
+          !!err && err.code === spacePostEngagement.POST_NOT_ACCESSIBLE,
+        accessMessage: "This post is unavailable.",
+      });
     }
   });
 
@@ -7377,13 +7387,19 @@ exports.addCommentCallable = functions
       throw blockGuard.blockedError(functions);
     }
 
+    // The name on the comment and in the notification is the commenter's
+    // public profile name; the request's authorName is never written.
+    const fromName = await socialFanout.senderDisplayName(
+      admin.firestore(),
+      context.auth.uid
+    );
     try {
       const result = await socialCounters.addComment({
         firestore: admin.firestore(),
         uid: context.auth.uid,
         activityId,
         text,
-        authorName,
+        authorName: fromName,
         authorPhotoURL,
         increment: admin.firestore.FieldValue.increment,
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
@@ -7396,8 +7412,6 @@ exports.addCommentCallable = functions
         // re-read of a possibly-now-private activity.
         const activityAuthorId = result && result.activityAuthorId;
         if (activityAuthorId && activityAuthorId !== context.auth.uid) {
-          const fromName =
-            (typeof authorName === "string" && authorName) || "Someone";
           await socialFanout.createNotification({
             firestore: admin.firestore(),
             fromUid: context.auth.uid,
@@ -7425,10 +7439,11 @@ exports.addCommentCallable = functions
         activityId,
         error: err && err.message,
       });
-      throw new functions.https.HttpsError(
-        "failed-precondition",
-        (err && err.message) || "Comment create failed."
-      );
+      throw commentRejection(err, {
+        functions,
+        isAccessError: !!err && err.code === "activity-not-accessible",
+        accessMessage: "This activity is unavailable.",
+      });
     }
   });
 
@@ -7479,14 +7494,11 @@ exports.deleteCommentCallable = functions
       // "not authorized" (wrong author) AND "activity-not-accessible" (lost
       // visibility) both → permission-denied; the access case returns a
       // generic message that doesn't disclose the activity's state.
-      const isAccessError = err && err.code === "activity-not-accessible";
-      const isAuthz = err && /not authorized/.test(err.message || "");
-      throw new functions.https.HttpsError(
-        isAccessError || isAuthz ? "permission-denied" : "failed-precondition",
-        isAccessError
-          ? "This activity is unavailable."
-          : (err && err.message) || "Comment delete failed."
-      );
+      throw commentRejection(err, {
+        functions,
+        isAccessError: !!err && err.code === "activity-not-accessible",
+        accessMessage: "This activity is unavailable.",
+      });
     }
   });
 

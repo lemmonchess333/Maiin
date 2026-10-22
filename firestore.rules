@@ -1108,6 +1108,16 @@ service cloud.firestore {
       // below is retained but now unreferenced — harmless.)
       allow create, update, delete: if false;
 
+      // A challenge with no endDate is a malformed definition the app still
+      // lists; it is not refused here.
+      function challengeTakesJoins(id) {
+        let path = /databases/$(database)/documents/challenges/$(id);
+        return !exists(path)
+          || !('endDate' in get(path).data)
+          || !(get(path).data.endDate is timestamp)
+          || request.time < get(path).data.endDate + duration.value(12, 'h');
+      }
+
       // ========================================
       // Participant docs — leaderboard entries.
       //
@@ -1145,6 +1155,11 @@ service cloud.firestore {
           && request.auth.uid == uid
           && !isWriteFrozen(uid)
           && !isRestricted()
+          // No joining a challenge that has ended. The app ends one at
+          // local midnight of its UTC end day, up to twelve hours after
+          // the stored endDate, so that is when joins close (the same
+          // moment as challengeJoinClosed in functions/lib/challengeBackfill.js).
+          && challengeTakesJoins(challengeId)
           && request.resource.data.keys().hasOnly([
             'currentValue', 'tierAchieved', 'joinedAt',
             'displayName', 'photoURL', 'uid'
@@ -1547,6 +1562,8 @@ service cloud.firestore {
             && exists(
               /databases/$(database)/documents/followers/$(get(activityPath).data.authorId)/users/$(request.auth.uid)
             )
+            // The parent's block check: a follow edge can outlive a block.
+            && !blockExistsBetween(get(activityPath).data.authorId, request.auth.uid)
           )
         );
     }

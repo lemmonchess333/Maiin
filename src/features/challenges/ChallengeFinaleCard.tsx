@@ -110,7 +110,7 @@ export function ChallengeFinaleCard({
               <>
                 {" · "}
                 <span className="font-mono tabular-nums">
-                  #{rankIdx + 1}
+                  #{leaderboard[rankIdx].rank ?? rankIdx + 1}
                 </span>{" "}
                 of {challenge.participantCount}
               </>

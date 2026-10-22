@@ -21,6 +21,8 @@ import {
   metricNeedsWorkouts,
   metricNeedsRuns,
   backfillQueryWindow,
+  challengeJoinClosed,
+  JOIN_CLOSE_GRACE_MS,
   workoutChallengeIncrements,
   runChallengeIncrements,
 } from "../lib/challengeBackfill";
@@ -133,6 +135,28 @@ describe("backfillQueryWindow", () => {
   });
 });
 
+describe("challengeJoinClosed", () => {
+  const endMs = JULY.endDate.getTime();
+
+  it("is open through the last local midnight anywhere, twelve hours past the UTC end", () => {
+    expect(JOIN_CLOSE_GRACE_MS).toBe(12 * 3_600_000);
+    expect(challengeJoinClosed(JULY, endMs - 1)).toBe(false);
+    expect(challengeJoinClosed(JULY, endMs + JOIN_CLOSE_GRACE_MS - 1)).toBe(
+      false
+    );
+  });
+
+  it("is closed from then on", () => {
+    expect(challengeJoinClosed(JULY, endMs + JOIN_CLOSE_GRACE_MS)).toBe(true);
+    expect(challengeJoinClosed(JULY, endMs + 30 * 86_400_000)).toBe(true);
+  });
+
+  it("does not call a challenge with no readable end closed", () => {
+    expect(challengeJoinClosed({}, endMs)).toBe(false);
+    expect(challengeJoinClosed(null, endMs)).toBe(false);
+  });
+});
+
 describe("workoutChallengeIncrements", () => {
   it("every workout counts once; volume-bearing workouts add tonnage + hybrid term", () => {
     expect(workoutChallengeIncrements({ totalVolume: 4321 })).toEqual([
@@ -199,7 +223,15 @@ describe("reachability: the live triggers consume the shared mapping (ADR-0008)"
     // Runs replayed by the backfill pass the same eligibility gate the
     // live trigger applies.
     expect(indexSource).toMatch(
-      /backfillChallengeProgressForParticipant[\s\S]{0,2000}isVolumeEligibleRun\(data\)/
+      /backfillChallengeProgressForParticipant[\s\S]{0,2500}isVolumeEligibleRun\(data\)/
+    );
+    // A join after the challenge closed credits nothing, measured at the
+    // event's time.
+    expect(indexSource).toMatch(
+      /async function backfillChallengeProgressForParticipant[\s\S]{0,1200}challengeJoinClosed\(challenge, joinedAtMs\)/
+    );
+    expect(indexSource).toMatch(
+      /backfillChallengeProgressForParticipant\(\s*context\.params\.challengeId,\s*context\.params\.uid,[\s\S]{0,120}Date\.parse\(context\.timestamp\)/
     );
   });
 });
