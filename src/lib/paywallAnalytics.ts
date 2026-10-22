@@ -29,6 +29,8 @@ export type PaywallEvent =
   | "paywall_cta_clicked"
   | "checkout_started"
   | "checkout_failed"
+  /** The person closed the store's purchase sheet without buying. */
+  | "checkout_cancelled"
   | "checkout_success_returned"
   | "checkout_cancelled_returned"
   | "restore_purchases_clicked"

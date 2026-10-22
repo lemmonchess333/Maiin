@@ -841,6 +841,48 @@ suite("firestore.rules — /challenges", () => {
       );
     });
   });
+
+  // ── joining closes when the challenge ends ──────────────────────────
+  describe("a join after the challenge has ended", () => {
+    const CHALLENGE = "weekly-2026-01-01";
+    const HOUR = 3_600_000;
+    const seedEndingAt = (endMs: number) =>
+      env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "challenges", CHALLENGE), {
+          ...validChallengeData,
+          startDate: Timestamp.fromMillis(endMs - 7 * 24 * HOUR),
+          endDate: Timestamp.fromMillis(endMs),
+        });
+      });
+    const joinRef = () =>
+      doc(
+        env.authenticatedContext(OWNER_UID).firestore(),
+        "challenges",
+        CHALLENGE,
+        "participants",
+        OWNER_UID
+      );
+    const join = {
+      currentValue: 0,
+      tierAchieved: null,
+      joinedAt: serverTimestamp(),
+    };
+
+    it("is refused once the last local midnight anywhere has passed", async () => {
+      await seedEndingAt(Date.now() - 13 * HOUR);
+      await assertFails(setDoc(joinRef(), join));
+    });
+
+    it("is accepted while the challenge may still be running somewhere", async () => {
+      await seedEndingAt(Date.now() - 11 * HOUR);
+      await assertSucceeds(setDoc(joinRef(), join));
+    });
+
+    it("is accepted for a running challenge", async () => {
+      await seedEndingAt(Date.now() + 3 * 24 * HOUR);
+      await assertSucceeds(setDoc(joinRef(), join));
+    });
+  });
 });
 
 /**
@@ -3182,6 +3224,35 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
       // Not a follower.
       await assertFails(getDoc(kudosDoc(STRANGER)));
       await assertFails(getDoc(commentDoc(STRANGER)));
+    });
+
+    it("FOLLOWERS: a follower blocked either way reads no children, as the parent", async () => {
+      await seedActivity("followers");
+      await seedFollower(FOLLOWER);
+      for (const [blocker, blocked] of [
+        [AUTHOR, FOLLOWER],
+        [FOLLOWER, AUTHOR],
+      ]) {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(
+            doc(ctx.firestore(), "blocks", blocker, "users", blocked),
+            {
+              blockedAt: serverTimestamp(),
+            }
+          );
+        });
+        await assertFails(getDoc(kudosDoc(FOLLOWER)));
+        await assertFails(getDocs(kudosCol(FOLLOWER)));
+        await assertFails(getDoc(commentDoc(FOLLOWER)));
+        await assertFails(getDocs(commentCol(FOLLOWER)));
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await deleteDoc(
+            doc(ctx.firestore(), "blocks", blocker, "users", blocked)
+          );
+        });
+      }
+      // Unblocked again: the follower reads, so the refusals were the block.
+      await assertSucceeds(getDoc(kudosDoc(FOLLOWER)));
     });
 
     it("TRANSITION: a stranger who could read a public child loses access when it turns private", async () => {

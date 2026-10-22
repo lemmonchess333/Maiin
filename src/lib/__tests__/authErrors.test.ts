@@ -18,7 +18,9 @@ import {
   friendlyAuthError,
   providerHint,
   duplicateEmailHint,
+  AUTH_ERROR_FALLBACK,
 } from "../authErrors";
+import { __getRecentErrors } from "../errorReporting";
 
 /* Raw Firebase Auth error messages typically look like:
    "Firebase: Error (auth/<code>)."
@@ -138,25 +140,32 @@ describe("friendlyAuthError — reauth-specific codes (R1A Chunk 4)", () => {
 });
 
 describe("friendlyAuthError — fallthrough behaviour", () => {
-  it("returns the raw message when no branch matches", () => {
-    /* Caller is expected to display the return value as-is.
-       For unknown codes we surface the original message rather
-       than masking with a generic 'Something went wrong' —
-       the raw message is at least informative for operator
-       triage, even if not friendly for the user. */
+  it("shows a plain sentence, never the SDK's text, when no branch matches", () => {
+    /* The caller displays the return value as-is, and the Login screen
+       showed "Firebase: Error (auth/…)." to the person. The code goes to
+       error reporting instead, where it can be given a branch. */
     expect(friendlyAuthError(wrap("multi-factor-auth-required"))).toBe(
-      wrap("multi-factor-auth-required")
+      AUTH_ERROR_FALLBACK
     );
+    expect(
+      friendlyAuthError(wrap("some-new-code"), "Couldn't sign in. Try again.")
+    ).toBe("Couldn't sign in. Try again.");
+    expect(__getRecentErrors().at(-1)?.message).toBe(wrap("some-new-code"));
   });
 
-  it("returns non-Firebase error messages verbatim", () => {
+  it("gives a non-Firebase message the fallback too", () => {
     expect(friendlyAuthError("Network connection lost")).toBe(
-      "Network connection lost"
+      AUTH_ERROR_FALLBACK
     );
   });
 
-  it("returns empty string for empty input", () => {
-    expect(friendlyAuthError("")).toBe("");
+  it("names a missing email or password", () => {
+    expect(friendlyAuthError(wrap("missing-email"))).toBe(
+      "Enter your email address"
+    );
+    expect(friendlyAuthError(wrap("missing-password"))).toBe(
+      "Enter your password"
+    );
   });
 });
 

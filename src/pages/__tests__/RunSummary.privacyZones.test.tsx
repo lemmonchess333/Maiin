@@ -282,3 +282,30 @@ describe("RunSummary — privacy zones are cut before a run is written", () => {
     expect(savedTrace().inZone).toEqual([]);
   });
 });
+
+describe("RunSummary — a zone hides where the run went, not how fast", () => {
+  it("finds and saves the best efforts in the whole trace", async () => {
+    // A zone wide enough that the route left after the cut is under 1 km:
+    // the first four fixes (333 m) fall in it.
+    resetFirestore();
+    seedFirestore({
+      [`${ZONES}/home`]: { name: "Home", ...HOME, radiusMeters: 400 },
+    });
+    renderFinished();
+    const save = await screen.findByRole("button", { name: "Save run" });
+    expect(screen.getByRole("region", { name: "Best efforts" })).toBeVisible();
+    fireEvent.click(save);
+    await screen.findByRole("button", { name: "Done" });
+    const run = queued()[0].data as {
+      bestEfforts: { label: string }[];
+      points: { lat: number; lon: number }[];
+    };
+    expect(run.bestEfforts.map((e) => e.label)).toEqual(["1K"]);
+    // The route itself is still cut.
+    expect(
+      run.points.filter(
+        (p) => haversine(p.lat, p.lon, HOME.lat, HOME.lon) <= 400
+      )
+    ).toEqual([]);
+  });
+});

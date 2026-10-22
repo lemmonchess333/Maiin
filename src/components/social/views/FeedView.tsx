@@ -129,7 +129,8 @@ export default function FeedView({
   );
   const exploreFeed = useDiscoverFeed(
     feedSubTab === "explore" && blockedReady,
-    blockedUsers
+    blockedUsers,
+    hiddenActivityIds
   );
   /* SOC-P3a — "My communities": posts from joined spaces as a third
      source. The directory hook resolves joined ids (bounded reads,

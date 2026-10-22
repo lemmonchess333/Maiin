@@ -87,6 +87,14 @@ describe("a run's numbers on a feed card", () => {
     expect(screen.queryByText("5:18")).toBeNull();
   });
 
+  it("label a pace posted as text per km, even for a reader in miles", () => {
+    reader.unit = "mi";
+    renderCard(run({ avgPace: "5:18" }));
+    expect(screen.getByText("5:18")).toBeTruthy();
+    expect(screen.getByText("/km")).toBeTruthy();
+    expect(screen.queryByText("/mi")).toBeNull();
+  });
+
   it("leave the time out of a run with none", () => {
     renderCard(run({ duration: 0 }));
     expect(screen.queryByText("Time")).toBeNull();

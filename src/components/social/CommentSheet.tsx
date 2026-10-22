@@ -57,6 +57,9 @@ interface CommentSheetProps {
   onOpenChange: (open: boolean) => void;
   commentCount?: number;
   quickChips?: string[];
+  /** Told +1 when a comment lands and -1 when one is deleted, so the
+   *  card that opened the sheet can move its count. */
+  onCountChange?: (delta: number) => void;
 }
 
 export default function CommentSheet({
@@ -66,6 +69,7 @@ export default function CommentSheet({
   onOpenChange,
   commentCount = 0,
   quickChips,
+  onCountChange,
 }: CommentSheetProps) {
   const { user, profile } = useAuth();
   const gate = useEmailVerificationGate(user);
@@ -180,6 +184,7 @@ export default function CommentSheet({
         profile?.photoURL || undefined
       );
       setText("");
+      onCountChange?.(1);
       const result = await getComments(activityId);
       setComments(result.comments as Comment[]);
       lastDocRef.current = result.lastDoc;
@@ -206,6 +211,7 @@ export default function CommentSheet({
     setDeletingId(commentId);
     try {
       await deleteComment(activityId, commentId);
+      onCountChange?.(-1);
       haptic("light");
       setComments((prev) => prev.filter((c) => c.id !== commentId));
     } catch (err) {

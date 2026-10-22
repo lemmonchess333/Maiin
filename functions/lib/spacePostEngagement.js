@@ -29,6 +29,7 @@ const POST_NOT_ACCESSIBLE = "space-post-not-accessible";
  *  notifications: it is not a user. Clients hide those posts. */
 const COACH_AUTHOR_ID = "tropos-coach";
 const { publicPhotoUrl } = require("./publicPhotoUrl");
+const { MAX_DISPLAY_NAME_LENGTH } = require("../profileSanitizer");
 const { refusedAddError } = require("./restriction");
 
 async function toggleSpacePostLike({
@@ -103,7 +104,7 @@ async function addSpacePostComment({
   }
   const name =
     typeof authorName === "string" && authorName.trim().length > 0
-      ? authorName.trim().slice(0, 100)
+      ? authorName.trim().slice(0, MAX_DISPLAY_NAME_LENGTH)
       : "Athlete";
 
   const postRef = firestore

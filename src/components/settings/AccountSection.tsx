@@ -316,11 +316,11 @@ function AccountSectionContent({
         closeAndReset();
         return;
       }
-      const friendly = friendlyAuthError(code || msg);
       setReauthError(
-        friendly === (code || msg)
-          ? "Couldn't confirm your identity. Use the same sign-in account and try again."
-          : friendly
+        friendlyAuthError(
+          code || msg,
+          "Couldn't confirm your identity. Use the same sign-in account and try again."
+        )
       );
       dispatchModal({ type: "REAUTH_FAIL" });
     } finally {

@@ -61,14 +61,16 @@ describe("reachability: no callable takes the sender's name from the request", (
     "utf8"
   );
 
-  it("props and space-post likes ask senderDisplayName", () => {
-    // Anchor on the two notifications by their wording, so the count below
+  it("props, space-post likes and both comment callables ask senderDisplayName", () => {
+    // Anchor on the four notifications by their wording, so the count below
     // is about these callables.
     expect(index).toContain("gave you props");
     expect(index).toContain("gave your space post props");
+    expect(index).toContain("commented on your activity");
+    expect(index).toContain("commented on your space post");
     expect(
       index.match(/socialFanout\.senderDisplayName\(/g) || []
-    ).toHaveLength(2);
+    ).toHaveLength(4);
   });
 
   it("reads no fromName off a request", () => {

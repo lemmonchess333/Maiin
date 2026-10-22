@@ -36,8 +36,6 @@ export interface FinishedRun {
   elapsed: number;
   /** Seconds a kilometre. */
   avgPaceSeconds: number;
-  /** The pace as the post shows it ("5:12"). */
-  avgPace: string;
   calories: number;
   elevationGain: number;
   splits: Split[];
@@ -226,7 +224,8 @@ export function runPost(
     activityTitle: name,
     distance: run.distance,
     duration: run.elapsed,
-    avgPace: run.avgPace,
+    // Seconds a kilometre, so each reader's card shows it in their unit.
+    avgPace: run.avgPaceSeconds,
     elevationGain: run.elevationGain,
     calories: run.calories,
     routePreview: route.routePreview,

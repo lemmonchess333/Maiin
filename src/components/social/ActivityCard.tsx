@@ -1,3 +1,4 @@
+import { BLOCK_DIALOG_DESCRIPTION } from "@/lib/blockCopy";
 import { useState, memo, useEffect, useRef } from "react";
 import { formatClock } from "@/utils/formatters";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -95,6 +96,10 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
   const [liked, setLiked] = useState(feedItem.liked ?? false);
   const [kudosCount, setKudosCount] = useState(feedItem.kudosCount ?? 0);
   const [showCommentSheet, setShowCommentSheet] = useState(false);
+  /* Comments added or deleted from this card's sheet. The post's own
+     count is written by the server and reaches the card only on the next
+     feed read, so the card adds what it saw happen. */
+  const [commentDelta, setCommentDelta] = useState(0);
   const [flameAnimating, setFlameAnimating] = useState(false);
   // The flame's pulse ends on a timer; a card that goes away first clears
   // it, so it never sets state on an unmounted card.
@@ -121,6 +126,10 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
     targetWeightKg: number;
   } | null>(null);
   const activity = feedItem.activity;
+  const commentTotal = Math.max(
+    0,
+    (activity?.commentCount ?? 0) + commentDelta
+  );
   const showFollow =
     !!followAuthor && !!feedItem.authorId && feedItem.authorId !== user?.uid;
 
@@ -439,7 +448,13 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
               ? paceMinSec(activity.avgPace, unit)
               : activity.avgPace || "--:--"}
           </p>
-          <SectionLabel className="mt-0.5">{paceUnitLabel(unit)}</SectionLabel>
+          {/* A pace posted as text is per km whatever the reader's unit,
+               so it keeps its own label rather than borrowing "/mi". */}
+          <SectionLabel className="mt-0.5">
+            {paceUnitLabel(
+              typeof activity.avgPace === "string" ? "km" : unit
+            )}
+          </SectionLabel>
         </div>
         {(activity.duration ?? 0) > 0 && (
           <div className="min-w-0">
@@ -842,9 +857,9 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
             className="flex items-center gap-1.5 p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
           >
             <MessageCircle className="size-5" />
-            {(activity?.commentCount ?? 0) > 0 && (
+            {commentTotal > 0 && (
               <span className="text-xs font-medium font-mono tabular-nums">
-                {(activity?.commentCount ?? 0).toLocaleString()}
+                {commentTotal.toLocaleString()}
               </span>
             )}
           </button>
@@ -910,8 +925,9 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
         activityAuthorId={activity?.authorId as string | undefined}
         open={showCommentSheet}
         onOpenChange={setShowCommentSheet}
-        commentCount={activity?.commentCount}
+        commentCount={commentTotal}
         quickChips={chips}
+        onCountChange={(delta) => setCommentDelta((d) => d + delta)}
       />
 
       {/* Save-as-routine sheet — only mounts when the gate above
@@ -967,7 +983,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
       <ConfirmDialog
         open={showBlockConfirm}
         title="Block this user?"
-        description={`They won't be able to see your activities and you won't see theirs.`}
+        description={BLOCK_DIALOG_DESCRIPTION}
         confirmLabel="Block"
         destructive
         onConfirm={async () => {

@@ -135,7 +135,9 @@ export default function Login() {
         !message.includes("user-not-found") &&
         !message.includes("invalid-credential")
       ) {
-        setError(friendlyAuthError(message));
+        setError(
+          friendlyAuthError(message, "Couldn't send the link. Try again.")
+        );
         setLoadingAction(null);
         return;
       }
@@ -172,7 +174,14 @@ export default function Login() {
           return;
         }
       }
-      setError(friendlyAuthError(message));
+      setError(
+        friendlyAuthError(
+          message,
+          isSignUp
+            ? "Couldn't create your account. Try again."
+            : "Couldn't sign in. Try again."
+        )
+      );
     } finally {
       setLoadingAction(null);
     }
@@ -200,7 +209,7 @@ export default function Login() {
         }
       }
     }
-    setError(friendlyAuthError(message));
+    setError(friendlyAuthError(message, "Couldn't sign in. Try again."));
   };
 
   const handleGoogle = async () => {

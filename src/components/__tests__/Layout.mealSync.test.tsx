@@ -350,7 +350,6 @@ describe("meal sync status — real queue and Layout, shared Firestore fake", ()
       distance: 5000,
       elapsed: 1800,
       avgPaceSeconds: 360,
-      avgPace: "6:00",
       calories: 400,
       elevationGain: 0,
       splits: [],

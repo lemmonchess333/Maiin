@@ -32,7 +32,6 @@ import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { logger } from "../lib/logger";
 import { appErrorMessage } from "@/lib/callableErrors";
 import {
-  calculatePace,
   detectBestEfforts,
   toGPX,
   estimateRunCalories,
@@ -700,18 +699,18 @@ export default function RunSummary() {
      touching each call site. */
   const distance = editedDistanceMeters ?? originalDistance;
   /* Mile laps are recomputed from the trace rather than converted — a mile
-     split is a different CUT of the run. Privacy-zone trimming happens
-     first, so the rows match the map the user is looking at. */
+     split is a different CUT of the run. They and the best efforts read
+     the full trace: privacy zones hide where the run went, not how far
+     or how fast it was, so only the map and the shared route are cut. */
   const { splits: displaySplits, lapUnit } = splitsForDisplay(
     unit,
-    points,
+    state.points,
     splits
   );
-  const avgPace = calculatePace(distance, elapsed);
   const calories = estimateRunCalories(distance, profile?.weightKg || 70);
   const avgPaceSeconds =
     elapsed > 0 && distance > 0 ? (elapsed / distance) * 1000 : 0;
-  const bestEfforts = detectBestEfforts(points, distance);
+  const bestEfforts = detectBestEfforts(state.points, distance);
 
   /* `distance` is metres throughout the run flow (useGPS.ts:118-120
      accumulates via Haversine in metres, RunSummary already converts
@@ -1014,7 +1013,6 @@ export default function RunSummary() {
           distance,
           elapsed,
           avgPaceSeconds,
-          avgPace,
           calories,
           elevationGain,
           splits,

@@ -166,3 +166,24 @@ describe("useDiscoverFeed — uid/generation ownership", () => {
     }
   });
 });
+
+describe("useDiscoverFeed — hidden posts", () => {
+  beforeEach(() => {
+    authUser.current = { uid: "A" };
+    feed.calls = [];
+  });
+
+  it("leaves out a post the person hid from their feed", async () => {
+    const hidden = new Set(["h1"]);
+    const { result } = renderHook(() =>
+      useDiscoverFeed(true, BLOCKED, hidden)
+    );
+    await act(async () => {
+      feed.calls[0].resolve({
+        items: [activity("h1", "X"), activity("k1", "X")],
+        lastDoc: "end",
+      });
+    });
+    expect(result.current.items.map((i) => i.activityId)).toEqual(["k1"]);
+  });
+});

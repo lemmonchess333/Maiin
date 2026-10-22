@@ -56,6 +56,25 @@ function backfillQueryWindow(challenge) {
 }
 
 /**
+ * How long after its stored UTC end a challenge still takes joins. The app
+ * ends a challenge at local midnight of its UTC end day, which falls up to
+ * twelve hours after that instant (UTC-12); firestore.rules refuses a join
+ * from the same moment.
+ */
+const JOIN_CLOSE_GRACE_MS = 12 * 3_600_000;
+
+/**
+ * Whether a join at `atMs` comes after the challenge closed. A challenge
+ * whose end cannot be read is not called closed here; the backfill's own
+ * window check fails closed on it.
+ */
+function challengeJoinClosed(challenge, atMs) {
+  const endKey = instantToDateKey(challenge && challenge.endDate);
+  if (!endKey || !Number.isFinite(atMs)) return false;
+  return atMs >= Date.parse(`${endKey}T00:00:00Z`) + JOIN_CLOSE_GRACE_MS;
+}
+
+/**
  * SUM-metric increments a workout doc produces. Mirrors (and is consumed
  * by) the onWorkoutCreated trigger: every workout counts once toward
  * workout_count; volume-bearing workouts add their tonnage to
@@ -110,6 +129,8 @@ module.exports = {
   metricNeedsWorkouts,
   metricNeedsRuns,
   backfillQueryWindow,
+  JOIN_CLOSE_GRACE_MS,
+  challengeJoinClosed,
   workoutChallengeIncrements,
   runChallengeIncrements,
 };

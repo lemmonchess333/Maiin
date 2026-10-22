@@ -400,6 +400,15 @@ function ProgramInner() {
   const contextMenuRef = useFocusTrap<HTMLDivElement>(contextMenu !== null);
   useBackDismiss(showOverflow, () => setShowOverflow(false));
   useBackDismiss(contextMenu !== null, () => setContextMenu(null));
+  /* Back during a lift does what the session's own Close does: the
+     session closes to Train and its draft waits to be resumed. Without
+     it, Back would leave the page with no word. A sheet in the session
+     registers after this one, so Back closes that first. */
+  const closeSession = () => {
+    setSessionDayIndex(null);
+    setSessionVariant("full");
+  };
+  useBackDismiss(sessionOpen, closeSession);
   useEffect(() => {
     if (!showOverflow && contextMenu === null) return;
     const onKey = (e: KeyboardEvent) => {
@@ -415,6 +424,14 @@ function ProgramInner() {
     exIndex: number;
   } | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The drop's green flash, cleared if the page goes before it ends.
+  const dropFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (dropFlashTimer.current) clearTimeout(dropFlashTimer.current);
+    },
+    []
+  );
 
   // Exercise management helpers — accept dayIdx to work on any day (auto-save to Firestore)
   const removeExFromDay = async (dayIdx: number, exIndex: number) => {
@@ -592,7 +609,8 @@ function ProgramInner() {
     // Green flash — track the dropped exercise by its stable id so the flash
     // lands on the right row after the re-render reorders the list.
     setJustDroppedId(rowId(reordered[newIdx], dayIndex, newIdx));
-    setTimeout(() => setJustDroppedId(null), 300);
+    if (dropFlashTimer.current) clearTimeout(dropFlashTimer.current);
+    dropFlashTimer.current = setTimeout(() => setJustDroppedId(null), 300);
 
     // P6: through the command boundary, not `saveProgram`. The reorder applies
     // optimistically first, so the drop still settles immediately; the server
@@ -2076,10 +2094,7 @@ function ProgramInner() {
                 trainingBlockId: programState.trainingBlock?.id,
               }}
               onCompleteDay={completeWithViewToast}
-              onClose={() => {
-                setSessionDayIndex(null);
-                setSessionVariant("full");
-              }}
+              onClose={closeSession}
             />
           );
         })()}

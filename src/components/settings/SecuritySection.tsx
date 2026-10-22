@@ -118,7 +118,9 @@ export default function SecuritySection({
       closeDialog();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
-      setFormError(friendlyAuthError(msg));
+      setFormError(
+        friendlyAuthError(msg, "Couldn't change your password. Try again.")
+      );
     } finally {
       setBusy(false);
     }
@@ -142,7 +144,9 @@ export default function SecuritySection({
       closeDialog();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
-      setFormError(friendlyAuthError(msg));
+      setFormError(
+        friendlyAuthError(msg, "Couldn't change your email. Try again.")
+      );
     } finally {
       setBusy(false);
     }

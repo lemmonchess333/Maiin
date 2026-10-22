@@ -387,7 +387,7 @@ export function ChallengeCard({
                   className="flex items-center gap-2 text-xs"
                 >
                   <span className="w-4 text-right font-medium text-muted-foreground">
-                    {i + 1}
+                    {p.rank ?? i + 1}
                   </span>
                   <BlockAwareAvatar
                     uid={p.uid}
@@ -691,7 +691,7 @@ export function ChallengeCard({
                     className="flex items-center gap-2 text-xs"
                   >
                     <span className="w-5 text-right font-medium text-muted-foreground">
-                      {i + 1}
+                      {p.rank ?? i + 1}
                     </span>
                     <BlockAwareAvatar
                       uid={p.uid}

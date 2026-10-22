@@ -8,7 +8,15 @@
  * a stored document; its map, elevation chart and sheets are stubbed out.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
+import { restoreRealTimers } from "@/test/fakeTimers";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { totalDistance, type GPSPoint } from "@/lib/gps";
 
@@ -270,5 +278,49 @@ describe("RunDetail — a treadmill run says so", () => {
     renderDetail();
     expect(screen.getByText("Long Run")).toBeInTheDocument();
     expect(screen.queryByText(/Treadmill/)).toBeNull();
+  });
+});
+
+describe("RunDetail — the route replay", () => {
+  it("leaves no timer behind when the page closes as a replay ends", async () => {
+    h.run = savedRun();
+    vi.useFakeTimers();
+    const pending = new Set<unknown>();
+    const realSet = globalThis.setTimeout;
+    const realClear = globalThis.clearTimeout;
+    const setSpy = vi
+      .spyOn(globalThis, "setTimeout")
+      .mockImplementation(((fn: () => void, ms?: number) => {
+        const id = realSet(() => {
+          pending.delete(id);
+          fn();
+        }, ms);
+        if (ms === 600) pending.add(id);
+        return id;
+      }) as typeof setTimeout);
+    const clearSpy = vi
+      .spyOn(globalThis, "clearTimeout")
+      .mockImplementation(((id: unknown) => {
+        pending.delete(id);
+        realClear(id as ReturnType<typeof setTimeout>);
+      }) as typeof clearTimeout);
+    try {
+      const { unmount } = renderDetail();
+      act(() => {
+        fireEvent.click(screen.getByRole("button", { name: /Replay/ }));
+      });
+      // Thirteen fixes, one a frame: the replay reaches its end and the
+      // button's short wait before it resets begins.
+      act(() => {
+        vi.advanceTimersByTime(13 * 50);
+      });
+      expect(pending.size).toBe(1);
+      unmount();
+      expect(pending.size).toBe(0);
+    } finally {
+      setSpy.mockRestore();
+      clearSpy.mockRestore();
+      await restoreRealTimers();
+    }
   });
 });

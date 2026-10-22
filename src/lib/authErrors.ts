@@ -10,10 +10,14 @@
  * Future surfaces (link-account, change-password, MFA enrolment)
  * should route through here too. The contract: take a raw Firebase
  * Auth error message (often "Firebase: Error (auth/<code>).") and
- * return a user-facing string. Falls through to the raw message if
- * no branch matches — callers should treat the return value as the
- * thing to display, not as a discriminated union.
+ * return a user-facing string. A code with no branch gets the caller's
+ * plain fallback sentence, never the SDK's own text, and is reported so
+ * the code can be given a branch — callers should treat the return value
+ * as the thing to display, not as a discriminated union.
  */
+import { captureError } from "./errorReporting";
+
+export const AUTH_ERROR_FALLBACK = "Something went wrong. Try again.";
 
 /**
  * The person closed the sign-in sheet: say nothing. The web SDK reports it
@@ -66,7 +70,16 @@ export function duplicateEmailHint(methods: string[]): string | null {
   return providerHint(methods);
 }
 
-export function friendlyAuthError(message: string): string {
+export function friendlyAuthError(
+  message: string,
+  fallback: string = AUTH_ERROR_FALLBACK
+): string {
+  if (message.includes("missing-email")) {
+    return "Enter your email address";
+  }
+  if (message.includes("missing-password")) {
+    return "Enter your password";
+  }
   if (
     message.includes("user-not-found") ||
     message.includes("wrong-password") ||
@@ -111,5 +124,8 @@ export function friendlyAuthError(message: string): string {
   if (message.includes("operation-not-supported-in-this-environment")) {
     return "Sign-in unavailable in this browser. Try a different browser";
   }
-  return message;
+  if (message) {
+    captureError(new Error(message), "error", { surface: "authErrors" });
+  }
+  return fallback;
 }
