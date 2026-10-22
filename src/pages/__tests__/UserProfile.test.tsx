@@ -23,6 +23,7 @@ const H = vi.hoisted(() => ({
   viewer: "viewer" as string | null,
   followers: {} as Record<string, number>,
   countsFail: false,
+  blocked: [] as string[],
 }));
 
 vi.mock("firebase/firestore");
@@ -36,6 +37,8 @@ vi.mock("@/lib/socialApi", () => ({
   getFollowingCount: async () => 0,
   batchGetKudos: async () => ({}),
   blockUser: vi.fn(),
+  unblockUser: vi.fn(async () => {}),
+  getBlockedUsers: async () => H.blocked,
   hasFollowRequestFrom: async () => false,
   acceptFollowRequest: vi.fn(),
   declineFollowRequest: vi.fn(),
@@ -139,6 +142,7 @@ beforeEach(() => {
   H.viewer = "viewer";
   H.followers = {};
   H.countsFail = false;
+  H.blocked = [];
 });
 afterEach(() => {
   resumeReads();
@@ -350,6 +354,22 @@ describe("a read that failed is not an empty profile", () => {
       await screen.findByText("Couldn't load badges.")
     ).toBeInTheDocument();
     expect(unfiredFailures()).toEqual([]);
+  });
+});
+
+describe("someone you blocked", () => {
+  it("offers Unblock, not a Follow the rules would refuse", async () => {
+    // A viewer of its own: the block list is cached per signed-in uid.
+    H.viewer = "blocker";
+    H.blocked = ["alice"];
+    seedFirestore({ "users/alice/public/profile": { displayName: "Alice" } });
+    renderAt("/user/alice");
+    const unblock = await screen.findByRole("button", { name: "Unblock" });
+    expect(screen.queryByRole("button", { name: "Follow" })).toBeNull();
+    fireEvent.click(unblock);
+    expect(
+      await screen.findByRole("button", { name: "Follow" })
+    ).toBeInTheDocument();
   });
 });
 

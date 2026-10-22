@@ -97,3 +97,19 @@ describe("Escape closes either", () => {
     expect(effect).toMatch(/setContextMenu\(null\)/);
   });
 });
+
+describe("an open lift session", () => {
+  it("closes to Train on Back, as its own Close does", () => {
+    expect(code).toMatch(/useBackDismiss\(sessionOpen, closeSession\)/);
+    expect(code).toMatch(/onClose=\{closeSession\}/);
+  });
+});
+
+describe("the drop flash", () => {
+  it("is held in a ref and cleared on unmount", () => {
+    expect(code).toMatch(/dropFlashTimer\.current = setTimeout\(/);
+    expect(code).toMatch(
+      /\(\) => \(\) => \{\s*if \(dropFlashTimer\.current\) clearTimeout\(dropFlashTimer\.current\);/
+    );
+  });
+});

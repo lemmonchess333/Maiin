@@ -1,6 +1,8 @@
+import { BLOCK_DIALOG_DESCRIPTION } from "@/lib/blockCopy";
 import { useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { blockUser } from "../lib/socialApi";
+import { blockUser, unblockUser } from "../lib/socialApi";
+import { useBlockedUsers } from "../hooks/useBlockedUsers";
 import { useUid } from "../lib/auth";
 import FollowButton from "../components/social/FollowButton";
 import FollowRequestBanner from "../components/social/FollowRequestBanner";
@@ -100,6 +102,8 @@ function ProfilePage({
   const [showMenu, setShowMenu] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
+  const { blocked, addBlocked, removeBlocked } = useBlockedUsers();
+  const youBlockedThem = !!uid && blocked.has(uid);
 
   const back = (
     <Button
@@ -158,10 +162,24 @@ function ProfilePage({
     if (!viewerUid) return;
     try {
       await blockUser(viewerUid, uid);
+      addBlocked(uid);
       toast.success(`Blocked ${name}`);
       navigate(-1);
     } catch {
       toast.error("Couldn't block user. Try again.");
+    }
+  };
+
+  /* The rules refuse a follow across a block, so a Follow button here
+     would only fail. Unblocking is the way back to following. */
+  const handleUnblock = async () => {
+    if (!viewerUid) return;
+    try {
+      await unblockUser(viewerUid, uid);
+      removeBlocked(uid);
+      toast.success(`Unblocked ${name}`);
+    } catch {
+      toast.error("Couldn't unblock. Try again.");
     }
   };
 
@@ -233,15 +251,25 @@ function ProfilePage({
             onAccepted={() => adjustFollowing(1)}
           />
           <div className="flex items-center gap-2">
-            <FollowButton
-              targetUid={uid}
-              className="flex-1 text-sm"
-              onFollowChange={(now, before) => {
-                // A request is not a follower yet.
-                if (now === "following") adjustFollowers(1);
-                else if (before === "following") adjustFollowers(-1);
-              }}
-            />
+            {youBlockedThem ? (
+              <Button
+                variant="secondary"
+                className="flex-1 text-sm"
+                onClick={() => void handleUnblock()}
+              >
+                Unblock
+              </Button>
+            ) : (
+              <FollowButton
+                targetUid={uid}
+                className="flex-1 text-sm"
+                onFollowChange={(now, before) => {
+                  // A request is not a follower yet.
+                  if (now === "following") adjustFollowers(1);
+                  else if (before === "following") adjustFollowers(-1);
+                }}
+              />
+            )}
             <div className="relative">
               <IconButton
                 aria-label="More options"
@@ -274,17 +302,19 @@ function ProfilePage({
                       <Flag className="size-4" />
                       Report user
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowMenu(false);
-                        setShowBlockConfirm(true);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive-strong hover:bg-destructive/10 transition-colors"
-                    >
-                      <Ban className="size-4" />
-                      Block user
-                    </button>
+                    {!youBlockedThem && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowMenu(false);
+                          setShowBlockConfirm(true);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive-strong hover:bg-destructive/10 transition-colors"
+                      >
+                        <Ban className="size-4" />
+                        Block user
+                      </button>
+                    )}
                   </div>
                 </>
               )}
@@ -410,7 +440,7 @@ function ProfilePage({
       <ConfirmDialog
         open={showBlockConfirm}
         title={`Block ${name}?`}
-        description="They won't be able to see your activity and you won't see theirs."
+        description={BLOCK_DIALOG_DESCRIPTION}
         confirmLabel="Block"
         destructive
         onConfirm={() => {

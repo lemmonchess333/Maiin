@@ -7,6 +7,7 @@
  * moderation kit: author delete, or report/block for everyone else.
  * photoUrl renders when present (written by the PR4 photo slice).
  */
+import { BLOCK_DIALOG_DESCRIPTION } from "@/lib/blockCopy";
 import { useState } from "react";
 import { doc, type Timestamp } from "firebase/firestore";
 import {
@@ -414,7 +415,7 @@ export default function SpacePostCard({
       <ConfirmDialog
         open={showBlockConfirm}
         title="Block this user?"
-        description="They won't be able to see your activities and you won't see theirs."
+        description={BLOCK_DIALOG_DESCRIPTION}
         confirmLabel="Block"
         destructive
         onConfirm={async () => {

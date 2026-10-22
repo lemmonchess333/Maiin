@@ -130,7 +130,15 @@ export function useProCheckout(): UseProCheckoutResult {
             withTrial: options.withTrial,
           }
         );
-        if (!result.success) {
+        if (!result.success && result.cancelled) {
+          // Closing the store's sheet is a choice, not an error.
+          track("checkout_cancelled", {
+            source: options.source ?? "unknown",
+            featureKey: options.featureKey,
+            selectedPlan: submittedPlan,
+            platform,
+          });
+        } else if (!result.success) {
           const message = result.error || "Couldn't start checkout. Try again.";
           setError(message);
           toast.error(message);

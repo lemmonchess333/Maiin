@@ -31,6 +31,9 @@ export interface PurchaseResult {
   /** The underlying error's own text (an SDK's, a fetch's), for logs and
    *  telemetry. Never shown. */
   detail?: string;
+  /** The person closed the purchase sheet. Not a failure: callers say
+   *  nothing, and `error` is unset. */
+  cancelled?: boolean;
   /** Optional URL the caller can redirect to (Stripe portal, App
    *  Store manage-subscriptions page). When set, the caller is
    *  responsible for navigation — purchase() and manageSubscription()
@@ -191,7 +194,7 @@ async function purchaseWithRevenueCat(plan: PlanId): Promise<PurchaseResult> {
   const productId = APPLE_PRODUCT_IDS[plan];
   const outcome = await rcPurchase(productId);
   if (outcome.userCancelled) {
-    return { success: false, error: "Purchase cancelled." };
+    return { success: false, cancelled: true };
   }
   if (!outcome.success) {
     return {
