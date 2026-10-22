@@ -148,7 +148,11 @@ export default function ExerciseProgressChart({ data, accent }: Props) {
                     {Math.round(point.value).toLocaleString()}
                     {point.isPR && (
                       <span
-                        style={{ marginLeft: 6, fontSize: 10, fontWeight: 700 }}
+                        style={{
+                          marginLeft: 6,
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                        }}
                       >
                         PR
                       </span>

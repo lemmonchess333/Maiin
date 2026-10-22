@@ -885,7 +885,7 @@ export default function Home() {
               </>
             )}
           </span>
-          <span className="text-caption font-semibold text-primary-foreground bg-primary-strong rounded-full px-2.5 py-1 shrink-0">
+          <span className="text-micro font-semibold text-primary-foreground bg-primary-strong rounded-full px-2.5 py-1 shrink-0">
             Subscribe
           </span>
         </button>
@@ -917,7 +917,7 @@ export default function Home() {
                 ? "Log meals from a photo — try Pro free for 7 days"
                 : "Upgrade to Pro"}
             </span>
-            <span className="text-caption font-semibold text-primary-foreground bg-primary-strong rounded-full px-2.5 py-1 shrink-0">
+            <span className="text-micro font-semibold text-primary-foreground bg-primary-strong rounded-full px-2.5 py-1 shrink-0">
               {proStripTrialEligible ? "Start trial" : "See plans"}
             </span>
           </button>

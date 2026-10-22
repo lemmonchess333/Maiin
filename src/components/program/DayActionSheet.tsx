@@ -390,7 +390,7 @@ export default function DayActionSheet({
               </div>
               <div className="min-w-0 flex-1">
                 <SectionLabel>Run</SectionLabel>
-                <p className="text-lg font-extrabold leading-tight text-foreground truncate">
+                <p className="text-lg font-bold leading-tight text-foreground truncate">
                   {runSessionName(selectedRunTemplate, selectedRacePace, unit)}
                 </p>
                 {/* Run21 (2): the session's one feel line. Its shape is
@@ -768,7 +768,7 @@ export default function DayActionSheet({
               </div>
               <div className="min-w-0 flex-1">
                 <SectionLabel>Lift</SectionLabel>
-                <p className="text-lg font-extrabold leading-tight text-foreground truncate">
+                <p className="text-lg font-bold leading-tight text-foreground truncate">
                   {liftDayNameIn(
                     (programState?.workouts ?? []).map((w) => w.dayName),
                     lift.index,

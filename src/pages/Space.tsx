@@ -135,7 +135,7 @@ function RaceEventHeader({
     <div className="rounded-2xl bg-card card-shadow p-4 space-y-3">
       <div className="flex items-center gap-2 flex-wrap">
         <span
-          className="inline-flex items-center px-2.5 py-1 rounded-full text-caption font-semibold"
+          className="inline-flex items-center px-2.5 py-1 rounded-full text-micro font-semibold"
           style={{
             /* Ink on the -strong step — the coral identity is 3.12:1 as
                11px text on its light tint; the tint concat stays hex. */
@@ -148,7 +148,7 @@ function RaceEventHeader({
           </span>
         </span>
         {event.elevation && (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-caption font-semibold bg-muted text-muted-foreground">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-micro font-semibold bg-muted text-muted-foreground">
             {ELEVATION_LABEL[event.elevation]}
           </span>
         )}

@@ -465,7 +465,7 @@ describe("DS ratchets — surface-level drift", () => {
      `tracking-*` utility. Grandfathered until touched (Diagnostics carries
      8 of them, RunDetail 4, WorkoutDetail 3); `pages/dev/*` is outside
      the scan as usual. */
-  const HAND_ROLLED_LABEL_BASELINE = 28;
+  const HAND_ROLLED_LABEL_BASELINE = 20;
   const LABEL_PRIMITIVE = "src/components/ui/SectionLabel.tsx";
   it("hand-rolled uppercase tracked labels do not increase (use SectionLabel)", () => {
     const { total, byFile } = scan((src, rel) => {
@@ -635,5 +635,83 @@ describe("DS ratchets — surface-level drift", () => {
       (src) => (src.match(/\btext-\[\d+(?:\.\d+)?px\]/g) ?? []).length
     );
     expectRatchet("text-[Npx]", total, OFF_SCALE_TEXT_BASELINE, byFile);
+  });
+});
+
+describe("type tiers", () => {
+  /* `text-caption` (11px) is the floor for dense numerals and units
+     (DESIGN_GUIDE §10). A unit with neither `font-mono` nor `tabular-nums`
+     is counted as words; words belong on `text-micro` (12px) or above.
+     The count holds the remaining word uses and may only fall. */
+  const CAPTION_WORDS_BASELINE = 66;
+  it("text-caption on words does not increase (words sit on text-micro)", () => {
+    const { total, byFile } = scan((src) => {
+      let n = 0;
+      for (const chunk of classNameChunks(src)) {
+        if (
+          /\btext-caption\b/.test(chunk) &&
+          !/\b(?:font-mono|tabular-nums)\b/.test(chunk)
+        )
+          n++;
+      }
+      return n;
+    });
+    expectRatchet(
+      "text-caption on words",
+      total,
+      CAPTION_WORDS_BASELINE,
+      byFile
+    );
+  });
+
+  /* "Never mix 700 and 800 in the same visual tier" (§4 weight rules). A
+     tier is a size step plus its register: numerals (`font-mono` or
+     `tabular-nums`) are hero figures and words are headings, so the two
+     registers are separate tiers. Every tier listed here carries one
+     weight; a tier joins the list once it is aligned. */
+  const SINGLE_WEIGHT_TIERS = [
+    "text-display num",
+    "text-3xl num",
+    "text-h1 word",
+    "text-h2 word",
+    "text-h2 num",
+    "text-h3 word",
+    "text-lg word",
+  ];
+  it("a pinned type tier uses one weight, never 700 beside 800", () => {
+    const seen = new Map<string, Map<string, string[]>>();
+    for (const file of FILES) {
+      const rel = relative(repoRoot, file).replaceAll("\\", "/");
+      for (const chunk of classNameChunks(readFileSync(file, "utf8"))) {
+        const tokens = chunk.split(/\s+/);
+        const weights = tokens.filter(
+          (t) => t === "font-bold" || t === "font-extrabold"
+        );
+        if (weights.length !== 1) continue;
+        const size = tokens.find((t) =>
+          /^text-(?:lg|xl|2xl|3xl|h1|h2|h3|display)$/.test(t)
+        );
+        if (!size) continue;
+        const register = tokens.some(
+          (t) => t === "font-mono" || t === "tabular-nums"
+        )
+          ? "num"
+          : "word";
+        const tier = `${size} ${register}`;
+        const byWeight = seen.get(tier) ?? new Map<string, string[]>();
+        byWeight.set(weights[0], [...(byWeight.get(weights[0]) ?? []), rel]);
+        seen.set(tier, byWeight);
+      }
+    }
+    const mixed = SINGLE_WEIGHT_TIERS.filter(
+      (tier) => (seen.get(tier)?.size ?? 0) > 1
+    ).map(
+      (tier) =>
+        `${tier}: ` +
+        [...seen.get(tier)!.entries()]
+          .map(([w, files]) => `${w} ×${files.length} (${files.join(", ")})`)
+          .join(" | ")
+    );
+    expect(mixed, mixed.join("\n")).toEqual([]);
   });
 });

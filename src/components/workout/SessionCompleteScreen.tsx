@@ -259,7 +259,7 @@ export default function SessionCompleteScreen({
           {/* A display heading (text-h2, bold), under the figures' weight:
               at the page-title size, centred over three hero figures, it
               outshouted them. */}
-          <h2 className="text-h2 font-bold tracking-tight text-foreground text-balance">
+          <h2 className="text-h2 font-extrabold tracking-tight text-foreground text-balance">
             {heading}
           </h2>
           <p className="text-base text-muted-foreground">{dayLabel}</p>

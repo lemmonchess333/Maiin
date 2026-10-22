@@ -315,7 +315,7 @@ export default function Upgrade() {
   const footer = (
     <div className="space-y-2">
       {platform === "ios" && onSale ? (
-        <p className="text-caption text-muted-foreground text-center">
+        <p className="text-micro text-muted-foreground text-center">
           Already purchased?{" "}
           <button
             type="button"
@@ -608,7 +608,7 @@ export default function Upgrade() {
           </div>
 
           {onSale && (
-            <p className="text-caption text-muted-foreground text-center leading-snug">
+            <p className="text-micro text-muted-foreground text-center leading-snug">
               {withTrial
                 ? `Billing starts when your free trial ends, unless you cancel before then. ${getRenewalTerms(platform)}`
                 : getRenewalTerms(platform)}

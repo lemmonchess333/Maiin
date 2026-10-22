@@ -346,7 +346,9 @@ function BestMoment({
           <Trophy className="size-4" aria-hidden="true" />
           New best
         </span>
-        <p className="text-h2 font-bold text-foreground">{best.exerciseName}</p>
+        <p className="text-h2 font-extrabold text-foreground">
+          {best.exerciseName}
+        </p>
         <p className="text-foreground">
           <span className="text-display font-extrabold font-mono tabular-nums">
             {loadIn(best.weight, liftUnit)}
@@ -405,7 +407,7 @@ function WeekAhead({
       <div className="mt-6 space-y-6">
         {lifts !== null || runs !== null ? (
           <div className="space-y-1">
-            <p className="text-h2 font-bold text-foreground">
+            <p className="text-h2 font-extrabold text-foreground">
               {lifts !== null && (
                 <>
                   <span className="font-mono tabular-nums">{lifts}</span>{" "}

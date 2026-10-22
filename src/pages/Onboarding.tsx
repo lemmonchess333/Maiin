@@ -982,7 +982,7 @@ export default function Onboarding() {
             step === 3 ||
             step === 2 ||
             step === 4) && (
-            <p className="text-caption text-muted-foreground">
+            <p className="text-micro text-muted-foreground">
               {step === 1 || step === 2 ? "1 of 2" : "2 of 2"} in this chapter
             </p>
           )}

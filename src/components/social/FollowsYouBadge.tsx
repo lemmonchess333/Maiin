@@ -22,7 +22,7 @@ export default function FollowsYouBadge({ uid }: Props) {
   if (!followers.has(uid)) return null;
   return (
     <span
-      className="inline-flex items-center text-caption font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0"
+      className="inline-flex items-center text-micro font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0"
       aria-label="This athlete follows you"
     >
       Follows you

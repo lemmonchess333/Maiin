@@ -121,7 +121,7 @@ export function ToastProvider() {
         visibleToasts={2}
         toastOptions={{
           style: {
-            fontSize: "14px",
+            fontSize: "0.875rem",
           },
         }}
         closeButton
