@@ -38,6 +38,31 @@ const h = vi.hoisted(() => ({
   hint: { owed: false, loading: false, runCount: 0 },
   launchCardRenders: 0,
   pickerRenders: 0,
+  gpsPermission: "prompt" as string,
+  gpsError: null as string | null,
+  native: false,
+  openedSettings: 0,
+}));
+
+const visibility = vi.hoisted(() => ({
+  onVisible: null as null | ((e: { hiddenDuration: number }) => void),
+}));
+vi.mock("@/hooks/useRunVisibility", () => ({
+  useRunVisibility: (opts: {
+    onVisible: (e: { hiddenDuration: number }) => void;
+  }) => {
+    visibility.onVisible = opts.onVisible;
+  },
+}));
+vi.mock("@/lib/platform", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/platform")>()),
+  isNativePlatform: () => h.native,
+}));
+vi.mock("@/lib/nativeLocationSettings", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/nativeLocationSettings")>()),
+  openLocationSettings: async () => {
+    h.openedSettings += 1;
+  },
 }));
 
 /* Stable across renders, as the real hook's useCallbacks are. */
@@ -94,9 +119,9 @@ vi.mock("@/hooks/useGPS", () => ({
     currentPoint: null,
     distance: 0,
     isTracking: false,
-    error: null,
+    error: h.gpsError,
     gpsAccuracy: null,
-    permissionState: "prompt",
+    permissionState: h.gpsPermission,
     signalQuality: "searching",
     lastFixAt: null,
     ...gpsControls,
@@ -257,6 +282,10 @@ beforeEach(() => {
   h.hint = { owed: false, loading: false, runCount: 0 };
   h.launchCardRenders = 0;
   h.pickerRenders = 0;
+  h.gpsPermission = "prompt";
+  h.gpsError = null;
+  h.native = false;
+  h.openedSettings = 0;
 });
 afterEach(() => {
   cleanup();
@@ -351,6 +380,75 @@ describe("a run started from Home", () => {
       })
     ).toBeInTheDocument();
     expect(h.launchCardRenders).toBe(0);
+  });
+});
+
+describe("a run whose location is refused", () => {
+  function refuse() {
+    h.gpsPermission = "denied";
+    h.gpsError = "User denied Geolocation";
+  }
+
+  it("says location is off rather than that it is still searching", async () => {
+    refuse();
+    await open("/run?start=1");
+    expect(screen.getByText("Location is off for Tropos")).toBeInTheDocument();
+    expect(screen.queryByText("Acquiring GPS...")).toBeNull();
+    expect(
+      screen.queryByText("Move to an open area away from buildings")
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Track without GPS" })
+    ).toBeInTheDocument();
+  });
+
+  it("opens the phone's settings from the app", async () => {
+    refuse();
+    h.native = true;
+    await open("/run?start=1");
+    fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
+    expect(h.openedSettings).toBe(1);
+  });
+
+  it("offers no Settings button on the web, where there is none to open", async () => {
+    refuse();
+    await open("/run?start=1");
+    expect(screen.queryByRole("button", { name: "Open settings" })).toBeNull();
+    expect(screen.getByText(/browser's settings/)).toBeInTheDocument();
+  });
+});
+
+describe("the note about time in the background", () => {
+  it("leaves no timer behind when the screen closes while it shows", async () => {
+    const pending = new Set<unknown>();
+    const realSet = globalThis.setTimeout;
+    const realClear = globalThis.clearTimeout;
+    const setSpy = vi
+      .spyOn(globalThis, "setTimeout")
+      .mockImplementation(((fn: () => void, ms?: number) => {
+        const id = realSet(() => {
+          pending.delete(id);
+          fn();
+        }, ms);
+        if (ms === 6000) pending.add(id);
+        return id;
+      }) as typeof setTimeout);
+    const clearSpy = vi
+      .spyOn(globalThis, "clearTimeout")
+      .mockImplementation(((id: unknown) => {
+        pending.delete(id);
+        realClear(id as ReturnType<typeof setTimeout>);
+      }) as typeof clearTimeout);
+    try {
+      await open("/run?start=1");
+      act(() => visibility.onVisible?.({ hiddenDuration: 30 }));
+      expect(pending.size).toBe(1);
+      cleanup();
+      expect(pending.size).toBe(0);
+    } finally {
+      setSpy.mockRestore();
+      clearSpy.mockRestore();
+    }
   });
 });
 

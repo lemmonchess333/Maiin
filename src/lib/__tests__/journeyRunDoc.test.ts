@@ -79,7 +79,6 @@ function finished(input: JourneyRun): FinishedRun {
     distance: input.distance,
     elapsed: input.duration,
     avgPaceSeconds: input.duration / (input.distance / 1000),
-    avgPace: "",
     calories: 0,
     elevationGain: 0,
     splits: [],

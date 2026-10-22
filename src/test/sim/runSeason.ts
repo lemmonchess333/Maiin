@@ -325,7 +325,6 @@ function finishedRun(
     distance: done.km * 1000,
     elapsed: done.minutes * 60,
     avgPaceSeconds: done.pace,
-    avgPace: paceText(done.pace),
     calories: 0,
     elevationGain: 0,
     splits: [],

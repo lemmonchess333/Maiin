@@ -253,6 +253,14 @@ export default function Run() {
   );
   const [acquiringSeconds, setAcquiringSeconds] = useState(0);
   const autoPauseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The background-gap banner's dismissal, cleared if the screen goes first.
+  const bgGapBannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (bgGapBannerTimer.current) clearTimeout(bgGapBannerTimer.current);
+    },
+    []
+  );
   // Latest timer, held in a ref so the auto-pause effect can call pause/resume
   // WITHOUT listing the (per-render-changing) timer object as a dep — otherwise
   // the effect re-runs every second and never lets the 5s stationary timer run.
@@ -405,7 +413,11 @@ export default function Run() {
           setBgGapBanner(
             `App was in background for ${duration} — GPS data may have gaps`
           );
-          setTimeout(() => setBgGapBanner(null), 6000);
+          if (bgGapBannerTimer.current) clearTimeout(bgGapBannerTimer.current);
+          bgGapBannerTimer.current = setTimeout(() => {
+            bgGapBannerTimer.current = null;
+            setBgGapBanner(null);
+          }, 6000);
         }
       } else if (
         // Section 7 (docs/run-background-gps.md): with an Always grant the
@@ -1695,6 +1707,7 @@ export default function Run() {
         (() => {
           const acc = gps.gpsAccuracy;
           const quality = gps.signalQuality;
+          const locationDenied = gps.permissionState === "denied";
           const { lit: bars, colour: barColor } = gpsSignalBars(quality);
           return (
             <div
@@ -1772,24 +1785,40 @@ export default function Run() {
                 </p>
               </div>
 
+              {/* A refusal is not a search: no signal will arrive until
+                  location is turned back on, so it gets its own words. */}
               <p className="text-white font-semibold text-lg mb-1">
-                {quality === "strong" || quality === "good"
-                  ? "GPS locked"
-                  : "Acquiring GPS..."}
+                {locationDenied
+                  ? "Location is off for Tropos"
+                  : quality === "strong" || quality === "good"
+                    ? "GPS locked"
+                    : "Acquiring GPS..."}
               </p>
               <p
                 className="text-sm text-center max-w-[260px]"
-                style={{ color: "rgba(255,255,255,0.4)" }}
+                style={{ color: "rgba(255,255,255,0.6)" }}
               >
-                {quality === "weak" || quality === "searching"
-                  ? "Move to an open area away from buildings"
-                  : "Getting accurate signal..."}
+                {locationDenied
+                  ? isNativePlatform()
+                    ? "Turn it on in Settings to track this run with GPS, or track it without GPS."
+                    : "Allow location for this site in your browser's settings to track this run with GPS, or track it without GPS."
+                  : quality === "weak" || quality === "searching"
+                    ? "Move to an open area away from buildings"
+                    : "Getting accurate signal..."}
               </p>
-              {gps.permissionState === "denied" ? (
-                <p className="text-xs text-destructive-strong mt-2 text-center max-w-[280px]">
-                  Location is turned off for Tropos. Turn it on in your phone's
-                  Settings, then come back and start again.
-                </p>
+              {locationDenied ? (
+                isNativePlatform() && (
+                  <div className="mt-4 w-full">
+                    <Button
+                      variant="ghost"
+                      fullWidth
+                      onClick={() => void openLocationSettings()}
+                      className="rounded-2xl bg-stage-raised text-white hover:bg-white/10"
+                    >
+                      Open settings
+                    </Button>
+                  </div>
+                )
               ) : gps.error ? (
                 <p className="text-xs text-destructive-strong mt-2 text-center max-w-[280px]">
                   Can't get a GPS signal right now. Move outside, or track
@@ -1798,7 +1827,7 @@ export default function Run() {
               ) : null}
 
               <div className="mt-8 flex flex-col items-center gap-3 w-full">
-                {(acquiringSeconds >= 15 || !!gps.error) && (
+                {(acquiringSeconds >= 15 || !!gps.error || locationDenied) && (
                   /* Replaces the old "Start without GPS" CTA. That one
                    started an outdoor run with zero GPS fixes \u2014 the
                    canonical 0km production bug. This sends the user

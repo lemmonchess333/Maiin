@@ -448,7 +448,13 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
               ? paceMinSec(activity.avgPace, unit)
               : activity.avgPace || "--:--"}
           </p>
-          <SectionLabel className="mt-0.5">{paceUnitLabel(unit)}</SectionLabel>
+          {/* A pace posted as text is per km whatever the reader's unit,
+               so it keeps its own label rather than borrowing "/mi". */}
+          <SectionLabel className="mt-0.5">
+            {paceUnitLabel(
+              typeof activity.avgPace === "string" ? "km" : unit
+            )}
+          </SectionLabel>
         </div>
         {(activity.duration ?? 0) > 0 && (
           <div className="min-w-0">
