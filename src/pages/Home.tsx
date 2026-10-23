@@ -273,9 +273,8 @@ export default function Home() {
     function () {
       /* A day counts as logged when it has a meal, and the loaded meals
          are the record of that. The daily log holds the count Food last
-         wrote, and Food writes nothing when a day's last meal is deleted,
-         so the log can go on counting meals that are gone. It stands in
-         only while the meals are loading or could not be read. */
+         saved; another device can change the diary since then. It
+         stands in only while the meals are loading or could not be read. */
       const mealsKnown = !mealsLoading && !mealsError;
       const mealsByDate = new Map<string, { meals: number }>();
       for (const day of weekDays(currentWeekKey)) {

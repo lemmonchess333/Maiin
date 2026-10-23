@@ -65,7 +65,9 @@ export async function rcLogIn(appUserID: string): Promise<boolean> {
   try {
     if (!configured) {
       await configureRevenueCat(appUserID);
-      return true;
+      // configureRevenueCat logs SDK failures without throwing. Report its
+      // actual result so the identity hook can retry this same account.
+      return configured;
     }
     const Purchases = await loadPurchases();
     await Purchases.logIn({ appUserID });

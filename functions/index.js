@@ -8064,8 +8064,10 @@ exports.onGoalSpaceEventCreated = functions
     // item 20). Past twenty an hour in one Circle, far past a real day's
     // sessions and milestones, an event comes out before anyone is told of
     // it. The weekly check-in is the callable's, one per week, so it is not
-    // counted. A failed count keeps the event: losing what a member wrote
-    // costs more than one extra notice.
+    // counted. Acceptance is marked on the source in the SAME quota
+    // transaction: an at-least-once redelivery must never count again and
+    // delete an event that was already accepted. A failed count throws for
+    // retry before any delete/notification, keeping what the member wrote.
     if (
       event.kind !== "weekly_check_in" &&
       (await rateLimiter.isRateLimited(
@@ -8074,10 +8076,9 @@ exports.onGoalSpaceEventCreated = functions
         `circleEvent_${spaceId}`,
         CIRCLE_EVENTS_PER_HOUR,
         3_600_000,
-        { failOpen: true }
+        { receiptRef: snap.ref }
       ))
     ) {
-      await snap.ref.delete();
       functions.logger.info("onGoalSpaceEventCreated.over_rate", {
         spaceId,
         eventId,

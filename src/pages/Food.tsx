@@ -421,6 +421,7 @@ export default function Food() {
     editMeal,
     loading: mealsLoading,
     error: mealsError,
+    serverConfirmed: mealsServerConfirmed,
     refresh: refreshMeals,
   } = useMeals({
     from: mealsFrom,
@@ -671,7 +672,11 @@ export default function Food() {
 
   useEffect(() => {
     const mealCount = todaysMeals.length;
-    if (mealCount === 0 || mealsLoading || mealsError) return;
+    if (mealsLoading || mealsError) return;
+    // Deleting/moving the final meal must also clear Home's food-day signal.
+    // A cached empty query or a durable delete still waiting to sync is not
+    // evidence of an empty server diary, so keep the old count until confirmed.
+    if (mealCount === 0 && !mealsServerConfirmed) return;
     // Fire-and-forget previously: a failed log write (permission, offline)
     // would silently desync the streak system from the user's actual
     // activity. We removed the meal success toast in 0f68ff3
@@ -681,15 +686,19 @@ export default function Food() {
     // food-save-error so rapid retries collapse into one message.
     saveLog({
       date: selectedDate,
-      workouts: 0,
       meals: mealCount,
-      hasPR: false,
-      notes: "",
     }).catch((err) => {
       logger.error("[Food] daily log save failed", err);
       toast.error("Couldn't update today's log", { id: "food-save-error" });
     });
-  }, [todaysMeals.length, selectedDate, saveLog, mealsLoading, mealsError]);
+  }, [
+    todaysMeals.length,
+    selectedDate,
+    saveLog,
+    mealsLoading,
+    mealsError,
+    mealsServerConfirmed,
+  ]);
 
   // Food6a-3: tap-back limited to 90 days; beyond that the History
   // page is the surface for review (privacy + data freshness).

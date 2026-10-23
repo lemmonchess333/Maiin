@@ -10,13 +10,19 @@ import { MemoryRouter } from "react-router-dom";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { restoreRealTimers } from "@/test/fakeTimers";
+import type { Meal } from "@/hooks/useMeals";
 
 const api = vi.hoisted(() => ({
   createMealEntry: vi.fn(),
   notifyMealsLogged: vi.fn(),
   addFavourite: vi.fn(),
   saveLog: vi.fn(),
-  mealsState: { error: null as string | null, loading: false },
+  diaryMeals: [] as Meal[],
+  mealsState: {
+    error: null as string | null,
+    loading: false,
+    serverConfirmed: true,
+  },
   refreshMeals: vi.fn(),
 }));
 
@@ -48,10 +54,11 @@ vi.mock("@/hooks/useFirestore", () => ({
 }));
 vi.mock("@/hooks/useMeals", () => ({
   useMeals: () => ({
-    meals: [],
+    meals: api.diaryMeals,
     ...api.mealsState,
     refresh: api.refreshMeals,
-    getMealsForDate: () => [],
+    getMealsForDate: (date: string) =>
+      api.diaryMeals.filter((meal) => meal.date === date),
     getDailyTotals: () => ({ calories: 0, protein: 0, carbs: 0, fat: 0 }),
     deleteMeal: vi.fn(),
     editMeal: vi.fn(),
@@ -116,7 +123,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   api.createMealEntry.mockResolvedValue({ id: "m1" });
   api.saveLog.mockResolvedValue(undefined);
-  api.mealsState = { error: null, loading: false };
+  api.diaryMeals = [];
+  api.mealsState = { error: null, loading: false, serverConfirmed: true };
 });
 afterEach(async () => {
   await restoreRealTimers();
@@ -607,5 +615,81 @@ describe("food diary read recovery", () => {
     expect(screen.getByRole("button", { name: /previous day/i })).toBeEnabled();
     expect(screen.getByRole("status", { name: "Loading" })).toBeInTheDocument();
     expect(api.saveLog).not.toHaveBeenCalled();
+  });
+});
+
+describe("food daily log consistency", () => {
+  const mealOn = (date: string): Meal => ({
+    id: "last-meal",
+    date,
+    foodName: "Eggs",
+    items: [],
+    totalCalories: 140,
+    totalProtein: 12,
+    totalCarbs: 1,
+    totalFat: 10,
+    confidence: "high",
+    createdAt: null,
+  });
+  const diary = () => (
+    <MemoryRouter>
+      <Food />
+    </MemoryRouter>
+  );
+
+  it("clears the meal count after the last meal is deleted, without resetting other log fields", async () => {
+    const date = localDateString();
+    api.diaryMeals = [mealOn(date)];
+    const view = render(diary());
+    await waitFor(() =>
+      expect(api.saveLog).toHaveBeenCalledWith({ date, meals: 1 })
+    );
+    api.saveLog.mockClear();
+
+    api.diaryMeals = [];
+    view.rerender(diary());
+
+    await waitFor(() =>
+      expect(api.saveLog).toHaveBeenCalledWith({ date, meals: 0 })
+    );
+  });
+
+  it("does not clear a count from an empty cached snapshot before the server confirms it", async () => {
+    api.mealsState.serverConfirmed = false;
+    const view = render(diary());
+    expect(api.saveLog).not.toHaveBeenCalled();
+
+    api.mealsState.serverConfirmed = true;
+    view.rerender(diary());
+    await waitFor(() =>
+      expect(api.saveLog).toHaveBeenCalledWith({
+        date: localDateString(),
+        meals: 0,
+      })
+    );
+  });
+
+  it("waits for the selected date's read while switching to an empty day", async () => {
+    api.diaryMeals = [mealOn(localDateString())];
+    const view = render(diary());
+    await waitFor(() => expect(api.saveLog).toHaveBeenCalled());
+    api.saveLog.mockClear();
+
+    api.mealsState.loading = true;
+    api.mealsState.serverConfirmed = false;
+    fireEvent.click(screen.getByRole("button", { name: /previous day/i }));
+    expect(api.saveLog).not.toHaveBeenCalled();
+
+    api.mealsState.loading = false;
+    api.mealsState.serverConfirmed = true;
+    view.rerender(diary());
+    const previous = new Date();
+    previous.setDate(previous.getDate() - 1);
+    await waitFor(() =>
+      expect(api.saveLog).toHaveBeenCalledWith({
+        date: localDateString(previous),
+        meals: 0,
+      })
+    );
   });
 });
