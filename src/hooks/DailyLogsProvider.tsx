@@ -34,6 +34,11 @@ export interface DailyLog {
   createdAt: Timestamp;
 }
 
+// Each surface writes only the fields it owns; a meal-count correction must
+// not reset training, PRs or notes already kept on the same date.
+type DailyLogPatch = Pick<DailyLog, "date"> &
+  Partial<Omit<DailyLog, "id" | "date" | "createdAt">>;
+
 /**
  * Single authoritative subscription on `users/{uid}/logs`, by date desc,
  * from the earlier of this week's Monday and this month's first day: the
@@ -69,7 +74,7 @@ interface WeeklyDayEntry {
 interface DailyLogsValue {
   logs: DailyLog[];
   loading: boolean;
-  saveLog: (log: Omit<DailyLog, "id" | "createdAt">) => Promise<void>;
+  saveLog: (log: DailyLogPatch) => Promise<void>;
   weeklyStats: WeeklyStats;
   monthlyStats: WeeklyStats;
   weeklyDayMap: Map<string, WeeklyDayEntry>;
@@ -119,7 +124,7 @@ export function DailyLogsProvider({ children }: { children: ReactNode }) {
   }, [user, todayKey]);
 
   const saveLog = useCallback(
-    async (log: Omit<DailyLog, "id" | "createdAt">) => {
+    async (log: DailyLogPatch) => {
       if (!user) return;
       await safeMerge(db, user.uid, `users/${user.uid}/logs`, log.date, {
         ...log,

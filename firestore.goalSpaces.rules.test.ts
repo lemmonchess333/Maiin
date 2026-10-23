@@ -221,6 +221,20 @@ suite("firestore.rules — goal spaces and server-only ledgers", () => {
       await assertFails(
         setDoc(eventRef(db, "f3"), validEvent({ somethingElse: 1 }))
       );
+      // Admission is a server transaction's receipt, never a caller's way
+      // to exempt their own events from the per-Circle allowance.
+      await assertFails(
+        setDoc(
+          eventRef(db, "forged-receipt"),
+          validEvent({ _rateLimitAccepted: true })
+        )
+      );
+      await assertSucceeds(
+        setDoc(eventRef(db, "receipt-update"), validEvent())
+      );
+      await assertFails(
+        updateDoc(eventRef(db, "receipt-update"), { _rateLimitAccepted: true })
+      );
     });
 
     it("caps text at 200 characters, and accepts exactly 200", async () => {

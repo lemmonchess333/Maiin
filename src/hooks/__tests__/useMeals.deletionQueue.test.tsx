@@ -66,6 +66,29 @@ afterEach(() => {
 });
 
 describe("queued diary deletion and restoration", () => {
+  it("does not confirm an empty diary while its last meal is only deleted in the durable queue", async () => {
+    const online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    seedFirestore({ [`${path}/last-meal`]: meal });
+    const { result } = renderHook(() => useMeals());
+    await flushSnapshots();
+    expect(result.current.serverConfirmed).toBe(true);
+
+    await act(async () => {
+      await result.current.deleteMeal("last-meal");
+    });
+    expect(result.current.meals).toEqual([]);
+    expect(readDoc(`${path}/last-meal`)?.deletedAt).toBeUndefined();
+    expect(result.current.serverConfirmed).toBe(false);
+
+    online.mockReturnValue(true);
+    await act(async () => {
+      await flushQueue(db, uid);
+      await flushSnapshots();
+    });
+    expect(result.current.meals).toEqual([]);
+    expect(result.current.serverConfirmed).toBe(true);
+  });
+
   it("does not replay an acknowledged create after permanent deletion", async () => {
     const online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
     await createMealEntry(uid, meal, "new-meal");

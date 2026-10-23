@@ -93,6 +93,47 @@ suite("Circle events and their notices", () => {
     );
   });
 
+  it("does not delete an accepted event on redelivery at the cap, and still rejects event twenty-one", async () => {
+    const first = await publish("s0", "session_completed", null);
+    for (let i = 1; i < 20; i += 1) {
+      await publish(`s${i}`, "session_completed", null);
+    }
+    await onGoalSpaceEventCreated.run(await first.get(), {
+      params: { spaceId: SPACE, eventId: "s0" },
+    });
+    expect((await first.get()).exists).toBe(true);
+    expect((await first.get()).data()._rateLimitAccepted).toBe(true);
+    const rejected = await publish("twenty-one");
+    expect((await rejected.get()).exists).toBe(false);
+    expect(
+      (await db.doc(`rateLimits/${AUTHOR}_circleEvent_${SPACE}`).get()).data()
+        .timestamps
+    ).toHaveLength(20);
+    expect(await notices()).toBe(0);
+  });
+
+  it("concurrent deliveries reserve one allowance atomically with the source receipt", async () => {
+    const ref = db.doc(`goalSpaces/${SPACE}/events/concurrent`);
+    await ref.set({
+      uid: AUTHOR,
+      kind: "session_completed",
+      text: null,
+      createdAt: Date.now(),
+    });
+    const original = await ref.get();
+    const context = { params: { spaceId: SPACE, eventId: "concurrent" } };
+    await Promise.all(
+      Array.from({ length: 3 }, () =>
+        onGoalSpaceEventCreated.run(original, context)
+      )
+    );
+    expect((await ref.get()).data()._rateLimitAccepted).toBe(true);
+    expect(
+      (await db.doc(`rateLimits/${AUTHOR}_circleEvent_${SPACE}`).get()).data()
+        .timestamps
+    ).toHaveLength(1);
+  });
+
   it("the count is per Circle: another Circle is not held to this one's", async () => {
     await db.doc(`rateLimits/${AUTHOR}_circleEvent_other-circle`).set({
       timestamps: Array.from({ length: 20 }, () => Date.now()),
