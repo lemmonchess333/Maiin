@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { EXERCISES } from "@/lib/exercises";
 import { FORM_ARTWORK } from "@/lib/formArtwork";
+import { readJson, writeJson } from "@/lib/localStore";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import ExerciseCard from "./ExerciseCard";
 
@@ -16,21 +17,15 @@ const exercises = EXERCISES.filter(
 const flagStorageKey = "tropos.exercise-library.flags.v1";
 
 function loadFlags(): Set<string> {
-  try {
-    const saved: unknown = JSON.parse(
-      localStorage.getItem(flagStorageKey) ?? "[]"
-    );
-    return new Set(
-      Array.isArray(saved)
-        ? saved.filter(
-            (id): id is string =>
-              typeof id === "string" && exercises.some((e) => e.id === id)
-          )
-        : []
-    );
-  } catch {
-    return new Set();
-  }
+  const saved = readJson<unknown>(flagStorageKey, []);
+  return new Set(
+    Array.isArray(saved)
+      ? saved.filter(
+          (id): id is string =>
+            typeof id === "string" && exercises.some((e) => e.id === id)
+        )
+      : []
+  );
 }
 
 export default function Library() {
@@ -66,12 +61,7 @@ export default function Library() {
     if (next.has(exerciseId)) next.delete(exerciseId);
     else next.add(exerciseId);
     setFlags(next);
-    try {
-      localStorage.setItem(flagStorageKey, JSON.stringify([...next]));
-      setSaveFailed(false);
-    } catch {
-      setSaveFailed(true);
-    }
+    setSaveFailed(!writeJson(flagStorageKey, [...next]));
   };
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
