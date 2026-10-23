@@ -98,6 +98,26 @@ describe("runDocument", () => {
     expect(saved.date).toBe(localDateString(FINISH));
   });
 
+  it.each(["clipped", "fully private"])(
+    "keeps the original start day when the saved route is %s",
+    (route) => {
+      const points =
+        route === "clipped"
+          ? trace(2).map((point, i) => ({
+              ...point,
+              timestamp: FINISH.getTime() + i * 1000,
+            }))
+          : [];
+      const saved = runDocument(
+        run({ points, startedAt: START.getTime() }),
+        FINISH
+      );
+      expect(saved.date).toBe(localDateString(START));
+      expect(saved.startedAt.toMillis()).toBe(START.getTime());
+      expect(saved.points).toEqual(points);
+    }
+  );
+
   it("keeps a run saved anyway apart from the runs that count", () => {
     expect(
       runDocument(run({ isInvalid: true, invalidReason: "too-fast" }), FINISH)

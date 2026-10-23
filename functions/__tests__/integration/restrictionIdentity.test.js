@@ -76,6 +76,41 @@ suite("a public name the filter refuses", () => {
   it("a clean name stays as written", async () => {
     expect((await rename("Maya Chen")).displayName).toBe("Maya Chen");
   });
+
+  it("an old refused-name delivery preserves a correction already saved to Firestore", async () => {
+    const ref = db.doc(`users/${UID}/public/profile`);
+    await ref.set({ displayName: "Sam", currentStreak: 4 });
+    const before = await ref.get();
+    await ref.update({ displayName: "shit head", displayNameLower: "shit head" });
+    const after = await ref.get();
+    await ref.update({ displayName: "Maya Chen", displayNameLower: "maya chen" });
+
+    await idx.onPublicProfileWritten.run(
+      { before, after },
+      { params: { uid: UID, docId: "profile" } }
+    );
+
+    expect((await ref.get()).data()).toMatchObject({
+      displayName: "Maya Chen",
+      displayNameLower: "maya chen",
+      currentStreak: 4,
+    });
+  });
+
+  it("an old refused-name delivery never recreates a deleted profile", async () => {
+    const ref = db.doc(`users/${UID}/public/profile`);
+    const before = await ref.get();
+    await ref.set({ displayName: "shit head", displayNameLower: "shit head" });
+    const after = await ref.get();
+    await ref.delete();
+
+    await idx.onPublicProfileWritten.run(
+      { before, after },
+      { params: { uid: UID, docId: "profile" } }
+    );
+
+    expect((await ref.get()).exists).toBe(false);
+  });
 });
 
 suite("a restriction carried to a new account", () => {

@@ -92,6 +92,15 @@ export default function ShoesManager() {
     setShowSuggestions(false);
   };
 
+  const handleSetDefault = async (shoeId: string) => {
+    try {
+      await setDefault(shoeId);
+    } catch (err) {
+      logger.error("[ShoesManager] setDefault failed", err);
+      toast.error("Couldn't change your default shoe. Try again.");
+    }
+  };
+
   // One-shot reconciler for users whose mileage may have drifted while the
   // auto-assign-default-shoe bug was live. Safe to re-run: it rebuilds
   // totals from `runs` rather than incrementing, so repeated taps converge
@@ -312,7 +321,7 @@ export default function ShoesManager() {
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => setDefault(shoe.id)}
+                onClick={() => void handleSetDefault(shoe.id)}
                 className={cn(
                   "size-11 inline-flex items-center justify-center rounded-lg transition-colors",
                   shoe.isDefault

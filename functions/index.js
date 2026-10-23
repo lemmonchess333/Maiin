@@ -6813,17 +6813,24 @@ exports.onPublicProfileWritten = functions
       ))
     )
       return null;
-    try {
-      // update, not set: a profile deleted since is not written back.
-      await change.after.ref.update({
+    const removed = await db.runTransaction(async (transaction) => {
+      // Trigger deliveries can arrive after a newer edit, or out of order.
+      // Classify the current name inside the transaction so an older refusal
+      // cannot clear a correction committed before this moderation write.
+      const current = await transaction.get(change.after.ref);
+      if (
+        !current.exists ||
+        !objectionableText.displayNameRefusal((current.data() || {}).displayName)
+      )
+        return false;
+      transaction.update(change.after.ref, {
         displayName: null,
         displayNameLower: null,
       });
-    } catch (err) {
-      if (err && err.code === 5) return null; // NOT_FOUND
-      throw err;
-    }
-    functions.logger.info("onPublicProfileWritten.name_removed", { uid });
+      return true;
+    });
+    if (removed)
+      functions.logger.info("onPublicProfileWritten.name_removed", { uid });
     return null;
   });
 

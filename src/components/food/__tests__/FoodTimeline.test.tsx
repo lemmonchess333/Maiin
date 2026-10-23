@@ -3,7 +3,7 @@
  * vanishing, and a day with photos lines every name up behind a
  * thumbnail or its slot's tile.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { Meal } from "@/hooks/useMeals";
 
@@ -11,7 +11,13 @@ const motionPref = vi.hoisted(() => ({ reduce: false }));
 vi.mock("@/hooks/useReducedMotion", () => ({
   useReducedMotion: () => motionPref.reduce,
 }));
-vi.mock("@/hooks/useFoodPhotoUrls", () => ({ useFoodPhotoUrls: () => ({}) }));
+const photos = vi.hoisted(() => ({ urls: {} as Record<string, string> }));
+vi.mock("@/hooks/useFoodPhotoUrls", () => ({
+  useFoodPhotoUrls: (ids: readonly string[]) =>
+    Object.fromEntries(
+      ids.filter((id) => photos.urls[id]).map((id) => [id, photos.urls[id]])
+    ),
+}));
 vi.mock("@/lib/foodAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
@@ -51,7 +57,10 @@ const rowFor = (name: string) =>
 
 beforeEach(() => {
   motionPref.reduce = false;
+  photos.urls = {};
 });
+
+afterEach(() => document.documentElement.classList.remove("dark"));
 
 describe("FoodTimeline — a deleted meal folds away (Pol1)", () => {
   it("keeps the row while it folds, then lets it go", async () => {
@@ -82,6 +91,49 @@ describe("FoodTimeline — a deleted meal folds away (Pol1)", () => {
 });
 
 describe("FoodTimeline — thumbnails (Pol1)", () => {
+  it.each(["light", "dark"])(
+    "shows a later grouped portion's local photo in %s mode",
+    (theme) => {
+      document.documentElement.classList.toggle("dark", theme === "dark");
+      photos.urls = { scanned: "data:image/jpeg;base64,c2Nhbm5lZA==" };
+      const { container } = render(
+        diary([
+          meal("typed", "Soup"),
+          meal("scanned", "Soup"),
+          meal("other", "Oats", { meal: "breakfast" }),
+        ])
+      );
+      expect(container.querySelectorAll("img")).toHaveLength(1);
+      expect(container.querySelector("img")).toHaveAttribute(
+        "src",
+        photos.urls.scanned
+      );
+      expect(rowFor("Soup")).not.toBeNull();
+      expect(
+        container.querySelector('[data-slot-tile="breakfast"]')
+      ).not.toBeNull();
+    }
+  );
+
+  it("prefers the first available local photo across the group before a legacy URL", () => {
+    photos.urls = {
+      scanned: "data:image/jpeg;base64,c2Nhbm5lZA==",
+      later: "data:image/jpeg;base64,bGF0ZXI=",
+    };
+    const { container } = render(
+      diary([
+        meal("legacy", "Soup", { photoUrl: "https://example.test/soup.jpg" }),
+        meal("scanned", "Soup"),
+        meal("later", "Soup"),
+      ])
+    );
+    expect(container.querySelectorAll("img")).toHaveLength(1);
+    expect(container.querySelector("img")).toHaveAttribute(
+      "src",
+      photos.urls.scanned
+    );
+  });
+
   it("lines every name up on a day with a photo", () => {
     const { container } = render(
       diary([
