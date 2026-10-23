@@ -8118,6 +8118,7 @@ exports.onGoalSpaceEventCreated = functions
             data: { type: notifType, fromName: authorName },
             serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
             notificationId: `${spaceId}_${eventId}`,
+            sourceEvent: socialFanout.notificationSourceEvent(snap, context),
           })
         )
       );
@@ -8136,12 +8137,12 @@ exports.onGoalSpaceEventCreated = functions
  * The two follow notices: "X started following you" and "X asked to follow
  * you". The person following writes the doc each one fires on themselves
  * (socialApi), so these triggers are the only place the server sees a
- * follow or a request. Each id is fixed per person, so a re-delivery, or
- * the same person following or asking again, rewrites one row instead of
- * adding another. createNotification holds the block check and each
+ * follow or a request. Each id is fixed per person: a new follow/request
+ * refreshes one row, while its source receipt makes retries preserve the
+ * delivery time the recipient has seen. createNotification holds the block check and each
  * recipient's switch, and skips an account that is being deleted.
  */
-async function sendFollowNotice({ toUid, fromUid, type, verb, logKey }) {
+async function sendFollowNotice({ toUid, fromUid, type, verb, logKey, sourceEvent }) {
   try {
     const profileSnap = await db.doc(`users/${fromUid}/public/profile`).get();
     const fromName =
@@ -8153,6 +8154,7 @@ async function sendFollowNotice({ toUid, fromUid, type, verb, logKey }) {
       data: { type, fromName, message: `${fromName} ${verb}` },
       serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       notificationId: `${type}_${fromUid}`,
+      sourceEvent,
     });
   } catch (err) {
     functions.logger.warn(`${logKey}.notification_failed`, {
@@ -8188,6 +8190,7 @@ exports.onFollowerCreated = functions
       type: "follow",
       verb: "started following you",
       logKey: "onFollowerCreated",
+      sourceEvent: socialFanout.notificationSourceEvent(snap, context),
     });
     return null;
   });
@@ -8213,6 +8216,7 @@ exports.onFollowRequestCreated = functions
       type: "follow_request",
       verb: "asked to follow you",
       logKey: "onFollowRequestCreated",
+      sourceEvent: socialFanout.notificationSourceEvent(snap, context),
     });
     return null;
   });

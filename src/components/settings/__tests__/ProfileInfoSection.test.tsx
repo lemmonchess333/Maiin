@@ -8,7 +8,13 @@
  * Firebase emulator.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  cleanup,
+  act,
+} from "@testing-library/react";
 import { afterEach } from "vitest";
 import { useState } from "react";
 import ProfileInfoSection from "../ProfileInfoSection";
@@ -40,6 +46,14 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
     heightCm: 175,
     ...overrides,
   } as UserProfile;
+}
+
+function pendingProfileSave() {
+  let resolve!: (result: UpdateProfileResult) => void;
+  const promise = new Promise<UpdateProfileResult>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
 }
 
 function renderSection(
@@ -140,6 +154,83 @@ describe("ProfileInfoSection — D16 training why", () => {
     fireEvent.blur(input);
     expect(updateProfile).toHaveBeenCalledWith({ trainingWhy: "" });
   });
+
+  it.each([true, false])(
+    "keeps a newer why draft when the pending save finishes with ok=%s",
+    async (ok) => {
+      const { updateProfile } = renderSection(
+        makeProfile({ trainingWhy: "Feel stronger" })
+      );
+      const pending = pendingProfileSave();
+      updateProfile.mockReturnValueOnce(pending.promise);
+      const input = screen.getByLabelText("Why you train");
+      fireEvent.change(input, { target: { value: "  More energy  " } });
+      fireEvent.blur(input);
+      expect(updateProfile).toHaveBeenCalledWith({
+        trainingWhy: "More energy",
+      });
+      fireEvent.change(input, { target: { value: "  Run a marathon  " } });
+
+      await act(async () => {
+        pending.resolve(
+          ok ? { ok: true } : { ok: false, error: new Error("offline") }
+        );
+        await pending.promise;
+      });
+      expect(input).toHaveValue("  Run a marathon  ");
+
+      // The text kept on screen is also what the next blur persists.
+      await act(async () => fireEvent.blur(input));
+      expect(updateProfile).toHaveBeenLastCalledWith({
+        trainingWhy: "Run a marathon",
+      });
+      expect(input).toHaveValue("Run a marathon");
+    }
+  );
+
+  it("still restores the saved why when a failed save has no newer edit", async () => {
+    const { updateProfile } = renderSection(
+      makeProfile({ trainingWhy: "Feel stronger" })
+    );
+    const pending = pendingProfileSave();
+    updateProfile.mockReturnValueOnce(pending.promise);
+    const input = screen.getByLabelText("Why you train");
+    fireEvent.change(input, { target: { value: "More energy" } });
+    fireEvent.blur(input);
+    await act(async () => {
+      pending.resolve({ ok: false, error: new Error("offline") });
+      await pending.promise;
+    });
+    expect(input).toHaveValue("Feel stronger");
+    await act(async () => fireEvent.blur(input));
+    expect(updateProfile).toHaveBeenCalledOnce();
+  });
+
+  it("persists a return to the original why while another save is pending", async () => {
+    const { updateProfile } = renderSection(
+      makeProfile({ trainingWhy: "Feel stronger" })
+    );
+    const first = pendingProfileSave();
+    const second = pendingProfileSave();
+    updateProfile
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+    const input = screen.getByLabelText("Why you train");
+    fireEvent.change(input, { target: { value: "More energy" } });
+    fireEvent.blur(input);
+    fireEvent.change(input, { target: { value: "Feel stronger" } });
+    fireEvent.blur(input);
+    await act(async () => {
+      first.resolve({ ok: true });
+      await first.promise;
+      second.resolve({ ok: true });
+      await second.promise;
+    });
+    expect(updateProfile).toHaveBeenNthCalledWith(2, {
+      trainingWhy: "Feel stronger",
+    });
+    expect(input).toHaveValue("Feel stronger");
+  });
 });
 
 describe("ProfileInfoSection — cleared-field guards on weight/height blur", () => {
@@ -221,6 +312,56 @@ describe("ProfileInfoSection — cleared-field guards on weight/height blur", ()
     type(/height/i, "180");
     await Promise.resolve();
     expect(updateProfile).toHaveBeenCalledWith({ heightCm: 180 });
+  });
+
+  it("keeps a newer centimetre draft when an earlier height save fails", async () => {
+    const { updateProfile } = renderSection(makeProfile());
+    const pending = pendingProfileSave();
+    updateProfile.mockReturnValueOnce(pending.promise);
+    const input = type("Height (cm)", "180");
+    expect(updateProfile).toHaveBeenCalledWith({ heightCm: 180 });
+    fireEvent.change(input, { target: { value: "181" } });
+    await act(async () => {
+      pending.resolve({ ok: false, error: new Error("offline") });
+      await pending.promise;
+    });
+    expect(input).toHaveValue(181);
+    await act(async () => fireEvent.blur(input));
+    expect(updateProfile).toHaveBeenLastCalledWith({ heightCm: 181 });
+  });
+
+  it("still restores the saved height after failure without a newer edit", async () => {
+    const { updateProfile } = renderSection(makeProfile());
+    const pending = pendingProfileSave();
+    updateProfile.mockReturnValueOnce(pending.promise);
+    const input = type("Height (cm)", "180");
+    await act(async () => {
+      pending.resolve({ ok: false, error: new Error("offline") });
+      await pending.promise;
+    });
+    expect(input).toHaveValue(175);
+    await act(async () => fireEvent.blur(input));
+    expect(updateProfile).toHaveBeenCalledOnce();
+  });
+
+  it("persists a return to the original centimetres while a save is pending", async () => {
+    const { updateProfile } = renderSection(makeProfile());
+    const first = pendingProfileSave();
+    const second = pendingProfileSave();
+    updateProfile
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+    const input = type("Height (cm)", "180");
+    fireEvent.change(input, { target: { value: "175" } });
+    fireEvent.blur(input);
+    await act(async () => {
+      first.resolve({ ok: true });
+      await first.promise;
+      second.resolve({ ok: true });
+      await second.promise;
+    });
+    expect(updateProfile).toHaveBeenNthCalledWith(2, { heightCm: 175 });
+    expect(input).toHaveValue(175);
   });
 
   it("writes nothing when a field is left as it was", async () => {
@@ -313,6 +454,55 @@ describe("ProfileInfoSection — weight and height in the chosen units", () => {
     expect(updateProfile).not.toHaveBeenCalled();
     expect(inches.value).toBe("9");
   });
+
+  it("treats feet and inches as one draft while a height save is pending", async () => {
+    const { updateProfile } = renderSection(
+      makeProfile({ preferredHeightUnit: "ft", heightCm: 175 })
+    );
+    const pending = pendingProfileSave();
+    updateProfile.mockReturnValueOnce(pending.promise);
+    const feet = screen.getByLabelText("Height, feet");
+    const inches = screen.getByLabelText("Height, inches");
+    fireEvent.change(feet, { target: { value: "6" } });
+    fireEvent.change(inches, { target: { value: "0" } });
+    fireEvent.blur(inches);
+    expect(updateProfile).toHaveBeenCalledWith({ heightCm: 182.9 });
+    fireEvent.change(inches, { target: { value: "2" } });
+    await act(async () => {
+      pending.resolve({ ok: false, error: new Error("offline") });
+      await pending.promise;
+    });
+    expect(feet).toHaveValue(6);
+    expect(inches).toHaveValue(2);
+    await act(async () => fireEvent.blur(inches));
+    expect(updateProfile).toHaveBeenLastCalledWith({ heightCm: 188 });
+  });
+
+  it("persists a return to the original feet and inches while a save is pending", async () => {
+    const { updateProfile } = renderSection(
+      makeProfile({ preferredHeightUnit: "ft", heightCm: 175 })
+    );
+    const first = pendingProfileSave();
+    const second = pendingProfileSave();
+    updateProfile
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+    const inches = screen.getByLabelText("Height, inches");
+    fireEvent.change(inches, { target: { value: "10" } });
+    fireEvent.blur(inches);
+    fireEvent.change(inches, { target: { value: "9" } });
+    fireEvent.blur(inches);
+    await act(async () => {
+      first.resolve({ ok: true });
+      await first.promise;
+      second.resolve({ ok: true });
+      await second.promise;
+    });
+    // Returning to the original display must retain its precise stored cm,
+    // rather than writing the rounded feet/inches conversion back.
+    expect(updateProfile).toHaveBeenNthCalledWith(2, { heightCm: 175 });
+    expect(inches).toHaveValue(9);
+  });
 });
 
 /* The name is public and this field writes the profile directly, so it
@@ -390,5 +580,84 @@ describe("ProfileInfoSection — the display name", () => {
     expect(screen.getByRole("alert")).toBeInTheDocument();
     fireEvent.change(input, { target: { value: "Sam" } });
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("keeps a newer name draft when the previous save fails", async () => {
+    const { updateProfile, input } = renderName();
+    const pending = pendingProfileSave();
+    updateProfile.mockReturnValueOnce(pending.promise);
+    fireEvent.change(input, { target: { value: "Sam Kerr" } });
+    fireEvent.blur(input);
+    expect(updateProfile).toHaveBeenCalledWith({ displayName: "Sam Kerr" });
+    fireEvent.change(input, { target: { value: "Alex Smith" } });
+    await act(async () => {
+      pending.resolve({ ok: false, error: new Error("offline") });
+      await pending.promise;
+    });
+    expect(input).toHaveValue("Alex Smith");
+    await act(async () => fireEvent.blur(input));
+    expect(updateProfile).toHaveBeenLastCalledWith({
+      displayName: "Alex Smith",
+    });
+  });
+
+  it("still restores the saved name after failure without a newer edit", async () => {
+    const { updateProfile, input } = renderName();
+    const pending = pendingProfileSave();
+    updateProfile.mockReturnValueOnce(pending.promise);
+    fireEvent.change(input, { target: { value: "Sam Kerr" } });
+    fireEvent.blur(input);
+    await act(async () => {
+      pending.resolve({ ok: false, error: new Error("offline") });
+      await pending.promise;
+    });
+    expect(input).toHaveValue("Test");
+    await act(async () => fireEvent.blur(input));
+    expect(updateProfile).toHaveBeenCalledOnce();
+  });
+
+  it("persists a return to the original name while another save is pending", async () => {
+    const { updateProfile, input } = renderName();
+    const first = pendingProfileSave();
+    const second = pendingProfileSave();
+    updateProfile
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+    fireEvent.change(input, { target: { value: "Sam Kerr" } });
+    fireEvent.blur(input);
+    fireEvent.change(input, { target: { value: "Test" } });
+    fireEvent.blur(input);
+    await act(async () => {
+      first.resolve({ ok: true });
+      await first.promise;
+      second.resolve({ ok: true });
+      await second.promise;
+    });
+    expect(updateProfile).toHaveBeenNthCalledWith(2, { displayName: "Test" });
+    expect(input).toHaveValue("Test");
+  });
+
+  it("does not call the parent name setter after the form unmounts", async () => {
+    const pending = pendingProfileSave();
+    const updateProfile = vi.fn(() => pending.promise);
+    const setName = vi.fn();
+    const { unmount } = render(
+      <ProfileInfoSection
+        profile={makeProfile()}
+        name="Sam Kerr"
+        setName={setName}
+        updateProfile={updateProfile}
+        inline
+      />
+    );
+    fireEvent.blur(screen.getByLabelText("Name"));
+    expect(updateProfile).toHaveBeenCalledWith({ displayName: "Sam Kerr" });
+    unmount();
+    setName.mockClear();
+    await act(async () => {
+      pending.resolve({ ok: false, error: new Error("offline") });
+      await pending.promise;
+    });
+    expect(setName).not.toHaveBeenCalled();
   });
 });
