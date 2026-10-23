@@ -29,6 +29,8 @@ import {
   doc,
   getDoc,
   getDocs,
+  getDocFromServer,
+  getDocsFromServer,
   collection,
   setDoc,
   deleteDoc,
@@ -2739,9 +2741,9 @@ suite(
       await env.withSecurityRulesDisabled(async (ctx) => {
         const db = ctx.firestore();
         await setDoc(doc(db, "feeds", OWNER_UID, "items", "I1"), {
+          schemaVersion: 2,
           activityId: "act1",
           authorId: OTHER_UID,
-          summary: "from a friend",
           createdAt: new Date(),
         });
       });
@@ -2749,6 +2751,122 @@ suite(
       await assertSucceeds(
         getDoc(doc(ownerDb, "feeds", OWNER_UID, "items", "I1"))
       );
+    });
+
+    it("refuses historical summaries at server get and list during migration", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), "feeds", OWNER_UID, "items", "legacy"),
+          {
+            activityId: "private-run",
+            authorId: OTHER_UID,
+            summary: "Private run · 5.0 km · 25:00",
+            createdAt: new Date(),
+          }
+        );
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        getDocFromServer(doc(ownerDb, "feeds", OWNER_UID, "items", "legacy"))
+      );
+      await assertFails(
+        getDocsFromServer(
+          query(
+            collection(ownerDb, "feeds", OWNER_UID, "items"),
+            orderBy("createdAt", "desc"),
+            limit(20)
+          )
+        )
+      );
+    });
+
+    it("lists a full page of safe indexes alongside unreadable historical copies", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        const batch = writeBatch(db);
+        batch.set(doc(db, "feeds", OWNER_UID, "items", "legacy"), {
+          activityId: "private-run",
+          authorId: OTHER_UID,
+          summary: "Private session",
+          createdAt: new Date(),
+        });
+        for (let i = 0; i < 25; i += 1) {
+          batch.set(doc(db, "feeds", OWNER_UID, "items", `safe-${i}`), {
+            schemaVersion: 2,
+            activityId: `activity-${i}`,
+            authorId: OTHER_UID,
+            createdAt: new Date(Date.now() + i),
+            expiresAt: new Date(Date.now() + 86_400_000),
+          });
+        }
+        await batch.commit();
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const page = await assertSucceeds(
+        getDocsFromServer(
+          query(
+            collection(ownerDb, "feeds", OWNER_UID, "items"),
+            where("schemaVersion", "==", 2),
+            orderBy("createdAt", "desc"),
+            limit(20)
+          )
+        )
+      );
+      expect(page.docs).toHaveLength(20);
+      expect(page.docs.every((d) => d.data().schemaVersion === 2)).toBe(true);
+      const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+      await assertFails(
+        getDocFromServer(doc(strangerDb, "feeds", OWNER_UID, "items", "safe-0"))
+      );
+    });
+
+    it("a blocked former follower can read only the routing index, never an old session summary", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "a1"), {
+          authorId: OTHER_UID,
+          visibility: "followers",
+          runName: "Private run",
+          distance: 5000,
+        });
+        await setDoc(doc(db, "followers", OTHER_UID, "users", OWNER_UID), {
+          followedAt: new Date(),
+        });
+        await setDoc(doc(db, "feeds", OWNER_UID, "items", "legacy"), {
+          activityId: "a1",
+          authorId: OTHER_UID,
+          summary: "Private run · 5.0 km",
+        });
+        await setDoc(doc(db, "feeds", OWNER_UID, "items", "a1"), {
+          schemaVersion: 2,
+          activityId: "a1",
+          authorId: OTHER_UID,
+          createdAt: new Date(),
+          expiresAt: new Date(Date.now() + 86_400_000),
+        });
+      });
+      const followerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        getDocFromServer(doc(followerDb, "activities", "a1"))
+      );
+      const authorDb = env.authenticatedContext(OTHER_UID).firestore();
+      await setDoc(doc(authorDb, "blocks", OTHER_UID, "users", OWNER_UID), {
+        blockedAt: serverTimestamp(),
+      });
+      await assertFails(getDocFromServer(doc(followerDb, "activities", "a1")));
+      await assertFails(
+        getDocFromServer(doc(followerDb, "feeds", OWNER_UID, "items", "legacy"))
+      );
+      const index = await assertSucceeds(
+        getDocFromServer(doc(followerDb, "feeds", OWNER_UID, "items", "a1"))
+      );
+      expect(Object.keys(index.data() || {}).sort()).toEqual([
+        "activityId",
+        "authorId",
+        "createdAt",
+        "expiresAt",
+        "schemaVersion",
+      ]);
     });
 
     it("owner can still delete their own feed item (regression guard — UI inbox clear)", async () => {

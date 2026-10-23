@@ -10,6 +10,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { webcrypto } from "node:crypto";
 import { Blob as NodeBlob } from "node:buffer";
+import { uploadBytesResumable, type UploadTask } from "firebase/storage";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {}, storage: {} }));
@@ -21,9 +22,14 @@ const storageMock = vi.hoisted(() => ({
 }));
 vi.mock("firebase/storage", () => ({
   ref: vi.fn((_storage: unknown, path: string) => ({ fullPath: path })),
-  uploadBytes: vi.fn(async (r: { fullPath: string }) => {
-    storageMock.uploaded.push(r.fullPath);
-  }),
+  uploadBytesResumable: vi.fn((r: { fullPath: string }) =>
+    Object.assign(
+      Promise.resolve().then(() => {
+        storageMock.uploaded.push(r.fullPath);
+      }),
+      { cancel: vi.fn(() => true) }
+    )
+  ),
   deleteObject: vi.fn(async (r: { fullPath: string }) => {
     if (storageMock.deleteError) throw storageMock.deleteError;
     storageMock.deleted.push(r.fullPath);
@@ -52,6 +58,7 @@ import {
   readDoc,
   batchLog,
   failNextFirestore,
+  writeLog,
 } from "@/test/firestoreHarness";
 
 const stored = (
@@ -85,6 +92,7 @@ beforeEach(() => {
   storageMock.deleteError = null;
 });
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -337,6 +345,90 @@ describe("uploadProgressPhoto", () => {
     ).rejects.toMatchObject({ code: "permission-denied" });
     expect(storageMock.uploaded).toHaveLength(1);
     expect(storageMock.deleted).toEqual(storageMock.uploaded);
+  });
+
+  function deferredUpload(cancelWins: boolean) {
+    let complete!: () => void;
+    let fail!: (error: unknown) => void;
+    const cancel = vi.fn(() => {
+      if (cancelWins) fail({ code: "storage/canceled" });
+      return cancelWins;
+    });
+    vi.mocked(uploadBytesResumable).mockImplementationOnce((reference) => {
+      const pending = new Promise<void>((resolve, reject) => {
+        complete = () => {
+          storageMock.uploaded.push(reference.fullPath);
+          resolve();
+        };
+        fail = reject;
+      });
+      return Object.assign(pending, { cancel }) as unknown as UploadTask;
+    });
+    return {
+      cancel,
+      complete: () => complete(),
+      fail: (error: unknown) => fail(error),
+    };
+  }
+
+  it("cancels a timed-out upload and never writes photo metadata", async () => {
+    prepareImage();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const upload = deferredUpload(true);
+    const failed = expect(
+      uploadProgressPhoto("u1", file(), {
+        date: "2026-06-20",
+        pose: "front",
+      })
+    ).rejects.toThrow("Upload timed out");
+    await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1));
+    await vi.advanceTimersByTimeAsync(25_000);
+    await failed;
+    expect(upload.cancel).toHaveBeenCalledOnce();
+    expect(storageMock.deleted).toHaveLength(1);
+    expect(writeLog()).toEqual([]);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("deletes a late committed object when cancellation loses the race", async () => {
+    prepareImage();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const upload = deferredUpload(false);
+    const failed = expect(
+      uploadProgressPhoto("u1", file(), {
+        date: "2026-06-20",
+        pose: "side",
+      })
+    ).rejects.toThrow("Upload timed out");
+    await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1));
+    await vi.advanceTimersByTimeAsync(25_000);
+    await failed;
+    expect(upload.cancel).toHaveBeenCalledOnce();
+    expect(storageMock.deleted).toEqual([]);
+    upload.complete();
+    await vi.waitFor(() =>
+      expect(storageMock.deleted).toEqual(storageMock.uploaded)
+    );
+    expect(storageMock.uploaded).toHaveLength(1);
+    expect(writeLog()).toEqual([]);
+  });
+
+  it("clears its deadline when the upload fails before timing out", async () => {
+    prepareImage();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const upload = deferredUpload(false);
+    const failed = expect(
+      uploadProgressPhoto("u1", file(), {
+        date: "2026-06-20",
+        pose: "back",
+      })
+    ).rejects.toMatchObject({ code: "storage/unauthorized" });
+    await vi.waitFor(() => expect(vi.getTimerCount()).toBe(1));
+    upload.fail({ code: "storage/unauthorized" });
+    await failed;
+    expect(vi.getTimerCount()).toBe(0);
+    expect(upload.cancel).not.toHaveBeenCalled();
+    expect(writeLog()).toEqual([]);
   });
 
   it("refuses a day that is not a real date before uploading anything", async () => {

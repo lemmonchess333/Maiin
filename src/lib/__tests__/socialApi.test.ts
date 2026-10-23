@@ -79,6 +79,7 @@ import {
   getBlockedUsers,
   reportContent,
   getComments,
+  getFeed,
 } from "../socialApi";
 
 beforeEach(() => {
@@ -294,6 +295,31 @@ describe("toggleKudos", () => {
     );
     expect(mockHttpsCallable).not.toHaveBeenCalled();
     expect(mockCallableInvoke).not.toHaveBeenCalled();
+  });
+});
+
+describe("getFeed — only safe indexes", () => {
+  it("paginates current indexes while excluding legacy rows and other accounts", async () => {
+    const current = (createdAt: number) => ({
+      schemaVersion: 2,
+      activityId: `act${createdAt}`,
+      authorId: "friend",
+      createdAt: Timestamp.fromMillis(createdAt),
+    });
+    seedFirestore({
+      "feeds/user1/items/new": current(3),
+      "feeds/user1/items/old": current(1),
+      "feeds/user1/items/legacy": {
+        activityId: "private",
+        summary: "private session",
+        createdAt: Timestamp.fromMillis(4),
+      },
+      "feeds/other/items/unrelated": current(5),
+    });
+    const first = await getFeed("user1", 1);
+    expect(first.items.map((row) => row.id)).toEqual(["new"]);
+    const second = await getFeed("user1", 1, first.lastDoc);
+    expect(second.items.map((row) => row.id)).toEqual(["old"]);
   });
 });
 
