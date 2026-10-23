@@ -99,6 +99,14 @@ class ReadBackRetryTest(unittest.TestCase):
 
 
 class ChallengeSourceTargetsTest(unittest.TestCase):
+    def test_profile_name_moderation_reads_back_its_filter_and_retry_guard(self):
+        paths = verifier.source_targets()["onPublicProfileWritten"]
+        self.assertTrue({"index.js", "package-lock.json", "lib/objectionableText.js",
+                         "profanityFilter.js", "lib/hateTerms.js", "lib/triggerRetry.js",
+                         "lib/accountDeletionLocks.js"}.issubset(paths))
+        self.assertEqual(len(paths), len(set(paths)))
+        self.assertIn("onPublicProfileWritten", verifier.RETRY_REQUIRED)
+
     def test_social_fanout_targets_cover_changed_privacy_and_retry_artifacts(self):
         targets = verifier.source_targets()
         expected = {
@@ -208,6 +216,18 @@ class DeployedSourceIdentityTest(unittest.TestCase):
         self.assertNotIn("private-signed-url", printed)
         self.assertNotIn("https://", printed)
         self.assertEqual(reader.call_count, 3)
+
+    def test_profile_name_moderation_accepts_current_retry_enabled_source_and_rejects_any_stale_artifact(self):
+        name = "onPublicProfileWritten"
+        self.use_source_target(name)
+        printed, reader = self.check(self.deployed(), name)
+        self.assertIn(f"Verified deployed source: {name}, version 123", printed)
+        self.assertEqual(reader.call_count, 3)
+        for path in self.paths:
+            with self.subTest(artifact=path):
+                stale = {**self.uploaded, path: b"previous deployment"}
+                with self.assertRaisesRegex(RuntimeError, "deployed .* differs from uploaded source"):
+                    self.check(self.deployed(stale), name)
 
     def test_social_fanout_exact_bundles_accept_enabled_empty_retry_objects(self):
         for name in ("onActivityCreated", "onGoalSpaceEventCreated"):

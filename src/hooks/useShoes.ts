@@ -101,17 +101,20 @@ export function useShoes() {
 
   const setDefault = async (shoeId: string) => {
     if (!uid) return;
-    // Unset all others
+    // Move the flag together: a rejected target write must not clear the
+    // previous default and silently switch future runs to the fallback shoe.
+    const batch = writeBatch(db);
     for (const s of shoes) {
       if (s.isDefault && s.id !== shoeId) {
-        await updateDocGuarded(doc(db, "users", uid, "shoes", s.id), {
+        batch.update(doc(db, "users", uid, "shoes", s.id), {
           isDefault: false,
         });
       }
     }
-    await updateDocGuarded(doc(db, "users", uid, "shoes", shoeId), {
+    batch.update(doc(db, "users", uid, "shoes", shoeId), {
       isDefault: true,
     });
+    await batch.commit();
   };
 
   const updateMileage = async (shoeId: string, addKm: number) => {

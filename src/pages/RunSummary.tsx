@@ -31,11 +31,7 @@ import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { logger } from "../lib/logger";
 import { appErrorMessage } from "@/lib/callableErrors";
-import {
-  detectBestEfforts,
-  toGPX,
-  estimateRunCalories,
-} from "../lib/gps";
+import { detectBestEfforts, toGPX, estimateRunCalories } from "../lib/gps";
 import type { SessionShareAction } from "../lib/sessionPost";
 import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
@@ -648,6 +644,8 @@ export default function RunSummary() {
     () => (state ? applyPrivacyZones(state.points, privacyZones) : []),
     [state, privacyZones]
   );
+  // Keep the run's clock independently of the coordinates privacy zones cut.
+  const startedAt = state?.points[0]?.timestamp;
 
   /* This run as the screen's two week lines count it, saved or not yet.
      One read of the week (`useWeekPulse`, counted by `trainingWeek`) feeds
@@ -661,7 +659,7 @@ export default function RunSummary() {
     return {
       id: savedRunId,
       // A run with no trace (entered by hand) is today's.
-      date: points[0] ? localDateString(new Date(points[0].timestamp)) : null,
+      date: startedAt ? localDateString(new Date(startedAt)) : null,
       distance: runDistance,
       duration: state.elapsed,
       isInvalid: type
@@ -673,7 +671,7 @@ export default function RunSummary() {
           }) !== null
         : false,
     };
-  }, [state, editedDistanceMeters, savedRunId, points]);
+  }, [state, editedDistanceMeters, savedRunId, startedAt]);
   const weekPulse = useWeekPulse(0, pendingWeekRun);
 
   // A redirect is an element, not a call made while rendering: React Router
@@ -1009,6 +1007,7 @@ export default function RunSummary() {
         runId: savedRunId ?? runIdRef.current,
         alreadySaved: savedRunId !== null,
         run: {
+          startedAt,
           points: savedPoints,
           distance,
           elapsed,
