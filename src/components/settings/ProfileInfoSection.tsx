@@ -1,4 +1,4 @@
-import { useState, type FocusEvent } from "react";
+import { useEffect, useRef, useState, type FocusEvent } from "react";
 import { User } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
 import { haptic } from "@/lib/haptic";
@@ -70,6 +70,31 @@ export default function ProfileInfoSection({
   refreshProfile,
   inline = false,
 }: ProfileInfoSectionProps) {
+  // A completed blur save belongs to the draft it submitted. Editing again
+  // (or leaving this form) must prevent it from replacing a newer draft.
+  const nameRevision = useRef(0);
+  const heightRevision = useRef(0);
+  const whyRevision = useRef(0);
+  const pendingSaves = useRef({ name: 0, height: 0, why: 0 });
+  async function saveField(
+    field: "name" | "height" | "why",
+    data: Partial<UserProfile>
+  ) {
+    pendingSaves.current[field]++;
+    try {
+      return await updateProfile(data);
+    } finally {
+      pendingSaves.current[field]--;
+    }
+  }
+  useEffect(
+    () => () => {
+      nameRevision.current++;
+      heightRevision.current++;
+      whyRevision.current++;
+    },
+    []
+  );
   const weightUnit = profile.preferredWeightUnit === "lbs" ? "lbs" : "kg";
   const heightUnit = profile.preferredHeightUnit === "ft" ? "ft" : "cm";
   /* The weight a change here last saved. The weigh-in queue writes the
@@ -132,18 +157,28 @@ export default function ProfileInfoSection({
    *  so the client and the Cloud-Function write path agree on what's
    *  plausible. */
   async function commitHeight(cm: number, unchanged: boolean) {
+    const submitted = ++heightRevision.current;
     const restore = () => {
       setHeightCmText(String(Number(savedCm.toFixed(1))));
       setFeet(String(feetInches(savedCm).feet));
       setInches(String(feetInches(savedCm).inches));
     };
-    if (unchanged) return;
-    if (!Number.isFinite(cm) || cm < HEIGHT_CM.min || cm > HEIGHT_CM.max) {
+    // The profile stays on the last acknowledged value while a save runs.
+    // Returning to that value is another write, not an unchanged field.
+    if (unchanged && pendingSaves.current.height === 0) return;
+    const next = unchanged ? savedCm : cm;
+    if (
+      !Number.isFinite(next) ||
+      next < HEIGHT_CM.min ||
+      next > HEIGHT_CM.max
+    ) {
       restore();
       return;
     }
-    const result = await updateProfile({ heightCm: Number(cm.toFixed(1)) });
-    if (!result.ok) restore();
+    const result = await saveField("height", {
+      heightCm: unchanged ? savedCm : Number(next.toFixed(1)),
+    });
+    if (!result.ok && heightRevision.current === submitted) restore();
   }
 
   function commitFeetInches(e: FocusEvent<HTMLDivElement>) {
@@ -186,12 +221,14 @@ export default function ProfileInfoSection({
           aria-invalid={nameError ? true : undefined}
           aria-describedby={nameError ? "profile-name-error" : undefined}
           onChange={(e) => {
+            nameRevision.current++;
             setName(e.target.value);
             setNameError(null);
           }}
           onBlur={async () => {
+            const submitted = ++nameRevision.current;
             const prev = profile.displayName ?? "";
-            if (name === prev) return;
+            if (name === prev && pendingSaves.current.name === 0) return;
             /* The name is public, and this field writes the profile
                directly, so it is held to Onboarding's rules here,
                word filter included. A refused name is not saved; the
@@ -202,8 +239,10 @@ export default function ProfileInfoSection({
               return;
             }
             setName(check.trimmed);
-            const result = await updateProfile({ displayName: check.trimmed });
-            if (!result.ok) setName(prev);
+            const result = await saveField("name", {
+              displayName: check.trimmed,
+            });
+            if (!result.ok && nameRevision.current === submitted) setName(prev);
           }}
           placeholder="Your name"
           className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
@@ -255,7 +294,10 @@ export default function ProfileInfoSection({
                 inputMode="numeric"
                 aria-label="Height, feet"
                 value={feet}
-                onChange={(e) => setFeet(e.target.value)}
+                onChange={(e) => {
+                  heightRevision.current++;
+                  setFeet(e.target.value);
+                }}
                 className="w-full min-w-0 min-h-11 px-3 rounded-lg bg-muted border border-border/50 text-foreground text-sm font-mono tabular-nums"
               />
               <input
@@ -263,7 +305,10 @@ export default function ProfileInfoSection({
                 inputMode="numeric"
                 aria-label="Height, inches"
                 value={inches}
-                onChange={(e) => setInches(e.target.value)}
+                onChange={(e) => {
+                  heightRevision.current++;
+                  setInches(e.target.value);
+                }}
                 className="w-full min-w-0 min-h-11 px-3 rounded-lg bg-muted border border-border/50 text-foreground text-sm font-mono tabular-nums"
               />
             </div>
@@ -281,7 +326,10 @@ export default function ProfileInfoSection({
               type="number"
               inputMode="decimal"
               value={heightCmText}
-              onChange={(e) => setHeightCmText(e.target.value)}
+              onChange={(e) => {
+                heightRevision.current++;
+                setHeightCmText(e.target.value);
+              }}
               onBlur={() =>
                 void commitHeight(
                   parseNumber(heightCmText),
@@ -333,12 +381,17 @@ export default function ProfileInfoSection({
           type="text"
           value={why}
           maxLength={120}
-          onChange={(e) => setWhy(e.target.value)}
+          onChange={(e) => {
+            whyRevision.current++;
+            setWhy(e.target.value);
+          }}
           onBlur={async () => {
+            const submitted = ++whyRevision.current;
             const prev = profile.trainingWhy ?? "";
             const next = why.trim().slice(0, 120);
-            if (next === prev) return;
-            const result = await updateProfile({ trainingWhy: next });
+            if (next === prev && pendingSaves.current.why === 0) return;
+            const result = await saveField("why", { trainingWhy: next });
+            if (whyRevision.current !== submitted) return;
             if (!result.ok) setWhy(prev);
             else setWhy(next);
           }}

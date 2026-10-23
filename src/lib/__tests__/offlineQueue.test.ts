@@ -1,5 +1,6 @@
 // @vitest-environment jsdom — needs DOM/storage APIs; the rest of this directory runs in the fast node environment (audit batch 2).
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { Timestamp } from "firebase/firestore";
 import {
   queueWrite,
   queueDurableWrite,
@@ -143,6 +144,73 @@ describe("offlineQueue", () => {
     expect(stored[0].docId).toBe("profile");
     expect(stored[0].merge).toBe(true);
     expect(stored[0].uid).toBe(UID_A);
+  });
+
+  it.each([false, true])(
+    "preserves SDK timestamps when a merge is queued (initially online: %s)",
+    async (online) => {
+      const originalNavigator = navigator;
+      vi.stubGlobal("navigator", { onLine: online });
+      try {
+        const stamp = new Timestamp(1_800_000_000, 123_456_789);
+        const path = `users/${UID_A}/logs/2026-10-23`;
+        if (online) failNextFirestore("setDoc", { path, code: "unavailable" });
+        const db = {} as Parameters<typeof safeMerge>[0];
+        await safeMerge(db, UID_A, `users/${UID_A}/logs`, "2026-10-23", {
+          date: "2026-10-23",
+          meals: 2,
+          createdAt: stamp,
+          nested: { times: [stamp] },
+        });
+        expect(getQueueLength(UID_A)).toBe(1);
+        expect(unfiredFailures()).toEqual([]);
+
+        vi.stubGlobal("navigator", { onLine: true });
+        expect(await flushQueue(db, UID_A)).toBe(1);
+        const saved = readDoc(path)!;
+        expect(saved.createdAt).toBeInstanceOf(Timestamp);
+        expect(saved.createdAt).toEqual(stamp);
+        expect(saved.nested).toEqual({ times: [stamp] });
+        expect(getQueueLength(UID_A)).toBe(0);
+      } finally {
+        vi.stubGlobal("navigator", originalNavigator);
+      }
+    }
+  );
+
+  it("keeps ordinary maps in legacy unencoded queue entries unchanged", async () => {
+    const data = { nested: { __queuedTimestamp: [12, 34] }, meals: 1 };
+    localStorage.setItem(
+      "tropos_offline_queue",
+      JSON.stringify([
+        {
+          id: "legacy-plain-map",
+          uid: UID_A,
+          collectionPath: `users/${UID_A}/logs`,
+          docId: "legacy",
+          merge: true,
+          data,
+          timestamp: 123,
+        },
+      ])
+    );
+    await flushQueue({} as Parameters<typeof flushQueue>[0], UID_A);
+    expect(readDoc(`users/${UID_A}/logs/legacy`)).toMatchObject(data);
+  });
+
+  it("retains JSON serialization for non-Timestamp class values", async () => {
+    const date = new Date("2026-10-23T10:30:00.123Z");
+    queueWrite(
+      UID_A,
+      `users/${UID_A}/logs`,
+      { metadata: { capturedAt: date } },
+      "date-json",
+      true
+    );
+    await flushQueue({} as Parameters<typeof flushQueue>[0], UID_A);
+    expect(readDoc(`users/${UID_A}/logs/date-json`)).toMatchObject({
+      metadata: { capturedAt: date.toISOString() },
+    });
   });
 
   it("flushes only this user's items on success", async () => {

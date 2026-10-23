@@ -20,6 +20,7 @@
  * status it had under the Storage implementation.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { Filesystem } from "@capacitor/filesystem";
 
 /** In-memory stand-in for the plugin, shaped like the parts we call. */
 const files = new Map<string, { data: string; mtime: number; size: number }>();
@@ -312,6 +313,30 @@ describe("uid isolation", () => {
     expect(await listFoodPhotos("alice")).toEqual([]);
     expect((await listFoodPhotos("bob")).map((p) => p.mealId)).toEqual(["m2"]);
   });
+
+  it.each([
+    new Error("IndexedDB transaction failed"),
+    { code: "OS-PLUG-FILE-0013", message: "Permission denied" },
+  ])(
+    "reports a failed device purge instead of confirming cleanup: %j",
+    async (error) => {
+      await seed("alice", "private", 0);
+      vi.mocked(Filesystem.rmdir).mockRejectedValueOnce(error);
+      await expect(purgeFoodPhotos("alice")).rejects.toBe(error);
+      expect(await readFoodPhotoSrc("alice", "private")).not.toBeNull();
+    }
+  );
+
+  it.each([
+    new Error("Folder does not exist."),
+    { code: "OS-PLUG-FILE-0008", message: "File does not exist." },
+  ])(
+    "treats an already absent photo directory as cleaned: %j",
+    async (error) => {
+      vi.mocked(Filesystem.rmdir).mockRejectedValueOnce(error);
+      await expect(purgeFoodPhotos("never-scanned")).resolves.toBeUndefined();
+    }
+  );
 
   it("sweeping one account never touches another's expired photos", async () => {
     await seed("alice", "old", 200);

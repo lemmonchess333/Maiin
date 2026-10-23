@@ -23,6 +23,7 @@ RETRY_REQUIRED = frozenset({
     "onChallengeParticipantCreated", "onWorkoutCreated", "onRunCreated",
     "onWorkoutUpdated", "onRunUpdated", "onWorkoutDeleted", "onRunDeleted",
     "onActivityCreated", "onGoalSpaceEventCreated", "onPublicProfileWritten",
+    "onFollowerCreated", "onFollowRequestCreated",
 })
 PUSH_RUNTIME_LIMITS = {
     "claimPushDeviceToken": (100, None),
@@ -111,7 +112,9 @@ def source_targets():
         # Read back the privacy-safe feed index writer and the Circle
         # admission receipt before a release can report either trigger current.
         "onActivityCreated": ["index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js"],
-        "onGoalSpaceEventCreated": ["index.js", "package-lock.json", "rateLimiter.js"],
+        "onGoalSpaceEventCreated": ["index.js", "package-lock.json", "rateLimiter.js", "lib/socialFanout.js"],
+        "onFollowerCreated": ["index.js", "package-lock.json", "lib/socialFanout.js"],
+        "onFollowRequestCreated": ["index.js", "package-lock.json", "lib/socialFanout.js"],
         "getCurrentWeather": ["index.js", "currentWeather.js", "lib/metWeather.js"],
         # The reminder before a free trial is charged, and the sync it reads.
         "trialReminderSweep": ["index.js", "trialReminders.js", "lib/trialReminder.js",

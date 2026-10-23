@@ -20,7 +20,96 @@ const RTE_GPX = `<?xml version="1.0" encoding="UTF-8"?>
   </rte>
 </gpx>`;
 
+const GPX_11 = "http://www.topografix.com/GPX/1/1";
+const GPX_10 = "http://www.topografix.com/GPX/1/0";
+
 describe("parseGpx", () => {
+  it.each([GPX_11, GPX_10])(
+    "reads prefixed track elements in %s, including their name, measurements and gaps",
+    (namespace) => {
+      const xml = `<g:gpx xmlns:g="${namespace}" version="${namespace === GPX_11 ? "1.1" : "1.0"}" creator="test">
+        <g:trk><g:name>Canal Loop</g:name>
+          <g:trkseg>
+            <g:trkpt lat="51.5" lon="-0.1"><g:ele>12.5</g:ele><g:time>2026-01-01T10:00:00Z</g:time></g:trkpt>
+            <g:trkpt lat="51.501" lon="-0.11"/>
+          </g:trkseg>
+          <g:trkseg><g:trkpt lat="51.502" lon="-0.12"/></g:trkseg>
+        </g:trk>
+      </g:gpx>`;
+      const points = parseGpx(xml);
+      expect(points.map(({ lat, lon }) => [lat, lon])).toEqual([
+        [51.5, -0.1],
+        [51.501, -0.11],
+        [51.502, -0.12],
+      ]);
+      expect(points[0]).toMatchObject({
+        altitude: 12.5,
+        timestamp: Date.parse("2026-01-01T10:00:00Z"),
+      });
+      expect(points.map((point) => point.breakBefore === true)).toEqual([
+        false,
+        false,
+        true,
+      ]);
+      expect(parseGpxName(xml)).toBe("Canal Loop");
+    }
+  );
+
+  it.each([GPX_11, GPX_10])(
+    "reads a prefixed route and its own name in %s when no track exists",
+    (namespace) => {
+      const xml = `<route:gpx xmlns:route="${namespace}" version="${namespace === GPX_11 ? "1.1" : "1.0"}" creator="test">
+        <route:rte><route:name>Coast path</route:name>
+          <route:rtept lat="40" lon="-70"/>
+          <route:rtept lat="40.1" lon="-70.1"/>
+        </route:rte>
+      </route:gpx>`;
+      expect(parseGpx(xml).map(({ lat, lon }) => [lat, lon])).toEqual([
+        [40, -70],
+        [40.1, -70.1],
+      ]);
+      expect(parseGpxName(xml)).toBe("Coast path");
+    }
+  );
+
+  it("ignores foreign extension elements with GPX-looking local names", () => {
+    const xml = `<gpx xmlns="${GPX_11}" version="1.1" creator="test">
+      <trk><name>Actual route</name>
+        <extensions>
+          <trkpt xmlns="urn:vendor:preview" lat="1" lon="2"/>
+        </extensions>
+        <trkseg>
+          <trkpt lat="51.5" lon="-0.1"><extensions>
+            <ele xmlns="urn:vendor:preview">900</ele>
+            <time xmlns="urn:vendor:preview">2030-01-01T00:00:00Z</time>
+          </extensions></trkpt>
+          <trkpt lat="51.501" lon="-0.11"/>
+        </trkseg>
+      </trk>
+    </gpx>`;
+    const points = parseGpx(xml);
+    expect(points.map(({ lat, lon }) => [lat, lon])).toEqual([
+      [51.5, -0.1],
+      [51.501, -0.11],
+    ]);
+    expect(points[0]).toMatchObject({ altitude: null, timestamp: 0 });
+    expect(parseGpxName(xml)).toBe("Actual route");
+  });
+
+  it("uses metadata when a track has only a waypoint name, not its own name", () => {
+    const xml = `<gpx xmlns="${GPX_11}" version="1.1" creator="test">
+      <metadata><name>Whole route</name></metadata>
+      <trk><trkseg><trkpt lat="51.5" lon="-0.1"><name>Start point</name></trkpt></trkseg></trk>
+    </gpx>`;
+    expect(parseGpxName(xml)).toBe("Whole route");
+  });
+
+  it("still reads legacy unqualified GPX exports", () => {
+    const legacy = TRK_GPX.replace(` xmlns="${GPX_11}"`, "");
+    expect(parseGpx(legacy)).toEqual(parseGpx(TRK_GPX));
+    expect(parseGpxName(legacy)).toBe("Loop");
+  });
+
   it("parses track points with lat/lon/ele (namespaced GPX)", () => {
     const pts = parseGpx(TRK_GPX);
     expect(pts).toHaveLength(3);
@@ -103,4 +192,27 @@ describe("parseGpx", () => {
     expect(round[0].lon).toBeCloseTo(original[0].lon, 5);
     expect(round[1].lat).toBeCloseTo(original[1].lat, 5);
   });
+});
+
+it("exports GPX 1.1 that an independent namespace-aware reader can consume", () => {
+  const points = parseGpx(TRK_GPX).map((point, i) => ({
+    ...point,
+    ...(i === 2 ? { breakBefore: true } : {}),
+  }));
+  const doc = new DOMParser().parseFromString(
+    toGPX(points, "Canal & bridge"),
+    "application/xml"
+  );
+  expect(doc.getElementsByTagName("parsererror")).toHaveLength(0);
+  expect(doc.documentElement.namespaceURI).toBe(GPX_11);
+  expect(doc.documentElement.getAttribute("version")).toBe("1.1");
+  expect(doc.getElementsByTagNameNS(GPX_11, "trkpt")).toHaveLength(3);
+  expect(doc.getElementsByTagNameNS(GPX_11, "trkseg")).toHaveLength(2);
+  expect(doc.getElementsByTagNameNS(GPX_11, "name")[0].textContent).toBe(
+    "Canal & bridge"
+  );
+  expect(doc.getElementsByTagNameNS(GPX_11, "ele")[0].textContent).toBe("10.0");
+  expect(doc.getElementsByTagNameNS(GPX_11, "time")[0].textContent).toBe(
+    "2026-01-01T10:00:00.000Z"
+  );
 });
