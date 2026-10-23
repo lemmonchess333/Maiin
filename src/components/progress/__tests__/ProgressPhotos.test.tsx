@@ -27,7 +27,7 @@ import { Blob as NodeBlob } from "node:buffer";
 import { webcrypto } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { deleteObject, uploadBytes } from "firebase/storage";
+import { deleteObject, uploadBytesResumable } from "firebase/storage";
 import { decryptProgressPhoto } from "@/lib/progressPhotoCrypto";
 
 let currentUid: string | null = "u-self";
@@ -38,7 +38,9 @@ vi.mock("@/lib/firebase", () => ({ db: {}, storage: {} }));
 vi.mock("firebase/firestore");
 vi.mock("firebase/storage", () => ({
   ref: vi.fn((_storage: unknown, path: string) => ({ fullPath: path })),
-  uploadBytes: vi.fn(async () => undefined),
+  uploadBytesResumable: vi.fn(() =>
+    Object.assign(Promise.resolve(), { cancel: vi.fn(() => true) })
+  ),
   deleteObject: vi.fn(async () => undefined),
   getDownloadURL: vi.fn(async () => "https://example.invalid/blob"),
 }));
@@ -212,8 +214,9 @@ describe("adding photos", () => {
     const dialog = await screen.findByRole("dialog");
     pickFile(dialog, "Add side photo");
 
-    await waitFor(() => expect(uploadBytes).toHaveBeenCalledOnce());
-    const [fileRef, encrypted, options] = vi.mocked(uploadBytes).mock.calls[0];
+    await waitFor(() => expect(uploadBytesResumable).toHaveBeenCalledOnce());
+    const [fileRef, encrypted, options] =
+      vi.mocked(uploadBytesResumable).mock.calls[0];
     expect(options).toEqual({ contentType: "image/webp" });
     const path = (fileRef as unknown as { fullPath: string }).fullPath;
     expect(path).toMatch(/^progress-photos\/u-self\/.+\.enc$/);
@@ -253,7 +256,7 @@ describe("adding photos", () => {
     expect(
       await screen.findByText(/Couldn't encrypt the photo/)
     ).toBeInTheDocument();
-    expect(uploadBytes).not.toHaveBeenCalled();
+    expect(uploadBytesResumable).not.toHaveBeenCalled();
   });
 
   it("says a connection is needed instead of starting an upload offline", async () => {
@@ -265,7 +268,7 @@ describe("adding photos", () => {
     expect(
       await screen.findByText("Adding a photo needs a connection.")
     ).toBeInTheDocument();
-    expect(uploadBytes).not.toHaveBeenCalled();
+    expect(uploadBytesResumable).not.toHaveBeenCalled();
   });
 });
 
@@ -461,7 +464,7 @@ describe("Compare", () => {
       shareKind: "compare",
       shareVia: "share_sheet",
     });
-    expect(uploadBytes).not.toHaveBeenCalled();
+    expect(uploadBytesResumable).not.toHaveBeenCalled();
   });
 
   it("downloads the image on the web without a share sheet", async () => {

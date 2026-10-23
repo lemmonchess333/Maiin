@@ -1533,7 +1533,12 @@ service cloud.firestore {
     // invariant ("a deleting user does not write anywhere") consistent.
     // ========================================
     match /feeds/{uid}/items/{doc} {
-      allow read: if isOwner(uid);
+      // Legacy rows carry names and session summaries even after access to
+      // their parent is revoked. Refuse those immediately during migration.
+      // V2 is server-only and contains routing ids + ordering/expiry only;
+      // every displayed detail is fetched under the parent activity's rules.
+      // Listeners/queries constrain schemaVersion == 2 (rules aren't filters).
+      allow read: if isOwner(uid) && resource.data.schemaVersion == 2;
       allow create: if false;
       allow delete: if isOwnerAndNotDeleting(uid);
     }

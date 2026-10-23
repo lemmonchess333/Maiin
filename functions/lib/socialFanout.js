@@ -46,93 +46,14 @@ const { categoryFor, wantsNotification } = require("./notificationPreferences");
 
 const blockGuard = require("./blockGuard");
 const { MAX_DISPLAY_NAME_LENGTH } = require("../profileSanitizer");
+const {
+  FEED_COPY_RETENTION_DAYS,
+  FEED_COPY_PATH,
+  buildFeedIndex,
+} = require("./feedIndex");
 
 const DAY_MS = 86_400_000;
-const FEED_COPY_RETENTION_DAYS = 180;
 const NOTIFICATION_RETENTION_DAYS = 90;
-
-function formatDuration(seconds) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-function formatPace(secPerKm) {
-  const m = Math.floor(secPerKm / 60);
-  const s = Math.round(secPerKm % 60);
-  // Spaced, as the app writes every pace ("5:00 /km"; unitTreatment.test.ts).
-  return `${m}:${s.toString().padStart(2, "0")} /km`;
-}
-
-function buildSummary(activity) {
-  if (activity.type === "run") {
-    const km = ((activity.distance || 0) / 1000).toFixed(1);
-    const time = activity.duration ? formatDuration(activity.duration) : "";
-    const pace =
-      typeof activity.avgPace === "number"
-        ? formatPace(activity.avgPace)
-        : activity.avgPace || "";
-    const name = activity.runName || "Run";
-    return `${name} · ${km} km · ${time} · ${pace} pace`;
-  }
-  const name = activity.workoutName || "Workout";
-  const exCount = activity.exerciseCount || 0;
-  /* Explicit locale, like every other formatter in functions/. This
-     string is PERSISTED and fanned out to every follower's feed, so it
-     is formatted once on the server and read by everyone — there is no
-     viewer whose locale it could follow. A bare `toLocaleString()` takes
-     the Cloud Functions CONTAINER's locale, which is nobody's choice and
-     can change under the runtime: the same feed would then carry "5,200"
-     on old items and "5.200" on new ones.
-
-     `en-GB` for the comma grouping the house numeric style uses
-     ("2,633 cal"). The siblings already do this — `en-CA` in
-     `streakNudge`, `programCommands` and `aiScanQuota` for ISO-shaped
-     dates, `en-GB` and `en-US` in `pushSchedule` for a 24h hour and a
-     weekday name. This line was the only one left guessing. */
-  const vol = activity.totalVolume
-    ? `${Math.round(activity.totalVolume).toLocaleString("en-GB")} kg volume`
-    : "";
-  const dur = activity.duration
-    ? `${Math.round(activity.duration / 60)} min`
-    : "";
-  return [name, `${exCount} exercises`, vol, dur].filter(Boolean).join(" · ");
-}
-
-function buildFeedItem(
-  activityId,
-  authorId,
-  activity,
-  serverTimestamp,
-  now = Date.now()
-) {
-  const item = {
-    activityId,
-    authorId,
-    authorName:
-      typeof activity.authorName === "string" && activity.authorName.trim()
-        ? activity.authorName.slice(0, MAX_DISPLAY_NAME_LENGTH)
-        : "Athlete",
-    type: activity.type,
-    summary: buildSummary(activity),
-    createdAt: serverTimestamp(),
-    expiresAt: new Date(now + FEED_COPY_RETENTION_DAYS * DAY_MS),
-  };
-  if (typeof activity.authorPhotoURL === "string" && activity.authorPhotoURL) {
-    item.authorPhotoURL = activity.authorPhotoURL.slice(0, 500);
-  }
-  if (activity.prHit) item.prHit = true;
-  if (typeof activity.badgeEarned === "string" && activity.badgeEarned) {
-    item.badgeEarned = activity.badgeEarned.slice(0, 100);
-  }
-  if (
-    typeof activity.challengeMilestone === "string" &&
-    activity.challengeMilestone
-  ) {
-    item.challengeMilestone = activity.challengeMilestone.slice(0, 100);
-  }
-  return item;
-}
 
 /**
  * Fan out a single activity creation to follower feeds + author's
@@ -163,12 +84,12 @@ async function fanoutActivityToFeeds({
     return { fanned: 0 };
   }
 
-  const feedItem = buildFeedItem(
+  const feedItem = buildFeedIndex({
     activityId,
     authorId,
-    activityData,
-    serverTimestamp
-  );
+    createdAt: serverTimestamp(),
+    expiresAt: new Date(Date.now() + FEED_COPY_RETENTION_DAYS * DAY_MS),
+  });
 
   // The author's own feed, then the followers a page at a time, so a post
   // from someone with thousands of followers reaches all of them inside
@@ -258,10 +179,8 @@ async function writeFeedPage({
   });
 }
 
-/** A feed copy's path. The `items` collection group also holds
- *  notifications and comments, and a kudos or comment notification carries
- *  the activityId of the post it is about; those are not copies. */
-const FEED_COPY_PATH = /^feeds\/[^/]+\/items\/[^/]+$/;
+/** The `items` collection group also holds notifications and comments;
+ * FEED_COPY_PATH keeps their same-activityId documents out of removal. */
 const REMOVE_PAGE_SIZE = 300;
 
 /**

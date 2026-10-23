@@ -205,7 +205,15 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(task.then(({ response }) => response));
     return;
   }
-  if (
+  // Hosting serves Firebase's auth/config helpers from the app's own origin.
+  // Let the browser handle those reserved endpoints, including OAuth replies.
+  if (url.origin === self.location.origin && url.pathname.startsWith("/__/")) {
+    return;
+  }
+  // A firebaseapp.com hostname can also be the app itself. Only external API
+  // requests belong in this skip-list; same-origin assets and routes need the
+  // offline cache just as they do on web.app, a custom domain, or Pages.
+  if (url.origin !== self.location.origin && (
     url.hostname.includes("firebaseio.com") ||
     url.hostname.includes("googleapis.com") ||
     url.hostname.includes("firebase") ||
@@ -228,9 +236,8 @@ self.addEventListener("fetch", (event) => {
     // every later emulator request hangs. Surfaced by the two-account
     // offline-queue E2E, the first spec to drive one browser context
     // through enough page sessions to drain the pool.
-    (url.origin !== self.location.origin &&
-      (url.hostname === "127.0.0.1" || url.hostname === "localhost"))
-  ) {
+    url.hostname === "127.0.0.1" || url.hostname === "localhost"
+  )) {
     return;
   }
 

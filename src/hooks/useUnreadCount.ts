@@ -17,6 +17,7 @@ import {
 } from "@/lib/socialPreferenceKeys";
 import { useBlockedUsers } from "./useBlockedUsers";
 import { useHiddenActivities } from "./useHiddenActivities";
+import { FEED_INDEX_VERSION } from "@/lib/feedIndex";
 
 // Cap the unread-counter SUBSCRIPTION so this hook can't fan out to the
 // user's whole feed. This is a query bound, not a display rule: the tab
@@ -35,7 +36,7 @@ const UNREAD_CAP = 50;
  *    server-fanned per-user feed that the Following tab already renders
  *    (`getFeed` / `useSocialFeed`). So the badge counts exactly what the
  *    user will see when they open Social, from a strictly owner-scoped
- *    read (firestore.rules: `feeds/{uid}/items` read is `isOwner(uid)`).
+ *    read (the rules require its owner and the routing-only v2 schema).
  *
  * 2. **uid-scoped last-seen + honest error state.** The last-seen pointer
  *    was a global localStorage key, so on a shared browser account B
@@ -77,6 +78,7 @@ export function useUnreadCount() {
 
     const q = query(
       collection(db, "feeds", uid, "items"),
+      where("schemaVersion", "==", FEED_INDEX_VERSION),
       where("createdAt", ">", since),
       orderBy("createdAt", "desc"),
       limit(UNREAD_CAP + 1)

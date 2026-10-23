@@ -22,8 +22,8 @@
  */
 
 const SCREENED_PATHS = [
-  /^space-photos\/([^/]+)\/[^/]+$/,
-  /^profile-photos\/([^/]+)\/[^/]+$/,
+  /^space-photos\/([^/]+)(?:\/[\s\S]*)?$/,
+  /^profile-photos\/([^/]+)(?:\/[\s\S]*)?$/,
 ];
 
 /** SafeSearch's likelihoods at which a photo is refused as nudity. */
@@ -33,7 +33,11 @@ const VISION_URL = "https://vision.googleapis.com/v1/images:annotate";
 
 /** The uid a screened path belongs to, or null for a path not screened. */
 function screenedOwner(path) {
-  if (typeof path !== "string" || path.includes("..")) return null;
+  // Storage rules allow every object below these owner prefixes, including
+  // nested keys (and the owner key itself: their v2 wildcard matches zero
+  // segments). Object names are opaque: '..' has no filesystem traversal
+  // meaning here and must not let an otherwise public upload skip screening.
+  if (typeof path !== "string") return null;
   for (const pattern of SCREENED_PATHS) {
     const match = pattern.exec(path);
     if (match) return match[1];
