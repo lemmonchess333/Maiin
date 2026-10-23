@@ -22,6 +22,11 @@ npm run dev
 Hot-reload dev server runs on http://localhost:5173/Maiin/ (note the
 `/Maiin/` base path — see the Vite config in `vite.config.ts`).
 
+For artwork review, open http://localhost:5173/Maiin/exercise-library/ after
+starting the dev server. The grid uses the approved exercise frames and full
+form viewer, with larger previews, playback controls and review flags saved in
+that browser. It is a standalone development page, outside the production app.
+
 ---
 
 ## Tech stack
