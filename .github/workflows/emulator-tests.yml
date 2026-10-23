@@ -52,7 +52,10 @@ concurrency:
 jobs:
   emulator-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Main run 39985990688 spent 9m48 on setup, build and server suites,
+    # then hit the former 15m limit during authenticated E2E. Leave time
+    # for the full browser suite, design-QA and cleanup on a slow runner.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
