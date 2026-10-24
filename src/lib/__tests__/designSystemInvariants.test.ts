@@ -259,7 +259,7 @@ describe("DS ratchets — surface-level drift", () => {
   // Raw <button> elements. CTAs belong on the Button / IconButton
   // primitives (44px floor, focus ring, press feedback come with them);
   // pressable cards, rows, chips and day-cells are legitimately bare.
-  const RAW_BUTTON_BASELINE = 295;
+  const RAW_BUTTON_BASELINE = 293;
   it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
     const { total, byFile } = scan(
       (src) => (src.match(/<button\b/g) ?? []).length
@@ -891,5 +891,215 @@ describe("form controls share the field primitive", () => {
     expect(css).toMatch(
       /input\.ds-input\[type="number"\]::-webkit-inner-spin-button/
     );
+  });
+});
+
+/* An action takes its domain's colour wherever it appears (DESIGN_GUIDE
+   §14i). The colour says what the button does, not which page it sits on:
+   logging food is the food orange on Home, Analytics and the run summary as
+   much as on Food; starting a run is coral; starting a lift is purple.
+
+   It is a scan of the source, not a render, because the drift it stops is
+   a call site written with the default variant on a page whose own colour
+   is something else. Food10 made every Log on Food orange while the
+   manual logger, the search result's serving sheet and the portion sheet
+   kept logging in purple, and the run summary's "Log recovery food" was a
+   bare grey button. The control is found by its label: a literal label
+   that logs food (or a bare "Log" in a food file), starts a run or starts
+   a lift. A label built at run time is not seen, which is why the test
+   also names the controls it must find. */
+describe("an action takes its domain's colour wherever it appears", () => {
+  type Hue = "food" | "running" | "lifting" | "other";
+  interface Control {
+    file: string;
+    line: number;
+    label: string;
+    hue: Hue;
+  }
+
+  /** Comments blanked to spaces, so offsets and line numbers still hold
+   *  and an apostrophe in a comment cannot open a string. `://` is kept,
+   *  so a URL in copy is not cut short. */
+  function blankComments(src: string): string {
+    const blank = (m: string) => m.replace(/[^\n]/g, " ");
+    return src
+      .replace(/\/\*[\s\S]*?\*\//g, blank)
+      .replace(
+        /(^|[^:\\])\/\/[^\n]*/g,
+        (m, lead: string) => lead + blank(m.slice(lead.length))
+      );
+  }
+
+  /** Where an opening tag ends: the first `>` outside braces and strings. */
+  function openTagEnd(src: string, from: number): number {
+    let depth = 0;
+    let quote: string | null = null;
+    for (let i = from; i < src.length; i++) {
+      const c = src[i];
+      if (quote) {
+        if (c === quote && src[i - 1] !== "\\") quote = null;
+        continue;
+      }
+      if (c === '"' || c === "'" || c === "`") quote = c;
+      else if (c === "{") depth++;
+      else if (c === "}") depth--;
+      else if (c === ">" && depth === 0) return i;
+    }
+    return -1;
+  }
+
+  /** The `{…}` expressions of a run of JSX children, outermost only. */
+  function expressions(text: string): string[] {
+    const out: string[] = [];
+    let depth = 0;
+    let start = -1;
+    for (let i = 0; i < text.length; i++) {
+      if (text[i] === "{") {
+        if (depth === 0) start = i + 1;
+        depth++;
+      } else if (text[i] === "}" && depth > 0) {
+        depth--;
+        if (depth === 0) out.push(text.slice(start, i));
+      }
+    }
+    return out;
+  }
+
+  /** What the control says: its aria-label or ctaLabel, its plain text,
+   *  and the string literals its children choose between. */
+  function labelsOf(open: string, body: string): string[] {
+    const out: string[] = [];
+    for (const m of open.matchAll(
+      /\b(?:aria-label|ctaLabel)=(?:"([^"]*)"|\{`([^`$]*))/g
+    ))
+      out.push(m[1] ?? m[2] ?? "");
+    const children = body.replace(/<[^>]*>/g, " ");
+    const exprs = expressions(children);
+    let plain = children;
+    for (const e of exprs) plain = plain.replace(`{${e}}`, " ");
+    out.push(plain);
+    for (const e of exprs)
+      for (const m of e.matchAll(/"([^"]+)"|'([^']+)'|`([^`$]+)/g))
+        out.push(m[1] ?? m[2] ?? m[3] ?? "");
+    return out.map((s) => s.replace(/\s+/g, " ").trim()).filter(Boolean);
+  }
+
+  /** The hue the control paints: its variant, else a fill class, else the
+   *  primitive's default (`primary`). */
+  function hueOf(tag: string, open: string): Hue {
+    const variant = /\bvariant(?:=\{?\s*|:\s*)["']([a-z-]+)["']/.exec(
+      open
+    )?.[1];
+    if (variant)
+      return variant.startsWith("nutrition")
+        ? "food"
+        : variant.startsWith("sport")
+          ? "running"
+          : variant === "primary"
+            ? "lifting"
+            : "other";
+    if (
+      /\b(bg|text)-nutrition(-fill|-strong|\/)|THEME\.semantic\.nutrition/.test(
+        open
+      )
+    )
+      return "food";
+    if (/\b(bg|text)-running(-fill|-strong|\/)|THEME\.running\b/.test(open))
+      return "running";
+    if (/\bbg-(lifting-fill|primary-strong)\b/.test(open)) return "lifting";
+    if (tag === "Button" || /\bbuttonClasses\(/.test(open)) return "lifting";
+    return "other";
+  }
+
+  const FOOD_FILE =
+    /^src\/(components\/(food|nutrition)\/|pages\/Food\.tsx$|components\/(FoodAnalyzer|ManualFoodLogger|FoodCameraModal)\.tsx$)/;
+
+  /** The domain an action label belongs to, if it names one. A Pro
+   *  offer is the brand's, whatever it promises to log. A bare "Log" is
+   *  read only on the Button primitive in a food file: on a raw button it
+   *  is the hint inside a pressable row, which keeps the row's look. */
+  function domainOf(label: string, file: string, tag: string): Hue | null {
+    if (/\bPro\b/.test(label)) return null;
+    if (/^Log\b.*\b(food|meals?|portion)\b|^Log to\b/i.test(label))
+      return "food";
+    if (label === "Log" && tag === "Button" && FOOD_FILE.test(file))
+      return "food";
+    if (/^Start (a )?run$/i.test(label)) return "running";
+    if (/^Start (lift|workout)$/i.test(label)) return "lifting";
+    return null;
+  }
+
+  function domainControls(): (Control & { domain: Hue })[] {
+    const found: (Control & { domain: Hue })[] = [];
+    for (const full of FILES) {
+      const file = relative(repoRoot, full).replaceAll("\\", "/");
+      const src = blankComments(readFileSync(full, "utf8"));
+      for (const m of src.matchAll(
+        /<(Button|button|Link|SectionEmptyCTA)(?=[\s>/])/g
+      )) {
+        const tag = m[1];
+        const end = openTagEnd(src, m.index + 1);
+        if (end < 0) continue;
+        const open = src.slice(m.index, end + 1);
+        const close = src.indexOf(`</${tag}>`, end);
+        const body =
+          src[end - 1] === "/" || close < 0 ? "" : src.slice(end + 1, close);
+        const line = src.slice(0, m.index).split("\n").length;
+        for (const label of labelsOf(open, body)) {
+          const domain = domainOf(label, file, tag);
+          if (!domain) continue;
+          found.push({ file, line, label, hue: hueOf(tag, open), domain });
+          break;
+        }
+      }
+    }
+    return found;
+  }
+
+  it("finds the food logs it knows of (positive pin)", () => {
+    const food = domainControls()
+      .filter((c) => c.domain === "food")
+      .map((c) => `${c.file} ${c.label}`);
+    for (const known of [
+      "src/pages/History.tsx Log meal",
+      "src/components/home/TodayEnergy.tsx Log food",
+      "src/components/nutrition/ServingSizeDrawer.tsx Log food",
+      "src/components/ManualFoodLogger.tsx Log meal",
+      "src/components/food/QuickMealPortionSheet.tsx Log this portion",
+      "src/components/food/CopyMealsSheet.tsx Log selected meals",
+      "src/components/FoodAnalyzer.tsx Log to",
+      "src/pages/RunSummary.tsx Log recovery food",
+      "src/pages/Food.tsx Log",
+    ])
+      expect(food, `the scan no longer finds ${known}`).toContain(known);
+  });
+
+  it("finds the run and lift starts it knows of (positive pin)", () => {
+    const starts = domainControls()
+      .filter((c) => c.domain !== "food")
+      .map((c) => `${c.file} ${c.label}`);
+    for (const known of [
+      "src/pages/History.tsx Start run",
+      "src/pages/History.tsx Start lift",
+      "src/components/home/RunCTACard.tsx Start run",
+      "src/components/home/LiftCTACard.tsx Start workout",
+    ])
+      expect(starts, `the scan no longer finds ${known}`).toContain(known);
+  });
+
+  it("every one of them wears its domain's colour", () => {
+    const wrong = domainControls()
+      .filter((c) => c.hue !== c.domain)
+      .map(
+        (c) =>
+          `${c.file}:${c.line} "${c.label}" is ${c.hue}, should be ${c.domain}`
+      );
+    expect(
+      wrong,
+      `An action takes its domain's colour on every page (DESIGN_GUIDE ` +
+        `§14i): logging food is \`nutrition\` / \`nutrition-tinted\`, a ` +
+        `run is \`sport\` / \`sport-tinted\`, a lift is \`primary\`.\n` +
+        wrong.join("\n")
+    ).toEqual([]);
   });
 });

@@ -898,15 +898,41 @@ The `nutrition` / `nutrition-tinted` variants are the food-domain analogue of
 tokens (warm orange #D9884E identity; #B45309 amber-700 AA white-text/text step).
 They exist to close the design-system gap — nutrition was the only documented
 domain/sport colour with no first-class token + variant, which is what kept
-leaking one-off hex orange past the hex guardrail. **This is NOT a licence to
-paint Food buttons orange.** Orange is a domain/data identity (section labels,
-macro rings, calorie data), not a per-screen button colour: reserve the filled
-`nutrition` variant for genuinely nutrition-PRIMARY, glanceable actions where
-orange IS the meaning, and keep ordinary Food CTAs (Add, Save, Log) on `primary`.
+leaking one-off hex orange past the hex guardrail.
 
-**Exceptions, owner calls:** four Food-page buttons are `nutrition`. Brand
-purple stays for Pro there ("Try Pro free"). Other Food CTAs follow the rule
-above until the owner says otherwise.
+**An action takes its domain's colour wherever it appears** (Polish3, call 3).
+The colour says what the button does, not which page it sits on. The role
+picks the emphasis (filled for the main action, tinted for a secondary one,
+neutral for a low one) and the domain picks the hue:
+
+| The action                          | Filled      | Tinted             |
+| ----------------------------------- | ----------- | ------------------ |
+| Logging food, on any page           | `nutrition` | `nutrition-tinted` |
+| Starting, logging or planning a run | `sport`     | `sport-tinted`     |
+| Starting a lift; a brand action     | `primary`   | (none)             |
+
+So "Log meal" is orange on Analytics' empty state and in the manual logger,
+"Log food" is orange on Home's food card and in a search result's serving sheet,
+and "Log recovery food" is orange after a run, where Done stays coral. Food10's
+"every Log is orange" was the first case of this rule: it scoped the Food
+page, and the rule under it holds on every page.
+
+What the orange is NOT is a page colour. An action that does not log food
+keeps its role's variant wherever it sits, the Food page included: Try
+again, Turn on (AI analysis), Set focus, Pro ("Try Pro free" stays brand
+purple), Cancel, and the Save that corrects an entry already in the diary.
+An action that belongs to no domain (a settings form's Save, account
+actions, Retry) is `primary` or neutral. Water has no Button variant: its
+one filled control, the tile's +, is the hydration teal.
+
+`designSystemInvariants.test.ts` holds the rule for the actions it can name
+from their label: a control that logs food (Log food, Log meal, Log this
+portion, Log to Breakfast…) carries a nutrition variant, "Start run" a sport
+one and "Start lift" / "Start workout" the primary, whether it is a
+`Button`, a `Link` wearing `buttonClasses` or an empty state's CTA.
+
+**How the rule arrived: four owner calls on the Food page**, kept as the
+record of what each button was for:
 
 - **2026-09-22 — the "Your usual" row's Log.** Every other food control on
   that page is orange, and a purple Log sat directly above the orange meal

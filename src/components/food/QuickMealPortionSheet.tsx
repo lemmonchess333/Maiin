@@ -91,6 +91,7 @@ export default function QuickMealPortionSheet({
           ))}
         </Select>
         <Button
+          variant="nutrition"
           fullWidth
           disabled={!valid}
           loading={saving}
