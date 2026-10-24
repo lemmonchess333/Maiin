@@ -2,6 +2,7 @@ import { BLOCK_DIALOG_DESCRIPTION } from "@/lib/blockCopy";
 import { useState, memo, useEffect, useRef, type ReactNode } from "react";
 import { formatClock } from "@/utils/formatters";
 import SectionLabel from "@/components/ui/SectionLabel";
+import MetaLine from "@/components/ui/MetaLine";
 import { Link } from "react-router-dom";
 import InlineFollow from "@/components/social/InlineFollow";
 import { useAuth } from "../../lib/auth";
@@ -626,11 +627,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                 (activity.muscleGroups as string[]).map(movementCategoryLabel)
               )
             );
-            return (
-              <p className="text-xs text-muted-foreground">
-                {labels.join(" · ")}
-              </p>
-            );
+            return <MetaLine size="xs" items={labels} />;
           })()}
         {/* Workout volume/duration/PR count. Cells already printed on
             the lift's hero panel (volume numeral, PR chip) drop out
