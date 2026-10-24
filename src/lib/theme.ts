@@ -27,6 +27,20 @@ export const THEME = {
      lighter `brand` is borderline for WCAG AA on white text at 14–15px.
      Tints (`${THEME.brand}14`) keep using `brand`. */
   brandStrong: "#6560C8",
+  /* The brand purple's ramp, step for step the `--ds-purple-*` hexes in
+     tokens.css (pinned by colorCanonical.test.ts), for the places a colour
+     has to be a JS value: an SVG gradient stop, a canvas. 400, 500 and 600
+     are brandLight, brand and brandStrong. The streak flame's tiers are
+     built from it. */
+  purpleRamp: {
+    50: "#F5F4FE",
+    100: "#ECEAFE",
+    200: "#D9D5FA",
+    400: "#9590E0",
+    500: "#7B72E9",
+    600: "#6560C8",
+    700: "#4E4AA8",
+  },
 
   // Semantic — harmonised hues, calmer saturation
   semantic: {

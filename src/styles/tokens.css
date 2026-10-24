@@ -20,9 +20,10 @@
   --ds-purple-600: #6560c8; /* THEME.brandStrong */
   --ds-purple-700: #4e4aa8;
 
-  /* GENERIC warm orange ramp — PR-celebration flash, streak flame, the "NEW"
-     badge, the progress-ring fill, achievement accents. This is NOT the
-     nutrition/food/macro orange: that identity is `--nutrition` (#D9884E, in
+  /* GENERIC warm orange ramp — PR-celebration flash, the partner streak's
+     flame, the "NEW" badge, the progress-ring fill, achievement accents.
+     The activity streak's flame is brand purple (flameTiers.ts).
+     This is NOT the nutrition/food/macro orange: that identity is `--nutrition` (#D9884E, in
      index.css). Renamed-by-comment after the #E87316↔#D9884E drift where these
      two oranges were confused (~8 nutrition uses repointed to --nutrition;
      this ramp kept for the genuinely non-nutrition warm-accent uses). Do NOT

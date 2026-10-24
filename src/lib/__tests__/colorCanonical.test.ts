@@ -94,6 +94,21 @@ describe("colour canonical layer — theme.ts ↔ tokens.css (EXACT hex)", () =>
     expect(norm(THEME.liftingLight)).toBe(ds);
   });
 
+  it("the purple ramp is tokens.css's --ds-purple-* step for step", () => {
+    const steps = Object.keys(THEME.purpleRamp);
+    const css = [...tokensCss.matchAll(/--ds-purple-(\d+)\s*:/g)].map(
+      (m) => m[1]
+    );
+    expect(steps).toEqual(css);
+    for (const [step, hex] of Object.entries(THEME.purpleRamp))
+      expect(norm(hex), `--ds-purple-${step}`).toBe(
+        cssHexVar(tokensCss, `--ds-purple-${step}`)
+      );
+    expect(THEME.purpleRamp[400]).toBe(THEME.brandLight);
+    expect(THEME.purpleRamp[500]).toBe(THEME.brand);
+    expect(THEME.purpleRamp[600]).toBe(THEME.brandStrong);
+  });
+
   it("nutrition orange is the single canonical #D9884E (post #E87316 resolution)", () => {
     expect(norm(THEME.semantic.nutrition)).toBe("#d9884e");
     expect(norm(MACROS_TEXT_LIGHT.nutrition)).toBe("#b45309"); // -strong step

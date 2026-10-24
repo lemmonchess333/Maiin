@@ -199,7 +199,9 @@ const EXPECTED_INLINE_USES = {
   // the EmptyState primitive) and the solo feed's.
   // 2026-10-01: 33 → 32. The notifications sheet's empty state moved to
   // the EmptyState primitive too.
-  "THEME.brand": 32,
+  // 32 → 33. The week pulse's streak flame, an icon, follows the streak
+  // flame from amber to the brand purple.
+  "THEME.brand": 33,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.

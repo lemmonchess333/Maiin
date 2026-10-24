@@ -116,8 +116,9 @@
   --color-achievement: hsl(var(--achievement));
   --color-achievement-strong: hsl(var(--achievement-strong));
   --color-achievement-bg: hsl(var(--achievement-bg));
-  /* Streak flame. `--ds-orange-500`'s own comment in tokens.css names
-     "streak flame" as one of its uses, but there was no Tailwind colour
+  /* The partner streak's flame (the activity streak's is brand purple,
+     `flameTiers.ts`). `--ds-orange-500`'s own comment in tokens.css names
+     it as one of its uses, but there was no Tailwind colour
      pointing at it, so every flame site reached for `text-orange-500`
      instead — raw Tailwind palette (#ff6900), not a Tropos token, and
      invisible to the hex-literal lint because it is a class name rather

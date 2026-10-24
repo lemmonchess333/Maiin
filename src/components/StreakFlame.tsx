@@ -1,8 +1,11 @@
 import { useId } from "react";
-import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import {
+  flamePaletteFor,
+  type FlamePalette,
+} from "@/features/streaks/flameTiers";
 
 interface StreakFlameProps {
   streak: number;
@@ -18,68 +21,20 @@ interface StreakFlameProps {
 /**
  * Streak pill — shared by Home's top-right and the Food hero card.
  *
- * Design language inspired by Cal AI's streak chip: a clean white pill
- * with a two-tone colourful flame inside. The pill itself stays neutral
- * so the flame is the only warm element — that's why it pops. An all-
- * orange pill (our previous iteration) made the flame blend in.
- *
- * Tier escalation is carried entirely by the FLAME colours, not the pill.
- * At 1–6 days it's classic orange + yellow. At 7+ it leans amber. At 30+
- * it gets hotter / red. At 100+ it goes violet — matches the platinum
- * hex-badge language so the whole achievement system feels cohesive.
+ * A clean neutral pill with a two-tone flame inside, so the flame is the
+ * only coloured thing on it. The flame is brand purple, and its tier is
+ * carried by the flame's colours alone, never the pill: each tier is a
+ * step further down the brand purple ramp, and at 100 days the flame's
+ * heart is the platinum of the top badge tier. The table lives in
+ * `flameTiers.ts`, which may hold tokens only. Gold is not a tier colour:
+ * it means a new best.
  */
-
-interface FlamePalette {
-  /** Deep colour at the base of the flame body. */
-  bodyBase: string;
-  /** Bright tip colour at the top of the flame body. */
-  bodyTip: string;
-  /** Deep colour at the base of the inner core. */
-  coreBase: string;
-  /** Bright tip colour at the top of the inner core. */
-  coreTip: string;
-}
-
-const TIER_BASE: FlamePalette = {
-  bodyBase: "#ea580c", // orange-600
-  bodyTip: "#fb923c", // orange-400
-  coreBase: THEME.amberLight, // amber-500
-  coreTip: "#fde68a", // amber-200
-};
-
-const TIER_WEEK: FlamePalette = {
-  bodyBase: THEME.amber, // amber-600
-  bodyTip: "#fbbf24", // amber-400
-  coreBase: "#fbbf24",
-  coreTip: "#fef3c7", // amber-100
-};
-
-const TIER_MONTH: FlamePalette = {
-  bodyBase: "#b91c1c", // red-700
-  bodyTip: "#f87171", // red-400
-  coreBase: THEME.amberLight,
-  coreTip: "#fde68a",
-};
-
-const TIER_ELITE: FlamePalette = {
-  bodyBase: "#6d28d9", // violet-700
-  bodyTip: "#c4b5fd", // violet-300
-  coreBase: "#ec4899", // pink-500
-  coreTip: "#fbcfe8", // pink-200
-};
-
-function paletteForStreak(streak: number): FlamePalette {
-  if (streak >= 100) return TIER_ELITE;
-  if (streak >= 30) return TIER_MONTH;
-  if (streak >= 7) return TIER_WEEK;
-  return TIER_BASE;
-}
 
 /**
  * Two-layer flame SVG — outer body gradient + inner core gradient.
  * Looks like a proper coloured flame emoji without depending on platform
  * emoji rendering. Each path has its own vertical linearGradient so the
- * base-to-tip hue shift reads at the 18px render size.
+ * base-to-tip shift between ramp steps reads at the 18px render size.
  */
 function FlameSvg({
   palette,
@@ -160,7 +115,7 @@ export function StreakFlame({
   const reducedMotion = useReducedMotion();
   if (streak <= 0) return null;
 
-  const palette = paletteForStreak(streak);
+  const palette = flamePaletteFor(streak);
 
   return (
     <motion.div
