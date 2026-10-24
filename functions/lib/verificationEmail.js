@@ -24,7 +24,7 @@ function verifyEmailHtml(link, appName) {
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;background:#ffffff;border-radius:16px;padding:32px;">
           <tr><td style="text-align:center;">
             <div style="font-size:12px;font-weight:800;letter-spacing:4px;color:#7B72E9;text-transform:uppercase;">${appName}</div>
-            <h1 style="font-size:22px;font-weight:800;color:#1c1b22;margin:12px 0 8px;">Confirm your email</h1>
+            <h1 style="font-size:22px;font-weight:800;color:#1c1b22;margin:12px 0 8px;">Verify your email</h1>
             <p style="font-size:15px;line-height:1.5;color:#6b6878;margin:0 0 24px;">
               Tap the button to verify this address for your ${appName} account. If you didn't create a ${appName} account, you can safely ignore this email.
             </p>

@@ -215,12 +215,12 @@ describe("FoodAnalyzer — the result sheet", () => {
       Object.assign(new Error("Missing or insufficient permissions."), {
         code: "permission-denied",
       }),
-      "Couldn't save — please try again.",
+      "Couldn't save. Try again.",
     ],
     [
       "not a browser's error text",
       new TypeError("Failed to fetch"),
-      "Couldn't save — please try again.",
+      "Couldn't save. Try again.",
     ],
   ])("a failed log says %s", async (_label, err, shown) => {
     vi.mocked(createMealEntry).mockRejectedValueOnce(err);

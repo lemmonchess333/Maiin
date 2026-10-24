@@ -889,9 +889,9 @@ export default function Onboarding() {
         code === "failed-precondition" ? describeRejection(err) : null;
       setSaveError(
         code === "unauthenticated"
-          ? "Please sign in again to finish setting up your account. Your answers are saved on this device."
+          ? "Sign in again to finish setting up your account. Your answers are saved on this device."
           : code === "resource-exhausted"
-            ? "Please wait a moment, then try creating your plan again. Your answers are saved."
+            ? "Wait a moment, then try creating your plan again. Your answers are saved."
             : refusal
               ? refusal
               : code === "invalid-argument"

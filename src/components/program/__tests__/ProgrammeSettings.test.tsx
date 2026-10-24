@@ -187,9 +187,12 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
 
   it("a save refused for coming too often says to wait, and keeps the change", async () => {
     configureSpy.mockRejectedValueOnce(
-      Object.assign(new Error("Too many attempts. Please wait."), {
-        code: "functions/resource-exhausted",
-      })
+      Object.assign(
+        new Error("Too many attempts. Try again in a few minutes."),
+        {
+          code: "functions/resource-exhausted",
+        }
+      )
     );
     setup({}, "lift");
     fireEvent.click(screen.getByText("Get stronger"));

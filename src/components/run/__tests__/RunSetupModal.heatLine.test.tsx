@@ -81,7 +81,7 @@ describe("RunSetupModal — the heat line", () => {
     expect(heatLines[0].textContent).not.toMatch(/\d/);
     expect(within(strip).queryByText(/\/km/)).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Start Easy Run" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start easy run" }));
     expect(onStart).toHaveBeenCalledWith(
       expect.objectContaining({ target: PACE_TARGET })
     );

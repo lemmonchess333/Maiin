@@ -46,10 +46,10 @@ export function isSignInCancelled(err: unknown): boolean {
 export function providerHint(methods: string[]): string | null {
   if (methods.length === 0 || methods.includes("password")) return null;
   if (methods.includes("google.com")) {
-    return "This account uses Google — tap Continue with Google to sign in.";
+    return "This account uses Google. Use Continue with Google to sign in.";
   }
   if (methods.includes("apple.com")) {
-    return "This account uses Apple — tap Continue with Apple to sign in.";
+    return "This account uses Apple. Use Continue with Apple to sign in.";
   }
   return null;
 }
@@ -65,7 +65,7 @@ export function providerHint(methods: string[]): string | null {
  */
 export function duplicateEmailHint(methods: string[]): string | null {
   if (methods.includes("password")) {
-    return "This email already has a Tropos account with a password — sign in with your email and password.";
+    return "This email already has a Tropos account with a password. Sign in with your email and password.";
   }
   return providerHint(methods);
 }
@@ -94,10 +94,10 @@ export function friendlyAuthError(
     return "Password must be at least 6 characters";
   }
   if (message.includes("invalid-email")) {
-    return "Please enter a valid email address";
+    return "Enter a valid email address";
   }
   if (message.includes("network-request-failed")) {
-    return "Network issue — check your connection and try again";
+    return "Network issue. Check your connection and try again";
   }
   if (message.includes("too-many-requests")) {
     return "Too many attempts. Wait a moment and try again";

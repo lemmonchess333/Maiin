@@ -377,7 +377,7 @@ export default function CirclesSection({
         haptic("light");
         toast.success("Circle wrapped. Nice work.");
       } else {
-        toast.error("Couldn't wrap the Circle. Try again.");
+        toast.error("Couldn't wrap the circle. Try again.");
       }
     },
     [targetBusy, resolveTarget]
@@ -533,11 +533,11 @@ export default function CirclesSection({
     inviteCode: string;
   }) => {
     const code = inviteString(h.spaceId, h.inviteCode);
-    const text = `Join my Tropos Circle "${h.title}" — invite code: ${code}`;
+    const text = `Join my Tropos circle "${h.title}" — invite code: ${code}`;
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Join my Circle on Tropos",
+          title: "Join my circle on Tropos",
           text,
           url: window.location.origin,
         });
@@ -745,7 +745,7 @@ export default function CirclesSection({
       {!loading && loadFailed && (
         <div className="p-3 rounded-xl bg-card flex items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            Couldn't load your Circles.
+            Couldn't load your circles.
           </p>
           <Button
             variant="secondary"
@@ -862,7 +862,7 @@ export default function CirclesSection({
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">
                 You've reached your target date. Keep training together, or wrap
-                this Circle up.
+                this circle up.
               </p>
               {extendOpen ? (
                 <div className="space-y-2">
@@ -931,7 +931,7 @@ export default function CirclesSection({
                owner's summaries). */
             <>
               <p className="text-xs text-muted-foreground">
-                Your Circle is ready — invite someone to make it a circle.
+                Your circle is ready — invite someone to make it a circle.
               </p>
               <Button
                 className="w-full"
@@ -1475,7 +1475,7 @@ export default function CirclesSection({
         onOpenChange={(o) => {
           if (!o) setInviteHandoff(null);
         }}
-        title="Your Circle is ready"
+        title="Your circle is ready"
         description="Invite 1–7 people. The circle only ever sees check-ins, never numbers, meals or photos."
       >
         {inviteHandoff && (

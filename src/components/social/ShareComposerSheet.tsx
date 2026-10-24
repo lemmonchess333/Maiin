@@ -37,8 +37,8 @@ const REMEMBER_LABEL: Record<ShareType, string> = {
 /** Explain the scope before the user chooses an audience. */
 const REMEMBER_HINT: Record<ShareType, string> = {
   workout:
-    "Your choice will apply automatically to future workouts. Change it any time in Settings → Privacy.",
-  run: "Your choice will apply automatically to future runs. Change it any time in Settings → Privacy.",
+    "Your choice will apply automatically to future workouts. Change it any time in Settings → Social & privacy.",
+  run: "Your choice will apply automatically to future runs. Change it any time in Settings → Social & privacy.",
 };
 
 /**
@@ -228,7 +228,7 @@ export default function ShareComposerSheet() {
             role="alert"
             className="text-xs text-destructive-strong font-medium px-1"
           >
-            Please remove objectionable language before sharing.
+            Remove objectionable language before sharing.
           </p>
         )}
 
@@ -298,7 +298,7 @@ export default function ShareComposerSheet() {
         <p className="text-caption text-muted-foreground px-1 -mt-1">
           {remember
             ? REMEMBER_HINT[state.type]
-            : "Applies to this session only. Set a default in Settings → Privacy."}
+            : "Applies to this session only. Set a default in Settings → Social & privacy."}
         </p>
 
         {!isOnline && (

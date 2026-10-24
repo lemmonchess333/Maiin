@@ -155,7 +155,7 @@ export default function WorkoutFeedShareSheet({
             role="alert"
             className="text-xs text-destructive-strong font-medium px-1"
           >
-            Please remove objectionable language before sharing.
+            Remove objectionable language before sharing.
           </p>
         )}
 

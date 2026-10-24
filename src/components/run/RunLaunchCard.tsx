@@ -61,7 +61,7 @@ function intervalSummary(intervals: RunConfig["intervals"]): string | null {
     return `${reps} × ${unit}`;
   }
   if (workDuration) return `${reps} × ${Math.round(workDuration / 60)}min`;
-  return `${reps} reps`;
+  return `${reps} ${reps === 1 ? "rep" : "reps"}`;
 }
 
 export default function RunLaunchCard({

@@ -113,7 +113,7 @@ describe("NotificationsSheet", () => {
     ]);
     expect(screen.getByText("Mia hit a milestone")).toBeInTheDocument();
     expect(screen.getByText("Nas could use a nudge")).toBeInTheDocument();
-    expect(screen.getByText("Jo joined your Circle")).toBeInTheDocument();
+    expect(screen.getByText("Jo joined your circle")).toBeInTheDocument();
     expect(screen.getByText("Ravi shared a routine")).toBeInTheDocument();
   });
 
@@ -148,7 +148,7 @@ describe("NotificationsSheet", () => {
     // by default: new followers are off until the person turns them on.
     expect(
       screen.getByText(
-        "Props and comments on your sessions, and news from your Circles and Spaces, show up here."
+        "Props and comments on your sessions, and news from your circles and spaces, show up here."
       )
     ).toBeInTheDocument();
   });

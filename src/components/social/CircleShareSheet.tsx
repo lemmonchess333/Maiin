@@ -114,7 +114,7 @@ export default function CircleShareSheet({
             className="flex items-center justify-between gap-3 rounded-xl bg-card p-3"
           >
             <p className="text-small text-muted-foreground">
-              Couldn&rsquo;t load your Circles.
+              Couldn&rsquo;t load your circles.
             </p>
             <Button variant="secondary" onClick={() => void reload()}>
               Try again
@@ -127,7 +127,7 @@ export default function CircleShareSheet({
             <EmptyState
               compact
               icon={Users}
-              headline="No Circles yet"
+              headline="No circles yet"
               sub="Circles are small, invite-only groups around one shared goal."
             />
             <Button

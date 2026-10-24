@@ -155,7 +155,7 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">
                   Social Activity (optional):
                 </strong>{" "}
-                the posts you share, comments, kudos, follows, Circle check-ins,
+                the posts you share, comments, props, follows, Circle check-ins,
                 Space posts, and the reports you make about content or accounts.
               </li>
               <li>
@@ -608,8 +608,8 @@ export default function PrivacyPolicy() {
               11. Contact
             </h2>
             <p>
-              For questions about this privacy policy or your data, please
-              contact us at support@troposfit.com
+              For questions about this privacy policy or your data, contact us
+              at support@troposfit.com
             </p>
           </section>
         </div>

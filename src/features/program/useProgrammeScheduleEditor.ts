@@ -66,8 +66,7 @@ function friendlyRestructureError(error: unknown): string {
   const code = (error as { code?: string })?.code;
   if (code === "permission-denied")
     return "You don't have permission to change this schedule.";
-  if (code === "unauthenticated")
-    return "Please sign in again to save changes.";
+  if (code === "unauthenticated") return "Sign in again to save changes.";
   if (code === "unavailable")
     return "Couldn't save changes. Reconnect and try again.";
   if (code === "deadline-exceeded") return "Saving took too long. Try again.";
@@ -280,6 +279,7 @@ export function useProgrammeScheduleEditor(
       setShowRestructureModal(false);
       void chooseSplit(pendingLiftDays);
       setPendingLiftDays(null);
+      toast.success("Programme rebuilt");
       return true;
     } catch (error) {
       logger.error("handleConfirmRestructure failed:", error);

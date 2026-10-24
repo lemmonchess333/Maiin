@@ -73,7 +73,7 @@ function fallbackMessage(n: NotificationItem): string {
     case "circle_needs_support":
       return `${who} could use a nudge`;
     case "circle_joined":
-      return `${who} joined your Circle`;
+      return `${who} joined your circle`;
     case "circle_routine_shared":
       return `${who} shared a routine`;
     case "space_post_like":
@@ -136,7 +136,7 @@ export default function NotificationsSheet({
             compact
             icon={Bell}
             headline="No notifications yet"
-            sub="Props and comments on your sessions, and news from your Circles and Spaces, show up here."
+            sub="Props and comments on your sessions, and news from your circles and spaces, show up here."
           />
         ) : (
           <ul className="divide-y divide-border/40">

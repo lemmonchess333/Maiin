@@ -35,9 +35,9 @@ function friendlyFoodAnalysisError(
      or the profile here is out of date. Say how to turn it back on. */
   if (reason === AI_ANALYSIS_OFF_REASON) return AI_ANALYSIS_OFF_MESSAGE;
   if (serverMessage) return serverMessage;
-  if (status === 401 || status === 403)
-    return "Please sign in again to log food.";
-  if (status === 429) return "Too many photos analysed. Please wait a moment.";
+  if (status === 401 || status === 403) return "Sign in again to log food.";
+  if (status === 429)
+    return "Too many photos analysed. Wait a moment and try again.";
   if (status >= 500)
     return "Food analysis is temporarily unavailable. Try again.";
   return "Couldn't analyse this photo. Try again.";

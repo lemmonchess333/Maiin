@@ -60,7 +60,7 @@ export async function reauthWithApple(
     if (options.forDeletion) {
       const token = OAuthProvider.credentialFromResult(result)?.accessToken;
       if (!token)
-        throw new Error("Apple confirmation was incomplete. Please try again.");
+        throw new Error("Apple confirmation was incomplete. Try again.");
       await revokeAccessToken(getAuth(), token);
     }
     return;

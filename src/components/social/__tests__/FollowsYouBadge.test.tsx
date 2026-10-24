@@ -37,6 +37,6 @@ describe("FollowsYouBadge", () => {
   it("uses an aria-label so screen readers know what the badge means", () => {
     followers.value = new Set(["alice"]);
     render(<FollowsYouBadge uid="alice" />);
-    expect(screen.getByLabelText("This athlete follows you")).toBeTruthy();
+    expect(screen.getByLabelText("This person follows you")).toBeTruthy();
   });
 });

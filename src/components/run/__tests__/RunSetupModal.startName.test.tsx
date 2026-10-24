@@ -1,6 +1,6 @@
 /**
  * The setup's Start button names a planned run as its launch card and Home
- * do ("Start Easy 30"). It said the run type's name ("Start Easy Run"), so
+ * do ("Start Easy 30"). It said the run type's name ("Start easy run"), so
  * the same run changed its name between the card and Customise. Once the
  * run stops being the planned session it starts as its type.
  */
@@ -103,14 +103,14 @@ describe("RunSetupModal — the Start button's name", () => {
     openOnEasy30();
     fireEvent.click(screen.getByRole("radio", { name: "Distance" }));
     expect(
-      screen.getByRole("button", { name: "Start Easy Run" })
+      screen.getByRole("button", { name: "Start easy run" })
     ).toBeInTheDocument();
   });
 
   it("is the type's name for a run with no planned session", () => {
     render(<RunSetupModal onStart={vi.fn()} onCancel={vi.fn()} />);
     expect(
-      screen.getByRole("button", { name: "Start Easy Run" })
+      screen.getByRole("button", { name: "Start easy run" })
     ).toBeInTheDocument();
   });
 });
@@ -123,7 +123,7 @@ describe("RunSetupModal — the interval session handed to Start", () => {
     });
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Selected run type: Easy Run. Tap to change.",
+        name: "Selected run type: Easy run. Tap to change.",
       })
     );
     fireEvent.click(
@@ -136,7 +136,7 @@ describe("RunSetupModal — the interval session handed to Start", () => {
     // Vaul's close animation does not finish in jsdom, so the setup
     // remains hidden in its accessible tree even though it is mounted.
     fireEvent.click(
-      screen.getByRole("button", { name: "Start Intervals", hidden: true })
+      screen.getByRole("button", { name: "Start intervals", hidden: true })
     );
     expect(onStart).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -176,7 +176,7 @@ describe("RunSetupModal — the interval session handed to Start", () => {
       target: { value: "120" },
     });
     expect(screen.getAllByText("800m @ 4:30 /km")).toHaveLength(6);
-    fireEvent.click(screen.getByRole("button", { name: "Start Intervals" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start intervals" }));
     expect(onStart).toHaveBeenCalledWith(
       expect.objectContaining({
         activityType: "intervals",

@@ -5,7 +5,7 @@
  * for user-generated content. This wrapper around `leo-profanity`
  * is the client-facing half of that filter — gives the user
  * inline feedback at the composer level ("your post contains
- * objectionable language; please edit"). The server-side mirror
+ * objectionable language. Reword it and try again."). The server-side mirror
  * in `functions/profanityFilter.js` is the definitive gate —
  * client validation is a UX nicety, the server is the trust
  * boundary.
@@ -50,6 +50,10 @@ export const OBJECTIONABLE_COMMENT_MESSAGE =
   "This comment contains objectionable language. Reword it and try again.";
 export const OBJECTIONABLE_NAME_MESSAGE =
   "This name contains objectionable language. Choose a different one.";
+/** A space post. Only the app says it: the server takes such a post down
+ *  rather than refusing it (functions/lib/spacePostModeration.js). */
+export const OBJECTIONABLE_POST_MESSAGE =
+  "This post contains objectionable language. Reword it and try again.";
 
 /**
  * Returns a cleaned version of `text` with blocked words replaced

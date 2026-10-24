@@ -429,20 +429,20 @@ export default function RunSetupModal({
         {lastRun &&
           (() => {
             const labelMap: Record<string, string> = {
-              freerun: "Free Run",
-              easy: "Easy Run",
+              freerun: "Free run",
+              easy: "Easy run",
               tempo: "Tempo",
               intervals: "Intervals",
-              long: "Long Run",
-              longrun: "Long Run",
+              long: "Long run",
+              longrun: "Long run",
               race: "Race",
-              manual: "Manual Run",
+              manual: "Manual run",
               guided: "Guided",
             };
             const km = distanceValue(lastRun.distanceM, unit, 2);
             const time = formatClock(Math.floor(lastRun.durationS));
             // A treadmill run says so, old or new (Pgm8): "Treadmill",
-            // or its type with the treadmill, "Easy Run · Treadmill".
+            // or its type with the treadmill, "Easy run · Treadmill".
             const type = isTreadmillRun(lastRun)
               ? runTitle(lastRun)
               : labelMap[lastRun.activityType] || "Run";
@@ -1217,8 +1217,8 @@ export default function RunSetupModal({
 
       {/* Sticky CTA. Underlined "Change type" link removed — the
           selected-run card at the top now owns that affordance.
-          Start text is contextual per run type ("Start Free Run",
-          "Start Guided Run") so the button mirrors the user's
+          Start text is contextual per run type ("Start free run",
+          "Start guided run") so the button mirrors the user's
           selection; on the treadmill it says where the run starts
           ("Start on the treadmill"), whatever its type (Pgm8). */}
       {/* Pinned to the viewport bottom with `fixed` (was `sticky bottom-0`).
@@ -1242,7 +1242,7 @@ export default function RunSetupModal({
           const Icon = onTreadmill ? Dumbbell : Footprints;
           /* The planned session keeps the name its card gave it ("Start
              Easy 30") until the run stops being it: another type, target
-             or set of intervals starts as its type ("Start Tempo Run"). */
+             or set of intervals starts as its type ("Start tempo run"). */
           const isPlannedSession =
             sessionName !== undefined &&
             config.activityType === savedPreferences?.activityType &&
@@ -1273,7 +1273,7 @@ export default function RunSetupModal({
               <Icon className="inline size-5 mr-1" />{" "}
               {onTreadmill
                 ? "Start on the treadmill"
-                : `Start ${isPlannedSession ? sessionName : selected.name}`}
+                : `Start ${isPlannedSession ? sessionName : selected.name.toLowerCase()}`}
             </button>
           );
         })()}

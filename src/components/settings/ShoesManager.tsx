@@ -135,9 +135,7 @@ export default function ShoesManager() {
     return (
       <div className="text-center py-4">
         <p className="text-xs text-destructive-strong">Failed to load shoes</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Please try again later
-        </p>
+        <p className="text-xs text-muted-foreground mt-1">Try again later</p>
       </div>
     );
 

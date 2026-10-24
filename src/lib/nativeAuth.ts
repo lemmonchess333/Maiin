@@ -91,7 +91,7 @@ export async function reauthAndRevokeAppleNative(user: User): Promise<void> {
   const idToken = result.credential?.idToken;
   const rawNonce = result.credential?.nonce;
   if (!code || !idToken || !rawNonce) {
-    throw new Error("Apple confirmation was incomplete. Please try again.");
+    throw new Error("Apple confirmation was incomplete. Try again.");
   }
   await reauthenticateWithCredential(
     user,
@@ -124,9 +124,7 @@ export async function reauthAndRevokeAppleNative(user: User): Promise<void> {
       }
     );
     if (!response.ok)
-      throw new Error(
-        "Couldn't disconnect Sign in with Apple. Please try again."
-      );
+      throw new Error("Couldn't disconnect Sign in with Apple. Try again.");
   } finally {
     clearTimeout(timeout);
   }

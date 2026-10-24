@@ -1,6 +1,6 @@
 /**
  * CIRCLE-INVITE-ACTIVATION-01 — a new circle is useful immediately:
- * (a) creating hands off straight into the "Your Circle is ready"
+ * (a) creating hands off straight into the "Your circle is ready"
  *     invite sheet with the RETURNED code (Share / Copy / Not now);
  * (b) a one-member circle's featured card leads with "Invite someone"
  *     (the focus action moves to the detail sheet); multi-member
@@ -138,7 +138,7 @@ beforeEach(() => {
 });
 
 describe("post-create invite hand-off", () => {
-  it("creating a circle opens 'Your Circle is ready' with the returned code", async () => {
+  it("creating a circle opens 'Your circle is ready' with the returned code", async () => {
     mockUseGoalSpaces.mockReturnValue(hookValue());
     render(
       <MemoryRouter>
@@ -155,7 +155,7 @@ describe("post-create invite hand-off", () => {
     fireEvent.click(screen.getByRole("button", { name: /start circle/i }));
 
     await waitFor(() =>
-      expect(screen.getByText("Your Circle is ready")).toBeInTheDocument()
+      expect(screen.getByText("Your circle is ready")).toBeInTheDocument()
     );
     // The RETURNED invite code, in the copyable row.
     expect(screen.getByText("new-space.new-code")).toBeInTheDocument();
@@ -224,7 +224,7 @@ describe("post-create invite hand-off", () => {
     fireEvent.click(screen.getByRole("button", { name: /start circle/i }));
 
     await waitFor(() =>
-      expect(screen.getByText("Your Circle is ready")).toBeInTheDocument()
+      expect(screen.getByText("Your circle is ready")).toBeInTheDocument()
     );
     // Short code shows grouped and WITHOUT the spaceId prefix.
     expect(screen.getByText("K7P4-9M2H")).toBeInTheDocument();
