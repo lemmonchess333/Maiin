@@ -453,7 +453,7 @@ exports.deleteMyAccount = functions
         functions.logger.warn("deleteMyAccount.kill_switch_trip", { uid });
         throw new functions.https.HttpsError(
           "failed-precondition",
-          "Account deletion is temporarily paused. Please try again later.",
+          "Account deletion is temporarily paused. Try again later.",
           { reason: "executor-disabled" }
         );
       }
@@ -481,7 +481,7 @@ exports.deleteMyAccount = functions
       });
       throw new functions.https.HttpsError(
         "internal",
-        "Account cleanup couldn't finish. Please retry account deletion.",
+        "Account cleanup couldn't finish. Try deleting your account again.",
         { reason: "cleanup-incomplete" }
       );
     }
@@ -742,7 +742,7 @@ exports.completeOnboarding = functions
     if (limited) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Too many attempts. Please wait."
+        "Too many attempts. Try again in a few minutes."
       );
     }
 
@@ -1059,7 +1059,7 @@ exports.configurePlan = functions
     if (limited) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Too many attempts. Please wait."
+        "Too many attempts. Try again in a few minutes."
       );
     }
 
@@ -1452,7 +1452,7 @@ exports.analyzeFood = functions
         if (!(await isFlagEnabled("geminiEnabled"))) {
           res.status(503).json({
             error:
-              "AI food scan is temporarily unavailable. Please use manual entry.",
+              "AI food scan is temporarily unavailable. Use manual entry instead.",
           });
           return;
         }
@@ -1467,7 +1467,7 @@ exports.analyzeFood = functions
         if (limited) {
           res.status(429).json({
             error:
-              "Rate limit reached. Please wait before analyzing more food.",
+              "Rate limit reached. Wait a few minutes before analysing more food.",
           });
           return;
         }
@@ -1503,8 +1503,7 @@ exports.analyzeFood = functions
         if (!quota.allowed) {
           if (quota.error === "quota-check-failed") {
             res.status(503).json({
-              error:
-                "Couldn't verify your scan quota. Please try again in a moment.",
+              error: "Couldn't verify your scan quota. Try again in a moment.",
               transient: true,
             });
             return;
@@ -1695,7 +1694,7 @@ exports.analyzeFoodText = functions
         if (!(await isFlagEnabled("geminiEnabled"))) {
           res.status(503).json({
             error:
-              "AI food scan is temporarily unavailable. Please use manual entry.",
+              "AI food scan is temporarily unavailable. Use manual entry instead.",
           });
           return;
         }
@@ -1710,7 +1709,7 @@ exports.analyzeFoodText = functions
         if (limited) {
           res.status(429).json({
             error:
-              "Rate limit reached. Please wait before analyzing more food.",
+              "Rate limit reached. Wait a few minutes before analysing more food.",
           });
           return;
         }
@@ -1742,8 +1741,7 @@ exports.analyzeFoodText = functions
         if (!quota.allowed) {
           if (quota.error === "quota-check-failed") {
             res.status(503).json({
-              error:
-                "Couldn't verify your scan quota. Please try again in a moment.",
+              error: "Couldn't verify your scan quota. Try again in a moment.",
               transient: true,
             });
             return;
@@ -2005,9 +2003,9 @@ exports.createCheckoutSession = functions
           600_000
         );
         if (limited) {
-          res
-            .status(429)
-            .json({ error: "Too many checkout attempts. Please wait." });
+          res.status(429).json({
+            error: "Too many checkout attempts. Try again in a few minutes.",
+          });
           return;
         }
 
@@ -2584,7 +2582,7 @@ exports.computePerformanceWeek = functions
     if (limited) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Too many requests. Please wait."
+        "Too many requests. Try again in a few minutes."
       );
     }
 
@@ -3674,8 +3672,8 @@ exports.sendTestPush = functions
               data: {
                 type: "test",
                 route: "/",
-                title: "Tropos 🔔",
-                body: "Push notifications are working — you're all set.",
+                title: "Tropos",
+                body: "Push notifications are working on this device.",
               },
             },
             uid
@@ -6317,7 +6315,7 @@ exports.createReport = functions
     if (limited) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Too many reports. Please try again later."
+        "Too many reports. Try again later."
       );
     }
 
@@ -6820,7 +6818,9 @@ exports.onPublicProfileWritten = functions
       const current = await transaction.get(change.after.ref);
       if (
         !current.exists ||
-        !objectionableText.displayNameRefusal((current.data() || {}).displayName)
+        !objectionableText.displayNameRefusal(
+          (current.data() || {}).displayName
+        )
       )
         return false;
       transaction.update(change.after.ref, {
@@ -6910,7 +6910,7 @@ exports.toggleKudosCallable = functions
     if (limited) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Too many kudos updates. Slow down."
+        "Too many props at once. Slow down."
       );
     }
     /* Blocking is enforced HERE, before any write. It used to be client-side
@@ -7000,7 +7000,7 @@ exports.toggleKudosCallable = functions
         isAccessError ? "permission-denied" : "failed-precondition",
         isAccessError
           ? "This activity is unavailable."
-          : (err && err.message) || "Kudos toggle failed."
+          : (err && err.message) || "Couldn't give props. Try again."
       );
     }
   });
@@ -7825,7 +7825,7 @@ async function goalSpaceCallableGate(
   if (limited) {
     throw new functions.https.HttpsError(
       "resource-exhausted",
-      "Too many requests. Please wait."
+      "Too many requests. Try again in a few minutes."
     );
   }
   return uid;
@@ -8250,7 +8250,7 @@ exports.setBoardSharing = functions
     if (limited) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Too many attempts. Please wait."
+        "Too many attempts. Try again in a minute."
       );
     }
     await friendsBoard.setBoardSharing(db, uid, share);
@@ -8313,7 +8313,7 @@ exports.planRunningRoute = functions
     if (limited) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
-        "Too many route requests. Please wait a few minutes."
+        "Too many route requests. Try again in a few minutes."
       );
     }
 

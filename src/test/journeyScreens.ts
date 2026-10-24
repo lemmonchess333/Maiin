@@ -100,7 +100,7 @@ export const RUN = {
   /** A button on the GPS screen (`Run`). */
   gpsTreadmill: "On a treadmill",
   customise: "Customise",
-  /** The setup's run type, by the type's name ("Easy Run"). */
+  /** The setup's run type, by the type's name ("Easy run"). */
   runType: (typeName: string) =>
     `Selected run type: ${typeName}. Tap to change.`,
   /** A switch. */
@@ -108,7 +108,7 @@ export const RUN = {
   startTreadmill: "Start on the treadmill",
   elapsedTime: "Elapsed time",
   distance: "Distance from treadmill",
-  saveTreadmill: "Save Treadmill Run",
+  saveTreadmill: "Save treadmill run",
   /** The summary's heading, by the planned session's name ("Easy 30"). */
   summary: (sessionName: string) => `${sessionName} complete ✓`,
   save: "Save run",

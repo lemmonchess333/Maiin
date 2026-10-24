@@ -49,14 +49,14 @@ function setup(
 describe("RunTilePicker", () => {
   it("renders the four direct-launch tiles", () => {
     setup();
-    ["Easy Run", "Tempo Run", "Long Run", "Free Run"].forEach((name) =>
+    ["Easy run", "Tempo run", "Long run", "Free run"].forEach((name) =>
       expect(screen.getByText(name)).toBeInTheDocument()
     );
   });
 
   it("tapping a tile calls onPickType with its activityType", () => {
     const { onPickType } = setup();
-    fireEvent.click(screen.getByText("Tempo Run"));
+    fireEvent.click(screen.getByText("Tempo run"));
     expect(onPickType).toHaveBeenCalledWith("tempo");
   });
 

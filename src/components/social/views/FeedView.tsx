@@ -672,7 +672,7 @@ export default function FeedView({
                           : "When members post in your spaces, their posts appear here."
                       }
                       accent={THEME.brand}
-                      action={{ label: "Browse Spaces", onClick: openTogether }}
+                      action={{ label: "Browse spaces", onClick: openTogether }}
                     />
                   )}
                 {communitiesFeed.items.map((item) => {
@@ -809,7 +809,7 @@ export default function FeedView({
                     <HexEmptyState
                       icon={Globe}
                       headline="Tropos is quiet right now"
-                      sub="Your Circles don't need a crowd"
+                      sub="Your circles don't need a crowd"
                       accent={THEME.brand}
                       action={{
                         label: "Open Together",

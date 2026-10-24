@@ -2291,7 +2291,7 @@ export function useProgram() {
       // nothing to read, and creates.
       await saveProgram(programState ? build : build(null), profilePatch);
       setViewingHistoryIndex(null);
-      toast.success("Program regenerated");
+      // Each caller says what it did: "Programme reset", "Programme rebuilt".
     },
     [profile, programState, mirrorReady, saveProgram, resolveLayoff]
   );

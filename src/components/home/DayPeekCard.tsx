@@ -1,7 +1,7 @@
 import { liftDayNameIn } from "@/lib/liftDayLabel";
 import RunAbout from "@/components/run/RunAbout";
 import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
-import { abbreviateK } from "@/utils/formatters";
+import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import RunPurpose from "@/components/run/RunPurpose";
 import LiftPurpose from "@/components/program/LiftPurpose";
@@ -23,7 +23,6 @@ import {
   Settings2,
   ChevronRight,
 } from "lucide-react";
-import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
@@ -230,7 +229,7 @@ export default function DayPeekCard({
     claimMap,
     todayKey,
   });
-  const dayLabel = format(parseLocalDate(dateKey), "EEE d MMM");
+  const dayLabel = formatShortWeekdayDayMonth(parseLocalDate(dateKey));
   /* The badge describes the day's WEEKDAY PATTERN (`profile.weekSchedule`),
      while the rows below it come from the resolved plan — the actual
      `runDays` for this date and the rotation's lift slot. Those are
@@ -483,8 +482,13 @@ export default function DayPeekCard({
                         {" · "}
                         {totalMinutes > 0 ? `${totalMinutes} min` : ""}
                         {totalMinutes > 0 && tonnage > 0 ? " · " : ""}
+                        {/* The whole figure, grouped, as the diary row
+                            below writes its calories. One session's
+                            volume runs to a few thousand, and "6.7k kg"
+                            asks the reader to expand the k before the
+                            unit. */}
                         {tonnage > 0
-                          ? `${abbreviateK(liftVolumeIn(tonnage, liftUnit))} ${liftUnitLabel(liftUnit)}`
+                          ? `${Math.round(liftVolumeIn(tonnage, liftUnit)).toLocaleString()} ${liftUnitLabel(liftUnit)}`
                           : ""}
                       </span>
                     )}
@@ -512,6 +516,9 @@ export default function DayPeekCard({
                     className="size-3.5 shrink-0"
                     style={{ color: THEME.success }}
                   />
+                  {/* The food diary's row, so its grams are the food
+                      surface's, unspaced ("140g"), as Home's Food card
+                      writes them in the tiles beside its ring. */}
                   <span className="text-foreground font-mono tabular-nums">
                     {dailyTotals.calories.toLocaleString()} {CALORIE_UNIT} {"·"}{" "}
                     {Math.round(dailyTotals.protein)}g protein

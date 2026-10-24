@@ -126,7 +126,7 @@ describe("a failed read", () => {
     renderSheet();
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Couldn’t load your Circles."
+      "Couldn’t load your circles."
     );
     expect(screen.queryByText(/Circles are small/i)).toBeNull();
     expect(screen.queryByRole("button", { name: /open together/i })).toBeNull();

@@ -251,7 +251,7 @@ export default function PeopleView({
             />
             <input
               type="text"
-              placeholder="Search athletes"
+              placeholder="Search people"
               value={searchQuery}
               onChange={(e) => handleSearchInputChange(e.target.value)}
               onKeyDown={(e) => {
@@ -264,7 +264,7 @@ export default function PeopleView({
               aria-label={
                 isRestricted
                   ? "Search is unavailable while your account is restricted"
-                  : "Search athletes"
+                  : "Search people"
               }
               disabled={isRestricted}
               className="w-full h-12 pl-10 pr-11 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"

@@ -15,6 +15,7 @@ import {
   type MealKey,
 } from "./mealConstants";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import { withSign } from "@/utils/formatters";
 import { FOOD_NAME_MAX } from "@/lib/mealEntry";
 
 interface ServingSource {
@@ -560,8 +561,7 @@ function EditServingsSheet({
                         : "hsl(var(--muted-foreground))",
                   }}
                 >
-                  ({countDelta > 0 ? "+" : ""}
-                  {countDelta}{" "}
+                  ({withSign(countDelta, String(Math.abs(countDelta)))}{" "}
                   {Math.abs(countDelta) === 1 ? "serving" : "servings"})
                 </span>
               )}

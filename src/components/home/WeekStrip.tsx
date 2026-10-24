@@ -11,6 +11,7 @@ import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import { cn } from "@/lib/utils";
 import { beforeStart } from "@/lib/startDay";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+import { formatWeekdayDayMonth } from "@/utils/formatters";
 
 /**
  * What one day of the strip shows (DS3). The circle carries the day's
@@ -282,7 +283,7 @@ export default function WeekStrip({
               // "Saturday 23 August", not "Saturday, August 23". The
               // capture spec's day-cell selector parses this shape;
               // weekStripCaptureSelector.test.tsx pins the two together.
-              format(day.date, "EEEE d MMMM") +
+              formatWeekdayDayMonth(day.date) +
               ", " +
               trainingLabel(day, day.isPast, startKey) +
               // Kept, but named for what it is: `dayMap` counts meals, and

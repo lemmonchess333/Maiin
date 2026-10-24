@@ -421,11 +421,13 @@ describe("FoodCameraModal — the failure beat", () => {
         {...props}
         loading={false}
         failure="error"
-        failureDetail="Rate limit reached. Please wait a moment."
+        failureDetail="Rate limit reached. Wait a few minutes before analysing more food."
       />
     );
     const failureText = screen.getByTestId("scan-failure").textContent ?? "";
-    expect(failureText).toContain("Rate limit reached. Please wait a moment.");
+    expect(failureText).toContain(
+      "Rate limit reached. Wait a few minutes before analysing more food."
+    );
     expect(failureText).not.toContain("Might be the connection");
   });
 

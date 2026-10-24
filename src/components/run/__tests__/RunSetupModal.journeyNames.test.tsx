@@ -93,7 +93,7 @@ describe("a planned run on the treadmill (Pgm8)", () => {
     chooseTreadmill();
     // The setup still names the plan's type.
     expect(
-      screen.getByRole("button", { name: RUN.runType("Easy Run") })
+      screen.getByRole("button", { name: RUN.runType("Easy run") })
     ).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: RUN.startTreadmill, hidden: true })
@@ -125,9 +125,9 @@ describe("a run onto the treadmill, by the journeys' names", () => {
     expect(treadmill).toHaveAttribute("aria-checked", "false");
     fireEvent.click(treadmill);
     expect(treadmill).toHaveAttribute("aria-checked", "true");
-    // The type is untouched: still the setup's Easy Run.
+    // The type is untouched: still the setup's Easy run.
     expect(
-      screen.getByRole("button", { name: RUN.runType("Easy Run") })
+      screen.getByRole("button", { name: RUN.runType("Easy run") })
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: RUN.startTreadmill }));
     expect(onStart).toHaveBeenLastCalledWith(
@@ -137,7 +137,7 @@ describe("a run onto the treadmill, by the journeys' names", () => {
     // Off again, the run is outdoors and starts as its type.
     fireEvent.click(treadmill);
     expect(treadmill).toHaveAttribute("aria-checked", "false");
-    fireEvent.click(screen.getByRole("button", { name: "Start Easy Run" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start easy run" }));
     expect(onStart.mock.lastCall?.[0]).toMatchObject({ activityType: "easy" });
     expect(onStart.mock.lastCall?.[0].place).toBeUndefined();
   });
@@ -147,10 +147,10 @@ describe("a run onto the treadmill, by the journeys' names", () => {
     render(<RunSetupModal onStart={onStart} onCancel={vi.fn()} />);
     chooseTreadmill();
     fireEvent.click(
-      screen.getByRole("button", { name: RUN.runType("Easy Run") })
+      screen.getByRole("button", { name: RUN.runType("Easy run") })
     );
     const types = screen.getByRole("dialog", { name: "Choose run type" });
-    const long = within(types).getByRole("button", { name: /^Long Run/ });
+    const long = within(types).getByRole("button", { name: /^Long run/ });
     // No type is the treadmill any more: it is where any of them is run.
     expect(
       within(types).queryByRole("button", { name: /^Treadmill/ })

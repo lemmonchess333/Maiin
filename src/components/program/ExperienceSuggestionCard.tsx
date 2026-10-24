@@ -13,6 +13,7 @@ import {
 import type { WorkoutDay } from "@/features/program/programTypes";
 import { levelSuggestionCopy } from "@/features/program/levelSuggestionCopy";
 import Card from "@/components/ui/Card";
+import { withSign } from "@/utils/formatters";
 
 /**
  * Evidence-triggered training-level suggestion (experience auto-detection).
@@ -78,8 +79,7 @@ export default function ExperienceSuggestionCard({
             <span className="text-sm text-foreground truncate">{e.name}</span>
             <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
               {e.sessions} sessions · {Math.round(e.spanDays / 7)} wks · e1RM{" "}
-              {e.deltaPct >= 0 ? "+" : ""}
-              {e.deltaPct}%
+              {withSign(e.deltaPct, String(Math.abs(e.deltaPct)))}%
             </span>
           </div>
         ))}

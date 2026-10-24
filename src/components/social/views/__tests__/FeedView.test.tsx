@@ -536,7 +536,7 @@ describe("FeedView — My communities source (SOC-P3a)", () => {
       screen.getByText("Join a space to fill this feed")
     ).toBeInTheDocument();
     expect(screen.queryByText(/your spaces are quiet right now/i)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Browse Spaces" }));
+    fireEvent.click(screen.getByRole("button", { name: "Browse spaces" }));
     expect(openTogether).toHaveBeenCalled();
   });
 

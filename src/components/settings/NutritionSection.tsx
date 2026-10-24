@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
+import { formatSigned, withSign } from "@/utils/formatters";
 import { motion } from "framer-motion";
 import { formatWeightInUnit, kgToLb, lbToKg } from "@/lib/weightUnits";
 import { haptic } from "@/lib/haptic";
@@ -171,7 +172,7 @@ export default function NutritionSection({
   const displayRate = (kgPerWeek: number) =>
     (weightUnit === "lbs" ? kgToLb(kgPerWeek) : kgPerWeek).toFixed(2);
   const paceLabel = (kgPerWeek: number) =>
-    `${kgPerWeek > 0 ? "+" : ""}${displayRate(kgPerWeek)} ${weightLabel}/wk`;
+    `${formatSigned(weightUnit === "lbs" ? kgToLb(kgPerWeek) : kgPerWeek, 2)} ${weightLabel}/wk`;
   const adjustGoalWeight = (direction: -1 | 1) => {
     // Edit in the displayed unit; keep the engine and persistence in kg.
     // Round the displayed pounds only, never the converted stored kilograms.
@@ -377,8 +378,11 @@ export default function NutritionSection({
             </span>
           </span>
           <span className="ml-auto text-xs font-mono tabular-nums font-medium text-foreground">
-            {goalPlan.dailyOffset > 0 ? "+" : ""}
-            {formatCalories(goalPlan.dailyOffset)} {CALORIE_UNIT}/day
+            {withSign(
+              goalPlan.dailyOffset,
+              formatCalories(Math.abs(goalPlan.dailyOffset))
+            )}{" "}
+            {CALORIE_UNIT}/day
           </span>
         </div>
 
@@ -413,8 +417,11 @@ export default function NutritionSection({
                       } offset`}
                 </span>
                 <span className="font-mono tabular-nums">
-                  {tdee.deficit > 0 ? "+" : ""}
-                  {formatCalories(tdee.deficit)} {CALORIE_UNIT}
+                  {withSign(
+                    tdee.deficit,
+                    formatCalories(Math.abs(tdee.deficit))
+                  )}{" "}
+                  {CALORIE_UNIT}
                 </span>
               </div>
             )}

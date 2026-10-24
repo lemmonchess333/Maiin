@@ -5,6 +5,7 @@ import type { FoodWeekDay } from "@/lib/foodWeek";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
+import { formatDayMonthLong, formatWeekdayDayMonth } from "@/utils/formatters";
 
 /* The ring's geometry. The circle is Home's week-strip size, and the
    stroke leaves the date inside it room to read at text-sm. */
@@ -56,7 +57,7 @@ export default function FoodWeekStrip({
   return (
     <div
       role="group"
-      aria-label={`Week of ${format(parseLocalDate(days[0].key), "d MMMM")}`}
+      aria-label={`Week of ${formatDayMonthLong(parseLocalDate(days[0].key))}`}
       /* Seven equal columns, as on Home's strip: fixed 44px buttons
          pushed Sunday off a 320px phone once the text was larger. */
       className="grid grid-cols-7 items-center justify-items-center"
@@ -78,7 +79,7 @@ export default function FoodWeekStrip({
             aria-current={day.isToday ? "date" : undefined}
             aria-label={
               // en-GB day-before-month, the app's one date treatment.
-              format(date, "EEEE d MMMM") +
+              formatWeekdayDayMonth(date) +
               eatingLabel(day) +
               (day.isToday ? " (today)" : "")
             }

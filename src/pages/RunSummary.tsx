@@ -250,12 +250,12 @@ function InvalidRunReview({
   const heading = isSaved
     ? "Saved"
     : reason === "too-fast"
-      ? "Run looks invalid"
+      ? "Check the distance"
       : "Run too short";
   const bodyCopy = isSaved
     ? null
     : reason === "too-fast"
-      ? `We recorded ${formattedDuration} and ${formattedDistance}. The implied pace looks unrealistic — did you mean a different distance?`
+      ? `We recorded ${formattedDuration} and ${formattedDistance}, which works out faster than a sprint. Was the distance different?`
       : outdoorGps
         ? `We recorded ${formattedDuration} and ${formattedDistance}. This may have happened before GPS locked.`
         : `We recorded ${formattedDuration} and ${formattedDistance}. This is below the minimum distance or duration for a normal summary.`;

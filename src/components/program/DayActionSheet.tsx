@@ -72,7 +72,7 @@ import {
 } from "@/lib/runPaces";
 import { runDoseLine } from "@/lib/runDose";
 import { targetZoneForRun, maxHrFromAge, zoneMetaItems } from "@/lib/hrZones";
-import { format } from "date-fns";
+import { formatShortWeekdayDayMonth } from "@/utils/formatters";
 import {
   parseLocalDate,
   localWeekKey,
@@ -185,7 +185,7 @@ export default function DayActionSheet({
 
   const dayLabel = useMemo(() => {
     if (!dateKey) return "";
-    return format(parseLocalDate(dateKey), "EEE d MMM");
+    return formatShortWeekdayDayMonth(parseLocalDate(dateKey));
   }, [dateKey]);
 
   // Q5 P74 same-date paradox (chunk B3f). When a saved run exists

@@ -1028,7 +1028,7 @@ describe("interrupted manual distance entry", () => {
       expect(h.gpsCalls).not.toContain("start");
       fireEvent.click(
         screen.getByRole("button", {
-          name: mode === "manual" ? "Save Manual Run" : "Save Treadmill Run",
+          name: mode === "manual" ? "Save manual run" : "Save treadmill run",
         })
       );
       const payload = JSON.parse(
@@ -1069,7 +1069,7 @@ describe("interrupted manual distance entry", () => {
         screen.getByRole("textbox", { name: "Distance covered" })
       ).toHaveValue(raw);
       expect(
-        screen.getByRole("button", { name: "Save Manual Run" })
+        screen.getByRole("button", { name: "Save manual run" })
       ).toBeDisabled();
       expect(h.timer.isRunning).toBe(false);
       expect(h.gpsCalls).not.toContain("start");
@@ -1254,7 +1254,7 @@ describe("a run on the treadmill", () => {
       fireEvent.change(distance, { target: { value: "6" } });
       await act(async () => {
         fireEvent.click(
-          screen.getByRole("button", { name: "Save Treadmill Run" })
+          screen.getByRole("button", { name: "Save treadmill run" })
         );
       });
       expect(screen.getByText(handed)).toBeInTheDocument();
@@ -1275,7 +1275,7 @@ describe("manual structured coaching through the real player", () => {
     }
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Selected run type: Easy Run. Tap to change.",
+        name: "Selected run type: Easy run. Tap to change.",
       })
     );
     fireEvent.click(
@@ -1287,7 +1287,7 @@ describe("manual structured coaching through the real player", () => {
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", {
-          name: treadmill ? "Start on the treadmill" : "Start Intervals",
+          name: treadmill ? "Start on the treadmill" : "Start intervals",
           hidden: true,
         })
       );
@@ -1335,7 +1335,7 @@ describe("manual structured coaching through the real player", () => {
         target: { value: "2.75" },
       }
     );
-    fireEvent.click(screen.getByRole("button", { name: "Save Treadmill Run" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save treadmill run" }));
     const payload = JSON.parse(
       screen.getByTestId("finish-payload").textContent!
     );
@@ -1363,7 +1363,7 @@ describe("manual structured coaching through the real player", () => {
       }
     );
     expect(screen.getByText("mi")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Save Manual Run" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save manual run" }));
     const payload = JSON.parse(
       screen.getByTestId("finish-payload").textContent!
     );

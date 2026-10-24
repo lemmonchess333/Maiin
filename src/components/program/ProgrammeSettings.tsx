@@ -413,31 +413,31 @@ const INJURY_OPTIONS: {
   {
     id: "lower_back",
     label: "Lower back",
-    desc: "We'll avoid heavy axial loading",
+    desc: "Avoids heavy loads on your spine",
     icon: <AlertTriangle size={20} style={{ color: THEME.warning }} />,
   },
   {
     id: "shoulder",
     label: "Shoulder",
-    desc: "We'll modify pressing movements",
+    desc: "Adjusts pressing movements",
     icon: <AlertTriangle size={20} style={{ color: THEME.warning }} />,
   },
   {
     id: "knee",
     label: "Knee",
-    desc: "We'll adjust squat and lunge variations",
+    desc: "Adjusts squat and lunge variations",
     icon: <AlertTriangle size={20} style={{ color: THEME.warning }} />,
   },
   {
     id: "elbow",
     label: "Elbow",
-    desc: "We'll swap heavy curls/dips for cable work",
+    desc: "Swaps heavy curls and dips for cable work",
     icon: <AlertTriangle size={20} style={{ color: THEME.warning }} />,
   },
   {
     id: "wrist",
     label: "Wrist",
-    desc: "We'll pick neutral-grip and machine variants",
+    desc: "Picks neutral-grip and machine variants",
     icon: <AlertTriangle size={20} style={{ color: THEME.warning }} />,
   },
 ];
@@ -772,7 +772,7 @@ export default function ProgrammeSettings({
       logger.error("[ProgrammeSettings] save failed:", err);
       const code = (err as { code?: string })?.code;
       if (code === "functions/unauthenticated" || code === "unauthenticated") {
-        toast.error("Please sign in again to update your plan.");
+        toast.error("Sign in again to update your plan.");
       } else if (code?.endsWith("failed-precondition")) {
         await refreshProfile().catch((error) =>
           logger.warn("Plan refresh failed", error)

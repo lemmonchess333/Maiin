@@ -437,7 +437,7 @@ export default function ProgrammeRunSection({
     // Storage unavailable / quota — the in-memory state still hides the
     // prompt for this session.
     writeString(raceRecentDismissKey, "1");
-    toast("Got it. We'll wrap up your plan.");
+    toast("Noted. You can set your next race in Run plan.");
   }
 
   // #975: one-time "Set a race goal" nudge for freeform runners — the skip

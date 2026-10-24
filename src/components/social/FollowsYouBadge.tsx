@@ -23,7 +23,7 @@ export default function FollowsYouBadge({ uid }: Props) {
   return (
     <span
       className="inline-flex items-center text-micro font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0"
-      aria-label="This athlete follows you"
+      aria-label="This person follows you"
     >
       Follows you
     </span>

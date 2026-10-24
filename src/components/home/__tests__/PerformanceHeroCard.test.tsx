@@ -254,7 +254,7 @@ describe("PerformanceHeroCard — delta chip", () => {
       weeksAvailable: 6,
       loading: false,
     });
-    expect(screen.getByText("-10")).toBeInTheDocument();
+    expect(screen.getByText("\u221210")).toBeInTheDocument();
     expect(screen.getByText(/down 10 from last week/i)).toBeInTheDocument();
   });
 

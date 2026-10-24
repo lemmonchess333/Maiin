@@ -7,7 +7,7 @@
  * 1. It returned a bare `FoodAnalysis | null`, so the CALLER could not
  *    tell "the AI found nothing" from "the request failed", and could
  *    not surface WHY it failed. The server's own copy ("Rate limit
- *    reached. Please wait a moment.", "Daily image-AI limit reached.
+ *    reached. Wait a few minutes…", "Daily image-AI limit reached.
  *    Upgrade to Pro…") was computed, stored in hook state, and shown
  *    NOWHERE — a rate-limited user read a generic connection line
  *    telling them to retry a window that was still closed.
@@ -91,7 +91,10 @@ describe("useFoodAnalysis — the outcome contract", () => {
     // The whole point of the outcome shape: a rate-limited user must
     // be told to WAIT, not to retry a closed window.
     stubFetch(async () =>
-      reply(429, { error: "Rate limit reached. Please wait a moment." })
+      reply(429, {
+        error:
+          "Rate limit reached. Wait a few minutes before analysing more food.",
+      })
     );
     const { result } = renderHook(() => useFoodAnalysis());
     let outcome!: Awaited<ReturnType<typeof result.current.analyzeFood>>;
@@ -100,7 +103,7 @@ describe("useFoodAnalysis — the outcome contract", () => {
     });
     expect(outcome.data).toBeNull();
     expect(outcome.errorMessage).toBe(
-      "Rate limit reached. Please wait a moment."
+      "Rate limit reached. Wait a few minutes before analysing more food."
     );
   });
 

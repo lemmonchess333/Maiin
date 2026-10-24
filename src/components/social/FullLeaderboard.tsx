@@ -44,7 +44,7 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
   const figure = (value: number) => boardFigure(activeTab, value, liftUnit);
 
   // SOCIAL S4 — a vs-others leaderboard only earns its place at a ≥20
-  // athlete cohort, and even then is percentile/neighbourhood-framed
+  // person cohort, and even then is percentile/neighbourhood-framed
   // (never a global absolute-rank list that exposes individuals). Below
   // the threshold we show a "unlocks at N" state instead.
   const cohortSize = entries.length;
@@ -52,7 +52,7 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
   const myIndex = entries.findIndex((e) => e.uid === user?.uid);
   const myPercentile =
     myIndex >= 0 ? topPercent(entries[myIndex].rank, cohortSize) : null;
-  // Neighbourhood: the 5 athletes above + you + 5 below. When you have no
+  // Neighbourhood: the 5 people above + you + 5 below. When you have no
   // ranked entry this week, fall back to the top 10 of the cohort.
   const visibleEntries = !leaderboardUnlocked
     ? []
@@ -119,13 +119,13 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
           />
         )}
 
-        {/* Sub-cohort gate: a ranked list among <20 athletes is meaningless
+        {/* Sub-cohort gate: a ranked list among <20 people is meaningless
             and exposes individuals — show the unlock state instead. */}
         {!loading && cohortSize > 0 && !leaderboardUnlocked && (
           <EmptyState
             icon={Zap}
-            headline={`Rankings unlock at ${SOCIAL_GATES.LEADERBOARD_MIN_COHORT} athletes`}
-            sub={`${cohortSize} active this week — follow more athletes to fill the board.`}
+            headline={`Rankings unlock at ${SOCIAL_GATES.LEADERBOARD_MIN_COHORT} people`}
+            sub={`${cohortSize} active this week. Follow more people to fill the board.`}
             accent={THEME.brand}
           />
         )}
@@ -138,7 +138,7 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
               <span className="font-mono tabular-nums">{myPercentile}%</span>
             </span>
             <span className="text-xs text-muted-foreground font-mono tabular-nums">
-              {cohortSize} athletes
+              {cohortSize} people
             </span>
           </div>
         )}

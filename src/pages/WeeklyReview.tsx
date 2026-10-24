@@ -13,7 +13,7 @@ import {
 } from "@/lib/weeklyReviewViewModel";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { parseLocalDate } from "@/lib/dateHelpers";
-import { formatDayMonth } from "@/utils/formatters";
+import { formatDayMonth, withSign } from "@/utils/formatters";
 import { formArtCutoutUrl, getFormArtCutout } from "@/lib/formArtCutouts";
 import { categoryFigureUri } from "@/lib/muscleFigureSvg";
 import { getExerciseById } from "@/lib/exercises";
@@ -235,7 +235,7 @@ function YourWeek({
                   : body.direction === "down"
                     ? "Down"
                     : "Up"
-                : `${body.deltaKg > 0 ? "+" : ""}${body.deltaKg}`
+                : withSign(body.deltaKg, String(Math.abs(body.deltaKg)))
             }
             caption={
               body.hidden || body.deltaKg === null

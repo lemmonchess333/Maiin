@@ -4,8 +4,8 @@ import Button from "@/components/ui/Button";
 import Select from "@/components/ui/Select";
 import WeightScaleDial from "./WeightScaleDial";
 import InlineNumerals from "@/components/ui/InlineNumerals";
-import { format, subDays } from "date-fns";
-import { formatDayMonth } from "@/utils/formatters";
+import { subDays } from "date-fns";
+import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
 import {
   kgToLb,
   lbToKg,
@@ -388,7 +388,7 @@ export default function WeightLogSheet({
               {date === todayKey
                 ? "Today"
                 : validWeightDate(date)
-                  ? format(new Date(`${date}T12:00:00`), "d MMM yyyy")
+                  ? formatDayMonthYear(new Date(`${date}T12:00:00`))
                   : "Choose date"}
             </Button>
           </div>

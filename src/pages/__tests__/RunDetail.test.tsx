@@ -263,7 +263,7 @@ describe("RunDetail — a treadmill run says so", () => {
   it("titles a planned long run done there with its type and the treadmill", () => {
     h.run = onTreadmill({ activityType: "long", place: "treadmill" });
     renderDetail();
-    expect(screen.getByText("Long Run · Treadmill")).toBeInTheDocument();
+    expect(screen.getByText("Long run · Treadmill")).toBeInTheDocument();
     expect(screen.getByText("Splits · No GPS route")).toBeInTheDocument();
   });
 
@@ -276,7 +276,7 @@ describe("RunDetail — a treadmill run says so", () => {
   it("titles the same long run outdoors by its type alone", () => {
     h.run = savedRun({ activityType: "long", place: null });
     renderDetail();
-    expect(screen.getByText("Long Run")).toBeInTheDocument();
+    expect(screen.getByText("Long run")).toBeInTheDocument();
     expect(screen.queryByText(/Treadmill/)).toBeNull();
   });
 });
@@ -288,22 +288,23 @@ describe("RunDetail — the route replay", () => {
     const pending = new Set<unknown>();
     const realSet = globalThis.setTimeout;
     const realClear = globalThis.clearTimeout;
-    const setSpy = vi
-      .spyOn(globalThis, "setTimeout")
-      .mockImplementation(((fn: () => void, ms?: number) => {
-        const id = realSet(() => {
-          pending.delete(id);
-          fn();
-        }, ms);
-        if (ms === 600) pending.add(id);
-        return id;
-      }) as typeof setTimeout);
-    const clearSpy = vi
-      .spyOn(globalThis, "clearTimeout")
-      .mockImplementation(((id: unknown) => {
+    const setSpy = vi.spyOn(globalThis, "setTimeout").mockImplementation(((
+      fn: () => void,
+      ms?: number
+    ) => {
+      const id = realSet(() => {
         pending.delete(id);
-        realClear(id as ReturnType<typeof setTimeout>);
-      }) as typeof clearTimeout);
+        fn();
+      }, ms);
+      if (ms === 600) pending.add(id);
+      return id;
+    }) as typeof setTimeout);
+    const clearSpy = vi.spyOn(globalThis, "clearTimeout").mockImplementation(((
+      id: unknown
+    ) => {
+      pending.delete(id);
+      realClear(id as ReturnType<typeof setTimeout>);
+    }) as typeof clearTimeout);
     try {
       const { unmount } = renderDetail();
       act(() => {

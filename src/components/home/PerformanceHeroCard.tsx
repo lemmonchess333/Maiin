@@ -19,6 +19,7 @@ import {
 import type { PerformanceWeekDoc } from "@/lib/performanceTypes";
 import ProgressRing from "@/components/ui/ProgressRing";
 import { Skeleton } from "@/components/LoadingSkeleton";
+import { formatSigned } from "@/utils/formatters";
 
 interface PerformanceHeroCardProps {
   /** Most recent week's perf doc, or null when no rollup exists yet. */
@@ -183,8 +184,7 @@ export default function PerformanceHeroCard({
               ) : (
                 <TrendingDown className="size-3" />
               )}
-              {delta! > 0 ? "+" : ""}
-              {delta}
+              {formatSigned(delta!)}
             </span>
           )}
         </div>

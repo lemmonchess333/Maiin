@@ -107,7 +107,7 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText("Couldn't load your Circles.")).toBeInTheDocument();
+    expect(screen.getByText("Couldn't load your circles.")).toBeInTheDocument();
     // Failed ≠ empty: the cold-start selector must NOT render.
     expect(screen.queryByText("What support would help?")).toBeNull();
 

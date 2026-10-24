@@ -26,7 +26,7 @@ function TargetFrame() {
           2,336
           <span className="text-xs font-medium text-muted-foreground">
             {" "}
-            kcal
+            {CALORIE_UNIT}
           </span>
         </p>
       </div>

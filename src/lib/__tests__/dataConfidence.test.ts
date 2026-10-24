@@ -264,7 +264,7 @@ describe("suppressionCaveatCopy", () => {
     /* Need 4 - 4 = 0 more points (already at threshold), but caller
        passed rate anyway — clamp to ~1 day to avoid "Trending in 0 days". */
     expect(suppressionCaveatCopy("sparkline", 4, 10)).toBe(
-      "Trending in ~1 days"
+      "Trending in ~1 day"
     );
   });
 

@@ -406,13 +406,13 @@ describe("storedKmLabel", () => {
 
 describe("runTypeTitle", () => {
   it("titles a long run as one, whichever spelling it saved", () => {
-    expect(runTypeTitle("long")).toBe("Long Run");
-    expect(runTypeTitle("longrun")).toBe("Long Run");
+    expect(runTypeTitle("long")).toBe("Long run");
+    expect(runTypeTitle("longrun")).toBe("Long run");
   });
 
   it("names the other kinds, and falls back to Run", () => {
-    expect(runTypeTitle("guided")).toBe("Guided Run");
-    expect(runTypeTitle("manual")).toBe("Manual Run");
+    expect(runTypeTitle("guided")).toBe("Guided run");
+    expect(runTypeTitle("manual")).toBe("Manual run");
     expect(runTypeTitle("something-new")).toBe("Run");
     expect(runTypeTitle(undefined)).toBe("Run");
   });
@@ -420,9 +420,9 @@ describe("runTypeTitle", () => {
 
 describe("runTitle", () => {
   it("titles an outdoor run by its type alone", () => {
-    expect(runTitle({ activityType: "long" })).toBe("Long Run");
-    expect(runTitle({ activityType: "long", place: null })).toBe("Long Run");
-    expect(runTitle({ activityType: "manual" })).toBe("Manual Run");
+    expect(runTitle({ activityType: "long" })).toBe("Long run");
+    expect(runTitle({ activityType: "long", place: null })).toBe("Long run");
+    expect(runTitle({ activityType: "manual" })).toBe("Manual run");
     expect(runTitle({})).toBe("Run");
   });
 
@@ -431,7 +431,7 @@ describe("runTitle", () => {
     expect(runTitle({ activityType: "treadmill" })).toBe("Treadmill");
     // Since, a run keeps its session's type, with the treadmill as where.
     expect(runTitle({ activityType: "long", place: "treadmill" })).toBe(
-      "Long Run · Treadmill"
+      "Long run · Treadmill"
     );
     expect(runTitle({ activityType: "intervals", place: "treadmill" })).toBe(
       "Intervals · Treadmill"

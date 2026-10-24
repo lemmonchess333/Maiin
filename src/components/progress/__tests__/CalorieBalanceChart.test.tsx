@@ -289,7 +289,8 @@ describe("calorie balance footer", () => {
 
   it("groups them in the other direction too", () => {
     render(<CalorieBalanceChart meals={[meal(1, 9000)]} />);
-    expect(gap()).toMatch(new RegExp(`^-\\d{1,3}${SEP_RE}\\d{3} kcal$`));
+    // The true minus, U+2212, not the hyphen toLocaleString prints.
+    expect(gap()).toMatch(new RegExp(`^\u2212\\d{1,3}${SEP_RE}\\d{3} kcal$`));
   });
 
   it("counts against the window it actually charts", () => {

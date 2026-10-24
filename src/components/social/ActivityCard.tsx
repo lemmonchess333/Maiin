@@ -506,12 +506,14 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
         )}
         {(activity.elevationGain || 0) > 0 && (
           <div className="min-w-0">
-            {/* Elevation was the one metric fusing its unit into the
-                  numeral — `elevationLabel` returns "120m", so the "m"
-                  rendered at text-xl/700 while every sibling metric
-                  puts its unit in the muted SectionLabel beneath. Pass
-                  withUnit=false and render the unit as its own
-                  secondary span so the four cells finally agree.
+            {/* The unit is its own muted span, smaller than the
+                  numeral, because this cell's caption is taken by
+                  "Elevation" where its siblings' captions carry their
+                  units. A space before it, as the run screens' stat grid
+                  writes "342 m": nothing here is short of room (the cell
+                  is at least as wide as its figure), so a glued unit
+                  would be no compact variant, only the one unit on the
+                  card drawn another way.
 
                   The Mountain icon used to be a SIBLING of this stack
                   inside a `flex gap-1`, which pushed the numeral and its
@@ -520,7 +522,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                   caption, so the figures line up and the icon still
                   marks the cell. */}
             <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
-              {elevationLabel(activity.elevationGain ?? 0, unit, false)}
+              {elevationLabel(activity.elevationGain ?? 0, unit, false)}{" "}
               <span className="text-caption font-semibold text-muted-foreground">
                 {elevationUnitLabel(unit)}
               </span>

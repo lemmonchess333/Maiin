@@ -65,9 +65,9 @@ export default function TreadmillMode({
      underlying input is identical. The helper text below the
      input nudges the user toward the right action without making
      it feel like a tutorial. */
-  const title = mode === "manual" ? "Manual Run" : "Treadmill Run";
+  const title = mode === "manual" ? "Manual run" : "Treadmill run";
   const saveLabel =
-    mode === "manual" ? "Save Manual Run" : "Save Treadmill Run";
+    mode === "manual" ? "Save manual run" : "Save treadmill run";
   const distanceLabel =
     mode === "manual" ? "Distance covered" : "Distance from treadmill";
   const helperCopy =

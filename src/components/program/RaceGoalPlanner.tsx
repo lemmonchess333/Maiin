@@ -17,7 +17,7 @@
  * performance promises.
  */
 import { useState } from "react";
-import { format } from "date-fns";
+import { formatDayMonthYear } from "@/utils/formatters";
 import { Check, ChevronDown, Flag } from "lucide-react";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -161,7 +161,7 @@ function UpcomingRacePicker({
                     key={`${race.id}:${dateKey}`}
                     type="button"
                     role="option"
-                    aria-label={`${race.name} ${format(parseLocalDate(dateKey), "d MMM yyyy")} ${RACE_DISTANCE_LABELS[race.event!.distance]}`}
+                    aria-label={`${race.name} ${formatDayMonthYear(parseLocalDate(dateKey))} ${RACE_DISTANCE_LABELS[race.event!.distance]}`}
                     aria-selected={isSelected}
                     onClick={() => {
                       haptic();
@@ -202,7 +202,7 @@ function UpcomingRacePicker({
                     </span>
                     <span className="shrink-0 flex items-center gap-2">
                       <span className="text-caption text-muted-foreground font-mono tabular-nums">
-                        {format(parseLocalDate(dateKey), "d MMM yyyy")}
+                        {formatDayMonthYear(parseLocalDate(dateKey))}
                       </span>
                       <span
                         className="text-caption text-muted-foreground"

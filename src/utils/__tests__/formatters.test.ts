@@ -9,6 +9,12 @@ import {
   formatClock,
   formatTimeOfDay,
   keepTogether,
+  formatDayMonthLong,
+  formatDayMonthYearLong,
+  formatWeekdayDayMonthYear,
+  formatDuration,
+  formatSigned,
+  withSign,
 } from "../formatters";
 
 describe("formatVolume", () => {
@@ -189,5 +195,66 @@ describe("formatClock (the one m:ss / h:mm:ss formatter — twelve local copies 
     expect(formatClock(59.6)).toBe("1:00");
     expect(formatClock(59.4)).toBe("0:59");
     expect(formatClock(-3)).toBe("0:00");
+  });
+});
+
+describe("the long date forms", () => {
+  const d = new Date("2026-08-22T12:00:00");
+
+  it("write the month in full, day first", () => {
+    expect(formatDayMonthLong(d)).toBe("22 August");
+    expect(formatDayMonthYearLong(d)).toBe("22 August 2026");
+  });
+
+  it("put the year after the weekday form with no comma", () => {
+    expect(formatWeekdayDayMonthYear(d)).toBe("Saturday 22 August 2026");
+  });
+});
+
+describe("withSign / formatSigned (the true minus)", () => {
+  it("writes U+2212 for a negative and + for a positive", () => {
+    expect(formatSigned(-0.27, 2)).toBe("\u22120.27");
+    expect(formatSigned(0.25, 2)).toBe("+0.25");
+    expect(formatSigned(-3)).toBe("\u22123");
+    expect(formatSigned(-3)).not.toMatch(/-/);
+  });
+
+  it("gives no sign to a figure that reads as zero", () => {
+    expect(formatSigned(0)).toBe("0");
+    expect(formatSigned(-0.001, 2)).toBe("0.00");
+    expect(withSign(-0.2, "0")).toBe("0");
+  });
+
+  it("signs a size already written for the reader", () => {
+    expect(withSign(-2400, (2400).toLocaleString())).toBe(
+      `\u2212${(2400).toLocaleString()}`
+    );
+    expect(withSign(1.5, "1.5")).toBe("+1.5");
+  });
+});
+
+describe("formatDuration (a span in words, units spaced)", () => {
+  it("rounds to the minute by default", () => {
+    expect(formatDuration(45)).toBe("45 s");
+    expect(formatDuration(600)).toBe("10 min");
+    expect(formatDuration(634)).toBe("11 min");
+    expect(formatDuration(3600)).toBe("1 h");
+    expect(formatDuration(3900)).toBe("1 h 5 min");
+    expect(formatDuration(3599)).toBe("1 h");
+  });
+
+  it("keeps the part minute when asked", () => {
+    expect(formatDuration(90, { seconds: true })).toBe("1 min 30 s");
+    expect(formatDuration(180, { seconds: true })).toBe("3 min");
+    expect(formatDuration(30, { seconds: true })).toBe("30 s");
+    expect(formatDuration(3725, { seconds: true })).toBe("1 h 2 min 5 s");
+  });
+
+  it("never glues a unit or reads as a clock", () => {
+    for (const s of [5, 59, 60, 61, 125, 3600, 3661, 7322])
+      for (const seconds of [false, true]) {
+        const text = formatDuration(s, { seconds });
+        expect(text, `${s}`).not.toMatch(/\d[hms]|\d:\d/);
+      }
   });
 });

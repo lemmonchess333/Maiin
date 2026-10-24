@@ -21,7 +21,10 @@ import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
-import { containsProfanity } from "@/lib/profanityFilter";
+import {
+  containsProfanity,
+  OBJECTIONABLE_POST_MESSAGE,
+} from "@/lib/profanityFilter";
 import { uploadSpacePostPhoto } from "@/lib/spacePhotoUpload";
 import { PhotoRefusedError } from "@/lib/photoScreen";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
@@ -297,7 +300,7 @@ export default function SpacePostComposer({
             className="text-xs"
             style={{ color: "hsl(var(--warning-strong))" }}
           >
-            Let&apos;s keep it friendly — please reword that.
+            {OBJECTIONABLE_POST_MESSAGE}
           </p>
         )}
 

@@ -36,7 +36,7 @@ export default class RouteErrorBoundary extends Component<Props, State> {
       // Raw error.message can leak implementation detail ("Firestore:
       // Missing or insufficient permissions", SDK internal paths).
       // Keep it visible in dev for debugging, collapse to a generic
-      // "Please try again" in production.
+      // retry line in production.
       const isDev = import.meta.env.DEV;
       const errorText = isDev
         ? this.state.error?.message || "This page couldn't load."
