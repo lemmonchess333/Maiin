@@ -1,7 +1,7 @@
 {
   "tolerance": 0.05,
   "total": 6407465,
-  "coldStart": ["firebase-auth", "motion", "vendor"],
+  "coldStart": ["firebase-auth", "vendor"],
   "chunks": {
     "ActivityCard": 33696,
     "ActivityPost": 4489,
@@ -127,7 +127,7 @@
     "haptic": 1281,
     "heart": 259,
     "History": 98548,
-    "Home": 113244,
+    "Home": 95863,
     "HomeProgramController": 2050,
     "hrZones": 816,
     "IconButton": 1619,
