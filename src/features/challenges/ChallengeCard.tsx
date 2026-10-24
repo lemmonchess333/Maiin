@@ -310,7 +310,12 @@ export function ChallengeCard({
             aria-hidden
           />
         )}
-        <div className="absolute bottom-3 left-4 right-20 min-w-0">
+        {/* Insets in px: in rem the reserve for the ghosted icon grew with
+            the text and left "Distance" 64px at 320 px and 2× text. A
+            photo band draws no icon, so it keeps no reserve. */}
+        <div
+          className={`absolute bottom-3 left-[16px] min-w-0 ${heroPhoto ? "right-[16px]" : "right-[80px]"}`}
+        >
           <SectionLabel
             className={`flex items-center gap-1 ${heroPhoto ? "text-white/85" : ""}`}
           >

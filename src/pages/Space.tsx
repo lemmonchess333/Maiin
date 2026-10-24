@@ -501,8 +501,11 @@ export default function Space() {
             style={photo ? { background: THEME.scrim } : undefined}
           />
         </div>
-        <div className="absolute bottom-4 left-4 right-4 flex items-end gap-3">
-          <div className="flex-1 min-w-0">
+        {/* Join or Joined drops under the name where the two do not fit
+            side by side (larger text), rather than squeezing the name
+            out of its column. */}
+        <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-end gap-x-3 gap-y-2">
+          <div className="min-w-[min(100%,10em)] flex-1">
             <h1
               className={`text-h2 font-extrabold leading-tight ${
                 photo ? "text-white" : "text-foreground"
@@ -570,7 +573,7 @@ export default function Space() {
         {pinnedPosts.map(renderPost)}
 
         <section className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <SectionHeading>From members</SectionHeading>
             {joined === true && memberPosts.length > 0 && (
               <Button

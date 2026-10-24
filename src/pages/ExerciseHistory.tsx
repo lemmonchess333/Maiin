@@ -613,14 +613,10 @@ export default function ExerciseHistory() {
                           <p className="text-xs font-medium text-foreground">
                             {formatDayMonth(parseLocalDate(s.date))}
                           </p>
+                          {/* The PR chip every other best wears. White on
+                              the food orange measured 2.76:1. */}
                           {isPR && (
-                            <span
-                              className="text-caption font-bold tracking-wider px-1.5 py-0.5 rounded-full"
-                              style={{
-                                backgroundColor: THEME.semantic.nutrition,
-                                color: "white",
-                              }}
-                            >
+                            <span className="text-caption font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-achievement/15 text-achievement-strong">
                               PR
                             </span>
                           )}

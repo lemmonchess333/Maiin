@@ -54,7 +54,14 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   const a = S * Math.min(L, 1 - L);
   const f = (n: number) =>
     L - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-  return [f(0), f(8), f(4)];
+  return [f(0), f(8), f(4)].map(paint) as [number, number, number];
+}
+
+/* A channel as the browser paints it: eight bits. Measured unrounded, a
+   token can clear 4.5:1 here and miss it on screen, where axe reads the
+   painted pixel (`--running-fill` was 4.51:1 here and 4.49:1 there). */
+function paint(c: number): number {
+  return Math.round(c * 255) / 255;
 }
 
 function luminance([r, g, b]: [number, number, number]): number {
@@ -230,11 +237,9 @@ describe("token contrast — text tokens on the card surface", () => {
       for (const surface of TINT_SURFACES) {
         const bg = hslToRgb(...readHsl(block, surface));
         for (const alpha of alphas) {
-          const chip = bg.map((c, i) => alpha * tint[i] + (1 - alpha) * c) as [
-            number,
-            number,
-            number,
-          ];
+          const chip = bg.map((c, i) =>
+            paint(alpha * tint[i] + (1 - alpha) * c)
+          ) as [number, number, number];
           const ratio = contrast(fg, chip);
           expect(
             ratio,
@@ -370,7 +375,9 @@ describe("Button variants — the label clears AA on its own surface", () => {
       const bg = (
         mix === 1
           ? tint!
-          : base.map((c, i) => mix * (tint ? tint[i] : c) + (1 - mix) * c)
+          : base.map((c, i) =>
+              paint(mix * (tint ? tint[i] : c) + (1 - mix) * c)
+            )
       ) as [number, number, number];
       const ratio = contrast(fg!, bg);
       expect(
@@ -663,7 +670,7 @@ function over(
   bg: [number, number, number],
   alpha: number
 ): [number, number, number] {
-  return [0, 1, 2].map((i) => fg[i] * alpha + bg[i] * (1 - alpha)) as [
+  return [0, 1, 2].map((i) => paint(fg[i] * alpha + bg[i] * (1 - alpha))) as [
     number,
     number,
     number,
@@ -712,6 +719,7 @@ describe("small secondary text on a tint", () => {
     { what: "Banner info", tint: "running", alpha: 0.06 },
     { what: "Run tile picker repeat row", tint: "running", alpha: 0.12 },
     { what: "selected focus row", tint: "primary", alpha: 0.1 },
+    { what: "lift session card", tint: "lifting", alpha: 0.12 },
   ] as const;
 
   it.each(WASHES)(
@@ -758,6 +766,27 @@ describe("small secondary text on a tint", () => {
     expect(readFile("src/components/program/TrainingBlockCard.tsx")).toMatch(
       /focus === g\s*\?\s*"text-foreground"/
     );
+  });
+
+  it.each([
+    "src/components/home/LiftCTACard.tsx",
+    "src/components/home/RunCTACard.tsx",
+    "src/components/program/SessionCommandCard.tsx",
+    "src/components/program/DeloadBanner.tsx",
+  ])("%s paints no grey words on its wash", (path) => {
+    /* Each is a card washed with its sport or warning colour over the
+       page, where axe measured the grey at 4.06:1 (the lifting wash) and
+       4.27:1 (the lighter-week banner). Its fact lines are MetaLines,
+       which default to the grey, so each must say otherwise. */
+    const src = readFile(path);
+    // A line on its own fill (the done-or-skipped pill, bg-muted) is not
+    // on the wash.
+    const grey = [...src.matchAll(/<p\s+className="([^"]*)"/g)]
+      .map((m) => m[1])
+      .filter((c) => c.includes("text-muted-foreground") && !/\bbg-/.test(c));
+    expect(grey).toEqual([]);
+    for (const m of src.matchAll(/<MetaLine\b[^>]*>/gs))
+      expect(m[0]).toMatch(/text-foreground/);
   });
 
   it.each([

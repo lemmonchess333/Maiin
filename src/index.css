@@ -208,8 +208,8 @@
      NOT --primary (246 88% 70%, hand-tuned for white-text AA). */
   --running: 348 57% 61%; /* #D4637A coral */
   --running-strong: 348 57% 43%; /* #AC2F48 — worst case 4.53:1 (18% tint over background) */
-  --running-fill: 348 57% 54%; /* #CD4762 — 4.51:1 under white */
-  --lifting-strong: 245 73% 59%; /* #574AE3 — worst case 4.51:1 (12% tint over background) */
+  --running-fill: 348 57% 53.5%; /* #CC4560 — 4.58:1 under white */
+  --lifting-strong: 245 73% 58.5%; /* #5548E2 — worst case 4.60:1 (12% tint over background) */
   --lifting-fill: 245 73% 64.5%; /* #6D62E7 — 4.60:1 under white */
   --lifting: 245 73% 68%; /* #7B72E9 purple */
   /* Nutrition domain colour. `--nutrition` is the FIXED warm-orange
@@ -227,7 +227,7 @@
      the CSS token contradicted it. */
   --nutrition: 25 65% 58%; /* #D9884E warm orange */
   --nutrition-fill: 26 91% 37%; /* #B45309 amber-700 — 5.02:1 under white */
-  --nutrition-strong: 26 91% 34%; /* #A64C08 — worst case 4.50:1 (chip over background) */
+  --nutrition-strong: 26 91% 33.5%; /* #A34B08 — worst case 4.61:1 (chip over background) */
   /* AA text step for red, same shape as the sport steps. The identity
      `--destructive` is 3.52:1 on a destructive/10 chip over the page
      background — under the 4.5:1 floor for the button labels
@@ -288,7 +288,7 @@
   --success-bg: 138 76% 97%;
   /* AA text step — the identity is 3.79:1 on a `bg-success/10` chip over
      the page canvas. Hue + saturation unchanged. */
-  --success-strong: 142 72% 26%; /* #137236 */
+  --success-strong: 142 72% 25.5%; /* #127035 */
   --warning: 26 90% 37%;
   --warning-foreground: 0 0% 98%;
   --warning-bg: 48 100% 96%;
@@ -334,7 +334,7 @@
   --running: 348 57% 61%; /* #D4637A coral */
   --running-strong: 348 57% 71%; /* #DF8B9C — worst case 4.52:1 (18% tint over muted) */
   /* IDENTICAL to :root — a fill under white text is theme-independent. */
-  --running-fill: 348 57% 54%; /* #CD4762 — 4.51:1 under white */
+  --running-fill: 348 57% 53.5%; /* #CC4560 — 4.58:1 under white */
   --lifting-strong: 245 73% 75.5%; /* #9B93EE — worst case 4.60:1 (12% tint over muted) */
   --lifting-fill: 245 73% 64.5%; /* #6D62E7 — 4.60:1 under white */
   --lifting: 245 73% 68%; /* #7B72E9 purple */

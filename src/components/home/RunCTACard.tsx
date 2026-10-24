@@ -138,8 +138,9 @@ export default function RunCTACard({
         <p className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground text-balance">
           <InlineNumerals>{runLabel}</InlineNumerals>
         </p>
+        {/* Foreground on the running wash, where the grey misses AA. */}
         {tmpl && dose && (
-          <p className="mt-2 text-sm font-medium text-muted-foreground">
+          <p className="mt-2 text-sm font-medium text-foreground">
             <InlineNumerals>{dose}</InlineNumerals>
           </p>
         )}

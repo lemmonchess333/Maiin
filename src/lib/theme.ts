@@ -139,7 +139,7 @@ export const THEME = {
     /* The overshoot orange, a fill only: the ring's second lap past the
        target, the week strip's over-target lap and the drill-down bar
        past it. The `--nutrition-strong` light value. */
-    deep: "#A64C08",
+    deep: "#A34B08",
   },
 
   // Swipe-action colours (FoodRow). Deliberate iOS-HIG system tones —

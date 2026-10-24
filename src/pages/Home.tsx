@@ -1006,8 +1006,10 @@ export default function Home() {
       </motion.div>
 
       {/* home-declutter 4a — sessions FIRST. Today's lift, run or rest is
-          the page's primary action and leads. */}
+          the page's primary action and leads. A group, so its name is
+          one a screen reader can use: a name on a roleless div is not. */}
       <motion.div
+        role="group"
         aria-label="Today’s training"
         variants={{
           hidden: { opacity: 0, y: 12 },
@@ -1190,7 +1192,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <div className="space-y-2" aria-label="Helpful tips">
+      <div className="space-y-2" role="group" aria-label="Helpful tips">
         {/* D7 — proactive recalibration check-in at natural seams (a few weeks
             in / after a gap). Per-seam tipKey so each seam can re-surface even
             after an earlier one was dismissed; gentle + dismiss-once. */}

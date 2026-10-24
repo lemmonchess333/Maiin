@@ -162,16 +162,20 @@ export default function LiftCTACard({
         </p>
         {/* The dose and the day's muscles, each a fact line whose
             separators never end or open a line ("3 exercises ·" alone
-            on a 375px phone), and whose facts each stay whole. */}
+            on a 375px phone), and whose facts each stay whole. On the
+            lifting wash the grey misses AA, so they take the foreground. */}
         <MetaLine
-          className="mt-2 font-medium"
+          className="mt-2 font-medium text-foreground"
           items={[
             `${count} ${count === 1 ? "exercise" : "exercises"}`,
             ...(minutes !== null ? [`about ${minutes} min`] : []),
           ]}
         />
         {muscleGroups && (
-          <MetaLine className="font-medium" items={muscleGroups.split(" · ")} />
+          <MetaLine
+            className="font-medium text-foreground"
+            items={muscleGroups.split(" · ")}
+          />
         )}
       </div>
       {/* The action row lets taps through to the preview like the rest of

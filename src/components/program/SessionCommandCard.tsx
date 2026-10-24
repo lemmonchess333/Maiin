@@ -117,14 +117,16 @@ export default function SessionCommandCard({
             <h3 className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground text-balance">
               {title}
             </h3>
+            {/* The description and the dose take the foreground: on the
+                sport wash the grey misses AA. */}
             {description && (
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="mt-2 text-sm text-foreground">
                 <InlineNumerals>{description}</InlineNumerals>
               </p>
             )}
             {meta.length > 0 && (
               <div className="mt-2">
-                <MetaLine items={meta} />
+                <MetaLine items={meta} className="text-foreground" />
               </div>
             )}
             {figure && onFigurePress && figureLabel && (
