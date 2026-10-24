@@ -49,7 +49,9 @@ function spokenVolume(ml: number): string {
  * identity is unchanged — only the underlying unit moved from whole
  * glasses to millilitres.
  */
-/** The everyday sizes, one tap each, on an empty day's tile. */
+/** The everyday sizes, one tap each, on an empty day's tile. Each keeps
+ *  its words whole: with larger text the second wraps under the first
+ *  rather than both squeezing past their edges. */
 function WaterPresetRow({
   className,
   onPick,
@@ -64,7 +66,7 @@ function WaterPresetRow({
           key={preset.id}
           variant="ghost"
           aria-label={`Log ${formatWaterVolume(preset.ml)}`}
-          className={cn("min-w-0 flex-1 px-2", className)}
+          className={cn("min-w-fit flex-1 basis-0 px-2", className)}
           onClick={() => onPick(preset.ml)}
         >
           <span className="font-mono tabular-nums">
