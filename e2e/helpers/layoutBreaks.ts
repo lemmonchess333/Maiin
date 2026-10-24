@@ -104,17 +104,19 @@ export async function layoutBreaks(
  */
 export async function brokenWords(
   page: Page,
-  ignore?: string
+  ignore?: string,
+  scope = "body"
 ): Promise<string[]> {
   return page.evaluate(
-    ({ ignore }) => {
+    ({ ignore, scope }) => {
       const out = new Set<string>();
-      const walker = document.createTreeWalker(
-        document.body,
-        NodeFilter.SHOW_TEXT
-      );
+      const texts: Node[] = [];
+      for (const root of Array.from(document.querySelectorAll(scope))) {
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        for (let n = walker.nextNode(); n; n = walker.nextNode()) texts.push(n);
+      }
       const range = document.createRange();
-      for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      for (const n of texts) {
         const el = n.parentElement;
         if (!el || (ignore && el.closest(ignore))) continue;
         const style = getComputedStyle(el);
@@ -122,7 +124,10 @@ export async function brokenWords(
         const text = n.textContent ?? "";
         // An address or a link may break anywhere.
         if (/@|:\/\//.test(text)) continue;
-        for (const m of text.matchAll(/\p{L}{2,15}/gu)) {
+        // Whole runs of letters: a 44-letter compound is one long word,
+        // not three ordinary ones of 15.
+        for (const m of text.matchAll(/\p{L}+/gu)) {
+          if (m[0].length < 2 || m[0].length > 15) continue;
           range.setStart(n, m.index!);
           range.setEnd(n, m.index! + m[0].length);
           const rects = Array.from(range.getClientRects()).filter(
@@ -152,6 +157,147 @@ export async function brokenWords(
       }
       return [...out];
     },
-    { ignore }
+    { ignore, scope }
+  );
+}
+
+/**
+ * Text drawn through a picture beside it. In each `card`, a line of text
+ * that crosses a drawing, where the drawing actually paints: an image
+ * fitted with `object-fit: contain` paints less than its box, and the
+ * measure is what it paints. A picture as wide as its card is a
+ * background, which text may sit on (a run's distance over its route);
+ * one that takes part of the width is a figure, and the words beside it
+ * have to give way to it. Nothing overflows when they do not, so the
+ * box checks above cannot see it. Icons are too small to count.
+ *
+ * `scope` is the region whose pictures are measured; `card`, the box a
+ * picture shares with the text measured against it.
+ */
+export async function textOverArt(
+  page: Page,
+  scope: string,
+  card: string
+): Promise<string[]> {
+  return page.evaluate(
+    ({ scope, card }) => {
+      const out = new Set<string>();
+      const ART = 'img, svg[role="img"], svg[aria-hidden="true"]';
+      const FIGURE = 64;
+      const painted = (el: Element): DOMRect => {
+        const box = el.getBoundingClientRect();
+        if (!(el instanceof HTMLImageElement) || !el.naturalWidth) return box;
+        const style = getComputedStyle(el);
+        if (style.objectFit !== "contain" && style.objectFit !== "scale-down")
+          return box;
+        const fit = Math.min(
+          box.width / el.naturalWidth,
+          box.height / el.naturalHeight,
+          style.objectFit === "scale-down" ? 1 : Infinity
+        );
+        const w = el.naturalWidth * fit;
+        const h = el.naturalHeight * fit;
+        // object-position computes to two lengths or percentages.
+        const [px, py] = style.objectPosition.split(" ");
+        const offset = (value: string, free: number) =>
+          value.endsWith("%")
+            ? (parseFloat(value) / 100) * free
+            : parseFloat(value) || 0;
+        return new DOMRect(
+          box.left + offset(px ?? "50%", box.width - w),
+          box.top + offset(py ?? "50%", box.height - h),
+          w,
+          h
+        );
+      };
+      const range = document.createRange();
+      for (const art of Array.from(document.querySelectorAll(ART))) {
+        if (!art.closest(scope)) continue;
+        const style = getComputedStyle(art);
+        if (style.visibility === "hidden" || style.display === "none") continue;
+        const drawn = painted(art);
+        if (Math.max(drawn.width, drawn.height) < FIGURE) continue;
+        const host = art.closest(card);
+        if (!host) continue;
+        // As wide as its card: a background.
+        const box = art.getBoundingClientRect();
+        if (box.width >= host.getBoundingClientRect().width * 0.9) continue;
+        const what =
+          art.getAttribute("aria-label") ||
+          art.getAttribute("src")?.split("/").pop() ||
+          art.tagName.toLowerCase();
+        const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
+        for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+          const text = (n.textContent ?? "").trim();
+          const el = n.parentElement;
+          if (!text || !el || art.contains(el) || el.closest(".sr-only"))
+            continue;
+          const es = getComputedStyle(el);
+          if (es.visibility === "hidden" || es.display === "none") continue;
+          range.selectNodeContents(n);
+          for (const r of Array.from(range.getClientRects())) {
+            const x =
+              Math.min(r.right, drawn.right) - Math.max(r.left, drawn.left);
+            const y =
+              Math.min(r.bottom, drawn.bottom) - Math.max(r.top, drawn.top);
+            if (x > 1 && y > 1) {
+              out.add(
+                `"${text.slice(0, 30)}" runs ${Math.round(x)}px into the ${what}`
+              );
+              break;
+            }
+          }
+        }
+      }
+      return [...out];
+    },
+    { scope, card }
+  );
+}
+
+/**
+ * Names cut short. Each element `names` matches is a person's name, which
+ * may end in an ellipsis when the row has no more room, but never before
+ * its first word is whole: "Aleksandra W…" still names someone,
+ * "Ale…" does not, and at that width the row has to wrap instead.
+ */
+export async function clippedNames(
+  page: Page,
+  names: string
+): Promise<string[]> {
+  return page.evaluate(
+    ({ names }) => {
+      const out: string[] = [];
+      const range = document.createRange();
+      for (const el of Array.from(document.querySelectorAll(names))) {
+        const rect = el.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) continue;
+        const style = getComputedStyle(el);
+        const clamped =
+          style.webkitLineClamp !== "" && style.webkitLineClamp !== "none";
+        const cut =
+          (style.textOverflow === "ellipsis" &&
+            el.scrollWidth > el.clientWidth + 1) ||
+          (clamped && el.scrollHeight > el.clientHeight + 1);
+        if (!cut) continue;
+        const text = el.firstChild;
+        const name = (el.textContent ?? "").trim();
+        const first = name.match(/^\S+/)?.[0] ?? "";
+        if (!text || text.nodeType !== Node.TEXT_NODE || !first) continue;
+        const start = (text.textContent ?? "").indexOf(first);
+        range.setStart(text, start);
+        range.setEnd(text, start + first.length);
+        // The first word laid out whole, against the room it was given:
+        // wider than the line, or (clamped) running past the last line.
+        const word = range.getBoundingClientRect();
+        const room = el.clientWidth;
+        if (word.width > room + 1 || word.bottom > rect.bottom + 1)
+          out.push(
+            `cuts "${name.slice(0, 30)}" inside "${first}" (${room}px of ${Math.round(word.width)}px)`
+          );
+      }
+      return out;
+    },
+    { names }
   );
 }

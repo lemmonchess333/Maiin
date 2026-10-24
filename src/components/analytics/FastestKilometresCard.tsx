@@ -63,52 +63,57 @@ export default function FastestKilometresCard({
             <li key={km}>
               <Link
                 to={`/run/${shown.runId}`}
-                className="flex min-h-[56px] flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-2 py-2 active:bg-muted/40 motion-safe:transition-colors"
+                className="flex min-h-[56px] items-center gap-3 rounded-xl px-2 py-2 active:bg-muted/40 motion-safe:transition-colors"
               >
-                <span className="w-12 shrink-0 text-sm font-bold text-running-strong">
-                  {km} km
-                </span>
-                {/* The fastest-ever column drops under the row when the
+                {/* The figures wrap inside this group, and the chevron
+                    stays outside it, at the row's end: as the group's last
+                    item it dropped onto a line of its own under "5 km". */}
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="w-12 shrink-0 text-sm font-bold text-running-strong">
+                    {km} km
+                  </span>
+                  {/* The fastest-ever column drops under the row when the
                     two no longer fit (larger text), rather than squeezing
                     this one. */}
-                <div className="min-w-[min(100%,7em)] flex-1">
-                  {inRange ? (
-                    <>
-                      <p className="flex items-center gap-2">
-                        <span className="text-base font-bold font-mono tabular-nums text-foreground">
-                          {finishTimeLabel(inRange.seconds)}
-                        </span>
-                        {isNew && <NewRecordChip label="New best" />}
+                  <div className="min-w-[min(100%,7em)] flex-1">
+                    {inRange ? (
+                      <>
+                        <p className="flex items-center gap-2">
+                          <span className="text-base font-bold font-mono tabular-nums text-foreground">
+                            {finishTimeLabel(inRange.seconds)}
+                          </span>
+                          {isNew && <NewRecordChip label="New best" />}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {day(inRange.date)} ·{" "}
+                          <span className="font-mono tabular-nums">
+                            {paceMinSec(inRange.seconds / km, unit)}
+                          </span>{" "}
+                          {paceUnitLabel(unit)}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        None in this range
                       </p>
+                    )}
+                  </div>
+                  <div className="ml-auto shrink-0 text-right">
+                    {isBestEver && !isNew ? (
                       <p className="text-xs text-muted-foreground">
-                        {day(inRange.date)} ·{" "}
-                        <span className="font-mono tabular-nums">
-                          {paceMinSec(inRange.seconds / km, unit)}
-                        </span>{" "}
-                        {paceUnitLabel(unit)}
+                        Your fastest ever
                       </p>
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      None in this range
-                    </p>
-                  )}
-                </div>
-                <div className="ml-auto shrink-0 text-right">
-                  {isBestEver && !isNew ? (
-                    <p className="text-xs text-muted-foreground">
-                      Your fastest ever
-                    </p>
-                  ) : isNew ? null : (
-                    <>
-                      <p className="text-xs text-muted-foreground">
-                        Fastest ever · {day(allTime.date)}
-                      </p>
-                      <p className="text-sm font-semibold font-mono tabular-nums text-foreground">
-                        {finishTimeLabel(allTime.seconds)}
-                      </p>
-                    </>
-                  )}
+                    ) : isNew ? null : (
+                      <>
+                        <p className="text-xs text-muted-foreground">
+                          Fastest ever · {day(allTime.date)}
+                        </p>
+                        <p className="text-sm font-semibold font-mono tabular-nums text-foreground">
+                          {finishTimeLabel(allTime.seconds)}
+                        </p>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <ChevronRight
                   className="size-4 shrink-0 text-muted-foreground"

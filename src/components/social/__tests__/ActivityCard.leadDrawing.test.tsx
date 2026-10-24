@@ -63,12 +63,18 @@ describe("a lift post's hero", () => {
     const card = renderCard(
       liftPost([
         { name: "My Own Lift", summary: "3×10" },
-        { name: "Bench Press", exerciseId: "bench-press", summary: "3×8×60 kg" },
+        {
+          name: "Bench Press",
+          exerciseId: "bench-press",
+          summary: "3×8×60 kg",
+        },
         { name: "Barbell Squat", exerciseId: "squat", summary: "3×5×80 kg" },
       ])
     );
     const drawing = card.querySelector("img[data-lead-drawing]");
-    expect(drawing?.getAttribute("src")).toMatch(/form-art\/bench-press\.webp$/);
+    expect(drawing?.getAttribute("src")).toMatch(
+      /form-art\/bench-press\.webp$/
+    );
     // In place of the muscle figure, not beside it.
     expect(
       screen.queryByRole("img", { name: "Muscles trained this session" })
@@ -85,7 +91,9 @@ describe("a lift post's hero", () => {
   });
 
   it("keeps the muscle figure for a post with no drawn lift", () => {
-    const card = renderCard(liftPost([{ name: "My Own Lift", summary: "3×10" }]));
+    const card = renderCard(
+      liftPost([{ name: "My Own Lift", summary: "3×10" }])
+    );
     expect(card.querySelector("img[data-lead-drawing]")).toBeNull();
     expect(
       screen.getByRole("img", { name: "Muscles trained this session" })
@@ -95,12 +103,35 @@ describe("a lift post's hero", () => {
   it("carries the volume and the PRs over the drawing, once", () => {
     const card = renderCard(
       liftPost(
-        [{ name: "Bench Press", exerciseId: "bench-press", summary: "3×8×60 kg" }],
+        [
+          {
+            name: "Bench Press",
+            exerciseId: "bench-press",
+            summary: "3×8×60 kg",
+          },
+        ],
         { prCount: 2 }
       )
     );
     expect(card.querySelector("img[data-lead-drawing]")).not.toBeNull();
     expect(screen.getAllByText("2 PRs")).toHaveLength(1);
     expect(screen.getAllByText(/kg volume/)).toHaveLength(1);
+  });
+});
+
+describe("a lift post's movement line", () => {
+  it("is a fact line, so a narrow card never strands a dot", () => {
+    // The labels were joined into one string, so at large text the line
+    // could end on its dot ("Push · Pull ·"). As a MetaLine each dot is
+    // held to the label after it.
+    const card = renderCard(
+      liftPost([{ name: "Bench Press", exerciseId: "bench-press" }], {
+        muscleGroups: ["horizontal_push", "vertical_pull"],
+      })
+    );
+    const line = Array.from(card.querySelectorAll("p")).find((p) =>
+      p.querySelector("[data-meta-separator]")
+    );
+    expect(line?.textContent).toBe("Push · Pull");
   });
 });

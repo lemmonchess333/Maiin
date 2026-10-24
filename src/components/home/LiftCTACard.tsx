@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Play } from "lucide-react";
 import InlineNumerals from "@/components/ui/InlineNumerals";
+import MetaLine from "@/components/ui/MetaLine";
 import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
@@ -153,34 +154,18 @@ export default function LiftCTACard({
         <p className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground text-balance">
           <InlineNumerals>{title}</InlineNumerals>
         </p>
-        <p className="mt-2 text-sm font-medium text-muted-foreground">
-          <InlineNumerals>
-            {`${count} ${count === 1 ? "exercise" : "exercises"}`}
-          </InlineNumerals>
-          {minutes !== null && (
-            <>
-              {" · "}
-              {/* One unit when the line wraps: on a 375px phone the text
-                  column beside the drawing broke "about 43" from "min". */}
-              <span className="whitespace-nowrap">
-                about <span className="font-mono tabular-nums">{minutes}</span>{" "}
-                min
-              </span>
-            </>
-          )}
-        </p>
+        {/* The dose and the day's muscles, each a fact line whose
+            separators never end or open a line ("3 exercises ·" alone
+            on a 375px phone), and whose facts each stay whole. */}
+        <MetaLine
+          className="mt-2 font-medium"
+          items={[
+            `${count} ${count === 1 ? "exercise" : "exercises"}`,
+            ...(minutes !== null ? [`about ${minutes} min`] : []),
+          ]}
+        />
         {muscleGroups && (
-          <p className="text-sm font-medium text-muted-foreground">
-            {/* Each group holds together, "Legs + more" included, so a
-                narrow column breaks between groups rather than leaving
-                "more" alone on a line. */}
-            {muscleGroups.split(" · ").map((group, i) => (
-              <span key={group}>
-                {i > 0 && " · "}
-                <span className="whitespace-nowrap">{group}</span>
-              </span>
-            ))}
-          </p>
+          <MetaLine className="font-medium" items={muscleGroups.split(" · ")} />
         )}
       </div>
       {/* The action row lets taps through to the preview like the rest of
