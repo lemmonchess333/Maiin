@@ -22,7 +22,8 @@
  * joining that list fails, since a lazy chunk lands there without any
  * size changing: a module shared with eager code that Rollup hosts in the
  * lazy chunk gives the entry a static edge to all of it. One leaving it
- * is reported.
+ * is reported. And it holds index.html's two first-paint font preloads
+ * (scripts/first-paint-fonts.ts) to files the build emitted.
  *
  * Bumping the baseline is allowed — in the same PR as the growth, with the
  * reason in the PR body. `node scripts/check-dist-size.mjs --update`
@@ -130,6 +131,29 @@ for (const name of coldStart) {
 for (const name of baseline.coldStart ?? []) {
   if (!coldStart.includes(name))
     shrunk.push(`${name}: no longer preloaded — remove it from coldStart`);
+}
+
+/* The first-paint fonts (scripts/first-paint-fonts.ts): both preloaded from
+   index.html, each a file the build emitted. A preload that names a missing
+   file fetches nothing useful, and one that goes missing brings back the
+   swap from the fallback face on a first web visit. */
+const html = readFileSync(indexPath, "utf8");
+const fontPreloads = [...html.matchAll(/<link\b[^>]*\bas="font"[^>]*>/g)].map(
+  ([tag]) => tag
+);
+if (fontPreloads.length !== 2) {
+  failures.push(
+    `index.html preloads ${fontPreloads.length} fonts, not the two first-paint faces (scripts/first-paint-fonts.ts)`
+  );
+}
+for (const tag of fontPreloads) {
+  const file = /href="[^"]*\/assets\/([^"]+)"/.exec(tag)?.[1];
+  if (
+    !/\bcrossorigin\b/.test(tag) ||
+    !file ||
+    !existsSync(resolve(assetsDir, file))
+  )
+    failures.push(`index.html font preload is broken: ${tag}`);
 }
 
 if (total - baseline.total > baseline.total * GROWTH_TOLERANCE) {

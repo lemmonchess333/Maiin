@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import { shrinkFormFrames } from "./scripts/art/shrink-form-frames";
+import { firstPaintFontPreloads } from "./scripts/first-paint-fonts";
 
 const isCapacitor = process.env.CAPACITOR_BUILD === "true";
 // Firebase Hosting serves from the domain root, AND from the same origin as the
@@ -76,6 +77,26 @@ function shrinkFormFramesPlugin(): Plugin {
   };
 }
 
+/** Preloads the two font files the first screen draws with from
+ * `dist/index.html` (`scripts/first-paint-fonts.ts`), so a first visit on
+ * the web fetches them with the stylesheet instead of after it. */
+function firstPaintFontsPlugin(): Plugin {
+  let base = "/";
+  return {
+    name: "tropos-first-paint-fonts",
+    apply: "build",
+    configResolved(config) {
+      base = config.base;
+    },
+    transformIndexHtml: {
+      order: "post",
+      handler(_html, ctx) {
+        return firstPaintFontPreloads(Object.keys(ctx.bundle ?? {}), base);
+      },
+    },
+  };
+}
+
 /** Debug tokens bypass device attestation. Read Vite's resolved env so this
  * also catches .env.local / mode files and native or custom-mode builds.
  * Never include the token value in an error or a build artifact. */
@@ -109,6 +130,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     releaseDebugTokenGuard(),
     shrinkFormFramesPlugin(),
+    firstPaintFontsPlugin(),
     react(),
     tailwindcss(),
     ...(mode === "test" ? [e2eMarkerPlugin()] : []),
