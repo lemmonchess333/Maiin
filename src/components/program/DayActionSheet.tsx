@@ -80,6 +80,7 @@ import {
 } from "@/lib/dateHelpers";
 import { resolveRunMoveOptions } from "@/lib/runReschedule";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
+import { liftOnDate } from "@/lib/homeLift";
 import { hasHybridInterference } from "@/lib/runProgrammeViewModel";
 import {
   getCompletionKind,
@@ -146,7 +147,13 @@ interface DayActionSheetProps {
    *    has its own tab with richer management). Lift skipping on the Run tab
    *    was never the job of this affordance. */
   scope?: "day" | "run";
+  /** Ids of the sessions logged on `dateKey`. Today's lift is the one
+   *  Home's card offers, and a session done today keeps it on the sheet,
+   *  done (`liftOnDate`). */
+  sessionsOnDate?: ReadonlySet<string>;
 }
+
+const NO_SESSIONS: ReadonlySet<string> = new Set();
 
 export default function DayActionSheet({
   open,
@@ -164,6 +171,7 @@ export default function DayActionSheet({
   restoreWorkoutDay,
   moveRunDay,
   scope = "day",
+  sessionsOnDate = NO_SESSIONS,
 }: DayActionSheetProps) {
   const unit = useDistanceUnit();
   // RUN-RESCHEDULE-01: reveal the destination-day picker inline.
@@ -203,7 +211,15 @@ export default function DayActionSheet({
 
   if (!open || !resolved || !dateKey) return null;
 
-  const { lift, run } = resolved;
+  const { run } = resolved;
+  // Today's lift is the today card's, so Skip skips the session it offers.
+  const lift = liftOnDate({
+    dateKey,
+    todayKey: localDateString(new Date()),
+    scheduled: resolved.lift,
+    programme: programState,
+    sessionsOnDate,
+  });
   const hasLift = lift.workout !== null && lift.index !== null;
   const hasRun = run.runDay !== null;
   // Run-scoped invocations (Programme Run tab) never surface the lift block —

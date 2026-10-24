@@ -58,12 +58,14 @@ describe("route planner — the position reaches the map", () => {
   });
 });
 
-describe("route planner — dark is the default theme", () => {
-  it("does not read an unloaded profile as light mode", () => {
-    /* `!!profile?.darkMode` is false while the profile is still loading, so
-       the planner could open on the LIGHT basemap inside a dark app. Dark is
-       the default per CLAUDE.md — only an explicit `false` means light. */
-    expect(section).toMatch(/darkMode=\{profile\?\.darkMode !== false\}/);
-    expect(section).not.toMatch(/darkMode=\{!!profile\?\.darkMode\}/);
+describe("route planner — the basemap draws the theme on screen", () => {
+  it("reads the rendered theme, not the profile field", () => {
+    /* `!!profile?.darkMode` was false while the profile loaded, so the
+       planner could open on the LIGHT basemap inside a dark app; and any
+       field-based reading disagrees with the page whenever something else
+       sets the `dark` class. Both sheets take the class (useIsDarkTheme). */
+    expect(section).toMatch(/const darkTheme = useIsDarkTheme\(\)/);
+    expect(section.match(/darkMode=\{darkTheme\}/g)).toHaveLength(2);
+    expect(section).not.toMatch(/profile\?\.darkMode/);
   });
 });

@@ -771,6 +771,18 @@ export default function Home() {
     },
     [peekDate, getWorkoutsForDate]
   );
+  // The sessions logged on the day being managed: one done today keeps
+  // today's lift on the sheet, done, as it stays on the today card.
+  const manageSessions = useMemo(
+    function () {
+      return new Set(
+        (manageDate ? getWorkoutsForDate(manageDate) : []).flatMap((w) =>
+          w.id ? [w.id] : []
+        )
+      );
+    },
+    [manageDate, getWorkoutsForDate]
+  );
   const peekT = useMemo(
     function () {
       return peekDate
@@ -1263,6 +1275,7 @@ export default function Home() {
           restoreRunDay={restoreRunDay}
           restoreWorkoutDay={restoreWorkoutDay}
           moveRunDay={moveRunDay}
+          sessionsOnDate={manageSessions}
         />
       </Suspense>
 

@@ -66,6 +66,7 @@ import type { WorkPortion } from "../hooks/useSessionPlayer";
 import { paceMinSec, distanceLabel2, distanceValue } from "../lib/runLabels";
 import { splitsForDisplay } from "../lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 import {
   distanceIn,
   type DistanceUnit,
@@ -372,6 +373,8 @@ export default function RunSummary() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const unit = useDistanceUnit();
+  // The basemap follows the theme on screen, not the profile field.
+  const darkTheme = useIsDarkTheme();
   const receipt = state?.savedRun?.uid === user?.uid ? state?.savedRun : null;
   const runOwnerRef = useRef(user?.uid);
   const {
@@ -1273,7 +1276,7 @@ export default function RunSummary() {
                   height="h-64"
                   paceColored={avgPaceSeconds > 0}
                   avgPaceSecPerKm={avgPaceSeconds}
-                  darkMode={!!profile?.darkMode}
+                  darkMode={darkTheme}
                 />
               </div>
               {avgPaceSeconds > 0 && <PaceLegend className="px-1" />}

@@ -33,6 +33,7 @@ import {
 } from "@/lib/dateHelpers";
 import { groupTextRe } from "@/test/localeGrouping";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
 
 /* These components read the display unit, which resolves from the auth
    profile — and `useAuth` throws outside an AuthProvider, which none of
@@ -1336,5 +1337,57 @@ describe("DayPeekCard — a long run that finishes at race pace (Run21 (2))", ()
     renderLong();
     expect(screen.getByText("Long 15K")).toBeInTheDocument();
     expect(screen.queryByText(/race pace/)).toBeNull();
+  });
+});
+
+/* Today's peek names the lift the today card offers: the programme's next
+   (homeLift.ts), not the weekday's slot in the schedule. The two differ
+   whenever the week's lifts ran out of step with its weekdays, and the
+   peek said "Legs A" over a card that said "Push A" on the same day. */
+describe("DayPeekCard — today's lift is the today card's", () => {
+  const EVERY_DAY = makeSchedule(Array(7).fill("lift"));
+  const NAMES = ["Pull", "Push", "Legs", "Upper", "Lower", "Arms", "Core"];
+
+  function programme(nextWorkoutOverride?: number): ProgramState {
+    return {
+      ...makeProgramState([]),
+      workouts: NAMES.map((dayName) => ({
+        dayName,
+        dayType: "full",
+        exercises: [],
+        completed: false,
+      })),
+      ...(nextWorkoutOverride === undefined ? {} : { nextWorkoutOverride }),
+    } as ProgramState;
+  }
+
+  it("names the programme's next on today's peek, not the weekday's slot", () => {
+    const today = localDateString();
+    const profile = makeProfile(EVERY_DAY);
+    const slot = resolveTrainingDayForDate({
+      dateKey: today,
+      profile,
+      programState: programme(),
+      currentWeekKey: localWeekKey(parseLocalDate(today)),
+      claimMap: emptyClaimMap,
+      todayKey: today,
+    }).lift.index;
+    expect(slot).not.toBeNull();
+    const next = (slot! + 1) % NAMES.length;
+    renderCard(
+      <DayPeekCard
+        todayKey={today}
+        dateKey={today}
+        profile={profile}
+        programState={programme(next)}
+        claimMap={emptyClaimMap}
+        extras={emptyExtras}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        onClose={vi.fn()}
+      />
+    );
+    expect(screen.getByText(NAMES[next])).toBeInTheDocument();
+    expect(screen.queryByText(NAMES[slot!])).toBeNull();
   });
 });

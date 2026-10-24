@@ -28,6 +28,7 @@ import { useNavigate } from "react-router-dom";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
+import { liftOnDate } from "@/lib/homeLift";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   getCompletionKind,
@@ -231,6 +232,15 @@ export default function DayPeekCard({
     claimMap,
     todayKey,
   });
+  /* Today's lift is the one the today card offers (the programme's next),
+     not the weekday's slot, so the peek and the card name one session. */
+  const dayLift = liftOnDate({
+    dateKey,
+    todayKey,
+    scheduled: resolved.lift,
+    programme: programState,
+    sessionsOnDate: new Set(workouts.flatMap((w) => (w.id ? [w.id] : []))),
+  });
   const dayLabel = formatShortWeekdayDayMonth(parseLocalDate(dateKey));
   /* The badge describes the day's WEEKDAY PATTERN (`profile.weekSchedule`),
      while the rows below it come from the resolved plan — the actual
@@ -319,11 +329,11 @@ export default function DayPeekCard({
   // you WHICH lift / run it is (not a generic "Lift + Run day"). Lift
   // name from the scheduled WorkoutDay; run name from its template
   // (honouring a per-day override).
-  const plannedLiftName = resolved.lift.workout
+  const plannedLiftName = dayLift.workout
     ? liftDayNameIn(
         (programState?.workouts ?? []).map((w) => w.dayName),
-        resolved.lift.index ?? -1,
-        resolved.lift.workout.dayName
+        dayLift.index ?? -1,
+        dayLift.workout.dayName
       )
     : null;
   const runTemplateId =
@@ -470,13 +480,13 @@ export default function DayPeekCard({
                         min/volume append in mono when the day is done. */}
                     {plannedLiftName ??
                       `${workouts.length} session${workouts.length !== 1 ? "s" : ""}`}
-                    {resolved.lift.status === "completed" && (
+                    {dayLift.status === "completed" && (
                       <Check
                         className="inline size-3 ml-1 align-[-1px]"
                         style={{ color: THEME.success }}
                       />
                     )}
-                    {resolved.lift.status === "skipped" && (
+                    {dayLift.status === "skipped" && (
                       <span className="text-muted-foreground"> · skipped</span>
                     )}
                     {hasW && (totalMinutes > 0 || tonnage > 0) && (
@@ -503,7 +513,7 @@ export default function DayPeekCard({
               {plannedLiftName && !multiSession && (
                 <LiftPurpose
                   programme={programState}
-                  day={resolved.lift.workout}
+                  day={dayLift.workout}
                   date={dateKey}
                   experience={profile?.experience}
                   className="pl-5"
@@ -645,8 +655,7 @@ export default function DayPeekCard({
               is both the conventional card order and the one that stops
               a 44px touch target reading as an accident. */}
           {onManage &&
-            (resolved.run.runDay !== null ||
-              resolved.lift.workout !== null) && (
+            (resolved.run.runDay !== null || dayLift.workout !== null) && (
               <div className="pt-1 border-t border-border/40">
                 <button
                   type="button"
