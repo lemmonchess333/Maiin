@@ -3,6 +3,8 @@
   "total": 6407465,
   "coldStart": ["firebase-auth", "motion", "vendor"],
   "chunks": {
+    "ActivityCard": 33696,
+    "ActivityPost": 4489,
     "AccordionSection": 1612,
     "accountSecurity": 2800,
     "activationTracker": 327,
@@ -345,7 +347,7 @@
     "useMacroPalette": 600,
     "useMeals": 8773,
     "useOnlineStatus": 497,
-    "usePartnerStreak": 38209,
+    "usePartnerStreak": 4799,
     "usePerformance": 2471,
     "usePrivacyZones": 1432,
     "useProgram": 35279,
