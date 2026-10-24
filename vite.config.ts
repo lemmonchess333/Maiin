@@ -156,6 +156,18 @@ export default defineConfig(({ mode }) => ({
 
     rollupOptions: {
       output: {
+        // No experimentalMinChunkSize, though two chunks in five are
+        // under 1 KB. Measured at 2, 5, 10, 15 and 20 KB: Rollup merges a
+        // small chunk into whichever chunk it judges cheapest, counting
+        // only the small chunk's own bytes. It moved firestoreWrite
+        // (600 B) into the entry, which put firebase-db on every cold
+        // start (check-dist-size's coldStart gate fails at every size),
+        // and the 395 B play icon into GuideWalk, so Home then loaded
+        // GuideWalk statically. Naming the entry's own code as a manual
+        // chunk keeps merges out of it, and sends the shared small chunks
+        // into big lazy ones instead: Home's closure grew 40%. The small
+        // chunks are the cheaper cost.
+        //
         // FUNCTION form, not the object form. The object form
         // (`charts: ["recharts"]`) claims the listed package AND its
         // entire dependency subtree into the chunk — recharts' subtree
