@@ -17,6 +17,7 @@ import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { toast } from "@/lib/toast";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { showRestrictedToast } from "@/lib/accountRestriction";
 import { logger } from "@/lib/logger";
@@ -329,9 +330,23 @@ export function useChallenges() {
     }
     return combined;
   }, [uid, progressState, liveProgress]);
-  const [leaderboards, setLeaderboards] = useState<
-    Record<string, ChallengeParticipant[]>
+  /* Each board as read, unranked. Ranked below without anyone either side
+     of a block with the viewer (S4a pin 2, Polish3 call 1), so a block
+     made or lifted re-ranks the boards without reading them again. */
+  const [rawBoards, setRawBoards] = useState<
+    Record<string, { metric: string; entries: ChallengeParticipant[] }>
   >({});
+  const { blocked } = useBlockedUsers();
+  const leaderboards = useMemo(() => {
+    const boards: Record<string, ChallengeParticipant[]> = {};
+    for (const [id, { metric, entries }] of Object.entries(rawBoards)) {
+      boards[id] = rankLeaderboard(
+        entries.filter((p) => !p.uid || !blocked.has(p.uid)),
+        metric
+      );
+    }
+    return boards;
+  }, [rawBoards, blocked]);
   const [loading, setLoading] = useState(true);
 
   // Upcoming definitions may not change at midnight. The day dependency also
@@ -448,7 +463,10 @@ export function useChallenges() {
     if (!uid || tracked.length === 0) return;
     let active = true;
     const load = async () => {
-      const boards: Record<string, ChallengeParticipant[]> = {};
+      const boards: Record<
+        string,
+        { metric: string; entries: ChallengeParticipant[] }
+      > = {};
       for (const ch of tracked) {
         /* Sort direction depends on the challenge's metric semantics.
            For SUM-style metrics (workout_count / total_volume / total_km
@@ -476,14 +494,14 @@ export function useChallenges() {
           );
         }
         const snap = await getDocs(qRef);
-        boards[ch.id] = rankLeaderboard(
-          snap.docs.map(
+        boards[ch.id] = {
+          metric: ch.metric,
+          entries: snap.docs.map(
             (d) => ({ uid: d.id, ...d.data() }) as ChallengeParticipant
           ),
-          ch.metric
-        );
+        };
       }
-      if (active) setLeaderboards(boards);
+      if (active) setRawBoards(boards);
     };
     load();
     return () => {

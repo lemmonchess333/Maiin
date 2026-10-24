@@ -107,6 +107,13 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
         self.assertEqual(len(paths), len(set(paths)))
         self.assertIn("onPublicProfileWritten", verifier.RETRY_REQUIRED)
 
+    def test_block_mirror_reads_back_its_reconciler_and_retry_guard(self):
+        paths = verifier.source_targets()["onBlockWritten"]
+        self.assertTrue({"index.js", "package-lock.json", "lib/blockMirror.js",
+                         "lib/triggerRetry.js", "lib/accountDeletionLocks.js"}.issubset(paths))
+        self.assertEqual(len(paths), len(set(paths)))
+        self.assertIn("onBlockWritten", verifier.RETRY_REQUIRED)
+
     def test_social_fanout_targets_cover_changed_privacy_and_retry_artifacts(self):
         targets = verifier.source_targets()
         expected = {

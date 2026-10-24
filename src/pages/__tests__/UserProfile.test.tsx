@@ -9,6 +9,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -24,6 +25,9 @@ const H = vi.hoisted(() => ({
   followers: {} as Record<string, number>,
   countsFail: false,
   blocked: [] as string[],
+  // Who has blocked the viewer, delivered live; `deliver` sends another.
+  blockedBy: [] as string[],
+  deliver: (_ids: string[]) => {},
 }));
 
 vi.mock("firebase/firestore");
@@ -39,6 +43,11 @@ vi.mock("@/lib/socialApi", () => ({
   blockUser: vi.fn(),
   unblockUser: vi.fn(async () => {}),
   getBlockedUsers: async () => H.blocked,
+  subscribeBlockedBy: (_uid: string, onChange: (ids: string[]) => void) => {
+    H.deliver = onChange;
+    onChange(H.blockedBy);
+    return () => {};
+  },
   hasFollowRequestFrom: async () => false,
   acceptFollowRequest: vi.fn(),
   declineFollowRequest: vi.fn(),
@@ -143,6 +152,7 @@ beforeEach(() => {
   H.followers = {};
   H.countsFail = false;
   H.blocked = [];
+  H.blockedBy = [];
 });
 afterEach(() => {
   resumeReads();
@@ -370,6 +380,120 @@ describe("someone you blocked", () => {
     expect(
       await screen.findByRole("button", { name: "Follow" })
     ).toBeInTheDocument();
+  });
+
+  it("shows whom you blocked and nothing they shared, until you unblock", async () => {
+    H.viewer = "blocker-hides";
+    H.blocked = ["alice"];
+    seedFirestore({
+      "users/alice/public/profile": {
+        displayName: "Alice",
+        trainingForSpaceId: "london-marathon",
+        badgeSummary: { earnedMap: { first_5k: "2026-02-01" } },
+      },
+      ...post("a1", "alice", {}),
+    });
+    renderAt("/user/alice");
+    // POSITIVE anchor: their name and the way back.
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Alice" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("You blocked Alice")).toBeInTheDocument();
+    expect(screen.queryByRole("article")).toBeNull();
+    expect(screen.queryByRole("list", { name: "Recent badges" })).toBeNull();
+    expect(screen.queryByTestId("training-for")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Unblock" }));
+    expect(
+      await screen.findByRole("article", { name: "Post a1" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText("You blocked Alice")).toBeNull();
+  });
+});
+
+/* Polish3 call 1: blocking hides each person from the other. The page of
+   someone who blocked you says what a deleted account's says, and shows
+   nothing of theirs. */
+describe("someone who blocked you", () => {
+  const BLOCKERS_PROFILE = {
+    "users/alice/public/profile": {
+      displayName: "Alice",
+      photoURL: "https://lh3.googleusercontent.com/alice.jpg",
+      trainingForSpaceId: "london-marathon",
+      badgeSummary: { earnedMap: { first_5k: "2026-02-01" } },
+    },
+    ...post("a1", "alice", {}),
+  };
+
+  const expectNothingOfTheirs = () => {
+    expect(screen.queryByText("Alice")).toBeNull();
+    expect(screen.queryByRole("img")).toBeNull();
+    expect(screen.queryByRole("article")).toBeNull();
+    expect(screen.queryByRole("list", { name: "Recent badges" })).toBeNull();
+    expect(screen.queryByTestId("training-for")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Follow" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Unblock" })).toBeNull();
+  };
+
+  it("reads as not available, in a deleted account's words", async () => {
+    H.viewer = "blocked-viewer";
+    H.blockedBy = ["alice"];
+    seedFirestore(BLOCKERS_PROFILE);
+    renderAt("/user/alice");
+    expect(
+      await screen.findByText("This profile isn't available")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "The account may have been deleted, or the link is out of date."
+      )
+    ).toBeInTheDocument();
+    expectNothingOfTheirs();
+  });
+
+  it("reads as not available when you blocked each other", async () => {
+    H.viewer = "mutual-viewer";
+    H.blocked = ["alice"];
+    H.blockedBy = ["alice"];
+    seedFirestore(BLOCKERS_PROFILE);
+    renderAt("/user/alice");
+    expect(
+      await screen.findByText("This profile isn't available")
+    ).toBeInTheDocument();
+    expectNothingOfTheirs();
+  });
+
+  it("goes the moment their block arrives, with the page open", async () => {
+    H.viewer = "blocked-later";
+    seedFirestore(BLOCKERS_PROFILE);
+    renderAt("/user/alice");
+    expect(
+      await screen.findByRole("article", { name: "Post a1" })
+    ).toBeInTheDocument();
+
+    act(() => H.deliver(["alice"]));
+    expect(
+      await screen.findByText("This profile isn't available")
+    ).toBeInTheDocument();
+    expectNothingOfTheirs();
+  });
+
+  it("reads as not available when the rules refuse it, not as a connection to retry", async () => {
+    // The server's copy of the block can trail it by a moment; the rules
+    // refuse the profile at once.
+    H.viewer = "refused-viewer";
+    seedFirestore(BLOCKERS_PROFILE);
+    failNextFirestore("getDoc", {
+      path: "users/alice/public/profile",
+      code: "permission-denied",
+    });
+    renderAt("/user/alice");
+    expect(
+      await screen.findByText("This profile isn't available")
+    ).toBeInTheDocument();
+    expect(unfiredFailures()).toEqual([]);
+    expect(screen.queryByText("Couldn't load this profile")).toBeNull();
+    expect(screen.queryByText("Alice")).toBeNull();
   });
 });
 

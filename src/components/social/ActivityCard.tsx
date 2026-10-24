@@ -92,7 +92,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
   const volumeFigure = (kg: number) =>
     Math.round(liftVolumeIn(kg, liftUnit)).toLocaleString();
   const volumeLabel = `${liftUnitLabel(liftUnit)} volume`;
-  const { addBlocked } = useBlockedUsers();
+  const { blocked, addBlocked } = useBlockedUsers();
   const { isRestricted } = useRestrictedStatus(user?.uid);
   const [liked, setLiked] = useState(feedItem.liked ?? false);
   const [kudosCount, setKudosCount] = useState(feedItem.kudosCount ?? 0);
@@ -898,22 +898,26 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
                 Couldn&apos;t load props right now. Try again.
               </p>
             ) : (
-              kudosUsers.map((u) => (
-                <div key={u.userId} className="flex items-center gap-2">
-                  <BlockAwareAvatar
-                    uid={u.userId}
-                    photoURL={u.photoURL}
-                    displayName={u.userName}
-                    size="sm"
-                  />
-                  <span
-                    dir="auto"
-                    className="min-w-0 truncate text-left text-xs font-medium text-foreground"
-                  >
-                    {u.userName}
-                  </span>
-                </div>
-              ))
+              /* Nobody either side of a block with you, as in the
+                 comments below. */
+              kudosUsers
+                .filter((u) => !blocked.has(u.userId))
+                .map((u) => (
+                  <div key={u.userId} className="flex items-center gap-2">
+                    <BlockAwareAvatar
+                      uid={u.userId}
+                      photoURL={u.photoURL}
+                      displayName={u.userName}
+                      size="sm"
+                    />
+                    <span
+                      dir="auto"
+                      className="min-w-0 truncate text-left text-xs font-medium text-foreground"
+                    >
+                      {u.userName}
+                    </span>
+                  </div>
+                ))
             )}
           </div>
         )}

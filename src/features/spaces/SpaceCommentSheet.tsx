@@ -178,8 +178,9 @@ export default function SpaceCommentSheet({
     }
   };
 
-  /* A blocked author's comments drop out, as their posts drop out of the
-     space (Space.tsx). Your own are never in the blocked set. */
+  /* Comments by someone either side of a block with you drop out, as
+     their posts drop out of the space (Space.tsx). Your own are never in
+     the blocked set. */
   const visibleComments =
     comments?.filter((c) => !c.authorId || !blocked.has(c.authorId)) ?? null;
 

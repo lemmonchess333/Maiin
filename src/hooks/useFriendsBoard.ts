@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
@@ -10,6 +10,7 @@ import {
   type LeaderboardEntry,
 } from "@/lib/leaderboard";
 import { logger } from "@/lib/logger";
+import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 
 export interface NamedBoardWeek extends BoardWeek {
   name: string;
@@ -92,10 +93,18 @@ export function useFriendsBoard() {
 
   const settled = board !== null && board.key === key ? board : null;
   const reload = useCallback(() => setAttempt((n) => n + 1), []);
+  /* Nobody either side of a block with you is on your board (S4a pin 2).
+     Blocking ends both follows, so this is the backstop for a follow left
+     behind, and the rules refuse that tally besides. */
+  const { blocked } = useBlockedUsers();
+  const weeks = useMemo(
+    () => (settled?.weeks ?? []).filter((w) => !blocked.has(w.uid)),
+    [settled, blocked]
+  );
   return {
     loading: settled === null,
     failed: settled?.failed ?? false,
-    weeks: settled?.weeks ?? [],
+    weeks,
     reload,
   };
 }

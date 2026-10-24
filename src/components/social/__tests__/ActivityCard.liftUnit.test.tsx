@@ -19,7 +19,7 @@ vi.mock("../../../hooks/useRestrictedStatus", () => ({
   useRestrictedStatus: () => ({ isRestricted: false, loading: false }),
 }));
 vi.mock("../../../hooks/useBlockedUsers", () => ({
-  useBlockedUsers: () => ({ addBlocked: vi.fn(), blockedUsers: new Set() }),
+  useBlockedUsers: () => ({ addBlocked: vi.fn(), blocked: new Set() }),
 }));
 vi.mock("../../../hooks/useDistanceUnit", () => ({
   useDistanceUnit: () => "km",

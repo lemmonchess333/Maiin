@@ -71,7 +71,7 @@ export default function PrivacySection({
     useState<PrivacyZone | null>(null);
   const { removeBlocked } = useBlockedUsers();
   const [blockedUsersList, setBlockedUsersList] = useState<
-    { uid: string; displayName: string }[]
+    { uid: string; displayName: string | null }[]
   >([]);
   const [blockedUsersLoading, setBlockedUsersLoading] = useState(false);
   const [blockedUsersLoaded, setBlockedUsersLoaded] = useState(false);
@@ -317,16 +317,22 @@ export default function PrivacySection({
                     // private user docs; this site would silently break.
                     // The public mirror is the supported read surface
                     // for cross-user displays anyway.
+                    /* One name that can't be read leaves that row
+                       nameless rather than failing the list: the rules
+                       refuse the profile of someone who blocked you
+                       back, and the row still needs its Unblock. */
                     const users = await Promise.all(
                       ids.map(async (uid) => {
                         const snap = await getDoc(
                           doc(db, "users", uid, "public", "profile")
-                        );
+                        ).catch(() => null);
                         return {
                           uid,
-                          displayName: snap.exists()
-                            ? snap.data().displayName || "User"
-                            : "Deleted user",
+                          displayName: !snap
+                            ? null
+                            : snap.exists()
+                              ? snap.data().displayName || "User"
+                              : "Deleted user",
                         };
                       })
                     );
@@ -356,7 +362,7 @@ export default function PrivacySection({
                     className="flex items-center justify-between p-2.5 rounded-lg bg-card"
                   >
                     <span className="text-xs font-medium text-foreground">
-                      {bu.displayName}
+                      {bu.displayName ?? "Name unavailable"}
                     </span>
                     <button
                       type="button"
@@ -375,7 +381,11 @@ export default function PrivacySection({
                         setBlockedUsersList((prev) =>
                           prev.filter((u) => u.uid !== bu.uid)
                         );
-                        toast.success(`Unblocked ${bu.displayName}`);
+                        toast.success(
+                          bu.displayName
+                            ? `Unblocked ${bu.displayName}`
+                            : "Unblocked"
+                        );
                       }}
                       className="px-2.5 py-1 rounded-lg text-xs font-medium bg-muted text-foreground hover:bg-destructive/10 hover:text-destructive-strong transition-colors"
                     >

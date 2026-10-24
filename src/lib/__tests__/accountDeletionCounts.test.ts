@@ -45,7 +45,9 @@ const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
 // goalSpaceEventsAuthored (executor step goal_spaces,
 // lib/goalSpaceCleanup — the membership/counter/event cleanup the
 // foundation PR #1545 deferred).
-export const EXPECTED_INCLUDED_COUNT = 57;
+// Polish3 call 1 bumped to 59 — blockedByOwn and blockedByReverse, the
+// server-written copy of who has blocked each account.
+export const EXPECTED_INCLUDED_COUNT = 59;
 // S4e STATUS 2026-10-20 bumped excluded to 12 — restrictedIdentities, a
 // deleted restricted account's hashed sign-in identities, retained.
 export const EXPECTED_EXCLUDED_COUNT = 12;

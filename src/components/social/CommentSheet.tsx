@@ -271,9 +271,9 @@ export default function CommentSheet({
     }
   };
 
-  /* Comments by someone you have blocked drop out of the list, as their
-     posts drop out of the feed (S4a: a block takes effect on the next
-     render). Your own are never in the blocked set. */
+  /* Comments by someone you blocked, or who blocked you, drop out of the
+     list, as their posts drop out of the feed (S4a: a block takes effect
+     on the next render). Your own are never in the blocked set. */
   const visibleComments = comments.filter(
     (c) => !c.authorId || !blocked.has(c.authorId)
   );
