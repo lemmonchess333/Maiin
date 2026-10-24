@@ -16,7 +16,7 @@
     "firebase-functions": "^7.4.0",
     "jsonwebtoken": "^9.0.2",
     "leo-profanity": "^1.9.0",
-    "stripe": "^17.0.0"
+    "stripe": "^23.0.0"
   },
   "devDependencies": {
     "vitest": "^5.0.5"
