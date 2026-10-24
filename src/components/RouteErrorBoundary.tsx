@@ -1,6 +1,7 @@
 import { Component, type ReactNode } from "react";
 import { THEME } from "../lib/theme";
 import { captureError } from "@/lib/errorReporting";
+import { Button } from "@/components/ui/Button";
 
 interface Props {
   children: ReactNode;
@@ -69,24 +70,20 @@ export default class RouteErrorBoundary extends Component<Props, State> {
               {this.props.fallbackTitle || "Something went wrong"}
             </h2>
             <p className="text-sm text-muted-foreground">{errorText}</p>
-            <div className="flex gap-2 justify-center">
-              <button
-                type="button"
+            <div className="flex flex-wrap gap-2 justify-center">
+              <Button
+                variant="secondary"
                 onClick={() => this.setState({ hasError: false, error: null })}
-                className="px-4 py-2.5 rounded-xl text-sm font-medium bg-card text-foreground"
               >
                 Try again
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
                 onClick={() => {
                   window.location.href = import.meta.env.BASE_URL;
                 }}
-                className="px-4 py-2.5 rounded-xl text-sm font-medium text-white"
-                style={{ background: THEME.teal }}
               >
                 Go home
-              </button>
+              </Button>
             </div>
           </div>
         </div>

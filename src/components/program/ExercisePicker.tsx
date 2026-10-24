@@ -252,25 +252,25 @@ export default function ExercisePicker({
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden px-4 pb-3"
                 >
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-muted">
-                    <p className="text-sm text-foreground">
+                  {/* The question keeps 8em beside its two answers, or
+                      the answers go under it. */}
+                  <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-muted">
+                    <p className="min-w-[min(100%,8em)] flex-1 text-sm text-foreground">
                       Discard {newlySelectedCount} selections?
                     </p>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
+                    <div className="ml-auto flex items-center gap-2">
+                      <Button
+                        variant="ghost"
                         onClick={() => setShowDiscardConfirm(false)}
-                        className="px-3 py-1.5 text-xs font-medium text-muted-foreground rounded-lg hover:bg-card"
                       >
                         Keep browsing
-                      </button>
-                      <button
-                        type="button"
+                      </Button>
+                      <Button
+                        variant="destructive-tinted"
                         onClick={confirmDiscard}
-                        className="px-3 py-1.5 text-xs font-medium text-destructive-strong bg-destructive/10 rounded-lg"
                       >
                         Discard
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </motion.div>

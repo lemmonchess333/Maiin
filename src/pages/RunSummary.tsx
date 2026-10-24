@@ -145,13 +145,9 @@ function RetryBanner({
           {error || "We couldn't save this run."}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-running-fill"
-      >
+      <Button variant="sport" className="shrink-0" onClick={onRetry}>
         Retry
-      </button>
+      </Button>
     </div>
   );
 }
@@ -329,23 +325,19 @@ function InvalidRunReview({
       {(showSaveAnyway || showDiscard) && (
         <div className="space-y-2 pt-1">
           {showSaveAnyway && (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              fullWidth
               onClick={onSave}
               disabled={saveStatus === "saving"}
-              className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] disabled:opacity-90 bg-muted text-foreground border border-border"
             >
               {saveStatus === "saving" ? "Saving…" : "Save anyway"}
-            </button>
+            </Button>
           )}
           {showDiscard && (
-            <button
-              type="button"
-              onClick={onDiscard}
-              className="w-full py-2.5 rounded-xl text-sm font-medium bg-destructive/10 text-destructive-strong border border-destructive/20"
-            >
+            <Button variant="destructive-tinted" fullWidth onClick={onDiscard}>
               Discard
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -1907,13 +1899,13 @@ export default function RunSummary() {
               </button>
             )}
             {canShowDiscard({ saveStatus }) && (
-              <button
-                type="button"
+              <Button
+                variant="destructive-tinted"
+                fullWidth
                 onClick={handleDiscard}
-                className="w-full py-2 text-sm text-destructive-strong"
               >
                 Discard
-              </button>
+              </Button>
             )}
           </div>
 

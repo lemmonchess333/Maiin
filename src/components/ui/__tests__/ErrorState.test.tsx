@@ -70,6 +70,13 @@ describe("ErrorState — retry button", () => {
     expect(screen.getByRole("button", { name: "Retry feed" })).toBeTruthy();
   });
 
+  it("the retry is the Button's default size, clearing the 44px floor", () => {
+    render(<ErrorState title="X" retry={{ onClick: () => {} }} />);
+    const retry = screen.getByRole("button", { name: "Try again" });
+    expect(retry.className).toContain("min-h-[44px]");
+    expect(retry.className).not.toContain("min-h-[36px]");
+  });
+
   it("calls retry.onClick when the button is clicked", () => {
     const handle = vi.fn();
     render(<ErrorState title="X" retry={{ onClick: handle }} />);

@@ -225,7 +225,7 @@ interface ProgrammeRunSectionProps {
    *  done, so the user returns to FREEFORM (plan + raceGoal cleared),
    *  UNLESS a newer future race was set during the recovery window,
    *  in which case race_prep is preserved and only the recovery phase
-   *  clears. Called from the in-recovery "Skip recovery early" link
+   *  clears. Called from the in-recovery "Skip recovery early" action
    *  and the recovery-complete banner's "Back to freeform" action. */
   skipRecoveryEarly: () => Promise<ProgramOutcome>;
   /** Run9 phase-3 (Slice DE) — re-anchor the race plan to today (keep the
@@ -242,6 +242,11 @@ interface ProgrammeRunSectionProps {
    *  show the quality sessions their plan holds back. */
   recentLayoff: LayoffClass;
 }
+
+/** Two actions in a wrapping row: side by side while both labels fit on
+ *  one line, each the row's width once they do not (a small phone, or
+ *  larger text), rather than a label broken over two lines in a pill. */
+const ACTION_PAIR = "flex-auto";
 
 export default function ProgrammeRunSection({
   profile,
@@ -1055,9 +1060,13 @@ export default function ProgrammeRunSection({
           title={`${raceGoal.distance.toUpperCase()} · ${raceGoal.targetDate}`}
           description="We marked this as no-show after 3 days with no log. Log it now if you ran it."
           action={
+            /* One filled coral CTA per banner, the run's main action
+               (DESIGN_GUIDE §14i: running CTAs are `sport`); the rest
+               are secondary. */
             <div className="flex flex-col gap-2">
-              <button
-                type="button"
+              <Button
+                variant="sport"
+                fullWidth
                 onClick={() => {
                   if (raceDayRunDay?.id) {
                     haptic();
@@ -1066,31 +1075,30 @@ export default function ProgrammeRunSection({
                     );
                   }
                 }}
-                className="w-full min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg text-xs font-bold text-white bg-running-fill"
               >
                 Log race now
-              </button>
-              <div className="flex gap-2">
-                <button
-                  type="button"
+              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="secondary"
+                  className={ACTION_PAIR}
                   onClick={() => {
                     haptic();
                     navigate("/settings/run-plan");
                   }}
-                  className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-primary-strong text-primary-foreground text-xs font-medium"
                 >
                   Set next race
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="secondary"
+                  className={ACTION_PAIR}
                   onClick={() => {
                     haptic();
                     navigate("/settings/run-plan");
                   }}
-                  className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
                 >
                   Manage plan
-                </button>
+                </Button>
               </div>
             </div>
           }
@@ -1106,16 +1114,16 @@ export default function ProgrammeRunSection({
           title="Configure your runs"
           description={`You're on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`}
           action={
-            <button
-              type="button"
+            <Button
+              variant="sport"
+              fullWidth
               onClick={() => {
                 haptic();
                 navigate("/settings/run-plan");
               }}
-              className="w-full min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-primary-strong text-primary-foreground text-xs font-medium"
             >
               Configure plan
-            </button>
+            </Button>
           }
         />
       )}
@@ -1133,24 +1141,24 @@ export default function ProgrammeRunSection({
           title="Recovery complete"
           description="What's next?"
           action={
-            <div className="flex gap-2">
-              <button
-                type="button"
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="sport"
+                className={ACTION_PAIR}
                 onClick={() => {
                   haptic();
                   navigate("/settings/run-plan");
                 }}
-                className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-primary-strong text-primary-foreground text-xs font-medium"
               >
                 Set next race
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="secondary"
+                className={ACTION_PAIR}
                 onClick={handleSkipRecoveryEarly}
-                className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
               >
                 Back to freeform
-              </button>
+              </Button>
             </div>
           }
         />
@@ -1168,24 +1176,20 @@ export default function ProgrammeRunSection({
           description="Realign keeps your race date and re-plans the remaining weeks from today."
           action={
             <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={handleRealign}
-                className="w-full min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg text-xs font-bold text-white bg-running-fill"
-              >
+              <Button variant="sport" fullWidth onClick={handleRealign}>
                 Realign my plan
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="secondary"
+                fullWidth
                 onClick={() => {
                   haptic();
                   void dismissFellBehindPrompt();
                   navigate("/settings/run-plan");
                 }}
-                className="w-full min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
               >
                 My race moved →
-              </button>
+              </Button>
             </div>
           }
         />
@@ -1199,13 +1203,9 @@ export default function ProgrammeRunSection({
           title={`Recovering · ${recoveryDaysLeft} day${recoveryDaysLeft === 1 ? "" : "s"} left`}
           description="Easy runs only until then, while your legs recover from the race."
           action={
-            <button
-              type="button"
-              onClick={handleSkipRecoveryEarly}
-              className="inline-flex items-center gap-0.5 text-xs font-semibold transition-transform motion-safe:active:scale-95 text-running-strong"
-            >
-              Skip recovery early &rsaquo;
-            </button>
+            <Button variant="sport-tinted" onClick={handleSkipRecoveryEarly}>
+              Skip recovery early
+            </Button>
           }
         />
       )}
@@ -1448,8 +1448,10 @@ export default function ProgrammeRunSection({
               className="shrink-0 -mr-1"
             />
           </div>
-          <button
-            type="button"
+          <Button
+            variant="sport"
+            fullWidth
+            leftIcon={<Play className="size-3.5" fill="currentColor" />}
             onClick={() => {
               haptic();
               navigate(
@@ -1458,11 +1460,9 @@ export default function ProgrammeRunSection({
                   : "/run"
               );
             }}
-            className="w-full min-h-[44px] py-2.5 rounded-lg text-sm font-bold text-white inline-flex items-center justify-center gap-1.5 bg-running-fill"
           >
-            <Play className="size-3.5" fill="white" />
             Start race
-          </button>
+          </Button>
         </div>
       )}
 
@@ -1505,9 +1505,10 @@ export default function ProgrammeRunSection({
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="sport"
+              className={ACTION_PAIR}
               onClick={() => {
                 haptic();
                 navigate(
@@ -1516,20 +1517,19 @@ export default function ProgrammeRunSection({
                     : "/run"
                 );
               }}
-              className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg text-xs font-bold text-white bg-running-fill"
             >
               Log it
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="secondary"
+              className={ACTION_PAIR}
               onClick={() => {
                 haptic();
                 dismissRaceRecent();
               }}
-              className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
             >
               I didn't race
-            </button>
+            </Button>
           </div>
         </div>
       )}

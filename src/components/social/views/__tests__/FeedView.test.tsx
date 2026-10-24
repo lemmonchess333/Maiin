@@ -202,9 +202,9 @@ describe("FeedView — a failed Following feed", () => {
   it("says the feed couldn't load, not the SDK's error text", () => {
     followingError = "Missing or insufficient permissions.";
     setup({ feedSubTab: "following" });
-    expect(
-      screen.getByText("Couldn't load your feed. Check your connection.")
-    ).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Couldn't load your feed"
+    );
     expect(screen.queryByText(/insufficient permissions/)).toBeNull();
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
