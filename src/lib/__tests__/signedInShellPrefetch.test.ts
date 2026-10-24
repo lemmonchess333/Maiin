@@ -1,10 +1,10 @@
 /**
  * The signed-in shell's chunks load side by side, not one after another.
  *
- * Three providers, the layout and Home are lazy and nested, and React
- * starts a lazy component's import only when it renders, so a cold start
- * waited on five round trips in series before Home painted. App.tsx now
- * starts all five once the session is known.
+ * The motion root, three providers, the layout and Home are lazy and
+ * nested, and React starts a lazy component's import only when it renders,
+ * so a cold start would wait on six round trips in series before Home
+ * painted. App.tsx starts all six once the session is known.
  *
  * Pinned at the source: App.tsx mounts every provider and route, and
  * nothing renders it whole in jsdom. What is pinned is what keeps the
@@ -24,6 +24,11 @@ const code = readFileSync(resolve(repoRoot, "src/App.tsx"), "utf8")
   .replace(/\/\/[^\n]*/g, " ");
 
 const LAYERS = [
+  {
+    loader: "loadMotionRoot",
+    module: "@/components/MotionRoot",
+    lazy: "MotionRoot",
+  },
   {
     loader: "loadStreaks",
     module: "@/features/streaks/useStreaks",

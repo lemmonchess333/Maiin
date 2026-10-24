@@ -104,7 +104,7 @@ export function StreakFlame({
   // reduced-motion still benefit from the state-change cue),
   // but the always-on flicker pulse is suppressed entirely so the
   // chip becomes a static illustration rather than a perpetual
-  // distractor. MotionConfig at App root downgrades repeat:Infinity
+  // distractor. MotionRoot's MotionConfig downgrades repeat:Infinity
   // to a single iteration which still loops awkwardly, hence the
   // explicit override.
   //

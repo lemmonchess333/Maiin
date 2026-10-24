@@ -214,6 +214,15 @@ const DEFERRED_PACKAGES: { spec: string; why: string }[] = [
       "the web analytics SDK. analyticsProvider starts it once the app " +
       "has, on the web only; nothing waits on it to draw",
   },
+  {
+    spec: "framer-motion",
+    why:
+      "the animation library, the largest chunk a new visitor would " +
+      "fetch for nothing: Login and the legal pages draw without it. " +
+      "Signed-in surfaces get its MotionConfig from MotionRoot, which " +
+      "App.tsx loads lazily; render motion inside a lazy page, not at " +
+      "the root",
+  },
 ];
 
 describe("eager import graph — packages Login pays for", () => {
