@@ -36,6 +36,7 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import { challengeEditorialImage } from "@/lib/editorialImages";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import { useChallengePercentile } from "./useChallengePercentile";
+import { challengeSport, SPORT_ACCENT, SPORT_BAR_FILL } from "./challengeSport";
 
 interface ChallengeCardProps {
   challenge: Challenge;
@@ -62,21 +63,12 @@ const TIER_LABELS: Record<ChallengeTier, string> = {
    are real or withheld — never inflated. */
 const FOUNDING_COUNT_MIN = 3;
 
-/* Sport-coding by metric (visual polish, 2026-07). Every challenge card
-   used to wear brand purple regardless of discipline — a km challenge and
-   a volume challenge looked identical, ignoring the app's strongest visual
-   language (coral = running, purple = lifting, brand = hybrid/other).
-   The accent drives the icon tile, the progress fill pre-tier, and the
-   Join CTA variant. */
-const METRIC_ACCENT: Record<string, string> = {
-  total_km: THEME.running,
-  fastest_effort: THEME.running,
-  total_volume: THEME.lifting,
-  workout_count: THEME.lifting,
-  hybrid_score: THEME.brand,
-  active_days: THEME.brand,
-  training_minutes: THEME.brand,
-};
+/** A tier's metal as a ring around something drawn in the text colour,
+ *  the leaderboard's rank treatment: as a fill or as text, silver and gold
+ *  all but vanish on a light card. */
+const metalRing = (tier: ChallengeTier) => ({
+  boxShadow: `inset 0 0 0 2px ${TIER_COLORS[tier]}`,
+});
 
 /* Icon map for challenge cards. The seed definitions in
    useChallenges.ts store lucide icon names as strings ("footprints",
@@ -221,7 +213,11 @@ export function ChallengeCard({
   const maxTier = challenge.tiers.gold;
   const pct = Math.min((currentValue / maxTier) * 100, 100);
   const timeLeft = getTimeRemaining(challenge.endDate);
-  const accent = METRIC_ACCENT[challenge.metric] ?? THEME.brand;
+  /* The card wears its sport (`challengeSport`): the hero band, the icon,
+     Join and the bar's fill. The tier metal never fills the bar. */
+  const sport = challengeSport(challenge.metric);
+  const accent = SPORT_ACCENT[sport];
+  const barFill = SPORT_BAR_FILL[sport];
 
   const nextTier: ChallengeTier | null = !currentTier
     ? "bronze"
@@ -330,14 +326,16 @@ export function ChallengeCard({
             {challenge.name}
           </p>
         </div>
+        {/* The tier badge: the trophy in the text colour on the card,
+            ringed in the tier's metal. White on gold was 1.4:1. */}
         {currentTier && (
           <div
-            className="absolute top-3 right-3 size-6 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: TIER_COLORS[currentTier] }}
+            className="absolute top-3 right-3 size-6 rounded-full flex items-center justify-center bg-card text-foreground"
+            style={metalRing(currentTier)}
             aria-label={`${TIER_LABELS[currentTier]} achieved`}
             role="img"
           >
-            <Trophy className="size-3.5 text-white" />
+            <Trophy className="size-3.5" />
           </div>
         )}
       </div>
@@ -431,7 +429,7 @@ export function ChallengeCard({
              (coral) variant, everything else the primary. The primitive
              also supplies the 44px floor the old py-2.5 button missed. */
           <Button
-            variant={accent === THEME.running ? "sport" : "primary"}
+            variant={sport === "running" ? "sport" : "primary"}
             fullWidth
             onClick={handleJoin}
             loading={busy === "joining"}
@@ -453,7 +451,6 @@ export function ChallengeCard({
             );
             const target = challenge.collectiveTarget!;
             const collPct = Math.min((collectiveTotal / target) * 100, 100);
-            const reached = collectiveTotal >= target;
             return (
               <div className="space-y-2">
                 <div className="relative pt-1 pb-1">
@@ -462,10 +459,9 @@ export function ChallengeCard({
                       initial={{ width: 0 }}
                       animate={{ width: `${collPct}%` }}
                       transition={{ duration: 0.6 }}
-                      className="h-full rounded-full"
-                      style={{
-                        backgroundColor: reached ? TIER_COLORS.gold : accent,
-                      }}
+                      /* The sport's colour, reached or not: a full bar says
+                         it, and gold is kept for a new best. */
+                      className={`h-full rounded-full ${barFill}`}
                     />
                   </div>
                 </div>
@@ -543,12 +539,10 @@ export function ChallengeCard({
                         : `${pct}%`,
                   }}
                   transition={{ duration: 0.6 }}
-                  className="h-full rounded-full"
-                  style={{
-                    backgroundColor: currentTier
-                      ? TIER_COLORS[currentTier]
-                      : accent,
-                  }}
+                  /* The sport's colour at every tier. The tier shows on its
+                     marker below and on the badge, never as the fill: a
+                     bronze bar beside purple and coral read as food. */
+                  className={`h-full rounded-full ${barFill}`}
                 />
               </div>
               {/* Tier markers — `isTierAchieved` encapsulates the
@@ -719,11 +713,8 @@ export function ChallengeCard({
                     </span>
                     {tier && (
                       <span
-                        className="text-xs font-medium px-1.5 py-0.5 rounded-full"
-                        style={{
-                          backgroundColor: TIER_COLORS[tier] + "20",
-                          color: TIER_COLORS[tier],
-                        }}
+                        className="text-xs font-medium px-1.5 py-0.5 rounded-full text-foreground"
+                        style={metalRing(tier)}
                       >
                         {TIER_LABELS[tier]}
                       </span>

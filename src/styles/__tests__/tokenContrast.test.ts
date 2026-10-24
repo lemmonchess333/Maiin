@@ -824,6 +824,49 @@ describe("medal ranks — the numeral is text, the metal is a marker", () => {
     expect(src).not.toMatch(/color:\s*[^;]{0,60}RANK_COLORS/);
     expect(src).toMatch(/inset 0 0 0 2px \$\{RANK_COLORS/);
   });
+
+  it.each([
+    "src/features/challenges/ChallengeCard.tsx",
+    "src/features/challenges/ChallengeFinaleCard.tsx",
+  ])(
+    "%s writes a challenge tier in the text colour, its metal a ring",
+    (path) => {
+      const src = readFile(path);
+      // A tier label or badge coloured with the metal is the same 1.40:1.
+      // (The finale's `accent` IS the tier's metal; the live card's is
+      // the sport's colour, which may tint its icon.)
+      expect(src).not.toMatch(/\bcolor:\s*TIER_COLORS\[/);
+      expect(src).not.toMatch(/TIER_COLORS\[[^\]]+\]\s*\+\s*"20"/);
+      if (path.endsWith("ChallengeFinaleCard.tsx"))
+        expect(src).not.toMatch(/\bcolor:\s*accent/);
+      expect(src).toMatch(/inset 0 0 0 2px \$\{TIER_COLORS/);
+    }
+  );
+});
+
+/* A challenge's bar fills in its sport's colour (DESIGN_GUIDE §14k), and
+   the fill's edge against the empty track is the only thing that says how
+   far along the challenge is: the 3:1 non-text bar, in both themes. The
+   tier metals it replaced failed it on the light track (silver about
+   1.8:1, gold about 1.4:1). */
+describe("a challenge bar's fill against its track — WCAG 1.4.11", () => {
+  it.each(["light", "dark"] as const)(
+    "every sport's fill is at least 3:1 against --muted in %s",
+    async (theme) => {
+      const { SPORT_BAR_FILL } =
+        await import("@/features/challenges/challengeSport");
+      const b = theme === "light" ? lightBlock() : darkBlock();
+      const track = hslToRgb(...readHsl(b, "muted"));
+      for (const [sport, cls] of Object.entries(SPORT_BAR_FILL)) {
+        const token = cls.replace(/^bg-/, "");
+        const ratio = contrast(hslToRgb(...readHsl(b, token)), track);
+        expect(
+          ratio,
+          `${sport}: --${token} is ${ratio.toFixed(2)}:1 against the track (${theme})`
+        ).toBeGreaterThanOrEqual(AA_LARGE);
+      }
+    }
+  );
 });
 
 describe("photo captions — the scrim holds through the words", () => {
