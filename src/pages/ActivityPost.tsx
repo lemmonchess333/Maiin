@@ -68,7 +68,7 @@ function ActivityPostPage({
   const openComments = searchParams.get("comments") === "1";
   const fallbackUserId = (location.state as ActivityPostState | null)
     ?.fallbackUserId;
-  const { blocked, blockedYou, ready: blocksReady } = useBlockedUsers();
+  const { blocked, ready: blocksReady } = useBlockedUsers();
   const [read, setRead] = useState<PostRead>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
 
@@ -101,12 +101,10 @@ function ActivityPostPage({
     };
   }, [activityId, uid, attempt]);
 
-  /* Blocking hides each person from the other, here as on the feed. */
+  /* Blocking hides each person from the other, here as on the feed:
+     `blocked` holds both directions. */
   const authorId = read.status === "ready" ? read.item.authorId : "";
-  const hidden =
-    !!authorId &&
-    authorId !== uid &&
-    (blocked.has(authorId) || blockedYou.has(authorId));
+  const hidden = !!authorId && authorId !== uid && blocked.has(authorId);
   const unavailable = read.status === "unavailable" || hidden;
 
   if (unavailable && fallbackUserId) {

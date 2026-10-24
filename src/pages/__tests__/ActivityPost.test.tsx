@@ -13,10 +13,8 @@ import { MemoryRouter, Routes, Route } from "react-router-dom";
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/auth", () => ({ useUid: () => "viewer" }));
-const blocks = vi.hoisted(() => ({
-  blocked: new Set<string>(),
-  blockedYou: new Set<string>(),
-}));
+// `blocked` is both directions merged, as useBlockedUsers returns it.
+const blocks = vi.hoisted(() => ({ blocked: new Set<string>() }));
 vi.mock("@/hooks/useBlockedUsers", () => ({
   useBlockedUsers: () => ({ ...blocks, ready: true }),
 }));
@@ -71,7 +69,6 @@ function renderAt(url: string, state?: { fallbackUserId?: string }): void {
 beforeEach(() => {
   resetFirestore();
   blocks.blocked = new Set();
-  blocks.blockedYou = new Set();
 });
 afterEach(cleanup);
 
@@ -132,7 +129,7 @@ describe("the post a notice opens", () => {
 
   it("someone else's post from a person who blocked the viewer is not drawn", async () => {
     seedFirestore({ "activities/a1": { ...POST, authorId: "blocker" } });
-    blocks.blockedYou = new Set(["blocker"]);
+    blocks.blocked = new Set(["blocker"]);
     renderAt("/activity/a1");
     expect(
       await screen.findByText("This post isn't available")

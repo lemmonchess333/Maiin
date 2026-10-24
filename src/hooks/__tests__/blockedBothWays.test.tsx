@@ -138,6 +138,7 @@ const FILTERING_SURFACES: Record<string, string> = {
   "src/components/social/ActivityCard.tsx": "the props list",
   "src/components/social/BlockAwareAvatar.tsx": "photos on every list",
   "src/hooks/useNotifications.ts": "the notification tray",
+  "src/pages/ActivityPost.tsx": "a post a notice opens",
   "src/hooks/useUnreadCount.ts": "the unread badge",
   "src/hooks/useFriendsBoard.ts": "the friends board",
   "src/features/challenges/useChallenges.ts": "challenge leaderboards",
