@@ -243,7 +243,7 @@ export default function ReportForm({
             value={freeform}
             onChange={(e) => setFreeform(e.target.value.slice(0, FREEFORM_MAX))}
             placeholder="Add context for the review team…"
-            className="w-full mt-1 px-3 py-2 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground resize-none"
+            className="ds-input mt-1 resize-none text-sm"
             rows={3}
             maxLength={FREEFORM_MAX}
           />

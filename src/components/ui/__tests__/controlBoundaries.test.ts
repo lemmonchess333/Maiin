@@ -86,6 +86,25 @@ describe("controls draw that boundary", () => {
     expect(FIELD_FOCUS_RING).toContain("focus-visible:outline-primary!");
   });
 
+  it("the field primitive's edge is the boundary, at rest and on a tapped select", () => {
+    // `.ds-input` fills with the card, so on a card its edge is all that
+    // marks the box. Every text field, textarea and select draws it.
+    const css = read("src/styles/components.css").replace(
+      /\/\*[\s\S]*?\*\//g,
+      ""
+    );
+    const rest = /select\.ds-input\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
+    expect(rest).toMatch(
+      /border:\s*1px solid hsl\(var\(--muted-foreground\) \/ 0\.8\)/
+    );
+    const tapped =
+      css.split(".ds-input.ds-input-pointer-focus:focus")[1]?.split("}")[0] ??
+      "";
+    expect(tapped).toMatch(
+      /border-color:\s*hsl\(var\(--muted-foreground\) \/ 0\.8\)/
+    );
+  });
+
   it("Toggle's off track edge is the boundary in light", () => {
     expect(read("src/components/ui/Toggle.tsx")).toMatch(
       /bg-muted border border-muted-foreground\/80 dark:border-border/

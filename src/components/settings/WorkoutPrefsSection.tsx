@@ -1,5 +1,6 @@
 import { Timer } from "lucide-react";
 import { Toggle } from "@/components/ui/Toggle";
+import Select from "@/components/ui/Select";
 import { haptic } from "@/lib/haptic";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import AccordionSection from "@/components/AccordionSection";
@@ -75,7 +76,7 @@ export default function WorkoutPrefsSection({
           >
             Rest between sets
           </label>
-          <select
+          <Select
             id="rest-between-sets"
             value={defaultRestSeconds}
             onChange={async (e) => {
@@ -85,7 +86,7 @@ export default function WorkoutPrefsSection({
               const result = await updateProfile({ defaultRestSeconds: val });
               if (!result.ok) setDefaultRestSeconds(prev);
             }}
-            className="ml-auto min-h-11 min-w-0 max-w-full bg-card rounded-lg px-3 text-sm border border-border/50"
+            className="ml-auto w-auto min-w-0 max-w-full"
           >
             <option value={0}>Plan's suggestion</option>
             <option value={60}>1:00</option>
@@ -95,7 +96,7 @@ export default function WorkoutPrefsSection({
             <option value={180}>3:00</option>
             <option value={240}>4:00</option>
             <option value={300}>5:00</option>
-          </select>
+          </Select>
         </div>
 
         <div className={ROW}>

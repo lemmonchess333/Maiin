@@ -360,7 +360,7 @@ export default function NotificationsSection({
                       [meal]: { ...mealReminders[meal], time: e.target.value },
                     })
                   }
-                  className="ml-auto min-h-11 min-w-0 max-w-full bg-card rounded-lg px-3 text-sm border border-border/50"
+                  className="ds-input ml-auto w-auto min-w-0 max-w-full text-sm"
                   disabled={!mealReminders[meal].enabled}
                 />
               </div>
@@ -420,7 +420,7 @@ export default function NotificationsSection({
               aria-label="Workout reminder time"
               value={workoutReminders.time}
               onChange={(e) => updateWorkoutReminders({ time: e.target.value })}
-              className="ml-auto min-h-11 min-w-0 max-w-full bg-card rounded-lg px-3 text-sm border border-border/50"
+              className="ds-input ml-auto w-auto min-w-0 max-w-full text-sm"
             />
           </div>
         )}
@@ -486,7 +486,7 @@ export default function NotificationsSection({
               aria-label="Streak reminder time"
               value={streakReminder.time}
               onChange={(e) => updateStreakReminder({ time: e.target.value })}
-              className="ml-auto min-h-11 min-w-0 max-w-full bg-card rounded-lg px-3 text-sm border border-border/50"
+              className="ds-input ml-auto w-auto min-w-0 max-w-full text-sm"
             />
           </div>
         )}

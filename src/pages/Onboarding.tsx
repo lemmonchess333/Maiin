@@ -1666,11 +1666,14 @@ export default function Onboarding() {
                     (optional)
                   </span>
                 </label>
+                {/* The field is 8rem wide, 256px at double text: it may
+                    shrink below that so the unit beside it stays on a 320px
+                    screen, and the unit itself never shrinks. */}
                 <div className="flex items-center gap-2">
                   <input
                     id="onboarding-goal-weight"
                     inputMode="decimal"
-                    className="ds-input w-32 min-h-11 font-mono tabular-nums"
+                    className="ds-input w-32 min-w-0 min-h-11 font-mono tabular-nums"
                     value={goalWeightText}
                     aria-invalid={goalWeightInvalid}
                     aria-describedby={
@@ -1681,7 +1684,7 @@ export default function Onboarding() {
                     placeholder={formatWeightInUnit(weightKg, weightUnit)}
                     onChange={(event) => setGoalWeightText(event.target.value)}
                   />
-                  <span className="text-sm text-muted-foreground">
+                  <span className="shrink-0 text-sm text-muted-foreground">
                     {weightUnit === "lbs" ? "lb" : "kg"}
                   </span>
                 </div>

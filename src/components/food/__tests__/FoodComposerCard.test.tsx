@@ -81,7 +81,7 @@ describe("FoodComposerCard — the camera button beside the field", () => {
     expect(scans[0]).toHaveClass("size-[56px]");
     expect(
       screen.getByRole("textbox", { name: "What did you eat" })
-    ).toHaveClass("block", "min-h-[56px]");
+    ).toHaveClass("ds-input", "block", "min-h-[56px]!");
     // The food orange (the nutrition variant) — the owner call recorded
     // in CLAUDE.md's Button mapping — not the brand purple.
     expect(scans[0]).toHaveClass("bg-nutrition-fill");

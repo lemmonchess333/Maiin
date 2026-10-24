@@ -7,6 +7,7 @@ import {
 } from "@/features/program/runningBaseline";
 import type { RaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import Button from "@/components/ui/Button";
+import Select from "@/components/ui/Select";
 
 export default function RunningBaselineSettings({
   value,
@@ -49,8 +50,7 @@ export default function RunningBaselineSettings({
         <>
           <label className="block space-y-2 text-xs text-muted-foreground">
             <span>Running experience</span>
-            <select
-              className="ds-input min-h-11 w-full"
+            <Select
               value={value.experience}
               onChange={(e) =>
                 edit({
@@ -63,7 +63,7 @@ export default function RunningBaselineSettings({
               <option value="regular">
                 Running regularly, including faster sessions
               </option>
-            </select>
+            </Select>
           </label>
           <div className="grid grid-cols-2 gap-3">
             {(

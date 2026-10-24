@@ -37,6 +37,7 @@ import LiftPurpose from "@/components/program/LiftPurpose";
 import { useMemo, useState } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import MetaLine from "@/components/ui/MetaLine";
+import Select from "@/components/ui/Select";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import {
   Footprints,
@@ -481,7 +482,8 @@ export default function DayActionSheet({
                   ordinary run. */}
               <label className="block">
                 <SectionLabel as="span">Template</SectionLabel>
-                <select
+                <Select
+                  className="mt-1"
                   value={run.runDay.userOverride || run.runDay.templateId}
                   onChange={(e) =>
                     overrideRunDay(
@@ -497,14 +499,13 @@ export default function DayActionSheet({
                         ? "Run template"
                         : `${run.status} — template locked`
                   }
-                  className="w-full mt-1 bg-background/80 rounded-xl px-3 py-3 text-base border border-border/60 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {RUN_TEMPLATES.map((t) => (
                     <option key={t.id} value={t.id}>
                       {runTemplateName(t.name, unit)} ({t.type})
                     </option>
                   ))}
-                </select>
+                </Select>
                 {isRaceTemplate ? (
                   <span className="mt-1 block text-caption text-muted-foreground">
                     Race day — the template is locked.

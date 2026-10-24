@@ -42,6 +42,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { IconButton } from "@/components/ui/IconButton";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionHeading from "@/components/ui/SectionHeading";
+import Select from "@/components/ui/Select";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
@@ -174,9 +175,8 @@ function RaceEventHeader({
           <label htmlFor="space-race-day" className="text-sm font-medium">
             Your assigned race day
           </label>
-          <select
+          <Select
             id="space-race-day"
-            className="ds-input w-full"
             value={trainingDate}
             onChange={(e) => setChosenDay(e.target.value)}
           >
@@ -188,7 +188,7 @@ function RaceEventHeader({
                   {format(parseLocalDate(d), "EEEE d MMMM yyyy")}
                 </option>
               ))}
-          </select>
+          </Select>
         </div>
       )}
 

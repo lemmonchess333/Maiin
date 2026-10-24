@@ -765,7 +765,7 @@ export default function RunPlanSettings({
             value={raceTimeStr}
             onChange={(e) => setRaceTimeStr(e.target.value)}
             placeholder={`e.g. ${goalTimeExample(raceDistance)}`}
-            className="w-full min-h-[44px] rounded-xl border border-border bg-background px-3 text-sm font-mono tabular-nums"
+            className="ds-input text-sm font-mono tabular-nums"
           />
           {raceTimeInvalid && (
             <p className="text-xs text-destructive-strong">

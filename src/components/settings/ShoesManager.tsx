@@ -218,7 +218,7 @@ export default function ShoesManager() {
               }}
               placeholder="Shoe name (e.g., Pegasus 41)"
               aria-label="Shoe name"
-              className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-sm"
+              className="ds-input text-sm"
             />
             {suggestions.length > 0 && (
               <div
@@ -252,7 +252,7 @@ export default function ShoesManager() {
             onChange={(e) => setNewBrand(e.target.value)}
             placeholder="Brand (e.g., Nike)"
             aria-label="Brand"
-            className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-sm"
+            className="ds-input text-sm"
           />
 
           {/* Max km — previously only had "Max km" as a placeholder which
@@ -277,7 +277,7 @@ export default function ShoesManager() {
                   placeholder={storedKmLabel(SHOE_MAX_DEFAULT_KM, unit, false)}
                   onChange={(e) => setNewMax(e.target.value)}
                   aria-describedby="shoe-max-km-hint"
-                  className="w-full px-3 py-2 pr-10 rounded-lg bg-muted border border-border text-sm"
+                  className="ds-input pr-10 text-sm"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
                   {distanceUnitLabel(unit)}

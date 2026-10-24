@@ -282,7 +282,7 @@ export default function SpacePostComposer({
           onChange={(e) => setTitle(e.target.value.slice(0, TITLE_MAX))}
           placeholder="Title (optional)"
           aria-label="Post title"
-          className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+          className="ds-input text-sm font-semibold"
         />
         <textarea
           value={body}
@@ -290,7 +290,7 @@ export default function SpacePostComposer({
           placeholder="Share something with the space…"
           aria-label="Post body"
           rows={5}
-          className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground leading-snug resize-none focus:outline-none focus:ring-2 focus:ring-primary/40"
+          className="ds-input resize-none text-sm leading-snug"
         />
         {profane && (
           <p

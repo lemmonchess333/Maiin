@@ -259,7 +259,7 @@ describe("DS ratchets — surface-level drift", () => {
   // Raw <button> elements. CTAs belong on the Button / IconButton
   // primitives (44px floor, focus ring, press feedback come with them);
   // pressable cards, rows, chips and day-cells are legitimately bare.
-  const RAW_BUTTON_BASELINE = 320;
+  const RAW_BUTTON_BASELINE = 295;
   it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
     const { total, byFile } = scan(
       (src) => (src.match(/<button\b/g) ?? []).length
@@ -713,5 +713,183 @@ describe("type tiers", () => {
           .join(" | ")
     );
     expect(mixed, mixed.join("\n")).toEqual([]);
+  });
+});
+
+/* Form controls on one field. A text input, a select and a textarea are
+   the same kind of box to the person filling them in, and `.ds-input`
+   (src/styles/components.css) is that box: radius, the 3:1 edge, the card
+   fill, the inset and a floor above 44px. Selects render through the
+   `Select` primitive, which puts a native <select> on that field (so iOS
+   keeps its picker) and owns the tapped-select focus fix. Floors are 0
+   for selects and textareas; typed inputs off the field are a named list,
+   each with its reason, and the list only shrinks. */
+describe("form controls share the field primitive", () => {
+  const SELECT_PRIMITIVE = "src/components/ui/Select.tsx";
+
+  /** Source with comments blanked, so prose that names `<select>` or
+   *  `<input type=file>` is not counted. A `//` after a colon or a quote
+   *  is a URL in a string, not a comment. */
+  const code = (src: string) =>
+    src
+      .replace(/\/\*[\s\S]*?\*\//g, " ")
+      .replace(/(^|[^:"'`\\])\/\/[^\n]*/gm, "$1");
+
+  /** A JSX opening tag from `<` to its `>`, skipping a `>` inside braces
+   *  (an arrow function in an onChange) or inside a string. */
+  function openingTag(src: string, start: number): string {
+    let depth = 0;
+    let quote: string | null = null;
+    for (let i = start; i < src.length; i++) {
+      const c = src[i];
+      if (quote) {
+        if (c === quote) quote = null;
+        continue;
+      }
+      if (c === '"' || c === "'" || c === "`") quote = c;
+      else if (c === "{") depth++;
+      else if (c === "}") depth--;
+      else if (c === ">" && depth === 0) return src.slice(start, i + 1);
+    }
+    return src.slice(start);
+  }
+
+  /** Whether a tag's class carries `.ds-input`: a literal, a cn() call,
+   *  or a module constant (`className={INPUT_CLASS}`) read from the file. */
+  function onField(tag: string, src: string): boolean {
+    if (/\bds-input\b/.test(tag)) return true;
+    const ident = /className=\{([A-Z_a-z]\w*)\}/.exec(tag)?.[1];
+    if (!ident) return false;
+    const decl = new RegExp(`const ${ident}\\s*=\\s*["'\`]([^"'\`]*)`).exec(
+      src
+    );
+    return !!decl && /\bds-input\b/.test(decl[1]);
+  }
+
+  const lineOf = (src: string, index: number) =>
+    src.slice(0, index).split("\n").length;
+
+  it("a <select> renders only inside the Select primitive", () => {
+    const offenders: string[] = [];
+    scan((src, rel) => {
+      if (rel === SELECT_PRIMITIVE) return 0;
+      const body = code(src);
+      for (const m of body.matchAll(/<select\b/g))
+        offenders.push(`${rel}:${lineOf(body, m.index!)}`);
+      return 0;
+    });
+    expect(
+      offenders,
+      `Raw <select> outside the primitive. Render it through <Select> ` +
+        `(src/components/ui/Select.tsx): the field, the chevron and the ` +
+        `tapped-select focus fix come with it.\n  ` +
+        offenders.join("\n  ")
+    ).toEqual([]);
+  });
+
+  it("every <textarea> is on .ds-input", () => {
+    const offenders: string[] = [];
+    scan((src, rel) => {
+      const body = code(src);
+      for (const m of body.matchAll(/<textarea\b/g)) {
+        const tag = openingTag(body, m.index!);
+        if (!onField(tag, body))
+          offenders.push(`${rel}:${lineOf(body, m.index!)}`);
+      }
+      return 0;
+    });
+    expect(
+      offenders,
+      `A <textarea> off the field primitive. Give it \`ds-input\` and ` +
+        `keep only its own type size, rows and resize.\n  ` +
+        offenders.join("\n  ")
+    ).toEqual([]);
+  });
+
+  /* The typed inputs that are deliberately their own control. The counts
+     are exact, so an exception that moves onto the field comes off the
+     list rather than lingering with a stale reason, and nothing new goes
+     on without its reason written beside it. */
+  const INPUTS_OFF_FIELD: Record<string, { count: number; why: string }> = {
+    "src/components/WorkoutSession.tsx": {
+      count: 2,
+      why: "the set row's weight and reps: compact 44px cells on FIELD_EDGE",
+    },
+    "src/components/food/EditServingsSheet.tsx": {
+      count: 2,
+      why: "the serving editor's quantity and unit, sized per field, on FIELD_FOCUS_RING",
+    },
+    "src/components/food/FoodDateBar.tsx": {
+      count: 1,
+      why: "an sr-only date input that the visible day button opens",
+    },
+    "src/components/nutrition/ServingSizeDrawer.tsx": {
+      count: 1,
+      why: "the stepper's readout between its minus and plus",
+    },
+    "src/components/program/ExercisePicker.tsx": {
+      count: 1,
+      why: "a search bar: filled, borderless, with its magnifier",
+    },
+    "src/components/social/views/PeopleView.tsx": {
+      count: 1,
+      why: "a search bar: filled, borderless, with its magnifier",
+    },
+    "src/components/run/TreadmillMode.tsx": {
+      count: 1,
+      why: "the run screen's dark stage, white on translucent white",
+    },
+  };
+  const NOT_TYPED = /\btype="(checkbox|radio|range|hidden|file|color)"/;
+
+  it("typed inputs off .ds-input are only the named exceptions", () => {
+    const { byFile } = scan((src) => {
+      const body = code(src);
+      let n = 0;
+      for (const m of body.matchAll(/<input\b/g)) {
+        const tag = openingTag(body, m.index!);
+        if (NOT_TYPED.test(tag)) continue;
+        if (!onField(tag, body)) n++;
+      }
+      return n;
+    });
+    const sorted = (entries: [string, number][]) =>
+      Object.fromEntries(entries.sort(([a], [b]) => a.localeCompare(b)));
+    expect(
+      sorted([...byFile.entries()]),
+      `Typed inputs off the field primitive, by file. Put a new field on ` +
+        `\`ds-input\`; when an exception moves onto it, take it off ` +
+        `INPUTS_OFF_FIELD.`
+    ).toEqual(
+      sorted(Object.entries(INPUTS_OFF_FIELD).map(([f, e]) => [f, e.count]))
+    );
+  });
+
+  it("the Select primitive is a native select on the field, with its chevron (positive pin)", () => {
+    // The guards above are only a fix if what they send people to is the
+    // field and keeps the platform's picker.
+    const body = code(
+      readFileSync(resolve(repoRoot, SELECT_PRIMITIVE), "utf8")
+    );
+    expect(body.match(/<select\b/g)?.length).toBe(1);
+    expect(body).toMatch(/"peer ds-input appearance-none/);
+    expect(body).toMatch(/<ChevronDown\b/);
+    expect(body).toMatch(/pointerFocus && "ds-input-pointer-focus"/);
+  });
+
+  it(".ds-input clears the 44px floor and hides the number spinners (positive pin)", () => {
+    const css = readFileSync(
+      resolve(repoRoot, "src/styles/components.css"),
+      "utf8"
+    ).replace(/\/\*[\s\S]*?\*\//g, "");
+    const box = /select\.ds-input\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
+    // 3rem is 48px at the default root size, and grows with the text.
+    expect(box).toMatch(/min-height:\s*3rem/);
+    expect(css).toMatch(
+      /input\.ds-input\[type="number"\]\s*\{[^}]*appearance:\s*textfield/
+    );
+    expect(css).toMatch(
+      /input\.ds-input\[type="number"\]::-webkit-inner-spin-button/
+    );
   });
 });

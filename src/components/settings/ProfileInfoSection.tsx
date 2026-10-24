@@ -206,7 +206,7 @@ export default function ProfileInfoSection({
             if (!result.ok) setName(prev);
           }}
           placeholder="Your name"
-          className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
+          className="ds-input mt-1 text-sm"
         />
         {nameError && (
           <p
@@ -233,7 +233,7 @@ export default function ProfileInfoSection({
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
             onBlur={() => void commitWeight()}
-            className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm font-mono tabular-nums"
+            className="ds-input mt-1 text-sm font-mono tabular-nums"
           />
           <p className="text-xs text-muted-foreground mt-1">
             Sets your calorie target. Log your weight on Home to keep it
@@ -256,7 +256,7 @@ export default function ProfileInfoSection({
                 aria-label="Height, feet"
                 value={feet}
                 onChange={(e) => setFeet(e.target.value)}
-                className="w-full min-w-0 min-h-11 px-3 rounded-lg bg-muted border border-border/50 text-foreground text-sm font-mono tabular-nums"
+                className="ds-input min-w-0 text-sm font-mono tabular-nums"
               />
               <input
                 type="number"
@@ -264,7 +264,7 @@ export default function ProfileInfoSection({
                 aria-label="Height, inches"
                 value={inches}
                 onChange={(e) => setInches(e.target.value)}
-                className="w-full min-w-0 min-h-11 px-3 rounded-lg bg-muted border border-border/50 text-foreground text-sm font-mono tabular-nums"
+                className="ds-input min-w-0 text-sm font-mono tabular-nums"
               />
             </div>
           </div>
@@ -288,7 +288,7 @@ export default function ProfileInfoSection({
                   heightCmText.trim() === String(Number(savedCm.toFixed(1)))
                 )
               }
-              className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm font-mono tabular-nums"
+              className="ds-input mt-1 text-sm font-mono tabular-nums"
             />
           </div>
         )}
@@ -343,7 +343,7 @@ export default function ProfileInfoSection({
             else setWhy(next);
           }}
           placeholder="What's driving you?"
-          className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
+          className="ds-input mt-1 text-sm"
         />
         <p className="text-xs text-muted-foreground mt-1">
           We resurface this in your weekly review.

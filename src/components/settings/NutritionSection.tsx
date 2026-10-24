@@ -223,7 +223,7 @@ export default function NutritionSection({
               const result = await updateProfile({ age });
               if (!result.ok) setAge(prev);
             }}
-            className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
+            className="ds-input mt-1 text-sm font-mono tabular-nums"
           />
         </div>
 

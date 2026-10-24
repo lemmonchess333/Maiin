@@ -194,7 +194,7 @@ export default function CircleShareSheet({
               maxLength={GOAL_SPACE_TEXT_MAX}
               placeholder="Add a note — optional"
               aria-label="Note"
-              className="w-full min-h-[44px] px-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="ds-input text-sm"
             />
 
             {isRestricted && <RestrictedNotice />}

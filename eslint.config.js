@@ -41,6 +41,13 @@ export default defineConfig([
       "react-hooks/refs": "warn",
       "react-hooks/purity": "warn",
       "react-hooks/preserve-manual-memoization": "warn",
+      // The `Select` primitive renders a native <select>, so a <label>
+      // wrapping it is associated with a control; the rule cannot see
+      // through the component without being told.
+      "jsx-a11y/label-has-associated-control": [
+        "error",
+        { controlComponents: ["Select"] },
+      ],
       // DS1 footgun guard: the bare Tailwind class `text-muted` resolves
       // to --color-muted (a SURFACE fill), NOT a text colour, so it
       // renders near-invisible text. The correct token is

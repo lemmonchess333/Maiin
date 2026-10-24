@@ -596,7 +596,7 @@ function AccountSectionContent({
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="Password"
                   disabled={busy}
-                  className="min-h-11 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
+                  className="ds-input text-base"
                 />
               )}
               <div className="space-y-2">

@@ -48,6 +48,7 @@ import { shouldRenderFollowingList } from "@/lib/socialGates";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import type { FeedSubTab } from "./socialTabs";
 import { Button } from "@/components/ui/Button";
@@ -608,25 +609,15 @@ export default function FeedView({
               handlers on this container, so the button was redundant
               affordance for the same action. Removed in PR-bug-fix. */}
 
+            {/* The hook keeps the raw error for the log; it is the SDK's
+                text ("Missing or insufficient permissions."), not a
+                sentence for the person. */}
             {feedSubTab === "following" && followingFeed.error && (
-              <div
-                className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20"
-                aria-live="polite"
-              >
-                {/* The hook keeps the raw error for the log; it is the
-                    SDK's text ("Missing or insufficient permissions."),
-                    not a sentence for the person. */}
-                <p className="text-xs text-destructive-strong">
-                  Couldn't load your feed. Check your connection.
-                </p>
-                <button
-                  type="button"
-                  onClick={followingFeed.refresh}
-                  className="text-xs font-medium text-destructive-strong underline ml-2 shrink-0"
-                >
-                  Retry
-                </button>
-              </div>
+              <ErrorState
+                title="Couldn't load your feed"
+                description="Check your connection and try again."
+                retry={{ label: "Retry", onClick: followingFeed.refresh }}
+              />
             )}
 
             {/* Sprint 5: Discover feed errors now surface a retry banner
@@ -641,21 +632,11 @@ export default function FeedView({
               exploreFeed.error &&
               exploreFeed.items.length === 0 &&
               !exploreFeed.loading && (
-                <div
-                  className="flex items-center justify-between p-3 rounded-xl bg-destructive/10 border border-destructive/20"
-                  aria-live="polite"
-                >
-                  <p className="text-xs text-destructive-strong">
-                    Couldn't load the community feed. Check your connection.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={exploreFeed.refresh}
-                    className="text-xs font-medium text-destructive-strong underline ml-2 shrink-0"
-                  >
-                    Retry
-                  </button>
-                </div>
+                <ErrorState
+                  title="Couldn't load the community feed"
+                  description="Check your connection and try again."
+                  retry={{ label: "Retry", onClick: exploreFeed.refresh }}
+                />
               )}
 
             {/* SOC-P3a — the communities stream: joined-space posts,

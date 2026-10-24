@@ -627,7 +627,7 @@ export default function RunSetupModal({
                                   },
                                 })
                               }
-                              className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
+                              className="ds-input mt-1 text-sm text-center font-mono tabular-nums"
                             />
                           </div>
                         ))}
@@ -642,7 +642,7 @@ export default function RunSetupModal({
                             id="interval-target-pace"
                             type="text"
                             placeholder="4:30"
-                            className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
+                            className="ds-input mt-1 text-sm text-center font-mono tabular-nums"
                             onChange={(e) => {
                               const [m, s] = e.target.value
                                 .split(":")
@@ -852,7 +852,7 @@ export default function RunSetupModal({
                                 });
                               }
                             }}
-                            className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
+                            className="ds-input mt-1 text-sm text-center font-mono tabular-nums"
                           />
                         </>
                       )}
@@ -956,7 +956,7 @@ export default function RunSetupModal({
                                 });
                               }
                             }}
-                            className="w-full min-h-11 mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center font-mono tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            className="ds-input mt-1 text-sm text-center font-mono tabular-nums"
                           />
                         </>
                       )}
@@ -1034,7 +1034,7 @@ export default function RunSetupModal({
                                 });
                               }
                             }}
-                            className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
+                            className="ds-input mt-1 text-sm text-center font-mono tabular-nums"
                           />
                         </>
                       )}

@@ -215,7 +215,7 @@ export default function ShareComposerSheet() {
             rows={2}
             aria-label="Add a note (optional)"
             aria-invalid={captionIsProfane}
-            className="w-full resize-none rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="ds-input resize-none text-sm"
           />
           {caption.length > 0 && (
             <span className="absolute bottom-2 right-3 text-caption font-mono tabular-nums text-muted-foreground">
