@@ -485,10 +485,7 @@ export default function CirclesSection({
       (e) =>
         e.kind === "weekly_check_in" && e.uid === uid && e.weekKey === thisWeek
     ) ?? null;
-  const focusSetCount = countWeeklyFocusSet(
-    events.filter((e) => memberUids.has(e.uid)),
-    thisWeek
-  );
+  const focusSetCount = countWeeklyFocusSet(events, thisWeek, memberUids);
 
   /* Featured-card equivalents of the sheet derivations above, from the
      eager featuredDetail (member-filtered for the same mid-week-
@@ -502,10 +499,7 @@ export default function CirclesSection({
         e.kind === "weekly_check_in" && e.uid === uid && e.weekKey === thisWeek
     ) ?? null;
   const featuredFocusCount = featuredDetail
-    ? countWeeklyFocusSet(
-        featuredDetail.events.filter((e) => featuredMemberUids.has(e.uid)),
-        thisWeek
-      )
+    ? countWeeklyFocusSet(featuredDetail.events, thisWeek, featuredMemberUids)
     : 0;
 
   const openDetail = async (c: CircleSummary) => {
