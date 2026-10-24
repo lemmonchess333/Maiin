@@ -244,12 +244,19 @@ export default function WaterCard({
     ? "linear-gradient(0deg, rgba(30, 120, 155, 0.25) 0%, rgba(58, 153, 186, 0.15) 40%, rgba(82, 163, 189, 0.08) 100%)"
     : "transparent";
 
+  /* The tile's heading, so Home's cards can be stepped through by heading.
+     Unseen: the visible "Water" sits inside the tile's button, and a
+     heading inside a button is no heading (the button's name replaces
+     what is in it, and the HTML is invalid). */
+  const heading = <h2 className="sr-only">Water</h2>;
+
   if (compact) {
     return (
       <div
         className="@container relative overflow-hidden p-3 rounded-xl bg-card h-full flex flex-col"
         style={{ boxShadow: iconBoxShadow }}
       >
+        {heading}
         <motion.div
           className="absolute inset-x-0 bottom-0 pointer-events-none rounded-xl"
           style={{ background: fillBg }}
@@ -447,6 +454,7 @@ export default function WaterCard({
       className="relative overflow-hidden p-4 rounded-2xl bg-card"
       style={{ boxShadow: iconBoxShadow }}
     >
+      {heading}
       <motion.div
         className="absolute inset-x-0 bottom-0 pointer-events-none rounded-2xl"
         style={{ background: fillBg }}

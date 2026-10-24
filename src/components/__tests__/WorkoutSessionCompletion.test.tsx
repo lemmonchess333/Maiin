@@ -187,6 +187,15 @@ it("finishes a session by the names the journeys use", async () => {
   expect(log).toHaveBeenCalledTimes(1);
 });
 
+it("gives the session screen its heading, the day it names at the top", () => {
+  // Full screen over Train, or alone from a saved routine, the session is
+  // a screen of its own, and a screen reader finds it by this heading.
+  openSession(writer(), vi.fn(), {}, { dayLabel: "Pull B" });
+  const title = screen.getByRole("heading", { level: 1, name: "Pull B" });
+  expect(title).toHaveClass("text-base", "font-bold");
+  expect(screen.getAllByRole("heading", { level: 1 })).toEqual([title]);
+});
+
 describe("set completion through row controls", () => {
   it("rejects an invalid later set and keeps it editable", () => {
     openSession();
@@ -1830,6 +1839,31 @@ describe("WorkoutSession — timers survive a locked phone", () => {
       "0:30"
     );
     hidden.mockRestore();
+  });
+
+  it("tells a screen reader when a rest starts and when it is over, not every second", async () => {
+    /* The countdown is plain text and the rest's end is a buzz and a
+       chime, so the start and the end are put into words. The region is
+       on the page before the rest is, since one that arrives with its
+       words already in it is often not read. */
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
+    const regions = screen.getAllByRole("status");
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    await act(async () => {});
+    const region = screen.getByText("Rest, 1:30").closest('[role="status"]');
+    expect(regions).toContain(region);
+    await act(async () => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(region).toHaveTextContent(/^Rest, 1:30$/);
+    await background(90_000);
+    expect(region).toHaveTextContent(/^Rest over$/);
+    // A rest that is put away takes its words with it.
+    fireEvent.click(screen.getByRole("button", { name: "End rest" }));
+    await vi.waitFor(() =>
+      expect(screen.queryByRole("group", { name: "Rest timer" })).toBeNull()
+    );
+    expect(region).toHaveTextContent(/^$/);
   });
 
   it("re-arms the completion alert when an expired rest is extended", async () => {

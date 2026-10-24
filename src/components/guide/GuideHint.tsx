@@ -23,6 +23,25 @@ import { cn } from "@/lib/utils";
 /** How long to look for the anchor once the hint's moment has come. */
 const ANCHOR_WAIT_MS = 3000;
 
+const NOT_TYPED_IN = new Set([
+  "button",
+  "checkbox",
+  "radio",
+  "range",
+  "submit",
+  "reset",
+  "color",
+  "file",
+  "image",
+]);
+
+/** Someone is typing here: a hint does not take their keyboard away. */
+function typingIn(el: Element | null): boolean {
+  if (!(el instanceof HTMLElement)) return false;
+  if (el.isContentEditable || el instanceof HTMLTextAreaElement) return true;
+  return el instanceof HTMLInputElement && !NOT_TYPED_IN.has(el.type);
+}
+
 /**
  * How far the hint keeps from each edge. On a page it keeps above the tab
  * bar, turning to the other side of its anchor rather than sit across the
@@ -72,6 +91,12 @@ interface GuideHintProps {
  * goes through the education lane, so it never shows beside another tip.
  * Any tap outside it closes it and still reaches what was tapped: tapping
  * the box it points at both closes it and completes the set.
+ *
+ * Focus moves to the hint when it shows, so a screen reader reads it and
+ * Got it is the next stop rather than one at the end of the page, and
+ * goes back where it was when the hint closes, or to the thing the hint
+ * explained. It is not trapped: Tab leaves, as from any non-modal
+ * dialog. Someone typing keeps their field.
  */
 export default function GuideHint({
   id,
@@ -93,6 +118,7 @@ export default function GuideHint({
   });
   const open = wants && lane.visible && !!anchor && anchor.isConnected;
   const titleId = useId();
+  const bodyId = useId();
   const bubbleRef = useRef<HTMLDivElement>(null);
   const arrowRef = useRef<SVGSVGElement>(null);
   const reported = useRef(false);
@@ -170,6 +196,28 @@ export default function GuideHint({
   });
   useEffect(() => () => seenOnLeave(), []);
 
+  // Into the hint as it shows; back out as it goes, unless the person has
+  // already taken focus somewhere else. By the time this cleans up the
+  // hint is off the page, so focus that was in it has fallen to the body.
+  useEffect(() => {
+    if (!open) return;
+    const before = document.activeElement;
+    if (typingIn(before)) return;
+    const bubble = bubbleRef.current;
+    bubble?.focus({ preventScroll: true });
+    return () => {
+      const now = document.activeElement;
+      if (now && now !== document.body && !bubble?.contains(now)) return;
+      const back =
+        before instanceof HTMLElement &&
+        before !== document.body &&
+        before.isConnected
+          ? before
+          : anchor;
+      back?.focus({ preventScroll: true });
+    };
+  }, [open, anchor]);
+
   if (!open || typeof document === "undefined") return null;
 
   const words = GUIDE_HINTS[id];
@@ -183,22 +231,23 @@ export default function GuideHint({
       role="dialog"
       aria-modal="false"
       aria-labelledby={titleId}
+      aria-describedby={bodyId}
+      tabIndex={-1}
       data-guide-hint={id}
       className={cn(
-        "w-[min(calc(100vw-2rem),20rem)]",
+        "w-[min(calc(100vw-2rem),20rem)] outline-none",
         layer === "session" ? "z-[55]" : "z-40"
       )}
     >
-      {/* The bubble and its arrow fade in together. */}
+      {/* The bubble and its arrow fade in together. Read out by taking
+          focus, with its words as the dialog's description, rather than
+          as a live region as well, which would say it twice. */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2 }}
       >
-        <div
-          className="rounded-2xl border border-border bg-card p-4 pb-2 shadow-lg"
-          aria-live="polite"
-        >
+        <div className="rounded-2xl border border-border bg-card p-4 pb-2 shadow-lg">
           <div className="flex items-center gap-2">
             <GuideMark />
             <h2
@@ -208,7 +257,10 @@ export default function GuideHint({
               {words.title}
             </h2>
           </div>
-          <p className="mt-1 text-sm leading-snug text-muted-foreground">
+          <p
+            id={bodyId}
+            className="mt-1 text-sm leading-snug text-muted-foreground"
+          >
             {body ?? words.body}
           </p>
           <div className="mt-1 flex justify-end">

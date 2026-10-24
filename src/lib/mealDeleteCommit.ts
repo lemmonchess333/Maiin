@@ -15,6 +15,7 @@
  * syncs, so nothing resolves and nothing is restored.
  */
 import { logger } from "@/lib/logger";
+import { TOAST_DURATION_MS } from "@/lib/toastDurations";
 
 export interface MealDeleteCommitDeps {
   /** The soft-delete itself. Rejects when the write is refused. */
@@ -48,8 +49,9 @@ export async function commitMealDeletes(
   deps.report(foodName);
 }
 
-/** How long a deleted meal can be put back: the Undo toast's life. */
-export const MEAL_UNDO_WINDOW_MS = 3000;
+/** How long a deleted meal can be put back: the Undo toast's life, which
+ *  is a toast with an action's (the window's close dismisses the toast). */
+export const MEAL_UNDO_WINDOW_MS = TOAST_DURATION_MS.action;
 
 export interface UndoWindowDeps {
   /** Take these meals off the screen and out of the day's total. */

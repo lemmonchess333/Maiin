@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { Search, X, Plus, Check, Dumbbell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMotionSafe } from "@/hooks/useMotionSafe";
 import { haptic } from "@/lib/haptic";
 import { categoryFigureUri } from "@/lib/muscleFigureSvg";
 import { useWorkouts } from "@/hooks/useWorkouts";
@@ -61,6 +62,7 @@ export default function ExercisePicker({
   currentExerciseId,
 }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
+  const motionSafe = useMotionSafe();
   const [selectedCategory, setSelectedCategory] = useState<string>(
     () =>
       (currentExerciseId &&
@@ -208,9 +210,9 @@ export default function ExercisePicker({
         <>
           <motion.div
             key="picker-backdrop"
-            initial={{ opacity: 0 }}
+            initial={motionSafe({ opacity: 0 })}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={motionSafe({ opacity: 0 })}
             transition={{ duration: 0.2 }}
             className="fixed inset-0"
             style={{ zIndex: 9998, backgroundColor: "rgba(0,0,0,0.4)" }}
@@ -246,9 +248,9 @@ export default function ExercisePicker({
             <AnimatePresence>
               {showDiscardConfirm && (
                 <motion.div
-                  initial={{ height: 0, opacity: 0 }}
+                  initial={motionSafe({ height: 0, opacity: 0 })}
                   animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
+                  exit={motionSafe({ height: 0, opacity: 0 })}
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden px-4 pb-3"
                 >
@@ -295,9 +297,9 @@ export default function ExercisePicker({
                 {searchQuery && (
                   <motion.button
                     data-motion-driven
-                    initial={{ opacity: 0, width: 0 }}
+                    initial={motionSafe({ opacity: 0, width: 0 })}
                     animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
+                    exit={motionSafe({ opacity: 0, width: 0 })}
                     transition={{ duration: 0.2 }}
                     onClick={cancelSearch}
                     className="text-sm font-medium shrink-0 overflow-hidden text-lifting-strong"

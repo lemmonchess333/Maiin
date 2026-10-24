@@ -35,6 +35,15 @@ describe.each([false, true])("WaterCard compact=%s", (compact) => {
     ).not.toBeInTheDocument();
   });
 
+  it("heads the tile, outside its buttons, so Home steps through it by heading", () => {
+    render(
+      <WaterCard compact={compact} ml={1750} targetMl={2000} onLog={vi.fn()} />
+    );
+    const heading = screen.getByRole("heading", { level: 2, name: "Water" });
+    // Inside the tile's button it would be read as the button's name.
+    expect(heading.closest("button")).toBeNull();
+  });
+
   it("offers Retry when a retry action exists", () => {
     const onRetry = vi.fn();
     render(

@@ -29,6 +29,7 @@ import {
   CloudLightning,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMotionSafe } from "@/hooks/useMotionSafe";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Toggle } from "@/components/ui/Toggle";
 import { fetchSavedRuns } from "@/lib/savedRuns";
@@ -208,6 +209,7 @@ export default function RunSetupModal({
 }: RunSetupModalProps) {
   const { user, profile } = useAuth();
   const unit = useDistanceUnit();
+  const motionSafe = useMotionSafe();
   // Adaptive Paces: the user's pace table (null when no benchmark). Used to
   // personalize the prescription when picking a run type in the ad-hoc
   // launcher (the programme path personalizes via templateToPrefill).
@@ -463,7 +465,7 @@ export default function RunSetupModal({
         {/* Weather strip */}
         {!weatherLoading && weather && (
           <motion.div
-            initial={{ opacity: 0, y: -4 }}
+            initial={motionSafe({ opacity: 0, y: -4 })}
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-3 p-3 rounded-xl"
             style={{
@@ -499,7 +501,7 @@ export default function RunSetupModal({
                 return (
                   <motion.p
                     key={config.activityType}
-                    initial={{ opacity: 0 }}
+                    initial={motionSafe({ opacity: 0 })}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.2 }}
                     className="text-xs text-muted-foreground"
@@ -546,9 +548,9 @@ export default function RunSetupModal({
         <AnimatePresence>
           {config.activityType === "intervals" && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
+              initial={motionSafe({ opacity: 0, height: 0 })}
               animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
+              exit={motionSafe({ opacity: 0, height: 0 })}
               className="overflow-hidden space-y-2"
             >
               <SessionStructureView
@@ -572,9 +574,9 @@ export default function RunSetupModal({
                 {showCustomise && (
                   <motion.div
                     id="interval-customise-panel"
-                    initial={{ opacity: 0, height: 0 }}
+                    initial={motionSafe({ opacity: 0, height: 0 })}
                     animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
+                    exit={motionSafe({ opacity: 0, height: 0 })}
                     className="overflow-hidden"
                   >
                     <div className="p-4 rounded-xl border border-border space-y-3 bg-card">
@@ -671,9 +673,9 @@ export default function RunSetupModal({
         <AnimatePresence>
           {config.activityType === "guided" && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
+              initial={motionSafe({ opacity: 0, height: 0 })}
               animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
+              exit={motionSafe({ opacity: 0, height: 0 })}
               className="overflow-hidden space-y-2"
             >
               <GuidedRunPicker
@@ -1124,9 +1126,9 @@ export default function RunSetupModal({
         <AnimatePresence>
           {showAdvanced && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
+              initial={motionSafe({ opacity: 0, height: 0 })}
               animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
+              exit={motionSafe({ opacity: 0, height: 0 })}
               className="overflow-hidden space-y-2"
             >
               {/* Auto-pause hides for manual-distance modes —

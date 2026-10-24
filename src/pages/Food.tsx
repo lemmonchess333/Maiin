@@ -1355,7 +1355,7 @@ export default function Food() {
        user's perspective. Looping over every ID in the group makes the
        row's visible state and the underlying data agree.
 
-       Optimistic hide / 3-second undo / Firestore delete logic is
+       Optimistic hide / undo window / Firestore delete logic is
        symmetric across all IDs — they go in and out of pending together
        so the toast's "Undo" action restores the entire group. */
     if (mealIds.length === 0) return;

@@ -876,6 +876,17 @@ export default function WorkoutSession({
 
   const stopRest = useCallback(() => setRest(null), []);
 
+  /* What the rest timer says to a screen reader, held here in a region
+     that is always on the page (the card's own would arrive with its
+     words in it). Each line is a node of its own, so a second rest of the
+     same length is still read out. */
+  const [restWords, setRestWords] = useState({ line: 0, words: "" });
+  const announceRest = useCallback(
+    (words: string) =>
+      setRestWords((spoken) => ({ line: spoken.line + 1, words })),
+    []
+  );
+
   /* The set being logged stays on screen. Ticking a set moves the current
      one down the table while the rest card (and a new best) dock under
      it, so on a phone the next set went below the fold: after a squat's
@@ -1731,7 +1742,15 @@ export default function WorkoutSession({
           stored name. A routine's own name reads as written. */}
       <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/50">
         <div className="min-w-0">
-          <p className="truncate text-base font-bold text-foreground">
+          {/* The session's title is the screen's heading, so a screen
+              reader finds where it is from. A heading by role rather than
+              an h1 element: the global h1 rule in index.css is unlayered,
+              so it would beat this line's own leading and tracking. */}
+          <p
+            role="heading"
+            aria-level={1}
+            className="truncate text-base font-bold text-foreground"
+          >
             {dayLabel ?? liftDayLine(day.dayName)}
           </p>
           <WorkoutProgress
@@ -2539,6 +2558,9 @@ export default function WorkoutSession({
           another comes in. With auto-start off (D-LIFT-16) the manual
           start waits in the same place, so starting a rest moves nothing
           either. */}
+      <p role="status" className="sr-only">
+        <span key={restWords.line}>{restWords.words}</span>
+      </p>
       <AnimatePresence initial={false}>
         {rest ? (
           <motion.div
@@ -2555,6 +2577,7 @@ export default function WorkoutSession({
               initialTarget={rest.target}
               exerciseName={day.exercises[currentExIndex]?.name}
               onStop={stopRest}
+              onAnnounce={announceRest}
             />
           </motion.div>
         ) : !autoRest && currentSets.some((st) => st.completed) ? (

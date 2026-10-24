@@ -14,6 +14,7 @@ import {
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
+import { useMotionSafe } from "@/hooks/useMotionSafe";
 import {
   Dumbbell,
   ClipboardList,
@@ -218,6 +219,7 @@ export default function DayPeekCard({
   const navigate = useNavigate();
   const unit = useDistanceUnit();
   const liftUnit = useLiftUnit();
+  const motionSafe = useMotionSafe();
   // Q5 P71 — overflow expand-sheet state. Mirrors RunWeekStrip's
   // local handling (the parent doesn't need to know about overflow).
   const [extrasSheetOpen, setExtrasSheetOpen] = useState(false);
@@ -365,9 +367,9 @@ export default function DayPeekCard({
   const hasExtras = extras.length > 0;
   return (
     <motion.div
-      initial={{ opacity: 0, height: 0 }}
+      initial={motionSafe({ opacity: 0, height: 0 })}
       animate={{ opacity: 1, height: "auto" }}
-      exit={{ opacity: 0, height: 0 }}
+      exit={motionSafe({ opacity: 0, height: 0 })}
       transition={{ duration: 0.2 }}
       className="overflow-hidden"
     >

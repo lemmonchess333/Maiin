@@ -95,6 +95,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMotionSafe } from "@/hooks/useMotionSafe";
 import PageShell from "@/components/ui/PageShell";
 import type { Exercise } from "@/lib/exercises";
 import { splitLabel } from "@/features/program/programEngine";
@@ -157,6 +158,7 @@ export default function Program() {
 
 function ProgramInner() {
   const navigate = useNavigate();
+  const motionSafe = useMotionSafe();
   const [searchParams, setSearchParams] = usePageSearchParams();
   const {
     programState,
@@ -1291,11 +1293,11 @@ function ProgramInner() {
                 <motion.div
                   key={idx}
                   custom={direction}
-                  variants={{
+                  variants={motionSafe.variants({
                     enter: (dir: number) => ({ opacity: 0, x: dir * 50 }),
                     center: { opacity: 1, x: 0 },
                     exit: (dir: number) => ({ opacity: 0, x: dir * -50 }),
-                  }}
+                  })}
                   initial="enter"
                   animate="center"
                   exit="exit"
@@ -1835,9 +1837,9 @@ function ProgramInner() {
         {contextMenu && (
           <>
             <motion.div
-              initial={{ opacity: 0 }}
+              initial={motionSafe({ opacity: 0 })}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              exit={motionSafe({ opacity: 0 })}
               className="fixed inset-0 z-[200]"
               onClick={() => setContextMenu(null)}
             />
@@ -1849,9 +1851,9 @@ function ProgramInner() {
                   contextMenu.exIndex
                 ]?.name ?? "exercise"
               }`}
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={motionSafe({ opacity: 0, scale: 0.95 })}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              exit={motionSafe({ opacity: 0, scale: 0.95 })}
               transition={{ duration: 0.15 }}
               className="fixed z-[201] bg-card rounded-xl shadow-lg border border-border/50 overflow-hidden"
               style={{
@@ -2158,9 +2160,9 @@ function ProgramInner() {
         {showOverflow && (
           <>
             <motion.div
-              initial={{ opacity: 0 }}
+              initial={motionSafe({ opacity: 0 })}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              exit={motionSafe({ opacity: 0 })}
               className="fixed inset-0 bg-black/50 z-40"
               onClick={() => setShowOverflow(false)}
             />

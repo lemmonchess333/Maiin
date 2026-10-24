@@ -432,12 +432,14 @@ behaviour.
   `AnimatedNumber` (`StatFigure`'s `count` draws one; `useCountUp` is for
   a once-a-session count on Home). Under Reduce Motion `AnimatedNumber` is
   plain text from the first paint.
-- **Entrance:** a page's header and sections rise in, staggered, through
-  the framer variants in `src/components/ui/pageMotion.ts`
-  (`pageItemVariant` inside `pageStaggerContainer`), which `PageShell`
-  applies; a page that animates a section itself imports
-  `pageItemVariant`. Content replacing its placeholder fades in instead
-  (`ArrivalFade`, under Pol1 below).
+- **Entrance:** a page's header and sections take the framer variants in
+  `src/components/ui/pageMotion.ts` (`pageItemVariant` inside
+  `pageStaggerContainer`), which `PageShell` applies, but they do not
+  rise in: the shell starts settled (`initial={false}`) and framer hands
+  that on to every section that takes the variants, one that mounts
+  later included, so a page is simply there (`PageShell.test.tsx` pins
+  it). Content replacing its placeholder fades in instead (`ArrivalFade`,
+  under Pol1 below).
 - **Numbers and records:** no flash class. A figure counts up (above), a
   set ticked on screen pops its check (`SetCheck`, under Pol1 below) and a
   new best is the gold card docked above the workout's bottom bar
@@ -449,7 +451,9 @@ behaviour.
   POSITIONAL values only (x, y, scale, width, height). Opacity, stroke
   offsets, `pathLength` and count-ups are not covered: if you add one,
   gate it in the component with the `useReducedMotion` hook, as
-  `ProgressRing` and `AnimatedNumber` do.
+  `ProgressRing` and `AnimatedNumber` do. A framer enter or exit that
+  fades wraps its targets in `useMotionSafe`, which takes the opacity out
+  (`Collapse`, `DayPeekCard`).
 - **A change seen on screen moves; the same state arriving by mount does
   not** (Pol1, 2026-10-11). A set ticked on screen pops its check
   (`SetCheck`); a done set on a resumed session or a return to its
@@ -849,17 +853,21 @@ reduced-motion` always gets the settled static state — no entrance, no
   name-only debt, pinned in `colorCanonical.test.ts` alongside the
   warning≠nutrition inequality that IS the D19 contract).
 - **Framer Motion is gated globally only for POSITION; CSS animations
-  are not gated at all.** `MotionConfig reducedMotion="user"` in
+  and transitions are gated globally in full.** `MotionConfig reducedMotion="user"` in
   `App.tsx` settles positional values (x, y, scale, rotate, width,
   height) and nothing else: opacity, a stroke offset, `pathLength` and a
   motion-value count-up all still animate under Reduce Motion. A non-positional animation
   asks `useReducedMotion` in its own component (`ProgressRing`,
-  `CalorieRing`, `EmptyState`, `AnimatedNumber` are the patterns). A
-  Tailwind `animate-*` class runs under Reduce Motion unless it carries
-  the `motion-safe:` variant. Every skeleton pulse and ping does;
-  `animate-spin` spinners are progress feedback and stay unprefixed
-  (`UNGUARDED_ANIMATION_BASELINE = 8` in `designSystemInvariants.test.ts`
-  is exactly the spinner set).
+  `CalorieRing`, `EmptyState`, `AnimatedNumber` are the patterns), and a
+  framer target that fades goes through `useMotionSafe`. CSS needs no
+  such step: under Reduce Motion the reset in `animations.css` gives
+  every animation and transition 0.01 ms and one iteration, so a
+  Tailwind `animate-*` class stops there with or without the
+  `motion-safe:` variant, an unprefixed `animate-spin` spinner included,
+  which stands still. Every skeleton pulse and ping carries the
+  prefix all the same, saying so where the class is written; the
+  spinners stay unprefixed (`UNGUARDED_ANIMATION_BASELINE = 8` in
+  `designSystemInvariants.test.ts` is exactly the spinner set).
 - **Empty states go through the `EmptyState` primitive**
   (`src/components/ui/EmptyState.tsx`; `compact` for in-card use) — no
   hand-rolled centered-icon-tile blocks. The primitive owns the brand

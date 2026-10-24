@@ -12,7 +12,9 @@ import { render, screen, cleanup } from "@testing-library/react";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
+import { motion } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
+import { pageItemVariant } from "@/components/ui/pageMotion";
 
 afterEach(cleanup);
 
@@ -120,5 +122,33 @@ describe("PageShell header", () => {
     const root = screen.getByTestId("root");
     expect(root.style.paddingBottom).toBe("var(--page-bottom-pad)");
     expect(root.className).toMatch(/space-y-4/);
+  });
+});
+
+/* The page starts settled, and the settle reaches every section, one
+   that mounts after the page included: framer hands `initial={false}` on
+   to each variant child. So no page section fades in, with or without
+   Reduce Motion, and the section variants have no fade to take out. */
+describe("PageShell motion", () => {
+  it("draws the header and every section settled, however late it arrives", () => {
+    const section = (id: string) => (
+      <motion.div key={id} data-testid={id} variants={pageItemVariant}>
+        {id}
+      </motion.div>
+    );
+    const { rerender } = render(
+      <PageShell title="Food">{[section("first")]}</PageShell>
+    );
+    rerender(
+      <PageShell title="Food">{[section("first"), section("later")]}</PageShell>
+    );
+    for (const el of [
+      screen.getByRole("banner"),
+      screen.getByTestId("first"),
+      screen.getByTestId("later"),
+    ]) {
+      expect(el.style.opacity).toBe("1");
+      expect(el.style.transform).toBe("none");
+    }
   });
 });

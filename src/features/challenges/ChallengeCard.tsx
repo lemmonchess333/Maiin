@@ -1,5 +1,6 @@
 import { useState, type ComponentType, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMotionSafe } from "@/hooks/useMotionSafe";
 import {
   Users,
   Clock,
@@ -187,6 +188,7 @@ export function ChallengeCard({
   const liftUnit = useLiftUnit();
   const distanceUnit = useDistanceUnit();
   const [expanded, setExpanded] = useState(false);
+  const motionSafe = useMotionSafe();
   const [busy, setBusy] = useState<"joining" | "leaving" | null>(null);
   const handleJoin = async () => {
     if (busy) return;
@@ -239,7 +241,7 @@ export function ChallengeCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={motionSafe({ opacity: 0, y: 8 })}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl bg-card border border-border/50 overflow-hidden"
     >
@@ -673,9 +675,9 @@ export function ChallengeCard({
       <AnimatePresence>
         {expanded && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
+            initial={motionSafe({ height: 0, opacity: 0 })}
             animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            exit={motionSafe({ height: 0, opacity: 0 })}
             className="overflow-hidden border-t border-border/50"
           >
             <div className="p-4 space-y-1.5 max-h-60 overflow-y-auto">
