@@ -1665,7 +1665,9 @@ service cloud.firestore {
       allow read: if request.auth != null;
       // Follower doc is written by the person doing the following.
       // R1A-Deletion: writer (followerUid) and recipient (uid) both
-      // must be writable.
+      // must be writable. A direct follow never carries `fromRequest`:
+      // onFollowerCreated reads it as "the person asked said yes" and
+      // tells the follower so, which only the person asked may say.
       allow delete: if (
           request.auth != null
           && request.auth.uid == followerUid
@@ -1689,6 +1691,7 @@ service cloud.firestore {
           && !blockExistsBetween(uid, followerUid)
           && !isRestricted()
           && !approvesFollowers(uid)
+          && !('fromRequest' in request.resource.data)
         )
         || acceptsFollowRequest(uid, followerUid);
     }

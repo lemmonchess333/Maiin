@@ -132,6 +132,20 @@ describe("NotificationsSheet", () => {
     expect(navigateMock).toHaveBeenCalledWith("/user/u-mia");
   });
 
+  it("an accepted follow request names who said yes and opens their profile", () => {
+    renderSheet([
+      item({
+        id: "y",
+        type: "follow_accepted",
+        fromUserId: "u-robin",
+        message: undefined,
+        fromName: "Robin",
+      }),
+    ]);
+    fireEvent.click(screen.getByText("Robin accepted your follow request"));
+    expect(navigateMock).toHaveBeenCalledWith("/user/u-robin");
+  });
+
   it("tapping a row deep-links to the actor's profile and closes the sheet", () => {
     const { onOpenChange } = renderSheet([
       item({ id: "a", fromUserId: "u-actor", message: "Alex gave you props" }),

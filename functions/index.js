@@ -8134,13 +8134,14 @@ exports.onGoalSpaceEventCreated = functions
   });
 
 /**
- * The two follow notices: "X started following you" and "X asked to follow
- * you". The person following writes the doc each one fires on themselves
- * (socialApi), so these triggers are the only place the server sees a
- * follow or a request. Each id is fixed per person, so a re-delivery, or
- * the same person following or asking again, rewrites one row instead of
- * adding another. createNotification holds the block check and each
- * recipient's switch, and skips an account that is being deleted.
+ * The follow notices: "X started following you", "X asked to follow you"
+ * and "X accepted your follow request". Each fires on a doc a client
+ * writes (socialApi), so these triggers are the only place the server sees
+ * a follow, a request or an answer. Each id is fixed per person, so a
+ * re-delivery, or the same person following, asking or accepting again,
+ * rewrites one row instead of adding another. createNotification holds the
+ * block check and each recipient's switch, and skips an account that is
+ * being deleted.
  */
 async function sendFollowNotice({ toUid, fromUid, type, verb, logKey }) {
   try {
@@ -8168,11 +8169,14 @@ async function sendFollowNotice({ toUid, fromUid, type, verb, logKey }) {
 /**
  * onFollowerCreated — "X started following you", for the people who turn
  * New followers on in Settings → Notifications (S3: off by default, so
- * createNotification skips everyone else before writing anything). Before
- * it, "follow" was an allowed notification type nothing sent.
+ * createNotification skips everyone else before writing anything).
  *
  * A follow the person accepted from a request (`fromRequest` on the edge,
- * written by acceptFollowRequest) sends nothing: they have just said yes.
+ * written by acceptFollowRequest) tells them nothing, since they have just
+ * said yes. It tells the person who asked instead: "X accepted your follow
+ * request", under the Follow requests switch. Only the person asked can
+ * write an edge carrying `fromRequest` (firestore.rules), so the notice
+ * cannot be forged by the asker.
  */
 exports.onFollowerCreated = functions
   .runWith({ ...TRIGGER_CAP, failurePolicy: true })
@@ -8182,7 +8186,16 @@ exports.onFollowerCreated = functions
     if (!uid || !followerUid || uid === followerUid) return null;
     // Retried: the notification's id is fixed per follower (above).
     if (pastRetryWindow(context)) return null;
-    if (snap.data() && snap.data().fromRequest === true) return null;
+    if (snap.data() && snap.data().fromRequest === true) {
+      await sendFollowNotice({
+        toUid: followerUid,
+        fromUid: uid,
+        type: "follow_accepted",
+        verb: "accepted your follow request",
+        logKey: "onFollowerCreated",
+      });
+      return null;
+    }
     await sendFollowNotice({
       toUid: uid,
       fromUid: followerUid,
