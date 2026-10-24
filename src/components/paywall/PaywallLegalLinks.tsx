@@ -15,7 +15,7 @@ import { Link } from "react-router-dom";
  */
 export function PaywallLegalLinks() {
   return (
-    <p className="text-caption text-muted-foreground text-center">
+    <p className="text-micro text-muted-foreground text-center">
       <Link to="/terms" className="underline underline-offset-2">
         Terms
       </Link>

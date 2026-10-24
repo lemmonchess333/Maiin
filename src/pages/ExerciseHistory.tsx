@@ -498,7 +498,7 @@ export default function ExerciseHistory() {
                         </>
                       )}
                     </p>
-                    <p className="text-caption text-muted-foreground mt-0.5">
+                    <p className="text-micro text-muted-foreground mt-0.5">
                       {formatDayMonth(parseLocalDate(pr.date))}
                     </p>
                   </div>
@@ -545,7 +545,7 @@ export default function ExerciseHistory() {
                         haptic("light");
                         setMetric(m);
                       }}
-                      className={`px-2 py-1 rounded-full text-caption font-semibold transition-colors ${
+                      className={`px-2 py-1 rounded-full text-micro font-semibold transition-colors ${
                         displayMetric === m
                           ? "bg-card text-foreground"
                           : "text-muted-foreground"
@@ -645,7 +645,7 @@ export default function ExerciseHistory() {
                         </p>
                         {delta != null && delta !== 0 && (
                           <p
-                            className="text-caption font-medium mt-0.5"
+                            className="text-micro font-medium mt-0.5"
                             style={{
                               color:
                                 delta > 0

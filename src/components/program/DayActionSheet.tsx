@@ -390,7 +390,7 @@ export default function DayActionSheet({
               </div>
               <div className="min-w-0 flex-1">
                 <SectionLabel>Run</SectionLabel>
-                <p className="text-lg font-extrabold leading-tight text-foreground truncate">
+                <p className="text-lg font-bold leading-tight text-foreground truncate">
                   {runSessionName(selectedRunTemplate, selectedRacePace, unit)}
                 </p>
                 {/* Run21 (2): the session's one feel line. Its shape is
@@ -449,13 +449,7 @@ export default function DayActionSheet({
                       : null;
                     const isManual = completionKind === "manual";
                     return (
-                      <span
-                        className={cn(
-                          "text-xs font-medium",
-                          isManual && "opacity-70"
-                        )}
-                        style={{ color: THEME.success }}
-                      >
+                      <span className="text-xs font-medium text-success-strong">
                         {isManual ? "Marked complete" : "Completed"}
                       </span>
                     );
@@ -768,7 +762,7 @@ export default function DayActionSheet({
               </div>
               <div className="min-w-0 flex-1">
                 <SectionLabel>Lift</SectionLabel>
-                <p className="text-lg font-extrabold leading-tight text-foreground truncate">
+                <p className="text-lg font-bold leading-tight text-foreground truncate">
                   {liftDayNameIn(
                     (programState?.workouts ?? []).map((w) => w.dayName),
                     lift.index,
@@ -784,10 +778,7 @@ export default function DayActionSheet({
               </div>
               <div className="shrink-0 pt-1">
                 {lift.status === "completed" && (
-                  <span
-                    className="text-xs font-medium"
-                    style={{ color: THEME.success }}
-                  >
+                  <span className="text-xs font-medium text-success-strong">
                     Completed
                   </span>
                 )}

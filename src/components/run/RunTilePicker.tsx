@@ -111,7 +111,7 @@ export default function RunTilePicker({
               <span className="block text-sm font-bold">
                 Repeat {repeatOpt.name.toLowerCase()}
               </span>
-              <span className="text-micro text-muted-foreground">
+              <span className="text-micro text-foreground">
                 {repeatBand ? (
                   <span className="font-mono tabular-nums">{repeatBand}</span>
                 ) : (
@@ -139,7 +139,7 @@ export default function RunTilePicker({
                   <Icon className="size-5 text-running" />
                 </div>
                 <span className="text-sm font-bold mt-1">{opt.name}</span>
-                <span className="text-micro text-muted-foreground">
+                <span className="text-micro text-foreground">
                   {band ? (
                     <span className="font-mono tabular-nums">{band}</span>
                   ) : (

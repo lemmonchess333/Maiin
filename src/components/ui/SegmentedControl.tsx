@@ -198,6 +198,9 @@ function SegmentedControl<T extends string | number>({
                     // ("Analytics PRs Badges" on a 320px phone).
                     "flex-1 min-w-0 truncate"
                   : "px-4",
+              // Every option carries a border so the selected pill can draw
+              // a 3:1 edge without shifting the row.
+              emphasis !== "solid" && "border",
               emphasis === "solid"
                 ? selected
                   ? cn(
@@ -207,7 +210,9 @@ function SegmentedControl<T extends string | number>({
                   : "border-border/80 bg-card text-muted-foreground hover:bg-muted/60"
                 : selected
                   ? cn(
-                      "bg-card shadow-sm",
+                      // The card pill on the muted track measures ~1:1 in
+                      // dark, so the selected state is carried by its edge.
+                      "bg-card shadow-sm border-muted-foreground/80",
                       tone === "running"
                         ? "text-running-strong"
                         : tone === "lifting"
@@ -217,8 +222,8 @@ function SegmentedControl<T extends string | number>({
                   : // Unselected: transparent on the shared track (fill), or
                     // an individual muted pill when wrapped (no track behind).
                     layout === "wrap"
-                    ? "bg-muted text-muted-foreground"
-                    : "text-muted-foreground"
+                    ? "border-transparent bg-muted text-muted-foreground"
+                    : "border-transparent text-muted-foreground"
             )}
           >
             {opt.label}

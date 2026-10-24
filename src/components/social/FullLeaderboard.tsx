@@ -72,7 +72,7 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
         >
           <ChevronLeft className="size-5" />
         </button>
-        <h2 className="text-lg font-extrabold">Leaderboard</h2>
+        <h2 className="text-lg font-bold">Leaderboard</h2>
       </div>
 
       {/* Which board: one choice of three, as a radiogroup. */}

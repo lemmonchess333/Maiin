@@ -190,8 +190,8 @@ function PIGauge({
         {/* Labels */}
         <text
           x={14}
-          y={107}
-          fontSize={10}
+          y={108}
+          fontSize={11}
           fill="hsl(var(--muted-foreground))"
           textAnchor="middle"
         >
@@ -200,7 +200,7 @@ function PIGauge({
         <text
           x={90}
           y={10}
-          fontSize={10}
+          fontSize={11}
           fill="hsl(var(--muted-foreground))"
           textAnchor="middle"
         >
@@ -208,8 +208,8 @@ function PIGauge({
         </text>
         <text
           x={166}
-          y={107}
-          fontSize={10}
+          y={108}
+          fontSize={11}
           fill="hsl(var(--muted-foreground))"
           textAnchor="middle"
         >

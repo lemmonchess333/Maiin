@@ -410,7 +410,7 @@ describe("recovering coaching and checkpoint durability", () => {
         fireEvent.click(screen.getByRole("button", { name: "Resume run" }))
       );
       expect(
-        screen.getByText("Warm-up", { selector: "p.font-extrabold" })
+        screen.getByText("Warm-up", { selector: "p.text-lg.font-bold" })
       ).toBeInTheDocument();
       for (const [elapsed, metres] of [
         [60, 200],
@@ -426,7 +426,7 @@ describe("recovering coaching and checkpoint durability", () => {
         view.rerender(tree());
       }
       expect(
-        screen.getByText("Recovery two", { selector: "p.font-extrabold" })
+        screen.getByText("Recovery two", { selector: "p.text-lg.font-bold" })
       ).toBeInTheDocument();
       expect(screen.getByText("0:15")).toBeInTheDocument();
       if (savedPhase === "paused")
@@ -441,7 +441,7 @@ describe("recovering coaching and checkpoint durability", () => {
         fireEvent.click(screen.getByRole("button", { name: "Resume run" }))
       );
       expect(
-        screen.getByText("Recovery two", { selector: "p.font-extrabold" })
+        screen.getByText("Recovery two", { selector: "p.text-lg.font-bold" })
       ).toBeInTheDocument();
       expect(screen.getByText("0:15")).toBeInTheDocument();
       expect(h.speak).toHaveBeenCalledTimes(spokenBefore);
@@ -452,7 +452,7 @@ describe("recovering coaching and checkpoint durability", () => {
       h.gps.distance = 1150;
       restoredView.rerender(tree());
       expect(
-        screen.getByText("Rep three", { selector: "p.font-extrabold" })
+        screen.getByText("Rep three", { selector: "p.text-lg.font-bold" })
       ).toBeInTheDocument();
       expect(
         h.speak.mock.calls.filter(([cue]) => cue === "Third rep")
@@ -512,7 +512,7 @@ describe("recovering coaching and checkpoint durability", () => {
         screen.getByText(/Continuing without coaching/)
       ).toBeInTheDocument();
       expect(
-        document.querySelector("p.font-extrabold.leading-tight")
+        document.querySelector("p.text-lg.font-bold.leading-tight")
       ).toBeNull();
       fireEvent.click(screen.getByRole("button", { name: "Finish" }));
       const payload = JSON.parse(

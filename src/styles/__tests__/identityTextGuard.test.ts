@@ -209,7 +209,9 @@ const EXPECTED_INLINE_USES = {
   // (its apple) went with the Settings pass; the phase is a row now.
   // 17 → 16 with the first-week pass: Home's welcome card (its Food tab
   // icon in the food orange) became the first-week card.
-  "THEME.semantic.nutrition": 16,
+  // 16 → 15: the food search's "Log manually" (12px, 2.77:1 on the card)
+  // took `text-nutrition-strong`.
+  "THEME.semantic.nutrition": 15,
 } as const;
 
 type InlineToken = keyof typeof EXPECTED_INLINE_USES;

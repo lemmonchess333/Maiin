@@ -236,10 +236,7 @@ export default function ExercisePicker({
               >
                 <X className="size-5 text-muted-foreground" />
               </button>
-              <p
-                className="text-foreground"
-                style={{ fontSize: 17, fontWeight: 600 }}
-              >
+              <p className="text-body font-semibold text-foreground">
                 {headerTitle}
               </p>
               <div style={{ width: 32 }} />

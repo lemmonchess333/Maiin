@@ -495,7 +495,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
             commonMistakes &&
             commonMistakes.length > 0 && (
               <div className="mt-4">
-                <p className="text-caption uppercase tracking-wide text-muted-foreground">
+                <p className="text-micro text-muted-foreground">
                   Common mistakes
                 </p>
                 <ul className="mt-1.5 space-y-1">

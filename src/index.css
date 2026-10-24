@@ -717,9 +717,13 @@ select:disabled {
   cursor: not-allowed;
 }
 
+/* The secondary grey at full strength: 4.86:1 on the light field fill,
+   5.40 on the card, 6.53 on the dark field. Alpha thinned it under 2.5:1.
+   opacity 1 also overrides the reduced placeholder opacity some engines
+   apply by default, which reaches `.ds-input` too. */
 ::placeholder {
   color: hsl(var(--muted-foreground));
-  opacity: 0.6;
+  opacity: 1;
 }
 
 /* Smooth scrolling */

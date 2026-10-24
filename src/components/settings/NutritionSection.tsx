@@ -434,7 +434,7 @@ export default function NutritionSection({
             </div>
             {/* D6 — is this target engine-adapted, manual, or formula? So the
                 user can tell what's learning vs what they own. */}
-            <p className="text-caption text-muted-foreground leading-snug pt-1">
+            <p className="text-micro text-muted-foreground leading-snug pt-1">
               {adaptiveCalorieStatusLabel(
                 adaptiveStatus,
                 // The learned value, so the line can't claim the formula
@@ -445,7 +445,7 @@ export default function NutritionSection({
             {showDrift && drift && (
               <div className="pt-2 space-y-2">
                 <p
-                  className="text-caption leading-snug"
+                  className="text-micro leading-snug"
                   style={{ color: "hsl(var(--warning-strong))" }}
                 >
                   Your body has changed since this target was set, so it now
@@ -533,14 +533,14 @@ export default function NutritionSection({
               a 168 g figure where the plan intends 242 g reads as a plan
               choice rather than a shortfall. Say it, at the point the pace is
               chosen. */}
-          <p className="text-caption text-muted-foreground leading-snug pt-2">
+          <p className="text-micro text-muted-foreground leading-snug pt-2">
             Protein follows your training block. Carbs and fat are a rest
             day&apos;s; training days move some fat to carbs.
           </p>
 
           {split.aggressive && !split.infeasible && (
             <p
-              className="text-caption leading-snug pt-2"
+              className="text-micro leading-snug pt-2"
               style={{ color: "hsl(var(--warning-strong))" }}
             >
               This pace leaves room for{" "}
@@ -560,7 +560,7 @@ export default function NutritionSection({
           {split.infeasible && (
             <p
               role="status"
-              className="text-caption leading-snug pt-2"
+              className="text-micro leading-snug pt-2"
               style={{ color: "hsl(var(--warning-strong))" }}
             >
               {macroInfeasibilityMessage(split.minFeasibleKcal)}
@@ -572,13 +572,13 @@ export default function NutritionSection({
               number stay the person's, as for a target under 1,200. */}
           {lowCarb && (
             <p
-              className="text-caption leading-snug pt-2"
+              className="text-micro leading-snug pt-2"
               style={{ color: "hsl(var(--warning-strong))" }}
             >
               {adaptiveStatus.kind === "manual" ? "Your target" : "This pace"}{" "}
               leaves{" "}
-              <span className="font-mono tabular-nums">{split.carbs} g</span>{" "}
-              of carbs a day, which is little to train on.{" "}
+              <span className="font-mono tabular-nums">{split.carbs} g</span> of
+              carbs a day, which is little to train on.{" "}
               {adaptiveStatus.kind === "manual"
                 ? "A higher target leaves more."
                 : "A gentler pace leaves more."}

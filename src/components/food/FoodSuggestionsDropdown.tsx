@@ -7,7 +7,6 @@ import {
 import { motion } from "framer-motion";
 import IconButton from "@/components/ui/IconButton";
 import { ChevronRight, Star, Pencil } from "lucide-react";
-import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -475,10 +474,7 @@ function FoodSuggestionsDropdown({
             <span className="text-sm text-muted-foreground">
               No matches found
             </span>
-            <span
-              className="text-xs font-medium"
-              style={{ color: THEME.semantic.nutrition }}
-            >
+            <span className="text-xs font-medium text-nutrition-strong">
               Log manually
             </span>
           </button>
