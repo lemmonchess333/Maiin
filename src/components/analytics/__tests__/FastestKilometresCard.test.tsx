@@ -107,4 +107,24 @@ describe("FastestKilometresCard", () => {
     const { container } = renderCard([]);
     expect(container).toBeEmptyDOMElement();
   });
+  it("keeps the chevron at the row's end when the figures wrap", () => {
+    // As the last item of the wrapping row, the chevron dropped onto a
+    // line of its own under "5 km" on a 393px phone. The figures wrap in
+    // their own group; the chevron sits beside that group.
+    renderCard([
+      {
+        km: 5,
+        inRange: effort(1440, "r-recent", "2026-09-17"),
+        allTime: effort(1351, "r-race", "2026-08-29"),
+      },
+    ]);
+    const row = screen.getByRole("link");
+    expect(row).not.toHaveClass("flex-wrap");
+    const chevron = row.lastElementChild as Element;
+    expect(chevron.tagName.toLowerCase()).toBe("svg");
+    const figures = row.firstElementChild as Element;
+    expect(figures).toHaveClass("flex-wrap");
+    expect(figures).toContainElement(within(row).getByText("5 km"));
+    expect(figures.contains(chevron)).toBe(false);
+  });
 });
