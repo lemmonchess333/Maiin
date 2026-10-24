@@ -73,7 +73,7 @@ function points(finalForm: number): LoadPoint[] {
 
 /** The chip itself — a single span carrying "Form" and the signed value. */
 function chip(): HTMLElement {
-  return screen.getByText(/^Form [+-]?\d+$/, { selector: "span" });
+  return screen.getByText(/^Form [+\u2212]?\d+$/, { selector: "span" });
 }
 
 describe("training load — the Form chip's register", () => {
@@ -103,6 +103,6 @@ describe("training load — the Form chip's register", () => {
     expect(chip().textContent).toBe("Form +7");
     cleanup();
     render(<TrainingLoadCard points={points(-6)} loading={false} />);
-    expect(chip().textContent).toBe("Form -6");
+    expect(chip().textContent).toBe("Form \u22126");
   });
 });

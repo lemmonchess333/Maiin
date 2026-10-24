@@ -175,7 +175,7 @@ describe("RunSetupModal — the interval session handed to Start", () => {
     fireEvent.change(screen.getByLabelText("Rest (s)"), {
       target: { value: "120" },
     });
-    expect(screen.getAllByText("800m @ 4:30 /km")).toHaveLength(6);
+    expect(screen.getAllByText("800 m @ 4:30 /km")).toHaveLength(6);
     fireEvent.click(screen.getByRole("button", { name: "Start intervals" }));
     expect(onStart).toHaveBeenCalledWith(
       expect.objectContaining({

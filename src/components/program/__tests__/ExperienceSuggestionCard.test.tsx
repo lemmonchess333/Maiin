@@ -118,9 +118,7 @@ describe("ExperienceSuggestionCard", () => {
     // ON the card, with the classifier's own numbers.
     expect(screen.getByText("Bench Press")).toBeInTheDocument();
     expect(screen.getByText("Squat")).toBeInTheDocument();
-    expect(screen.getAllByText(/6 sessions · 5 wks · e1RM \+0%/)).toHaveLength(
-      2
-    );
+    expect(screen.getAllByText(/6 sessions · 5 wks · e1RM 0%/)).toHaveLength(2);
     // The criteria statement — including that advanced is never automatic.
     expect(
       screen.getByText(/Advanced is never suggested automatically/i)

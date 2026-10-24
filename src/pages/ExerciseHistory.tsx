@@ -7,7 +7,7 @@ import { ChevronLeft, Trophy, Search, Dumbbell } from "lucide-react";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { EXERCISES } from "@/lib/exercises";
 import { epley1RMExact } from "@/lib/analytics";
-import { formatDayMonth } from "@/utils/formatters";
+import { formatDayMonth, withSign } from "@/utils/formatters";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { liftUnitLabel, liftVolumeIn, wholeLoadIn } from "@/lib/liftLoad";
 import { formatKitLoad, kitLoadIn } from "@/features/program/loadSteps";
@@ -653,11 +653,17 @@ export default function ExerciseHistory() {
                                   : "hsl(var(--muted-foreground))",
                             }}
                           >
-                            {delta > 0 ? "+" : ""}
-                            {isTimed
-                              ? `${delta} s`
-                              : `${kitLoadIn(delta, liftUnit, exercise?.id)} ${unitLabel}`}{" "}
-                            from last
+                            {withSign(
+                              delta,
+                              String(
+                                Math.abs(
+                                  isTimed
+                                    ? delta
+                                    : kitLoadIn(delta, liftUnit, exercise?.id)
+                                )
+                              )
+                            )}{" "}
+                            {isTimed ? "s" : unitLabel} from last
                           </p>
                         )}
                       </div>

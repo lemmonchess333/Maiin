@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { Feather, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
-import { durationLabel, distanceLabel } from "@/lib/runLabels";
-import { formatDayMonth } from "@/utils/formatters";
+import { distanceLabel } from "@/lib/runLabels";
+import { formatDayMonth, formatDuration } from "@/utils/formatters";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import type { EaseWeekNudgeResult } from "@/lib/easeWeekNudge";
@@ -106,7 +106,7 @@ export default function EaseWeekNudgeCard({
               {(evidence ?? []).map((run) => {
                 const amount = (value: number) =>
                   run.target.unit === "seconds"
-                    ? durationLabel(value)
+                    ? formatDuration(value)
                     : distanceLabel(value, unit);
                 return (
                   <li key={run.id}>

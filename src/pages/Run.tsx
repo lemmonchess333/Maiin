@@ -147,6 +147,7 @@ import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import GuideHint from "@/components/guide/GuideHint";
 import { useGuideHint } from "@/hooks/useGuideHint";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
+import { formatDuration } from "@/utils/formatters";
 
 function sessionSegmentsFor(
   config: RunConfig | null,
@@ -407,9 +408,9 @@ export default function Run() {
 
         // Show a brief banner if the gap was significant (> 5 seconds)
         if (event.hiddenDuration > 5) {
-          const mins = Math.floor(event.hiddenDuration / 60);
-          const secs = Math.floor(event.hiddenDuration % 60);
-          const duration = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+          const duration = formatDuration(Math.floor(event.hiddenDuration), {
+            seconds: true,
+          });
           setBgGapBanner(
             `App was in background for ${duration} — GPS data may have gaps`
           );

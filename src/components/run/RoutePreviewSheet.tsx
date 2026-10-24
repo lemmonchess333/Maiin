@@ -15,6 +15,7 @@ import RunMap from "./RunMapLazy";
 import { distanceLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { elevationLabel } from "@/lib/runLabels";
+import { formatDuration } from "@/utils/formatters";
 
 interface RoutePreviewSheetProps {
   open: boolean;
@@ -47,12 +48,6 @@ function estDuration(points: GPSPoint[]): { sec: number; estimated: boolean } {
   if (sec > 0) return { sec, estimated: false };
   const km = routeTotalDistance(points) / 1000;
   return { sec: km * DEFAULT_PACE_SEC_PER_KM, estimated: true };
-}
-
-function fmtDuration(sec: number): string {
-  const m = Math.round(sec / 60);
-  if (m < 60) return `${m} min`;
-  return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
 }
 
 function Stat({
@@ -142,7 +137,7 @@ export default function RoutePreviewSheet({
           />
           <Stat
             icon={<Clock className="size-4" />}
-            value={`${estimated ? "~" : ""}${fmtDuration(sec)}`}
+            value={`${estimated ? "~" : ""}${formatDuration(sec)}`}
             label="Est. time"
           />
         </div>

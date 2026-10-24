@@ -482,9 +482,9 @@ describe("NutritionSection — sub-floor override notice", () => {
         inline
       />
     );
-    const notice = screen.getByText(/cal floor Tropos uses everywhere else/);
+    const notice = screen.getByText(/kcal floor Tropos uses everywhere else/);
     // Names the actual constant, not a hardcoded string that could drift.
-    expect(notice.textContent).toContain(String(MIN_TARGET_CALORIES));
+    expect(notice.textContent).toContain(group(MIN_TARGET_CALORIES));
   });
 
   it("stays silent at or above the floor, and when no override is set", () => {
@@ -569,15 +569,15 @@ describe("NutritionSection — target drift notice", () => {
   it("names both paces — the real one and the chosen one", () => {
     renderDrift({});
     const notice = screen.getByText(/Your body has changed since this target/);
-    expect(notice.textContent).toContain("-0.33 kg/wk"); // what it now is
-    expect(notice.textContent).toContain("-0.50 kg/wk"); // what was picked
+    expect(notice.textContent).toContain("\u22120.33 kg/wk"); // what it now is
+    expect(notice.textContent).toContain("\u22120.50 kg/wk"); // what was picked
   });
 
   it("uses pounds for both drift paces and the recalculation action", () => {
     renderDrift({ preferredWeightUnit: "lbs" });
     const notice = screen.getByText(/Your body has changed since this target/);
-    expect(notice.textContent).toContain("-0.73 lb/wk");
-    expect(notice.textContent).toContain("-1.10 lb/wk");
+    expect(notice.textContent).toContain("\u22120.73 lb/wk");
+    expect(notice.textContent).toContain("\u22121.10 lb/wk");
     expect(
       screen.getByRole("button", { name: "Recalculate for 172.0 lb" })
     ).toBeInTheDocument();
@@ -680,7 +680,7 @@ describe("the adapting status line is wired to the learned target", () => {
  * call the gap "Recomp offset −2400 cal", a plan choice the user never made.
  */
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
-import { groupText } from "@/test/localeGrouping";
+import { group, groupText } from "@/test/localeGrouping";
 
 describe("NutritionSection — manual target naming and the infeasible notice", () => {
   function renderWith(profile: Partial<UserProfile>, tdee: TDEEResult) {

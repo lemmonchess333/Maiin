@@ -23,6 +23,7 @@ import {
 import { ChevronDown, Footprints, Info } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import UITooltip from "@/components/ui/Tooltip";
+import { formatSigned } from "@/utils/formatters";
 
 /* Body copy reused at both render sites (gauge headline + summary card)
  * so they stay in sync. PI = 65% load + 25% recovery + 10% adherence
@@ -450,8 +451,7 @@ export default function PerformanceTab({
                   background: `${delta >= 0 ? THEME.success : THEME.running}18`,
                 }}
               >
-                {delta >= 0 ? "+" : ""}
-                {delta} pts
+                {formatSigned(delta)} pts
               </span>
             )}
           </div>

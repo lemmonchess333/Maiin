@@ -61,7 +61,7 @@ describe("SessionStructureView — intervals", () => {
     );
     expect(screen.queryByText("Warm-up")).not.toBeInTheDocument();
     expect(screen.queryByText("Cool-down")).not.toBeInTheDocument();
-    expect(screen.getAllByText("400m")).toHaveLength(4);
+    expect(screen.getAllByText("400 m")).toHaveLength(4);
     expect(screen.getAllByText("Recover")).toHaveLength(3);
   });
 });

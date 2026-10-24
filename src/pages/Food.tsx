@@ -82,6 +82,7 @@ import EditServingsSheet from "@/components/food/EditServingsSheet";
 import CopyMealsSheet from "@/components/food/CopyMealsSheet";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import { useInFlightGuard } from "@/hooks/useInFlightGuard";
+import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
 import FoodComposerCard from "@/components/food/FoodComposerCard";
 import ScanGrow from "@/components/food/ScanGrow";
@@ -2134,9 +2135,10 @@ export default function Food() {
             </p>
             <p className="text-xs leading-tight text-muted-foreground truncate">
               <span className="font-mono tabular-nums">
-                {Math.round(usual.cal)}
+                {formatCalories(usual.cal)}
               </span>{" "}
-              kcal{usualPortion && ` · ${usualPortion}`}
+              {CALORIE_UNIT}
+              {usualPortion && ` · ${usualPortion}`}
             </p>
           </div>
           <div className="ml-auto flex items-center gap-2">

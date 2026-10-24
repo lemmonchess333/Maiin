@@ -12,7 +12,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
-import { format } from "date-fns";
+import {
+  formatDayMonthYear,
+  formatWeekdayDayMonthYear,
+} from "@/utils/formatters";
 import {
   ArrowLeft,
   Check,
@@ -185,7 +188,7 @@ function RaceEventHeader({
               .filter((d) => d >= todayKey)
               .map((d) => (
                 <option key={d} value={d}>
-                  {format(parseLocalDate(d), "EEEE d MMMM yyyy")}
+                  {formatWeekdayDayMonthYear(parseLocalDate(d))}
                 </option>
               ))}
           </Select>
@@ -202,9 +205,8 @@ function RaceEventHeader({
             Your race ·{" "}
             <span className="font-mono tabular-nums">
               {profile?.raceGoal?.targetDate
-                ? format(
-                    parseLocalDate(profile.raceGoal.targetDate),
-                    "d MMM yyyy"
+                ? formatDayMonthYear(
+                    parseLocalDate(profile.raceGoal.targetDate)
                   )
                 : shortDay}
             </span>

@@ -6,6 +6,7 @@ import Tooltip from "@/components/ui/Tooltip";
 import { Spinner } from "@/components/ui/Spinner";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
+import { withSign } from "@/utils/formatters";
 
 /**
  * Solo-user alternative to LeaderboardCard. Surfaces this week's
@@ -113,7 +114,9 @@ export default function TrajectoryCard({
                   }}
                 >
                   <DeltaIcon size={12} />
-                  {delta === 0 ? "Same" : `${delta > 0 ? "+" : ""}${delta}`}
+                  {delta === 0
+                    ? "Same"
+                    : withSign(delta, String(Math.abs(delta)))}
                 </button>
               </Tooltip>
             )}

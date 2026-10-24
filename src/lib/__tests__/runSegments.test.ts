@@ -642,12 +642,12 @@ describe("segmentTargetLabel", () => {
   it("spells out a part minute rather than rounding it", () => {
     const label = (seconds: number) =>
       segmentTargetLabel({ kind: "duration", seconds });
-    expect(label(45)).toBe("45s");
+    expect(label(45)).toBe("45 s");
     expect(label(60)).toBe("1 min");
     // A 90-second walk read "2 min", and so did an interval's 90s rest.
-    expect(label(90)).toBe("90s");
-    expect(label(150)).toBe("2 min 30s");
-    expect(label(330)).toBe("5 min 30s");
+    expect(label(90)).toBe("90 s");
+    expect(label(150)).toBe("2 min 30 s");
+    expect(label(330)).toBe("5 min 30 s");
     expect(label(1200)).toBe("20 min");
     expect(segmentTargetLabel({ kind: "distance", meters: 1000 })).toBe("1K");
   });

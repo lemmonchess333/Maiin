@@ -1,5 +1,5 @@
 import { getSegmentColor } from "@/lib/guidedRun";
-import { formatClock } from "@/utils/formatters";
+import { formatClock, formatDuration } from "@/utils/formatters";
 import { segmentsDurationSeconds } from "@/lib/runSegments";
 import type { SessionPlayer } from "@/hooks/useSessionPlayer";
 import { THEME } from "@/lib/theme";
@@ -114,7 +114,9 @@ export default function GuidedRunOverlay({
           <p className="text-xs text-white/50">
             Up next:{" "}
             <span className="text-white/70 font-medium">{next.label}</span> —{" "}
-            {formatTime(nextTarget)}
+            {/* A planned span, so it reads in words; the countdown above
+                is the live one and stays a clock. */}
+            {formatDuration(nextTarget, { seconds: true })}
           </p>
         )}
       </div>

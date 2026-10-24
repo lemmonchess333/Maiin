@@ -23,8 +23,8 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
 import { spaceDef } from "@/features/spaces/spaceDefs";
-import { format } from "date-fns";
 import { parseLocalDate } from "@/lib/dateHelpers";
+import { formatDayMonthYear } from "@/utils/formatters";
 import PhaseRail from "./PhaseRail";
 
 interface RaceCockpitCardProps {
@@ -83,13 +83,11 @@ export default function RaceCockpitCard({
     ? Math.min(100, Math.max(0, ((currentWeek! + 1) / totalWeeks!) * 100))
     : 0;
 
-  const dateLabel = (() => {
-    try {
-      return format(parseLocalDate(targetDate), "d MMM yyyy");
-    } catch {
-      return targetDate;
-    }
-  })();
+  // A key that does not parse shows as stored, rather than "Invalid Date".
+  const target = parseLocalDate(targetDate);
+  const dateLabel = Number.isNaN(target.getTime())
+    ? targetDate
+    : formatDayMonthYear(target);
 
   return (
     <section

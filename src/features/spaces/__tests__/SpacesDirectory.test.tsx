@@ -122,7 +122,7 @@ describe("SpacesDirectory — Races & Events", () => {
         screen.getByRole("link", { name: "Great North Run space" })
       ).getByText("Half marathon")
     ).toBeInTheDocument();
-    expect(screen.getByText(/13 Sep 2099/)).toBeInTheDocument();
+    expect(screen.getByText(/13 Sept? 2099/)).toBeInTheDocument();
     expect(screen.getByText(/Newcastle/)).toBeInTheDocument();
     // Density gate stays interest-only territory: the race card never
     // renders a count line, whatever its membership.

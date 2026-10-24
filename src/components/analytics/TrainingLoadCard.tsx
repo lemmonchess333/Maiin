@@ -22,6 +22,7 @@ import ChartAreaGradient from "./ChartAreaGradient";
 import { evaluateLoadGuardrails, type LoadPoint } from "@/lib/trainingLoad";
 import { Skeleton } from "@/components/LoadingSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
+import { formatSigned } from "@/utils/formatters";
 
 /* The card's own legend, moved off the surface and behind the ⓘ. The
    sport words keep their `-strong` steps: an identity is a fill value
@@ -165,8 +166,7 @@ export default function TrainingLoadCard({
               : "bg-muted/60 text-muted-foreground"
           }`}
         >
-          Form {formFresh ? "+" : ""}
-          {numberFmt(last.form)}
+          Form {formatSigned(last.form)}
         </span>
       </div>
 

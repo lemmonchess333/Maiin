@@ -63,6 +63,7 @@ import {
   type RunFitnessInput,
 } from "./runPaces";
 import { paceMinSec } from "./runLabels";
+import { formatDuration } from "@/utils/formatters";
 import { paceUnitLabel, type DistanceUnit } from "./distanceUnits";
 
 export type RaceDistance = "5k" | "10k" | "half" | "marathon";
@@ -118,11 +119,7 @@ const RACE_IN_A_SENTENCE: Record<RaceDistance, string> = {
 
 /** A span of minutes to the nearest five: "35 min", "2 h", "2 h 30 min". */
 function aboutTime(minutes: number): string {
-  const rounded = Math.round(minutes / 5) * 5;
-  const hours = Math.floor(rounded / 60);
-  const rest = rounded % 60;
-  if (!hours) return `${rest} min`;
-  return rest ? `${hours} h ${rest} min` : `${hours} h`;
+  return formatDuration(Math.round(minutes / 5) * 5 * 60);
 }
 
 /**
