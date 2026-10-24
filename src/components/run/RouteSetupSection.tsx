@@ -128,7 +128,7 @@ export default function RouteSetupSection({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Route name"
-              className="mb-4 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              className="ds-input mb-4 text-sm"
             />
             <div className="flex gap-2">
               <Button

@@ -1772,7 +1772,7 @@ export default function RunSummary() {
               placeholder="Any notes about this run..."
               aria-label="Run notes"
               rows={3}
-              className="w-full px-4 py-3 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground resize-none"
+              className="ds-input resize-none text-sm"
             />
 
             {canShowRetrySave({ saveStatus }) && (

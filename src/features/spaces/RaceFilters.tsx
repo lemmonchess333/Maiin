@@ -1,4 +1,5 @@
 import { useId } from "react";
+import Select from "@/components/ui/Select";
 import { RACE_COUNTRIES, raceSpaceDefs } from "./spaceDefs";
 import { RACE_DISTANCE_LABELS, type RaceBrowseFilters } from "./raceBrowse";
 
@@ -24,9 +25,9 @@ export default function RaceFilters({
         >
           Country
         </label>
-        <select
+        <Select
           id={`${id}-country`}
-          className="ds-input mt-1 w-full min-h-11 px-3 py-2.5 text-sm"
+          className="mt-1"
           value={value.country}
           onChange={(e) =>
             onChange({
@@ -45,7 +46,7 @@ export default function RaceFilters({
                 {label}
               </option>
             ))}
-        </select>
+        </Select>
       </div>
       <div className="min-w-0">
         <label
@@ -54,9 +55,9 @@ export default function RaceFilters({
         >
           Distance
         </label>
-        <select
+        <Select
           id={`${id}-distance`}
-          className="ds-input mt-1 w-full min-h-11 px-3 py-2.5 text-sm"
+          className="mt-1"
           value={value.distance}
           onChange={(e) =>
             onChange({
@@ -78,7 +79,7 @@ export default function RaceFilters({
                 {label}
               </option>
             ))}
-        </select>
+        </Select>
       </div>
     </div>
   );

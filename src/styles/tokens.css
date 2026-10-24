@@ -102,7 +102,6 @@
   --ds-shadow-input-focus-nutrition:
     0 4px 14px -8px rgba(217, 136, 78, 0.28),
     0 0 0 2.5px rgba(217, 136, 78, 0.11);
-  --ds-color-input-border-rest: rgba(0, 0, 0, 0.06);
   --ds-color-input-border-focus-nutrition: rgba(217, 136, 78, 0.5);
 
   /* Font Weights
@@ -140,6 +139,5 @@
   --ds-shadow-input-focus-nutrition:
     0 4px 14px -8px rgba(217, 136, 78, 0.4),
     0 0 0 2.5px rgba(217, 136, 78, 0.18);
-  --ds-color-input-border-rest: rgba(255, 255, 255, 0.1);
   --ds-color-input-border-focus-nutrition: rgba(217, 136, 78, 0.65);
 }

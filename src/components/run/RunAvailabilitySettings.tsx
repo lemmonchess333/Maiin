@@ -1,5 +1,6 @@
 import type { RaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import type { RunTimeLimits } from "@/features/program/runTimeLimits";
+import Select from "@/components/ui/Select";
 
 export default function RunAvailabilitySettings({
   value,
@@ -34,8 +35,8 @@ export default function RunAvailabilitySettings({
             className="space-y-1.5 text-xs text-muted-foreground"
           >
             <span>{label}</span>
-            <select
-              className="ds-input min-h-11 w-full font-mono tabular-nums"
+            <Select
+              fieldClassName="font-mono tabular-nums"
               value={value[key] ?? ""}
               onChange={(event) =>
                 onChange({
@@ -53,7 +54,7 @@ export default function RunAvailabilitySettings({
                   {minutes} min
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         ))}
       </div>

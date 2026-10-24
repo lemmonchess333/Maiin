@@ -872,7 +872,7 @@ export default function CirclesSection({
                     min={localTomorrowKey()}
                     onChange={(e) => setNewTargetDate(e.target.value)}
                     aria-label="New target date"
-                    className="w-full min-h-[44px] rounded-xl bg-muted border border-border/50 px-3 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    className="ds-input text-sm"
                   />
                   <div className="flex gap-2">
                     <Button
@@ -1179,7 +1179,7 @@ export default function CirclesSection({
                 ?.namePlaceholder ?? "e.g. Autumn strength block"
             })`}
             aria-label="Circle name"
-            className="w-full min-h-[44px] px-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="ds-input text-sm"
           />
           {/* PROGRAM-CIRCLE-01 — the hand-off's finish line, saved as
               the circle's targetDate on create. */}
@@ -1260,7 +1260,7 @@ export default function CirclesSection({
             onChange={(e) => setJoinInput(e.target.value)}
             placeholder="Invite code"
             aria-label="Invite code"
-            className="w-full min-h-[44px] px-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring font-mono"
+            className="ds-input text-sm font-mono"
           />
           <Button
             className="w-full"

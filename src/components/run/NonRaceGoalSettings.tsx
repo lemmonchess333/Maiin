@@ -1,4 +1,5 @@
 import { isNonRaceGoal, type NonRaceGoal } from "@/lib/nonRaceGoal";
+import Select from "@/components/ui/Select";
 
 export default function NonRaceGoalSettings({
   value,
@@ -15,8 +16,7 @@ export default function NonRaceGoalSettings({
     <section aria-label="Weekly running goal" className="space-y-3">
       <label className="block space-y-2 text-sm text-foreground">
         <span>Weekly running goal</span>
-        <select
-          className="ds-input min-h-11 w-full"
+        <Select
           value={value?.kind ?? ""}
           onChange={(e) =>
             onChange(
@@ -32,7 +32,7 @@ export default function NonRaceGoalSettings({
           <option value="">No weekly goal</option>
           <option value="runs">Number of runs</option>
           <option value="minutes">Time spent running</option>
-        </select>
+        </Select>
       </label>
       {value && (
         <label className="block space-y-2 text-xs text-muted-foreground">

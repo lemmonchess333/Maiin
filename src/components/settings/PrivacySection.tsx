@@ -5,6 +5,7 @@ import { haptic } from "@/lib/haptic";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import { Users, MapPin, Trash2, Plus, Shield } from "lucide-react";
 import { Toggle } from "@/components/ui/Toggle";
+import Select from "@/components/ui/Select";
 import { toast } from "@/lib/toast";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -235,19 +236,19 @@ export default function PrivacySection({
               value={newZoneName}
               onChange={(e) => setNewZoneName(e.target.value)}
               placeholder="Zone name (e.g. Home)"
-              className="min-w-[min(100%,8em)] flex-1 min-h-11 px-3 rounded-lg bg-card border border-border text-sm"
+              className="ds-input min-w-[min(100%,8em)] flex-1 text-sm"
             />
-            <select
+            <Select
               aria-label="Privacy zone radius"
               value={newZoneRadius}
               onChange={(e) => setNewZoneRadius(Number(e.target.value))}
-              className="min-h-11 max-w-full px-3 rounded-lg bg-card border border-border text-sm"
+              className="w-auto max-w-full"
             >
               <option value={200}>200 m</option>
               <option value={500}>500 m</option>
               <option value={750}>750 m</option>
               <option value={1000}>1 km</option>
-            </select>
+            </Select>
           </div>
           <Button
             variant="primary"
