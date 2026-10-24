@@ -4,11 +4,12 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
-import { cleanup, renderHook } from "@testing-library/react";
+import { act, cleanup, renderHook } from "@testing-library/react";
 import {
   flushSnapshots,
   resetFirestore,
   seedFirestore,
+  readDoc,
 } from "@/test/firestoreHarness";
 import {
   DailyLogsProvider,
@@ -54,6 +55,39 @@ describe("dailyLogsFrom", () => {
 });
 
 describe("DailyLogsProvider", () => {
+  it("updates an emptied food day without erasing its training, PR, weight or notes", async () => {
+    vi.setSystemTime(new Date(2026, 9, 15, 12));
+    const date = "2026-10-15";
+    seedFirestore({
+      [`users/u1/logs/${date}`]: {
+        ...log(date, 1),
+        workouts: 2,
+        hasPR: true,
+        weightKg: 80,
+        notes: "Felt strong",
+      },
+    });
+    const { result } = renderHook(
+      () => ({ daily: useDailyLogs(), week: useWeeklyDayMap() }),
+      { wrapper }
+    );
+    await flushSnapshots();
+
+    await act(async () => {
+      await result.current.daily.saveLog({ date, meals: 0 });
+    });
+    await flushSnapshots();
+
+    expect(readDoc(`users/u1/logs/${date}`)).toMatchObject({
+      meals: 0,
+      workouts: 2,
+      hasPR: true,
+      weightKg: 80,
+      notes: "Felt strong",
+    });
+    expect(result.current.week.get(date)?.meals).toBe(0);
+  });
+
   it("reads this month and this week, and nothing older", async () => {
     // Local noon, so no timezone moves the day.
     vi.setSystemTime(new Date(2026, 9, 15, 12));

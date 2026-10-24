@@ -42,7 +42,11 @@ const gitBash = gitExecPath
 const bash = gitBash && existsSync(gitBash) ? gitBash : "bash";
 const scriptPath = script.replace(/\\/g, "/");
 
-function runScript(args: string[], fixtureDir?: string) {
+function runScript(
+  args: string[],
+  fixtureDir?: string,
+  entryScript = scriptPath
+) {
   // Let Bash extend its own PATH, after MSYS converts the Windows PATH.
   // A Windows temp path prepended with ':' in Node splits its drive letter
   // and mixes POSIX/Windows separators, so the fake npx is never selected.
@@ -56,10 +60,10 @@ function runScript(args: string[], fixtureDir?: string) {
         ].join("\n"),
         "playwright-install-test",
         fixtureDir,
-        scriptPath,
+        entryScript,
         ...args,
       ]
-    : [scriptPath, ...args];
+    : [entryScript, ...args];
   const result = spawnSync(bash, command, { encoding: "utf8" });
   if (result.error) {
     throw new Error(
@@ -169,6 +173,8 @@ function stage(attempts: Attempt[], options: { oldRetryStep?: boolean } = {}) {
     'dpkg() { echo "dpkg $*"; }',
     `LOCKS=("${frontend}" "${lock}")`,
     `STRAY=${stray}`,
+    // A simulated timeout must never modify the test runner's own apt config.
+    `APT_MIRRORS="${dir}/no-host-mirrors"`,
     "ASK_WAIT=2",
     "KILL_WAIT=4",
     "RETRY_PAUSE=0",
@@ -276,6 +282,145 @@ describe("browsers", () => {
     expect(run(["install-deps", "60", "webkit"]).stdout).toBe(
       "npx playwright install-deps webkit\n"
     );
+  });
+});
+
+describe("a slow hosted-runner apt mirror", () => {
+  const azure = "http://azure.archive.ubuntu.com/ubuntu/\tpriority:1\n";
+  const archive = "https://archive.ubuntu.com/ubuntu/\tpriority:2\n";
+  const security = "https://security.ubuntu.com/ubuntu/\tpriority:3\n";
+  const unrelated =
+    "https://packages.microsoft.com/ubuntu/24.04/prod\tpriority:4\n";
+
+  /** Every attempt stalls while Azure is selected; the same install completes
+   *  only when a retry can use the existing HTTPS fallback. No network or apt
+   *  command runs, and all source changes stay inside this scratch directory. */
+  const run = (
+    mirrors: string | null,
+    {
+      mode = "install-deps",
+      failure = 124,
+      github = true,
+    }: { mode?: string; failure?: number; github?: boolean } = {}
+  ) => {
+    const dir = mkdtempSync(join(tmpdir(), "pw-mirrors-"));
+    const mirrorPath = join(dir, "apt-mirrors.txt");
+    if (mirrors !== null) writeFileSync(mirrorPath, mirrors);
+    writeFileSync(
+      join(dir, "npx"),
+      [
+        "#!/usr/bin/env bash",
+        'fixture_dir=$(dirname "$0")',
+        'echo attempt >> "$fixture_dir/attempts"',
+        // Missing configuration represents an unsupported runner, where the
+        // retry still fails but must not invent or write an apt source file.
+        'if [[ ! -f "$fixture_dir/apt-mirrors.txt" ]] || grep -Eq "^http://azure\\.archive\\.ubuntu\\.com/ubuntu/?([[:space:]]|$)" "$fixture_dir/apt-mirrors.txt"; then',
+        `  exit ${failure}`,
+        "fi",
+        'echo "npx $*"',
+        "",
+      ].join("\n")
+    );
+    chmodSync(join(dir, "npx"), 0o755);
+    const harnessPath = join(dir, "harness.sh");
+    writeFileSync(
+      harnessPath,
+      [
+        `source "${scriptPath}"`,
+        'APT_MIRRORS="$(dirname "${BASH_SOURCE[0]}")/apt-mirrors.txt"',
+        'sudo() { "$@"; }',
+        "release_dpkg() { :; }",
+        "RETRY_PAUSE=0",
+        `GITHUB_ACTIONS=${github}`,
+        'main "$@"',
+        "",
+      ].join("\n")
+    );
+    try {
+      const result = runScript(
+        [mode, "60"],
+        dir,
+        harnessPath.replace(/\\/g, "/")
+      );
+      return {
+        ...result,
+        attempts: readFileSync(join(dir, "attempts"), "utf8").trim().split("\n")
+          .length,
+        mirrors: existsSync(mirrorPath)
+          ? readFileSync(mirrorPath, "utf8")
+          : null,
+      };
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  };
+
+  it.each(["install", "install-deps"])(
+    "finishes %s through the existing HTTPS fallback after a timeout",
+    (mode) => {
+      const result = run(azure + archive + security + unrelated, { mode });
+      expect(result.status).toBe(0);
+      expect(result.attempts).toBe(2);
+      expect(result.mirrors).toBe(archive + security + unrelated);
+      expect(result.stdout).toContain("official HTTPS Ubuntu fallback");
+      expect(result.stdout).toContain(
+        mode === "install"
+          ? "npx playwright install --with-deps chromium"
+          : "npx playwright install-deps chromium"
+      );
+    }
+  );
+
+  it("also falls back when timeout has to kill a stalled attempt", () => {
+    const result = run(azure + archive, { failure: 137 });
+    expect(result.status).toBe(0);
+    expect(result.attempts).toBe(2);
+    expect(result.mirrors).toBe(archive);
+  });
+
+  it("does not change sources after an ordinary command failure", () => {
+    const mirrors = azure + archive;
+    const result = run(mirrors, { failure: 1 });
+    expect(result.status).toBe(1);
+    expect(result.attempts).toBe(3);
+    expect(result.mirrors).toBe(mirrors);
+  });
+
+  it("leaves successful installs alone", () => {
+    const mirrors = azure + archive;
+    const result = run(mirrors, { failure: 0 });
+    expect(result.status).toBe(0);
+    expect(result.attempts).toBe(1);
+    expect(result.mirrors).toBe(mirrors);
+  });
+
+  it("does not change a local installation's sources", () => {
+    const mirrors = azure + archive;
+    const result = run(mirrors, { github: false });
+    expect(result.status).toBe(1);
+    expect(result.attempts).toBe(3);
+    expect(result.mirrors).toBe(mirrors);
+  });
+
+  it.each([
+    azure + security,
+    azure + "https://archive.ubuntu.com/ubuntu/extra\tpriority:2\n",
+    azure + "https://archive.ubuntu.com.example/ubuntu/\tpriority:2\n",
+    null,
+  ])("requires the exact existing official fallback: %j", (mirrors) => {
+    const result = run(mirrors);
+    expect(result.status).toBe(1);
+    expect(result.attempts).toBe(3);
+    expect(result.mirrors).toBe(mirrors);
+  });
+
+  it("preserves lookalike Azure hosts and paths along with their priorities", () => {
+    const lookalikes =
+      "http://azure.archive.ubuntu.com.example/ubuntu/\tpriority:5\n" +
+      "http://azure.archive.ubuntu.com/ubuntu/extra\tpriority:6\n";
+    const result = run(azure + archive + lookalikes);
+    expect(result.status).toBe(0);
+    expect(result.mirrors).toBe(archive + lookalikes);
   });
 });
 

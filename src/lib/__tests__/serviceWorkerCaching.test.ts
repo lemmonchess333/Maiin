@@ -58,12 +58,15 @@ function page(body: string): FakeResponse {
   return response(body, 200, "text/html; charset=utf-8");
 }
 
-/** The worker, evaluated as served at /Maiin/sw.js with a given stamp. */
-function worker(stamp = "__TROPOS_BUILD__") {
+/** The worker, evaluated at a supported app origin and base path. */
+function worker(
+  stamp = "__TROPOS_BUILD__",
+  { origin = ORIGIN, base = BASE } = {}
+) {
   const store = new Map<string, Map<string, FakeResponse>>();
   const keyOf = (req: unknown) =>
     typeof req === "string"
-      ? new URL(req, ORIGIN).href
+      ? new URL(req, origin).href
       : (req as { url: string }).url;
   const open = async (name: string) => {
     if (!store.has(name)) store.set(name, new Map());
@@ -94,7 +97,7 @@ function worker(stamp = "__TROPOS_BUILD__") {
   const listeners = new Map<string, (event: unknown) => void>();
   runInNewContext(SOURCE.replaceAll("__TROPOS_BUILD__", stamp), {
     self: {
-      location: new URL(`${ORIGIN}${BASE}sw.js`),
+      location: new URL(`${origin}${base}sw.js`),
       addEventListener: (type: string, fn: (event: unknown) => void) =>
         listeners.set(type, fn),
       skipWaiting: () => {},
@@ -114,7 +117,7 @@ function worker(stamp = "__TROPOS_BUILD__") {
     Request: class {
       url: string;
       constructor(url: string) {
-        this.url = new URL(url, ORIGIN).href;
+        this.url = new URL(url, origin).href;
       }
     },
     importScripts: () => {
@@ -140,7 +143,7 @@ function worker(stamp = "__TROPOS_BUILD__") {
     path: string,
     mode = "no-cors"
   ): Promise<FakeResponse | null> {
-    const url = new URL(path, ORIGIN).href;
+    const url = new URL(path, origin).href;
     let answer: Promise<FakeResponse> | null = null;
     const waits: Promise<unknown>[] = [];
     listeners.get("fetch")!({
@@ -166,6 +169,42 @@ function worker(stamp = "__TROPOS_BUILD__") {
 
   return { store, net, listeners, get, lifecycle, open };
 }
+
+describe.each([
+  { origin: "https://adaptive-fitness-af8bb.firebaseapp.com", base: "/" },
+  { origin: "https://adaptive-fitness-af8bb.web.app", base: "/" },
+  { origin: "https://troposfit.com", base: "/" },
+  { origin: "https://lemmonchess333.github.io", base: "/Maiin/" },
+  { origin: ORIGIN, base: BASE },
+])("offline app at $origin$base", ({ origin, base }) => {
+  it("keeps a visited shell and hashed asset available after going offline", async () => {
+    const sw = worker(undefined, { origin, base });
+    const asset = `${base}assets/index-abc123.js`;
+    sw.net.pages.set(new URL(`${base}food`, origin).href, page("<app>"));
+    sw.net.pages.set(new URL(asset, origin).href, response("app javascript"));
+    await sw.get(`${base}food`, "navigate");
+    await sw.get(asset);
+
+    sw.net.online = false;
+    expect((await sw.get(`${base}program`, "navigate"))?.body).toBe("<app>");
+    expect((await sw.get(asset))?.body).toBe("app javascript");
+    expect(sw.net.fetched.filter((url) => url.endsWith(asset))).toHaveLength(1);
+  });
+
+  it("leaves Firebase API traffic and reserved Hosting helpers uncached", async () => {
+    const sw = worker(undefined, { origin, base });
+    for (const url of [
+      "https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel",
+      "https://firebasestorage.googleapis.com/v0/b/bucket/o/photo.jpg",
+      "https://adaptive-fitness-af8bb.firebaseio.com/data.json",
+      `${origin}/__/auth/handler?code=private-code`,
+      `${origin}/__/firebase/init.json`,
+    ]) {
+      expect(await sw.get(url), url).toBeNull();
+    }
+    expect(sw.net.fetched).toEqual([]);
+  });
+});
 
 describe("public/sw.js caching (executed)", () => {
   it("serves a hashed font from the cache without fetching it again", async () => {

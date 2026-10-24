@@ -3278,7 +3278,10 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
     runDays: ScheduledRunDay[],
     call: (api: any) => Promise<void>
   ) {
-    mockProfile = raceProfile("2099-09-15");
+    // Keep a seeded race in its actual race week so load does not replace it.
+    // Other scenarios need a future goal without building decades of runs.
+    const raceDate = runDays.find((day) => day.type === "race")?.date;
+    mockProfile = raceProfile(raceDate ?? raceHalfAYearOut());
     seedProgram(stateWith(runDays));
     const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
@@ -3321,8 +3324,20 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
      refuses them too (programCommands.test.js), but a client that fires a
      doomed command has still lost its guard. */
   it("refuses to move a race slot (immovable identity)", async () => {
-    await run([plannedToday({ type: "race", templateId: "10k_race" })], (api) =>
-      api.moveRunDay("runday_move_1", target)
+    await run(
+      [plannedToday({ type: "race", templateId: "10k_race" })],
+      (api) => {
+        expect(api.programState.runDays).toContainEqual(
+          expect.objectContaining({
+            id: "runday_move_1",
+            type: "race",
+            templateId: "10k_race",
+            status: "planned",
+            completed: false,
+          })
+        );
+        return api.moveRunDay("runday_move_1", target);
+      }
     );
     expect(setDocCalls().length).toBe(0);
     expect(sentCommands.filter((c) => c.kind === "moveRunDay")).toEqual([]);

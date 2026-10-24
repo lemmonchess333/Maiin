@@ -47,6 +47,8 @@ const DEVICE_SCOPED: Record<string, string> = {
   "tropos-dark-mode":
     "theme is a property of this screen; scoping it would flash the wrong theme on sign-in",
   "bk-font-combo": "dev-only font bake-off switch (src/dev)",
+  "tropos.exercise-library.flags.v1":
+    "review flags for the standalone developer artwork library (src/dev); this page has no signed-in account and reviews the same global artwork catalogue in this browser",
   "tropos.account_deleted":
     "written precisely when there is no longer an account to scope to",
   "tropos-email-change-pending":

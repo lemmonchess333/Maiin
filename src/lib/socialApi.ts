@@ -24,6 +24,7 @@ import {
 } from "@/lib/firestoreWrite";
 import { httpsCallable, getFunctions } from "firebase/functions";
 import type { ActivityPost } from "./activityPost";
+import { FEED_INDEX_VERSION } from "./feedIndex";
 
 // ============================================
 // Auth helper — single source of truth for identity
@@ -249,9 +250,8 @@ export async function getFollowerIds(uid: string): Promise<Set<string>> {
 // Post Activity
 //
 // Only the activity doc is written client-side; fan-out to follower feeds runs in the
-// `onActivityCreated` Firestore trigger. `formatDuration` and
-// `formatPace` moved into `functions/lib/socialFanout.js` along
-// with `buildFeedItem`.
+// `onActivityCreated` Firestore trigger. The trigger writes routing-only
+// indexes; every display field is read from the activity itself.
 // ============================================
 export async function postActivity(activity: ActivityPost) {
   const authedUid = getAuthUid();
@@ -259,7 +259,7 @@ export async function postActivity(activity: ActivityPost) {
   // Only the activity doc is written client-side. Fan-out to follower feeds + author feed
   // happens server-side via the `onActivityCreated` Firestore
   // trigger (functions/index.js). The trigger reads followers,
-  // builds the summary, and writes feed items — `/feeds/*` is
+  // writes routing-only feed indexes — `/feeds/*` is
   // rule-denied for client writes post-PR-3.
   //
   // Trade-off: fan-out is now async — a few seconds of latency
@@ -566,12 +566,14 @@ export async function getFeed(
 ) {
   let q = query(
     collection(db, "feeds", userId, "items"),
+    where("schemaVersion", "==", FEED_INDEX_VERSION),
     orderBy("createdAt", "desc"),
     limit(limitCount)
   );
   if (afterDoc) {
     q = query(
       collection(db, "feeds", userId, "items"),
+      where("schemaVersion", "==", FEED_INDEX_VERSION),
       orderBy("createdAt", "desc"),
       startAfter(afterDoc),
       limit(limitCount)

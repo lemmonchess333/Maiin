@@ -22,6 +22,7 @@ RETRY_DELAYS = (5, 15, 45)
 RETRY_REQUIRED = frozenset({
     "onChallengeParticipantCreated", "onWorkoutCreated", "onRunCreated",
     "onWorkoutUpdated", "onRunUpdated", "onWorkoutDeleted", "onRunDeleted",
+    "onActivityCreated", "onGoalSpaceEventCreated", "onPublicProfileWritten",
 })
 PUSH_RUNTIME_LIMITS = {
     "claimPushDeviceToken": (100, None),
@@ -83,6 +84,9 @@ def source_targets():
         # Moderation (App Review 1.2): the report alert and the Space post filter.
         "createReport": ["index.js", "lib/reportAlert.js", "lib/reportTargets.js"],
         "onSpacePostWritten": ["index.js", "lib/spacePostModeration.js"],
+        "onPublicProfileWritten": ["index.js", "package-lock.json", "lib/objectionableText.js",
+                                   "profanityFilter.js", "lib/hateTerms.js", "lib/triggerRetry.js",
+                                   "lib/accountDeletionLocks.js"],
         # Ship1: the photos other people see, screened for nudity.
         "screenPhoto": ["index.js", "lib/photoScreen.js"],
         "screenUploadedPhoto": ["index.js", "lib/photoScreen.js"],
@@ -104,6 +108,10 @@ def source_targets():
         "onRunUpdated": challenge_paths,
         "onWorkoutDeleted": challenge_paths,
         "onRunDeleted": challenge_paths,
+        # Read back the privacy-safe feed index writer and the Circle
+        # admission receipt before a release can report either trigger current.
+        "onActivityCreated": ["index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js"],
+        "onGoalSpaceEventCreated": ["index.js", "package-lock.json", "rateLimiter.js"],
         "getCurrentWeather": ["index.js", "currentWeather.js", "lib/metWeather.js"],
         # The reminder before a free trial is charged, and the sync it reads.
         "trialReminderSweep": ["index.js", "trialReminders.js", "lib/trialReminder.js",

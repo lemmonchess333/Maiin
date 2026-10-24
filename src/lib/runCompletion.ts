@@ -30,6 +30,9 @@ import { CALORIE_UNIT } from "@/utils/formatNutrition";
 export interface FinishedRun {
   /** The trace, after privacy zones are cut out of it. */
   points: GPSPoint[];
+  /** Original first-fix epoch, before privacy zones remove any points.
+   *  Absent for older callers and runs with no recorded trace. */
+  startedAt?: number;
   /** Metres: the distance edited on the finish screen, else as tracked. */
   distance: number;
   /** Seconds. */
@@ -59,9 +62,10 @@ export interface FinishedRun {
   bestEfforts: { distance: number; time: number; label: string }[];
 }
 
-/** The run's start: its first point, or now for a run with no trace. */
+/** Privacy cuts change the route, not when the run started. Older callers
+ *  fall back to their first point, or now for a run with no trace. */
 function startOf(run: FinishedRun, now: Date): Date {
-  const first = run.points[0]?.timestamp;
+  const first = run.startedAt ?? run.points[0]?.timestamp;
   return first ? new Date(first) : now;
 }
 

@@ -70,6 +70,7 @@ const SEEN_KEY = socialPreferenceKey("me", "unread-last-seen");
 /** Hours before NOW, as a stored feed item. */
 function item(hoursAgo: number, authorId: string, activityId = "act") {
   return {
+    schemaVersion: 2,
     authorId,
     activityId,
     createdAt: Timestamp.fromDate(

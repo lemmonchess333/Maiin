@@ -217,6 +217,7 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
     lastDoc: QueryDocumentSnapshot | null;
     hasMore: boolean;
     error: string | null;
+    serverConfirmed: boolean;
   } | null>(null);
   const refreshWaiters = useRef<Array<() => void>>([]);
   const refresh = useCallback(
@@ -255,6 +256,7 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
         : query(mealsRef, orderBy("createdAt", "desc"), limit(PAGE_SIZE));
     const unsubscribe = onSnapshot(
       q,
+      { includeMetadataChanges: true },
       (result) => {
         if (!active) return;
         setSnapshot({
@@ -266,6 +268,8 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
           lastDoc: result.docs.at(-1) ?? null,
           hasMore: !from && result.docs.length >= PAGE_SIZE,
           error: null,
+          serverConfirmed:
+            !result.metadata.fromCache && !result.metadata.hasPendingWrites,
         });
         noteActivitySnapshot(
           "food",
@@ -286,6 +290,7 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
           lastDoc: null,
           hasMore: false,
           error: "Couldn't load your food diary.",
+          serverConfirmed: false,
         }));
         finish();
       }
@@ -297,28 +302,31 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
     };
   }, [uid, from, to, scope, revision]);
 
-  const allMeals = useMemo(() => {
+  const pendingMeals = useMemo(() => {
     void queueVersion;
+    return uid ? pendingDocumentWrites(uid, `users/${uid}/meals`) : [];
+  }, [uid, queueVersion]);
+
+  const allMeals = useMemo(() => {
     const byId = new Map(
       (snapshot?.scope === scope ? snapshot.meals : []).map((meal) => [
         meal.id,
         meal,
       ])
     );
-    if (uid)
-      for (const pending of pendingDocumentWrites(uid, `users/${uid}/meals`)) {
-        byId.set(
-          pending.id,
-          parseMealDoc(pending.id, {
-            ...(pending.merge ? byId.get(pending.id) : {}),
-            ...pending.data,
-          })
-        );
-      }
+    for (const pending of pendingMeals) {
+      byId.set(
+        pending.id,
+        parseMealDoc(pending.id, {
+          ...(pending.merge ? byId.get(pending.id) : {}),
+          ...pending.data,
+        })
+      );
+    }
     return [...byId.values()].filter(
       (meal) => (!from || meal.date >= from) && (!to || meal.date <= to)
     );
-  }, [snapshot, scope, uid, from, to, queueVersion]);
+  }, [snapshot, scope, from, to, pendingMeals]);
   const meals = useMemo(() => activeMealDocs(allMeals), [allMeals]);
   const deletedMeals = useMemo(
     () => allMeals.filter((meal) => !!meal.deletedAt),
@@ -327,6 +335,15 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
   const loading =
     !!uid && (snapshot?.scope !== scope || snapshot.revision !== revision);
   const error = snapshot?.scope === scope ? snapshot.error : null;
+  // Empty cached results and optimistic durable deletes are useful to draw,
+  // but cannot erase a previously saved daily count. Confirmation belongs to
+  // the current account/window/retry and waits for both write queues to settle.
+  const serverConfirmed =
+    !!uid &&
+    !loading &&
+    !error &&
+    snapshot?.serverConfirmed === true &&
+    pendingMeals.length === 0;
   const hasMore = snapshot?.scope === scope && snapshot.hasMore;
   const lastDoc = snapshot?.scope === scope ? snapshot.lastDoc : null;
   const loadMore = useCallback(async () => {
@@ -503,6 +520,7 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
     deletedMeals,
     loading,
     error,
+    serverConfirmed,
     refresh,
     hasMore,
     loadMore,

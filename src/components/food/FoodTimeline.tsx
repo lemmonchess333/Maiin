@@ -166,13 +166,11 @@ export default function FoodTimeline({
     nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
   }
 
-  /* Device-local photo resolution (Food9). One id per group is enough:
-     grouping collapses same-name logs in one slot, and the card shows a
-     single hero — the FIRST group member that has a photo, matching what
-     the legacy `photoUrl` derive below already did. Hooks must run before
-     the empty-list early return, so this sits above it. */
+  /* Identical portions can mix text logs and scanned meals. Resolve every
+     member so the row can use the first portion that actually has a local
+     photo. Hooks must run before the empty-list early return. */
   const photoCandidateIds = useMemo(
-    () => entries.map((g) => g.meals[0]?.id).filter((id): id is string => !!id),
+    () => entries.flatMap((g) => g.meals.map((meal) => meal.id)),
     [entries]
   );
   const localPhotoUrls = useFoodPhotoUrls(photoCandidateIds);
@@ -181,7 +179,7 @@ export default function FoodTimeline({
      fallback drains on its own as those meals age out of the 90-day diary
      window. */
   const photoUrlOf = (group: (typeof entries)[number]) =>
-    localPhotoUrls[group.meals[0]?.id ?? ""] ??
+    group.meals.map((meal) => localPhotoUrls[meal.id]).find(Boolean) ??
     group.meals.find((m) => m.photoUrl)?.photoUrl;
   const dayHasPhotos = entries.some((group) => !!photoUrlOf(group));
 

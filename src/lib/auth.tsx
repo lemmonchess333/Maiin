@@ -913,6 +913,32 @@ const PROTECTED_FIELDS = [
   "subscriptionTrial",
 ] as const;
 
+// The backend owns entitlement and billing state. Keep this small projection
+// live without replacing unrelated settings the person is editing locally.
+const SUBSCRIPTION_FIELDS = [
+  ...PROTECTED_FIELDS,
+  "subscriptionExpiresAt",
+] as const;
+
+function mergeSubscriptionProfile(
+  profile: UserProfile,
+  data: Record<string, unknown>
+): UserProfile {
+  const patch = Object.fromEntries(
+    SUBSCRIPTION_FIELDS.map((field) => [field, data[field]])
+  ) as Partial<UserProfileSubscription>;
+  patch.subscriptionTier =
+    (data.subscriptionTier as UserProfileSubscription["subscriptionTier"]) ??
+    "free";
+  patch.trialExpiresAt = (data.trialExpiresAt as string | null) ?? null;
+  // A user-doc snapshot can be an unrelated workout/settings write. Avoid
+  // re-rendering every auth consumer when the subscription is unchanged.
+  const changed = SUBSCRIPTION_FIELDS.some(
+    (field) => JSON.stringify(profile[field]) !== JSON.stringify(patch[field])
+  );
+  return changed ? { ...profile, ...patch } : profile;
+}
+
 // Subset of UserProfile fields that also need to be mirrored onto the
 // cross-user-readable public/profile doc when they change.
 const PUBLIC_MIRRORED_FIELDS = [
@@ -983,6 +1009,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
+    let stopSubscriptionUpdates = () => {};
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!isMounted) return;
@@ -992,6 +1019,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // generation. Reject it before incrementing the epoch.
       if ((auth.currentUser?.uid ?? null) !== uid) return;
 
+      stopSubscriptionUpdates();
+      stopSubscriptionUpdates = () => {};
       const epoch = ++authEpochRef.current;
       const previousUid = activeUidRef.current;
 
@@ -1037,7 +1066,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // hydrateProfile does no writes, and the timezone-capture write stays
         // on the server branch only so it isn't double-fired.
         /* Inside `if (firebaseUser)`, so a profile exists to read. */
-        const { doc, getDoc, getDocFromCache, updateDocGuarded, db } =
+        const { doc, getDoc, getDocFromCache, onSnapshot, updateDocGuarded, db } =
           await firestore();
         try {
           const cachedDoc = await getDocFromCache(
@@ -1123,6 +1152,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           logger.error("[AuthProvider] Failed to load profile", err);
           setProfile(null);
         }
+
+        if (!isCurrent()) return;
+        // A native purchase or restore does not navigate/restart AuthProvider.
+        // The sync callable and the delayed-webhook fallback both write this
+        // document, so listen once per account instead of leaving each paywall
+        // to refresh (and potentially read before the webhook arrives).
+        stopSubscriptionUpdates = onSnapshot(
+          doc(db, "users", firebaseUser.uid),
+          { includeMetadataChanges: true },
+          (snapshot) => {
+            if (
+              !isCurrent() ||
+              !snapshot.exists() ||
+              snapshot.metadata.fromCache ||
+              snapshot.metadata.hasPendingWrites
+            )
+              return;
+            const data = snapshot.data();
+            setProfile((previous) =>
+              isCurrent() && previous?.uid === uid
+                ? mergeSubscriptionProfile(previous, data)
+                : previous
+            );
+          },
+          (err) => {
+            if (isCurrent())
+              logger.warn("[AuthProvider] Subscription updates failed", err);
+          }
+        );
       } else {
         // No signed-in user (Login screen) — apply the dark default.
         setProfile(null);
@@ -1136,6 +1194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isMounted = false;
       authEpochRef.current += 1;
       activeUidRef.current = null;
+      stopSubscriptionUpdates();
       unsubscribe();
     };
   }, []);

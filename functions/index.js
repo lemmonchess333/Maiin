@@ -6813,17 +6813,24 @@ exports.onPublicProfileWritten = functions
       ))
     )
       return null;
-    try {
-      // update, not set: a profile deleted since is not written back.
-      await change.after.ref.update({
+    const removed = await db.runTransaction(async (transaction) => {
+      // Trigger deliveries can arrive after a newer edit, or out of order.
+      // Classify the current name inside the transaction so an older refusal
+      // cannot clear a correction committed before this moderation write.
+      const current = await transaction.get(change.after.ref);
+      if (
+        !current.exists ||
+        !objectionableText.displayNameRefusal((current.data() || {}).displayName)
+      )
+        return false;
+      transaction.update(change.after.ref, {
         displayName: null,
         displayNameLower: null,
       });
-    } catch (err) {
-      if (err && err.code === 5) return null; // NOT_FOUND
-      throw err;
-    }
-    functions.logger.info("onPublicProfileWritten.name_removed", { uid });
+      return true;
+    });
+    if (removed)
+      functions.logger.info("onPublicProfileWritten.name_removed", { uid });
     return null;
   });
 
@@ -8064,8 +8071,10 @@ exports.onGoalSpaceEventCreated = functions
     // item 20). Past twenty an hour in one Circle, far past a real day's
     // sessions and milestones, an event comes out before anyone is told of
     // it. The weekly check-in is the callable's, one per week, so it is not
-    // counted. A failed count keeps the event: losing what a member wrote
-    // costs more than one extra notice.
+    // counted. Acceptance is marked on the source in the SAME quota
+    // transaction: an at-least-once redelivery must never count again and
+    // delete an event that was already accepted. A failed count throws for
+    // retry before any delete/notification, keeping what the member wrote.
     if (
       event.kind !== "weekly_check_in" &&
       (await rateLimiter.isRateLimited(
@@ -8074,10 +8083,9 @@ exports.onGoalSpaceEventCreated = functions
         `circleEvent_${spaceId}`,
         CIRCLE_EVENTS_PER_HOUR,
         3_600_000,
-        { failOpen: true }
+        { receiptRef: snap.ref }
       ))
     ) {
-      await snap.ref.delete();
       functions.logger.info("onGoalSpaceEventCreated.over_rate", {
         spaceId,
         eventId,

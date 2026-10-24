@@ -349,7 +349,7 @@ describe("fanoutActivityToFeeds", () => {
     expect(firestore._writes[0].path).toMatch(/^feeds\/alice\/items\//);
   });
 
-  it("builds a run summary server-side (km · time · pace)", async () => {
+  it("stores only routing and time fields, never a run's private summary", async () => {
     const { fanoutActivityToFeeds } = require("../lib/socialFanout");
     const firestore = makeFirestoreStub({
       collections: { "followers/alice/users": [] },
@@ -372,13 +372,16 @@ describe("fanoutActivityToFeeds", () => {
     });
 
     const item = firestore._writes[0].data;
-    expect(item.summary).toContain("5.0 km");
-    expect(item.summary).toContain("25:00");
-    expect(item.summary).toContain("5:00 /km");
-    expect(item.summary).toContain("Tempo");
+    expect(item).toEqual({
+      schemaVersion: 2,
+      activityId: "act1",
+      authorId: "alice",
+      createdAt: serverTimestamp(),
+      expiresAt: expect.any(Date),
+    });
   });
 
-  it("builds a workout summary server-side (name · exercises · volume · duration)", async () => {
+  it("does not denormalize workout names, volume or duration", async () => {
     const { fanoutActivityToFeeds } = require("../lib/socialFanout");
     const firestore = makeFirestoreStub({
       collections: { "followers/alice/users": [] },
@@ -401,13 +404,16 @@ describe("fanoutActivityToFeeds", () => {
     });
 
     const item = firestore._writes[0].data;
-    expect(item.summary).toContain("Push Day");
-    expect(item.summary).toContain("6 exercises");
-    expect(item.summary).toContain("5,200 kg volume");
-    expect(item.summary).toContain("60 min");
+    expect(Object.keys(item).sort()).toEqual([
+      "activityId",
+      "authorId",
+      "createdAt",
+      "expiresAt",
+      "schemaVersion",
+    ]);
   });
 
-  it("carries highlight flags (prHit, badgeEarned, challengeMilestone) onto the feed item", async () => {
+  it("keeps highlights on the access-controlled parent only", async () => {
     const { fanoutActivityToFeeds } = require("../lib/socialFanout");
     const firestore = makeFirestoreStub({
       collections: { "followers/alice/users": [] },
@@ -430,12 +436,12 @@ describe("fanoutActivityToFeeds", () => {
     });
 
     const item = firestore._writes[0].data;
-    expect(item.prHit).toBe(true);
-    expect(item.badgeEarned).toBe("first-bench");
-    expect(item.challengeMilestone).toBe("5x5");
+    expect(item).not.toHaveProperty("prHit");
+    expect(item).not.toHaveProperty("badgeEarned");
+    expect(item).not.toHaveProperty("challengeMilestone");
   });
 
-  it("includes authorPhotoURL when present, omits when absent", async () => {
+  it("does not copy author names or photos into readable feed indexes", async () => {
     const { fanoutActivityToFeeds } = require("../lib/socialFanout");
     const fs1 = makeFirestoreStub({
       collections: { "followers/alice/users": [] },
@@ -453,9 +459,8 @@ describe("fanoutActivityToFeeds", () => {
       },
       serverTimestamp,
     });
-    expect(fs1._writes[0].data.authorPhotoURL).toBe(
-      "https://example.com/a.jpg"
-    );
+    expect(fs1._writes[0].data).not.toHaveProperty("authorPhotoURL");
+    expect(fs1._writes[0].data).not.toHaveProperty("authorName");
 
     const fs2 = makeFirestoreStub({
       collections: { "followers/alice/users": [] },
