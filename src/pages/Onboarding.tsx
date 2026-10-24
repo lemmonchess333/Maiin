@@ -1957,7 +1957,7 @@ export default function Onboarding() {
               ? "Creating your plan…"
               : step === 7
                 ? saveError
-                  ? "Try creating my plan again"
+                  ? "Try again"
                   : "Start my plan"
                 : returnToReview
                   ? "Back to review"

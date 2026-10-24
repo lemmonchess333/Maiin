@@ -780,28 +780,33 @@ export default function CirclesSection({
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button
-              className="flex-1"
-              onClick={() => {
-                if (refused()) return;
-                haptic("light");
-                setChooserOpen(true);
-              }}
-            >
-              Start a circle
-            </Button>
-            <Button
-              variant="secondary"
-              className="flex-1"
-              onClick={() => {
-                if (refused()) return;
-                haptic("light");
-                setShowJoin(true);
-              }}
-            >
-              Join with code
-            </Button>
+          {/* Side by side while both labels fit on one line, stacked on
+              a narrow card or at larger text, where each wrapped inside
+              its pill. */}
+          <div className="@container">
+            <div className="flex gap-2 @max-[18em]:flex-col">
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  if (refused()) return;
+                  haptic("light");
+                  setChooserOpen(true);
+                }}
+              >
+                Start a circle
+              </Button>
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => {
+                  if (refused()) return;
+                  haptic("light");
+                  setShowJoin(true);
+                }}
+              >
+                Join with code
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -1005,32 +1010,34 @@ export default function CirclesSection({
           ))}
 
       {!loading && !loadFailed && circles.length > 0 && (
-        <div className="flex gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="flex-1"
-            onClick={() => {
-              if (refused()) return;
-              haptic("light");
-              setGoalPrechosen(false); // manual entry — user still picks a goal
-              setShowCreate(true);
-            }}
-          >
-            Start a circle
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex-1"
-            onClick={() => {
-              if (refused()) return;
-              haptic("light");
-              setShowJoin(true);
-            }}
-          >
-            Join with code
-          </Button>
+        <div className="@container">
+          <div className="flex gap-2 @max-[18em]:flex-col">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="flex-1"
+              onClick={() => {
+                if (refused()) return;
+                haptic("light");
+                setGoalPrechosen(false); // manual entry — user still picks a goal
+                setShowCreate(true);
+              }}
+            >
+              Start a circle
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1"
+              onClick={() => {
+                if (refused()) return;
+                haptic("light");
+                setShowJoin(true);
+              }}
+            >
+              Join with code
+            </Button>
+          </div>
         </div>
       )}
 

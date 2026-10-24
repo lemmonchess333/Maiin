@@ -16,6 +16,9 @@ export function levelSuggestionCopy(
   goal: PrimaryGoal | undefined
 ): {
   title: string;
+  /** One line under the title: the card shows it, and the rest waits
+   *  behind Read more. */
+  summary: string;
   body: string;
   basis: string;
 } {
@@ -24,6 +27,8 @@ export function levelSuggestionCopy(
   if (suggestion.to === "intermediate") {
     return {
       title: "Ready for intermediate programming?",
+      summary:
+        "Your main lifts have stopped moving up from session to session.",
       body:
         "These lifts have stalled through real missed reps AND a load " +
         "reset — the classic end of session-to-session progress, not just " +
@@ -40,8 +45,9 @@ export function levelSuggestionCopy(
   }
   return {
     title: "You could progress faster",
+    summary: "You're still adding weight nearly every session.",
     body:
-      "You're still adding weight nearly every session. Your exercises " +
+      "Your exercises " +
       `stay as they are. Beginner ${ranged ? "gives your main lifts one target each, without heavier and lighter days" : "takes the heavier and lighter days off your main lifts"}, ` +
       "has no lighter weeks on the calendar, and keeps a plan built later " +
       "to simpler lifts. Switch back the moment progress slows.",

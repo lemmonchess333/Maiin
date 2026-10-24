@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Droplets, Plus, Minus } from "lucide-react";
 import { haptic } from "@/lib/haptic";
+import { cn } from "@/lib/utils";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import IconButton from "@/components/ui/IconButton";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -11,6 +12,7 @@ import WaterBubbles from "@/components/home/WaterBubbles";
 import WaterSizeSheet from "@/components/home/WaterSizeSheet";
 import {
   GLASS_ML,
+  WATER_PRESETS,
   formatWaterVolume,
   splitWaterVolume,
   waterProgress,
@@ -47,6 +49,34 @@ function spokenVolume(ml: number): string {
  * identity is unchanged — only the underlying unit moved from whole
  * glasses to millilitres.
  */
+/** The everyday sizes, one tap each, on an empty day's tile. */
+function WaterPresetRow({
+  className,
+  onPick,
+}: {
+  className: string;
+  onPick: (ml: number) => void;
+}) {
+  return (
+    <div className="mt-auto flex flex-wrap gap-2 pt-3">
+      {WATER_PRESETS.slice(0, 2).map((preset) => (
+        <Button
+          key={preset.id}
+          variant="ghost"
+          aria-label={`Log ${formatWaterVolume(preset.ml)}`}
+          className={cn("min-w-0 flex-1 px-2", className)}
+          onClick={() => onPick(preset.ml)}
+        >
+          <span className="font-mono tabular-nums">
+            {splitWaterVolume(preset.ml).value}
+          </span>{" "}
+          {splitWaterVolume(preset.ml).unit}
+        </Button>
+      ))}
+    </div>
+  );
+}
+
 export default function WaterCard({
   ml,
   targetMl,
@@ -159,6 +189,10 @@ export default function WaterCard({
   }
   function quickRemove() {
     quickLog(-servingMl);
+  }
+  function presetAdd(presetMl: number) {
+    if (!quickLog(presetMl)) return;
+    if (onRemoveDrink) setJustLogged(Date.now());
   }
   function openSheet() {
     haptic();
@@ -398,6 +432,17 @@ export default function WaterCard({
               It is under the 44px floor, deliberately — a transient
               affordance whose permanent, full-size equivalent is the
               sheet's log, one tap away on the same tile. */}
+          {/* An empty day's tile is as tall as Weight and Steps together,
+              and before the first drink its lower half was blank. It
+              offers the two everyday sizes there instead, one tap each.
+              The first drink fills the tile from the bottom, and the
+              wave takes the space. */}
+          {!hasWater && (
+            <WaterPresetRow
+              className={quickControlClass}
+              onPick={(presetMl) => presetAdd(presetMl)}
+            />
+          )}
           {showUndo && newestDrink && (
             <p className="text-micro mt-1 flex items-center gap-2 text-foreground">
               <span className="font-medium">

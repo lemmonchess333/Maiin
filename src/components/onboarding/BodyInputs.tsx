@@ -12,6 +12,20 @@ import {
 type WeightUnit = "kg" | "lbs" | "st";
 const valueClass =
   "ds-input w-full min-w-0 min-h-16 text-center text-display font-mono tabular-nums";
+/* Each box says its unit under it, and, before anything is entered, shows
+   the figure the dial points at as its placeholder: an unanswered box
+   stays empty (nothing advances on numbers nobody entered), but an empty
+   80px box with no unit read as a fault, not a field. */
+function UnitCaption({ children }: { children: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="block text-center text-sm text-muted-foreground"
+    >
+      {children}
+    </span>
+  );
+}
 const numeric = (text: string) =>
   /^\d+(?:[.,]\d+)?$/.test(text) ? Number(text.replace(",", ".")) : NaN;
 
@@ -154,43 +168,39 @@ export default function BodyInputs({
           />
         </div>
         <div className="flex gap-3">
-          <label className="flex-1 min-w-0">
-            <span className="sr-only">
-              Weight ({weightUnit === "lbs" ? "lb" : weightUnit})
-            </span>
-            <input
-              inputMode="decimal"
-              className={valueClass}
-              value={weight}
-              aria-invalid={!weightValid}
-              onChange={(event) => editWeight(event.target.value, pounds)}
-            />
-            {weightUnit === "st" && (
-              <span
-                aria-hidden="true"
-                className="block text-center text-sm text-muted-foreground"
-              >
-                st
+          <div className="flex-1 min-w-0">
+            <label className="block">
+              <span className="sr-only">
+                Weight ({weightUnit === "lbs" ? "lb" : weightUnit})
               </span>
-            )}
-          </label>
-          {weightUnit === "st" && (
-            <label className="flex-1 min-w-0">
-              <span className="sr-only">Pounds</span>
               <input
                 inputMode="decimal"
                 className={valueClass}
-                value={pounds}
+                value={weight}
+                placeholder={weightText(weightKg, weightUnit)}
                 aria-invalid={!weightValid}
-                onChange={(event) => editWeight(weight, event.target.value)}
+                onChange={(event) => editWeight(event.target.value, pounds)}
               />
-              <span
-                aria-hidden="true"
-                className="block text-center text-sm text-muted-foreground"
-              >
-                lb
-              </span>
             </label>
+            <UnitCaption>
+              {weightUnit === "lbs" ? "lb" : weightUnit}
+            </UnitCaption>
+          </div>
+          {weightUnit === "st" && (
+            <div className="flex-1 min-w-0">
+              <label className="block">
+                <span className="sr-only">Pounds</span>
+                <input
+                  inputMode="decimal"
+                  className={valueClass}
+                  value={pounds}
+                  placeholder={String(kgToStonePounds(weightKg).pounds)}
+                  aria-invalid={!weightValid}
+                  onChange={(event) => editWeight(weight, event.target.value)}
+                />
+              </label>
+              <UnitCaption>lb</UnitCaption>
+            </div>
           )}
         </div>
         {!weightValid && (
@@ -244,33 +254,35 @@ export default function BodyInputs({
           />
         </div>
         <div className="flex gap-3">
-          <label className="flex-1 min-w-0">
-            <span className="sr-only">Height ({heightUnit})</span>
-            <input
-              inputMode="decimal"
-              className={valueClass}
-              value={height}
-              aria-invalid={!heightValid}
-              onChange={(event) => editHeight(event.target.value, inches)}
-            />
-          </label>
-          {heightUnit === "ft" && (
-            <label className="flex-1 min-w-0">
-              <span className="sr-only">Inches</span>
+          <div className="flex-1 min-w-0">
+            <label className="block">
+              <span className="sr-only">Height ({heightUnit})</span>
               <input
                 inputMode="decimal"
                 className={valueClass}
-                value={inches}
+                value={height}
+                placeholder={heightText(heightCm, heightUnit)}
                 aria-invalid={!heightValid}
-                onChange={(event) => editHeight(height, event.target.value)}
+                onChange={(event) => editHeight(event.target.value, inches)}
               />
-              <span
-                aria-hidden="true"
-                className="block text-center text-sm text-muted-foreground"
-              >
-                in
-              </span>
             </label>
+            <UnitCaption>{heightUnit}</UnitCaption>
+          </div>
+          {heightUnit === "ft" && (
+            <div className="flex-1 min-w-0">
+              <label className="block">
+                <span className="sr-only">Inches</span>
+                <input
+                  inputMode="decimal"
+                  className={valueClass}
+                  value={inches}
+                  placeholder={String(Math.round(heightCm / 2.54) % 12)}
+                  aria-invalid={!heightValid}
+                  onChange={(event) => editHeight(height, event.target.value)}
+                />
+              </label>
+              <UnitCaption>in</UnitCaption>
+            </div>
           )}
         </div>
         {!heightValid && (

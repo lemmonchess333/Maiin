@@ -465,3 +465,28 @@ describe("WaterCard — it reports what you logged, not a score", () => {
     expect(status.textContent).toBe("");
   });
 });
+
+/* An empty day's tile is as tall as Weight and Steps together. Its lower
+   half was blank before the first drink; it offers the everyday sizes
+   there, and the first drink's fill takes the space. */
+describe("WaterCard — an empty day's tile", () => {
+  it("offers 250 ml and 500 ml, one tap each, until the first drink", () => {
+    const onLog = vi.fn(() => true);
+    const { rerender } = render(
+      <WaterCard compact ml={0} targetMl={2500} onLog={onLog} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Log 500 ml" }));
+    expect(onLog).toHaveBeenCalledWith(500);
+    expect(
+      screen.getByRole("button", { name: "Log 250 ml" })
+    ).toBeInTheDocument();
+    rerender(<WaterCard compact ml={500} targetMl={2500} onLog={onLog} />);
+    expect(screen.queryByRole("button", { name: "Log 250 ml" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Log 500 ml" })).toBeNull();
+  });
+
+  it("is not on the full-width card, which has its own − and +", () => {
+    render(<WaterCard ml={0} targetMl={2500} onLog={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: "Log 250 ml" })).toBeNull();
+  });
+});
