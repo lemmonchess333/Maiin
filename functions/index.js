@@ -49,6 +49,7 @@ const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
 const blockGuard = require("./lib/blockGuard");
 const blockMirror = require("./lib/blockMirror");
+const identityResync = require("./lib/identityResync");
 // S4e: a restricted account is refused anything that reaches another person.
 const restriction = require("./lib/restriction");
 const {
@@ -6832,6 +6833,57 @@ exports.onPublicProfileWritten = functions
     });
     if (removed)
       functions.logger.info("onPublicProfileWritten.name_removed", { uid });
+    return null;
+  });
+
+/**
+ * A new public name or photo, carried to the copies of the person other
+ * people read: their posts and comments from the last 90 days, their Space
+ * and Circle memberships, their place in recent challenges
+ * (lib/identityResync.js has what, and the bounds). Each copy took the
+ * name and photo when it was written, and nothing updated them after.
+ *
+ * Runs only when the name or the photo changed, and carries only that one.
+ * It reads the profile as it is now, never the event, so a refused name
+ * the filter above takes back is never carried, and an older delivery
+ * cannot undo a newer one. Retried: a second run writes nothing that is
+ * already right.
+ */
+exports.onPublicProfileIdentityChanged = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true, timeoutSeconds: 120 })
+  .firestore.document("users/{uid}/public/{docId}")
+  .onWrite(async (change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const { uid, docId } = context.params;
+    if (docId !== "profile" || !change.after.exists) return null;
+    const before = change.before.exists ? change.before.data() || {} : {};
+    const after = change.after.data() || {};
+    const fields = {
+      name: before.displayName !== after.displayName,
+      photo: before.photoURL !== after.photoURL,
+    };
+    if (!fields.name && !fields.photo) return null;
+    if (
+      !(await accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        uid,
+        "onPublicProfileIdentityChanged"
+      ))
+    )
+      return null;
+    const at = Date.parse(context.timestamp || "");
+    const result = await identityResync.resyncAuthorIdentity({
+      firestore: db,
+      uid,
+      fields,
+      // The event's own time, so a retry looks back over the same days.
+      now: Number.isFinite(at) ? at : Date.now(),
+      deleteField: admin.firestore.FieldValue.delete,
+    });
+    functions.logger.info("onPublicProfileIdentityChanged.resynced", {
+      uid,
+      ...result,
+    });
     return null;
   });
 

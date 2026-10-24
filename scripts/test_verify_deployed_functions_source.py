@@ -107,6 +107,15 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
         self.assertEqual(len(paths), len(set(paths)))
         self.assertIn("onPublicProfileWritten", verifier.RETRY_REQUIRED)
 
+    def test_identity_resync_reads_back_its_bounds_filters_and_guards(self):
+        paths = verifier.source_targets()["onPublicProfileIdentityChanged"]
+        self.assertTrue({"index.js", "package-lock.json", "lib/identityResync.js",
+                         "lib/publicPhotoUrl.js", "lib/objectionableText.js",
+                         "lib/deletionTransactionGuard.js", "lib/restriction.js",
+                         "lib/triggerRetry.js", "lib/accountDeletionLocks.js"}.issubset(paths))
+        self.assertEqual(len(paths), len(set(paths)))
+        self.assertIn("onPublicProfileIdentityChanged", verifier.RETRY_REQUIRED)
+
     def test_block_mirror_reads_back_its_reconciler_and_retry_guard(self):
         paths = verifier.source_targets()["onBlockWritten"]
         self.assertTrue({"index.js", "package-lock.json", "lib/blockMirror.js",
