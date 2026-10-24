@@ -63,6 +63,7 @@ import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
+import { useSessionsInFlight } from "@/hooks/useSessionsInFlight";
 
 import { StreakFlame } from "@/components/StreakFlame";
 import Avatar from "@/components/Avatar";
@@ -419,6 +420,11 @@ export default function Home() {
   const inActivationWindow = isWithinActivationWindow(createdAtMs, nowMs);
   const { runCount: lifetimeRunCount, loading: runStatsLoading } =
     useLifetimeRunStats({ enabled: inActivationWindow });
+  // A workout closed with its sets kept, or a run left before it was
+  // saved, is offered back on the session card (`todaySession`).
+  const { drafts: draftsInFlight, run: runInFlight } = useSessionsInFlight(
+    user?.uid
+  );
   // Today's session card: which card shows and what it says.
   const session = useMemo(
     () =>
@@ -432,6 +438,7 @@ export default function Home() {
         nowMs,
         lifetimeRuns: runStatsLoading ? null : lifetimeRunCount,
         lifetimeMeals: totalLifetimeMeals,
+        inFlight: { drafts: draftsInFlight, run: runInFlight },
       }),
     [
       todayKey,
@@ -444,6 +451,8 @@ export default function Home() {
       runStatsLoading,
       lifetimeRunCount,
       totalLifetimeMeals,
+      draftsInFlight,
+      runInFlight,
     ]
   );
 

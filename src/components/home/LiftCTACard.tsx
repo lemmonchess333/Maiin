@@ -13,6 +13,8 @@ import {
 } from "@/features/program/expressSession";
 import type { RestContext } from "@/features/program/restTime";
 import { liftCardTitle, liftDayLine, liftDayTitle } from "@/lib/liftDayLabel";
+import InProgressStrip from "@/components/session/InProgressStrip";
+import type { SessionInProgress } from "@/lib/sessionsInFlight";
 
 type LiftCardExercise = Partial<PricedExercise> & { name: string };
 
@@ -23,7 +25,8 @@ type LiftCardExercise = Partial<PricedExercise> & { name: string };
  * the day with `start=1`, and Train starts it the way its own Start does.
  * Anywhere else on the card opens the day in Train to look it over first.
  * A finished or skipped day has no Start; the card says what happened and
- * still opens the day.
+ * still opens the day. A workout already under way offers Resume in
+ * Start's place (`InProgressStrip`).
  *
  * The drawing is the first exercise in the day that has released art,
  * cut out of its black backdrop (`formArtCutouts`). A day with none shows
@@ -39,6 +42,7 @@ export default function LiftCTACard({
   eyebrowLabel,
   rest,
   dayLabel,
+  inProgress = null,
 }: {
   nextWorkout: {
     completed?: boolean;
@@ -65,6 +69,8 @@ export default function LiftCTACard({
   /** The day as Train names it in its week ("Pull B", `liftDayNameIn`).
    *  Without it a generated day is named by its type alone. */
   dayLabel?: string;
+  /** This workout is under way on this phone (`todaySession`). */
+  inProgress?: SessionInProgress | null;
 }) {
   const dayTarget =
     typeof dayIndex === "number" ? `/program?day=${dayIndex}` : "/program";
@@ -172,7 +178,16 @@ export default function LiftCTACard({
           the content, so its padding and a status pill open the day. Start
           is the one control that takes its own taps. */}
       <div className="pointer-events-none relative z-10 px-5 pb-5 pt-4">
-        {state === "planned" ? (
+        {state === "planned" && inProgress ? (
+          <InProgressStrip
+            session={inProgress}
+            onCard
+            onResume={function () {
+              trackHomeEvent("home_card_tapped", { card: "today_workout" });
+              navigate(inProgress.resumeTarget);
+            }}
+          />
+        ) : state === "planned" ? (
           <Button
             variant="primary"
             size="lg"

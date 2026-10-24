@@ -60,7 +60,9 @@ vi.mock("@/features/streaks/useStreaks", () => ({
     awardEventBadges: h.awardEventBadges,
   }),
 }));
-vi.mock("@/hooks/useWorkoutDraft", () => ({
+vi.mock("@/hooks/useWorkoutDraft", async (importOriginal) => ({
+  // The pure helpers (`draftLayout`) stay real.
+  ...(await importOriginal<typeof import("@/hooks/useWorkoutDraft")>()),
   useWorkoutDraft: () => ({ load: h.load, save: h.save, clear: h.clear }),
   computeDraftIdentity: () => "test",
   createWorkoutCompletionId: () => "test",
@@ -307,7 +309,10 @@ describe("set completion through row controls", () => {
   /* Finish sits in the top bar by Close (owner, 2026-10-12), offered once
      a working set is done and while sets remain; under the set action it
      took a row from the list on every set after the first. */
-  it("offers Finish in the top bar once a set is done, asking first", async () => {
+  /* Finishing early is undone by the review's Edit workout, so it asks
+     nothing first: the review is the check, and it counts the sets left
+     unticked. */
+  it("offers Finish in the top bar once a set is done, going to the review", async () => {
     openSession();
     const finish = () =>
       screen.queryByRole("button", { name: "Finish workout" });
@@ -317,9 +322,15 @@ describe("set completion through row controls", () => {
     expect(finish()).toHaveTextContent("Finish");
     expect(screen.queryByRole("button", { name: "Finish early" })).toBeNull();
     fireEvent.click(finish()!);
+    expect(screen.queryByRole("alertdialog")).toBeNull();
     expect(
-      screen.getByRole("alertdialog", { name: "Finish early?" })
+      screen.getByRole("heading", { name: "Review workout" })
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(/sets? you haven't ticked won't be saved\./)
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Edit workout" }));
+    expect(finish()).toBeVisible();
   });
 
   /* The exercise's name and set count head the list rather than sit fixed
@@ -1903,7 +1914,6 @@ it("Undo followed by finishing early saves only the final completed work", async
   fireEvent.click(screen.getByRole("button", { name: "Undo last set" }));
   expect(complete).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Finish workout" }));
-  fireEvent.click(screen.getByRole("button", { name: "Finish" }));
   fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
   await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
   expect(

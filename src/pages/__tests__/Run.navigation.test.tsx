@@ -216,6 +216,32 @@ describe("Run setup navigation", () => {
     );
   });
 
+  /* Back returns to where the run was opened (Home's card, Train), not
+     to Train's Run tab every time; the tests above open /run directly,
+     where there is nowhere to go back to. The router keeps each entry's
+     place in the visit on the history entry. */
+  it.each([
+    ["/run", "Back from picker"],
+    ["/run?template=easy_30", "Back from planned run"],
+  ])("returns %s to the screen it was opened from", (url, back) => {
+    window.history.replaceState({ idx: 1 }, "");
+    try {
+      render(
+        <MemoryRouter initialEntries={["/", url]} initialIndex={1}>
+          <Routes>
+            <Route path="/" element={<p data-testid="home">Home</p>} />
+            <Route path="/run" element={<Run />} />
+            <Route path="/program" element={<Destination />} />
+          </Routes>
+        </MemoryRouter>
+      );
+      fireEvent.click(screen.getByRole("button", { name: back }));
+      expect(screen.getByTestId("home")).toBeInTheDocument();
+    } finally {
+      window.history.replaceState(null, "");
+    }
+  });
+
   it("returns a planned run launch card to the Run tab", () => {
     open("/run?template=easy_30");
     fireEvent.click(

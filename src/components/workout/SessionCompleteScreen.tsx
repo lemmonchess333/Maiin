@@ -158,6 +158,11 @@ export default function SessionCompleteScreen({
     .flat()
     .filter((s) => s.completed && s.type !== "warmup").length;
   const sets = setsFigure(totalSetsCompleted);
+  /* Finishing early comes straight here, so the review says what the
+     finish leaves out, beside Edit workout, which goes back for it. */
+  const unticked = setLogs
+    .flat()
+    .filter((s) => !s.completed && s.type !== "warmup").length;
 
   /* New bests (DS3: gold means a personal best and nothing else). A
      "best" beat the exercise's previous best; a "bucket-first" is the
@@ -433,6 +438,13 @@ export default function SessionCompleteScreen({
             >
               {status}
             </p>
+            {onEdit && unticked > 0 && (
+              <p className="text-center text-sm text-muted-foreground">
+                <InlineNumerals>
+                  {`${unticked} ${unticked === 1 ? "set" : "sets"} you haven't ticked won't be saved.`}
+                </InlineNumerals>
+              </p>
+            )}
             <Button
               fullWidth
               size="lg"

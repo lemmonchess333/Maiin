@@ -138,6 +138,7 @@ import {
   useWorkoutDraft,
   computeDraftIdentity,
   createWorkoutCompletionId,
+  draftLayout,
 } from "@/hooks/useWorkoutDraft";
 import { logger } from "@/lib/logger";
 import { useScrollEdges } from "@/hooks/useScrollEdges";
@@ -292,6 +293,9 @@ interface Props {
   /** Whether a long or hard run finished in the 24 hours before a start
    *  (`useHardRunBefore`); the finish records it. Train passes it. */
   hardRunBefore?: (startedAt: number) => boolean;
+  /** Opened from a Resume tap (the In progress strip): a draft found for
+   *  this session carries on without asking "Resume workout?" again. */
+  resumeDraft?: boolean;
 }
 
 export default function WorkoutSession({
@@ -311,6 +315,7 @@ export default function WorkoutSession({
   onClose,
   firstWorkout = false,
   hardRunBefore,
+  resumeDraft = false,
 }: Props) {
   const { user, profile } = useAuth();
   // Loads are stored in kg; the lifter reads and types them in this unit.
@@ -328,10 +333,7 @@ export default function WorkoutSession({
         epoch: draftEpoch ?? 0,
         dayIndex,
         dayName: initialDay.dayName,
-        layout: initialDay.exercises.map((ex) => ({
-          id: ex.exerciseId || ex.name,
-          sets: ex.sets,
-        })),
+        layout: draftLayout(initialDay.exercises),
       }),
     [draftScope, draftEpoch, dayIndex, initialDay.dayName, initialDay.exercises]
   );
@@ -376,7 +378,7 @@ export default function WorkoutSession({
    *  workout is not. */
   const sessionDay = liftSessionDay(originalStartedAt);
   const [showResumePrompt, setShowResumePrompt] = useState(
-    initialDraft !== null && !initialDraft.completionPending
+    initialDraft !== null && !initialDraft.completionPending && !resumeDraft
   );
   // CIRCLE-SESSION-01 — explicit Circle share from the completion
   // screen. The sheet mounts ONLY while open so its Circle reads
@@ -634,6 +636,20 @@ export default function WorkoutSession({
 
   const formatElapsed = formatClock;
 
+  /* Closing keeps a workout that has a draft: Home and Train offer it back
+     with Resume. The toast says so, so a close does not read as a
+     discard. */
+  const closeKeepingDraft = () => {
+    if (hasRecoveryDraft.current && !completionPendingRef.current) {
+      toast.message("Workout kept", {
+        description: draftScope?.startsWith("routine:")
+          ? "Open this routine again to carry on."
+          : "Resume it from Home or Train.",
+      });
+    }
+    onClose();
+  };
+
   // Rest timer: the rest fixed in Settings → Workout preferences, or the
   // plan's suggestion by role and reps, shorter in a plan built for 30
   // minutes (`restSecondsFor`, Lift4 (5)).
@@ -677,7 +693,6 @@ export default function WorkoutSession({
   const [sessionComplete, setSessionComplete] = useState(
     initialDraft?.completionPending ?? false
   );
-  const [showFinishEarly, setShowFinishEarly] = useState(false);
   /* Lift16: a set far past today's plan or the best for its reps waits
      for a yes. Kept after the question closes so the dialog's words
      hold while it animates out. */
@@ -1697,7 +1712,7 @@ export default function WorkoutSession({
       {showResumePrompt && initialDraft && (
         <Dialog
           open
-          onClose={onClose}
+          onClose={closeKeepingDraft}
           title="Resume workout?"
           description="You left this workout in progress earlier."
           size="md"
@@ -1765,14 +1780,17 @@ export default function WorkoutSession({
             from the list on every set after the first. Offered once a working set is
             done and while sets remain; when none remain, the bar's own
             "Finish workout" takes over, so there is one Finish at a
-            time. */}
+            time. It goes straight to the review, which is the check: the
+            review counts the sets left unticked and has Edit workout to go
+            back for them, so a dialog asking first was a second check on a
+            step that can be undone. */}
         <div className="flex shrink-0 items-center gap-1">
           {finishEarlyOffered && (
             <Button
               variant="secondary"
               className={SECONDARY_ON_CARD_EDGE}
               aria-label="Finish workout"
-              onClick={() => setShowFinishEarly(true)}
+              onClick={completeSession}
             >
               Finish
             </Button>
@@ -1780,7 +1798,7 @@ export default function WorkoutSession({
           <IconButton
             variant="ghost"
             aria-label="Close workout"
-            onClick={onClose}
+            onClick={closeKeepingDraft}
             icon={<X className="size-5 text-muted-foreground" />}
           />
         </div>
@@ -2696,19 +2714,6 @@ export default function WorkoutSession({
           setAskingJump(false);
           if (jumpQuestion?.exIdx === currentExIndex)
             void completeSet(jumpQuestion.setIdx, true);
-        }}
-      />
-
-      <ConfirmDialog
-        open={showFinishEarly}
-        title="Finish early?"
-        description="Sets you haven't ticked won't be saved."
-        confirmLabel="Finish"
-        cancelLabel="Keep training"
-        onCancel={() => setShowFinishEarly(false)}
-        onConfirm={() => {
-          setShowFinishEarly(false);
-          completeSession();
         }}
       />
 

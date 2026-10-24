@@ -1,0 +1,67 @@
+/**
+ * The In progress strip: what a session under way says, and Resume.
+ */
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+
+const h = vi.hoisted(() => ({ unlock: vi.fn() }));
+vi.mock("@/lib/speechUnlock", () => ({ unlockSpeech: h.unlock }));
+vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+
+import InProgressStrip from "../InProgressStrip";
+import type { SessionInProgress } from "@/lib/sessionsInFlight";
+
+const PULL: SessionInProgress = {
+  sport: "lift",
+  name: "Pull B",
+  sets: 5,
+  elapsedSeconds: 1120,
+  resumeTarget: "/program?day=1&resume=1",
+};
+
+afterEach(() => {
+  cleanup();
+  h.unlock.mockClear();
+});
+
+describe("InProgressStrip", () => {
+  it("says what was done, and resumes", () => {
+    const onResume = vi.fn();
+    render(<InProgressStrip session={PULL} onResume={onResume} />);
+    const strip = screen.getByRole("group", { name: "Pull B in progress" });
+    expect(strip).toHaveTextContent("In progress");
+    expect(strip).toHaveTextContent("Pull B");
+    expect(strip).toHaveTextContent("5 sets");
+    expect(strip).toHaveTextContent("18:40");
+    fireEvent.click(screen.getByRole("button", { name: "Resume Pull B" }));
+    expect(onResume).toHaveBeenCalledOnce();
+    expect(h.unlock).not.toHaveBeenCalled();
+  });
+
+  it("leaves the name to the card it sits on", () => {
+    render(<InProgressStrip session={PULL} onCard onResume={() => {}} />);
+    const strip = screen.getByRole("group", { name: "Pull B in progress" });
+    expect(strip).not.toHaveTextContent("Pull B");
+    expect(strip).toHaveTextContent("5 sets");
+  });
+
+  it("names no sets before one is ticked, and unlocks a run's voice inside the tap", () => {
+    render(
+      <InProgressStrip
+        session={{
+          sport: "run",
+          name: "Free run",
+          sets: null,
+          elapsedSeconds: 65,
+          resumeTarget: "/run?resume=1",
+        }}
+        onResume={() => {}}
+      />
+    );
+    const strip = screen.getByRole("group", { name: "Free run in progress" });
+    expect(strip).not.toHaveTextContent("set");
+    expect(strip).toHaveTextContent("1:05");
+    fireEvent.click(screen.getByRole("button", { name: "Resume Free run" }));
+    expect(h.unlock).toHaveBeenCalledOnce();
+  });
+});

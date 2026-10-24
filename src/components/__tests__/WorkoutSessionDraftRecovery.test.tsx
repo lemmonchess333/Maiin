@@ -192,6 +192,50 @@ it("requires an explicit recovery choice and safely leaves the workout on modal 
   expect(props.onCompleteDay).not.toHaveBeenCalled();
 });
 
+/* Close keeps a workout that has a draft, and says so: Home and Train
+   offer it back with Resume, which carries on without asking again. */
+it("says the workout is kept when it is closed with a set done, and only then", async () => {
+  const onClose = vi.fn();
+  const fresh = await open({ onClose });
+  fireEvent.click(screen.getByRole("button", { name: "Close workout" }));
+  expect(onClose).toHaveBeenCalledOnce();
+  expect(h.message).not.toHaveBeenCalled();
+  fresh.unmount();
+
+  const session = await open({ onClose });
+  fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
+  await waitFor(() => expect(draft()?.setLogs[0][0].completed).toBe(true));
+  fireEvent.click(screen.getByRole("button", { name: "Close workout" }));
+  expect(h.message).toHaveBeenCalledWith("Workout kept", {
+    description: "Open this routine again to carry on.",
+  });
+  expect(draft()?.setLogs[0][0].completed).toBe(true);
+  session.unmount();
+
+  // A programme day's workout comes back from Home or Train.
+  h.message.mockClear();
+  await open({ onClose, draftScope: "programme", dayIndex: 0 });
+  fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
+  fireEvent.click(screen.getByRole("button", { name: "Close workout" }));
+  expect(h.message).toHaveBeenCalledWith("Workout kept", {
+    description: "Resume it from Home or Train.",
+  });
+});
+
+it("opened from Resume, carries on with the draft without asking", async () => {
+  const session = await open();
+  fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
+  await waitFor(() => expect(draft()?.setLogs[0][0].completed).toBe(true));
+  session.unmount();
+  await open({ resumeDraft: true });
+  expect(
+    screen.queryByRole("dialog", { name: "Resume workout?" })
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Edit completed set 1" })
+  ).toBeInTheDocument();
+});
+
 it("control: a corrected completed set survives real remount and reaches the actual saved workout", async () => {
   const session = await open();
   fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
@@ -238,10 +282,7 @@ it("undoing the only completed set must not resurrect that unperformed set in th
   const finish = screen.queryByRole("button", {
     name: "Finish workout",
   });
-  if (finish) {
-    fireEvent.click(finish);
-    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
-  }
+  if (finish) fireEvent.click(finish);
   const saved = await finishRemaining();
   expect(saved.exercises[0].sets).toHaveLength(2);
 });
