@@ -144,7 +144,11 @@ export function EmptyState({
         )}
       </div>
       <div className="space-y-1.5">
-        <p className="text-h3 font-bold text-foreground">{headline}</p>
+        {/* A long word ("notifications") is wider than a 320pt phone at
+            double text, so a headline may break inside one, hyphenated. */}
+        <p className="text-h3 font-bold text-foreground break-words hyphens-auto">
+          {headline}
+        </p>
         {sub && (
           <p className="text-small text-muted-foreground max-w-[260px] mx-auto leading-relaxed">
             {sub}
