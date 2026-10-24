@@ -79,9 +79,17 @@ interface ActivityCardProps {
   /** Offer Follow beside the author when the viewer doesn't follow them
    *  (Explore). Never on your own post. */
   followAuthor?: boolean;
+  /** Open the comments as the card mounts: a comment notice opens the
+   *  post to answer it. */
+  openComments?: boolean;
 }
 
-function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
+function ActivityCard({
+  feedItem,
+  onShare,
+  followAuthor,
+  openComments = false,
+}: ActivityCardProps) {
   const { user, profile } = useAuth();
   /* The VIEWER's unit, not the poster's — a feed reads in the units of
      whoever is reading it, which is what every social running app does. */
@@ -96,7 +104,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
   const { isRestricted } = useRestrictedStatus(user?.uid);
   const [liked, setLiked] = useState(feedItem.liked ?? false);
   const [kudosCount, setKudosCount] = useState(feedItem.kudosCount ?? 0);
-  const [showCommentSheet, setShowCommentSheet] = useState(false);
+  const [showCommentSheet, setShowCommentSheet] = useState(openComments);
   /* Comments added or deleted from this card's sheet. The post's own
      count is written by the server and reaches the card only on the next
      feed read, so the card adds what it saw happen. */
