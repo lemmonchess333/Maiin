@@ -283,7 +283,7 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
     expect(screen.queryByRole("button", { name: /^Undo/ })).toBeNull();
   });
 
-  it("the sheet lists today's drinks, each removing the drink it names", () => {
+  it("the sheet lists today's drinks, each removing the drink it names", async () => {
     /* Replaces a row that read "Remove 250 ml" and subtracted an
        abstract amount: with a 500 and a 250 logged, that row took back
        the remembered serving rather than the drink you meant. Each row
@@ -304,7 +304,10 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
       />
     );
     fireEvent.click(screen.getByRole("button", { name: /add water/i }));
-    const rows = screen.getAllByRole("button", { name: /^Remove \d+ ml/ });
+    // The sheet is lazy: it is not part of Home's first paint.
+    const rows = await screen.findAllByRole("button", {
+      name: /^Remove \d+ ml/,
+    });
     expect(rows).toHaveLength(2);
     fireEvent.click(rows[1]);
     expect(onRemoveDrink).toHaveBeenCalledWith("early");

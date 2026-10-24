@@ -263,6 +263,25 @@ describe("Home programme loading", () => {
   });
 });
 
+describe("Home's closed sheets", () => {
+  it("draws Home without a sheet that is closed when it first draws", () => {
+    /* The bottom sheet is vaul and Radix, and the badge modal is its own
+       13 KB; none is open on Home's first paint. Load a new one with
+       lazyRetry, as DayActionSheet is. */
+    const graph = eagerGraph(resolve(SRC, "pages/Home.tsx"));
+    for (const path of [
+      "components/ui/BottomSheet.tsx",
+      "features/streaks/BadgeEarnedModal.tsx",
+    ]) {
+      const chain = graph.get(resolve(SRC, path));
+      expect(
+        chain ? chain.join("\n    → ") : null,
+        `Home eagerly imports ${path}:\n    `
+      ).toBeNull();
+    }
+  });
+});
+
 describe("on-demand exercise guides", () => {
   it("keeps unopened exercise guides off the Programme import graph", () => {
     const graph = eagerGraph(resolve(SRC, "pages/Program.tsx"));

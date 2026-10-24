@@ -1,5 +1,5 @@
 import Button from "@/components/ui/Button";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Droplets, Plus, Minus } from "lucide-react";
 import { haptic } from "@/lib/haptic";
@@ -9,7 +9,6 @@ import IconButton from "@/components/ui/IconButton";
 import SectionLabel from "@/components/ui/SectionLabel";
 import WaterWave from "@/components/home/WaterWave";
 import WaterBubbles from "@/components/home/WaterBubbles";
-import WaterSizeSheet from "@/components/home/WaterSizeSheet";
 import {
   GLASS_ML,
   WATER_PRESETS,
@@ -18,6 +17,13 @@ import {
   waterProgress,
 } from "@/lib/waterUnits";
 import type { WaterDrink } from "@/lib/waterActions";
+import { lazyRetry } from "@/lib/lazyRetry";
+
+/* Closed when Home first draws, and it brings the bottom sheet (vaul and
+   Radix) with it, so it stays out of Home's first paint. The card fetches
+   it once it has drawn, so a tap on the drink size does not wait. */
+const loadWaterSizeSheet = () => import("@/components/home/WaterSizeSheet");
+const WaterSizeSheet = lazyRetry(loadWaterSizeSheet);
 
 /** How long the tile offers to take the last drink back. Long enough to
  *  notice a mis-tap, short enough that the line is the step size again
@@ -110,6 +116,9 @@ export default function WaterCard({
 }) {
   const [rippleKey, setRippleKey] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
+  useEffect(() => {
+    void loadWaterSizeSheet().catch(() => {});
+  }, []);
   /* The moment of the last add, or null. It only decides WHETHER the
      undo line shows; what it says comes from the newest drink at render
      time, so the line and the button can never name different drinks. */
@@ -257,20 +266,22 @@ export default function WaterCard({
   );
 
   const sheet = sheetOpen && (
-    <WaterSizeSheet
-      open={sheetOpen}
-      onClose={() => setSheetOpen(false)}
-      onLog={(v) => {
-        const saved = onLog(v);
-        if (saved !== false) setRippleKey((k) => k + 1);
-        return saved;
-      }}
-      /* Only the compact tile routes removal through the sheet; the
-         full-width card has its minus beside the reading. */
-      totalMl={compact ? ml : undefined}
-      drinks={compact ? drinks : undefined}
-      onRemoveDrink={compact ? onRemoveDrink : undefined}
-    />
+    <Suspense fallback={null}>
+      <WaterSizeSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        onLog={(v) => {
+          const saved = onLog(v);
+          if (saved !== false) setRippleKey((k) => k + 1);
+          return saved;
+        }}
+        /* Only the compact tile routes removal through the sheet; the
+           full-width card has its minus beside the reading. */
+        totalMl={compact ? ml : undefined}
+        drinks={compact ? drinks : undefined}
+        onRemoveDrink={compact ? onRemoveDrink : undefined}
+      />
+    </Suspense>
   );
 
   const iconBoxShadow = hasWater
