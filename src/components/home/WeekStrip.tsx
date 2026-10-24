@@ -11,7 +11,7 @@ import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import { cn } from "@/lib/utils";
 import { beforeStart } from "@/lib/startDay";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
-import { formatWeekdayDayMonth } from "@/utils/formatters";
+import { formatDayMonthLong, formatWeekdayDayMonth } from "@/utils/formatters";
 
 /**
  * What one day of the strip shows (DS3). The circle carries the day's
@@ -255,7 +255,7 @@ export default function WeekStrip({
     <div
       role="group"
       aria-label={
-        days[0] ? `Week of ${format(days[0].date, "d MMMM")}` : undefined
+        days[0] ? `Week of ${formatDayMonthLong(days[0].date)}` : undefined
       }
       className="grid grid-cols-7 items-center justify-items-center"
     >
