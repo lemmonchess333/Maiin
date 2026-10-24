@@ -128,6 +128,20 @@ service cloud.firestore {
         || exists(/databases/$(database)/documents/blocks/$(b)/users/$(a));
     }
 
+    /* Who besides its author may read a feed post: anyone signed in for a
+       public one; for a followers-only one, a follower of the author when
+       neither has blocked the other. A follow edge can outlive a block
+       (blockUser's delete of it can fail), so the edge alone is not
+       enough. */
+    function activityVisibleTo(activity) {
+      return activity.visibility == 'public'
+        || (
+          activity.visibility == 'followers'
+          && exists(/databases/$(database)/documents/followers/$(activity.authorId)/users/$(request.auth.uid))
+          && !blockExistsBetween(activity.authorId, request.auth.uid)
+        );
+    }
+
     /* Has a moderator restricted the signed-in account? (S4e, STATUS
        2026-10-06.)
 
@@ -614,7 +628,17 @@ service cloud.firestore {
     // call sites in the same PR.
     // ========================================
     match /users/{uid}/public/{doc} {
-      allow read: if request.auth != null;
+      /* One profile, read on its own, is refused to someone its owner
+         blocked (Polish3 call 1): the profile page, a props list, a
+         follow request's name. The other way round is allowed, so the
+         person who blocked can still see whom they blocked to unblock
+         them, and the app hides the rest. A query cannot be checked per
+         document, so search (the collection group, below) is filtered in
+         the app. */
+      allow get: if request.auth != null
+        && (request.auth.uid == uid
+            || !exists(/databases/$(database)/documents/blocks/$(uid)/users/$(request.auth.uid)));
+      allow list: if request.auth != null;
       allow write: if isOwnerAndNotDeleting(uid)
         /* The one document this collection holds. User search reads the
            whole collection group, so any other id under a user's own
@@ -776,8 +800,10 @@ service cloud.firestore {
     // collection at ANY depth, so we need this recursive-wildcard rule
     // in addition to the per-user rule above. The per-user rule still
     // enforces owner-only writes; this one only grants read.
+    // Queries only. This also matches a single profile read, which the
+    // rule above decides.
     match /{path=**}/public/{doc} {
-      allow read: if request.auth != null;
+      allow list: if request.auth != null;
     }
 
     // ========================================
@@ -826,21 +852,18 @@ service cloud.firestore {
     // whole write).
     // ========================================
     match /activities/{activityId} {
-      allow read: if request.auth != null && (
-        // Public — any authed user
-        resource.data.visibility == 'public'
-        // Owner — always
-        || resource.data.authorId == request.auth.uid
-        // Followers-only — read iff caller is a follower of the author,
-        // and neither has blocked the other. A follow edge can outlive a
-        // block (blockUser could not remove the blocked person's side
-        // until the two delete clauses below), so the edge alone is not
-        // enough.
-        || (
-          resource.data.visibility == 'followers'
-          && exists(/databases/$(database)/documents/followers/$(resource.data.authorId)/users/$(request.auth.uid))
-          && !blockExistsBetween(resource.data.authorId, request.auth.uid)
-        )
+      /* One post, read on its own, is refused across a block in either
+         direction (Polish3 call 1): a feed copy's post, a notification's.
+         A query (Explore, a profile's posts) cannot be checked per
+         document, so the app filters those. */
+      allow get: if request.auth != null && (
+        resource.data.authorId == request.auth.uid
+        || (activityVisibleTo(resource.data)
+            && !blockExistsBetween(resource.data.authorId, request.auth.uid))
+      );
+      allow list: if request.auth != null && (
+        resource.data.authorId == request.auth.uid
+        || activityVisibleTo(resource.data)
       );
 
       allow create: if request.auth != null
@@ -1833,6 +1856,21 @@ service cloud.firestore {
       // The owner can still remove an existing block while the target deletes.
       allow create, update: if isOwnerAndNotDeleting(uid) && !isWriteFrozen(targetUid);
       allow delete: if isOwnerAndNotDeleting(uid);
+    }
+
+    // ========================================
+    // Social: Blocked by — who has blocked this account (Polish3 call 1)
+    //
+    // The copy of blocks/{blocker}/users/{uid} that the person blocked
+    // can read, so their app leaves the blocker out of what it shows
+    // them. Only onBlockWritten writes it (functions/lib/blockMirror.js).
+    // No rule consults it, so a forged row would only hide someone from
+    // the forger; it is server-only all the same, because a copy with two
+    // writers drifts from what it copies.
+    // ========================================
+    match /blockedBy/{uid}/users/{blockerUid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
     }
 
     // ========================================

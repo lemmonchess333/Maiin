@@ -526,6 +526,23 @@
       "testCoverageStatus": "planned"
     },
     {
+      "key": "blockedByOwn",
+      "domain": "D_crossUserEdge",
+      "type": "topLevelByUid",
+      "path": "blockedBy/{uid}/users",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "uid",
+      "recordPurpose": "private",
+      "strategy": "deleteSubcollection",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "reason": "Who has blocked this account (Polish3 call 1): the server-written copy of blocks/*/users/{uid}, one empty doc per blocker, readable only by this account so its app can filter the blockers out. Written only by onBlockWritten (functions/lib/blockMirror.js), which writes nothing for an account being deleted. Deleted with the other uid-keyed social collections (TOP_LEVEL_USER_KEYED_COLLECTIONS).",
+      "testCoverageKey": "smoke::topLevelOwn::blockedBy",
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/accountDeletion.js"
+    },
+    {
       "key": "scanUsage",
       "domain": "F_usage",
       "type": "topLevelByUid",
@@ -762,6 +779,26 @@
       "testCoverageKey": "smoke::blocksReverse",
       "testCoverageStatus": "implemented",
       "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
+    },
+    {
+      "key": "blockedByReverse",
+      "domain": "D_crossUserEdge",
+      "type": "collectionGroupByDocId",
+      "collectionGroup": "users",
+      "pathFilter": "blockedBy/*/users",
+      "docIdEquals": "{uid}",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "uid",
+      "recordPurpose": "private",
+      "strategy": "deleteCollectionGroupInBatches",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "feasibilityNote": "A bare UID is not a valid collection-group documentId comparison. Implementation uses the same ordered, resumable reference scan as blocksReverse and checks the full path before mutation.",
+      "reason": "The copies of this account's own blocks, under each account it blocked (blockedBy/{other}/users/{uid}). Removed by the paged reference scan of the users collection group that removes blocksReverse; onBlockWritten also removes each one as the executor deletes blocks/{uid}/users.",
+      "testCoverageKey": "smoke::blockedByReverse",
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js"
     },
     {
       "key": "crewMemberships",

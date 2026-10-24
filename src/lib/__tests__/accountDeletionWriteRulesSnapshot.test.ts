@@ -184,6 +184,10 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // setBoardSharing callable (actor-locked) and the session triggers
   // (system-writer guard) write it, and the executor deletes it.
   "match /friendsBoard/{uid}",
+  // Polish3 call 1: who has blocked this account. Read by that account
+  // only; onBlockWritten writes it (system-writer guard), and the
+  // executor deletes it both ways (blockedByOwn, blockedByReverse).
+  "match /blockedBy/{uid}/users/{blockerUid}",
   // S4e (PR #722) — restricted-user marker. Admin SDK writes only
   // (Cloud Function resolveReport sets the doc); clients can read
   // their own doc but cannot write. R1A cleanup is wired via the

@@ -192,6 +192,18 @@ export function useUserProfileData(uid: string, viewerUid: string | null) {
         setStatus("ready");
         return;
       }
+      /* The rules refuse someone else's profile to a reader its owner
+         blocked (Polish3 call 1). That is not available, as a missing
+         profile is, not a connection worth retrying. */
+      if (
+        !isOwn &&
+        pub.status === "rejected" &&
+        (pub.reason as { code?: string } | undefined)?.code ===
+          "permission-denied"
+      ) {
+        setStatus("missing");
+        return;
+      }
       const failed = own.status === "rejected" || pub.status === "rejected";
       if (failed) {
         logger.warn(

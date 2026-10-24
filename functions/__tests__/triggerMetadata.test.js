@@ -524,6 +524,15 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/followRequests/{uid}/users/{requesterUid}",
   },
+  // Polish3 call 1: the person blocked's copy of a block, on every write.
+  onBlockWritten: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/blocks/{blockerUid}/users/{blockedUid}",
+  },
 };
 
 function endpointSummary(fn) {

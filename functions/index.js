@@ -48,6 +48,7 @@ const {
 const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
 const blockGuard = require("./lib/blockGuard");
+const blockMirror = require("./lib/blockMirror");
 // S4e: a restricted account is refused anything that reaches another person.
 const restriction = require("./lib/restriction");
 const {
@@ -8214,6 +8215,32 @@ exports.onFollowRequestCreated = functions
       verb: "asked to follow you",
       logKey: "onFollowRequestCreated",
     });
+    return null;
+  });
+
+/**
+ * onBlockWritten — keeps `blockedBy/{blocked}/users/{blocker}` matching
+ * `blocks/{blocker}/users/{blocked}` (Polish3 call 1), so the app of the
+ * person blocked can leave the blocker out of everything it shows them.
+ * Only the person blocking can read their block; this row is the copy the
+ * other person's app reads (lib/blockMirror.js).
+ *
+ * On every write, and each delivery sets the row to what the block is now,
+ * read in the transaction that writes it, so a retry or a delivery out of
+ * order changes nothing that is already right.
+ */
+exports.onBlockWritten = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("blocks/{blockerUid}/users/{blockedUid}")
+  .onWrite(async (_change, context) => {
+    if (pastRetryWindow(context)) return null;
+    const { blockerUid, blockedUid } = context.params;
+    const result = await blockMirror.reconcileBlockMirror({
+      firestore: admin.firestore(),
+      blockerUid,
+      blockedUid,
+    });
+    functions.logger.info("onBlockWritten.reconciled", { result });
     return null;
   });
 

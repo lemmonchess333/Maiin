@@ -10,6 +10,35 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Blocking both ways (Polish3 call 1, 2026-10-24)
+
+A block now hides each person from the other. `onBlockWritten` writes the
+person blocked's copy of each block (`blockedBy/{them}/users/{blocker}`),
+`useBlockedUsers` merges it into the set the feed, Explore, Spaces,
+comments, props, boards, search and the tray filter on, a blocker's profile
+reads as not available, and the rules refuse a single read of the
+blocker's public profile or of either's post. The unit, rules and emulator
+suites cover each half; only a deploy and two real accounts can confirm the
+trigger runs in production and the two apps agree.
+
+- [ ] **Backfill the blocks made before the deploy.** Once Deploy
+      production has shipped `onBlockWritten` (check its deployed source),
+      run the backfill with credentials that can write Firestore:
+      `node functions/scripts/backfill-block-mirror.js adaptive-fitness-af8bb`.
+      Passing: it prints its totals, and a second run prints `mirrored: 0`
+      and `removed: 0`.
+- [ ] **Block from one account, look from the other.** On two phones (or
+      a phone and the web build), account A follows B and both have shared
+      a public session; A blocks B from B's profile. Passing, on B, without
+      reopening the app: A's posts leave the feed, Explore and any Space;
+      A's comments and props leave B's posts; A is gone from the friends
+      board and challenge leaderboards; searching A's name finds nothing;
+      opening a link to A's profile says "This profile isn't available"
+      with no name or photo, the same words as a deleted account. On A:
+      B's profile shows B's name, Unblock and nothing B shared. In the
+      Firebase console, `blockedBy/{B}/users/{A}` exists. Unblock on A, and
+      both ways come back (follows do not: blocking ended them).
+
 ## Apple's name, and the second account made visible (survey item 22, Polish2 call 3, 2026-10-21)
 
 Native Apple sign-in now keeps the name Apple shares on the first

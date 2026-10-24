@@ -127,6 +127,10 @@ const TOP_LEVEL_USER_KEYED_COLLECTIONS = Object.freeze([
   { parent: "blocks", sub: "users" },
   // Polish2: follow requests to this account.
   { parent: "followRequests", sub: "users" },
+  // Polish3: who has blocked this account, the server-written copy
+  // (lib/blockMirror.js). The rows naming this account as the blocker sit
+  // under other accounts and go in the social scan.
+  { parent: "blockedBy", sub: "users" },
 ]);
 
 const STORAGE_PREFIX_TEMPLATES = Object.freeze([
