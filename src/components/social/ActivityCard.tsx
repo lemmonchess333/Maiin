@@ -1,5 +1,5 @@
 import { BLOCK_DIALOG_DESCRIPTION } from "@/lib/blockCopy";
-import { useState, memo, useEffect, useRef } from "react";
+import { useState, memo, useEffect, useRef, type ReactNode } from "react";
 import { formatClock } from "@/utils/formatters";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Link } from "react-router-dom";
@@ -296,72 +296,113 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
 
   /* The volume numeral and the PR chip a lift's hero carries, whichever
      hero it is. */
-  const renderVolumeOverlay = () => (
-    <div className="absolute bottom-3 left-4">
+  const renderVolumeFigure = (className: string) => (
+    <div className={className}>
       <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-lifting">
         {volumeFigure(activity?.totalVolume ?? 0)}
       </p>
       <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
     </div>
   );
-  const renderPrChip = (side: "left-4" | "right-4") => (
+  const renderPrChip = (className: string) => (
     <span
-      className={`absolute top-3 ${side} inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-achievement/15 text-achievement-strong`}
+      className={`${className} inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-achievement/15 text-achievement-strong`}
     >
       <Star className="size-3.5 fill-achievement" />
       {prCount} PR{prCount === 1 ? "" : "s"}
     </span>
   );
 
+  const liftHeroBackground = {
+    background: `linear-gradient(150deg, ${THEME.lifting}22 0%, ${THEME.lifting}08 55%, ${THEME.lifting}10 100%)`,
+  };
+
   /* The lead lift's drawing at the right, the numbers at the left: Home's
-     Today card, in the feed. Alone, the drawing takes the middle. */
+     Today card, in the feed. Alone, the drawing takes the middle.
+     Beside the numbers, the two share one row, so a wide number
+     ("128,450") narrows the drawing instead of being drawn through it.
+     On a card under 12em, as at large text sizes, what is left for the
+     drawing is a thumbnail in a tall panel: it goes, and the panel
+     closes up around the numbers. The volume still reads before the PR
+     chip. */
   const renderDrawingHero = (art: FormArtCutout) => {
     const flanked = showVolumeOverlay || showPrChip;
+    const drawing = (className: string) => (
+      <img
+        src={formArtCutoutUrl(art)}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        decoding="async"
+        loading="lazy"
+        data-lead-drawing=""
+        className={`exercise-drawing pointer-events-none object-contain ${className}`}
+      />
+    );
+    if (!flanked) {
+      return (
+        <div
+          className="relative h-40 border-b border-border/50 overflow-hidden"
+          style={liftHeroBackground}
+        >
+          {drawing(
+            "absolute inset-y-3 h-[calc(100%-1.5rem)] inset-x-3 w-[calc(100%-1.5rem)] object-bottom"
+          )}
+        </div>
+      );
+    }
     return (
       <div
-        className="relative h-40 border-b border-border/50 overflow-hidden"
-        style={{
-          background: `linear-gradient(150deg, ${THEME.lifting}22 0%, ${THEME.lifting}08 55%, ${THEME.lifting}10 100%)`,
-        }}
+        className="flex h-40 gap-3 border-b border-border/50 overflow-hidden @max-[12em]:h-auto"
+        style={liftHeroBackground}
       >
-        <img
-          src={formArtCutoutUrl(art)}
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-          decoding="async"
-          loading="lazy"
-          data-lead-drawing=""
-          className={
-            "exercise-drawing pointer-events-none absolute inset-y-3 h-[calc(100%-1.5rem)] object-contain " +
-            (flanked
-              ? "right-3 w-[58%] object-right-bottom"
-              : "inset-x-3 w-[calc(100%-1.5rem)] object-bottom")
-          }
-        />
-        {showVolumeOverlay && renderVolumeOverlay()}
-        {showPrChip && renderPrChip("left-4")}
+        <div className="my-3 ml-4 flex shrink-0 flex-col-reverse items-start gap-2">
+          {showVolumeOverlay && renderVolumeFigure("mt-auto")}
+          {showPrChip && renderPrChip("mb-auto")}
+        </div>
+        {drawing(
+          "my-3 mr-3 ml-auto h-[calc(100%-1.5rem)] min-w-0 max-w-[58%] flex-1 object-right-bottom @max-[12em]:hidden"
+        )}
       </div>
     );
   };
 
-  const renderMuscleHero = () => (
-    <div
-      className="relative h-32 border-b border-border/50 overflow-hidden"
-      style={{
-        background: `linear-gradient(150deg, ${THEME.lifting}22 0%, ${THEME.lifting}08 55%, ${THEME.lifting}10 100%)`,
-      }}
-    >
-      <div className="absolute inset-0 flex items-center justify-center py-2">
-        <MiniMuscleFigure
-          categories={muscleCategories}
-          className="h-full w-auto"
-        />
+  /* The muscle figure in the middle, the volume at its left and the PR
+     chip at its right, in one row: the two sides take equal shares, so
+     the figure sits in the middle while they fit beside it, moves aside
+     for a wide number and then narrows. Under 14em the figure goes and
+     the panel closes up around the numbers, as the drawing's does; the
+     chip takes a column of its own here, so it needs more room. */
+  const renderMuscleHero = () => {
+    const flanked = showVolumeOverlay || showPrChip;
+    return (
+      <div
+        className={`flex h-32 gap-3 border-b border-border/50 overflow-hidden ${
+          flanked
+            ? "@max-[14em]:h-auto @max-[14em]:flex-col-reverse @max-[14em]:gap-2 @max-[14em]:py-3"
+            : ""
+        }`}
+        style={liftHeroBackground}
+      >
+        <div className="my-3 ml-4 flex min-w-max flex-1 items-end @max-[14em]:my-0 @max-[14em]:flex-none @max-[14em]:empty:hidden">
+          {showVolumeOverlay && renderVolumeFigure("")}
+        </div>
+        <div
+          className={`flex min-w-0 items-center justify-center py-2 ${
+            flanked ? "@max-[14em]:hidden" : ""
+          }`}
+        >
+          <MiniMuscleFigure
+            categories={muscleCategories}
+            className="h-28 w-auto max-w-full"
+          />
+        </div>
+        <div className="my-3 mr-4 flex min-w-max flex-1 items-start justify-end @max-[14em]:my-0 @max-[14em]:ml-4 @max-[14em]:flex-none @max-[14em]:justify-start @max-[14em]:empty:hidden">
+          {showPrChip && renderPrChip("")}
+        </div>
       </div>
-      {showVolumeOverlay && renderVolumeOverlay()}
-      {showPrChip && renderPrChip("right-4")}
-    </div>
-  );
+    );
+  };
 
   /* The words on the post: its title, the summary older posts carry in
      its place, and the author's caption. One block for the standard and
@@ -451,9 +492,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
           {/* A pace posted as text is per km whatever the reader's unit,
                so it keeps its own label rather than borrowing "/mi". */}
           <SectionLabel className="mt-0.5">
-            {paceUnitLabel(
-              typeof activity.avgPace === "string" ? "km" : unit
-            )}
+            {paceUnitLabel(typeof activity.avgPace === "string" ? "km" : unit)}
           </SectionLabel>
         </div>
         {(activity.duration ?? 0) > 0 && (
@@ -661,35 +700,13 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
         <>
           {routePreview && renderRouteHero("h-[120px]")}
           <div className="p-4 pb-0">
-            {/* Author row */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
-              <Link
-                to={`/user/${feedItem.authorId}`}
-                className="flex items-center gap-3 flex-1 min-w-[min(8em,100%)]"
-              >
-                <Avatar
-                  photoURL={feedItem.authorPhotoURL}
-                  displayName={feedItem.authorName}
-                  size="lg"
-                  fallbackBg={`${THEME.brand}20`}
-                  fallbackColor={THEME.brand}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <p
-                      dir="auto"
-                      className="text-left text-sm font-semibold truncate text-foreground"
-                    >
-                      {feedItem.authorName}
-                    </p>
-                  </div>
-                  <p className="text-small text-muted-foreground whitespace-nowrap @max-[14em]:whitespace-normal">
-                    {timeAgo}
-                  </p>
-                </div>
-              </Link>
-              {renderAuthorActions()}
-            </div>
+            {renderAuthorRow(
+              `${THEME.brand}20`,
+              THEME.brand,
+              <p className="text-small text-muted-foreground whitespace-nowrap @max-[14em]:whitespace-normal">
+                {timeAgo}
+              </p>
+            )}
             {renderPostText()}
             {renderRunStats()}
             <div className="border-b border-border/30 mb-3" />
@@ -706,42 +723,20 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
           {showMuscleHero && renderMuscleHero()}
 
           <div className="p-4">
-            {/* Author row */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
-              <Link
-                to={`/user/${feedItem.authorId}`}
-                className="flex items-center gap-3 flex-1 min-w-[min(8em,100%)]"
-              >
-                <Avatar
-                  photoURL={feedItem.authorPhotoURL}
-                  displayName={feedItem.authorName}
-                  size="lg"
-                  fallbackBg={avatarBg}
-                  fallbackColor={avatarColor}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <p
-                      dir="auto"
-                      className="text-left text-sm font-semibold truncate text-foreground"
-                    >
-                      {feedItem.authorName}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    {isRun ? (
-                      <Footprints className="size-3.5 text-running" />
-                    ) : (
-                      <Dumbbell className="size-3.5 text-lifting" />
-                    )}
-                    <p className="text-small whitespace-nowrap @max-[14em]:whitespace-normal">
-                      {timeAgo}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-              {renderAuthorActions()}
-            </div>
+            {renderAuthorRow(
+              avatarBg,
+              avatarColor,
+              <div className="flex items-center gap-1 text-muted-foreground">
+                {isRun ? (
+                  <Footprints className="size-3.5 text-running" />
+                ) : (
+                  <Dumbbell className="size-3.5 text-lifting" />
+                )}
+                <p className="text-small whitespace-nowrap @max-[14em]:whitespace-normal">
+                  {timeAgo}
+                </p>
+              </div>
+            )}
 
             {renderPostText()}
 
@@ -762,11 +757,17 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
       )}
 
       <div className="px-4 pb-4">
+        {/* The PR and challenge lines: an icon, then the words. Beside the
+            icon, a large-text line can be narrower than one word, which
+            then splits ("Comple/ted"). So on a card under 16em the icon
+            stands above the words, which have the line's whole width and
+            wrap between words; breaking inside a word is left for a string
+            with nowhere else to go. */}
         {/* PR Highlight */}
         {(feedItem.prHit || activity?.prHit) && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 bg-achievement/10 border border-achievement/20">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 bg-achievement/10 border border-achievement/20 @max-[16em]:flex-col @max-[16em]:items-start @max-[16em]:gap-1">
             <Trophy className="size-4 text-achievement shrink-0" />
-            <p className="min-w-0 break-words text-xs font-medium text-achievement-strong">
+            <p className="min-w-0 max-w-full break-words text-xs font-medium text-achievement-strong">
               New PR:{" "}
               {feedItem.prExercise || activity?.prExercise || "Personal Record"}{" "}
               {feedItem.prWeight || activity?.prWeight
@@ -782,7 +783,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
         {/* Challenge Milestone */}
         {(feedItem.challengeMilestone || activity?.challengeMilestone) && (
           <div
-            className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 @max-[16em]:flex-col @max-[16em]:items-start @max-[16em]:gap-1"
             style={{
               background: `${THEME.brand}10`,
               border: `1px solid ${THEME.brand}25`,
@@ -795,7 +796,7 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
             {/* Text on the -strong step — brand is 3.87:1 as 12px text on
                 the light card; the Target icon keeps the identity. */}
             <p
-              className="min-w-0 break-words text-xs font-medium"
+              className="min-w-0 max-w-full break-words text-xs font-medium"
               style={{ color: "hsl(var(--primary-strong))" }}
             >
               {feedItem.challengeMilestone || activity?.challengeMilestone}
@@ -1007,6 +1008,46 @@ function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
       />
     </div>
   );
+
+  /* The author's avatar, name and time, which open their profile, with
+     Follow and the menu at the row's end. A card 18em wide or more keeps
+     the name on one line beside the avatar, ending in an ellipsis if it
+     must. Narrower, as at large text sizes, the name wraps instead, and
+     a name too long to sit beside the avatar goes under it, with the
+     row's whole width: beside it, the name would be cut to its first
+     letters ("Ale…"). One row for the standard and the hybrid card. */
+  function renderAuthorRow(
+    fallbackBg: string,
+    fallbackColor: string,
+    time: ReactNode
+  ) {
+    return (
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2 @max-[18em]:items-start">
+        <Link
+          to={`/user/${feedItem.authorId}`}
+          className="flex items-center gap-3 flex-1 min-w-[min(8em,100%)] @max-[18em]:flex-wrap @max-[18em]:gap-y-2"
+        >
+          <Avatar
+            photoURL={feedItem.authorPhotoURL}
+            displayName={feedItem.authorName}
+            size="lg"
+            fallbackBg={fallbackBg}
+            fallbackColor={fallbackColor}
+          />
+          <div className="flex-1 min-w-0 @max-[18em]:flex-auto @max-[18em]:max-w-full">
+            <p
+              dir="auto"
+              className="text-left text-sm font-semibold truncate break-words text-foreground @max-[18em]:whitespace-normal"
+            >
+              {feedItem.authorName}
+            </p>
+            {time}
+          </div>
+        </Link>
+        {renderAuthorActions()}
+      </div>
+    );
+  }
 
   /* Follow and the menu, kept together. The name beside them keeps at
      least 8em; when the row cannot also hold these, they take a line of
