@@ -21,10 +21,8 @@ import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
-import {
-  containsProfanity,
-  OBJECTIONABLE_POST_MESSAGE,
-} from "@/lib/profanityFilter";
+import { OBJECTIONABLE_POST_MESSAGE } from "@/lib/objectionableMessages";
+import { useWordFilter } from "@/hooks/useWordFilter";
 import { uploadSpacePostPhoto } from "@/lib/spacePhotoUpload";
 import { PhotoRefusedError } from "@/lib/photoScreen";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -106,12 +104,17 @@ export default function SpacePostComposer({
   const attached =
     picked ?? (attachLatest && !latestRemoved ? (sessions[0] ?? null) : null);
 
-  const profane = containsProfanity(title) || containsProfanity(body);
+  // The word filter loads as the sheet opens; posting waits for it.
+  const wordFilter = useWordFilter(open);
+  const profane =
+    !!wordFilter &&
+    (wordFilter.containsProfanity(title) || wordFilter.containsProfanity(body));
   // Space posts are public content: the rules refuse an unverified email
   // and a restricted account (S4e), so the action is held here and the
   // notice below says why.
   const canPost =
     body.trim().length > 0 &&
+    !!wordFilter &&
     !profane &&
     !busy &&
     !gate.needsVerification &&

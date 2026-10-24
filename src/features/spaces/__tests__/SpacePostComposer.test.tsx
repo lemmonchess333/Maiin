@@ -6,7 +6,16 @@
  * as soon as the list arrives; removing it or picking another sticks for
  * the draft; and the post carries the attached session's snapshot.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+  beforeAll,
+} from "vitest";
+import { loadWordFilter } from "@/lib/wordFilter";
 import {
   render,
   screen,
@@ -305,4 +314,10 @@ describe("SpacePostComposer — a photo the screening refuses (Ship1)", () => {
     ).toBe(false);
     vi.unstubAllGlobals();
   });
+});
+
+/* The word filter as a session that has used it holds it: loaded, so the
+   sheet draws on its first render (useWordFilter covers the wait). */
+beforeAll(async () => {
+  await loadWordFilter();
 });

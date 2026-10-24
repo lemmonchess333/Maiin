@@ -11,10 +11,8 @@ import {
   isPermissionDenied,
   type CommentReaction,
 } from "../../lib/socialApi";
-import {
-  containsProfanity,
-  OBJECTIONABLE_COMMENT_MESSAGE,
-} from "../../lib/profanityFilter";
+import { OBJECTIONABLE_COMMENT_MESSAGE } from "@/lib/objectionableMessages";
+import { loadWordFilter } from "@/lib/wordFilter";
 import { commentReportTargetId } from "@/lib/reportTargetIds";
 import { getTimeAgo } from "../../lib/timeAgo";
 import { haptic } from "../../lib/haptic";
@@ -102,6 +100,11 @@ export default function CommentSheet({
   const loading = settled?.key !== loadKey;
   const failed = !loading && settled.failed;
 
+  // The word filter loads with the sheet, so Send rarely waits for it.
+  useEffect(() => {
+    if (open) void loadWordFilter().catch(() => {});
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
@@ -167,12 +170,18 @@ export default function CommentSheet({
     // trust boundary (addCommentCallable refuses the same text with
     // the same sentence, and the onCommentCreated trigger deletes
     // anything that got past it). Catching it here saves a round-trip.
-    if (containsProfanity(text)) {
-      toast.error(OBJECTIONABLE_COMMENT_MESSAGE);
+    setSending(true);
+    const filter = await loadWordFilter().catch(() => null);
+    if (!filter || filter.containsProfanity(text)) {
+      setSending(false);
+      toast.error(
+        filter
+          ? OBJECTIONABLE_COMMENT_MESSAGE
+          : "Couldn't post comment. Try again."
+      );
       haptic("error");
       return;
     }
-    setSending(true);
     haptic("light");
     try {
       await addComment(

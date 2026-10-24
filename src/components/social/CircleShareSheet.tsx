@@ -31,7 +31,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { GOAL_SPACE_TEXT_MAX } from "@/features/goalSpace/goalSpaceTypes";
 import { useGoalSpaces } from "@/features/goalSpace/useGoalSpaces";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
-import { containsProfanity } from "@/lib/profanityFilter";
+import { loadWordFilter } from "@/lib/wordFilter";
+import { useWordFilter } from "@/hooks/useWordFilter";
 import { circleTitle } from "@/features/goalSpace/circleTitle";
 import RestrictedNotice from "./RestrictedNotice";
 
@@ -46,8 +47,17 @@ export default function CircleShareSheet({
   onOpenChange,
   uid,
 }: CircleShareSheetProps) {
-  const { loading, circles, loadFailed, reload, publishEvent } =
-    useGoalSpaces(uid);
+  const {
+    loading: circlesLoading,
+    circles,
+    loadFailed,
+    reload,
+    publishEvent,
+  } = useGoalSpaces(uid);
+  /* The names go through the word filter (circleTitle), and so does the
+     note: it loads as the sheet opens, and the list waits for it. */
+  const wordFilter = useWordFilter(open);
+  const loading = circlesLoading || !wordFilter;
   // A restricted account shares nothing with a Circle (S4e).
   const { isRestricted } = useRestrictedStatus(uid);
   const navigate = useNavigate();
@@ -70,7 +80,12 @@ export default function CircleShareSheet({
     if (!selectedId || busy || isRestricted) return;
     // The server takes a refused note back out (onGoalSpaceEventCreated);
     // saying so here keeps the person's words in the box to reword.
-    if (containsProfanity(note)) {
+    const filter = wordFilter ?? (await loadWordFilter().catch(() => null));
+    if (!filter) {
+      toast.error("Couldn't share. Try again.");
+      return;
+    }
+    if (filter.containsProfanity(note)) {
       toast.error(
         "This note contains objectionable language. Reword it and try again."
       );
@@ -169,7 +184,7 @@ export default function CircleShareSheet({
                   )}
                 >
                   <p className="text-sm font-semibold text-foreground truncate">
-                    {circleTitle(c.space)}
+                    {circleTitle(c.space, wordFilter)}
                     {!c.space.active && (
                       <span className="font-normal text-muted-foreground">
                         {" "}

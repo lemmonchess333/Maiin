@@ -20,6 +20,12 @@
  * The filter operates on full strings, not per-word — so a caption
  * like "ate a whole pizza, what a beast" doesn't fire on "beast",
  * but "f*** this hill" does.
+ *
+ * App code loads this through `wordFilter.ts` (`loadWordFilter`,
+ * `useWordFilter`), never with a static import: the lists are about
+ * 100 KB, and a static import puts them in every screen that reaches a
+ * composer or a Circle name. `eagerGraph.test.ts` holds those screens to
+ * it.
  */
 
 import leoProfanity from "leo-profanity";
@@ -39,21 +45,13 @@ export function containsProfanity(text: unknown): boolean {
   return leoProfanity.check(text) || containsHateTerm(text);
 }
 
-/**
- * What a person reads when public text they wrote is refused. The server
- * refuses with the same sentences (REFUSALS in
- * functions/lib/objectionableText.js), so a comment or a name reads the same
- * whether the app caught it first or the server did. Pinned equal by
- * profanityFilterMirror.cross.test.ts.
- */
-export const OBJECTIONABLE_COMMENT_MESSAGE =
-  "This comment contains objectionable language. Reword it and try again.";
-export const OBJECTIONABLE_NAME_MESSAGE =
-  "This name contains objectionable language. Choose a different one.";
-/** A space post. Only the app says it: the server takes such a post down
- *  rather than refusing it (functions/lib/spacePostModeration.js). */
-export const OBJECTIONABLE_POST_MESSAGE =
-  "This post contains objectionable language. Reword it and try again.";
+/* The refusal sentences live without the word lists, so a composer can say
+   them before the lists have loaded. */
+export {
+  OBJECTIONABLE_COMMENT_MESSAGE,
+  OBJECTIONABLE_NAME_MESSAGE,
+  OBJECTIONABLE_POST_MESSAGE,
+} from "./objectionableMessages";
 
 /**
  * Returns a cleaned version of `text` with blocked words replaced

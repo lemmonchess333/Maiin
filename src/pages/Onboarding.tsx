@@ -61,6 +61,7 @@ import SessionLengthLabel from "@/components/program/SessionLengthLabel";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
+import { useWordFilter } from "@/hooks/useWordFilter";
 import { describeRejection } from "@/lib/callableErrors";
 import {
   formatWeightInUnit,
@@ -574,7 +575,10 @@ export default function Onboarding() {
       runFrequency,
     ]
   );
-  const displayNameValidation = validateDisplayName(displayName);
+  /* The name step is the last; the word filter loads from the first, and
+     until it has, the name waits (valid false, nothing to say). */
+  const wordFilter = useWordFilter();
+  const displayNameValidation = validateDisplayName(displayName, wordFilter);
   /* A race with no date is not a race plan. Run9a lands a persisted
      race_prep with no usable date on the freeform substrate rather than
      leaving a dangling raceGoal — correct, and it stays as the backstop for
@@ -1883,7 +1887,7 @@ export default function Onboarding() {
                   className="ds-input w-full min-h-11"
                   value={displayName}
                   maxLength={DISPLAY_NAME_MAX}
-                  aria-invalid={!displayNameValidation.valid}
+                  aria-invalid={displayNameValidation.problem !== null}
                   onChange={(event) => {
                     setNameTyped(true);
                     setDisplayName(event.target.value);
@@ -1893,7 +1897,7 @@ export default function Onboarding() {
                   Other people can see this name on your profile. You can change
                   it later.
                 </p>
-                {!displayNameValidation.valid && (
+                {displayNameValidation.message && (
                   <p className="text-sm text-destructive-strong" role="alert">
                     {displayNameValidation.message}
                   </p>

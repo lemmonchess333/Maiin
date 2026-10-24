@@ -14,10 +14,8 @@ import {
   getSpacePostComments,
   type SpacePostComment,
 } from "@/lib/socialApi";
-import {
-  containsProfanity,
-  OBJECTIONABLE_COMMENT_MESSAGE,
-} from "@/lib/profanityFilter";
+import { OBJECTIONABLE_COMMENT_MESSAGE } from "@/lib/objectionableMessages";
+import { loadWordFilter } from "@/lib/wordFilter";
 import { spacePostCommentReportTargetId } from "@/lib/reportTargetIds";
 import { getTimeAgo } from "@/lib/timeAgo";
 import { toast } from "@/lib/toast";
@@ -100,6 +98,11 @@ export default function SpaceCommentSheet({
     }
   }, [spaceId, postId]);
 
+  // The word filter loads with the sheet, so Send rarely waits for it.
+  useEffect(() => {
+    if (open) void loadWordFilter().catch(() => {});
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const key = `${spaceId}/${postId}`;
@@ -116,12 +119,18 @@ export default function SpaceCommentSheet({
       return;
     // The word filter, caught before the round-trip. The callable is the
     // boundary and refuses the same text with the same sentence.
-    if (containsProfanity(trimmed)) {
-      toast.error(OBJECTIONABLE_COMMENT_MESSAGE);
+    setSending(true);
+    const filter = await loadWordFilter().catch(() => null);
+    if (!filter || filter.containsProfanity(trimmed)) {
+      setSending(false);
+      toast.error(
+        filter
+          ? OBJECTIONABLE_COMMENT_MESSAGE
+          : "Couldn't post the comment. Try again."
+      );
       haptic("error");
       return;
     }
-    setSending(true);
     haptic("light");
     try {
       const commentId = await addSpacePostComment(

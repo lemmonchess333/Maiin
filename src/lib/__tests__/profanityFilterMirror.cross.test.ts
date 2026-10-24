@@ -171,13 +171,16 @@ describe("a refusal reads the same from the app and from the server", () => {
     // validateDisplayName (Onboarding, Settings) against the server's
     // displayNameRefusal (completeOnboarding, configurePlan).
     for (const name of ["Sam", "Beast mode", "sucks", "Shit head"]) {
-      const client = validateDisplayName(name);
+      const client = validateDisplayName(name, {
+        containsProfanity: clientContains,
+      });
       const serverRefusal = serverText.displayNameRefusal(name);
       expect(client.problem === "objectionable").toBe(serverRefusal !== null);
     }
     // The control: at least one of them is refused, on both sides.
-    expect(validateDisplayName("sucks").message).toBe(
-      serverText.displayNameRefusal("sucks")
-    );
+    expect(
+      validateDisplayName("sucks", { containsProfanity: clientContains })
+        .message
+    ).toBe(serverText.displayNameRefusal("sucks"));
   });
 });

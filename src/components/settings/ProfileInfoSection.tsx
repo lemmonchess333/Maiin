@@ -7,6 +7,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { kgToLb, lbToKg } from "@/lib/weightUnits";
 import { HEIGHT_CM } from "@/lib/bodyMetrics";
 import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
+import { loadWordFilter } from "@/lib/wordFilter";
 import { flushQueuedWeights, queueWeightEntry } from "@/lib/weightQueue";
 import { localDateString } from "@/lib/dateHelpers";
 import { toast } from "@/lib/toast";
@@ -196,7 +197,12 @@ export default function ProfileInfoSection({
                directly, so it is held to Onboarding's rules here,
                word filter included. A refused name is not saved; the
                field keeps it so it can be corrected. */
-            const check = validateDisplayName(name);
+            const wordFilter = await loadWordFilter().catch(() => null);
+            if (!wordFilter) {
+              setNameError("Couldn't check the name. Try again.");
+              return;
+            }
+            const check = validateDisplayName(name, wordFilter);
             if (!check.valid) {
               setNameError(check.message);
               return;
