@@ -39,6 +39,28 @@ accounts can confirm them in production.
       comment row opens it with the comments showing. Delete the session
       and tap the comment row again: it opens B's profile.
 
+## Cold start: what loads before the first paint (step 8, 2026-10-24)
+
+Login paints without framer, Home without its closed sheets, the composers
+without the word lists; a returning device starts Firestore and the
+signed-in shell with the app's own code; `dist/index.html` preloads the two
+first-paint fonts; and the diary row reads a 160 px thumbnail of a meal
+photo instead of the 1280 px photo. The dist checks and unit tests cover
+what ships; these need a browser's Network panel or an iPhone.
+
+- [ ] **The meal photo thumbnail, on an iPhone.** Scan a meal: the diary
+      row shows its photo, sharp at 52 pt. Delete the meal and both files
+      go (`food-photos/{uid}/{mealId}.jpg` and `.thumb.jpg`). A photo scanned
+      before this build still shows in its row, read from the photo itself.
+- [ ] **The fonts, on a first web visit.** In a private window, open the
+      app: the Network panel shows both Latin woff2 files requested from
+      the HTML (initiator: preload), the text never swaps face, and the
+      console has no "preloaded but not used" warning on Home.
+- [ ] **A returning launch.** Signed in, reload with the Network panel
+      open: the firebase-db, Home and Layout chunks start alongside the
+      entry, not after Auth's requests; signed out with the device never
+      signed in, none of them load on Login.
+
 ## Blocking both ways (Polish3 call 1, 2026-10-24)
 
 A block now hides each person from the other. `onBlockWritten` writes the
