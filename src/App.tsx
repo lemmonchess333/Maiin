@@ -8,7 +8,7 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/lib/auth";
+import { AuthProvider, hasSignedInOnThisDevice, useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { LiftUnitProvider } from "@/hooks/useLiftUnit";
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
@@ -76,6 +76,12 @@ function prefetchSignedInShell(): void {
   ])
     void load().catch(() => {});
 }
+
+/* A device that has had an account almost always restores it, so the shell
+   starts loading with the app's own code rather than once Auth has read
+   the session back. A first visit starts none of it, and gets it when
+   someone signs in (the effect in AppRoutes). */
+if (hasSignedInOnThisDevice()) prefetchSignedInShell();
 
 /* framer's MotionConfig, around the signed-in branches only: nothing
    signed out animates with framer, so Login paints without it. */
@@ -393,8 +399,9 @@ function AppRoutes() {
   usePushTokenRefresh();
   useNativePushNavigation(uid, !loading && !!user);
   // Signed in: fetch the shell's chunks side by side, while the profile
-  // loads, instead of one after another as each layer renders. Never at
-  // module load, which would pull Firestore for a signed-out visitor.
+  // loads, instead of one after another as each layer renders. A device
+  // that has signed in before started them at module load already; this
+  // covers the first sign-in, and the module map makes a repeat free.
   useEffect(() => {
     if (uid) prefetchSignedInShell();
   }, [uid]);
