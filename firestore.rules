@@ -1419,9 +1419,11 @@ service cloud.firestore {
             !('photoUrl' in request.resource.data)
             || isAllowedPhotoUrl(request.resource.data.photoUrl)
           )
-          // The attached session is the composer's snapshot (toSnapshot in
-          // SpacePostComposer.tsx), served to every viewer of the Space.
-          // `is map` alone took 500 KB of anything.
+          // The attached session is the composer's snapshot
+          // (src/features/spaces/spacePostSnapshot.ts, whose key list
+          // spacePostSnapshot.cross.test.ts pins to this one), served to
+          // every viewer of the Space. `is map` alone took 500 KB of
+          // anything.
           && (
             !('activity' in request.resource.data)
             || (request.resource.data.activity is map

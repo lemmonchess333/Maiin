@@ -2,6 +2,7 @@
 
 const crypto = require("crypto");
 const { FieldPath } = require("firebase-admin/firestore");
+const { REACTION_KEYS } = require("./commentReactions");
 
 const PAGE_SIZE = 150;
 const YEAR_MS = 365 * 86400000;
@@ -110,7 +111,7 @@ async function cleanupSocial({ firestore, uid, now, checkpoint }) {
       await anonymiseComment({ firestore, ref: doc.ref, uid, now });
     }
   });
-  for (const reaction of ["muscle", "fire"]) {
+  for (const reaction of REACTION_KEYS) {
     const field = `reactions.${reaction}`;
     for (const collection of ["items", "comments"]) {
       await scan(`${collection}_${reaction}`, group(collection, field, "array-contains"), async (doc) => {

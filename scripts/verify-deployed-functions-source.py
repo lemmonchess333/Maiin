@@ -58,13 +58,13 @@ def read(request, timeout, opener=urllib.request.urlopen, sleep=time.sleep):
 def source_targets():
     """The executing exports and source artifacts each release must read back."""
     comment_paths = ["index.js", "package-lock.json", "lib/publicPhotoUrl.js", "lib/socialCounters.js", "lib/spacePostEngagement.js",
-                     "lib/restriction.js"]
+                     "lib/restriction.js", "lib/commentLimit.js", "lib/commentRejection.js"]
     training_paths = ["index.js", "package-lock.json", "lib/stateTransition.js", "lib/workoutCorrections.js", "lib/programCommands.js"]
     deletion_paths = ["index.js", "package-lock.json", "accountDeletion.js", "lib/spaceIds.js",
                       "lib/accountDeletionSocial.js", "lib/accountDeletionRetry.js",
                       "lib/accountDeletionLocks.js", "lib/accountDeletionAuth.js",
                       "lib/accountDeletionLedger.js", "lib/accountDeletionMinimisation.js",
-                      "lib/accountDeletionStatus.js"]
+                      "lib/accountDeletionStatus.js", "lib/commentReactions.js"]
     challenge_paths = ["index.js", "package-lock.json", "lib/challengeDefs.js",
                        "lib/challengeBackfill.js", "lib/challengeActivityWindow.js",
                        "lib/challengeTiers.js", "lib/challengeMarkers.js",

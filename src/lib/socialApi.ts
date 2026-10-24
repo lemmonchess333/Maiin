@@ -500,8 +500,11 @@ export async function deleteComment(
   await fn({ activityId, commentId });
 }
 
-/** One-tap comment reactions (💪 = "muscle", 🔥 = "fire"). */
-export type CommentReaction = "muscle" | "fire";
+/** One-tap comment reactions (💪 = "muscle", 🔥 = "fire"). The callable
+ *  takes only REACTION_KEYS (functions/lib/commentReactions.js), and
+ *  commentReactions.cross.test.ts holds this list to it. */
+export const COMMENT_REACTIONS = ["muscle", "fire"] as const;
+export type CommentReaction = (typeof COMMENT_REACTIONS)[number];
 
 /**
  * Toggle the caller's reaction on a comment. Comments are server-write-only

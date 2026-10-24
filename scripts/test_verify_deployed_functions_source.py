@@ -114,6 +114,18 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
         self.assertEqual(len(paths), len(set(paths)))
         self.assertIn("onBlockWritten", verifier.RETRY_REQUIRED)
 
+    def test_comment_callables_and_deletion_read_back_the_shared_comment_rules(self):
+        targets = verifier.source_targets()
+        for name in ("addCommentCallable", "addSpacePostCommentCallable"):
+            with self.subTest(function=name):
+                self.assertTrue({"lib/commentLimit.js", "lib/commentRejection.js"}
+                                .issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+        for name in ("deleteMyAccount", "resumeAccountDeletions"):
+            with self.subTest(function=name):
+                self.assertIn("lib/commentReactions.js", targets[name])
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+
     def test_social_fanout_targets_cover_changed_privacy_and_retry_artifacts(self):
         targets = verifier.source_targets()
         expected = {

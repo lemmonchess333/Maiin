@@ -10,6 +10,7 @@
    ───────────────────────────────────────────── */
 
 const { RESTRICTED_MESSAGE, RESTRICTED_REASON } = require("./restriction");
+const { MAX_COMMENT_LENGTH } = require("./commentLimit");
 
 /** Engine failures the person can act on, each with the words they see. */
 const KNOWN = [
@@ -24,9 +25,11 @@ const KNOWN = [
     message: "You can only delete your own comments.",
   },
   {
-    test: /: text must be 1-1000 chars$/,
+    test: new RegExp(`: text must be 1-${MAX_COMMENT_LENGTH} chars$`),
     code: "failed-precondition",
-    message: "Write a comment of up to 1,000 characters.",
+    message: `Write a comment of up to ${MAX_COMMENT_LENGTH.toLocaleString(
+      "en-GB"
+    )} characters.`,
   },
 ];
 
