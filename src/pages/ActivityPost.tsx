@@ -2,17 +2,16 @@
  * `/activity/:activityId` — one shared session, where its props and
  * comments are.
  *
- * The notification tray opens it for props and a comment on your session,
- * which used to open the profile of whoever gave them. The post is the
- * thing the notice is about, and its comments are where you answer.
- * `?comments=1` opens the comments at once, for a comment notice.
+ * The notification tray opens it for props and a comment on your session:
+ * the post is the thing the notice is about, and its comments are where
+ * you answer. `?comments=1` opens the comments at once, for a comment
+ * notice.
  *
  * The post is read as anyone reads it, so the rules decide: a post that
  * was deleted, or one the viewer can no longer see, is refused rather than
  * answered as missing. Either way the page says the post is unavailable,
  * or, when the tray sent the person who acted along (`fallbackUserId` in
- * the route state), opens that person's profile instead, which is where
- * the row used to go.
+ * the route state), opens that person's profile instead.
  */
 import { useEffect, useState } from "react";
 import {
