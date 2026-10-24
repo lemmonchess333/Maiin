@@ -23,6 +23,7 @@ RETRY_REQUIRED = frozenset({
     "onChallengeParticipantCreated", "onWorkoutCreated", "onRunCreated",
     "onWorkoutUpdated", "onRunUpdated", "onWorkoutDeleted", "onRunDeleted",
     "onActivityCreated", "onGoalSpaceEventCreated", "onPublicProfileWritten",
+    "onBlockWritten",
 })
 PUSH_RUNTIME_LIMITS = {
     "claimPushDeviceToken": (100, None),
@@ -87,6 +88,9 @@ def source_targets():
         "onPublicProfileWritten": ["index.js", "package-lock.json", "lib/objectionableText.js",
                                    "profanityFilter.js", "lib/hateTerms.js", "lib/triggerRetry.js",
                                    "lib/accountDeletionLocks.js"],
+        # Who has blocked each account, the copy the blocked person's app reads.
+        "onBlockWritten": ["index.js", "package-lock.json", "lib/blockMirror.js",
+                           "lib/triggerRetry.js", "lib/accountDeletionLocks.js"],
         # Ship1: the photos other people see, screened for nudity.
         "screenPhoto": ["index.js", "lib/photoScreen.js"],
         "screenUploadedPhoto": ["index.js", "lib/photoScreen.js"],
