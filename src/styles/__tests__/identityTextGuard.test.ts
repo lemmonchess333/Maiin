@@ -99,7 +99,10 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // one line for a run and another for a run with a workout.
   // 42 → 41. Home's run card lost its run-type tile: a runner drawing is
   // the card's picture now, as the lift card's is its lead lift.
-  running: 41, // Calendar status icons now use the strong colour step.
+  // 2026-10-25: 41 → 42. The runner's welcome back (RunReturnSheet): its
+  // footprints ICON (3:1 non-text), as on FellBehindSheet; its words are
+  // foreground and muted text.
+  running: 42, // Calendar status icons now use the strong colour step.
   // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
   // the exercise drawing is the card's picture now.
   // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell

@@ -85,7 +85,8 @@ export type ReturnSurface =
   | "fell-behind"
   | "badge"
   | "priming"
-  | "lift-return";
+  | "lift-return"
+  | "run-return";
 
 /**
  * What the user did with a return surface. `dismissed` is the close with
@@ -101,7 +102,8 @@ export type ReturnChoice =
   | "upgrade"
   | "enable"
   | "acknowledge"
-  | "ease_back";
+  | "ease_back"
+  | "easy_run";
 
 export interface LifecycleEventMetadata {
   /** auth_screen_viewed: which signed-out screen was shown. */

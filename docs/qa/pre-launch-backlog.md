@@ -77,6 +77,37 @@ are below.
       "Workout kept", and Back on a routine's workout leaves the page with
       one too.
 
+## A runner's welcome back (survey item 49, 2026-10-25)
+
+Home greets a runner coming back: a free runner two weeks or more since
+their last run is offered an easy run (`RunReturnSheet`), and a race plan
+three weeks or more since opens the fell-behind sheet in its welcome-back
+register (`run-return`, ADR-0004's amendment). The rule, the read and both
+sheets are covered by unit suites against the Firestore fake; only a phone
+can confirm the run starts with its voice, and only a real account with
+real history can confirm the timing.
+
+- [ ] **Free runner, on the phone.** An account whose athlete type is
+      Runner or Hybrid, free running, whose last saved run is 15 or more
+      days old (the emulator's seed, or a real account left alone).
+      Passing: Home opens "Welcome back · It's been about 2 weeks since
+      your last run" once, alone, after the launch animation. Start with
+      an easy run lands on the Run page and starts Easy 20 with the GPS
+      search and its voice cue, with no second Start. Back on Home, the
+      sheet does not open again, then or after the app is closed and
+      reopened.
+- [ ] **Race plan, three weeks out.** A race-prep account, race still
+      ahead, whose last run and last workout are both more than 30 days
+      old: the weekly check sweeps only accounts active in the last 30
+      days, so no weekly prompt is pending. Passing: Home
+      opens "Welcome back · It's been a while between runs" with Rebuild
+      my plan, My race moved and Not now, and no runs-of-target line;
+      Rebuild re-plans with easy running first and toasts the plan's
+      length; the sheet does not come back.
+- [ ] **Offline.** With the phone in airplane mode, the same accounts
+      open Home and see no welcome back (the absence is measured only from
+      a server-confirmed read).
+
 ## Names that follow you, and notices that open the post (survey items 57 and 58, 2026-10-24)
 
 A new public name or photo is carried to the person's recent posts,
