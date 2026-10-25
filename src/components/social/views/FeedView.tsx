@@ -420,7 +420,9 @@ export default function FeedView({
                 the current source and opens a two-option sheet. The
                 Soc5b freshness dot rides on the chip when the OTHER
                 source has new content, and on each sheet option. */}
-            <div className="flex items-center justify-between gap-3">
+            {/* Wraps: at 320 px and 2× text the source chip beside the
+                line left "Find people" no room. */}
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               {/* While you follow fewer than three people, one line says
                   how many, with the way to more. It replaced a whole
                   card under the points card ("Following 1 of 3 — your

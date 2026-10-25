@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import VerifyEmailNotice from "./VerifyEmailNotice";
 import RestrictedNotice from "./RestrictedNotice";
-
-/** Both comment callables refuse a comment longer than this. */
-const COMMENT_MAX_CHARS = 1000;
+import { COMMENT_MAX_CHARS } from "@/lib/commentLimit";
 
 interface CommentComposerProps {
   text: string;

@@ -199,7 +199,9 @@ const EXPECTED_INLINE_USES = {
   // the EmptyState primitive) and the solo feed's.
   // 2026-10-01: 33 → 32. The notifications sheet's empty state moved to
   // the EmptyState primitive too.
-  "THEME.brand": 32,
+  // 32 → 33. The week pulse's streak flame, an icon, follows the streak
+  // flame from amber to the brand purple.
+  "THEME.brand": 33,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.
@@ -211,7 +213,9 @@ const EXPECTED_INLINE_USES = {
   // icon in the food orange) became the first-week card.
   // 16 → 15: the food search's "Log manually" (12px, 2.77:1 on the card)
   // took `text-nutrition-strong`.
-  "THEME.semantic.nutrition": 15,
+  // 15 → 14: Home's first-meal eyebrow, 12px on the orange tint, took
+  // `text-nutrition-strong` with the card's Log taking the fill step.
+  "THEME.semantic.nutrition": 14,
 } as const;
 
 type InlineToken = keyof typeof EXPECTED_INLINE_USES;

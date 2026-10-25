@@ -35,6 +35,15 @@ describe.each([false, true])("WaterCard compact=%s", (compact) => {
     ).not.toBeInTheDocument();
   });
 
+  it("heads the tile, outside its buttons, so Home steps through it by heading", () => {
+    render(
+      <WaterCard compact={compact} ml={1750} targetMl={2000} onLog={vi.fn()} />
+    );
+    const heading = screen.getByRole("heading", { level: 2, name: "Water" });
+    // Inside the tile's button it would be read as the button's name.
+    expect(heading.closest("button")).toBeNull();
+  });
+
   it("offers Retry when a retry action exists", () => {
     const onRetry = vi.fn();
     render(
@@ -274,7 +283,7 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
     expect(screen.queryByRole("button", { name: /^Undo/ })).toBeNull();
   });
 
-  it("the sheet lists today's drinks, each removing the drink it names", () => {
+  it("the sheet lists today's drinks, each removing the drink it names", async () => {
     /* Replaces a row that read "Remove 250 ml" and subtracted an
        abstract amount: with a 500 and a 250 logged, that row took back
        the remembered serving rather than the drink you meant. Each row
@@ -295,7 +304,10 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
       />
     );
     fireEvent.click(screen.getByRole("button", { name: /add water/i }));
-    const rows = screen.getAllByRole("button", { name: /^Remove \d+ ml/ });
+    // The sheet is lazy: it is not part of Home's first paint.
+    const rows = await screen.findAllByRole("button", {
+      name: /^Remove \d+ ml/,
+    });
     expect(rows).toHaveLength(2);
     fireEvent.click(rows[1]);
     expect(onRemoveDrink).toHaveBeenCalledWith("early");
@@ -307,7 +319,7 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
     ).toHaveLength(2);
   });
 
-  it("an empty day's sheet offers presets and no removals", () => {
+  it("an empty day's sheet offers presets and no removals", async () => {
     render(
       <WaterCard
         compact
@@ -319,8 +331,10 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
       />
     );
     fireEvent.click(screen.getByRole("button", { name: /add water/i }));
+    // The sheet is lazy: it arrives after the tap, as in the test above,
+    // and only from a warm module cache does it arrive at once.
     expect(
-      screen.getByRole("button", { name: /^Add 250 ml glass$/i })
+      await screen.findByRole("button", { name: /^Add 250 ml glass$/i })
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Remove/ })).toBeNull();
   });
@@ -454,5 +468,30 @@ describe("WaterCard — it reports what you logged, not a score", () => {
     );
     const status = document.querySelector('[role="status"]') as HTMLElement;
     expect(status.textContent).toBe("");
+  });
+});
+
+/* An empty day's tile is as tall as Weight and Steps together. Its lower
+   half was blank before the first drink; it offers the everyday sizes
+   there, and the first drink's fill takes the space. */
+describe("WaterCard — an empty day's tile", () => {
+  it("offers 250 ml and 500 ml, one tap each, until the first drink", () => {
+    const onLog = vi.fn(() => true);
+    const { rerender } = render(
+      <WaterCard compact ml={0} targetMl={2500} onLog={onLog} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Log 500 ml" }));
+    expect(onLog).toHaveBeenCalledWith(500);
+    expect(
+      screen.getByRole("button", { name: "Log 250 ml" })
+    ).toBeInTheDocument();
+    rerender(<WaterCard compact ml={500} targetMl={2500} onLog={onLog} />);
+    expect(screen.queryByRole("button", { name: "Log 250 ml" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Log 500 ml" })).toBeNull();
+  });
+
+  it("is not on the full-width card, which has its own − and +", () => {
+    render(<WaterCard ml={0} targetMl={2500} onLog={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: "Log 250 ml" })).toBeNull();
   });
 });

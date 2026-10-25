@@ -76,6 +76,8 @@ import FoodWeekStrip from "@/components/food/FoodWeekStrip";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { foodWeek, foodWeekStart } from "@/lib/foodWeek";
 import { parseLocalDate } from "@/lib/dateHelpers";
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
+import { keepFoodDraft, keptFoodDraft } from "@/lib/foodDraft";
 import { useDailyTargetsInRange } from "@/hooks/useDailyTargetsInRange";
 import FoodOfflineBanner from "@/components/food/FoodOfflineBanner";
 import EditServingsSheet from "@/components/food/EditServingsSheet";
@@ -179,9 +181,11 @@ export default function Food() {
     closed: composerHintClosed,
   });
   const FOOD_TAP_BACK_DAYS = 90;
-  const todayStr = format(new Date(), "yyyy-MM-dd");
+  // Today, from the shared day key: it moves at midnight and when the app
+  // comes back, so a diary left open overnight opens on the new day.
+  const todayStr = useLocalDateKey();
   const minDateStr = format(
-    addDays(new Date(), -FOOD_TAP_BACK_DAYS),
+    addDays(parseLocalDate(todayStr), -FOOD_TAP_BACK_DAYS),
     "yyyy-MM-dd"
   );
   const selectedDate = useMemo(() => {
@@ -218,10 +222,13 @@ export default function Food() {
   const [scanGrowFrom, setScanGrowFrom] = useState<DOMRect | null>(null);
   const [scannerShown, setScannerShown] = useState(false);
   const reducedMotion = useReducedMotion();
-  const [{ text: nlInput, revision: nlInputRevision }, setNlDraft] = useState({
-    text: "",
-    revision: 0,
-  });
+  // A meal typed and not yet logged survives a tab switch (`foodDraft`).
+  const [{ text: nlInput, revision: nlInputRevision }, setNlDraft] = useState(
+    () => ({ text: keptFoodDraft(uid, selectedDate), revision: 0 })
+  );
+  useEffect(() => {
+    keepFoodDraft(uid, nlInput, selectedDate);
+  }, [uid, nlInput, selectedDate]);
   const setNlInput = useCallback((text: string) => {
     setNlDraft((draft) => ({ text, revision: draft.revision + 1 }));
   }, []);
@@ -412,7 +419,10 @@ export default function Food() {
     addDays(parseLocalDate(weekStartKey), -1),
     "yyyy-MM-dd"
   );
-  const recentMealsFrom = format(addDays(new Date(), -30), "yyyy-MM-dd");
+  const recentMealsFrom = format(
+    addDays(parseLocalDate(todayStr), -30),
+    "yyyy-MM-dd"
+  );
   const mealsFrom =
     dayBeforeWeek < recentMealsFrom ? dayBeforeWeek : recentMealsFrom;
   const {
@@ -568,7 +578,10 @@ export default function Food() {
      read's 24-hour arithmetic across a clock change. */
   const { targets: dayTargets } = useDailyTargetsInRange(
     uid,
-    differenceInCalendarDays(new Date(), parseLocalDate(mealsFrom)) + 1
+    differenceInCalendarDays(
+      parseLocalDate(todayStr),
+      parseLocalDate(mealsFrom)
+    ) + 1
   );
   const weekDays = useMemo(
     () =>
@@ -1017,6 +1030,7 @@ export default function Food() {
     if (items.length === 0) {
       toast.error("Couldn't read that. Try rewording it, or add it manually.", {
         id: "food-nl-error",
+        action: { label: "Log manually", onClick: () => setManualOpen(true) },
       });
       setNlParsing(false);
       return;
@@ -1042,6 +1056,10 @@ export default function Food() {
                 inputRef.current?.focus();
               },
             },
+            cancel: {
+              label: "Log manually",
+              onClick: () => setManualOpen(true),
+            },
           }
         );
         setNlParsing(false);
@@ -1059,6 +1077,10 @@ export default function Food() {
                 event.currentTarget.blur();
                 inputRef.current?.focus();
               },
+            },
+            cancel: {
+              label: "Log manually",
+              onClick: () => setManualOpen(true),
             },
           }
         );
@@ -1355,7 +1377,7 @@ export default function Food() {
        user's perspective. Looping over every ID in the group makes the
        row's visible state and the underlying data agree.
 
-       Optimistic hide / 3-second undo / Firestore delete logic is
+       Optimistic hide / undo window / Firestore delete logic is
        symmetric across all IDs — they go in and out of pending together
        so the toast's "Undo" action restores the entire group. */
     if (mealIds.length === 0) return;
@@ -1490,7 +1512,7 @@ export default function Food() {
     //    `meal.date` is a local `YYYY-MM-DD` string; lexical comparison
     //    against the (also-local) cutoff string is correct and avoids
     //    parsing every meal's date into a Date object.
-    const cutoff = format(addDays(new Date(), -30), "yyyy-MM-dd");
+    const cutoff = format(addDays(parseLocalDate(todayStr), -30), "yyyy-MM-dd");
     // Collect every log per food-name so FOOD-03 can pick the MODAL
     // portion (below) instead of whichever version was logged last.
     const byFood = new Map<
@@ -1589,7 +1611,7 @@ export default function Food() {
     /* The day reaches this list through `timeRelevantHour`, which is
        keyed on selectedDate: the body never reads the date itself, so
        listing it too only recomputed an identical list. */
-  }, [meals, getTimeRelevant, timeRelevantHour, pendingRemovalIds]);
+  }, [meals, getTimeRelevant, timeRelevantHour, pendingRemovalIds, todayStr]);
 
   const cachedQuickOrder = quickAddOrderCache.get(selectedDate);
   if (!cachedQuickOrder) {
@@ -1613,13 +1635,13 @@ export default function Food() {
     // selectedDate, which derives from a local `format`), so the cutoff
     // must be local too — a UTC toISOString cutoff skews the window by a
     // day near midnight in non-UTC zones (CLAUDE.md: no local/UTC mix).
-    const cutoff = format(addDays(new Date(), -30), "yyyy-MM-dd");
+    const cutoff = format(addDays(parseLocalDate(todayStr), -30), "yyyy-MM-dd");
 
     return meals.some((meal) => {
       if (!meal.date || meal.date < cutoff) return false;
       return !isGenericAiFoodName(meal.foodName);
     });
-  }, [favourites.length, meals, quickMeals.length]);
+  }, [favourites.length, meals, quickMeals.length, todayStr]);
 
   const [quickAdding, setQuickAdding] = useState<string | null>(null);
   // Synchronous latch closing the same-frame double-tap window that the

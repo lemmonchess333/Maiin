@@ -432,12 +432,14 @@ behaviour.
   `AnimatedNumber` (`StatFigure`'s `count` draws one; `useCountUp` is for
   a once-a-session count on Home). Under Reduce Motion `AnimatedNumber` is
   plain text from the first paint.
-- **Entrance:** a page's header and sections rise in, staggered, through
-  the framer variants in `src/components/ui/pageMotion.ts`
-  (`pageItemVariant` inside `pageStaggerContainer`), which `PageShell`
-  applies; a page that animates a section itself imports
-  `pageItemVariant`. Content replacing its placeholder fades in instead
-  (`ArrivalFade`, under Pol1 below).
+- **Entrance:** a page's header and sections take the framer variants in
+  `src/components/ui/pageMotion.ts` (`pageItemVariant` inside
+  `pageStaggerContainer`), which `PageShell` applies, but they do not
+  rise in: the shell starts settled (`initial={false}`) and framer hands
+  that on to every section that takes the variants, one that mounts
+  later included, so a page is simply there (`PageShell.test.tsx` pins
+  it). Content replacing its placeholder fades in instead (`ArrivalFade`,
+  under Pol1 below).
 - **Numbers and records:** no flash class. A figure counts up (above), a
   set ticked on screen pops its check (`SetCheck`, under Pol1 below) and a
   new best is the gold card docked above the workout's bottom bar
@@ -449,7 +451,9 @@ behaviour.
   POSITIONAL values only (x, y, scale, width, height). Opacity, stroke
   offsets, `pathLength` and count-ups are not covered: if you add one,
   gate it in the component with the `useReducedMotion` hook, as
-  `ProgressRing` and `AnimatedNumber` do.
+  `ProgressRing` and `AnimatedNumber` do. A framer enter or exit that
+  fades wraps its targets in `useMotionSafe`, which takes the opacity out
+  (`Collapse`, `DayPeekCard`).
 - **A change seen on screen moves; the same state arriving by mount does
   not** (Pol1, 2026-10-11). A set ticked on screen pops its check
   (`SetCheck`); a done set on a resumed session or a return to its
@@ -722,7 +726,7 @@ These sat in CLAUDE.md's design-system section until 2026-10-05, loaded on every
   The elevation utility is `card-shadow`.
 - **Hero card (Health Score, Water):** `Card` (hero), larger icon (48px container), icon in purple-tinted bg square
 - **Compact tile (Weight, Steps):** the compact pairing on the card surface (`bg-card card-shadow`), 2-col grid. It sat one step darker than the page (`tone="muted"`) until DS3 deepened the dark surfaces, where a muted tile read as a hole beside the cards around it.
-- **Today card (`LiftCTACard` / `RunCTACard`, DS3):** the hero radius with the sport's 12% wash (`bg-lifting/12`, `bg-running/12`), the session as a 25px title, its dose ("5 exercises · about 50 min", "5 km · about 30 min") and a full-width Start (`primary` for a lift, `sport` for a run). Start begins the session (`/program?day=N&start=1`, `/run?template=…`); the rest of the card is a sibling button that opens the day in Train to look it over, because a button cannot sit inside a button. A lift shows the cut-out drawing of its first exercise that has one (`formArtCutouts`). A finished or skipped day shows its status instead of Start. No rationale and no plan position ("Base · week 3 of 16") on Home: owner direction 2026-09-09, pinned in `SessionPurpose.test.tsx`. `RestDayCard` is a plain hero card naming tomorrow's session.
+- **Today card (`LiftCTACard` / `RunCTACard`, DS3):** the hero radius with the sport's 12% wash (`bg-lifting/12`, `bg-running/12`), the session as a 25px title, its dose ("5 exercises · about 50 min", "5 km · about 30 min") and a full-width Start (`primary` for a lift, `sport` for a run). Start begins the session (`/program?day=N&start=1`, `/run?template=…`); the rest of the card is a sibling button that opens the day in Train to look it over, because a button cannot sit inside a button. A lift shows the cut-out drawing of its first exercise that has one (`formArtCutouts`). A finished or skipped day shows its status instead of Start. A session under way on the phone (a workout closed with its sets kept, a run left before it was saved) shows the In progress strip in Start's place, "In progress · 5 sets · 18:40" and Resume (`InProgressStrip`, Hevy and Strong's pattern); a session under way that is not the card's leads the stack on a strip of its own, and Train's day card draws the same primitive. Which card it goes on is `todaySession.ts`'s rule, and only a session Resume will actually open is offered (`sessionsInFlight.ts`). No rationale and no plan position ("Base · week 3 of 16") on Home: owner direction 2026-09-09, pinned in `SessionPurpose.test.tsx`. `RestDayCard` is a plain hero card naming tomorrow's session.
 - **Quick actions:** there is no pill row. Today's actions are the Start
   buttons on the Today cards, and food logging is the "Log food" button in
   `TodayEnergy`'s header.
@@ -849,17 +853,21 @@ reduced-motion` always gets the settled static state — no entrance, no
   name-only debt, pinned in `colorCanonical.test.ts` alongside the
   warning≠nutrition inequality that IS the D19 contract).
 - **Framer Motion is gated globally only for POSITION; CSS animations
-  are not gated at all.** `MotionConfig reducedMotion="user"` in
+  and transitions are gated globally in full.** `MotionConfig reducedMotion="user"` in
   `App.tsx` settles positional values (x, y, scale, rotate, width,
   height) and nothing else: opacity, a stroke offset, `pathLength` and a
   motion-value count-up all still animate under Reduce Motion. A non-positional animation
   asks `useReducedMotion` in its own component (`ProgressRing`,
-  `CalorieRing`, `EmptyState`, `AnimatedNumber` are the patterns). A
-  Tailwind `animate-*` class runs under Reduce Motion unless it carries
-  the `motion-safe:` variant. Every skeleton pulse and ping does;
-  `animate-spin` spinners are progress feedback and stay unprefixed
-  (`UNGUARDED_ANIMATION_BASELINE = 8` in `designSystemInvariants.test.ts`
-  is exactly the spinner set).
+  `CalorieRing`, `EmptyState`, `AnimatedNumber` are the patterns), and a
+  framer target that fades goes through `useMotionSafe`. CSS needs no
+  such step: under Reduce Motion the reset in `animations.css` gives
+  every animation and transition 0.01 ms and one iteration, so a
+  Tailwind `animate-*` class stops there with or without the
+  `motion-safe:` variant, an unprefixed `animate-spin` spinner included,
+  which stands still. Every skeleton pulse and ping carries the
+  prefix all the same, saying so where the class is written; the
+  spinners stay unprefixed (`UNGUARDED_ANIMATION_BASELINE = 8` in
+  `designSystemInvariants.test.ts` is exactly the spinner set).
 - **Empty states go through the `EmptyState` primitive**
   (`src/components/ui/EmptyState.tsx`; `compact` for in-card use) — no
   hand-rolled centered-icon-tile blocks. The primitive owns the brand
@@ -890,15 +898,41 @@ The `nutrition` / `nutrition-tinted` variants are the food-domain analogue of
 tokens (warm orange #D9884E identity; #B45309 amber-700 AA white-text/text step).
 They exist to close the design-system gap — nutrition was the only documented
 domain/sport colour with no first-class token + variant, which is what kept
-leaking one-off hex orange past the hex guardrail. **This is NOT a licence to
-paint Food buttons orange.** Orange is a domain/data identity (section labels,
-macro rings, calorie data), not a per-screen button colour: reserve the filled
-`nutrition` variant for genuinely nutrition-PRIMARY, glanceable actions where
-orange IS the meaning, and keep ordinary Food CTAs (Add, Save, Log) on `primary`.
+leaking one-off hex orange past the hex guardrail.
 
-**Exceptions, owner calls:** four Food-page buttons are `nutrition`. Brand
-purple stays for Pro there ("Try Pro free"). Other Food CTAs follow the rule
-above until the owner says otherwise.
+**An action takes its domain's colour wherever it appears** (Polish3, call 3).
+The colour says what the button does, not which page it sits on. The role
+picks the emphasis (filled for the main action, tinted for a secondary one,
+neutral for a low one) and the domain picks the hue:
+
+| The action                          | Filled      | Tinted             |
+| ----------------------------------- | ----------- | ------------------ |
+| Logging food, on any page           | `nutrition` | `nutrition-tinted` |
+| Starting, logging or planning a run | `sport`     | `sport-tinted`     |
+| Starting a lift; a brand action     | `primary`   | (none)             |
+
+So "Log meal" is orange on Analytics' empty state and in the manual logger,
+"Log food" is orange on Home's food card and in a search result's serving sheet,
+and "Log recovery food" is orange after a run, where Done stays coral. Food10's
+"every Log is orange" was the first case of this rule: it scoped the Food
+page, and the rule under it holds on every page.
+
+What the orange is NOT is a page colour. An action that does not log food
+keeps its role's variant wherever it sits, the Food page included: Try
+again, Turn on (AI analysis), Set focus, Pro ("Try Pro free" stays brand
+purple), Cancel, and the Save that corrects an entry already in the diary.
+An action that belongs to no domain (a settings form's Save, account
+actions, Retry) is `primary` or neutral. Water has no Button variant: its
+one filled control, the tile's +, is the hydration teal.
+
+`designSystemInvariants.test.ts` holds the rule for the actions it can name
+from their label: a control that logs food (Log food, Log meal, Log this
+portion, Log to Breakfast…) carries a nutrition variant, "Start run" a sport
+one and "Start lift" / "Start workout" the primary, whether it is a
+`Button`, a `Link` wearing `buttonClasses` or an empty state's CTA.
+
+**How the rule arrived: four owner calls on the Food page**, kept as the
+record of what each button was for:
 
 - **2026-09-22 — the "Your usual" row's Log.** Every other food control on
   that page is orange, and a purple Log sat directly above the orange meal
@@ -945,4 +979,6 @@ or touching a CTA button, route it through `Button` with the variant above.
 - The water card has a complex animated fill effect (WaterWave + WaterBubbles) — treat carefully when modifying
 - Group headings are sentence-case `SectionHeading`s and in-card labels are sentence-case captions (DS3). Nothing sits below the 12px micro floor except `text-caption` numerals and units
 - New-best and PR badges are gold (`--achievement`), never the food orange
+- The streak flame is brand purple (Polish3, call 4). Its tiers are steps of the purple ramp, deeper as the streak runs longer (1, 7, 30 days), and at 100 days its heart is the platinum of the top badge tier. The table is `src/features/streaks/flameTiers.ts`, built from `THEME.purpleRamp` and `THEME.tier.platinum`; `eslint.config.js` bans any hex literal in it (`PALETTE_TABLES`). Gold is never a tier colour
+- A challenge's bar fills in its sport's colour (Polish3, call 6): coral for a running challenge, purple for a lifting one, brand purple for a mixed or time one (`challengeSport.ts`). The tier metal is a marker, never the bar's fill and never text: a reached tier's dot is the metal, and the trophy badge and a leaderboard row's tier word are drawn in the text colour inside a ring of it, as the leaderboard ranks are
 - People's names (owner, 2026-10-05, from the break-social pass). A name reads in its own direction (`dir="auto"`) but keeps to the start of its row. A profile's heading wraps to two lines before it truncates. On a card narrower than 20.5em (under 360px at normal text size) a post's Follow is an icon (`InlineFollow`), so the author's name and time keep the room. At large text sizes the feed card, exercise rows and leaderboard rows wrap rather than clip: the card is a query container measured in em, its stats go from three columns to two to one, and the capture spec measures every dataset at 200% text. Display names are 2–50 characters in the app, the server's sanitizer and every rules cap on a copied name, pinned by `displayNameLimit.cross.test.ts`. The worst cases live at `/dev/break-social`

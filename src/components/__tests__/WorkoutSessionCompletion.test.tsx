@@ -60,7 +60,9 @@ vi.mock("@/features/streaks/useStreaks", () => ({
     awardEventBadges: h.awardEventBadges,
   }),
 }));
-vi.mock("@/hooks/useWorkoutDraft", () => ({
+vi.mock("@/hooks/useWorkoutDraft", async (importOriginal) => ({
+  // The pure helpers (`draftLayout`) stay real.
+  ...(await importOriginal<typeof import("@/hooks/useWorkoutDraft")>()),
   useWorkoutDraft: () => ({ load: h.load, save: h.save, clear: h.clear }),
   computeDraftIdentity: () => "test",
   createWorkoutCompletionId: () => "test",
@@ -187,6 +189,15 @@ it("finishes a session by the names the journeys use", async () => {
   expect(log).toHaveBeenCalledTimes(1);
 });
 
+it("gives the session screen its heading, the day it names at the top", () => {
+  // Full screen over Train, or alone from a saved routine, the session is
+  // a screen of its own, and a screen reader finds it by this heading.
+  openSession(writer(), vi.fn(), {}, { dayLabel: "Pull B" });
+  const title = screen.getByRole("heading", { level: 1, name: "Pull B" });
+  expect(title).toHaveClass("text-base", "font-bold");
+  expect(screen.getAllByRole("heading", { level: 1 })).toEqual([title]);
+});
+
 describe("set completion through row controls", () => {
   it("rejects an invalid later set and keeps it editable", () => {
     openSession();
@@ -298,7 +309,10 @@ describe("set completion through row controls", () => {
   /* Finish sits in the top bar by Close (owner, 2026-10-12), offered once
      a working set is done and while sets remain; under the set action it
      took a row from the list on every set after the first. */
-  it("offers Finish in the top bar once a set is done, asking first", async () => {
+  /* Finishing early is undone by the review's Edit workout, so it asks
+     nothing first: the review is the check, and it counts the sets left
+     unticked. */
+  it("offers Finish in the top bar once a set is done, going to the review", async () => {
     openSession();
     const finish = () =>
       screen.queryByRole("button", { name: "Finish workout" });
@@ -308,9 +322,15 @@ describe("set completion through row controls", () => {
     expect(finish()).toHaveTextContent("Finish");
     expect(screen.queryByRole("button", { name: "Finish early" })).toBeNull();
     fireEvent.click(finish()!);
+    expect(screen.queryByRole("alertdialog")).toBeNull();
     expect(
-      screen.getByRole("alertdialog", { name: "Finish early?" })
+      screen.getByRole("heading", { name: "Review workout" })
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(/sets? you haven't ticked won't be saved\./)
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Edit workout" }));
+    expect(finish()).toBeVisible();
   });
 
   /* The exercise's name and set count head the list rather than sit fixed
@@ -1832,6 +1852,31 @@ describe("WorkoutSession — timers survive a locked phone", () => {
     hidden.mockRestore();
   });
 
+  it("tells a screen reader when a rest starts and when it is over, not every second", async () => {
+    /* The countdown is plain text and the rest's end is a buzz and a
+       chime, so the start and the end are put into words. The region is
+       on the page before the rest is, since one that arrives with its
+       words already in it is often not read. */
+    openSession(writer(), vi.fn(), { restSeconds: 90 });
+    const regions = screen.getAllByRole("status");
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    await act(async () => {});
+    const region = screen.getByText("Rest, 1:30").closest('[role="status"]');
+    expect(regions).toContain(region);
+    await act(async () => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(region).toHaveTextContent(/^Rest, 1:30$/);
+    await background(90_000);
+    expect(region).toHaveTextContent(/^Rest over$/);
+    // A rest that is put away takes its words with it.
+    fireEvent.click(screen.getByRole("button", { name: "End rest" }));
+    await vi.waitFor(() =>
+      expect(screen.queryByRole("group", { name: "Rest timer" })).toBeNull()
+    );
+    expect(region).toHaveTextContent(/^$/);
+  });
+
   it("re-arms the completion alert when an expired rest is extended", async () => {
     /* Extending an already-finished rest starts a fresh countdown. The
        chime flag stayed set from the first expiry, so the second one passed
@@ -1869,7 +1914,6 @@ it("Undo followed by finishing early saves only the final completed work", async
   fireEvent.click(screen.getByRole("button", { name: "Undo last set" }));
   expect(complete).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Finish workout" }));
-  fireEvent.click(screen.getByRole("button", { name: "Finish" }));
   fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
   await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
   expect(

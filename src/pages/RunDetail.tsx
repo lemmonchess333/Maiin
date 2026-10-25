@@ -50,6 +50,7 @@ import {
 import RunStatGrid from "@/components/run/RunStatGrid";
 import { detectBestEfforts, splitsForDisplay, type GPSPoint } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 import { elevationLabel, runTitle } from "@/lib/runLabels";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 
@@ -89,6 +90,8 @@ export default function RunDetail() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  // The basemap follows the theme on screen, not the profile field.
+  const darkTheme = useIsDarkTheme();
   const shareRouteWithPrivacy = useShareRoute();
   const privacy = usePrivacyZones();
   const { save: saveRoute } = useSavedRoutes();
@@ -299,7 +302,7 @@ export default function RunDetail() {
             height="h-full"
             paceColored={avgPace > 0}
             avgPaceSecPerKm={avgPace}
-            darkMode={!!profile?.darkMode}
+            darkMode={darkTheme}
             replayIndex={replaying ? replayIndex : undefined}
           />
           {/* Back button over map */}

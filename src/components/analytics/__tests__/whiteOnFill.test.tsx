@@ -8,7 +8,7 @@ import PRCard from "../PRCard";
  * The identities are tuned to be recognisable at a glance as a colour, and
  * they are the wrong value to put white on: `--ds-orange-500` (#e87316)
  * measures 3.05:1 with white, and the coral identity 3.58:1 — which is
- * why `--nutrition-fill` (5.02:1) and `--running-fill` (4.51:1) exist and
+ * why `--nutrition-fill` (5.02:1) and `--running-fill` (4.58:1) exist and
  * say so in their own token comments.
  *
  * The badge this pins is the one element on the PRs tab whose entire job

@@ -23,7 +23,7 @@ RETRY_REQUIRED = frozenset({
     "onChallengeParticipantCreated", "onWorkoutCreated", "onRunCreated",
     "onWorkoutUpdated", "onRunUpdated", "onWorkoutDeleted", "onRunDeleted",
     "onActivityCreated", "onGoalSpaceEventCreated", "onPublicProfileWritten",
-    "onBlockWritten",
+    "onBlockWritten", "onPublicProfileIdentityChanged",
 })
 PUSH_RUNTIME_LIMITS = {
     "claimPushDeviceToken": (100, None),
@@ -58,13 +58,13 @@ def read(request, timeout, opener=urllib.request.urlopen, sleep=time.sleep):
 def source_targets():
     """The executing exports and source artifacts each release must read back."""
     comment_paths = ["index.js", "package-lock.json", "lib/publicPhotoUrl.js", "lib/socialCounters.js", "lib/spacePostEngagement.js",
-                     "lib/restriction.js"]
+                     "lib/restriction.js", "lib/commentLimit.js", "lib/commentRejection.js"]
     training_paths = ["index.js", "package-lock.json", "lib/stateTransition.js", "lib/workoutCorrections.js", "lib/programCommands.js"]
     deletion_paths = ["index.js", "package-lock.json", "accountDeletion.js", "lib/spaceIds.js",
                       "lib/accountDeletionSocial.js", "lib/accountDeletionRetry.js",
                       "lib/accountDeletionLocks.js", "lib/accountDeletionAuth.js",
                       "lib/accountDeletionLedger.js", "lib/accountDeletionMinimisation.js",
-                      "lib/accountDeletionStatus.js"]
+                      "lib/accountDeletionStatus.js", "lib/commentReactions.js"]
     challenge_paths = ["index.js", "package-lock.json", "lib/challengeDefs.js",
                        "lib/challengeBackfill.js", "lib/challengeActivityWindow.js",
                        "lib/challengeTiers.js", "lib/challengeMarkers.js",
@@ -88,6 +88,13 @@ def source_targets():
         "onPublicProfileWritten": ["index.js", "package-lock.json", "lib/objectionableText.js",
                                    "profanityFilter.js", "lib/hateTerms.js", "lib/triggerRetry.js",
                                    "lib/accountDeletionLocks.js"],
+        # A new public name or photo, carried to the person's recent copies.
+        "onPublicProfileIdentityChanged": ["index.js", "package-lock.json", "lib/identityResync.js",
+                                           "lib/publicPhotoUrl.js", "lib/objectionableText.js",
+                                           "profanityFilter.js", "lib/hateTerms.js",
+                                           "lib/deletionTransactionGuard.js", "lib/restriction.js",
+                                           "lib/spaceIds.js", "lib/triggerRetry.js",
+                                           "lib/accountDeletionLocks.js"],
         # Who has blocked each account, the copy the blocked person's app reads.
         "onBlockWritten": ["index.js", "package-lock.json", "lib/blockMirror.js",
                            "lib/triggerRetry.js", "lib/accountDeletionLocks.js"],

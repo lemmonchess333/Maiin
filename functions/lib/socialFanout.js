@@ -231,6 +231,8 @@ const VALID_NOTIFICATION_TYPES = [
   // Polish2: someone asked to follow the recipient, who approves each
   // follower (onFollowRequestCreated).
   "follow_request",
+  // The person asked said yes (onFollowerCreated, on an accepted edge).
+  "follow_accepted",
   "challenge_milestone",
   // SOCIAL-FOCUS-01: a Circle member backed the recipient's weekly
   // focus. Deliberately GENERIC — the message never names the backer

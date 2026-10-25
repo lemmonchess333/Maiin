@@ -8,15 +8,13 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
-import { MotionConfig } from "framer-motion";
-import { AuthProvider, useAuth } from "@/lib/auth";
+import { AuthProvider, hasSignedInOnThisDevice, useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { LiftUnitProvider } from "@/hooks/useLiftUnit";
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
 import { useNativePushNavigation } from "@/hooks/useNativePushNavigation";
 import { RevenueCatIdentity } from "@/hooks/useRevenueCatIdentity";
 import { ToastProvider } from "@/components/ToastProvider";
-import { NotificationBubbleProvider } from "@/components/NotificationBubble";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 import AuthSessionBoundary from "@/components/AuthSessionBoundary";
 import { SurfaceCoordinatorProvider } from "@/components/SurfaceCoordinatorProvider";
@@ -53,12 +51,13 @@ import MinVersionGate from "@/components/MinVersionGate";
 const OneTimeMaintenance = lazyRetry(
   () => import("@/components/OneTimeMaintenance")
 );
-/* The signed-in shell, outermost first: three providers, the layout, Home.
-   They nest, and React starts a lazy component's import only when it
-   renders, so left to that, each would wait for the one above it to
-   load: five round trips in series before Home paints. `prefetchSignedInShell`
-   starts all five once the session is known, and the module map hands
-   each lazy() below the same promise. */
+/* The signed-in shell, outermost first: the motion root, three providers,
+   the layout, Home. They nest, and React starts a lazy component's import
+   only when it renders, so left to that, each would wait for the one above
+   it to load: six round trips in series before Home paints.
+   `prefetchSignedInShell` starts all six once the session is known, and
+   the module map hands each lazy() below the same promise. */
+const loadMotionRoot = () => import("@/components/MotionRoot");
 const loadStreaks = () => import("@/features/streaks/useStreaks");
 const loadReminders = () => import("@/hooks/RemindersProvider");
 const loadDailyLogs = () => import("@/hooks/DailyLogsProvider");
@@ -68,6 +67,7 @@ const loadHome = () => import("@/pages/Home");
 function prefetchSignedInShell(): void {
   // A failed prefetch is the lazy import's to retry when it renders.
   for (const load of [
+    loadMotionRoot,
     loadStreaks,
     loadReminders,
     loadDailyLogs,
@@ -77,6 +77,15 @@ function prefetchSignedInShell(): void {
     void load().catch(() => {});
 }
 
+/* A device that has had an account almost always restores it, so the shell
+   starts loading with the app's own code rather than once Auth has read
+   the session back. A first visit starts none of it, and gets it when
+   someone signs in (the effect in AppRoutes). */
+if (hasSignedInOnThisDevice()) prefetchSignedInShell();
+
+/* framer's MotionConfig, around the signed-in branches only: nothing
+   signed out animates with framer, so Login paints without it. */
+const MotionRoot = lazyRetry(loadMotionRoot);
 const StreaksProvider = lazyRetry(() =>
   loadStreaks().then((m) => ({
     default: m.StreaksProvider,
@@ -165,6 +174,7 @@ const RunSummary = lazyRetry(() => import("@/pages/RunSummary"));
 const RunDetail = lazyRetry(() => import("@/pages/RunDetail"));
 const WorkoutDetail = lazyRetry(() => import("@/pages/WorkoutDetail"));
 const Space = lazyRetry(() => import("@/pages/Space"));
+const ActivityPost = lazyRetry(() => import("@/pages/ActivityPost"));
 const Social = lazyRetry(() => import("@/pages/Social"));
 const Routine = lazyRetry(() => import("@/pages/Routine"));
 const UserProfile = lazyRetry(() => import("@/pages/UserProfile"));
@@ -389,8 +399,9 @@ function AppRoutes() {
   usePushTokenRefresh();
   useNativePushNavigation(uid, !loading && !!user);
   // Signed in: fetch the shell's chunks side by side, while the profile
-  // loads, instead of one after another as each layer renders. Never at
-  // module load, which would pull Firestore for a signed-out visitor.
+  // loads, instead of one after another as each layer renders. A device
+  // that has signed in before started them at module load already; this
+  // covers the first sign-in, and the module map makes a repeat free.
   useEffect(() => {
     if (uid) prefetchSignedInShell();
   }, [uid]);
@@ -492,6 +503,28 @@ function AppRoutes() {
     );
   }
 
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <MotionRoot>
+        <SignedInRoutes user={user} profile={profile} deletion={deletion} />
+      </MotionRoot>
+    </Suspense>
+  );
+}
+
+type AuthState = ReturnType<typeof useAuth>;
+
+/** Everything a signed-in person can reach: a pending deletion, setup, or
+ *  the app. Rendered under the motion root, which signed-out pages skip. */
+function SignedInRoutes({
+  user,
+  profile,
+  deletion,
+}: {
+  user: NonNullable<AuthState["user"]>;
+  profile: AuthState["profile"];
+  deletion: ReturnType<typeof useAccountDeletionStatus>;
+}) {
   if (deletion.pending || deletion.completed) {
     return (
       <Suspense fallback={<PageLoader />}>
@@ -824,6 +857,14 @@ function AppRoutes() {
                             </RouteErrorBoundary>
                           }
                         />
+                        <Route
+                          path="/activity/:activityId"
+                          element={
+                            <RouteErrorBoundary>
+                              <ActivityPost />
+                            </RouteErrorBoundary>
+                          }
+                        />
                       </Route>
                       <Route
                         path="/run"
@@ -952,31 +993,27 @@ function AppRoutes() {
 function App() {
   return (
     <ErrorBoundary>
-      <MotionConfig reducedMotion="user">
-        <BrowserRouter basename={import.meta.env.BASE_URL}>
-          <MinVersionGate>
-            <AuthProvider>
-              <NotificationBubbleProvider>
-                {/* Global back-to-dismiss registry: device/browser BACK closes
-                    the topmost open overlay (native interceptor wired; web is a
-                    fast-follow). Wraps the root-level overlays + all routes. */}
-                <BackDismissProvider>
-                  <ToastProvider />
-                  <Suspense fallback={null}>
-                    <ShareComposerSheet />
-                  </Suspense>
-                  <Suspense fallback={null}>
-                    <OneTimeMaintenance />
-                  </Suspense>
-                  <RevenueCatIdentity />
-                  <LaunchSplash />
-                  <AppRoutes />
-                </BackDismissProvider>
-              </NotificationBubbleProvider>
-            </AuthProvider>
-          </MinVersionGate>
-        </BrowserRouter>
-      </MotionConfig>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
+        <MinVersionGate>
+          <AuthProvider>
+            {/* Global back-to-dismiss registry: device/browser BACK closes
+                the topmost open overlay (native interceptor wired; web is a
+                fast-follow). Wraps the root-level overlays + all routes. */}
+            <BackDismissProvider>
+              <ToastProvider />
+              <Suspense fallback={null}>
+                <ShareComposerSheet />
+              </Suspense>
+              <Suspense fallback={null}>
+                <OneTimeMaintenance />
+              </Suspense>
+              <RevenueCatIdentity />
+              <LaunchSplash />
+              <AppRoutes />
+            </BackDismissProvider>
+          </AuthProvider>
+        </MinVersionGate>
+      </BrowserRouter>
     </ErrorBoundary>
   );
 }

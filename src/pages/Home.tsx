@@ -8,7 +8,6 @@ import {
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import TrialEndingStrip from "@/components/home/TrialEndingStrip";
-import WeightLogSheet from "@/components/home/WeightLogSheet";
 import { lbToKg } from "@/lib/weightUnits";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
@@ -38,7 +37,6 @@ import NewBadgeRow from "@/components/home/NewBadgeRow";
 import { useSubscription } from "@/lib/subscription";
 import { useHomeProgram } from "@/features/program/useHomeProgram";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
-import { BadgeEarnedModal } from "@/features/streaks/BadgeEarnedModal";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -57,12 +55,12 @@ import { startDayKey } from "@/lib/startDay";
 import { loggedAgo } from "@/lib/loggedAgo";
 import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
 import { goalReachedOffer } from "@/lib/goalWeightPlan";
-import GoalReachedSheet from "@/components/home/GoalReachedSheet";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
+import { useSessionsInFlight } from "@/hooks/useSessionsInFlight";
 
 import { StreakFlame } from "@/components/StreakFlame";
 import Avatar from "@/components/Avatar";
@@ -70,8 +68,6 @@ import { formatWeekdayDayMonth } from "@/utils/formatters";
 import SectionHeading from "@/components/ui/SectionHeading";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
-import FellBehindSheet from "@/components/program/FellBehindSheet";
-import LiftReturnSheet from "@/components/program/LiftReturnSheet";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { useEducationCard } from "@/components/EducationLaneProvider";
 import StackedCTACards from "@/components/home/StackedCTACards";
@@ -117,6 +113,27 @@ const DayActionSheet = lazyRetry(
    account's first seven days and on a replay, so it stays out of Home's
    own chunk for everyone past their first week. */
 const GuideWalk = lazyRetry(() => import("@/components/guide/GuideWalk"));
+
+/* The rest of Home's sheets lazy-load the same way. Every one is closed
+   when Home first draws, and four of them carried the bottom sheet (vaul
+   and Radix) into Home's first paint. The weight sheet opens on a tap, so
+   Home fetches it once it has drawn (below) and the tap does not wait. */
+const loadWeightLogSheet = () => import("@/components/home/WeightLogSheet");
+const WeightLogSheet = lazyRetry(loadWeightLogSheet);
+const BadgeEarnedModal = lazyRetry(() =>
+  import("@/features/streaks/BadgeEarnedModal").then((m) => ({
+    default: m.BadgeEarnedModal,
+  }))
+);
+const GoalReachedSheet = lazyRetry(
+  () => import("@/components/home/GoalReachedSheet")
+);
+const FellBehindSheet = lazyRetry(
+  () => import("@/components/program/FellBehindSheet")
+);
+const LiftReturnSheet = lazyRetry(
+  () => import("@/components/program/LiftReturnSheet")
+);
 
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
@@ -221,6 +238,11 @@ export default function Home() {
   const prevStreakRef = useRef<number>(0);
   const [streakBounce, setStreakBounce] = useState(false);
   const [showWeightSheet, setShowWeightSheet] = useState(false);
+  // After Home's first paint, not in it: the weight tile's tap opens
+  // a sheet that is already here. A failed fetch is the lazy()'s to retry.
+  useEffect(() => {
+    void loadWeightLogSheet().catch(() => {});
+  }, []);
   const [showProModal, setShowProModal] = useState(false);
   // HealthKit steps (native iOS only; web resolves to status "unavailable"
   // so the tile hides and the priming modal never opens). See POST_LAUNCH.md.
@@ -419,6 +441,11 @@ export default function Home() {
   const inActivationWindow = isWithinActivationWindow(createdAtMs, nowMs);
   const { runCount: lifetimeRunCount, loading: runStatsLoading } =
     useLifetimeRunStats({ enabled: inActivationWindow });
+  // A workout closed with its sets kept, or a run left before it was
+  // saved, is offered back on the session card (`todaySession`).
+  const { drafts: draftsInFlight, run: runInFlight } = useSessionsInFlight(
+    user?.uid
+  );
   // Today's session card: which card shows and what it says.
   const session = useMemo(
     () =>
@@ -432,6 +459,7 @@ export default function Home() {
         nowMs,
         lifetimeRuns: runStatsLoading ? null : lifetimeRunCount,
         lifetimeMeals: totalLifetimeMeals,
+        inFlight: { drafts: draftsInFlight, run: runInFlight },
       }),
     [
       todayKey,
@@ -444,6 +472,8 @@ export default function Home() {
       runStatsLoading,
       lifetimeRunCount,
       totalLifetimeMeals,
+      draftsInFlight,
+      runInFlight,
     ]
   );
 
@@ -762,6 +792,18 @@ export default function Home() {
     },
     [peekDate, getWorkoutsForDate]
   );
+  // The sessions logged on the day being managed: one done today keeps
+  // today's lift on the sheet, done, as it stays on the today card.
+  const manageSessions = useMemo(
+    function () {
+      return new Set(
+        (manageDate ? getWorkoutsForDate(manageDate) : []).flatMap((w) =>
+          w.id ? [w.id] : []
+        )
+      );
+    },
+    [manageDate, getWorkoutsForDate]
+  );
   const peekT = useMemo(
     function () {
       return peekDate
@@ -985,8 +1027,10 @@ export default function Home() {
       </motion.div>
 
       {/* home-declutter 4a — sessions FIRST. Today's lift, run or rest is
-          the page's primary action and leads. */}
+          the page's primary action and leads. A group, so its name is
+          one a screen reader can use: a name on a roleless div is not. */}
       <motion.div
+        role="group"
         aria-label="Today’s training"
         variants={{
           hidden: { opacity: 0, y: 12 },
@@ -1169,7 +1213,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <div className="space-y-2" aria-label="Helpful tips">
+      <div className="space-y-2" role="group" aria-label="Helpful tips">
         {/* D7 — proactive recalibration check-in at natural seams (a few weeks
             in / after a gap). Per-seam tipKey so each seam can re-surface even
             after an earlier one was dismissed; gentle + dismiss-once. */}
@@ -1208,20 +1252,22 @@ export default function Home() {
       {/* Weight Log Bottom Sheet */}
       <AnimatePresence>
         {showWeightSheet && user && (
-          <WeightLogSheet
-            uid={user.uid}
-            unit={weightUnit}
-            lastLoggedDate={lastWeightInfo?.rawDate}
-            initialKg={
-              lastWeightInfo?.kg ??
-              (lastWeightInfo?.weight
-                ? weightUnit === "lbs"
-                  ? lbToKg(Number(lastWeightInfo.weight))
-                  : Number(lastWeightInfo.weight)
-                : undefined)
-            }
-            onClose={() => setShowWeightSheet(false)}
-          />
+          <Suspense fallback={null}>
+            <WeightLogSheet
+              uid={user.uid}
+              unit={weightUnit}
+              lastLoggedDate={lastWeightInfo?.rawDate}
+              initialKg={
+                lastWeightInfo?.kg ??
+                (lastWeightInfo?.weight
+                  ? weightUnit === "lbs"
+                    ? lbToKg(Number(lastWeightInfo.weight))
+                    : Number(lastWeightInfo.weight)
+                  : undefined)
+              }
+              onClose={() => setShowWeightSheet(false)}
+            />
+          </Suspense>
         )}
       </AnimatePresence>
 
@@ -1254,87 +1300,96 @@ export default function Home() {
           restoreRunDay={restoreRunDay}
           restoreWorkoutDay={restoreWorkoutDay}
           moveRunDay={moveRunDay}
+          sessionsOnDate={manageSessions}
         />
       </Suspense>
 
-      {goalOffer && profile && user && (
-        <GoalReachedSheet
-          open={goalReachedSurface.active}
-          offer={goalOffer}
-          profile={profile}
-          uid={user.uid}
-          updateProfile={updateProfile}
-          onResolved={() => {
-            dismissGoalReached();
-            goalReachedSurface.dismiss();
-          }}
-        />
-      )}
+      <Suspense fallback={null}>
+        {goalOffer && profile && user && (
+          <GoalReachedSheet
+            open={goalReachedSurface.active}
+            offer={goalOffer}
+            profile={profile}
+            uid={user.uid}
+            updateProfile={updateProfile}
+            onResolved={() => {
+              dismissGoalReached();
+              goalReachedSurface.dismiss();
+            }}
+          />
+        )}
+      </Suspense>
 
-      {liftReturn.daysAway !== null && liftReturn.welcomeBack && (
-        <LiftReturnSheet
-          open={liftReturnSurface.active}
-          onClose={() => {
-            dismissLiftReturn();
-            liftReturnSurface.dismiss();
-          }}
-          onEaseBack={async () => {
-            if (!(await easeBackIn(liftReturn.easeBackShare))) {
-              throw new Error("The plan wasn't eased back");
+      <Suspense fallback={null}>
+        {liftReturn.daysAway !== null && liftReturn.welcomeBack && (
+          <LiftReturnSheet
+            open={liftReturnSurface.active}
+            onClose={() => {
+              dismissLiftReturn();
+              liftReturnSurface.dismiss();
+            }}
+            onEaseBack={async () => {
+              if (!(await easeBackIn(liftReturn.easeBackShare))) {
+                throw new Error("The plan wasn't eased back");
+              }
+            }}
+            daysAway={liftReturn.daysAway}
+            easeBackFirst={liftReturn.easeBackFirst}
+            easeBackShare={liftReturn.easeBackShare}
+          />
+        )}
+      </Suspense>
+
+      <Suspense fallback={null}>
+        {fellBehindPrompt && (
+          <FellBehindSheet
+            open={fellBehindSurface.active}
+            onClose={() => {
+              setFellBehindDismissedFor(fellBehindPrompt.weekKey);
+              fellBehindSurface.dismiss();
+            }}
+            prompt={fellBehindPrompt}
+            dismissFellBehindPrompt={dismissFellBehindPrompt}
+            realignRacePlan={async () => {
+              const result = await realignRacePlan();
+              // A refusal or a failed save has already been said by the writer.
+              if (result.status === "applied" && profile?.raceGoal) {
+                toast.success(
+                  realignResultMessage({
+                    timing: result.timing,
+                    distance: profile.raceGoal.distance as
+                      | "5k"
+                      | "10k"
+                      | "half"
+                      | "marathon",
+                    totalWeeks: result.totalWeeks,
+                  })
+                );
+              }
+            }}
+            onRaceMoved={() => {
+              // "My race moved" — clear the flag and route to the dedicated
+              // run-plan editor (Run-Split); retired the +7d auto-shift guess.
+              void dismissFellBehindPrompt();
+              navigate("/settings/run-plan");
+            }}
+            raceModeActive={
+              profile?.runMode === "race_prep" && !!profile.raceGoal
             }
-          }}
-          daysAway={liftReturn.daysAway}
-          easeBackFirst={liftReturn.easeBackFirst}
-          easeBackShare={liftReturn.easeBackShare}
-        />
-      )}
+            recentLayoff={recentLayoff}
+          />
+        )}
+      </Suspense>
 
-      {fellBehindPrompt && (
-        <FellBehindSheet
-          open={fellBehindSurface.active}
-          onClose={() => {
-            setFellBehindDismissedFor(fellBehindPrompt.weekKey);
-            fellBehindSurface.dismiss();
+      <Suspense fallback={null}>
+        <BadgeEarnedModal
+          badge={badgeOpen ? newBadge : null}
+          onDismiss={() => {
+            dismissNewBadge();
+            setBadgeOpen(false);
           }}
-          prompt={fellBehindPrompt}
-          dismissFellBehindPrompt={dismissFellBehindPrompt}
-          realignRacePlan={async () => {
-            const result = await realignRacePlan();
-            // A refusal or a failed save has already been said by the writer.
-            if (result.status === "applied" && profile?.raceGoal) {
-              toast.success(
-                realignResultMessage({
-                  timing: result.timing,
-                  distance: profile.raceGoal.distance as
-                    | "5k"
-                    | "10k"
-                    | "half"
-                    | "marathon",
-                  totalWeeks: result.totalWeeks,
-                })
-              );
-            }
-          }}
-          onRaceMoved={() => {
-            // "My race moved" — clear the flag and route to the dedicated
-            // run-plan editor (Run-Split); retired the +7d auto-shift guess.
-            void dismissFellBehindPrompt();
-            navigate("/settings/run-plan");
-          }}
-          raceModeActive={
-            profile?.runMode === "race_prep" && !!profile.raceGoal
-          }
-          recentLayoff={recentLayoff}
         />
-      )}
-
-      <BadgeEarnedModal
-        badge={badgeOpen ? newBadge : null}
-        onDismiss={() => {
-          dismissNewBadge();
-          setBadgeOpen(false);
-        }}
-      />
+      </Suspense>
 
       {/* Steps priming (surface B) — native only, at most once ever. `open`
           is derived: connecting or dismissing persists primingShown, which

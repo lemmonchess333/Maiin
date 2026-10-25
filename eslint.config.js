@@ -7,6 +7,84 @@ import jsxA11y from "eslint-plugin-jsx-a11y";
 import tseslint from "typescript-eslint";
 import { defineConfig, globalIgnores } from "eslint/config";
 
+// The colour, theme and motion rules every source file is held to. A
+// file that needs one rule more (PALETTE_TABLES, below) spreads these
+// into its own list: a later config's rule REPLACES the earlier one, it
+// does not merge with it.
+const RESTRICTED_SYNTAX = [
+  {
+    selector: "Literal[value=/(^|\\s)text-muted(\\s|$)/]",
+    message:
+      'Use "text-muted-foreground" — the bare "text-muted" class maps to the muted SURFACE fill and renders near-invisible text.',
+  },
+  {
+    selector:
+      "JSXAttribute[name.name='style'] Literal[value=/#[0-9a-fA-F]{3,8}/]",
+    message:
+      "No hardcoded hex in inline style — use a THEME token or Tailwind semantic class (e.g. THEME.success, bg-lifting).",
+  },
+  {
+    selector:
+      "JSXAttribute[name.name='style'] TemplateElement[value.raw=/#[0-9a-fA-F]{3,8}/]",
+    message:
+      "No hardcoded hex in inline style — use a THEME token (e.g. `${THEME.success}` + alpha) or a Tailwind semantic class.",
+  },
+  {
+    selector:
+      "JSXAttribute[name.name='className'] Literal[value=/\\[#[0-9a-fA-F]{3,8}\\]/]",
+    message:
+      "No Tailwind arbitrary hex (bg-[#…]) — use a semantic token class (bg-lifting, text-running, bg-success/…).",
+  },
+  // The same class written into a variant MAP (`{ dark: "bg-[#…]" }`)
+  // or a template string reaches className one hop later and was
+  // invisible to the attribute-scoped selector above — Dialog's
+  // TONE_PANEL carried `bg-[#1A1A1F]` unflagged until it got a token.
+  {
+    selector: "Property > Literal[value=/\\[#[0-9a-fA-F]{3,8}\\]/]",
+    message:
+      "No Tailwind arbitrary hex (bg-[#…]) in a class map either — give the colour a token (see --stage / --stage-raised for a fixed-dark surface).",
+  },
+  {
+    selector: "TemplateElement[value.raw=/\\[#[0-9a-fA-F]{3,8}\\]/]",
+    message:
+      "No Tailwind arbitrary hex (bg-[#…]) in a template string — use a semantic token class.",
+  },
+  // ── Dark-mode leak guard ─────────────────────────────────────────
+  // Solid `bg-white` / `text-black` don't flip with the .dark theme —
+  // on theme-aware surfaces they render dark-on-dark / white flashes.
+  // Use the semantic classes (bg-card / bg-background / text-foreground)
+  // instead. Alpha tints (bg-white/10) stay allowed: they're deliberate
+  // overlays on the ALWAYS-dark surfaces (active-run screen, camera
+  // chrome). Genuinely always-white elements (iOS-style switch thumbs,
+  // the camera shutter) carry a line-level eslint-disable with a reason.
+  {
+    selector: "Literal[value=/(^|[\\s:])bg-white(\\s|$)/]",
+    message:
+      "Solid bg-white doesn't flip in dark mode — use bg-card / bg-background. If this surface is genuinely always-white (switch thumb, camera shutter), add an eslint-disable-next-line with the reason.",
+  },
+  {
+    selector: "Literal[value=/(^|[\\s:])text-black(\\s|$)/]",
+    message:
+      "text-black doesn't flip in dark mode — use text-foreground (or text-card-foreground on cards).",
+  },
+  // ── Reduce Motion reaches scrolling ──────────────────────────────
+  // An explicit `behavior: "smooth"` beats the stylesheet's
+  // reduced-motion scroll rule by spec, so a smooth scroll passed in
+  // code animates for someone who asked for less motion. Pass no
+  // behaviour and the stylesheet decides; "instant" is fine. This
+  // was a text scan in e2e/reducedMotionScroll.spec.ts, which runs
+  // only after a build in CI; as a lint rule it fails in seconds.
+  {
+    selector:
+      "Property:matches([key.name='behavior'], [key.value='behavior'])[value.value='smooth']",
+    message:
+      'Pass no scroll behaviour (the stylesheet picks smooth, or instant under Reduce Motion). An explicit "smooth" animates for people who turned motion off.',
+  },
+];
+
+// Colour tables that must be built from tokens alone: see the last block.
+const PALETTE_TABLES = ["src/features/streaks/flameTiers.ts"];
+
 export default defineConfig([
   globalIgnores(["dist", "functions", ".claude", "ios"]),
   {
@@ -74,75 +152,32 @@ export default defineConfig([
       // multi-line gradient and box-shadow strings no single-Literal
       // selector can. Deliberately NOT duplicated here: a weaker second copy
       // of the same rule is one more mirror to keep in sync.
+      "no-restricted-syntax": ["error", ...RESTRICTED_SYNTAX],
+    },
+  },
+  // ── Palette tables: tokens only, no hex at all ──────────────────────
+  // A colour table that must be built from the closed palette, not merely
+  // kept out of a style attribute. The rules above see a hex only inside
+  // `style`; a table one hop away is invisible to them, which is how the
+  // streak flame's tiers held twelve raw Tailwind hexes, three of them hues
+  // the app used nowhere else. Here any hex literal is an error: the table
+  // names THEME values, and a step the palette lacks is a token to add,
+  // not a hex to paste.
+  {
+    files: PALETTE_TABLES,
+    rules: {
       "no-restricted-syntax": [
         "error",
+        ...RESTRICTED_SYNTAX,
         {
-          selector: "Literal[value=/(^|\\s)text-muted(\\s|$)/]",
+          selector: "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
           message:
-            'Use "text-muted-foreground" — the bare "text-muted" class maps to the muted SURFACE fill and renders near-invisible text.',
+            "A palette table names THEME tokens (THEME.purpleRamp, THEME.tier.platinum), never a hex.",
         },
         {
-          selector:
-            "JSXAttribute[name.name='style'] Literal[value=/#[0-9a-fA-F]{3,8}/]",
+          selector: "TemplateElement[value.raw=/#[0-9a-fA-F]{3,8}/]",
           message:
-            "No hardcoded hex in inline style — use a THEME token or Tailwind semantic class (e.g. THEME.success, bg-lifting).",
-        },
-        {
-          selector:
-            "JSXAttribute[name.name='style'] TemplateElement[value.raw=/#[0-9a-fA-F]{3,8}/]",
-          message:
-            "No hardcoded hex in inline style — use a THEME token (e.g. `${THEME.success}` + alpha) or a Tailwind semantic class.",
-        },
-        {
-          selector:
-            "JSXAttribute[name.name='className'] Literal[value=/\\[#[0-9a-fA-F]{3,8}\\]/]",
-          message:
-            "No Tailwind arbitrary hex (bg-[#…]) — use a semantic token class (bg-lifting, text-running, bg-success/…).",
-        },
-        // The same class written into a variant MAP (`{ dark: "bg-[#…]" }`)
-        // or a template string reaches className one hop later and was
-        // invisible to the attribute-scoped selector above — Dialog's
-        // TONE_PANEL carried `bg-[#1A1A1F]` unflagged until it got a token.
-        {
-          selector: "Property > Literal[value=/\\[#[0-9a-fA-F]{3,8}\\]/]",
-          message:
-            "No Tailwind arbitrary hex (bg-[#…]) in a class map either — give the colour a token (see --stage / --stage-raised for a fixed-dark surface).",
-        },
-        {
-          selector: "TemplateElement[value.raw=/\\[#[0-9a-fA-F]{3,8}\\]/]",
-          message:
-            "No Tailwind arbitrary hex (bg-[#…]) in a template string — use a semantic token class.",
-        },
-        // ── Dark-mode leak guard ─────────────────────────────────────────
-        // Solid `bg-white` / `text-black` don't flip with the .dark theme —
-        // on theme-aware surfaces they render dark-on-dark / white flashes.
-        // Use the semantic classes (bg-card / bg-background / text-foreground)
-        // instead. Alpha tints (bg-white/10) stay allowed: they're deliberate
-        // overlays on the ALWAYS-dark surfaces (active-run screen, camera
-        // chrome). Genuinely always-white elements (iOS-style switch thumbs,
-        // the camera shutter) carry a line-level eslint-disable with a reason.
-        {
-          selector: "Literal[value=/(^|[\\s:])bg-white(\\s|$)/]",
-          message:
-            "Solid bg-white doesn't flip in dark mode — use bg-card / bg-background. If this surface is genuinely always-white (switch thumb, camera shutter), add an eslint-disable-next-line with the reason.",
-        },
-        {
-          selector: "Literal[value=/(^|[\\s:])text-black(\\s|$)/]",
-          message:
-            "text-black doesn't flip in dark mode — use text-foreground (or text-card-foreground on cards).",
-        },
-        // ── Reduce Motion reaches scrolling ──────────────────────────────
-        // An explicit `behavior: "smooth"` beats the stylesheet's
-        // reduced-motion scroll rule by spec, so a smooth scroll passed in
-        // code animates for someone who asked for less motion. Pass no
-        // behaviour and the stylesheet decides; "instant" is fine. This
-        // was a text scan in e2e/reducedMotionScroll.spec.ts, which runs
-        // only after a build in CI; as a lint rule it fails in seconds.
-        {
-          selector:
-            "Property:matches([key.name='behavior'], [key.value='behavior'])[value.value='smooth']",
-          message:
-            'Pass no scroll behaviour (the stylesheet picks smooth, or instant under Reduce Motion). An explicit "smooth" animates for people who turned motion off.',
+            "A palette table names THEME tokens (THEME.purpleRamp, THEME.tier.platinum), never a hex.",
         },
       ],
     },

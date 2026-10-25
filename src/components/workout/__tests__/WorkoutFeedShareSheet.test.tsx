@@ -13,7 +13,16 @@
  *    the feed twice. The marker is best-effort — a failed marker write must
  *    never fail the post, because the post is the thing the user asked for.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+  beforeAll,
+} from "vitest";
+import { loadWordFilter } from "@/lib/wordFilter";
 import {
   render,
   screen,
@@ -219,4 +228,10 @@ describe("WorkoutFeedShareSheet — a restricted account (S4e)", () => {
     fireEvent.click(followers);
     expect(postActivityMock).not.toHaveBeenCalled();
   });
+});
+
+/* The word filter as a session that has used it holds it: loaded, so the
+   sheet draws on its first render (useWordFilter covers the wait). */
+beforeAll(async () => {
+  await loadWordFilter();
 });

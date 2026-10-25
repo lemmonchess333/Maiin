@@ -5,6 +5,15 @@ import type { ProgramState } from "@/features/program/programTypes";
 import type { DayType } from "@/lib/scheduleUtils";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  programmeDraftIdentity,
+  sessionDayContext,
+} from "@/features/program/sessionDay";
+import type { SessionVariant } from "@/features/program/expressSession";
+import type { WorkoutDraft } from "@/hooks/useWorkoutDraft";
+import type { StoredRunSummary } from "@/lib/runResumeStorage";
+import { freeformPlanMetadata } from "@/lib/runPlanMetadata";
+import { storedRunName } from "@/lib/sessionsInFlight";
 
 /**
  * Today's session on Home, decided without the page. Every date here is a
@@ -754,5 +763,299 @@ describe("todaySession — a long run that finishes at race pace (Run21 (2))", (
     expect(session.rest).toMatchObject({
       tomorrow: { label: "Long 15K with race pace" },
     });
+  });
+});
+
+/* A session under way on this phone: a workout's draft, or the stored run.
+   The draft's identity is the one Train's workout screen gives it, built
+   by the same code (`sessionDay.ts`), so the card offers only what Resume
+   will open. */
+function draftFor(
+  state: ProgramState,
+  profile: UserProfile,
+  dayIndex: number,
+  {
+    variant = "full",
+    ticked = 2,
+    savedAt = 1_000,
+    weekNumber = state.weekNumber,
+  }: {
+    variant?: SessionVariant;
+    ticked?: number;
+    savedAt?: number;
+    weekNumber?: number;
+  } = {}
+): WorkoutDraft {
+  const day = state.workouts[dayIndex];
+  return {
+    dayIndex,
+    dayName: day.dayName,
+    setLogs: [
+      Array.from({ length: 3 }, (_, i) => ({
+        reps: 8,
+        weight: 40,
+        completed: i < ticked,
+        type: "working" as const,
+      })),
+    ],
+    exerciseNotes: {},
+    elapsedSeconds: 1120,
+    currentExIndex: 0,
+    savedAt,
+    identity: programmeDraftIdentity(
+      day,
+      dayIndex,
+      weekNumber,
+      variant,
+      sessionDayContext(state, profile)
+    ),
+    completionId: "c1",
+    completionCommandId: "c1",
+  };
+}
+
+function storedRun(extra: Partial<StoredRunSummary> = {}): StoredRunSummary {
+  return {
+    v: 2,
+    config: {
+      activityType: "freerun",
+      autoPause: true,
+      audioCues: true,
+      audioCueFrequency: "every_km",
+      paceAlerts: false,
+      voiceRate: 0.9,
+      displayStats: ["pace", "distance", "time"],
+      target: { type: "none" },
+      planMetadata: freeformPlanMetadata("freeform"),
+    },
+    startedAt: 0,
+    accumulatedSeconds: 1500,
+    isRunning: false,
+    lastWriteAt: 0,
+    phase: "paused",
+    ...extra,
+  };
+}
+
+describe("todaySession — a session under way", () => {
+  const liftDay = profileWith({ 3: "lift" });
+  const plan = programStateWith({ workouts: [PUSH, PULL, LEGS] });
+
+  it("puts today's workout under way on its own card, in Start's place", () => {
+    const session = todaySession(
+      input({
+        profile: liftDay,
+        programState: plan,
+        inFlight: { drafts: [draftFor(plan, liftDay, 0)], run: null },
+      })
+    );
+    expect(session.lift?.inProgress).toEqual({
+      sport: "lift",
+      name: "Push",
+      sets: 2,
+      elapsedSeconds: 1120,
+      resumeTarget: "/program?day=0&resume=1",
+    });
+    expect(session.inProgressElsewhere).toEqual([]);
+  });
+
+  it("gives another day's workout under way a strip of its own", () => {
+    const session = todaySession(
+      input({
+        profile: liftDay,
+        programState: plan,
+        inFlight: { drafts: [draftFor(plan, liftDay, 1)], run: null },
+      })
+    );
+    expect(session.lift?.inProgress).toBeUndefined();
+    expect(session.inProgressElsewhere).toEqual([
+      expect.objectContaining({ name: "Pull", sets: 2 }),
+    ]);
+  });
+
+  it("recognises a workout started short or easier, as it was started", () => {
+    const budget = profileWith({ 3: "lift" }, { liftTimeBudgetMinutes: 30 });
+    for (const variant of ["time_budget", "easier_today", "express30"] as const)
+      expect(
+        todaySession(
+          input({
+            profile: budget,
+            programState: plan,
+            inFlight: {
+              drafts: [draftFor(plan, budget, 0, { variant })],
+              run: null,
+            },
+          })
+        ).lift?.inProgress
+      ).toMatchObject({ resumeTarget: "/program?day=0&resume=1" });
+  });
+
+  it("offers nothing Resume could not open: last week's, an edited day, a finished day", () => {
+    const lastWeek = draftFor(plan, liftDay, 0, { weekNumber: 2 });
+    const edited = draftFor(
+      programStateWith({
+        workouts: [workoutDay("Push — Chest Focus", {}, ["bench-press"])],
+      }),
+      liftDay,
+      0
+    );
+    const finished = draftFor(plan, liftDay, 0);
+    const finishedPlan = programStateWith({
+      workouts: [{ ...PUSH, completed: true }, PULL, LEGS],
+    });
+    const waiting = { ...draftFor(plan, liftDay, 0), completionPending: true };
+    const routine = {
+      ...draftFor(plan, liftDay, 0),
+      identity: "v1|routine:abc|e0|d-1|Push — Chest Focus|lat-pulldownx3",
+    };
+    for (const [state, draft] of [
+      [plan, lastWeek],
+      [plan, edited],
+      [finishedPlan, finished],
+      [plan, waiting],
+      [plan, routine],
+    ] as const) {
+      const session = todaySession(
+        input({
+          profile: liftDay,
+          programState: state,
+          inFlight: { drafts: [draft], run: null },
+        })
+      );
+      expect(session.lift?.inProgress).toBeUndefined();
+      expect(session.inProgressElsewhere).toEqual([]);
+    }
+  });
+
+  it("offers the newest of two workouts under way", () => {
+    const session = todaySession(
+      input({
+        profile: liftDay,
+        programState: plan,
+        inFlight: {
+          drafts: [
+            draftFor(plan, liftDay, 0, { savedAt: 1 }),
+            draftFor(plan, liftDay, 2, { savedAt: 2 }),
+          ],
+          run: null,
+        },
+      })
+    );
+    // Named as Train names the day in its week.
+    expect(session.inProgressElsewhere).toEqual([
+      expect.objectContaining({
+        name: "Legs · Quad focus",
+        resumeTarget: "/program?day=2&resume=1",
+      }),
+    ]);
+  });
+
+  it("puts a new lifter's first workout under way on the rest day's card", () => {
+    const rest = profileWith({});
+    const session = todaySession(
+      newAccount({
+        profile: rest,
+        programState: plan,
+        inFlight: { drafts: [draftFor(plan, rest, 0)], run: null },
+      })
+    );
+    expect(session.rest).toMatchObject({
+      kind: "first-workout",
+      inProgress: { name: "Push" },
+    });
+  });
+
+  it("puts a run under way on today's run card while it could start one", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "run" }),
+        programState: programStateWith({ runDays: [runDay(WEDNESDAY)] }),
+        inFlight: { drafts: [], run: storedRun() },
+      })
+    );
+    expect(session.run?.inProgress).toEqual({
+      sport: "run",
+      name: "Free run",
+      sets: null,
+      elapsedSeconds: 1500,
+      resumeTarget: "/run?resume=1",
+    });
+  });
+
+  it("names a run by the plan's session it was started from", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith({ 3: "run" }),
+        programState: programStateWith({ runDays: [runDay(WEDNESDAY)] }),
+        inFlight: {
+          drafts: [],
+          run: storedRun({
+            config: {
+              ...storedRun().config,
+              activityType: "easy",
+              planMetadata: {
+                ...freeformPlanMetadata("freeform"),
+                actualTemplateId: "easy_30",
+              },
+            },
+          }),
+        },
+      })
+    );
+    expect(session.run?.inProgress?.name).toBe(session.run?.name);
+  });
+
+  it("gives a run under way its own strip on a lifting day, or when today's run is done", () => {
+    const onLiftDay = todaySession(
+      input({
+        profile: liftDay,
+        programState: plan,
+        inFlight: { drafts: [], run: storedRun() },
+      })
+    );
+    expect(onLiftDay.inProgressElsewhere).toEqual([
+      expect.objectContaining({ sport: "run" }),
+    ]);
+    const doneToday = todaySession(
+      input({
+        profile: profileWith({ 3: "run" }),
+        programState: programStateWith({
+          runDays: [
+            runDay(WEDNESDAY, { completed: true, status: "completed" }),
+          ],
+        }),
+        inFlight: { drafts: [], run: storedRun() },
+      })
+    );
+    expect(doneToday.run?.inProgress).toBeUndefined();
+    expect(doneToday.inProgressElsewhere).toEqual([
+      expect.objectContaining({ sport: "run" }),
+    ]);
+  });
+
+  it("puts a run under way on a free runner's rest-day card", () => {
+    const session = todaySession(
+      input({
+        profile: profileWith(
+          {},
+          { runMode: "freeform", athleteType: "Runner" }
+        ),
+        inFlight: { drafts: [], run: storedRun() },
+      })
+    );
+    expect(session.rest).toMatchObject({
+      kind: "free-run",
+      inProgress: { sport: "run" },
+    });
+  });
+
+  it("names a type started without a template in sentence case", () => {
+    expect(
+      storedRunName(
+        { ...storedRun().config, activityType: "tempo" },
+        null,
+        "km"
+      )
+    ).toBe("Tempo run");
   });
 });

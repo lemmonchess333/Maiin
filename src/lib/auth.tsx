@@ -103,6 +103,14 @@ async function firestore() {
   return { ...fs, ...write, db };
 }
 
+/* A device that has had an account almost always restores it, and the
+   profile read is the first thing that launch waits for. So Firestore
+   starts downloading now, while Auth reads its session from IndexedDB,
+   instead of after Auth has answered. A device that has never signed in
+   starts nothing: that person is about to see Login, which reads no
+   documents. A failed load is the post-auth call's to meet again. */
+if (hasSignedInOnThisDevice()) void firestore().catch(() => {});
+
 /* ================================
    OAUTH TRANSPORT (popup vs redirect)
 ================================ */
@@ -1066,8 +1074,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // hydrateProfile does no writes, and the timezone-capture write stays
         // on the server branch only so it isn't double-fired.
         /* Inside `if (firebaseUser)`, so a profile exists to read. */
-        const { doc, getDoc, getDocFromCache, onSnapshot, updateDocGuarded, db } =
-          await firestore();
+        const {
+          doc,
+          getDoc,
+          getDocFromCache,
+          onSnapshot,
+          updateDocGuarded,
+          db,
+        } = await firestore();
         try {
           const cachedDoc = await getDocFromCache(
             doc(db, "users", firebaseUser.uid)

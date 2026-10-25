@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { nextLiftAfter, resolveHomeLift } from "../homeLift";
+import { liftOnDate, nextLiftAfter, resolveHomeLift } from "../homeLift";
 import type { ResolvedLift } from "@/lib/trainingResolver";
 import type { WorkoutDay } from "@/features/program/programTypes";
 
@@ -161,5 +161,28 @@ describe("nextLiftAfter", () => {
   it("is null when nothing is left", () => {
     const all = plan.map((w) => ({ ...w, completed: true }));
     expect(nextLiftAfter(scheduled(0, all), { workouts: all })).toBeNull();
+  });
+});
+
+describe("liftOnDate", () => {
+  const plan = [day("A"), day("B"), day("C"), day("D")];
+  const input = (dateKey: string) => ({
+    dateKey,
+    todayKey: "2026-10-22",
+    scheduled: scheduled(2, plan),
+    programme: { workouts: plan, nextWorkoutOverride: 1 },
+    sessionsOnDate: new Set<string>(),
+  });
+
+  it("gives today the today card's lift, so Skip skips that one", () => {
+    const lift = liftOnDate(input("2026-10-22"));
+    expect(lift.index).toBe(1);
+    expect(lift.workout?.dayName).toBe("B");
+  });
+
+  it("leaves any other day on its slot in the week", () => {
+    const lift = liftOnDate(input("2026-10-23"));
+    expect(lift.index).toBe(2);
+    expect(lift.workout?.dayName).toBe("C");
   });
 });

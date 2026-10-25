@@ -9,6 +9,7 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
+import TimeRangePills from "./TimeRangePills";
 import { Activity, Info } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import UITooltip from "@/components/ui/Tooltip";
@@ -62,18 +63,44 @@ const numberFmt = (n: number) => Math.round(n).toString();
 export default function TrainingLoadCard({
   points,
   loading,
+  range,
 }: {
   points: LoadPoint[];
   loading: boolean;
+  /** The range the curve covers, as the card's own control: on the
+   *  Performance page it scopes this card and nothing else, so it sits
+   *  under the card's title rather than across the page. It stays put
+   *  while a new range loads. */
+  range?: { selected: string; onChange: (value: string) => void };
 }) {
+  const rangeRow = range ? (
+    <div className="mb-3">
+      <TimeRangePills selected={range.selected} onChange={range.onChange} />
+    </div>
+  ) : null;
   if (loading) {
-    return <Skeleton className="h-56 w-full rounded-2xl" />;
+    if (!range) return <Skeleton className="h-56 w-full rounded-2xl" />;
+    return (
+      <div className="p-4 rounded-2xl bg-card card-shadow">
+        <h3 className="mb-3 text-sm font-bold text-foreground">
+          Training load
+        </h3>
+        {rangeRow}
+        <Skeleton className="h-40 w-full rounded-xl" />
+      </div>
+    );
   }
 
   const hasAnyLoad = points.some((p) => p.load > 0 || p.fitness > 0.5);
   if (!hasAnyLoad) {
     return (
       <div className="p-4 rounded-2xl bg-card card-shadow">
+        {range && (
+          <h3 className="mb-3 text-sm font-bold text-foreground">
+            Training load
+          </h3>
+        )}
+        {rangeRow}
         <EmptyState
           compact
           icon={Activity}
@@ -175,6 +202,7 @@ export default function TrainingLoadCard({
           3.87:1 for purple / 3.58:1 for coral on the light card, under
           the 4.5:1 floor these 12px words need. Same hue, same reading,
           a legible lightness. Pinned by identityColour.test.ts. */}
+      {rangeRow}
       <p className="text-xs text-muted-foreground mb-2 font-mono tabular-nums">
         <span className="text-lifting-strong">
           Fitness {numberFmt(last.fitness)}

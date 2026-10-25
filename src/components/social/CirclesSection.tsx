@@ -65,10 +65,9 @@ import CircleWeeklyFocusSheet from "./CircleWeeklyFocusSheet";
 import RestrictedNotice from "./RestrictedNotice";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import { showRestrictedToast } from "@/lib/accountRestriction";
-import {
-  containsProfanity,
-  OBJECTIONABLE_NAME_MESSAGE,
-} from "@/lib/profanityFilter";
+import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/objectionableMessages";
+import { loadWordFilter } from "@/lib/wordFilter";
+import { useWordFilter } from "@/hooks/useWordFilter";
 import { circleTitle } from "@/features/goalSpace/circleTitle";
 
 // weekly_check_in copy is dynamic (checkInTimelineCopy — the focus
@@ -249,7 +248,7 @@ export default function CirclesSection({
   refreshRef?: MutableRefObject<(() => Promise<void>) | null>;
 }) {
   const {
-    loading,
+    loading: circlesLoading,
     circles,
     loadFailed,
     reload,
@@ -262,6 +261,10 @@ export default function CirclesSection({
     backCheckIn,
     resolveTarget,
   } = useGoalSpaces(uid);
+  /* Circle names go through the word filter (circleTitle), so the list
+     waits for it as it waits for the Circles: no name is drawn unseen. */
+  const wordFilter = useWordFilter();
+  const loading = circlesLoading || !wordFilter;
 
   /* A restricted account can read its Circles and leave them, but not
      start, join, check in, back a check-in or share (S4e). The section
@@ -485,10 +488,7 @@ export default function CirclesSection({
       (e) =>
         e.kind === "weekly_check_in" && e.uid === uid && e.weekKey === thisWeek
     ) ?? null;
-  const focusSetCount = countWeeklyFocusSet(
-    events.filter((e) => memberUids.has(e.uid)),
-    thisWeek
-  );
+  const focusSetCount = countWeeklyFocusSet(events, thisWeek, memberUids);
 
   /* Featured-card equivalents of the sheet derivations above, from the
      eager featuredDetail (member-filtered for the same mid-week-
@@ -502,10 +502,7 @@ export default function CirclesSection({
         e.kind === "weekly_check_in" && e.uid === uid && e.weekKey === thisWeek
     ) ?? null;
   const featuredFocusCount = featuredDetail
-    ? countWeeklyFocusSet(
-        featuredDetail.events.filter((e) => featuredMemberUids.has(e.uid)),
-        thisWeek
-      )
+    ? countWeeklyFocusSet(featuredDetail.events, thisWeek, featuredMemberUids)
     : 0;
 
   const openDetail = async (c: CircleSummary) => {
@@ -575,7 +572,12 @@ export default function CirclesSection({
     const trimmed = title.trim();
     // Everyone invited reads the name, so it meets the word filter a
     // display name does; the server refuses it with the same sentence.
-    if (containsProfanity(trimmed)) {
+    const filter = wordFilter ?? (await loadWordFilter().catch(() => null));
+    if (!filter) {
+      toast.error("Couldn't start the circle. Try again.");
+      return;
+    }
+    if (filter.containsProfanity(trimmed)) {
       toast.error(OBJECTIONABLE_NAME_MESSAGE);
       return;
     }
@@ -780,28 +782,33 @@ export default function CirclesSection({
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button
-              className="flex-1"
-              onClick={() => {
-                if (refused()) return;
-                haptic("light");
-                setChooserOpen(true);
-              }}
-            >
-              Start a circle
-            </Button>
-            <Button
-              variant="secondary"
-              className="flex-1"
-              onClick={() => {
-                if (refused()) return;
-                haptic("light");
-                setShowJoin(true);
-              }}
-            >
-              Join with code
-            </Button>
+          {/* Side by side while both labels fit on one line, stacked on
+              a narrow card or at larger text, where each wrapped inside
+              its pill. */}
+          <div className="@container">
+            <div className="flex gap-2 @max-[18em]:flex-col">
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  if (refused()) return;
+                  haptic("light");
+                  setChooserOpen(true);
+                }}
+              >
+                Start a circle
+              </Button>
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => {
+                  if (refused()) return;
+                  haptic("light");
+                  setShowJoin(true);
+                }}
+              >
+                Join with code
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -816,7 +823,7 @@ export default function CirclesSection({
             className="block w-full min-h-[44px] text-left active:scale-[0.97] transition-transform"
           >
             <p className="text-base font-bold text-foreground truncate">
-              {circleTitle(featured.space)}
+              {circleTitle(featured.space, wordFilter)}
               {!featured.space.active && (
                 <span className="font-normal text-muted-foreground">
                   {" "}
@@ -940,7 +947,7 @@ export default function CirclesSection({
                   if (!code) return; // narrowing lost across the closure
                   haptic("light");
                   setInviteHandoff({
-                    title: circleTitle(featured.space),
+                    title: circleTitle(featured.space, wordFilter),
                     spaceId: featured.space.id,
                     inviteCode: code,
                   });
@@ -980,7 +987,7 @@ export default function CirclesSection({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-foreground truncate">
-                  {circleTitle(c.space)}
+                  {circleTitle(c.space, wordFilter)}
                   {!c.space.active && (
                     <span className="font-normal text-muted-foreground">
                       {" "}
@@ -1005,32 +1012,34 @@ export default function CirclesSection({
           ))}
 
       {!loading && !loadFailed && circles.length > 0 && (
-        <div className="flex gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="flex-1"
-            onClick={() => {
-              if (refused()) return;
-              haptic("light");
-              setGoalPrechosen(false); // manual entry — user still picks a goal
-              setShowCreate(true);
-            }}
-          >
-            Start a circle
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex-1"
-            onClick={() => {
-              if (refused()) return;
-              haptic("light");
-              setShowJoin(true);
-            }}
-          >
-            Join with code
-          </Button>
+        <div className="@container">
+          <div className="flex gap-2 @max-[18em]:flex-col">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="flex-1"
+              onClick={() => {
+                if (refused()) return;
+                haptic("light");
+                setGoalPrechosen(false); // manual entry — user still picks a goal
+                setShowCreate(true);
+              }}
+            >
+              Start a circle
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1"
+              onClick={() => {
+                if (refused()) return;
+                haptic("light");
+                setShowJoin(true);
+              }}
+            >
+              Join with code
+            </Button>
+          </div>
         </div>
       )}
 
@@ -1221,7 +1230,7 @@ export default function CirclesSection({
                 void openDetail(existing);
               }}
             >
-              Open {circleTitle(trainTogether.existing.space)}
+              Open {circleTitle(trainTogether.existing.space, wordFilter)}
             </Button>
             <Button
               variant="secondary"
@@ -1279,7 +1288,7 @@ export default function CirclesSection({
         onOpenChange={(open) => {
           if (!open) setDetailOf(null);
         }}
-        title={detailOf ? circleTitle(detailOf.space) : ""}
+        title={detailOf ? circleTitle(detailOf.space, wordFilter) : ""}
         description={detailOf ? memberLine(detailOf.space) : undefined}
       >
         {detailOf && (

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Flame } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";

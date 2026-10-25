@@ -7,10 +7,13 @@
  * wrap, a picture that never gives way all pass every other test.
  *
  * The screens: Home, Train, History's five pages (and its charts again
- * on a Monday), Food and its manual entry and edit sheets, Settings and
- * every section of it, Train's exercise menu, a workout, a run before,
- * during and after, the exercise, run and workout detail pages, the
- * Weekly review, sign-up, setup and the Pro page.
+ * on a Monday), Food and its manual entry and edit sheets, Social's
+ * Together tab and its feed, a Space, a profile, Settings and every
+ * section of it, Train's exercise menu, a workout, a run before, during
+ * and after, the exercise, run and workout detail pages, the Weekly
+ * review, sign-up, setup and the Pro page. The sheets: the weight log,
+ * Social's notifications and a run's share sheet, with Food's two
+ * above.
  *
  * Each screen is opened at 393px and at 320px (Display Zoom on an SE or
  * a mini), with the root font at 135% (the largest standard size) and
@@ -29,6 +32,7 @@ import {
   signInAsTestUser,
 } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
+import { settleCommunity } from "../helpers/settleCommunity";
 import { brokenWords, layoutBreaks } from "../helpers/layoutBreaks";
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
 
@@ -399,6 +403,81 @@ test.describe("large text", () => {
       expect(found).toEqual([]);
     });
 
+    test(`Social, a Space and a profile at ${width}px`, async ({ page }) => {
+      test.setTimeout(300_000);
+      await page.setViewportSize({ width, height: 852 });
+      await signInAsTestUser(page);
+      const found: string[] = [];
+      const nav = page.getByRole("navigation").first();
+
+      await page.goto("social");
+      await ready(page, nav);
+      await settleCommunity(page);
+      await measure(page, "social-together", width, found);
+
+      await page.goto("social?tab=feed&feed=explore");
+      await ready(page, page.getByText("Maya Chen").first());
+      await measure(page, "social-feed", width, found);
+
+      // A Space the seeded user has joined, with posts in it.
+      await page.goto("space/womens-running");
+      await ready(
+        page,
+        page.getByRole("heading", { name: "Women's Running", level: 1 })
+      );
+      await measure(page, "space", width, found);
+
+      // The person's own profile, as others see it.
+      await page.goto("settings/profile");
+      await page
+        .getByRole("button", { name: "See your profile as others do" })
+        .click({ timeout: 20_000 });
+      await page.waitForURL(/\/user\//);
+      await ready(page, page.getByRole("heading", { level: 1 }));
+      await measure(page, "profile", width, found);
+
+      expect(found).toEqual([]);
+    });
+
+    test(`the sheets at ${width}px`, async ({ page }) => {
+      test.setTimeout(300_000);
+      await page.setViewportSize({ width, height: 852 });
+      await signInAsTestUser(page);
+      const found: string[] = [];
+      const dialog = page.getByRole("dialog").first();
+
+      const weight = page.getByRole("button", { name: /^Weight / }).first();
+      await page.goto("");
+      await ready(page, weight);
+      await weight.click();
+      await dialog.waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "weight-sheet", width, found);
+      // Closed through history: gone before the next goto, or they race.
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+
+      const bell = page.getByRole("button", { name: /^Notifications/ });
+      await page.goto("social");
+      await ready(page, bell);
+      await bell.click();
+      await dialog.waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(800);
+      await measure(page, "notifications-sheet", width, found);
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+
+      const share = page.getByRole("button", { name: "Share" }).first();
+      await page.goto("run/rich-r0");
+      await ready(page, share);
+      await share.click();
+      await dialog.waitFor({ timeout: 10_000 });
+      await page.waitForTimeout(1500);
+      await measure(page, "share-sheet", width, found);
+
+      expect(found).toEqual([]);
+    });
+
     test(`the detail screens at ${width}px`, async ({ page }) => {
       test.setTimeout(300_000);
       await page.setViewportSize({ width, height: 852 });
@@ -427,8 +506,13 @@ test.describe("large text", () => {
         await measure(page, screen, width, found);
       }
 
+      // The recap's first card, not the spinner in front of it: the page's
+      // own heading is there from the first frame.
       await page.goto("review");
-      await ready(page, page.getByRole("heading").first());
+      await ready(
+        page,
+        page.getByRole("heading", { name: "Your week", exact: true })
+      );
       await measure(page, "weekly-review", width, found);
 
       // A meal's edit sheet, from yesterday's diary. seed:rich logs meals

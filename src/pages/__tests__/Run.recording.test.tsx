@@ -1376,3 +1376,53 @@ describe("manual structured coaching through the real player", () => {
     expect(payload.runConfig.segments).toHaveLength(9);
   });
 });
+
+/* Home's and Train's In progress strip offer a run left unsaved, and the
+   finish screen holds a run only in memory until it is saved. */
+describe("a run picked up from the In progress strip", () => {
+  function openAt(url: string) {
+    return render(
+      <MemoryRouter initialEntries={[url]}>
+        <Routes>
+          <Route path="/run" element={<Run />} />
+          <Route path="/run-summary" element={<Summary />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+
+  it("carries on with the stored run without asking again", async () => {
+    const snapshot = saveInterruptedRun("paused");
+    h.gps.points = snapshot.points;
+    await act(async () => {
+      openAt("/run?resume=1");
+    });
+    expect(screen.queryByRole("button", { name: "Resume run" })).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Carry on" })
+    ).toBeInTheDocument();
+    expect(h.gpsCalls).toContain("appendPoints");
+  });
+
+  it("without the flag, still asks", async () => {
+    saveInterruptedRun("paused");
+    await act(async () => {
+      openAt("/run");
+    });
+    expect(
+      screen.getByRole("button", { name: "Resume run" })
+    ).toBeInTheDocument();
+  });
+
+  it("keeps a finished run stopped, so recovering it never runs on", async () => {
+    await resumeFromSnapshot("active");
+    expect(h.timer.isRunning).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+    expect(screen.getByTestId("finish-payload")).toBeInTheDocument();
+    expect(readStoredRun("recording-test")).toMatchObject({
+      phase: "paused",
+      isRunning: false,
+      accumulatedSeconds: 600,
+    });
+  });
+});

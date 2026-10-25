@@ -2682,6 +2682,47 @@ export function getExerciseById(id: string): Exercise | undefined {
   return EXERCISES_BY_ID.get(id);
 }
 
+/** Case, spaces, hyphens and underscores do not tell two names apart:
+ *  "Back Squat", "back-squat" and "back_squat" are one key. */
+const nameKey = (s: string) =>
+  s
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, " ");
+
+/**
+ * Other names a catalogue exercise is logged under: the SAME movement by a
+ * second name, never a variant. "Back Squat" is the catalogue's Barbell
+ * Squat, bar on the back. A front, goblet or box squat is its own exercise
+ * and must not borrow this one's drawing or its guide, which is why form
+ * art is otherwise keyed by exact id (`formArtwork.ts`). Keys are
+ * `nameKey`s; values are catalogue ids.
+ */
+const EXERCISE_ALIASES: ReadonlyMap<string, string> = new Map([
+  ["back squat", "squat"],
+  ["barbell back squat", "squat"],
+]);
+
+const EXERCISES_BY_NAME = new Map(EXERCISES.map((e) => [nameKey(e.name), e]));
+
+/**
+ * The catalogue exercise a logged id or name refers to: the exact id, else
+ * the catalogue name, else a listed alias. Undefined for a custom exercise
+ * the catalogue does not know. For what a logged row SHOWS (its picture);
+ * the engines keep reading exact ids through `getExerciseById`.
+ */
+export function findCatalogueExercise(idOrName: string): Exercise | undefined {
+  const exact = EXERCISES_BY_ID.get(idOrName);
+  if (exact) return exact;
+  const key = nameKey(idOrName);
+  if (!key) return undefined;
+  const alias = EXERCISE_ALIASES.get(key);
+  return (
+    EXERCISES_BY_NAME.get(key) ??
+    (alias ? EXERCISES_BY_ID.get(alias) : undefined)
+  );
+}
+
 /**
  * True iff the exercise is *intrinsically* bodyweight (Pull-Ups, Dips,
  * Push-Ups, etc. — `equipment === "Bodyweight"`).

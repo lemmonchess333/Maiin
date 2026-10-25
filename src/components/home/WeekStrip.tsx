@@ -11,7 +11,7 @@ import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import { cn } from "@/lib/utils";
 import { beforeStart } from "@/lib/startDay";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
-import { formatWeekdayDayMonth } from "@/utils/formatters";
+import { formatDayMonthLong, formatWeekdayDayMonth } from "@/utils/formatters";
 
 /**
  * What one day of the strip shows (DS3). The circle carries the day's
@@ -249,8 +249,16 @@ export default function WeekStrip({
     /* Seven equal columns, each circle as wide as its column allows up
        to 2.5rem. Fixed 44px buttons and rem-sized circles needed more
        than a 320px phone has once the text is larger, and pushed
-       Sunday off the screen. The 44px height stays the tap target. */
-    <div className="grid grid-cols-7 items-center justify-items-center">
+       Sunday off the screen. The 44px height stays the tap target.
+       Named as Food's strip is, so a screen reader hears seven days as
+       one week rather than seven loose buttons. */
+    <div
+      role="group"
+      aria-label={
+        days[0] ? `Week of ${formatDayMonthLong(days[0].date)}` : undefined
+      }
+      className="grid grid-cols-7 items-center justify-items-center"
+    >
       {days.map(function (day) {
         /* Every circle is the same size, deliberately: a larger today
            breaks the row's baselines on the one day a user looks at

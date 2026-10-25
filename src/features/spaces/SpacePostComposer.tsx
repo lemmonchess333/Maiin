@@ -21,91 +21,28 @@ import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
-import {
-  containsProfanity,
-  OBJECTIONABLE_POST_MESSAGE,
-} from "@/lib/profanityFilter";
+import { OBJECTIONABLE_POST_MESSAGE } from "@/lib/objectionableMessages";
+import { useWordFilter } from "@/hooks/useWordFilter";
 import { uploadSpacePostPhoto } from "@/lib/spacePhotoUpload";
 import { PhotoRefusedError } from "@/lib/photoScreen";
-import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
-import { liftPostLeadExerciseId } from "@/lib/liftPost";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import SustainedOfflineBanner from "@/components/ui/SustainedOfflineBanner";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { THEME } from "@/lib/theme";
-import { workoutTonnageKg } from "@/hooks/useWorkouts";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
 import RestrictedNotice from "@/components/social/RestrictedNotice";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
-import type { SpacePostActivitySnapshot } from "./spaceTypes";
 import { recentSessionDay, type RecentSession } from "./useRecentSessions";
+import { spacePostSnapshot } from "./spacePostSnapshot";
 import { distanceLabel } from "@/lib/runLabels";
-import { clipRouteEnds, DEFAULT_CLIP_METERS } from "@/lib/shareCard/polyline";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { IconButton } from "@/components/ui/IconButton";
 
 const TITLE_MAX = 120;
 const BODY_MAX = 4000;
-/** Route points cap for the snapshot — bounds the post doc size while
- *  keeping the RouteScene silhouette intact. */
-const ROUTE_POINTS_MAX = 40;
-
-function downsample<T>(points: T[], max: number): T[] {
-  if (points.length <= max) return points;
-  const step = (points.length - 1) / (max - 1);
-  return Array.from({ length: max }, (_, i) => points[Math.round(i * step)]);
-}
-
-function toSnapshot(
-  a: RecentSession,
-  keepRouteEnds: boolean
-): SpacePostActivitySnapshot {
-  if (a.kind === "run") {
-    const r = a.run;
-    // Any signed-in account can read a space post, so the route's ends are
-    // trimmed exactly as a run shared to the feed trims them: the privacy
-    // setting promises that the start and finish of a shared run are hidden.
-    const route =
-      r.routePreview && !keepRouteEnds
-        ? clipRouteEnds(r.routePreview, DEFAULT_CLIP_METERS)
-        : r.routePreview;
-    return {
-      type: "run",
-      distance: r.distance,
-      avgPace: r.avgPace,
-      duration: r.duration,
-      elevationGain: r.elevationGain,
-      ...(route && route.length > 1
-        ? { routePreview: downsample(route, ROUTE_POINTS_MAX) }
-        : {}),
-    };
-  }
-  const w = a.workout;
-  const categories = Array.from(
-    new Set(
-      w.exercises.map((ex) =>
-        inferMovementCategory(ex.exerciseName, ex.exerciseId)
-      )
-    )
-  );
-  const leadExerciseId = liftPostLeadExerciseId(
-    w.exercises.map((ex) => ({
-      exerciseId: ex.exerciseId,
-      name: ex.exerciseName,
-    }))
-  );
-  return {
-    type: "workout",
-    totalVolume: Math.round(workoutTonnageKg(w)),
-    exerciseCount: w.exercises.length,
-    muscleGroups: categories,
-    duration: w.durationMinutes * 60,
-    ...(leadExerciseId ? { leadExerciseId } : {}),
-  };
-}
 
 function attachableLabel(a: RecentSession, unit: DistanceUnit): string {
   if (a.kind === "run") {
@@ -167,12 +104,17 @@ export default function SpacePostComposer({
   const attached =
     picked ?? (attachLatest && !latestRemoved ? (sessions[0] ?? null) : null);
 
-  const profane = containsProfanity(title) || containsProfanity(body);
+  // The word filter loads as the sheet opens; posting waits for it.
+  const wordFilter = useWordFilter(open);
+  const profane =
+    !!wordFilter &&
+    (wordFilter.containsProfanity(title) || wordFilter.containsProfanity(body));
   // Space posts are public content: the rules refuse an unverified email
   // and a restricted account (S4e), so the action is held here and the
   // notice below says why.
   const canPost =
     body.trim().length > 0 &&
+    !!wordFilter &&
     !profane &&
     !busy &&
     !gate.needsVerification &&
@@ -224,7 +166,7 @@ export default function SpacePostComposer({
       body: body.trim(),
       ...(attached
         ? {
-            activity: toSnapshot(
+            activity: spacePostSnapshot(
               attached,
               profile?.hideSharedRouteEnds === false
             ),

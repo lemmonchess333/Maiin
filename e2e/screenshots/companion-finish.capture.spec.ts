@@ -235,7 +235,6 @@ for (const budget of [null, 30] as const) {
     await page
       .getByRole("button", { name: "Finish workout", exact: true })
       .click();
-    await page.getByRole("button", { name: "Finish", exact: true }).click();
     await expect(
       page.getByRole("region", { name: "Session completion" })
     ).toBeVisible();

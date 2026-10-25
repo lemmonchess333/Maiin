@@ -137,6 +137,19 @@ suite("firestore.rules — follow approval", () => {
       await seed(`users/${ALICE}`, { approveFollowers: true });
       await assertFails(followDirectly(db(BOB)));
     });
+
+    it("cannot claim to be an accepted request", async () => {
+      // `fromRequest` makes onFollowerCreated tell the follower they were
+      // accepted; only the person asked may write that.
+      await seed(`users/${ALICE}`, { approveFollowers: false });
+      await assertFails(
+        setDoc(doc(db(BOB), "followers", ALICE, "users", BOB), {
+          followedAt: Timestamp.now(),
+          fromRequest: true,
+        })
+      );
+      await assertSucceeds(followDirectly(db(BOB)));
+    });
   });
 
   describe("a request", () => {

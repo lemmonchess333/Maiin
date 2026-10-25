@@ -43,6 +43,7 @@ import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 import { useUserProfileData } from "@/hooks/useUserProfileData";
+import { useMenuButton } from "@/hooks/useMenuButton";
 import { profileWeek } from "@/lib/profileWeek";
 
 /**
@@ -166,7 +167,14 @@ function ProfileContent({
     adjustFollowing,
   } = useUserProfileData(uid, viewerUid);
   const week = useMemo(() => profileWeek(posts), [posts]);
-  const [showMenu, setShowMenu] = useState(false);
+  const {
+    open: menuOpen,
+    close: closeMenu,
+    choose: chooseFromMenu,
+    buttonProps: menuButtonProps,
+    menuProps,
+    itemProps: menuItemProps,
+  } = useMenuButton();
   const [showReport, setShowReport] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const { youBlocked, addBlocked, removeBlocked } = useBlockedUsers();
@@ -320,33 +328,34 @@ function ProfileContent({
               />
             )}
             <div className="relative">
+              {/* A menu button (`useMenuButton`): it says it opens a menu,
+                  the menu takes focus and arrow keys, and Escape puts
+                  focus back here. A tap outside closes it, on a backdrop
+                  that is not a control of its own, since a screen-sized
+                  "Close menu" button would be a stop for every reader
+                  and every Tab. */}
               <IconButton
                 aria-label="More options"
-                onClick={() => setShowMenu(!showMenu)}
+                {...menuButtonProps}
                 icon={<MoreHorizontal />}
                 className="bg-muted hover:bg-muted/80 text-muted-foreground"
               />
-              {showMenu && (
+              {menuOpen && (
                 <>
                   <div
                     className="fixed inset-0 z-10"
-                    role="button"
-                    tabIndex={0}
-                    aria-label="Close menu"
-                    onClick={() => setShowMenu(false)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ")
-                        setShowMenu(false);
-                    }}
+                    aria-hidden="true"
+                    onClick={closeMenu}
                   />
-                  <div className="absolute right-0 top-full mt-1 z-20 w-44 bg-card rounded-xl border border-border/50 shadow-xl overflow-hidden">
+                  <div
+                    {...menuProps}
+                    className="absolute right-0 top-full mt-1 z-20 w-44 bg-card rounded-xl border border-border/50 shadow-xl overflow-hidden"
+                  >
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowMenu(false);
-                        setShowReport(true);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                      {...menuItemProps}
+                      onClick={chooseFromMenu(() => setShowReport(true))}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted focus-visible:bg-muted focus-visible:outline-none transition-colors"
                     >
                       <Flag className="size-4" />
                       Report user
@@ -354,11 +363,11 @@ function ProfileContent({
                     {!youBlockedThem && (
                       <button
                         type="button"
-                        onClick={() => {
-                          setShowMenu(false);
-                          setShowBlockConfirm(true);
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive-strong hover:bg-destructive/10 transition-colors"
+                        {...menuItemProps}
+                        onClick={chooseFromMenu(() =>
+                          setShowBlockConfirm(true)
+                        )}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive-strong hover:bg-destructive/10 focus-visible:bg-destructive/10 focus-visible:outline-none transition-colors"
                       >
                         <Ban className="size-4" />
                         Block user

@@ -181,8 +181,12 @@ export default function WeightStepsTiles({
        stretch to match the water tile beside it. DS3: both tiles sit on
        the card surface, like the water tile, rather than the darker
        muted tile. Under 9em of tile (larger text on the phone) the
-       icons give their room to the labels, which ran off the tile. */
+       icons give their room to the labels, which ran off the tile.
+       Each tile has an unseen heading, so Home's cards can be stepped
+       through by heading: the visible label sits inside the tile's
+       button, where a heading is no heading. */
     <div className="@container grid grid-cols-1 gap-2 h-full">
+      <h2 className="sr-only">Weight</h2>
       <button
         type="button"
         onClick={function () {
@@ -260,6 +264,7 @@ export default function WeightStepsTiles({
           {syncStatus ?? saveAnnouncement}
         </span>
       </button>
+      {stepsTileEnabled && <h2 className="sr-only">Steps</h2>}
       {stepsTileEnabled &&
         (native ? (
           <button

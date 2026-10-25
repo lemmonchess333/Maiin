@@ -132,7 +132,48 @@ describe("NotificationsSheet", () => {
     expect(navigateMock).toHaveBeenCalledWith("/user/u-mia");
   });
 
-  it("tapping a row deep-links to the actor's profile and closes the sheet", () => {
+  it("an accepted follow request names who said yes and opens their profile", () => {
+    renderSheet([
+      item({
+        id: "y",
+        type: "follow_accepted",
+        fromUserId: "u-robin",
+        message: undefined,
+        fromName: "Robin",
+      }),
+    ]);
+    fireEvent.click(screen.getByText("Robin accepted your follow request"));
+    expect(navigateMock).toHaveBeenCalledWith("/user/u-robin");
+  });
+
+  it("props open the post, carrying the actor for a post that is gone", () => {
+    const { onOpenChange } = renderSheet([
+      item({ id: "k", activityId: "act-1", message: "Alex gave you props" }),
+    ]);
+    fireEvent.click(screen.getByText("Alex gave you props"));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(navigateMock).toHaveBeenCalledWith("/activity/act-1", {
+      state: { fallbackUserId: "u-actor" },
+    });
+  });
+
+  it("a comment opens the post with its comments open", () => {
+    renderSheet([
+      item({
+        id: "c",
+        type: "comment",
+        activityId: "act-2",
+        fromUserId: "u-sam",
+        message: "Sam commented on your activity",
+      }),
+    ]);
+    fireEvent.click(screen.getByText("Sam commented on your activity"));
+    expect(navigateMock).toHaveBeenCalledWith("/activity/act-2?comments=1", {
+      state: { fallbackUserId: "u-sam" },
+    });
+  });
+
+  it("props without a post id still open the actor's profile", () => {
     const { onOpenChange } = renderSheet([
       item({ id: "a", fromUserId: "u-actor", message: "Alex gave you props" }),
     ]);

@@ -325,3 +325,32 @@ describe("RunDetail — the route replay", () => {
     }
   });
 });
+
+/* The basemap draws the theme on screen. The profile here says light
+   (`darkMode: false`) while the page renders dark, which is what a capture
+   of the dark theme does, and what any other writer of the `dark` class
+   would do: read from the profile, the map drew the light basemap inside a
+   dark page. */
+describe("RunDetail — the map follows the theme on screen", () => {
+  afterEach(() => document.documentElement.classList.remove("dark"));
+
+  it("draws the dark basemap in a dark page whatever the profile says", () => {
+    document.documentElement.classList.add("dark");
+    h.run = savedRun();
+    renderDetail();
+    expect(h.mapProps.at(-1)?.darkMode).toBe(true);
+  });
+
+  it("follows the theme when it flips", async () => {
+    h.run = savedRun();
+    renderDetail();
+    expect(h.mapProps.at(-1)?.darkMode).toBe(false);
+    await act(async () => {
+      document.documentElement.classList.add("dark");
+      // The class is watched by a MutationObserver, which reports in a
+      // microtask.
+      await Promise.resolve();
+    });
+    expect(h.mapProps.at(-1)?.darkMode).toBe(true);
+  });
+});

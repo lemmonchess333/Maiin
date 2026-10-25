@@ -125,6 +125,27 @@ describe("ExperienceSuggestionCard", () => {
     ).toBeInTheDocument();
   });
 
+  /* It sits above the day's session, so it is a title, one line and its
+     actions; the explanation, the evidence and the criteria open under
+     Read more, and the session stays on the first screen. */
+  it("says itself in a title and one line, with the rest under Read more", () => {
+    renderCard(stalledWeek(), { experience: "beginner" });
+    expect(
+      screen.getByText(
+        "Your main lifts have stopped moving up from session to session."
+      )
+    ).toBeVisible();
+    const more = screen.getByText("Read more").closest("details")!;
+    expect(more).not.toHaveAttribute("open");
+    expect(more).toContainElement(screen.getByText("Bench Press"));
+    expect(more).toContainElement(
+      screen.getByText(/Advanced is never suggested automatically/i)
+    );
+    expect(more).not.toContainElement(
+      screen.getByRole("button", { name: "Review level" })
+    );
+  });
+
   it("the deload counter-explanation is ruled out IN the copy", () => {
     renderCard(stalledWeek(), { experience: "beginner" });
     expect(

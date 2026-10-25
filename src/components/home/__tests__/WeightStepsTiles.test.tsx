@@ -28,6 +28,25 @@ const setNative = (v: boolean) =>
   (isNativePlatform as unknown as ReturnType<typeof vi.fn>).mockReturnValue(v);
 
 describe("WeightStepsTiles", function () {
+  it("heads each tile, outside its button, so Home steps through them by heading", function () {
+    setNative(true);
+    render(
+      <WeightStepsTiles
+        lastWeight="75.4"
+        weightUnit="kg"
+        onLogWeight={vi.fn()}
+        lastWeightDate="Logged today"
+        stepsStatus="unprompted"
+      />
+    );
+    for (const name of ["Weight", "Steps"]) {
+      const heading = screen.getByRole("heading", { level: 2, name });
+      // A heading inside a button is read as the button's name, not as
+      // a heading, so it has to sit beside the tile's control.
+      expect(heading.closest("button")).toBeNull();
+    }
+  });
+
   it("shows the raw weight number when hideNumber is off (default)", function () {
     render(
       <WeightStepsTiles
@@ -115,7 +134,7 @@ describe("WeightStepsTiles", function () {
         onConnectSteps={onConnectSteps}
       />
     );
-    expect(screen.getByText("Steps")).toBeInTheDocument();
+    expect(screen.getByText("Steps", { selector: "p" })).toBeInTheDocument();
     expect(screen.getByText("Connect Health")).toBeInTheDocument();
     // Nothing to connect on the web, so the only control is Weight's.
     expect(screen.getAllByRole("button")).toHaveLength(1);

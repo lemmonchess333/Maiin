@@ -474,22 +474,24 @@ export default function PerformanceTab({
 
       <PerformanceWeekBreakdown breakdown={weekBreakdown} />
 
-      {/* Disclosure — the same "Details" + chevron the Home energy card
-          uses; open/closed is carried by the chevron and aria-expanded. */}
+      {/* Disclosure: a row at the start edge, as the finish screen's
+          "Session details" is, naming what it opens. Centred under the
+          cards it read as a caption of the card above. Open or closed is
+          carried by the chevron and aria-expanded. */}
       <button
         type="button"
         onClick={() => setShowTechnical((v) => !v)}
         aria-expanded={showTechnical}
         className={cn(
-          "flex items-center gap-1 text-xs text-muted-foreground",
-          "hover:text-foreground transition-colors w-full justify-center min-h-11"
+          "flex w-full items-center justify-between gap-2 min-h-11 text-sm font-semibold text-foreground",
+          "hover:text-lifting-strong transition-colors"
         )}
       >
-        Details
+        Score details
         <ChevronDown
           aria-hidden="true"
           className={cn(
-            "size-3.5 transition-transform duration-200",
+            "size-4 text-muted-foreground transition-transform duration-200",
             showTechnical && "rotate-180"
           )}
         />

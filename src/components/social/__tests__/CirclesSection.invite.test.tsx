@@ -7,7 +7,16 @@
  *     circles keep the focus button; a non-owner solo member (no
  *     inviteCode) falls back to the focus button.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+  beforeAll,
+} from "vitest";
+import { loadWordFilter } from "@/lib/wordFilter";
 import {
   render,
   screen,
@@ -348,4 +357,10 @@ describe("a full circle stops offering an invite", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText(/Nobody else can join/)).toBeNull();
   });
+});
+
+/* The word filter as a session that has used it holds it: loaded, so the
+   sheet draws on its first render (useWordFilter covers the wait). */
+beforeAll(async () => {
+  await loadWordFilter();
 });

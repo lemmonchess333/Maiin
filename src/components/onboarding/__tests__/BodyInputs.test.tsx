@@ -92,6 +92,26 @@ describe("body inputs before the user has answered", () => {
     expect(screen.getByLabelText("Height (cm)")).toHaveValue("");
   });
 
+  /* Empty, but not a blank box: each shows the figure the dial points at
+     as its placeholder, and says its unit under it. */
+  it("shows the dial's figure as a placeholder and each box's unit", () => {
+    setup(false);
+    expect(screen.getByLabelText("Weight (lb)")).toHaveAttribute(
+      "placeholder",
+      "180.0"
+    );
+    expect(screen.getByLabelText("Height (cm)")).toHaveAttribute(
+      "placeholder",
+      "172.7"
+    );
+    expect(
+      screen.getByLabelText("Weight (lb)").closest("label")?.nextSibling
+    ).toHaveTextContent("lb");
+    expect(
+      screen.getByLabelText("Height (cm)").closest("label")?.nextSibling
+    ).toHaveTextContent("cm");
+  });
+
   it("reports not-valid, so the caller cannot advance", () => {
     const { valid } = setup(false);
     expect(valid).toHaveBeenCalledWith(false);

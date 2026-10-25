@@ -32,11 +32,18 @@
  * content rows appear only under the richer local chain. Measured both
  * ways on 2026-09-18: zero offenders under `seed:e2e`, and under
  * `seed:e2e + seed:rich` the only hit across all sixteen routes was the
- * FoodRow construct above.
+ * FoodRow construct above. axe opens the sheets, in
+ * `screenshots/axe.capture.spec.ts`.
+ *
+ * The Weekly review is checked on its own, as `seed:review`'s account:
+ * the cold-start user has no week to review, so opening `/review` as it
+ * checked the spinner and then the "Your first review" placeholder, never
+ * a review. The check waits for the first card.
  */
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { signInAsTestUser } from "./helpers/auth";
 import { emulatorActive } from "./helpers/emulator";
+import { REVIEW_TEST_USER } from "./helpers/reviewUser";
 
 test.use({
   viewport: { width: 393, height: 852 },
@@ -52,7 +59,6 @@ const ROUTES = [
   "history",
   "program",
   "social",
-  "review",
   "upgrade",
   "settings",
   "settings/profile",
@@ -66,6 +72,79 @@ const ROUTES = [
   "settings/subscription",
   "settings/data",
 ] as const;
+
+/** The invariants, on the page as it stands. */
+function invariantOffences(
+  page: Page
+): Promise<{ kind: string; detail: string }[]> {
+  return page.evaluate(() => {
+    const out: { kind: string; detail: string }[] = [];
+    const describe = (el: Element) => {
+      const text = (el.textContent ?? "").trim().replace(/\s+/g, " ");
+      const aria = (el.getAttribute("aria-label") ?? "").trim();
+      return `<${el.tagName.toLowerCase()}> text=${JSON.stringify(
+        text.slice(0, 40)
+      )} aria=${JSON.stringify(aria)}`;
+    };
+
+    for (const button of Array.from(document.querySelectorAll("button"))) {
+      const named =
+        (button.textContent ?? "").trim() ||
+        (button.getAttribute("aria-label") ?? "").trim() ||
+        (button.getAttribute("title") ?? "").trim();
+      if (!named)
+        out.push({
+          kind: "button with no accessible name",
+          detail: describe(button),
+        });
+    }
+
+    /* The weakened rule (see the header): a non-button acting as one
+       must be keyboard-reachable and named. */
+    for (const fake of Array.from(
+      document.querySelectorAll('[role="button"]:not(button)')
+    )) {
+      const tabbable = fake.getAttribute("tabindex");
+      const named =
+        (fake.getAttribute("aria-label") ?? "").trim() ||
+        (fake.textContent ?? "").trim();
+      if (tabbable === null || Number(tabbable) < 0)
+        out.push({
+          kind: 'role="button" that Tab cannot reach',
+          detail: describe(fake),
+        });
+      if (!named)
+        out.push({
+          kind: 'role="button" with no accessible name',
+          detail: describe(fake),
+        });
+    }
+
+    for (const img of Array.from(document.querySelectorAll("img:not([alt])"))) {
+      out.push({
+        kind: "img with no alt attribute",
+        detail: (img as HTMLImageElement).src.slice(-60),
+      });
+    }
+
+    for (const link of Array.from(document.querySelectorAll("a"))) {
+      const named =
+        (link.textContent ?? "").trim() ||
+        (link.getAttribute("aria-label") ?? "").trim();
+      if (!named)
+        out.push({
+          kind: "link with no accessible name",
+          detail: `href=${link.getAttribute("href")}`,
+        });
+    }
+
+    const h1s = document.querySelectorAll("h1").length;
+    if (h1s !== 1)
+      out.push({ kind: "heading contract", detail: `${h1s} h1 elements` });
+
+    return out;
+  });
+}
 
 interface Offence {
   route: string;
@@ -93,75 +172,7 @@ test.describe("authenticated a11y invariants", () => {
       // so it never fires and the whole sweep times out.
       await page.waitForTimeout(1500);
 
-      const found = await page.evaluate(() => {
-        const out: { kind: string; detail: string }[] = [];
-        const describe = (el: Element) => {
-          const text = (el.textContent ?? "").trim().replace(/\s+/g, " ");
-          const aria = (el.getAttribute("aria-label") ?? "").trim();
-          return `<${el.tagName.toLowerCase()}> text=${JSON.stringify(
-            text.slice(0, 40)
-          )} aria=${JSON.stringify(aria)}`;
-        };
-
-        for (const button of Array.from(document.querySelectorAll("button"))) {
-          const named =
-            (button.textContent ?? "").trim() ||
-            (button.getAttribute("aria-label") ?? "").trim() ||
-            (button.getAttribute("title") ?? "").trim();
-          if (!named)
-            out.push({
-              kind: "button with no accessible name",
-              detail: describe(button),
-            });
-        }
-
-        /* The weakened rule (see the header): a non-button acting as one
-           must be keyboard-reachable and named. */
-        for (const fake of Array.from(
-          document.querySelectorAll('[role="button"]:not(button)')
-        )) {
-          const tabbable = fake.getAttribute("tabindex");
-          const named =
-            (fake.getAttribute("aria-label") ?? "").trim() ||
-            (fake.textContent ?? "").trim();
-          if (tabbable === null || Number(tabbable) < 0)
-            out.push({
-              kind: 'role="button" that Tab cannot reach',
-              detail: describe(fake),
-            });
-          if (!named)
-            out.push({
-              kind: 'role="button" with no accessible name',
-              detail: describe(fake),
-            });
-        }
-
-        for (const img of Array.from(
-          document.querySelectorAll("img:not([alt])")
-        )) {
-          out.push({
-            kind: "img with no alt attribute",
-            detail: (img as HTMLImageElement).src.slice(-60),
-          });
-        }
-
-        for (const link of Array.from(document.querySelectorAll("a"))) {
-          const named =
-            (link.textContent ?? "").trim() ||
-            (link.getAttribute("aria-label") ?? "").trim();
-          if (!named)
-            out.push({
-              kind: "link with no accessible name",
-              detail: `href=${link.getAttribute("href")}`,
-            });
-        }
-
-        const h1s = document.querySelectorAll("h1").length;
-        if (h1s !== 1)
-          out.push({ kind: "heading contract", detail: `${h1s} h1 elements` });
-
-        return out;
-      });
+      const found = await invariantOffences(page);
 
       for (const f of found) offences.push({ route: route || "/", ...f });
     }
@@ -173,6 +184,20 @@ test.describe("authenticated a11y invariants", () => {
         "IconButton primitive, which requires one at compile time); a " +
         'non-button acting as a button needs tabIndex="0" and a name; every ' +
         "page renders exactly one h1."
+    ).toEqual([]);
+  });
+
+  test("the Weekly review holds them too", async ({ page }) => {
+    await signInAsTestUser(page, REVIEW_TEST_USER);
+    await page.goto("review");
+    // The first card, not the spinner in front of it.
+    await page
+      .getByRole("heading", { name: "Your week", exact: true })
+      .waitFor({ timeout: 20_000 });
+    const found = await invariantOffences(page);
+    expect(
+      found.map((o) => `review: ${o.kind} — ${o.detail}`),
+      "The Weekly review must hold the same invariants as every other route."
     ).toEqual([]);
   });
 

@@ -18,12 +18,15 @@ import {
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
 import { cardClasses } from "@/components/ui/cardClasses";
+import InProgressStrip from "@/components/session/InProgressStrip";
+import type { SessionInProgress } from "@/lib/sessionsInFlight";
 
 /**
  * Today's run, as Home's lead card (DS3). Twin of LiftCTACard: Start
  * begins the run, straight into finding the GPS (`startOnArrival`),
  * anywhere else on the card opens it in Train, and a finished or skipped
- * run says so instead of offering Start. The card
+ * run says so instead of offering Start, and a run under way offers
+ * Resume in its place. The card
  * shows the session and its dose; why this run matters lives in Train's
  * day details ("Why this run"), per the 2026-09-09 daily-logging note.
  * A runner stands at the right, as the lift card draws its lead lift:
@@ -38,6 +41,7 @@ export default function RunCTACard({
   completed,
   dose,
   unit,
+  inProgress = null,
 }: {
   todayRun: ScheduledRunDay | null;
   /** A long run that finishes at race pace says so in its name
@@ -54,6 +58,8 @@ export default function RunCTACard({
   dose?: string | null;
   /** The reader's unit: a long run is named in it. */
   unit: DistanceUnit;
+  /** A run is under way on this phone (`todaySession`). */
+  inProgress?: SessionInProgress | null;
 }) {
   const tmpl = todayRun
     ? RUN_TEMPLATES.find(function (t) {
@@ -132,8 +138,9 @@ export default function RunCTACard({
         <p className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground text-balance">
           <InlineNumerals>{runLabel}</InlineNumerals>
         </p>
+        {/* Foreground on the running wash, where the grey misses AA. */}
         {tmpl && dose && (
-          <p className="mt-2 text-sm font-medium text-muted-foreground">
+          <p className="mt-2 text-sm font-medium text-foreground">
             <InlineNumerals>{dose}</InlineNumerals>
           </p>
         )}
@@ -141,7 +148,16 @@ export default function RunCTACard({
       {/* Taps pass through the action row to the preview; only Start takes
           its own (see LiftCTACard). */}
       <div className="pointer-events-none relative z-10 px-5 pb-5 pt-4">
-        {startable ? (
+        {startable && inProgress ? (
+          <InProgressStrip
+            session={inProgress}
+            onCard
+            onResume={function () {
+              trackHomeEvent("home_card_tapped", { card: "today_run" });
+              navigate(inProgress.resumeTarget);
+            }}
+          />
+        ) : startable ? (
           <Button
             variant="sport"
             size="lg"

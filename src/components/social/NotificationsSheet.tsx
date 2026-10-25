@@ -3,6 +3,7 @@ import {
   Heart,
   MessageCircle,
   UserPlus,
+  UserCheck,
   Trophy,
   Bell,
   Users,
@@ -20,14 +21,17 @@ import type {
   NotificationItem,
   NotificationType,
 } from "@/hooks/useNotifications";
+import { notificationTarget } from "@/lib/notificationTarget";
 
 /**
  * The in-app notification tray (kudos / comment / follow / milestone).
  * Presentational — the subscription + unread/last-seen logic lives in
  * `useNotifications`, owned by the Social page, so this is testable with
- * injected items. Tapping a row deep-links to the actor's profile
- * (`/user/{fromUserId}`) — there is no single-activity route, and the actor
- * is the useful next action (engage back / follow them).
+ * injected items.
+ *
+ * Tapping a row opens what it is about (`notificationTarget`): props and
+ * a comment open the post, a Space row the Space, the rest the profile of
+ * whoever acted.
  */
 
 const TYPE_ICON: Record<
@@ -38,6 +42,7 @@ const TYPE_ICON: Record<
   comment: { Icon: MessageCircle, color: THEME.brand },
   follow: { Icon: UserPlus, color: THEME.semantic.positive },
   follow_request: { Icon: UserPlus, color: THEME.semantic.positive },
+  follow_accepted: { Icon: UserCheck, color: THEME.semantic.positive },
   challenge_milestone: { Icon: Trophy, color: THEME.semantic.nutrition },
   circle_focus_backed: { Icon: Users, color: THEME.brand },
   circle_milestone: { Icon: Trophy, color: THEME.semantic.positive },
@@ -62,6 +67,8 @@ function fallbackMessage(n: NotificationItem): string {
       return `${who} started following you`;
     case "follow_request":
       return `${who} asked to follow you`;
+    case "follow_accepted":
+      return `${who} accepted your follow request`;
     case "challenge_milestone":
       return n.message || "You hit a challenge milestone";
     case "circle_focus_backed":
@@ -83,12 +90,6 @@ function fallbackMessage(n: NotificationItem): string {
     default:
       return who;
   }
-}
-
-/** Backing is anonymous in the tray — a profile deep-link would name
- *  the backer, so the row stays a non-navigating acknowledgement. */
-function navigatesToActor(type: NotificationType): boolean {
-  return type !== "circle_focus_backed";
 }
 
 export default function NotificationsSheet({
@@ -149,16 +150,11 @@ export default function NotificationsSheet({
                     onClick={() => {
                       haptic();
                       onOpenChange(false);
-                      // SOC-P2g: space engagement rows go to the SPACE —
-                      // that's where the post (and the reply action) lives.
-                      if (
-                        (n.type === "space_post_like" ||
-                          n.type === "space_post_comment") &&
-                        n.spaceId
-                      ) {
-                        navigate(`/space/${n.spaceId}`);
-                      } else if (n.fromUserId && navigatesToActor(n.type)) {
-                        navigate(`/user/${n.fromUserId}`);
+                      const target = notificationTarget(n);
+                      if (target?.state) {
+                        navigate(target.to, { state: target.state });
+                      } else if (target) {
+                        navigate(target.to);
                       }
                     }}
                     className="w-full flex items-center gap-3 py-3 text-left min-h-[44px] active:scale-[0.99] transition-transform"

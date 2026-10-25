@@ -49,6 +49,14 @@
  * isolation mechanism — same posture as `offlineQueue.ts`: signing out
  * does NOT wipe, because another account's photos are simply under
  * another prefix and unreachable.
+ *
+ * THE THUMBNAIL. The diary row draws a photo as a 52 px square, and a
+ * 1280 px JPEG read back as a data URL is a few hundred KB of string per
+ * row for it. So each save also writes `{mealId}.thumb.jpg` beside the
+ * photo, about 160 px, and the row reads that. It is the same photo kept
+ * the same way: on the device only, listed with its photo as one meal,
+ * deleted with it and swept with it at the same age. A photo saved before
+ * thumbnails were has none, and the row reads the photo itself.
  */
 
 import { Directory, Filesystem } from "@capacitor/filesystem";
@@ -62,6 +70,11 @@ const ROOT = "food-photos";
  *  implementation this module replaces. */
 export const MAX_EDGE_PX = 1280;
 export const JPEG_QUALITY = 0.8;
+
+/** The thumbnail's SHORT edge: the diary row crops the photo to a 52 pt
+ *  square, so this is what that square needs at 3x. */
+export const THUMB_EDGE_PX = 160;
+const THUMB_SUFFIX = ".thumb.jpg";
 
 /**
  * Age cap. NOT a guess about what users care about: `Food.tsx`'s
@@ -94,16 +107,38 @@ function pathFor(uid: string, mealId: string): string {
   return `${dirFor(uid)}/${mealId}.jpg`;
 }
 
-/** `mealId.jpg` → `mealId`; anything else → null. */
+function thumbPathFor(uid: string, mealId: string): string {
+  return `${dirFor(uid)}/${mealId}${THUMB_SUFFIX}`;
+}
+
+/** `mealId.jpg` → `mealId`, and its thumbnail `mealId.thumb.jpg` → the
+ *  same `mealId`; anything else → null. */
 export function mealIdFromFileName(name: string): string | null {
-  const m = /^(.+)\.jpg$/.exec(name);
+  const m = /^(.+?)(?:\.thumb)?\.jpg$/.exec(name);
   return m ? m[1] : null;
 }
 
 /**
- * Decode a base64 JPEG, downscale if the longest edge exceeds
- * MAX_EDGE_PX, re-encode, and hand back bare base64 (no data: prefix) —
- * the shape `Filesystem.writeFile` wants when no `encoding` is given.
+ * How far to scale a `width` x `height` image: to fit `edge` on its long
+ * side (the stored photo) or to bring its short side down to `edge` (the
+ * thumbnail, which the row crops to a square). Never up.
+ */
+export function downscaleFactor(
+  width: number,
+  height: number,
+  edge: number,
+  side: "long" | "short"
+): number {
+  const measured =
+    side === "long" ? Math.max(width, height) : Math.min(width, height);
+  return measured > 0 ? Math.min(1, edge / measured) : 1;
+}
+
+/**
+ * Decode a base64 JPEG once; `encodeJpeg` then downscales it (the photo to
+ * MAX_EDGE_PX, the thumbnail to THUMB_EDGE_PX) and hands back bare base64
+ * (no data: prefix) — the shape `Filesystem.writeFile` wants when no
+ * `encoding` is given.
  *
  * Uses `<img>` + canvas rather than OffscreenCanvas/createImageBitmap
  * for WKWebView compatibility. Carried over from `foodPhotoUpload.ts`;
@@ -111,21 +146,23 @@ export function mealIdFromFileName(name: string): string | null {
  * because the Filesystem plugin takes base64 uniformly on both platforms
  * while Blob support differs.
  */
-export async function toStorableJpeg(base64Jpeg: string): Promise<string> {
+async function decodeJpeg(base64Jpeg: string): Promise<HTMLImageElement> {
   const img = new Image();
   await new Promise<void>((resolve, reject) => {
     img.onload = () => resolve();
     img.onerror = () => reject(new Error("photo decode failed"));
     img.src = `data:image/jpeg;base64,${base64Jpeg}`;
   });
+  if (!img.naturalWidth || !img.naturalHeight)
+    throw new Error("photo has no dimensions");
+  return img;
+}
 
-  const longest = Math.max(img.naturalWidth, img.naturalHeight);
-  if (!longest) throw new Error("photo has no dimensions");
-  const scale = Math.min(1, MAX_EDGE_PX / longest);
-
+/** `img` scaled by `scale`, as bare base64 JPEG. */
+function encodeJpeg(img: HTMLImageElement, scale: number): string {
   const canvas = document.createElement("canvas");
-  canvas.width = Math.round(img.naturalWidth * scale);
-  canvas.height = Math.round(img.naturalHeight * scale);
+  canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("canvas 2d unavailable");
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -144,39 +181,78 @@ export async function toStorableJpeg(base64Jpeg: string): Promise<string> {
  * Fire this AFTER the meal doc write. The meal id is minted client-side
  * (`doc(collection(...))` in FoodAnalyzer), so the key is known before
  * the write lands and needs no reconciliation.
+ *
+ * The thumbnail is written after the photo, from the same decode. It is
+ * an optimisation of the row, not part of the photo: if it fails, the
+ * save still counts and the row reads the photo.
  */
 export async function saveFoodPhoto(
   uid: string,
   mealId: string,
   base64Jpeg: string
 ): Promise<boolean> {
+  let img: HTMLImageElement;
   try {
-    const data = await toStorableJpeg(base64Jpeg);
+    img = await decodeJpeg(base64Jpeg);
     await Filesystem.writeFile({
       path: pathFor(uid, mealId),
-      data,
+      data: encodeJpeg(
+        img,
+        downscaleFactor(
+          img.naturalWidth,
+          img.naturalHeight,
+          MAX_EDGE_PX,
+          "long"
+        )
+      ),
       directory: Directory.LibraryNoCloud,
       recursive: true,
     });
-    return true;
   } catch (err) {
     logger.warn("[foodPhoto] local save skipped:", err);
     return false;
   }
+  try {
+    await Filesystem.writeFile({
+      path: thumbPathFor(uid, mealId),
+      data: encodeJpeg(
+        img,
+        downscaleFactor(
+          img.naturalWidth,
+          img.naturalHeight,
+          THUMB_EDGE_PX,
+          "short"
+        )
+      ),
+      directory: Directory.LibraryNoCloud,
+      recursive: true,
+    });
+  } catch (err) {
+    logger.warn("[foodPhoto] thumbnail skipped:", err);
+  }
+  return true;
 }
 
 /**
- * Read one photo back as a `data:image/jpeg;base64,…` URL, or null when
- * there is no photo for this meal (the common case — most logs have no
- * photo at all) or the read fails.
+ * What the diary row draws for a meal, as a `data:image/jpeg;base64,…`
+ * URL: its thumbnail, or for a photo saved before thumbnails were, the
+ * photo itself. Null when there is neither (the common case — most logs
+ * have no photo at all) or the read fails.
  */
 export async function readFoodPhotoSrc(
   uid: string,
   mealId: string
 ): Promise<string | null> {
+  return (
+    (await readJpegSrc(thumbPathFor(uid, mealId))) ??
+    (await readJpegSrc(pathFor(uid, mealId)))
+  );
+}
+
+async function readJpegSrc(path: string): Promise<string | null> {
   try {
     const { data } = await Filesystem.readFile({
-      path: pathFor(uid, mealId),
+      path,
       directory: Directory.LibraryNoCloud,
     });
     /* `data` is typed `string | Blob` because readFile CAN yield a Blob
@@ -194,13 +270,15 @@ export async function readFoodPhotoSrc(
   }
 }
 
-/** One stored photo, as the sweep sees it. */
+/** One stored photo, as the sweep sees it: the photo and its thumbnail
+ *  together, or whichever of the two is there. */
 export interface StoredPhoto {
   mealId: string;
   /** Last-modified epoch ms — capture time, since blobs are written once
    *  and never rewritten. If that ever stops being true, eviction
-   *  ordering silently becomes wrong. */
+   *  ordering silently becomes wrong. With both files, the older. */
   mtime: number;
+  /** Both files' bytes, so the budget counts the thumbnail too. */
   bytes: number;
 }
 
@@ -212,7 +290,7 @@ export async function listFoodPhotos(uid: string): Promise<StoredPhoto[]> {
       path: dirFor(uid),
       directory: Directory.LibraryNoCloud,
     });
-    const out: StoredPhoto[] = [];
+    const byMeal = new Map<string, StoredPhoto>();
     for (const f of files) {
       if (f.type === "directory") continue;
       const mealId = mealIdFromFileName(f.name);
@@ -223,25 +301,34 @@ export async function listFoodPhotos(uid: string): Promise<StoredPhoto[]> {
          which runs ~37% high. That makes the byte budget merely stricter
          on web, never looser, so it is left uncorrected — a conversion
          factor here would be a second thing to keep true. */
-      out.push({ mealId, mtime: f.mtime, bytes: f.size });
+      const held = byMeal.get(mealId);
+      if (held) {
+        held.mtime = Math.min(held.mtime, f.mtime);
+        held.bytes += f.size;
+      } else {
+        byMeal.set(mealId, { mealId, mtime: f.mtime, bytes: f.size });
+      }
     }
-    return out;
+    return [...byMeal.values()];
   } catch {
     return [];
   }
 }
 
+/** Delete a meal's photo and its thumbnail. */
 export async function deleteFoodPhoto(
   uid: string,
   mealId: string
 ): Promise<void> {
-  try {
-    await Filesystem.deleteFile({
-      path: pathFor(uid, mealId),
-      directory: Directory.LibraryNoCloud,
-    });
-  } catch {
-    // Already gone is success.
+  for (const path of [pathFor(uid, mealId), thumbPathFor(uid, mealId)]) {
+    try {
+      await Filesystem.deleteFile({
+        path,
+        directory: Directory.LibraryNoCloud,
+      });
+    } catch {
+      // Already gone is success.
+    }
   }
 }
 

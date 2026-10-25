@@ -10,6 +10,57 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Names that follow you, and notices that open the post (survey items 57 and 58, 2026-10-24)
+
+A new public name or photo is carried to the person's recent posts,
+comments, memberships and challenge places by
+`onPublicProfileIdentityChanged`, which reads activity comments through a
+new `items` (authorId, text) collection-group index. Accepting a follow
+request tells the person who asked; a props or comment notice opens the
+post. The unit and emulator suites cover each; only a deploy and real
+accounts can confirm them in production.
+
+- [ ] **Rename, then look from another account.** After Deploy production
+      has shipped (the Firestore step waits for the new index to be READY;
+      `onPublicProfileIdentityChanged` is on the deployed-source list), on
+      account A change the name and the photo in Settings → Profile.
+      Passing, from account B within a minute: A's recent post in the feed,
+      A's comment on B's post, A's Space post and comment, A in a shared
+      Circle and on a challenge leaderboard all show the new name and
+      photo. The function's log line `onPublicProfileIdentityChanged.resynced`
+      shows the counts and no name. A post older than 90 days keeps the old
+      name, by design.
+- [ ] **Accept a request on one phone, read it on the other.** B asks to
+      follow A (A approves followers); A accepts from the tray. Passing: B's
+      tray shows "A accepted your follow request" and the row opens A's
+      profile, which now shows A's followers-only sessions.
+- [ ] **Open a props and a comment notice.** B gives props on and comments
+      on A's session. Passing, on A: the props row opens the session, the
+      comment row opens it with the comments showing. Delete the session
+      and tap the comment row again: it opens B's profile.
+
+## Cold start: what loads before the first paint (step 8, 2026-10-24)
+
+Login paints without framer, Home without its closed sheets, the composers
+without the word lists; a returning device starts Firestore and the
+signed-in shell with the app's own code; `dist/index.html` preloads the two
+first-paint fonts; and the diary row reads a 160 px thumbnail of a meal
+photo instead of the 1280 px photo. The dist checks and unit tests cover
+what ships; these need a browser's Network panel or an iPhone.
+
+- [ ] **The meal photo thumbnail, on an iPhone.** Scan a meal: the diary
+      row shows its photo, sharp at 52 pt. Delete the meal and both files
+      go (`food-photos/{uid}/{mealId}.jpg` and `.thumb.jpg`). A photo scanned
+      before this build still shows in its row, read from the photo itself.
+- [ ] **The fonts, on a first web visit.** In a private window, open the
+      app: the Network panel shows both Latin woff2 files requested from
+      the HTML (initiator: preload), the text never swaps face, and the
+      console has no "preloaded but not used" warning on Home.
+- [ ] **A returning launch.** Signed in, reload with the Network panel
+      open: the firebase-db, Home and Layout chunks start alongside the
+      entry, not after Auth's requests; signed out with the device never
+      signed in, none of them load on Login.
+
 ## Blocking both ways (Polish3 call 1, 2026-10-24)
 
 A block now hides each person from the other. `onBlockWritten` writes the

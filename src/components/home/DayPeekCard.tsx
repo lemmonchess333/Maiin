@@ -11,9 +11,10 @@ import {
   runSessionPresentation,
   weekHoldsQuality,
 } from "@/lib/runSessionExplainer";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
+import { useMotionSafe } from "@/hooks/useMotionSafe";
 import {
   Dumbbell,
   ClipboardList,
@@ -27,6 +28,7 @@ import { useNavigate } from "react-router-dom";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
+import { liftOnDate } from "@/lib/homeLift";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   getCompletionKind,
@@ -36,13 +38,20 @@ import type { SavedRunDoc } from "@/lib/runClaims";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/IconButton";
-import ExtrasExpandSheet from "@/components/program/ExtrasExpandSheet";
 import { workoutTitle } from "@/hooks/useWorkouts";
 import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { runDoseLine } from "@/lib/runDose";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
+import { lazyRetry } from "@/lib/lazyRetry";
+
+/* Closed when Home first draws, and it brings the bottom sheet (vaul and
+   Radix) with it: it loads once the card has drawn, as Home's
+   DayActionSheet does. */
+const ExtrasExpandSheet = lazyRetry(
+  () => import("@/components/program/ExtrasExpandSheet")
+);
 
 /** Q5 P71 cap — DayPeekCard mirrors RunWeekStrip; up to 2 extras
  *  shown inline before an overflow "+N more" tap-through. */
@@ -218,6 +227,7 @@ export default function DayPeekCard({
   const navigate = useNavigate();
   const unit = useDistanceUnit();
   const liftUnit = useLiftUnit();
+  const motionSafe = useMotionSafe();
   // Q5 P71 — overflow expand-sheet state. Mirrors RunWeekStrip's
   // local handling (the parent doesn't need to know about overflow).
   const [extrasSheetOpen, setExtrasSheetOpen] = useState(false);
@@ -228,6 +238,15 @@ export default function DayPeekCard({
     currentWeekKey: localWeekKey(parseLocalDate(todayKey)),
     claimMap,
     todayKey,
+  });
+  /* Today's lift is the one the today card offers (the programme's next),
+     not the weekday's slot, so the peek and the card name one session. */
+  const dayLift = liftOnDate({
+    dateKey,
+    todayKey,
+    scheduled: resolved.lift,
+    programme: programState,
+    sessionsOnDate: new Set(workouts.flatMap((w) => (w.id ? [w.id] : []))),
   });
   const dayLabel = formatShortWeekdayDayMonth(parseLocalDate(dateKey));
   /* The badge describes the day's WEEKDAY PATTERN (`profile.weekSchedule`),
@@ -317,11 +336,11 @@ export default function DayPeekCard({
   // you WHICH lift / run it is (not a generic "Lift + Run day"). Lift
   // name from the scheduled WorkoutDay; run name from its template
   // (honouring a per-day override).
-  const plannedLiftName = resolved.lift.workout
+  const plannedLiftName = dayLift.workout
     ? liftDayNameIn(
         (programState?.workouts ?? []).map((w) => w.dayName),
-        resolved.lift.index ?? -1,
-        resolved.lift.workout.dayName
+        dayLift.index ?? -1,
+        dayLift.workout.dayName
       )
     : null;
   const runTemplateId =
@@ -365,9 +384,9 @@ export default function DayPeekCard({
   const hasExtras = extras.length > 0;
   return (
     <motion.div
-      initial={{ opacity: 0, height: 0 }}
+      initial={motionSafe({ opacity: 0, height: 0 })}
       animate={{ opacity: 1, height: "auto" }}
-      exit={{ opacity: 0, height: 0 }}
+      exit={motionSafe({ opacity: 0, height: 0 })}
       transition={{ duration: 0.2 }}
       className="overflow-hidden"
     >
@@ -468,13 +487,13 @@ export default function DayPeekCard({
                         min/volume append in mono when the day is done. */}
                     {plannedLiftName ??
                       `${workouts.length} session${workouts.length !== 1 ? "s" : ""}`}
-                    {resolved.lift.status === "completed" && (
+                    {dayLift.status === "completed" && (
                       <Check
                         className="inline size-3 ml-1 align-[-1px]"
                         style={{ color: THEME.success }}
                       />
                     )}
-                    {resolved.lift.status === "skipped" && (
+                    {dayLift.status === "skipped" && (
                       <span className="text-muted-foreground"> · skipped</span>
                     )}
                     {hasW && (totalMinutes > 0 || tonnage > 0) && (
@@ -501,7 +520,7 @@ export default function DayPeekCard({
               {plannedLiftName && !multiSession && (
                 <LiftPurpose
                   programme={programState}
-                  day={resolved.lift.workout}
+                  day={dayLift.workout}
                   date={dateKey}
                   experience={profile?.experience}
                   className="pl-5"
@@ -643,8 +662,7 @@ export default function DayPeekCard({
               is both the conventional card order and the one that stops
               a 44px touch target reading as an accident. */}
           {onManage &&
-            (resolved.run.runDay !== null ||
-              resolved.lift.workout !== null) && (
+            (resolved.run.runDay !== null || dayLift.workout !== null) && (
               <div className="pt-1 border-t border-border/40">
                 <button
                   type="button"
@@ -658,12 +676,14 @@ export default function DayPeekCard({
             )}
         </div>
       </div>
-      <ExtrasExpandSheet
-        open={extrasSheetOpen}
-        onClose={() => setExtrasSheetOpen(false)}
-        dateKey={dateKey}
-        extras={extras}
-      />
+      <Suspense fallback={null}>
+        <ExtrasExpandSheet
+          open={extrasSheetOpen}
+          onClose={() => setExtrasSheetOpen(false)}
+          dateKey={dateKey}
+          extras={extras}
+        />
+      </Suspense>
     </motion.div>
   );
 }

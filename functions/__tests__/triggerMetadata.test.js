@@ -397,6 +397,16 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/users/{uid}/public/{docId}",
   },
+  // A new public name or photo, carried to the person's recent copies.
+  onPublicProfileIdentityChanged: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    timeoutSeconds: 120,
+    eventType: "providers/cloud.firestore/eventTypes/document.write",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/public/{docId}",
+  },
   // S4e, STATUS 2026-10-20: a new account carrying a deleted restricted
   // account's email or sign-in id is restricted as it is created.
   onAuthUserCreated: {

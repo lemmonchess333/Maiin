@@ -10,7 +10,16 @@
  *     + weekly-focus action) fed by exactly ONE eager loadDetail,
  *     while the remaining circles keep their summary-row rendering.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+  beforeAll,
+} from "vitest";
+import { loadWordFilter } from "@/lib/wordFilter";
 import {
   render,
   screen,
@@ -451,4 +460,10 @@ describe("a Circle of one", () => {
     await new Promise((r) => setTimeout(r, 50));
     expect(screen.queryByText(/focusing this week/)).not.toBeInTheDocument();
   });
+});
+
+/* The word filter as a session that has used it holds it: loaded, so the
+   sheet draws on its first render (useWordFilter covers the wait). */
+beforeAll(async () => {
+  await loadWordFilter();
 });

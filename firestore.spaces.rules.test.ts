@@ -258,7 +258,7 @@ suite("firestore.rules — community spaces", () => {
     });
 
     describe("the attached session", () => {
-      /* The composer's snapshot (toSnapshot), served to every viewer of the
+      /* The composer's snapshot (spacePostSnapshot), served to every viewer of the
          Space. The rule checked only `is map`, which took 500 KB of anything. */
       const run = {
         type: "run",

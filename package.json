@@ -43,6 +43,7 @@
     "seed:fellbehind": "tsx --tsconfig tsconfig.app.json scripts/seed-fellbehind-capture.ts",
     "seed:liftreturn": "tsx --tsconfig tsconfig.app.json scripts/seed-liftreturn-capture.ts",
     "seed:season": "tsx --tsconfig tsconfig.app.json scripts/seed-season-athlete.ts",
+    "seed:review": "tsx --tsconfig tsconfig.app.json scripts/seed-review-user.ts",
     "check:form-art": "node --import tsx scripts/audit-form-art.ts",
     "art:cutouts": "node --import tsx scripts/art/cut-out-form-art.ts",
     "art:releases": "node --import tsx scripts/art/gen-form-art-releases.ts",
@@ -96,6 +97,7 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@capacitor/cli": "^8.5.3",
     "@eslint/js": "^9.39.1",
     "@firebase/rules-unit-testing": "^5.0.1",

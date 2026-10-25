@@ -13,6 +13,7 @@ import { test, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { settleImages } from "../helpers/settleImages";
 import { emulatorActive } from "../helpers/emulator";
+import { settleCommunity } from "../helpers/settleCommunity";
 
 test.use({
   viewport: { width: 393, height: 852 },
@@ -117,7 +118,9 @@ test.describe("races & events directory screenshots", () => {
       .catch(() =>
         console.log("[capture] race date line not visible — capturing as-is")
       );
-    await page.waitForTimeout(900);
+    // The Challenges card above the row, not the two skeleton cards that
+    // stand in for it while it reads.
+    await settleCommunity(page);
     await shootLightDark(page, "races-directory");
   });
 });

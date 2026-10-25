@@ -168,6 +168,18 @@ const PINNED: Record<string, string> = {
   // the client's copy decides what Settings shows each switch as. Both run.
   "functions/lib/notificationPreferences.js":
     "src/lib/__tests__/notificationPreferences.cross.test.ts",
+  // The notification types the server sends, against the tray's list
+  // (useNotifications), which drops a type it does not know.
+  "functions/lib/socialFanout.js":
+    "src/lib/__tests__/notificationTypes.cross.test.ts",
+  // The reactions the callable takes, against the ones the comment sheet
+  // offers; deletion reads the same list.
+  "functions/lib/commentReactions.js":
+    "src/lib/__tests__/commentReactions.cross.test.ts",
+  // The longest comment both comment callables take, against the box's
+  // maxLength. A basename pair with src/lib/commentLimit.ts.
+  "functions/lib/commentLimit.js":
+    "src/lib/__tests__/commentLimit.cross.test.ts",
   // Feed schema: writer output, both client query constraints and the read
   // rule must agree or the Following feed is either refused or leaks legacy rows.
   "functions/lib/feedIndex.js": "src/lib/__tests__/feedIndex.cross.test.ts",

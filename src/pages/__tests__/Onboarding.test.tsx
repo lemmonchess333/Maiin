@@ -192,9 +192,7 @@ describe("onboarding chapters and commit", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "We couldn’t save your plan"
     );
-    expect(
-      screen.getByRole("button", { name: "Try creating my plan again" })
-    ).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
     expect(loadOnboardingDraft("setup-test", 7)?.weightKg).toBe(81.5);
     expect(refresh).not.toHaveBeenCalled();
   });

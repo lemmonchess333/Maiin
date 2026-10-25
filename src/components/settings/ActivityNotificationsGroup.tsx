@@ -34,7 +34,7 @@ const ROWS: {
   {
     category: "followRequests",
     label: "Follow requests",
-    description: "When someone asks to follow you",
+    description: "When someone asks to follow you, or accepts your request",
   },
   {
     category: "circles",

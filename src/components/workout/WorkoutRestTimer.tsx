@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import {
   elapsedSecondsSince,
   useElapsedSeconds,
@@ -9,6 +9,7 @@ import {
   scheduleRestEndNotification,
   cancelRestEndNotification,
 } from "@/lib/restTimerNotification";
+import { formatClock } from "@/utils/formatters";
 import CompactRestTimer from "./CompactRestTimer";
 
 function playChime() {
@@ -37,21 +38,38 @@ function playChime() {
 }
 
 /** One mounted instance per rest. Timer ticks and extensions stay inside
- * this row; only starting/ending a rest updates the workout editor. */
+ * this row; only starting/ending a rest updates the workout editor.
+ *
+ * A screen reader hears the rest begin ("Rest, 1:30") and end ("Rest
+ * over"), and nothing in between: the countdown is plain text that ticks
+ * every second, and the end is otherwise a buzz and a chime. The words go
+ * to the session's live region through `onAnnounce`, since a region that
+ * arrives with the card, its words already in it, is often not read at
+ * all. A rest that goes takes its words with it. */
 export default function WorkoutRestTimer({
   startedAt,
   initialTarget,
   exerciseName,
   onStop,
+  onAnnounce,
 }: {
   startedAt: number;
   initialTarget: number;
   exerciseName?: string;
   onStop: () => void;
+  onAnnounce?: (words: string) => void;
 }) {
   const seconds = useElapsedSeconds(startedAt);
   const [target, setTarget] = useState(initialTarget);
   const chimeFired = useRef(false);
+
+  const announce = useEffectEvent((words: string) => onAnnounce?.(words));
+  useEffect(() => {
+    announce(
+      `Rest, ${formatClock(initialTarget - elapsedSecondsSince(startedAt))}`
+    );
+    return () => announce("");
+  }, [initialTarget, startedAt]);
 
   useEffect(() => {
     const onVisibility = () => {
@@ -80,6 +98,7 @@ export default function WorkoutRestTimer({
       chimeFired.current = true;
       haptic([200, 100, 200]);
       playChime();
+      announce("Rest over");
     }
   }, [seconds, target]);
 

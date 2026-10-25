@@ -18,30 +18,30 @@ describe("countPostsThisWeek", () => {
   it("counts from local Monday midnight, not the last seven days", () => {
     const posts = [post(new Date(2026, 8, 23, 9)), MONDAY_EARLY, SUNDAY_LATE];
     expect(
-      countPostsThisWeek(posts, NOW, { size: 3, limit: 50, oldest: posts[2] })
+      countPostsThisWeek(posts, NOW, { hasMore: false, oldest: posts[2] })
     ).toEqual({ count: 2, capped: false });
   });
 
   it("counts a post still waiting for its server timestamp", () => {
     expect(
-      countPostsThisWeek([post(null)], NOW, { size: 1, limit: 50 }).count
+      countPostsThisWeek([post(null)], NOW, { hasMore: false }).count
     ).toBe(1);
   });
 
-  it("is capped only when the fetch was full and its oldest post is from this week", () => {
-    const full = { size: 50, limit: 50 };
+  it("is capped only when more posts wait and the oldest loaded is from this week", () => {
+    const more = { hasMore: true };
     expect(
-      countPostsThisWeek([MONDAY_EARLY], NOW, { ...full, oldest: MONDAY_EARLY })
+      countPostsThisWeek([MONDAY_EARLY], NOW, { ...more, oldest: MONDAY_EARLY })
         .capped
     ).toBe(true);
     expect(
-      countPostsThisWeek([MONDAY_EARLY], NOW, { ...full, oldest: SUNDAY_LATE })
+      countPostsThisWeek([MONDAY_EARLY], NOW, { ...more, oldest: SUNDAY_LATE })
         .capped
     ).toBe(false);
+    // Every page read, however many: the count is the whole week.
     expect(
       countPostsThisWeek([MONDAY_EARLY], NOW, {
-        size: 49,
-        limit: 50,
+        hasMore: false,
         oldest: MONDAY_EARLY,
       }).capped
     ).toBe(false);

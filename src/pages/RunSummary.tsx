@@ -66,6 +66,7 @@ import type { WorkPortion } from "../hooks/useSessionPlayer";
 import { paceMinSec, distanceLabel2, distanceValue } from "../lib/runLabels";
 import { splitsForDisplay } from "../lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 import {
   distanceIn,
   type DistanceUnit,
@@ -372,6 +373,8 @@ export default function RunSummary() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const unit = useDistanceUnit();
+  // The basemap follows the theme on screen, not the profile field.
+  const darkTheme = useIsDarkTheme();
   const receipt = state?.savedRun?.uid === user?.uid ? state?.savedRun : null;
   const runOwnerRef = useRef(user?.uid);
   const {
@@ -1273,7 +1276,7 @@ export default function RunSummary() {
                   height="h-64"
                   paceColored={avgPaceSeconds > 0}
                   avgPaceSecPerKm={avgPaceSeconds}
-                  darkMode={!!profile?.darkMode}
+                  darkMode={darkTheme}
                 />
               </div>
               {avgPaceSeconds > 0 && <PaceLegend className="px-1" />}
@@ -1876,14 +1879,17 @@ export default function RunSummary() {
                  the EXISTING composer flow with a narrow context param
                  (Food renders a dismissible refuel line); no separate
                  recovery-meal flow, no target change. Only rendered in the
-                 valid-run path (this whole stack is), post-save. */
-              <button
-                type="button"
+                 valid-run path (this whole stack is), post-save. Logging
+                 food is the food orange on any page, tinted here because
+                 it is the skippable step and Done is the run's coral one
+                 (DESIGN_GUIDE §14i). */
+              <Button
+                variant="nutrition-tinted"
+                fullWidth
                 onClick={() => navigate("/food?context=post-run")}
-                className="w-full py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
               >
                 Log recovery food
-              </button>
+              </Button>
             )}
 
             {/* One Share: the card, and under it the run's other ways out

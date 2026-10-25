@@ -6,6 +6,7 @@ import {
   waitFor,
   act,
   cleanup,
+  within,
 } from "@testing-library/react";
 import type { ReactNode } from "react";
 import GuideHint from "../GuideHint";
@@ -190,6 +191,61 @@ describe("GuideHint", () => {
     localStorage.setItem(GUIDE_UNDER_AUTOMATION_KEY, "on");
     renderHint();
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("takes focus as it shows, so it is read and Got it is the next stop", async () => {
+    metTheGuide();
+    anchor();
+    renderHint();
+    const hint = await screen.findByRole("dialog", { name: "Your first set" });
+    await waitFor(() => expect(hint).toHaveFocus());
+    expect(hint).toHaveAccessibleDescription(/tap the box when it’s done/);
+    // Got it is the one control inside it, so the next Tab, and not
+    // trapped: a non-modal hint that Tab can leave.
+    expect(within(hint).getAllByRole("button")).toEqual([
+      within(hint).getByRole("button", { name: "Got it" }),
+    ]);
+    expect(hint).toHaveAttribute("aria-modal", "false");
+  });
+
+  it("gives focus back where it was when it closes", async () => {
+    metTheGuide();
+    anchor();
+    const was = document.createElement("button");
+    was.textContent = "Start workout";
+    document.body.appendChild(was);
+    added.push(was);
+    was.focus();
+    renderHint();
+    const hint = await screen.findByRole("dialog");
+    await waitFor(() => expect(hint).toHaveFocus());
+    fireEvent.click(within(hint).getByRole("button", { name: "Got it" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(was).toHaveFocus();
+  });
+
+  it("closed with nothing focused before it, focus lands on what it explained", async () => {
+    metTheGuide();
+    const el = anchor();
+    renderHint();
+    const hint = await screen.findByRole("dialog");
+    await waitFor(() => expect(hint).toHaveFocus());
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(el).toHaveFocus();
+  });
+
+  it("leaves someone typing in their field", async () => {
+    metTheGuide();
+    anchor();
+    const field = document.createElement("input");
+    document.body.appendChild(field);
+    added.push(field);
+    field.focus();
+    renderHint();
+    await screen.findByRole("dialog");
+    await settle();
+    expect(field).toHaveFocus();
   });
 
   it("keeps each account's seen flag to itself", async () => {

@@ -503,13 +503,20 @@ describe("the first-week card's rows open their step", () => {
     );
   });
 
-  it("the weigh-ins open the weigh-in sheet", () => {
+  it("the weigh-ins open the weigh-in sheet", async () => {
     renderHome();
     expect(screen.queryByText("Weigh-in sheet")).toBeNull();
+    /* The sheet is lazy, and Home fetches it once it has drawn; tap once
+       that has landed, as a person would. (A factory-mocked module asked
+       for again while its first import is still in flight never wakes a
+       suspended lazy() in vitest; a real module does.) */
+    await act(async () => {
+      await import("@/components/home/WeightLogSheet");
+    });
     fireEvent.click(
       screen.getByRole("button", { name: /Weigh in on three mornings/ })
     );
-    expect(screen.getByText("Weigh-in sheet")).toBeInTheDocument();
+    expect(await screen.findByText("Weigh-in sheet")).toBeInTheDocument();
   });
 
   it("the first workout is pointed out on today's card", async () => {

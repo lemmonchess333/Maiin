@@ -235,6 +235,19 @@ describe("WeeklyReview — the recap as cards", () => {
     expect(screen.queryByText(/kg, weight trend/)).toBeNull();
   });
 
+  /* The plan's week in the figures "Your week" counts the last one in,
+     rather than one line over an empty page. */
+  it("gives the week ahead its figures, each over what it counts", () => {
+    mockReview = normal();
+    renderRecap();
+    expect(
+      screen.getByText("lifts planned").previousElementSibling?.textContent
+    ).toBe("3");
+    expect(
+      screen.getByText("runs planned").previousElementSibling?.textContent
+    ).toBe("2");
+  });
+
   it("says a quiet week plainly, then the week ahead", () => {
     mockReview = {
       kind: "quiet",
