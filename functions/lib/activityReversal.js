@@ -68,13 +68,18 @@ const fastestEffortRebuild = require("./fastestEffortRebuild");
  * Undo one source activity's SUM-metric challenge credit, everywhere it
  * landed.
  *
- * Mirrors the accrual's shape on purpose: the create path loops every
- * challenge and lets the per-challenge helper decide, so this does too.
+ * Reads EVERY challenge, where the accrual reads only those open on the
+ * session's day (`openOnDayBound`). The day it credited on is not known
+ * here: a corrected date recounts the participation challenges, but a
+ * summed credit stays where it landed, so a bound on the session's
+ * current day could miss a marker and leave the total inflated. Only the
+ * server makes challenges, about a dozen a month (`challengeDefs.js`), so
+ * the read stays in the hundreds of documents for years, on a path that
+ * runs once per delete.
  * There is no query that finds "the markers for this source" directly —
  * the source id lives in the marker's document ID, not in a field — and
  * inventing a denormalised field to enable one would be a schema change
- * for a path that already costs the same order of reads as the accrual it
- * undoes.
+ * to save reads this small.
  *
  * No eligibility re-check, deliberately. An ineligible run (isInvalid /
  * savedAnyway / sub-threshold) never credited, so it has no markers, so
