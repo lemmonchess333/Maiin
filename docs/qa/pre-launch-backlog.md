@@ -537,6 +537,14 @@ shows what the deploy set.
       (`functions/lib/triggerRetry.js`). Passing: a week after the release,
       Logs Explorer shows no `will be retried` line repeating for one event,
       and no `retry window closed` line.
+- [ ] **A deleted session's reversal retries too (2026-10-25).** The delete
+      triggers caught their reversal's failure, so a contended transaction
+      left the deleted session's challenge credit and lifetime total standing
+      for good; they now fail the event and are retried for a day
+      (`functions/__tests__/sessionDeleteRetry.test.js`). Passing: after the
+      release, the deployed source of onWorkoutDeleted and onRunDeleted
+      contains `triggerSteps`, and of `lib/activityReversal.js` contains
+      `not reversed for` (Deploy production reads both back).
 
 ## Reminders, sign-in and posting on the phone (2026-10-20)
 
