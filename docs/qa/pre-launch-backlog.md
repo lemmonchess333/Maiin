@@ -228,6 +228,15 @@ what ships; these need a browser's Network panel or an iPhone.
       `crossorigin` matches). The Welcome screen draws no Archivo, so that
       preload waits there for the first figure; headless Chromium logged
       no warning for it within 7 s. Home still needs an account.
+      STATUS 2026-10-25 (emulator): Home's half, on the e2e build against
+      the Auth and Firestore emulators, served by `vite preview` on
+      localhost, NOT on production. Signed in as the seeded account,
+      Home reloaded eight times in headless Chromium (five with the cache,
+      three with it disabled) with CDP's Network and Log domains on: both
+      woff2 files were requested from the HTML (initiator: parser) at the
+      entry's moment, once each, and no "preloaded but not used" warning
+      reached `Log.entryAdded` or the console within 7 s of any reload.
+      The face swap was not checked. Production with an account remains.
 - [ ] **A returning launch.** Signed in, reload with the Network panel
       open: the firebase-db, Home and Layout chunks start alongside the
       entry, not after Auth's requests; signed out with the device never
@@ -247,6 +256,19 @@ what ships; these need a browser's Network panel or an iPhone.
       maintenance were mounted at the root for everyone, and both import
       Firestore; they now mount only for a signed-in person
       (`signedInRootOverlays.test.tsx`). Recheck after that deploys.
+      STATUS 2026-10-25 (emulator): the signed-in reload, on the e2e build
+      against the Auth and Firestore emulators, served by `vite preview`
+      on localhost, NOT on production, so no network latency is in these
+      figures. Signed in as the seeded account, Home reloaded eight times
+      in headless Chromium (five with the cache, three with it disabled),
+      timed from CDP `Network.requestWillBeSent`. The entry started 29 to
+      37 ms after the document; firebase-db 26 to 61 ms after the entry,
+      Layout 33 to 77 ms and Home 35 to 81 ms after it. Auth's first
+      request (the emulator's `accounts:lookup`) came 170 to 308 ms after
+      the document, so firebase-db started 104 to 215 ms before it, Layout
+      93 to 199 ms and Home 88 to 195 ms before it. The three chunks start
+      alongside the entry, not after Auth. Production with an account
+      remains.
 - [ ] **Analytics' config read, on the web.** Every web visit logs a 403
       from `firebase.googleapis.com/.../webConfig`: Google answers
       `API_KEY_SERVICE_BLOCKED`, because the web API key's API restrictions

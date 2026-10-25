@@ -45,6 +45,20 @@ describe("InProgressStrip", () => {
     expect(strip).toHaveTextContent("5 sets");
   });
 
+  /* jsdom lays nothing out, so the floor is read off its class. The words
+     keep 9em beside Resume, wrapping it below them when they cannot, and
+     the floor never passes the strip's own width: a bare 9em is wider
+     than the card at large text on a small phone, and the words ran past
+     it (large text, 320 px at 200%). */
+  it("keeps the words' floor inside the strip, wrapping Resume below", () => {
+    render(<InProgressStrip session={PULL} onResume={() => {}} />);
+    const strip = screen.getByRole("group", { name: "Pull B in progress" });
+    expect(strip).toHaveClass("flex-wrap");
+    const words = screen.getByText("In progress").parentElement!;
+    expect(words).toHaveClass("min-w-[min(9em,100%)]");
+    expect(words.className).not.toMatch(/(^|\s)min-w-\[9em\]/);
+  });
+
   it("names no sets before one is ticked, and unlocks a run's voice inside the tap", () => {
     render(
       <InProgressStrip
