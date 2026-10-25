@@ -57,6 +57,8 @@
  */
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 
@@ -658,6 +660,52 @@ describe("functions trigger metadata snapshot", () => {
       .map(([name]) => name)
       .sort();
     expect(noRetry).toEqual(Object.keys(NO_RETRY).sort());
+  });
+
+  /* A retried trigger that throws on a bug is delivered again, with
+     backoff, for seven days; `pastRetryWindow` drops it after one
+     (lib/triggerRetry.js). The two session updates and the two session
+     deletes had no window until 2026-10-25. Read from the source, because
+     the window is a call inside the handler that no endpoint metadata can
+     show. A trigger that keeps the platform's full retry goes here, with
+     its reason. */
+  const NO_RETRY_WINDOW = {
+    // The join backfill credits a mid-period joiner's history from the
+    // join's commit time (`context.timestamp`), and nothing else ever
+    // runs it: one dropped after a day leaves them at zero for the whole
+    // period (integration/challengeRejoinCredit.test.js delivers joins
+    // inside fixed past windows for exactly that reason).
+    onChallengeParticipantCreated:
+      "the join backfill has no other path, and its join time is the event's",
+  };
+
+  it("every retried Firestore trigger drops an event past the retry window", () => {
+    const source = readFileSync(
+      fileURLToPath(new URL("../index.js", import.meta.url)),
+      "utf8"
+    );
+    const starts = [...source.matchAll(/^exports\.([A-Za-z0-9_]+)\s*=/gm)];
+    const bodyOf = (name) => {
+      const i = starts.findIndex((m) => m[1] === name);
+      expect(i, `${name} is exported from index.js`).toBeGreaterThan(-1);
+      const end = i + 1 < starts.length ? starts[i + 1].index : source.length;
+      return source.slice(starts[i].index, end);
+    };
+    const retried = Object.entries(fns)
+      .filter(([, fn]) => {
+        const trigger = fn && fn.__endpoint && fn.__endpoint.eventTrigger;
+        return (
+          trigger &&
+          /cloud\.firestore/.test(trigger.eventType) &&
+          trigger.retry === true
+        );
+      })
+      .map(([name]) => name);
+    expect(retried.length).toBeGreaterThan(10);
+    const unwindowed = retried
+      .filter((name) => !/pastRetryWindow\(context\)/.test(bodyOf(name)))
+      .sort();
+    expect(unwindowed).toEqual(Object.keys(NO_RETRY_WINDOW).sort());
   });
 
   it("monthly announcements keep a UTC hourly schedule", () => {

@@ -21,6 +21,8 @@ vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
 vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn(), info: vi.fn() },
 }));
+const toastError = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/toast", () => ({ toast: { error: toastError } }));
 
 let mockUid: string | null = "u1";
 vi.mock("@/lib/auth", () => ({
@@ -207,6 +209,37 @@ describe("useSavedRoutes", () => {
     expect(result.current.loading).toBe(false);
     expect(result.current.error).toBe(false);
     expect(readDoc("users/u1/savedRoutes/a")).toBeDefined();
+  });
+
+  /* The route came back with nothing said: it looked like the tap had
+     not registered. */
+  it("a failed deletion says why the route came back", async () => {
+    toastError.mockClear();
+    const { result } = renderHook(() => useSavedRoutes());
+    await waitFor(() =>
+      expect(names(result.current.routes)).toEqual(["Canal loop"])
+    );
+    failNextFirestore("deleteDoc", { path: "users/u1/savedRoutes/a" });
+    await act(async () => {
+      await result.current.remove("a");
+    });
+    expect(toastError).toHaveBeenCalledWith(
+      "Couldn't delete the route. Try again."
+    );
+    expect(names(result.current.routes)).toEqual(["Canal loop"]);
+  });
+
+  it("a deletion that lands says nothing", async () => {
+    toastError.mockClear();
+    const { result } = renderHook(() => useSavedRoutes());
+    await waitFor(() =>
+      expect(names(result.current.routes)).toEqual(["Canal loop"])
+    );
+    await act(async () => {
+      await result.current.remove("a");
+    });
+    expect(names(result.current.routes)).toEqual([]);
+    expect(toastError).not.toHaveBeenCalled();
   });
 
   it("a failed mutation reload stays failed until a fresh retry, even if an old list answers", async () => {

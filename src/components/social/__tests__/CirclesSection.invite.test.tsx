@@ -23,6 +23,7 @@ import {
   cleanup,
   fireEvent,
   waitFor,
+  within,
 } from "@testing-library/react";
 /* CirclesSection reads useSearchParams (PROGRAM-CIRCLE-01 hand-off),
    so renders need a Router. The partial mock below keeps the real
@@ -368,6 +369,39 @@ describe("a full circle stops offering an invite", () => {
       screen.getByRole("button", { name: /copy invite code/i })
     ).toBeInTheDocument();
     expect(screen.queryByText(/Nobody else can join/)).toBeNull();
+  });
+});
+
+describe("the circle's own actions", () => {
+  /* jsdom lays nothing out, so the wrap is read off the classes. Three
+     buttons shared a row that could not wrap, each with a floor of its
+     longest word, and at large text "Need a nudge" ran off the sheet
+     (17 px at 393 px and 200%, 90 px at 320 px). Each button's floor is
+     now its one-line width, and the row wraps when the three do not fit. */
+  it("wrap to another row rather than run off the sheet", async () => {
+    mockUseGoalSpaces.mockReturnValue(
+      hookValue({
+        circles: [summary("c1", "Autumn Crew", 3, "K7P49M2H")],
+      })
+    );
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Autumn Crew/ }));
+    const sheet = await screen.findByRole("dialog");
+    const nudge = await within(sheet).findByRole("button", {
+      name: "Need a nudge",
+    });
+    const row = nudge.parentElement!;
+    expect(row).toHaveClass("flex-wrap");
+    for (const name of ["Weekly focus", "Milestone", "Need a nudge"]) {
+      expect(within(row).getByRole("button", { name })).toHaveClass(
+        "min-w-fit",
+        "flex-1"
+      );
+    }
   });
 });
 

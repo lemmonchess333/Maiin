@@ -40,6 +40,11 @@ const H = vi.hoisted(() => ({
   signOutAction: null as null | (() => Promise<void>),
   transition: vi.fn(async (operation: () => Promise<unknown>) => operation()),
   cancelAllNotifications: vi.fn(async () => {}),
+  reload: vi.fn(),
+  settled: vi.fn(async (wait: () => Promise<void>) => {
+    await wait();
+    return true;
+  }),
 }));
 const mockAuth = H.mockAuth;
 
@@ -70,6 +75,12 @@ vi.mock("@/lib/pushNotifications", () => ({
 }));
 vi.mock("@/lib/notifications", () => ({
   cancelAllNotifications: H.cancelAllNotifications,
+}));
+// jsdom cannot reload, and the reload is what these tests watch for.
+vi.mock("../firestoreCacheClear", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../firestoreCacheClear")>()),
+  reloadToClearFirestoreCache: H.reload,
+  writesSettled: (wait: () => Promise<void>) => H.settled(wait),
 }));
 vi.mock("firebase/auth", () => ({
   onAuthStateChanged: (
@@ -114,6 +125,7 @@ vi.mock("@/lib/captureTimezone", () => ({
 }));
 
 import { AuthProvider, useAuth } from "../auth";
+import { noteEmailChange, pendingEmailChange } from "../emailChangeNote";
 import {
   seedFirestore,
   resetFirestore,
@@ -311,6 +323,69 @@ describe("AuthProvider — push transition barrier", () => {
     });
     expect(H.transition).toHaveBeenCalledOnce();
     expect(state().u).toBe("A");
+  });
+});
+
+/* Firestore keeps every document an account read in IndexedDB, not split
+   by account and not under the rules, and signing out left it there for
+   the next person on the browser. A sign-out with nothing left to send
+   ends in a reload that clears it (firestoreCacheClear.ts). */
+describe("AuthProvider — the device's copy of the signed-out account", () => {
+  it("an online sign-out with nothing left to send reloads to clear it, holding the loading screen", async () => {
+    await emit("A");
+    await waitFor(() => expect(state().p).toBe("A"));
+    const { signOut } = await import("firebase/auth");
+    vi.mocked(signOut).mockClear();
+    H.reload.mockClear();
+    await act(async () => {
+      await H.signOutAction!();
+    });
+    expect(H.reload).toHaveBeenCalledOnce();
+    expect(vi.mocked(signOut).mock.invocationCallOrder[0]).toBeLessThan(
+      H.reload.mock.invocationCallOrder[0]
+    );
+    // Login drawn now would take input the reload throws away.
+    expect(state().loading).toBe("true");
+  });
+
+  it("keeps it, and does not reload, while writes are still waiting to go up", async () => {
+    await emit("A");
+    await waitFor(() => expect(state().p).toBe("A"));
+    H.reload.mockClear();
+    H.settled.mockResolvedValueOnce(false);
+    await act(async () => {
+      await H.signOutAction!();
+    });
+    expect(H.reload).not.toHaveBeenCalled();
+    expect(state().loading).toBe("false");
+  });
+
+  it("a failed sign-out lets go of the loading screen and does not reload", async () => {
+    await emit("A");
+    await waitFor(() => expect(state().p).toBe("A"));
+    const { signOut } = await import("firebase/auth");
+    vi.mocked(signOut).mockRejectedValueOnce(new Error("sign-out unavailable"));
+    H.reload.mockClear();
+    await act(async () => {
+      await expect(H.signOutAction!()).rejects.toThrow("sign-out unavailable");
+    });
+    expect(H.reload).not.toHaveBeenCalled();
+    expect(state().loading).toBe("false");
+    expect(state().u).toBe("A");
+  });
+
+  /* The note says where an email change is going, for the Login a
+     confirmed change signs the phone out to. Someone who signs out
+     themselves knows; the next person on the device need not be told. */
+  it("signing out forgets a pending email change", async () => {
+    await emit("A");
+    await waitFor(() => expect(state().p).toBe("A"));
+    noteEmailChange("new-address@x.z");
+    expect(pendingEmailChange()).toBe("new-address@x.z");
+    await act(async () => {
+      await H.signOutAction!();
+    });
+    expect(pendingEmailChange()).toBeNull();
   });
 });
 

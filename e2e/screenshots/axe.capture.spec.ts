@@ -12,6 +12,12 @@
  * The sheets: Food's manual entry and a meal's edit sheet, the weight
  * log, Train's exercise menu, Social's notifications and a run's share
  * sheet, each measured on its own (the screen behind has its own check).
+ * Then the surfaces the notification tray, a return and a session left
+ * open lead to: one shared session and one Space post on their own pages,
+ * each with its comments sheet, and a Space post that is not there; the
+ * In progress strip on Home and Train for a programme workout and for a
+ * routine's; and, as other seeded accounts, a runner's welcome back and a
+ * Circle's invite code live and expired.
  * Everything is measured in the light theme the seeded account keeps and
  * again in dark.
  *
@@ -99,6 +105,106 @@ function unaccepted(found: Finding[]): string[] {
     );
 }
 
+/* Reduce Motion, so no fade is mid-flight when contrast is read: a
+   half-faded label measures as a contrast failure it does not have. */
+async function prepare(page: Page) {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addInitScript(() => {
+    document.addEventListener("DOMContentLoaded", () => {
+      const style = document.createElement("style");
+      style.textContent = ".firebase-emulator-warning{display:none !important}";
+      document.head.appendChild(style);
+    });
+  });
+}
+
+/** Closes anything that opened over a screen by itself (a badge seal). */
+async function closeStrayDialogs(page: Page) {
+  for (let i = 0; i < 6; i++) {
+    if (
+      !(await page
+        .getByRole("dialog")
+        .isVisible()
+        .catch(() => false))
+    )
+      return;
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(400);
+  }
+}
+
+/** Runs axe in both themes and adds what it finds to `found`. */
+async function check(
+  page: Page,
+  screen: string,
+  found: Finding[],
+  scope?: string
+) {
+  for (const dark of [false, true]) {
+    await page.evaluate(
+      (d) => document.documentElement.classList.toggle("dark", d),
+      dark
+    );
+    // The colours a component reads in JS need a render to follow.
+    await page.waitForTimeout(300);
+    found.push(
+      ...(await axeFindings(
+        page,
+        `${screen}-${dark ? "dark" : "light"}`,
+        scope
+      ))
+    );
+  }
+  await page.evaluate(() => document.documentElement.classList.remove("dark"));
+}
+
+/* A sheet closes through history (its back-dismiss), so the next
+   navigation waits for it to be gone, or the two race and the goto is
+   aborted. */
+async function close(page: Page, what = page.getByRole("dialog")) {
+  await page.keyboard.press("Escape");
+  await expect(what).toHaveCount(0, { timeout: 10_000 });
+}
+
+/** Waits for `marker`, then for the screen's skeletons to go. */
+async function settle(page: Page, marker: Locator) {
+  await marker.waitFor({ state: "visible", timeout: 20_000 });
+  await closeStrayDialogs(page);
+  await expect(page.locator('[class*="animate-pulse"]')).toHaveCount(0, {
+    timeout: 20_000,
+  });
+  await page.waitForTimeout(400);
+}
+
+async function open(page: Page, route: string, marker: Locator) {
+  await page.goto(route);
+  await settle(page, marker);
+}
+
+/** Waits for a sheet's own content, then for it to finish opening. */
+async function sheetReady(page: Page, content: Locator) {
+  await content.waitFor({ state: "visible", timeout: 20_000 });
+  await page.waitForTimeout(700);
+}
+
+/* A workout left open, as the app keeps it: started, the warm-ups and
+   the first working set done, then closed, which leaves its draft on the
+   phone. */
+async function leaveAfterOneSet(page: Page) {
+  for (let i = 0; i < 4; i++) {
+    const next = page.getByRole("button", { name: /^Complete / }).first();
+    await next.waitFor({ timeout: 20_000 });
+    const name = (await next.textContent())?.replace(/\s+/g, " ").trim();
+    await next.click();
+    await page.waitForTimeout(500);
+    if (name === "Complete set 1") break;
+  }
+  await page
+    .getByRole("button", { name: "Close workout", exact: true })
+    .click();
+  await page.waitForURL((url) => url.pathname.endsWith("/program"));
+}
+
 test.describe("axe", () => {
   test.skip(
     !emulatorActive,
@@ -106,84 +212,9 @@ test.describe("axe", () => {
   );
 
   test.beforeEach(async ({ page }) => {
-    /* Reduce Motion, so no fade is mid-flight when contrast is read: a
-       half-faded label measures as a contrast failure it does not have. */
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.addInitScript(() => {
-      document.addEventListener("DOMContentLoaded", () => {
-        const style = document.createElement("style");
-        style.textContent =
-          ".firebase-emulator-warning{display:none !important}";
-        document.head.appendChild(style);
-      });
-    });
+    await prepare(page);
     await signInAsTestUser(page);
   });
-
-  /** Closes anything that opened over a screen by itself (a badge seal). */
-  async function closeStrayDialogs(page: Page) {
-    for (let i = 0; i < 6; i++) {
-      if (
-        !(await page
-          .getByRole("dialog")
-          .isVisible()
-          .catch(() => false))
-      )
-        return;
-      await page.keyboard.press("Escape");
-      await page.waitForTimeout(400);
-    }
-  }
-
-  /** Runs axe in both themes and adds what it finds to `found`. */
-  async function check(
-    page: Page,
-    screen: string,
-    found: Finding[],
-    scope?: string
-  ) {
-    for (const dark of [false, true]) {
-      await page.evaluate(
-        (d) => document.documentElement.classList.toggle("dark", d),
-        dark
-      );
-      // The colours a component reads in JS need a render to follow.
-      await page.waitForTimeout(300);
-      found.push(
-        ...(await axeFindings(
-          page,
-          `${screen}-${dark ? "dark" : "light"}`,
-          scope
-        ))
-      );
-    }
-    await page.evaluate(() =>
-      document.documentElement.classList.remove("dark")
-    );
-  }
-
-  /* A sheet closes through history (its back-dismiss), so the next
-     navigation waits for it to be gone, or the two race and the goto is
-     aborted. */
-  async function close(page: Page, what = page.getByRole("dialog")) {
-    await page.keyboard.press("Escape");
-    await expect(what).toHaveCount(0, { timeout: 10_000 });
-  }
-
-  /** Waits for `marker`, then for the screen's skeletons to go. */
-  async function settle(page: Page, marker: Locator) {
-    await marker.waitFor({ state: "visible", timeout: 20_000 });
-    await closeStrayDialogs(page);
-    await expect(page.locator('[class*="animate-pulse"]')).toHaveCount(0, {
-      timeout: 20_000,
-    });
-    await page.waitForTimeout(400);
-  }
-
-  async function open(page: Page, route: string, marker: Locator) {
-    await page.goto(route);
-    await settle(page, marker);
-  }
 
   test("the main screens", async ({ page }) => {
     test.setTimeout(300_000);
@@ -371,6 +402,158 @@ test.describe("axe", () => {
     await page.waitForTimeout(1500);
     await check(page, "sheet-share", found, sheet);
 
+    expect(unaccepted(found)).toEqual([]);
+  });
+
+  /* The pages the notification tray opens: Maya's push day (five props,
+     two comments, from seed:rich) with its props list open, then with its
+     comments; her Space post, then with its comment; and a Space post
+     that is not there. */
+  test("the one-post pages", async ({ page }) => {
+    test.setTimeout(300_000);
+    const found: Finding[] = [];
+    const sheet = '[role="dialog"]';
+    const dialog = page.locator(sheet).first();
+
+    const props = page.getByRole("button", { name: /props — show list$/ });
+    await open(page, "activity/rich-feed-push", props);
+    await props.click();
+    await page.getByText("Jordan Reyes").waitFor({ timeout: 20_000 });
+    await check(page, "activity-post", found);
+
+    await page.goto("activity/rich-feed-push?comments=1");
+    await sheetReady(
+      page,
+      dialog.getByText("Strong session.", { exact: false })
+    );
+    await check(page, "sheet-activity-comments", found, sheet);
+    await close(page);
+
+    await open(
+      page,
+      "space/womens-running/post/seed-maya",
+      page.getByRole("link", { name: "Women's Running" })
+    );
+    await check(page, "space-post", found);
+
+    await page.goto("space/womens-running/post/seed-maya?comments=1");
+    await sheetReady(page, dialog.getByText("Go for it.", { exact: false }));
+    await check(page, "sheet-space-post-comments", found, sheet);
+    await close(page);
+
+    await open(
+      page,
+      "space/womens-running/post/no-such-post",
+      page.getByText("This post isn't available")
+    );
+    await check(page, "space-post-unavailable", found);
+
+    expect(unaccepted(found)).toEqual([]);
+  });
+
+  /* The In progress strip: the day's own programme workout, which Home's
+     and Train's day cards show in Start's place, then a saved routine's
+     (seed:rich saves Maya's push day), newer, shown on its own above. */
+  test("a workout in progress", async ({ page }) => {
+    test.setTimeout(300_000);
+    const found: Finding[] = [];
+    const strip = (name: RegExp) => page.getByRole("group", { name }).first();
+
+    const start = page.getByRole("button", {
+      name: "Start workout",
+      exact: true,
+    });
+    await open(page, "program", start);
+    await start.click();
+    await leaveAfterOneSet(page);
+    await open(page, "", strip(/ in progress$/));
+    await check(page, "home-in-progress-programme", found);
+    await open(page, "program", strip(/ in progress$/));
+    await check(page, "train-in-progress-programme", found);
+
+    await page.goto("routine/rich-routine-push");
+    await leaveAfterOneSet(page);
+    await open(page, "", strip(/^Push day in progress$/));
+    await check(page, "home-in-progress-routine", found);
+    await open(page, "program", strip(/^Push day in progress$/));
+    await check(page, "train-in-progress-routine", found);
+
+    expect(unaccepted(found)).toEqual([]);
+  });
+});
+
+/* Surfaces only another seeded account reaches: seed:liftreturn's free
+   runner, 15 days from her last run, and seed:circles' two Circle owners,
+   one whose invite code works for another day and one whose code has
+   expired. Each sheet is measured on its own, as above. */
+test.describe("axe, other accounts", () => {
+  test.skip(
+    !emulatorActive,
+    "needs the Firebase emulator (auth-emulator project)"
+  );
+
+  test.beforeEach(async ({ page }) => {
+    await prepare(page);
+  });
+
+  const sheet = '[role="dialog"]';
+
+  test("a runner's welcome back", async ({ page }) => {
+    test.setTimeout(120_000);
+    const found: Finding[] = [];
+    await signInAsTestUser(page, {
+      email: "runreturn-capture@tropos.test",
+      password: "test-password-123",
+    });
+    await sheetReady(
+      page,
+      page.locator(sheet).getByText("since your last run", { exact: false })
+    );
+    await check(page, "sheet-run-return", found, sheet);
+    expect(unaccepted(found)).toEqual([]);
+  });
+
+  test("a Circle's live invite code", async ({ page }) => {
+    test.setTimeout(120_000);
+    const found: Finding[] = [];
+    await signInAsTestUser(page, {
+      email: "circles-capture@tropos.test",
+      password: "test-password-123",
+    });
+    await page.goto("social?tab=crews");
+    await page
+      .getByRole("button", { name: /autumn strength crew/i })
+      .click({ timeout: 20_000 });
+    await sheetReady(page, page.locator(sheet).getByText(/^Works until /));
+    await check(page, "sheet-circle-code-live", found, sheet);
+    expect(unaccepted(found)).toEqual([]);
+  });
+
+  test("a Circle's expired invite code", async ({ page }) => {
+    test.setTimeout(120_000);
+    const found: Finding[] = [];
+    const dialog = page.locator(sheet);
+    const renew = dialog.getByRole("button", {
+      name: "Make a new code",
+      exact: true,
+    });
+    await signInAsTestUser(page, {
+      email: "circles-expired-capture@tropos.test",
+      password: "test-password-123",
+    });
+    await page.goto("social?tab=crews");
+    await page
+      .getByRole("button", { name: "Invite someone", exact: true })
+      .click({ timeout: 20_000 });
+    await sheetReady(page, renew);
+    await check(page, "sheet-circle-invite-expired", found, sheet);
+    await close(page);
+
+    await page
+      .getByRole("button", { name: /lunchtime lifters/i })
+      .click({ timeout: 20_000 });
+    await sheetReady(page, renew);
+    await check(page, "sheet-circle-detail-expired", found, sheet);
     expect(unaccepted(found)).toEqual([]);
   });
 });

@@ -228,6 +228,15 @@ what ships; these need a browser's Network panel or an iPhone.
       `crossorigin` matches). The Welcome screen draws no Archivo, so that
       preload waits there for the first figure; headless Chromium logged
       no warning for it within 7 s. Home still needs an account.
+      STATUS 2026-10-25 (emulator): Home's half, on the e2e build against
+      the Auth and Firestore emulators, served by `vite preview` on
+      localhost, NOT on production. Signed in as the seeded account,
+      Home reloaded eight times in headless Chromium (five with the cache,
+      three with it disabled) with CDP's Network and Log domains on: both
+      woff2 files were requested from the HTML (initiator: parser) at the
+      entry's moment, once each, and no "preloaded but not used" warning
+      reached `Log.entryAdded` or the console within 7 s of any reload.
+      The face swap was not checked. Production with an account remains.
 - [ ] **A returning launch.** Signed in, reload with the Network panel
       open: the firebase-db, Home and Layout chunks start alongside the
       entry, not after Auth's requests; signed out with the device never
@@ -247,6 +256,19 @@ what ships; these need a browser's Network panel or an iPhone.
       maintenance were mounted at the root for everyone, and both import
       Firestore; they now mount only for a signed-in person
       (`signedInRootOverlays.test.tsx`). Recheck after that deploys.
+      STATUS 2026-10-25 (emulator): the signed-in reload, on the e2e build
+      against the Auth and Firestore emulators, served by `vite preview`
+      on localhost, NOT on production, so no network latency is in these
+      figures. Signed in as the seeded account, Home reloaded eight times
+      in headless Chromium (five with the cache, three with it disabled),
+      timed from CDP `Network.requestWillBeSent`. The entry started 29 to
+      37 ms after the document; firebase-db 26 to 61 ms after the entry,
+      Layout 33 to 77 ms and Home 35 to 81 ms after it. Auth's first
+      request (the emulator's `accounts:lookup`) came 170 to 308 ms after
+      the document, so firebase-db started 104 to 215 ms before it, Layout
+      93 to 199 ms and Home 88 to 195 ms before it. The three chunks start
+      alongside the entry, not after Auth. Production with an account
+      remains.
 - [ ] **Analytics' config read, on the web.** Every web visit logs a 403
       from `firebase.googleapis.com/.../webConfig`: Google answers
       `API_KEY_SERVICE_BLOCKED`, because the web API key's API restrictions
@@ -537,6 +559,14 @@ shows what the deploy set.
       (`functions/lib/triggerRetry.js`). Passing: a week after the release,
       Logs Explorer shows no `will be retried` line repeating for one event,
       and no `retry window closed` line.
+- [ ] **A deleted session's reversal retries too (2026-10-25).** The delete
+      triggers caught their reversal's failure, so a contended transaction
+      left the deleted session's challenge credit and lifetime total standing
+      for good; they now fail the event and are retried for a day
+      (`functions/__tests__/sessionDeleteRetry.test.js`). Passing: after the
+      release, the deployed source of onWorkoutDeleted and onRunDeleted
+      contains `triggerSteps`, and of `lib/activityReversal.js` contains
+      `not reversed for` (Deploy production reads both back).
 
 ## Reminders, sign-in and posting on the phone (2026-10-20)
 
@@ -1426,6 +1456,21 @@ them is a separate piece of work. Until it happens, "Tropos stores no
 meal photos" is true of everything written from 2026-08-18 onward and
 NOT of what came before — do not read the Food9 lock as meaning the
 bucket is empty.
+
+STATUS 2026-10-25 — `storage.rules` now refuses every upload under
+`food-photos/` (`allow write: if false`), so even a client that tried could
+not add to the legacy set; read and delete stay for the owner. The sweep of
+what is already there is still not done.
+
+- [ ] **Public photos can be fetched, not listed (2026-10-25).** Space-post
+      and profile photos grant `get`, not `read`, so nobody can list a
+      person's folder; a deleted Space post's photo is now deleted with it
+      (`functions/lib/spacePostPhoto.js`, run by onSpacePostWritten). Passing:
+      after the release, post a Space photo from a test account, delete the
+      post, and the file is gone from Storage within a minute; a post photo
+      and an avatar still load in the feed and on a profile, on web and on
+      the phone. Photos from posts deleted before the release stay until
+      their account is deleted.
 
 ## Scan failure beat + no-food prompt contract (2026-08-18, PR #2066)
 
@@ -2836,6 +2881,25 @@ Rollout sequence (operator, not agent):
 - [ ] Open **Firebase Console → App Check → APIs tab → Cloud Functions for Firebase**. Look for "Verified requests %". Target: ≥99% sustained for ≥7 days before any per-callable flip.
 - [ ] If verified % is low and the cause isn't obvious, query Cloud Logging: `resource.type="cloud_function" jsonPayload.appCheck.status=("MISSING" OR "INVALID")` to see exactly which callables would reject and which uids are missing tokens. Usual culprits: ad-blockers killing reCAPTCHA (rare, swallowed) or native iOS (all `MISSING` until the Capacitor App Check plugin is wired).
 - [ ] Flip enforcement per-callable in `functions/index.js` by adding `.runWith({ enforceAppCheck: true })`. Start with low-risk endpoints that the client **actually calls** — `sendTestPush`, `backfillMyActivityCategories`. (This line named `askGeminiText` until 2026-07-26; it had no client caller, so flipping it would have produced no telemetry and no rejection signal. It has since been retired. `docs/app-check-rollout.md` carries the full tier table and the traffic check.) Keep destructive ones (`deleteMyAccount`, `verifyApplePurchase`) until last. Don't bulk-flip.
+
+## Signing out clears the device's copy; sign-in avatars draw (2026-10-25)
+
+Unit-tested with the Firestore fake and jsdom, which have no IndexedDB, no
+reload and no CSP; only a browser and the phone show them doing their part.
+
+- [ ] **A sign-out clears Firestore's copy on the web.** Sign in on the web
+      build, open a few screens, sign out while online. Passing: the page
+      reloads to Login, and DevTools → Application → IndexedDB has no
+      `firestore/[DEFAULT]/…` database holding the account's documents (or
+      it is empty). Sign out with the network off instead: no reload, the
+      copy stays, and the account's offline changes go up on its next sign-in.
+- [ ] **The same on the phone.** Sign out on the iOS build while online.
+      Passing: the app reloads straight to Login, with no second Login flash
+      and no error screen, and signing back in works.
+- [ ] **Google and Apple avatars draw.** Sign in with Google on the web
+      build and on the phone, with no photo uploaded. Passing: the feed,
+      the profile and a comment show the Google photo, not an initial, and
+      the console shows no CSP refusal for `lh3.googleusercontent.com`.
 
 ## Saving offline counts as saved (2026-10-25)
 

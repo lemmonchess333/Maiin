@@ -29,6 +29,10 @@ import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { clearEmailChange } from "./emailChangeNote";
 import { settleWrite } from "./settleWrite";
+import {
+  reloadToClearFirestoreCache,
+  writesSettled,
+} from "./firestoreCacheClear";
 import { isNativePlatform } from "@/lib/platform";
 import {
   getGoogleCredentialNative,
@@ -977,10 +981,30 @@ async function cancelOutgoingAccountReminders(): Promise<void> {
   }
 }
 
+/**
+ * Whether the outgoing account has no writes left to send, so its cached
+ * copy can be cleared (firestoreCacheClear.ts). False offline, after the
+ * wait, or if Firestore will not load.
+ */
+async function outgoingWritesSettled(): Promise<boolean> {
+  try {
+    const { waitForPendingWrites, db } = await firestore();
+    return await writesSettled(() => waitForPendingWrites(db));
+  } catch (err) {
+    logger.warn("[auth] could not check the outgoing account's writes", err);
+    return false;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  /* A sign-out that clears the device's Firestore copy ends in a reload
+     (firestoreCacheClear.ts). Until it does, the app stays on its loading
+     screen: Login drawn on the page being left would take input the
+     reload then throws away. */
+  const [leavingForReload, setLeavingForReload] = useState(false);
   // Guards the once-per-session boot reconciliation writes (timezone capture +
   // email mirror) so they don't re-fire on every onAuthStateChanged emission —
   // it fires several times per sign-in (session restore, token refresh, popup),
@@ -1489,14 +1513,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // sign-out, so the user stays on A and retries rather than handing A's
     // device binding to the next account. Also wipes A's run/draft state.
     await revokeOutgoingAccountDeviceState();
-    await firebaseSignOut(auth);
+    // Clear the device's copy of what this account read only once none of
+    // its writes is still waiting to go up: clearing drops them.
+    const clearCache = await outgoingWritesSettled();
+    if (clearCache) setLeavingForReload(true);
+    try {
+      await firebaseSignOut(auth);
+    } catch (err) {
+      setLeavingForReload(false);
+      throw err;
+    }
     setProfile(null);
+    // The person chose to leave, so they know where an email change is
+    // going; the next person on this device should not be shown it.
+    clearEmailChange();
     // Reset to the DARK default so the next user starts dark unless their
     // Firestore profile explicitly says light. (Clearing the stored key lets
     // init.js / the next profile load own the value; the signed-out auth
     // listener also re-applies the dark default.)
     document.documentElement.classList.add("dark");
     remove("tropos-dark-mode");
+    if (clearCache) reloadToClearFirestoreCache();
   }, [revokeOutgoingAccountDeviceState]);
 
   const updateProfile = useCallback(
@@ -1741,7 +1778,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user,
       profile,
-      loading,
+      loading: loading || leavingForReload,
       ...credentialActions,
       resetPassword,
       fetchSignInMethods,
@@ -1753,6 +1790,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       profile,
       loading,
+      leavingForReload,
       credentialActions,
       resetPassword,
       fetchSignInMethods,
