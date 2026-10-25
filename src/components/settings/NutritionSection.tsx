@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 import { formatSigned, withSign } from "@/utils/formatters";
 import { motion } from "framer-motion";
 import { formatWeightInUnit, kgToLb, lbToKg } from "@/lib/weightUnits";
+import { AGE_YEARS, parseAgeYears } from "@/lib/bodyMetrics";
 import { haptic } from "@/lib/haptic";
 import { Calculator, Flame, Minus, Plus, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -77,6 +78,8 @@ export default function NutritionSection({
   program,
   inline = false,
 }: NutritionSectionProps) {
+  /** The age as typed, while the field is being edited. */
+  const [ageDraft, setAgeDraft] = useState<string | null>(null);
   // Contrast-safe macro colours from the shared palette — protein=pink,
   // carbs=gold, fat=sage everywhere else in the app. These tiles were
   // previously mis-coloured (protein blue / carbs amber / fat pink) with
@@ -213,15 +216,35 @@ export default function NutritionSection({
           <label htmlFor="tdee-age" className="text-xs text-muted-foreground">
             Age
           </label>
+          {/* The field holds what is typed while it is being edited. It
+              used to write `Number(text) || 25` on every keystroke, so a
+              cleared field became 25 at once (typing 3 then read 253),
+              and 0, a negative or 300 went to the profile on blur. Only
+              an age the profile keeps (bodyMetrics' AGE_YEARS, the
+              server's range) reaches the calculation or the save; any
+              other is put back on blur. */}
           <input
             id="tdee-age"
             type="number"
-            value={age}
-            onChange={(e) => setAge(Number(e.target.value) || 25)}
+            inputMode="numeric"
+            min={AGE_YEARS.min}
+            max={AGE_YEARS.max}
+            value={ageDraft ?? String(age)}
+            onChange={(e) => {
+              setAgeDraft(e.target.value);
+              const years = parseAgeYears(e.target.value);
+              if (years !== null) setAge(years);
+            }}
             onBlur={async () => {
               const prev = profile.age ?? 25;
-              if (age === prev) return;
-              const result = await updateProfile({ age });
+              const years = parseAgeYears(ageDraft ?? String(age));
+              setAgeDraft(null);
+              if (years === null) {
+                setAge(prev);
+                return;
+              }
+              if (years === prev) return;
+              const result = await updateProfile({ age: years });
               if (!result.ok) setAge(prev);
             }}
             className="ds-input mt-1 text-sm font-mono tabular-nums"

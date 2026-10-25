@@ -2836,3 +2836,19 @@ Rollout sequence (operator, not agent):
 - [ ] Open **Firebase Console → App Check → APIs tab → Cloud Functions for Firebase**. Look for "Verified requests %". Target: ≥99% sustained for ≥7 days before any per-callable flip.
 - [ ] If verified % is low and the cause isn't obvious, query Cloud Logging: `resource.type="cloud_function" jsonPayload.appCheck.status=("MISSING" OR "INVALID")` to see exactly which callables would reject and which uids are missing tokens. Usual culprits: ad-blockers killing reCAPTCHA (rare, swallowed) or native iOS (all `MISSING` until the Capacitor App Check plugin is wired).
 - [ ] Flip enforcement per-callable in `functions/index.js` by adding `.runWith({ enforceAppCheck: true })`. Start with low-risk endpoints that the client **actually calls** — `sendTestPush`, `backfillMyActivityCategories`. (This line named `askGeminiText` until 2026-07-26; it had no client caller, so flipping it would have produced no telemetry and no rejection signal. It has since been retired. `docs/app-check-rollout.md` carries the full tier table and the traffic check.) Keep destructive ones (`deleteMyAccount`, `verifyApplePurchase`) until last. Don't bulk-flip.
+
+## Saving offline counts as saved (2026-10-25)
+
+The SDK keeps an offline write on the device and sends it on reconnect,
+but its promise waits for the server, so every profile save offline spun
+until the connection came back (`src/lib/settleWrite.ts`). Unit-tested
+with the fake; only the phone shows the SDK replaying the write.
+
+- [ ] **A Settings change offline sticks.** On the phone, turn on Airplane
+      Mode, change a Settings value (units, max heart rate, a toggle).
+      Passing: it saves at once with no spinner left turning, and after
+      turning the connection back on and reopening the app, the value is
+      still the changed one.
+- [ ] **Connecting Apple Health offline shows steps.** With Airplane Mode
+      on, connect Apple Health from Settings → Health. Passing: today's
+      steps appear without waiting for a connection.
