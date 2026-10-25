@@ -6,8 +6,10 @@
  * Driven here, not only in memory, because the parts worth holding meet
  * only in Firestore: the activities query (authorId, visibility in, a
  * createdAt range), the `items` group read ordered by `text`, which leaves
- * out feed copies, the challenge read with `select()`, FieldValue.delete
- * inside the transaction, and the trigger's own gates.
+ * out feed copies, the `items` group read by fromUserId and a createdAt
+ * range, which finds notifications and no comment or feed copy, the
+ * challenge read with `select()`, FieldValue.delete inside the
+ * transaction, and the trigger's own gates.
  *
  * Gated on FIRESTORE_EMULATOR_HOST — skips in an ordinary unit run.
  */
@@ -41,6 +43,8 @@ const PATHS = {
   circleMember: `goalSpaces/${UID}-g1/members/${UID}`,
   challenge: `challenges/${UID}-now`,
   participant: `challenges/${UID}-now/participants/${UID}`,
+  notification: `notifications/${OTHER}/items/${UID}-n1`,
+  oldNotification: `notifications/${OTHER}/items/${UID}-n2`,
   deletion: `accountDeletionRequests/${UID}`,
   restriction: `globalRestrictedUids/${UID}`,
 };
@@ -110,6 +114,23 @@ async function seed() {
       photoURL: OLD_PHOTO,
       currentValue: 3,
     }),
+    // Props she gave Bob this week, and some from months ago.
+    db.doc(PATHS.notification).set({
+      type: "kudos",
+      fromUserId: UID,
+      fromName: "Alice Old",
+      message: "Alice Old gave you props",
+      read: false,
+      createdAt: ago(2),
+    }),
+    db.doc(PATHS.oldNotification).set({
+      type: "kudos",
+      fromUserId: UID,
+      fromName: "Alice Old",
+      message: "Alice Old gave you props",
+      read: false,
+      createdAt: ago(120),
+    }),
   ]);
 }
 
@@ -154,6 +175,23 @@ suite("a new name and photo reach the copies other people read", () => {
     expect((await read("participant")).currentValue).toBe(3);
   });
 
+  it("carries her new name into the notifications she sent this season", async () => {
+    await editProfile({ displayName: "Alice New" });
+    expect(await read("notification")).toMatchObject({
+      fromName: "Alice New",
+      message: "Alice New gave you props",
+      read: false,
+    });
+    expect(await read("oldNotification")).toMatchObject({
+      fromName: "Alice Old",
+      message: "Alice Old gave you props",
+    });
+    // The same group read touched neither her comment's text nor the feed
+    // copy: neither carries a fromUserId.
+    expect((await read("comment")).text).toBe("Nice one");
+    expect(await read("feedCopy")).not.toHaveProperty("fromName");
+  });
+
   it("a removed photo is deleted from the copies that leave it out", async () => {
     const { FieldValue } = require("firebase-admin/firestore");
     await editProfile({ photoURL: FieldValue.delete() });
@@ -180,6 +218,7 @@ suite("a new name and photo reach the copies other people read", () => {
     await db.doc(PATHS.restriction).set({ at: Date.now() });
     await editProfile({ displayName: "Alice New" });
     expect((await read("comment")).authorName).toBe("Alice Old");
+    expect((await read("notification")).fromName).toBe("Alice Old");
     await db.doc(PATHS.restriction).delete();
   });
 

@@ -108,6 +108,26 @@ real history can confirm the timing.
       open Home and see no welcome back (the absence is measured only from
       a server-confirmed read).
 
+## A new name reaches the notifications already sent (2026-10-25)
+
+`onPublicProfileIdentityChanged` now carries a new public name to the
+notifications the person sent in the last 90 days: `fromName`, and the
+sentence the tray shows, which starts with it. It reads them through a new
+`items` (fromUserId, createdAt newest first) collection-group index, which
+the emulator does not enforce. Notifications store no photo. A rename from
+before the deploy is not carried back; those notifications expire within
+90 days. The unit and emulator suites cover it; only a deploy confirms the
+index and the trigger in production.
+
+- [ ] **Rename, then read the other tray.** After Deploy production has
+      shipped (the Firestore step waits for the new index to be READY), on
+      account A give B props and comment on B's session, then change A's
+      name in Settings → Profile. Passing, on B within a minute: the rows
+      read "{new name} gave you props" and "{new name} commented on your
+      activity". The log line `onPublicProfileIdentityChanged.resynced`
+      counts `notification` and names no one, and Cloud Logging has no
+      "requires an index" error from the function.
+
 ## Partner streaks are counted on the server (2026-10-25)
 
 The rules no longer let an app create a partner bond. The
