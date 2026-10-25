@@ -2836,3 +2836,16 @@ Rollout sequence (operator, not agent):
 - [ ] Open **Firebase Console → App Check → APIs tab → Cloud Functions for Firebase**. Look for "Verified requests %". Target: ≥99% sustained for ≥7 days before any per-callable flip.
 - [ ] If verified % is low and the cause isn't obvious, query Cloud Logging: `resource.type="cloud_function" jsonPayload.appCheck.status=("MISSING" OR "INVALID")` to see exactly which callables would reject and which uids are missing tokens. Usual culprits: ad-blockers killing reCAPTCHA (rare, swallowed) or native iOS (all `MISSING` until the Capacitor App Check plugin is wired).
 - [ ] Flip enforcement per-callable in `functions/index.js` by adding `.runWith({ enforceAppCheck: true })`. Start with low-risk endpoints that the client **actually calls** — `sendTestPush`, `backfillMyActivityCategories`. (This line named `askGeminiText` until 2026-07-26; it had no client caller, so flipping it would have produced no telemetry and no rejection signal. It has since been retired. `docs/app-check-rollout.md` carries the full tier table and the traffic check.) Keep destructive ones (`deleteMyAccount`, `verifyApplePurchase`) until last. Don't bulk-flip.
+
+## Console checks a fix depends on (2026-10-25)
+
+- [ ] **Email Enumeration Protection is on.** Firebase console →
+      Authentication → Settings → User actions. A failed password sign-in
+      asks `fetchSignInMethods` for the address and, for a Google- or
+      Apple-only account, says which button to use (`src/pages/Login.tsx`,
+      `authErrors.ts`). With protection on, that call answers nothing for
+      any address, so Login cannot be used to learn whether an account
+      exists. With it off, typing any email reveals that, and the provider.
+      Passing: the switch reads enabled, and a wrong password for a
+      Google-only test account shows "Invalid email or password", not the
+      Google hint.

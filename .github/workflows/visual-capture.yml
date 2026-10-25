@@ -18,6 +18,10 @@ on:
   push:
     branches: ["claude/visual-capture"]
 
+# Reads the repository and nothing else; it writes nothing with the token.
+permissions:
+  contents: read
+
 jobs:
   capture:
     runs-on: ubuntu-latest

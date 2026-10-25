@@ -112,7 +112,8 @@ def source_targets():
         "screenPhoto": ["index.js", "lib/photoScreen.js"],
         "screenUploadedPhoto": ["index.js", "lib/photoScreen.js"],
         # S4e: a restriction refuses props and comments; the moderation page lifts one.
-        "toggleKudosCallable": ["index.js", "lib/restriction.js", "lib/socialCounters.js"],
+        "toggleKudosCallable": ["index.js", "lib/restriction.js", "lib/socialCounters.js",
+                                "lib/engagementRejection.js", "lib/documentId.js"],
         "liftRestriction": ["index.js"],
         # Race day: the daily no-show and recovery checks, and the recovery
         # entry a saved race run makes.
