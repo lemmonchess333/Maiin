@@ -8,7 +8,12 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
-import { AuthProvider, hasSignedInOnThisDevice, useAuth } from "@/lib/auth";
+import {
+  AuthProvider,
+  hasSignedInOnThisDevice,
+  useAuth,
+  useUid,
+} from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { LiftUnitProvider } from "@/hooks/useLiftUnit";
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
@@ -174,6 +179,7 @@ const RunSummary = lazyRetry(() => import("@/pages/RunSummary"));
 const RunDetail = lazyRetry(() => import("@/pages/RunDetail"));
 const WorkoutDetail = lazyRetry(() => import("@/pages/WorkoutDetail"));
 const Space = lazyRetry(() => import("@/pages/Space"));
+const SpacePost = lazyRetry(() => import("@/pages/SpacePost"));
 const ActivityPost = lazyRetry(() => import("@/pages/ActivityPost"));
 const Social = lazyRetry(() => import("@/pages/Social"));
 const Routine = lazyRetry(() => import("@/pages/Routine"));
@@ -858,6 +864,14 @@ function SignedInRoutes({
                           }
                         />
                         <Route
+                          path="/space/:spaceId/post/:postId"
+                          element={
+                            <RouteErrorBoundary>
+                              <SpacePost />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
                           path="/activity/:activityId"
                           element={
                             <RouteErrorBoundary>
@@ -990,6 +1004,26 @@ function SignedInRoutes({
    APP
 ================================ */
 
+/** The root-level pieces only a signed-in person uses: the share sheet a
+ *  finish screen opens, and the account's one-time maintenance. Both import
+ *  Firestore, which a signed-out visit's Login never reads, so they mount
+ *  once someone is signed in. A share opened before the sheet mounts is
+ *  replayed to it (subscribeShareComposer). */
+export function SignedInRootOverlays() {
+  const uid = useUid();
+  if (!uid) return null;
+  return (
+    <>
+      <Suspense fallback={null}>
+        <ShareComposerSheet />
+      </Suspense>
+      <Suspense fallback={null}>
+        <OneTimeMaintenance />
+      </Suspense>
+    </>
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -1001,12 +1035,7 @@ function App() {
                 fast-follow). Wraps the root-level overlays + all routes. */}
             <BackDismissProvider>
               <ToastProvider />
-              <Suspense fallback={null}>
-                <ShareComposerSheet />
-              </Suspense>
-              <Suspense fallback={null}>
-                <OneTimeMaintenance />
-              </Suspense>
+              <SignedInRootOverlays />
               <RevenueCatIdentity />
               <LaunchSplash />
               <AppRoutes />

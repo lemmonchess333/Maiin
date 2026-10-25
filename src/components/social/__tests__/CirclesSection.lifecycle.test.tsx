@@ -70,6 +70,7 @@ function summary(
     },
     // Multi-member so the default action is the focus button, not invite.
     inviteCode: null,
+    inviteCodeExpiresAt: null,
   };
 }
 

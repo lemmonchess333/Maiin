@@ -85,6 +85,18 @@ describe("describeJoinRejection", () => {
     expect(closed).not.toBe(typo);
   });
 
+  it("sends someone with an expired code back to whoever invited them", () => {
+    // Checking an expired or replaced code again cannot help, so this one
+    // does not say to; only the person who sent it can make a new one.
+    const expired = describeJoinRejection(
+      rejection("failed-precondition", "invite expired")
+    );
+    expect(expired).toBe(
+      "That invite code has expired. Ask whoever invited you for a new one."
+    );
+    expect(expired).not.toMatch(/check it/i);
+  });
+
   it("stops telling a rate-limited caller to check their code", () => {
     // The limiter is 10 per 10 minutes and carries no message worth
     // reading, so this one is matched on the code. Pre-fix it produced
@@ -163,6 +175,7 @@ describe("the mapping tracks the server", () => {
       "circle inactive",
       "no such circle",
       "bad invite",
+      "invite expired",
       "invite code required",
       "blocked-pair",
     ]) {

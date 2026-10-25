@@ -181,3 +181,34 @@ read them with this amendment.
   already answered. A failed read leaves it unasked on that visit.
 - **Food's Pro line takes its turn** with the guide's food-composer hint:
   it waits while that hint is due.
+
+## Amendment 2026-10-25 — the runner's return
+
+Survey item 49, under the owner's delegation. A lifter two weeks away got
+a welcome back (`LiftReturnSheet`); a runner got only the cadence line,
+and a race plan three weeks on got nothing unless the weekly check had
+flagged that week.
+
+- **It is a tier-4 surface**, `run-return`, priority 27. Home's order is
+  FirstVisitGuide (45), Trial (40), FellBehind (30), LiftReturn (28),
+  RunReturn (27), GoalReached (25).
+- **Two sheets, one surface.** A free runner two weeks or more away
+  (the lift's `WELCOME_BACK_DAYS`) gets `RunReturnSheet`: "Start with an
+  easy run", which opens Easy 20 on the Run page as the run card's Start
+  does, or "Not now". A race plan three weeks or more away (the shared
+  `LAYOFF_DETRAINED_DAYS`) gets `FellBehindSheet` in its welcome-back
+  register, with no weekly ledger: its promise that the plan eases the
+  runner back in holds for a rebuild only from that line. A race plan's
+  two-to-three-week gap stays the weekly check's to answer.
+- **Below the lift's return.** Easing back is the only way a lifter's
+  loads come down after a break; a race plan's weeks are already planned
+  from the layoff read. A hybrid away from both is asked about the weights
+  first and about running on the next visit, if they still have not run.
+- **The weekly check's sheet stands it down.** The run return is
+  suppressed by `fell-behind`, and closing that sheet settles the run
+  return for the same absence, so one absence is greeted once.
+- **Once per absence.** The dismissal key is the day of the last run that
+  counts (`lastRunDay`), as the lift's is its last session's.
+
+The rule is `src/features/program/runReturn.ts`; `homeSurfaceRegistry.test.ts`
+pins the registration, its place in the order and the suppression.

@@ -140,17 +140,14 @@ const PROTECTED_PATHS: ProtectedPath[] = [
   // (Admin SDK).
   {
     // SOCIAL S3 — partner-streak bond. Symmetric 1:1 doc naming two
-    // members. Create is a cross-user write (you name another user in
-    // members[]) so the freeze checks BOTH members' isDeleting. Declaring
-    // "actor"+"target" makes the cross-user assertion require >=2
-    // !isDeleting applications — CREATE supplies exactly 2 (members[0],
-    // members[1]). Soc7: UPDATE is now `allow update: if false` (streak
-    // state is server-written via the Admin SDK), so it contributes no
-    // freeze and needs none; create's pair still satisfies the assertion.
+    // members. CREATE and UPDATE are `if false`: the startPartnerStreak
+    // callable makes each bond (it reads both members' deletion state in
+    // its transaction), and streak state is server-written via the Admin
+    // SDK. DELETE is the one client write, and it freezes the actor.
     pathPattern: "match /partnerBonds/{bondId}",
-    sides: ["actor", "target"],
+    sides: ["actor"],
     notes:
-      "create freezes both members (!isDeleting on members[0] AND members[1]); update is server-only (if false); delete is member-only (executor sweeps in step 3b)",
+      "create and update are server-only (if false); delete is member-only and frozen on the actor (executor sweeps in step 3b)",
   },
   {
     // Spc1 PR1 — Community Spaces membership (nested block; semantic

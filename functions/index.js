@@ -7810,6 +7810,50 @@ exports._decideFellBehindFlag = _decideFellBehindFlag;
 exports._runWeeklyFellBehindCheckForUser = _runWeeklyFellBehindCheckForUser;
 
 // ═══════════════════════════════════════════════════════════════
+// Partner streaks: the one way a bond is made. The rules refuse every
+// client create, because only a transaction can count each person's
+// bonds against the limit (lib/partnerBonds.js). A restricted account
+// is refused, as the rules refused it, and so is one being deleted.
+// ═══════════════════════════════════════════════════════════════
+const partnerBonds = require("./lib/partnerBonds");
+
+exports.startPartnerStreak = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+    }
+    const uid = context.auth.uid;
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+    await restriction.assertNotRestricted(admin.firestore(), uid, functions);
+    if (await isRateLimited(uid, "partnerStreakStart", 10, 600_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many requests. Try again in a few minutes."
+      );
+    }
+    try {
+      return await partnerBonds.startPartnerBond({
+        firestore: admin.firestore(),
+        uid,
+        partnerUid: data?.partnerUid,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (err) {
+      if (err instanceof partnerBonds.PartnerBondError) {
+        throw new functions.https.HttpsError(err.code, err.reason, {
+          reason: err.reason,
+        });
+      }
+      functions.logger.error("startPartnerStreak failed", err);
+      throw new functions.https.HttpsError("internal", "Something went wrong.");
+    }
+  });
+
+// ═══════════════════════════════════════════════════════════════
 // GOALS-CORE-01 (slice 3) — Goal Space membership callables.
 // Server-owned membership: the rules lock goalSpaces/{id} + members
 // to `write: if false`, so these callables are the ONLY writers.
@@ -7927,6 +7971,29 @@ exports.joinGoalSpace = functions
         makeId: goalSpaceRandomId,
       });
       return { ok: true };
+    } catch (err) {
+      throw mapGoalSpaceError(err);
+    }
+  });
+
+/* The owner's new invite code: the old one stops working at once, and
+   the new one works for seven days (lib/goalSpaceMembership). Handing
+   out a way in reaches the people who use it, so a restricted owner is
+   refused it as they are refused starting a Circle. */
+exports.renewGoalSpaceInviteCode = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceCallableGate(context, "goalSpaceRenewCode", 10, {
+      reachesOthers: true,
+    });
+    try {
+      return await goalSpaceMembership.renewGoalSpaceInviteCode({
+        firestore: admin.firestore(),
+        uid,
+        spaceId: String(data?.spaceId || ""),
+        now: Date.now(),
+        makeCode: goalSpaceInviteCode,
+      });
     } catch (err) {
       throw mapGoalSpaceError(err);
     }

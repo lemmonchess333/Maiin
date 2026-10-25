@@ -1744,10 +1744,14 @@ service cloud.firestore {
     // members may read or write their bond.
     //
     //   - READ: either member.
-    //   - CREATE: the creator must be one of exactly two DISTINCT members,
-    //     and the streak must start COLD (streak == 0) so no one can mint
-    //     a bond with a forged head-start. Neither member may be
-    //     mid-deletion (R1A: both endpoints must be writable).
+    //   - CREATE: SERVER-ONLY (`if false`). Each person holds at most five
+    //     bonds, and rules cannot count documents, so the
+    //     startPartnerStreak callable makes every bond in a transaction
+    //     that counts both people's (functions/lib/partnerBonds.js). It
+    //     holds what this rule held: two distinct members at the pair's
+    //     sorted id, a mutual follow, no block either way, neither account
+    //     mid-deletion, the starter not restricted, and the cold initial
+    //     state the engine reads.
     //   - UPDATE: SERVER-ONLY (`if false`). Streak state is materialized by
     //     the Cloud Function persist path (applyPartnerActivity on
     //     onWorkoutCreated / onRunCreated, via the Admin SDK which bypasses
@@ -1755,9 +1759,9 @@ service cloud.firestore {
     //     either member to write streak fields; once the engine moved
     //     server-side that client path became BOTH unused AND a cheat vector
     //     (a member could hand-edit their own shared streak). `if false`
-    //     removes it and the client/server double-writer race. The client
-    //     only ever creates + deletes a bond (lifecycle).
-    //   - DELETE: either member may dissolve the bond.
+    //     removes it and the client/server double-writer race.
+    //   - DELETE: either member may dissolve the bond. It is the one
+    //     client write left.
     //
     // R1A-Deletion: bonds the deleted user is a member of are tombstoned
     // by the account-deletion executor (added to accountDeletionInventory).
@@ -1767,59 +1771,11 @@ service cloud.firestore {
         return request.auth != null
           && request.auth.uid in resource.data.members;
       }
-      // Consent is the mutual follow (partnerStreakApi.createBond). It was
-      // checked only in the client, so anyone could bond a stranger: the
-      // bond then carries the stranger's last active day, which the server
-      // writes on every session they save, and takes one of their five
-      // partner slots. With these two the create reads nine documents, one
-      // under the per-request limit of ten.
-      function followEachOther(a, b) {
-        return exists(/databases/$(database)/documents/following/$(a)/users/$(b))
-          && exists(/databases/$(database)/documents/following/$(b)/users/$(a));
-      }
       allow read: if bondMember();
-      // The whole INITIAL state is pinned, not just `streak`. `update` is
-      // server-only (below), so create is the one client-reachable moment —
-      // and `applyPartnerActivity` reads `lastSharedDay`, `lastActive` and
-      // `freezeWeek` straight off the document and feeds them to the engine.
-      // Pinning `streak == 0` alone left the rest forgeable: a bond created
-      // with a partner's `lastActive` already set to today makes the very
-      // next real session register as a SHARED day that never happened, and
-      // a pre-filled `freezeWeek` hands out streak freezes. `hasOnly` keeps
-      // the shape from silently growing a field the engine would then trust
-      // — the same guard the public-profile projection uses.
-      allow create: if request.auth != null
-        && request.resource.data.keys().hasOnly([
-             'members', 'streak', 'lastSharedDay', 'lastActive',
-             'freezeWeek', 'createdAt'
-           ])
-        && request.resource.data.members is list
-        && request.resource.data.members.size() == 2
-        && request.resource.data.members[0] != request.resource.data.members[1]
-        && request.auth.uid in request.resource.data.members
-        // One bond per pair, at the id createBond derives (sorted uids), so
-        // a pair cannot take a second slot under another id.
-        && request.resource.data.members[0] < request.resource.data.members[1]
-        && bondId == request.resource.data.members[0] + '__'
-             + request.resource.data.members[1]
-        && followEachOther(
-             request.resource.data.members[0],
-             request.resource.data.members[1]
-           )
-        && request.resource.data.streak == 0
-        && request.resource.data.lastSharedDay == null
-        && request.resource.data.lastActive.size() == 0
-        && request.resource.data.freezeWeek.size() == 0
-        && !isWriteFrozen(request.resource.data.members[0])
-        && !isWriteFrozen(request.resource.data.members[1])
-        // A bond puts the two names side by side on both profiles and
-        // writes the partner's activity into it. A block either way
-        // refuses one, as it refuses a follow.
-        && !blockExistsBetween(
-             request.resource.data.members[0],
-             request.resource.data.members[1]
-           )
-        && !isRestricted();
+      // Server-only: a create here could not count the bonds either person
+      // already holds (see the header). The startPartnerStreak callable is
+      // the one writer.
+      allow create: if false;
       // Soc7: streak state is server-written (Admin SDK). No client update.
       allow update: if false;
       // A frozen/tombstoned member cannot dissolve the bond client-side;

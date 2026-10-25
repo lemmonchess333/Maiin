@@ -11,7 +11,8 @@
  * - A planned run's: `StackedCTACards.test.tsx`, `RunLaunchCard.test.tsx`,
  *   `RunSetupModal.journeyNames.test.tsx` (the run type, the treadmill and
  *   its start), `RunSummary.savedRunState.test.tsx` and `WeekStrip.test.tsx`.
- * - Welcome back's: `LiftReturnSheet.test.tsx`.
+ * - Welcome back's: `LiftReturnSheet.test.tsx`, and the runner's:
+ *   `RunReturnSheet.test.tsx`.
  * - Train's rows, its Start workout, its two halves, the run week, the
  *   lift week's banners and the recovery count, "Why this run", Home's
  *   title and the tab bar: `journeyScreens.test.tsx`.
@@ -122,6 +123,14 @@ export const WELCOME_BACK = {
   sheet: "Welcome back",
   easeBack: /^Ease back in/,
   keep: /^Keep my old weights/,
+} as const;
+
+/** Home's greeting for a free runner back from two weeks or more away
+ *  (`RunReturnSheet`). A race plan's opens the fell-behind sheet instead. */
+export const RUN_RETURN = {
+  sheet: "Welcome back",
+  easyRun: /^Start with an easy run/,
+  notNow: "Not now",
 } as const;
 
 /** Home's week strip: the words a day's label ends on (`WeekStrip`). */

@@ -18,7 +18,11 @@
  * also clears it (the user is going to fix the date directly).
  *
  * Mounted from Home so the prompt lands on the user's first app
- * open after Monday's sweep.
+ * open after Monday's sweep. Home also opens it for a race plan's run
+ * return (`runReturn.ts`): a runner three weeks or more away whom the
+ * weekly check has not flagged. That opening has no weekly ledger, so it
+ * is always in the welcome-back register, and "Not now" there changes
+ * nothing on the server.
  *
  * The choice machine (pending state + double-tap guard + opacity
  * dim on non-active siblings + "Verb…" label idiom) lives in the
@@ -35,6 +39,7 @@ import type { ProgramOutcome } from "@/features/program/programOutcome";
 import {
   track as trackLifecycleEvent,
   type ReturnChoice,
+  type ReturnSurface,
 } from "@/lib/lifecycleAnalytics";
 
 interface FellBehindSheetProps {
@@ -43,13 +48,18 @@ interface FellBehindSheetProps {
    *  the sheet re-opens on next app launch. Use sparingly; the
    *  three action buttons are the intended dismissal path. */
   onClose: () => void;
-  /** Server-written flag payload — drives the body copy. */
-  prompt: {
+  /** Server-written flag payload — drives the body copy. Absent when the
+   *  run return opened the sheet: with no week's ledger to show, it speaks
+   *  in the welcome-back register whatever `recentLayoff` says. */
+  prompt?: {
     weekKey: string;
     completedRatio: number;
     realRunCount: number;
     weeklyTarget: number;
   };
+  /** Which return surface opened the sheet, for `return_choice`: the
+   *  weekly check's prompt, or the run return. */
+  surface?: Extract<ReturnSurface, "fell-behind" | "run-return">;
   /** Writers from useProgram. */
   dismissFellBehindPrompt: () => Promise<ProgramOutcome>;
   /** Re-anchor the plan to today (keep the race date). Already wrapped by the
@@ -84,9 +94,12 @@ export default function FellBehindSheet({
   onRaceMoved,
   raceModeActive,
   recentLayoff,
+  surface = "fell-behind",
 }: FellBehindSheetProps) {
-  const percent = Math.round(prompt.completedRatio * 100);
-  const detrained = recentLayoff === "detrained";
+  // The week's ledger, when there is one to show and the gap is a missed
+  // week rather than a return.
+  const ledger = recentLayoff === "detrained" ? null : (prompt ?? null);
+  const detrained = ledger === null;
 
   /**
    * `return_choice`, paired with the `return_surface_shown` the coordinator
@@ -104,7 +117,7 @@ export default function FellBehindSheet({
   const reportChoice = (choice: ReturnChoice) => {
     if (choiceReported.current) return;
     choiceReported.current = true;
-    trackLifecycleEvent("return_choice", { surface: "fell-behind", choice });
+    trackLifecycleEvent("return_choice", { surface, choice });
   };
 
   const choices: Choice[] = [
@@ -172,9 +185,9 @@ export default function FellBehindSheet({
             {detrained ? "Welcome back" : "Last week"}
           </SectionLabel>
           <p className="text-base font-semibold text-foreground mt-0.5">
-            {detrained
-              ? "It's been a while between runs"
-              : `${prompt.realRunCount} of ${prompt.weeklyTarget} runs (${percent}%)`}
+            {ledger
+              ? `${ledger.realRunCount} of ${ledger.weeklyTarget} runs (${Math.round(ledger.completedRatio * 100)}%)`
+              : "It's been a while between runs"}
           </p>
         </div>
       </div>

@@ -12,6 +12,10 @@ import { lbToKg } from "@/lib/weightUnits";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { assessLiftReturn } from "@/features/program/liftLayoff";
+import { useRunReturn } from "@/features/program/useRunReturn";
+import { RETURN_RUN_TEMPLATE_ID } from "@/features/program/runReturn";
+import { APPLIED } from "@/features/program/programOutcome";
+import { START_ON_ARRIVAL_PARAM } from "@/features/run/startOnArrival";
 import { useMeals } from "@/hooks/useMeals";
 import { useHomeData } from "@/hooks/useHomeData";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
@@ -133,6 +137,9 @@ const FellBehindSheet = lazyRetry(
 );
 const LiftReturnSheet = lazyRetry(
   () => import("@/components/program/LiftReturnSheet")
+);
+const RunReturnSheet = lazyRetry(
+  () => import("@/components/program/RunReturnSheet")
 );
 
 export default function Home() {
@@ -443,9 +450,11 @@ export default function Home() {
     useLifetimeRunStats({ enabled: inActivationWindow });
   // A workout closed with its sets kept, or a run left before it was
   // saved, is offered back on the session card (`todaySession`).
-  const { drafts: draftsInFlight, run: runInFlight } = useSessionsInFlight(
-    user?.uid
-  );
+  const {
+    drafts: draftsInFlight,
+    run: runInFlight,
+    routines: routinesInFlight,
+  } = useSessionsInFlight(user?.uid);
   // Today's session card: which card shows and what it says.
   const session = useMemo(
     () =>
@@ -459,7 +468,11 @@ export default function Home() {
         nowMs,
         lifetimeRuns: runStatsLoading ? null : lifetimeRunCount,
         lifetimeMeals: totalLifetimeMeals,
-        inFlight: { drafts: draftsInFlight, run: runInFlight },
+        inFlight: {
+          drafts: draftsInFlight,
+          run: runInFlight,
+          routines: routinesInFlight,
+        },
       }),
     [
       todayKey,
@@ -474,6 +487,7 @@ export default function Home() {
       totalLifetimeMeals,
       draftsInFlight,
       runInFlight,
+      routinesInFlight,
     ]
   );
 
@@ -572,6 +586,59 @@ export default function Home() {
     // exists to prevent, and the run sheet carries the race stakes.
     suppressedBy: ["fell-behind"],
   });
+
+  /**
+   * The runner's return (`runReturn.ts`): a free runner two weeks away is
+   * offered an easy run, a race plan three weeks away opens the
+   * fell-behind sheet in its welcome-back register. Measured from saved
+   * runs, as the lift's is from logged sessions, and asked once per
+   * absence: the key is the last run's day.
+   *
+   * Below the lift's return: easing back is the only way a lifter's loads
+   * come down after a break, while a race plan's weeks are already planned
+   * from the layoff read. So a hybrid away from both is asked about the
+   * weights first and about running on the next visit, if they still have
+   * not run. The weekly check's own sheet greets the same absence, so it
+   * stands this down, and answering it settles this one (below).
+   */
+  const runReturn = useRunReturn({
+    profile,
+    programState,
+    programLoading,
+    todayKey,
+  });
+  const { dismissed: runReturnDismissed, dismiss: dismissRunReturn } =
+    useDismissOnce(`tropos-run-return:${runReturn.dismissKey ?? "none"}`);
+  const runReturnSurface = useSurface({
+    id: "run-return",
+    priority: 27,
+    eligible: runReturn.offer !== null && !runReturnDismissed,
+    suppressedBy: ["fell-behind"],
+  });
+  const closeRunReturn = () => {
+    dismissRunReturn();
+    runReturnSurface.dismiss();
+  };
+  /** Re-plan the race from today, and say what was built. A refusal or a
+   *  failed save has already been said by the writer. Whether it landed. */
+  const realignAndSay = async (): Promise<boolean> => {
+    const result = await realignRacePlan();
+    if (result.status !== "applied") return false;
+    if (profile?.raceGoal) {
+      toast.success(
+        realignResultMessage({
+          timing: result.timing,
+          distance: profile.raceGoal.distance as
+            | "5k"
+            | "10k"
+            | "half"
+            | "marathon",
+          totalWeeks: result.totalWeeks,
+        })
+      );
+    }
+    return true;
+  };
 
   // Goal-reached prompt. The nutrition direction is evaluated on every Home
   // visit, not only inside a Settings edit — otherwise a cutter who arrives
@@ -1347,25 +1414,14 @@ export default function Home() {
             onClose={() => {
               setFellBehindDismissedFor(fellBehindPrompt.weekKey);
               fellBehindSurface.dismiss();
+              // The weekly check's sheet has just spoken to this absence;
+              // the run return does not greet it a second time.
+              if (runReturn.offer) dismissRunReturn();
             }}
             prompt={fellBehindPrompt}
             dismissFellBehindPrompt={dismissFellBehindPrompt}
             realignRacePlan={async () => {
-              const result = await realignRacePlan();
-              // A refusal or a failed save has already been said by the writer.
-              if (result.status === "applied" && profile?.raceGoal) {
-                toast.success(
-                  realignResultMessage({
-                    timing: result.timing,
-                    distance: profile.raceGoal.distance as
-                      | "5k"
-                      | "10k"
-                      | "half"
-                      | "marathon",
-                    totalWeeks: result.totalWeeks,
-                  })
-                );
-              }
+              await realignAndSay();
             }}
             onRaceMoved={() => {
               // "My race moved" — clear the flag and route to the dedicated
@@ -1377,6 +1433,52 @@ export default function Home() {
               profile?.runMode === "race_prep" && !!profile.raceGoal
             }
             recentLayoff={recentLayoff}
+          />
+        )}
+      </Suspense>
+
+      {/* The runner's return, one of two sheets by the offer: a free
+          runner's easy run, or the race plan's rebuild in the fell-behind
+          sheet's welcome-back register. Either close settles this absence
+          (`closeRunReturn`). */}
+      <Suspense fallback={null}>
+        {runReturn.offer === "easy-run" && runReturn.daysAway !== null && (
+          <RunReturnSheet
+            open={runReturnSurface.active}
+            onClose={closeRunReturn}
+            onEasyRun={() => {
+              // Settled before the page goes, so the run back is not
+              // greeted on the way home.
+              closeRunReturn();
+              closePeek();
+              navigate(
+                `/run?template=${RETURN_RUN_TEMPLATE_ID}&${START_ON_ARRIVAL_PARAM}=1`
+              );
+            }}
+            daysAway={runReturn.daysAway}
+          />
+        )}
+        {runReturn.offer === "rebuild" && (
+          <FellBehindSheet
+            open={runReturnSurface.active}
+            onClose={closeRunReturn}
+            surface="run-return"
+            // No weekly prompt to clear: "Not now" here changes nothing.
+            dismissFellBehindPrompt={async () => APPLIED}
+            realignRacePlan={async () => {
+              // A rebuild that didn't land keeps the sheet open to try
+              // again, as the weekly prompt's flag would stay set.
+              if (!(await realignAndSay()))
+                throw new Error("The plan wasn't rebuilt");
+            }}
+            onRaceMoved={() => {
+              closeRunReturn();
+              navigate("/settings/run-plan");
+            }}
+            raceModeActive
+            // The offer is made from the detrained line, so this is the
+            // layoff a rebuild plans from.
+            recentLayoff="detrained"
           />
         )}
       </Suspense>

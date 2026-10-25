@@ -30,8 +30,8 @@ import { notificationTarget } from "@/lib/notificationTarget";
  * injected items.
  *
  * Tapping a row opens what it is about (`notificationTarget`): props and
- * a comment open the post, a Space row the Space, the rest the profile of
- * whoever acted.
+ * a comment open the post, a session's or a Space's, and the rest the
+ * profile of whoever acted.
  */
 
 const TYPE_ICON: Record<

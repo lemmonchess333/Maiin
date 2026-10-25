@@ -133,6 +133,9 @@ describe("the callables actually call it", () => {
   it.each([
     ["addCommentCallable", "socialCounters.addComment("],
     ["addSpacePostCommentCallable", "spacePostEngagement.addSpacePostComment("],
+    // The rules refused a restricted account's bond; no client creates
+    // one now, so the callable that does is where the refusal lives.
+    ["startPartnerStreak", "partnerBonds.startPartnerBond("],
   ])("%s refuses before it writes", (name, write) => {
     const body = exported(name);
     const guardAt = body.indexOf("restriction.assertNotRestricted(");
@@ -140,10 +143,11 @@ describe("the callables actually call it", () => {
     expect(body.indexOf(write)).toBeGreaterThan(guardAt);
   });
 
-  it("Circles refuse starting, joining, checking in and backing, not leaving", () => {
+  it("Circles refuse starting, joining, a new invite code, checking in and backing, not leaving", () => {
     for (const name of [
       "createGoalSpace",
       "joinGoalSpace",
+      "renewGoalSpaceInviteCode",
       "goalSpaceWeeklyCheckIn",
       "backGoalSpaceCheckIn",
     ]) {

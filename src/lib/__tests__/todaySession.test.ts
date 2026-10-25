@@ -14,6 +14,10 @@ import type { WorkoutDraft } from "@/hooks/useWorkoutDraft";
 import type { StoredRunSummary } from "@/lib/runResumeStorage";
 import { freeformPlanMetadata } from "@/lib/runPlanMetadata";
 import { storedRunName } from "@/lib/sessionsInFlight";
+import {
+  routineDraftIdentity,
+  type RoutineLayout,
+} from "@/features/program/routineSession";
 
 /**
  * Today's session on Home, decided without the page. Every date here is a
@@ -1057,5 +1061,149 @@ describe("todaySession — a session under way", () => {
         "km"
       )
     ).toBe("Tempo run");
+  });
+});
+
+/* A saved routine's workout under way. Its draft's identity is the one its
+   page gives it (`routineSession.ts`), and it is offered only while the
+   routine, as it is now, builds the same session. */
+describe("todaySession — a routine's workout under way", () => {
+  const liftDay = profileWith({ 3: "lift" });
+  const plan = programStateWith({ workouts: [PUSH, PULL, LEGS] });
+  const ARMS: RoutineLayout = {
+    id: "r1",
+    name: "Arms",
+    exercises: [
+      {
+        name: "Barbell Curl",
+        exerciseId: "barbell-curl",
+        summary: "3×10",
+        setCount: 3,
+        targetReps: 10,
+        targetWeightKg: 30,
+      },
+    ],
+  };
+  const [CURL] = ARMS.exercises;
+  function routineDraft(
+    routine: RoutineLayout,
+    extra: Partial<WorkoutDraft> = {}
+  ): WorkoutDraft {
+    return {
+      dayIndex: -1,
+      dayName: routine.name,
+      setLogs: [
+        Array.from({ length: 3 }, (_, i) => ({
+          reps: 10,
+          weight: 30,
+          completed: i === 0,
+          type: "working" as const,
+        })),
+      ],
+      exerciseNotes: {},
+      elapsedSeconds: 640,
+      currentExIndex: 0,
+      savedAt: 2_000,
+      identity: routineDraftIdentity(routine),
+      completionId: "c2",
+      completionCommandId: "c2",
+      ...extra,
+    };
+  }
+  const routinesNow = (...routines: RoutineLayout[]) =>
+    new Map(routines.map((routine) => [routine.id, routine]));
+  function offered(
+    drafts: WorkoutDraft[],
+    routines: ReadonlyMap<string, RoutineLayout> | undefined,
+    extra: Partial<TodaySessionInput> = {}
+  ) {
+    return todaySession(
+      input({
+        profile: liftDay,
+        programState: plan,
+        inFlight: { drafts, run: null, routines },
+        ...extra,
+      })
+    );
+  }
+
+  it("gives it a strip of its own, named as the routine, whose Resume opens its page", () => {
+    const session = offered([routineDraft(ARMS)], routinesNow(ARMS));
+    expect(session.inProgressElsewhere).toEqual([
+      {
+        sport: "lift",
+        name: "Arms",
+        sets: 1,
+        elapsedSeconds: 640,
+        resumeTarget: "/routine/r1?resume=1",
+      },
+    ]);
+    // Today's own card still offers its Start.
+    expect(session.lift).toMatchObject({ index: 0, name: "Push" });
+    expect(session.lift?.inProgress).toBeUndefined();
+  });
+
+  it("is offered to someone with no programme too", () => {
+    const session = offered([routineDraft(ARMS)], routinesNow(ARMS), {
+      profile: profileWith({}),
+      programState: null,
+    });
+    expect(session.inProgressElsewhere).toEqual([
+      expect.objectContaining({ name: "Arms" }),
+    ]);
+  });
+
+  it("offers nothing Resume could not open: a routine deleted, renamed, or with an exercise or a set count changed", () => {
+    // The control: as kept, it is offered.
+    expect(
+      offered([routineDraft(ARMS)], routinesNow(ARMS)).inProgressElsewhere
+    ).toHaveLength(1);
+    for (const now of [
+      // Deleted since, or not read yet.
+      routinesNow(),
+      undefined,
+      routinesNow({ ...ARMS, name: "Arms day" }),
+      routinesNow({ ...ARMS, exercises: [{ ...CURL, setCount: 4 }] }),
+      routinesNow({
+        ...ARMS,
+        exercises: [
+          CURL,
+          { ...CURL, name: "Hammer Curl", exerciseId: "hammer-curl" },
+        ],
+      }),
+      // Another routine's document.
+      routinesNow({ ...ARMS, id: "r2" }),
+    ])
+      expect(offered([routineDraft(ARMS)], now).inProgressElsewhere).toEqual(
+        []
+      );
+    // A finished workout waiting for the server is not under way.
+    expect(
+      offered(
+        [routineDraft(ARMS, { completionPending: true })],
+        routinesNow(ARMS)
+      ).inProgressElsewhere
+    ).toEqual([]);
+  });
+
+  it("offers the newer of a routine's workout and a programme day's", () => {
+    const routine = routineDraft(ARMS, { savedAt: 2_000 });
+    const newerRoutine = offered(
+      [draftFor(plan, liftDay, 0, { savedAt: 1_000 }), routine],
+      routinesNow(ARMS)
+    );
+    expect(newerRoutine.inProgressElsewhere).toEqual([
+      expect.objectContaining({ name: "Arms" }),
+    ]);
+    expect(newerRoutine.lift?.inProgress).toBeUndefined();
+
+    const newerDay = offered(
+      [draftFor(plan, liftDay, 0, { savedAt: 3_000 }), routine],
+      routinesNow(ARMS)
+    );
+    expect(newerDay.lift?.inProgress).toMatchObject({
+      resumeTarget: "/program?day=0&resume=1",
+    });
+    expect(newerDay.inProgressElsewhere).toEqual([]);
   });
 });

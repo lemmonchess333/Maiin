@@ -10,6 +10,173 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Space post notices open the post (2026-10-25)
+
+Props and a comment on someone's Space post now open that post at
+`/space/{spaceId}/post/{postId}`, with the comments showing for a comment,
+instead of the Space's list. The page reads the one post, draws it with the
+Space page's own card and comment sheet, and opens the Space when the post
+is gone, refused, or someone else's across a block. Client only: the
+callables already store both ids on the notification. The unit suites drive
+the tray and the page against the Firestore fake; only two real accounts
+show the round trip.
+
+- [ ] **Open a props and a comment notice on a Space post.** On two phones
+      (or a phone and the web build), A posts in a Space; B gives the post
+      props and comments on it. Passing, on A: the props row opens the post,
+      with the Space's name above it opening the Space and A's flame state
+      as A left it; the comment row opens it with the comments showing and
+      B's comment in the list, and a reply from A there raises the card's
+      count. A deletes the post from its menu and lands on the Space; the
+      comment row then opens the Space too.
+
+## A routine's workout under way (2026-10-25)
+
+A saved routine's workout left with a set done is offered on Home and
+Train ("In progress · Arms · 3 sets · 12:40", Resume), and Resume opens
+the routine's page carrying on without asking. It is offered only while
+the routine still builds the same session, which the app learns by
+following that routine's document. The unit suite covers the rules and
+the page; these need a phone and a second device.
+
+- [ ] **Resume from Home, on an iPhone.** Start a routine from Train,
+      tick a set, close it. Passing: Home shows the strip with the
+      routine's name, the sets done and the time; Resume opens the
+      routine with the set ticked and no "Resume workout?" question;
+      Train's lift tab shows the same strip at its top.
+- [ ] **Deleted on another device.** With a routine's workout kept on
+      phone A, delete the routine on device B. Passing: within a few
+      seconds, A's Home and Train stop offering it, without reopening
+      the app.
+- [ ] **Offline in the gym.** In airplane mode, close a routine's workout
+      with a set done and open Home. Passing: the strip shows (the
+      routine was read on this phone when it was started), and Resume
+      opens the workout.
+
+## Leaving a workout says it was kept (2026-10-25)
+
+Every way out of a workout with a set done says "Workout kept" once, as
+the workout screen goes: Close, the browser's Back, Android's back button
+and leaving a routine's page. The unit suite drives each of those
+(`WorkoutSessionDraftRecovery.test.tsx`); the gestures only a phone has
+are below.
+
+- [ ] **The edge swipe in the iPhone app.** Capacitor's web view leaves
+      back and forward swipes off, and the app does not turn them on, so
+      swiping in from the left edge during a workout with a set done
+      should do nothing. Passing: nothing happens; or, if the swipe does
+      go back, "Workout kept" shows once and Home's In progress strip
+      offers the workout.
+- [ ] **The edge swipe in Safari on an iPhone.** In the web build, on
+      Train with a set done, swipe back from the left edge. Passing: the
+      workout closes to Train, "Workout kept · Resume it from Home or
+      Train." shows once, and the day's card offers Resume. Tap Close on
+      another workout instead: one toast, not two.
+- [ ] **Android's back button**, once the Android app exists. Passing:
+      Back during a workout with a set done closes it to Train with one
+      "Workout kept", and Back on a routine's workout leaves the page with
+      one too.
+
+## A runner's welcome back (survey item 49, 2026-10-25)
+
+Home greets a runner coming back: a free runner two weeks or more since
+their last run is offered an easy run (`RunReturnSheet`), and a race plan
+three weeks or more since opens the fell-behind sheet in its welcome-back
+register (`run-return`, ADR-0004's amendment). The rule, the read and both
+sheets are covered by unit suites against the Firestore fake; only a phone
+can confirm the run starts with its voice, and only a real account with
+real history can confirm the timing.
+
+- [ ] **Free runner, on the phone.** An account whose athlete type is
+      Runner or Hybrid, free running, whose last saved run is 15 or more
+      days old (the emulator's seed, or a real account left alone).
+      Passing: Home opens "Welcome back · It's been about 2 weeks since
+      your last run" once, alone, after the launch animation. Start with
+      an easy run lands on the Run page and starts Easy 20 with the GPS
+      search and its voice cue, with no second Start. Back on Home, the
+      sheet does not open again, then or after the app is closed and
+      reopened.
+- [ ] **Race plan, three weeks out.** A race-prep account, race still
+      ahead, whose last run and last workout are both more than 30 days
+      old: the weekly check sweeps only accounts active in the last 30
+      days, so no weekly prompt is pending. Passing: Home
+      opens "Welcome back · It's been a while between runs" with Rebuild
+      my plan, My race moved and Not now, and no runs-of-target line;
+      Rebuild re-plans with easy running first and toasts the plan's
+      length; the sheet does not come back.
+- [ ] **Offline.** With the phone in airplane mode, the same accounts
+      open Home and see no welcome back (the absence is measured only from
+      a server-confirmed read).
+
+## A new name reaches the notifications already sent (2026-10-25)
+
+`onPublicProfileIdentityChanged` now carries a new public name to the
+notifications the person sent in the last 90 days: `fromName`, and the
+sentence the tray shows, which starts with it. It reads them through a new
+`items` (fromUserId, createdAt newest first) collection-group index, which
+the emulator does not enforce. Notifications store no photo. A rename from
+before the deploy is not carried back; those notifications expire within
+90 days. The unit and emulator suites cover it; only a deploy confirms the
+index and the trigger in production.
+
+- [ ] **Rename, then read the other tray.** After Deploy production has
+      shipped (the Firestore step waits for the new index to be READY), on
+      account A give B props and comment on B's session, then change A's
+      name in Settings → Profile. Passing, on B within a minute: the rows
+      read "{new name} gave you props" and "{new name} commented on your
+      activity". The log line `onPublicProfileIdentityChanged.resynced`
+      counts `notification` and names no one, and Cloud Logging has no
+      "requires an index" error from the function.
+
+## Partner streaks are counted on the server (2026-10-25)
+
+The rules no longer let an app create a partner bond. The
+`startPartnerStreak` callable makes each one, counting both people's bonds
+against the limit of five in the transaction that creates it, with the
+mutual follow, a block either way, both accounts' deletion state and a
+restriction checked as the rules checked them. An iPhone build from before
+this change writes the bond itself, so on it Start streak now fails with
+"Couldn't start the streak. Try again."; nothing is lost, and an existing
+streak still shows and can be ended. The unit, rules and emulator suites
+cover each part, including two starts racing for one person's last place;
+only a deploy confirms the callable in production.
+
+- [ ] **Start a streak, then hit the limit.** After Deploy production has
+      shipped (`startPartnerStreak` is on the deployed-source list), on
+      two accounts that follow each other, tap Start streak on one's
+      profile from the other. Passing: "Streak started with …", and in the
+      console `partnerBonds/{a}__{b}` with streak 0 and a server
+      `createdAt`. With five streaks on either account, a sixth says whose
+      five it is ("You have 5 streak partners already. End one to start
+      another." or "{name} has 5 streak partners already.") and writes no
+      bond.
+- [ ] **Older iPhone builds.** Once a build carrying `startPartnerStreak`
+      is on TestFlight or the App Store, and if anyone still runs an
+      older one, set `config/client.minSupportedVersion` to that build's
+      version, so the older build shows the update screen instead of a
+      Start streak button that fails.
+
+## Circle invite codes expire (2026-10-25)
+
+A Circle's invite code works for seven days after it is made, and
+`joinGoalSpace` refuses it after that; the owner makes a new one from the
+Circle's sheet (`renewGoalSpaceInviteCode`), which stops the old one at
+once. A code made before this deploy is as old as its Circle, so a Circle
+more than a week old needs a new code before anyone else can join; nobody
+already in one is affected. The unit suites hold the rule on both sides;
+only a deploy can confirm the callables run it.
+
+- [ ] **A new code, a replaced code, an old Circle's code.** After Deploy
+      production has shipped (`joinGoalSpace` and
+      `renewGoalSpaceInviteCode` are on the deployed-source list), on
+      account A start a Circle. Passing: the invite sheet shows the code
+      and "Works until HH:MM on Ddd D Mmm", seven days on. In the Circle's
+      sheet tap New code, then on account B join with the first code:
+      "That invite code has expired. Ask whoever invited you for a new
+      one." Join with the new code: B is in. A Circle A made more than a
+      week before the deploy shows "This code has expired." and Make a new
+      code, and everyone already in it still opens it.
+
 ## Names that follow you, and notices that open the post (survey items 57 and 58, 2026-10-24)
 
 A new public name or photo is carried to the person's recent posts,
@@ -75,6 +242,11 @@ what ships; these need a browser's Network panel or an iPhone.
       root started about 270 ms after the entry, ahead of Login and every
       Google request. The signed-in reload and Home's fonts still need an
       account.
+      STATUS 2026-10-25 (later): with the gate's fix live, a first visit
+      still loaded firebase-db. The share sheet and the one-time
+      maintenance were mounted at the root for everyone, and both import
+      Firestore; they now mount only for a signed-in person
+      (`signedInRootOverlays.test.tsx`). Recheck after that deploys.
 - [ ] **Analytics' config read, on the web.** Every web visit logs a 403
       from `firebase.googleapis.com/.../webConfig`: Google answers
       `API_KEY_SERVICE_BLOCKED`, because the web API key's API restrictions
@@ -97,7 +269,7 @@ blocker's public profile or of either's post. The unit, rules and emulator
 suites cover each half; only a deploy and two real accounts can confirm the
 trigger runs in production and the two apps agree.
 
-- [ ] **Backfill the blocks made before the deploy.** Once Deploy
+- [x] **Backfill the blocks made before the deploy.** Once Deploy
       production has shipped `onBlockWritten` (check its deployed source),
       run the backfill with credentials that can write Firestore:
       `node functions/scripts/backfill-block-mirror.js adaptive-fitness-af8bb`,
@@ -107,6 +279,10 @@ trigger runs in production and the two apps agree.
       tab on demand.
       Passing: it prints its totals, and a second run prints `mirrored: 0`
       and `removed: 0` (the workflow runs it twice and checks this).
+      STATUS 2026-10-25: done by the workflow's first run, on the merge
+      that made it run by itself. Both passes printed `checked: 0`,
+      `mirrored: 0`, `removed: 0`: production had no blocks yet, so the
+      trigger alone keeps the mirror from here.
 - [ ] **Block from one account, look from the other.** On two phones (or
       a phone and the web build), account A follows B and both have shared
       a public session; A blocks B from B's profile. Passing, on B, without

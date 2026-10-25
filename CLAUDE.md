@@ -99,6 +99,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `WeeklyReview.tsx`                     | `/review`                          | Sunday recap — passive narration of the week (Rev1)                            |
 | `Social.tsx`                           | `/social`                          | Social feed, Circles/Spaces, leaderboards                                      |
 | `Space.tsx`                            | `/space/:spaceId`                  | Community Space — hero, join/leave, post list + composer                       |
+| `SpacePost.tsx`                        | `/space/:spaceId/post/:postId`     | One Space post with its props and comments (the tray's Space post rows)        |
 | `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: this week's shared sessions, badges, their posts           |
 | `ActivityPost.tsx`                     | `/activity/:activityId`            | One shared session with its props and comments (the tray's props/comment rows) |
 | `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                    |
@@ -189,8 +190,11 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 invites, weekly focus, check-ins. `spaces/` owns the space definitions,
 including the race spaces a `raceGoal.eventSpaceId` binds to.
 `partnerStreak/` owns partner bonds and shared-day streaks (the SERVER is
-the sole writer of bond streak state — see `docs/qa/pre-launch-backlog.md`). `run/` holds
-run-surface feature modules.
+the sole writer of bond streak state — see `docs/qa/pre-launch-backlog.md` —
+and makes every bond: the `startPartnerStreak` callable counts both people's
+bonds against `MAX_PARTNERS` in the transaction that creates one, and the
+rules refuse a client create; `partnerLimit.cross.test.ts` pins the limit
+both sides). `run/` holds run-surface feature modules.
 
 ### challenges/
 
@@ -274,7 +278,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - **A restricted account reaches no one** (S4e, 2026-10-06). `globalRestrictedUids/{uid}`, written by the moderation page's Restrict user (`resolveReport`) and removed by its Lift (`liftRestriction`), makes `isRestricted()` in `firestore.rules` refuse posts (a private one excepted), follows, Space and challenge joins, Circle events and partner bonds, and `functions/lib/restriction.js` refuse props, comments, likes, reactions and the Circle callables; the toggles refuse only adding. Logging, the person's own profile, blocking, reporting, unfollowing, leaving and deleting their own things stay open. The app says so before the server refuses: `RestrictedNotice` where an action would be, `showRestrictedToast()` for a refused tap (`src/lib/accountRestriction.ts`). Deleting a restricted account keeps a keyed hash of its email and its Google and Apple sign-in ids in `restrictedIdentities/{hash}` for 13 months (`functions/lib/restrictedIdentities.js`, STATUS 2026-10-20): `onAuthUserCreated` restricts a new account carrying one, and `liftRestriction` forgets them.
 - **A follower is someone you accepted** (Polish2, 2026-10-20). `users/{uid}.approveFollowers` (Settings → Social & privacy; absent means on) makes `firestore.rules` refuse a direct follow, and the app writes `followRequests/{target}/users/{asker}` instead, seen only by the two. Only the person asked writes the two follow edges, on accepting (`acceptFollowRequest`). Requests have their own collection so every reader of `followers/`/`following/` still sees only accepted follows.
 - **Activity notifications follow the recipient's switches.** `notificationPreferences` on `users/{uid}` (S3: props, comments, circles and spaces on; new followers off; Polish2: follow requests on) is read by `createNotification`, the one writer of `notifications/{uid}/items`, which writes nothing for a kind that is off. The client's copy (`src/lib/notificationPreferences.ts`) and the rules' value gate are pinned to the server's (`functions/lib/notificationPreferences.js`) by `notificationPreferences.cross.test.ts`. A new notification type has to be given a switch, or none on purpose, in that file.
-- **A copied name and photo follow the profile.** Posts, comments, Space and Circle memberships and challenge places copy the author's name and photo when written; `onPublicProfileIdentityChanged` carries a new public name or photo to the last 90 days of them (`functions/lib/identityResync.js` has the bounds), never a name the word filter refuses, a restricted account's new name or photo, or into an account being deleted. A new copy of a name goes on its list.
+- **A copied name and photo follow the profile.** Posts, comments, Space and Circle memberships and challenge places copy the author's name and photo when written, and a notification its sender's name (`fromName`, and the sentence that starts with it); `onPublicProfileIdentityChanged` carries a new public name or photo to the last 90 days of them (`functions/lib/identityResync.js` has the bounds), never a name the word filter refuses, a restricted account's new name or photo, or into an account being deleted. A new copy of a name goes on its list.
 - **User profile:** Defined in `src/lib/auth.tsx` as `UserProfile` interface
 - **Feed items:** Defined in `src/hooks/useSocialFeed.ts` as `FeedItem` / `ActivityData`
 

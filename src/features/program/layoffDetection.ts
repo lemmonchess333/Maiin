@@ -94,14 +94,31 @@ export interface DatedRun extends RunRecord {
 }
 
 /**
- * Whole days since the runner's most recent VOLUME-ELIGIBLE run, or `null`
- * when they have never logged one.
+ * The day of the runner's most recent VOLUME-ELIGIBLE run, or `null` when
+ * they have never logged one.
  *
  * Eligibility routes through the shared `isVolumeEligible` rather than a local
  * predicate, so an invalid / saved-anyway / sub-threshold run cannot read as
  * "still training" here while being excluded from every other volume surface.
  * That predicate has a server mirror (`isVolumeEligibleRun`); a second private
  * copy here is exactly the drift CLAUDE.md's tested-copy rule warns about.
+ *
+ * Exported for Home's run return (`runReturn.ts`), which keys its dismissal
+ * on this day: the same run the re-entry policy measures from.
+ */
+export function lastRunDay(runs: readonly DatedRun[]): string | null {
+  let latest: string | null = null;
+  for (const run of runs ?? []) {
+    if (!run?.date || !isVolumeEligible(run)) continue;
+    // Lexicographic max is safe and cheap for "YYYY-MM-DD".
+    if (latest === null || run.date > latest) latest = run.date;
+  }
+  return latest;
+}
+
+/**
+ * Whole days since the runner's most recent volume-eligible run
+ * (`lastRunDay`), or `null` when they have never logged one.
  *
  * `null` — never run — is NOT zero and NOT infinity. A brand-new user has not
  * lapsed; they have not started. `classifyLayoff` maps it to `none`, because a
@@ -111,12 +128,7 @@ export function daysSinceLastRun(
   runs: readonly DatedRun[],
   todayKey: string
 ): number | null {
-  let latest: string | null = null;
-  for (const run of runs ?? []) {
-    if (!run?.date || !isVolumeEligible(run)) continue;
-    // Lexicographic max is safe and cheap for "YYYY-MM-DD".
-    if (latest === null || run.date > latest) latest = run.date;
-  }
+  const latest = lastRunDay(runs);
   if (latest === null) return null;
 
   const last = parseLocalDate(latest).getTime();

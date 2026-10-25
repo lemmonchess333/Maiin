@@ -75,6 +75,8 @@ def source_targets():
                    "lib/deletedAccountsTombstone.js"]
     push_paths = token_paths + ["lib/pushConsent.js", "lib/pushSend.js",
                                 "lib/pushSchedule.js", "lib/accountDeletionLocks.js"]
+    circle_paths = ["index.js", "package-lock.json", "lib/goalSpaceMembership.js",
+                    "lib/restriction.js", "lib/accountDeletionLocks.js"]
     return {
         "deleteMyAccount": deletion_paths,
         "resumeAccountDeletions": deletion_paths,
@@ -98,6 +100,14 @@ def source_targets():
         # Who has blocked each account, the copy the blocked person's app reads.
         "onBlockWritten": ["index.js", "package-lock.json", "lib/blockMirror.js",
                            "lib/triggerRetry.js", "lib/accountDeletionLocks.js"],
+        # A Circle's invite code expires, and its owner replaces it.
+        "joinGoalSpace": circle_paths,
+        "renewGoalSpaceInviteCode": circle_paths,
+        # The one writer of partner bonds: the limit for both people, counted
+        # in the transaction that makes the bond. The rules refuse a client's.
+        "startPartnerStreak": ["index.js", "package-lock.json", "lib/partnerBonds.js",
+                               "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js",
+                               "lib/restriction.js", "lib/accountDeletionLocks.js"],
         # Ship1: the photos other people see, screened for nudity.
         "screenPhoto": ["index.js", "lib/photoScreen.js"],
         "screenUploadedPhoto": ["index.js", "lib/photoScreen.js"],

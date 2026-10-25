@@ -76,6 +76,7 @@ import {
 import { useSpaceMembership } from "@/features/spaces/useSpaceMembership";
 import RestrictedNotice from "@/components/social/RestrictedNotice";
 import SpacePostCard from "@/features/spaces/SpacePostCard";
+import { SPACE_ACCENT_HEX } from "@/features/spaces/spaceAccent";
 import { useSpacePostLikes } from "@/features/spaces/useSpacePostLikes";
 import RaceIdentityToggle from "@/features/spaces/RaceIdentityToggle";
 import SpaceCommentSheet from "@/features/spaces/SpaceCommentSheet";
@@ -272,12 +273,6 @@ const PHOTO_CHIP =
   "rounded-full text-white backdrop-blur-md border border-white/20";
 const PLAIN_CHIP = "rounded-full bg-background/80 border border-border/60";
 
-const ACCENT_HEX: Record<"running" | "lifting" | "brand", string> = {
-  running: THEME.running,
-  lifting: THEME.lifting,
-  brand: THEME.brand,
-};
-
 type PostItem = SpacePostDoc & { id: string };
 
 /** Posts one page reads, the first and each Load more. While the oldest
@@ -460,7 +455,7 @@ export default function Space() {
     );
   }
 
-  const accent = ACCENT_HEX[def.accent];
+  const accent = SPACE_ACCENT_HEX[def.accent];
   const Icon = ICON_MAP[def.icon] ?? Users;
   const week = countPostsThisWeek(visiblePosts, new Date(), {
     hasMore,

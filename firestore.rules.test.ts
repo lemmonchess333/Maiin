@@ -3168,9 +3168,12 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
     );
   });
 
-  it("creates a cold bond when the creator is one of two distinct members", async () => {
+  it("refuses even a cold bond from one of its two members: only the server makes bonds", async () => {
+    // The startPartnerStreak callable counts both members' bonds before it
+    // creates one, which a rule cannot; a direct create would skip the
+    // count (firestore.partnerBonds.rules.test.ts has the full case).
     const aDb = env.authenticatedContext(A_UID).firestore();
-    await assertSucceeds(
+    await assertFails(
       setDoc(doc(aDb, "partnerBonds", BOND), coldBond([A_UID, B_UID]))
     );
   });

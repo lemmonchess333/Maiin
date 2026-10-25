@@ -57,8 +57,8 @@ export const TRAY_NOTIFICATION_TYPES = [
   "circle_joined",
   "circle_routine_shared",
   // SOC-P2g — Space-post engagement: props / a comment on the
-  // recipient's space post. Rows deep-link to the SPACE (the post
-  // lives there), not the actor's profile.
+  // recipient's space post. Rows open the post (the Space when the row
+  // carries no post id), not the actor's profile.
   "space_post_like",
   "space_post_comment",
 ] as const;
@@ -71,8 +71,10 @@ export interface NotificationItem {
   fromUserId: string;
   fromName?: string;
   activityId?: string;
-  /** SOC-P2g — present on space_post_* types; drives the space deep-link. */
+  /** SOC-P2g — present on space_post_* types, with `postId`: the row
+   *  opens that post in that Space. */
   spaceId?: string;
+  postId?: string;
   message?: string;
   /** Resolved server timestamp; null only in the brief pending window. */
   createdAt: Date | null;
@@ -196,6 +198,7 @@ export function useNotifications() {
               typeof data.activityId === "string" ? data.activityId : undefined,
             spaceId:
               typeof data.spaceId === "string" ? data.spaceId : undefined,
+            postId: typeof data.postId === "string" ? data.postId : undefined,
             message:
               typeof data.message === "string" ? data.message : undefined,
             createdAt:

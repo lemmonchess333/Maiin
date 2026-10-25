@@ -2,23 +2,20 @@ import type { SessionPrescription } from "@/features/program/sessionCompletion";
 import { completeLift } from "@/lib/liftCompletion";
 import { resolveLiftUnit } from "@/lib/liftLoad";
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { auth } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
 import { getSavedRoutine, type SavedRoutine } from "../lib/savedRoutines";
-import { exerciseFromRoutine } from "../features/program/routineExercise";
+import {
+  ROUTINE_DAY_INDEX,
+  ROUTINE_DRAFT_EPOCH,
+  routineDraftScope,
+  routineSessionDay,
+} from "../features/program/routineSession";
+import { RESUME_PARAM } from "../lib/resumeParam";
 import { Skeleton } from "../components/LoadingSkeleton";
 import { ErrorState } from "../components/ui/ErrorState";
 import WorkoutSession from "../components/WorkoutSession";
-
-/* Synthetic dayIndex used by saved-routine sessions.
-   useWorkoutDraft keys drafts on dayIndex. Program days are 0-6, so
-   -1 is safely out of band — a routine session's draft can't
-   overwrite or be overwritten by a scheduled day's draft. Isolation
-   BETWEEN routines comes from the LIFT-01 draft identity: the
-   `routine:<id>` draftScope below means routine A's in-flight draft
-   is never offered for resume inside routine B. */
-const ROUTINE_DAY_INDEX = -1;
 
 /**
  * Saved-routine workout runner (PR 4.1).
@@ -26,9 +23,10 @@ const ROUTINE_DAY_INDEX = -1;
  * Reuses the existing WorkoutSession component (the same fullscreen
  * runner program days use) with two adaptations:
  *
- *   - Synthetic dayIndex (-1) so useWorkoutDraft scopes the in-flight
- *     draft to "the routine session" without overwriting any program
- *     day's draft.
+ *   - The session built from the routine (`routineSession.ts`), under a
+ *     day index no programme day has and a draft scope of the routine's
+ *     own, so its draft is the one Home and Train recognise and offer
+ *     back, and never another routine's or a programme day's.
  *   - A custom onCompleteDay handler that saves through the same
  *     `completeLift` as a programme day, with `source: "routine"` and
  *     no plan to move on, so the workout, its post and the sharing
@@ -38,6 +36,24 @@ export default function Routine() {
   const { routineId } = useParams<{ routineId: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  /* Resume on Home's or Train's In progress strip (`?resume=1`) carries on
+     with the routine's draft without asking "Resume workout?" again. Read
+     as the page opens; the flag then comes off the address, so a reload
+     or a Back to this page asks. */
+  const [searchParams, setSearchParams] = useSearchParams();
+  const resumeInAddress = searchParams.get(RESUME_PARAM) === "1";
+  const [resumeOnOpen] = useState(resumeInAddress);
+  useEffect(() => {
+    if (!resumeInAddress) return;
+    setSearchParams(
+      (params) => {
+        const next = new URLSearchParams(params);
+        next.delete(RESUME_PARAM);
+        return next;
+      },
+      { replace: true }
+    );
+  }, [resumeInAddress, setSearchParams]);
   const [routine, setRoutine] = useState<SavedRoutine | null>(null);
   const [loading, setLoading] = useState(true);
   // A read that failed is not a routine that doesn't exist.
@@ -71,15 +87,10 @@ export default function Routine() {
   }, [uid, routineId, attempt]);
 
   /* Synthetic workout day from the routine. Built once routine loads. */
-  const synthDay = useMemo(() => {
-    if (!routine) return null;
-    return {
-      dayName: routine.name,
-      dayType: "lift",
-      exercises: routine.exercises.map(exerciseFromRoutine),
-      completed: false,
-    };
-  }, [routine]);
+  const synthDay = useMemo(
+    () => (routine ? routineSessionDay(routine) : null),
+    [routine]
+  );
 
   /* No-op log handler — completeWorkoutDay's onLogExercise is used to
      update the program state's progression history. Saved routines
@@ -206,9 +217,11 @@ export default function Routine() {
     <WorkoutSession
       day={synthDay}
       dayIndex={ROUTINE_DAY_INDEX}
-      draftScope={`routine:${routineId ?? "unknown"}`}
+      draftScope={routineDraftScope(routine.id)}
+      draftEpoch={ROUTINE_DRAFT_EPOCH}
       onCompleteDay={handleCompleteRoutine}
       onClose={() => navigate("/program")}
+      resumeDraft={resumeOnOpen}
     />
   );
 }

@@ -226,6 +226,13 @@ vi.mock("@/components/program/FellBehindSheet", () => ({
 vi.mock("@/components/program/LiftReturnSheet", () => ({
   default: () => null,
 }));
+/* The runner's return has its own suite (Home.runReturn.test.tsx). */
+vi.mock("@/components/program/RunReturnSheet", () => ({
+  default: () => null,
+}));
+vi.mock("@/features/program/useRunReturn", () => ({
+  useRunReturn: () => ({ daysAway: null, dismissKey: null, offer: null }),
+}));
 vi.mock("@/components/program/DayActionSheet", () => ({
   default: () => null,
 }));

@@ -47,6 +47,7 @@ import { THEME } from "@/lib/theme";
 import { spaceEditorialImage } from "@/lib/editorialImages";
 import { localDateString } from "@/lib/dateHelpers";
 import { formatRaceEventDate } from "./raceDates";
+import { SPACE_ACCENT_HEX } from "./spaceAccent";
 import { SPACE_MEMBER_COUNT_MIN_VISIBLE, type SpaceDef } from "./spaceDefs";
 import {
   useSpacesDirectory,
@@ -65,12 +66,6 @@ const ICON_MAP: Record<string, LucideIcon> = {
   flag: Flag,
 };
 
-const ACCENT_HEX: Record<SpaceDef["accent"], string> = {
-  running: THEME.running,
-  lifting: THEME.lifting,
-  brand: THEME.brand,
-};
-
 /* The same accents as chip INK — theme-aware -strong steps for the
    tinted (no-photo) chips, where the raw identities measured ~3.1:1 as
    10-11px text on the light card (2026-08-22 frame sweep). Photo chips
@@ -85,7 +80,7 @@ const ACCENT_INK: Record<SpaceDef["accent"], string> = {
 function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
   const { def, memberCount, joined } = entry;
   const photo = spaceEditorialImage(def.id);
-  const accent = ACCENT_HEX[def.accent];
+  const accent = SPACE_ACCENT_HEX[def.accent];
   const Icon = ICON_MAP[def.icon] ?? Users;
   const showCount =
     memberCount !== null && memberCount >= SPACE_MEMBER_COUNT_MIN_VISIBLE;

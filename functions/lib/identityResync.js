@@ -23,9 +23,17 @@
  *   only (the items authorId+text index);
  * - their Space memberships (one read per known space), Circle
  *   memberships, and their place in challenges that ended in the last
- *   RECENT_DAYS days or have not ended.
- * Feed copies hold no name (feedIndex.js) and notifications are a record
- * of an event, so neither is touched.
+ *   RECENT_DAYS days or have not ended;
+ * - the notifications they sent in the last RECENT_DAYS days, newest
+ *   first, at most SCAN_CAP, for the name alone: a notification stores no
+ *   photo. These share the `items` collection group too, but only a
+ *   notification carries a `fromUserId` (comments and feed copies carry
+ *   an authorId), so the query reads notifications only (the items
+ *   fromUserId+createdAt index), and each path is checked as well. Its
+ *   sentence names the sender first ("Alice gave you props"), so that
+ *   carries the new name with `fromName`. An anonymous one stores no
+ *   sender and is never found.
+ * Feed copies hold no name (feedIndex.js), so they are not touched.
  *
  * The rules each write keeps:
  * - Only the field that changed is carried, and only where it differs, so
@@ -67,8 +75,12 @@ const CIRCLE_CAP = 50;
 const CHALLENGE_CAP = 100;
 /** Documents per transaction: well inside Firestore's 500 writes. */
 const CHUNK = 100;
+/** The longest sentence createNotification stores (socialFanout.js);
+ *  pinned to it by identityResync.test.js. */
+const NOTIFICATION_MESSAGE_MAX = 200;
 
 const COMMENT_PATH = /^comments\/[^/]+\/items\/[^/]+$/;
+const NOTIFICATION_PATH = /^notifications\/[^/]+\/items\/[^/]+$/;
 const SPACE_POST_PATH = /^spaces\/[^/]+\/posts\/[^/]+$/;
 const SPACE_COMMENT_PATH = /^spaces\/[^/]+\/posts\/[^/]+\/comments\/[^/]+$/;
 const CIRCLE_MEMBER_PATH = /^goalSpaces\/[^/]+\/members\/[^/]+$/;
@@ -92,6 +104,8 @@ const KINDS = {
   spaceMember: { name: "displayName", photo: "photoURL", noPhoto: "delete", owner: null },
   circleMember: { name: "displayName", photo: "photoURL", noPhoto: "null", owner: "uid" },
   participant: { name: "displayName", photo: "photoURL", noPhoto: "delete", owner: null },
+  // A name and the sentence that starts with it; no photo (notificationPatch).
+  notification: { name: "fromName", photo: null, noPhoto: null, owner: "fromUserId" },
 };
 
 /** A Firestore Timestamp, a Date or a number, in milliseconds; NaN when none. */
@@ -130,8 +144,31 @@ function wantedIdentity(profile, { fields, restricted }) {
   return wanted;
 }
 
+/**
+ * A notification names its sender twice: `fromName`, and the sentence the
+ * tray shows, which createNotification's callers start with that name
+ * ("Alice gave you props"). Both carry the new name. A sentence that does
+ * not start with the old name is left as written, and a notification with
+ * no `fromName` is given none.
+ */
+function notificationPatch(data, name) {
+  const old = data.fromName;
+  if (name === undefined || typeof old !== "string" || old === name) {
+    return null;
+  }
+  const patch = { fromName: name };
+  if (typeof data.message === "string" && old && data.message.startsWith(old)) {
+    patch.message = (name + data.message.slice(old.length)).slice(
+      0,
+      NOTIFICATION_MESSAGE_MAX
+    );
+  }
+  return patch;
+}
+
 /** The update `data` (a copy of `kind`) needs to show `wanted`, or null. */
 function patchFor(data, kind, wanted, deleteField) {
+  if (kind === "notification") return notificationPatch(data, wanted.name);
   const spec = KINDS[kind];
   const patch = {};
   if (wanted.name !== undefined && data[spec.name] !== wanted.name) {
@@ -158,9 +195,10 @@ function isRecent(data, cutoff) {
 
 /**
  * The copies to look at: `{ ref, kind }` for each, and which kinds were
- * cut short by their cap.
+ * cut short by their cap. Notifications hold a name and no photo, so they
+ * are looked for only when there is a name to carry (`names`).
  */
-async function findCopies({ firestore, uid, cutoff }) {
+async function findCopies({ firestore, uid, cutoff, names }) {
   const targets = [];
   const truncated = [];
   const add = (kind, docs, keep = () => true) => {
@@ -232,6 +270,22 @@ async function findCopies({ firestore, uid, cutoff }) {
     add("participant", places, (doc) => doc.exists);
   }
 
+  if (names) {
+    // Only a notification carries a fromUserId (see the header); the path
+    // check keeps it that way if another kind ever does.
+    const sent = await firestore
+      .collectionGroup("items")
+      .where("fromUserId", "==", uid)
+      .where("createdAt", ">=", new Date(cutoff))
+      .orderBy("createdAt", "desc")
+      .limit(SCAN_CAP)
+      .get();
+    add("notification", sent.docs, (doc) =>
+      NOTIFICATION_PATH.test(doc.ref.path)
+    );
+    if (sent.docs.length >= SCAN_CAP) truncated.push("notification");
+  }
+
   return { targets, truncated };
 }
 
@@ -264,7 +318,12 @@ async function resyncAuthorIdentity({
   }
 
   const cutoff = now - RECENT_DAYS * DAY_MS;
-  const { targets, truncated } = await findCopies({ firestore, uid, cutoff });
+  const { targets, truncated } = await findCopies({
+    firestore,
+    uid,
+    cutoff,
+    names: first.name !== undefined,
+  });
   result.truncated = truncated;
 
   for (let i = 0; i < targets.length; i += CHUNK) {
@@ -310,4 +369,5 @@ module.exports = {
   RECENT_DAYS,
   ACTIVITY_CAP,
   SCAN_CAP,
+  NOTIFICATION_MESSAGE_MAX,
 };

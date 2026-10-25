@@ -167,6 +167,13 @@ export function computeDraftIdentity(parts: DraftIdentityParts): string {
   ].join("|");
 }
 
+/** The scope an identity was computed with (`computeDraftIdentity`), or
+ *  null for one in no form this version writes. */
+export function draftIdentityScope(identity: string): string | null {
+  const [version, scope] = identity.split("|");
+  return version === "v1" && scope ? scope : null;
+}
+
 function writeDraftAt(key: string, draft: WorkoutDraft): boolean {
   return writeJson(key, draft);
 }

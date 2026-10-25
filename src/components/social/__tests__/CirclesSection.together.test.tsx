@@ -75,6 +75,7 @@ function circle(id: string, title: string, active = true): CircleSummary {
       createdAt: 1,
     },
     inviteCode: null,
+    inviteCodeExpiresAt: null,
   };
 }
 
