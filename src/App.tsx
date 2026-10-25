@@ -179,6 +179,7 @@ const RunSummary = lazyRetry(() => import("@/pages/RunSummary"));
 const RunDetail = lazyRetry(() => import("@/pages/RunDetail"));
 const WorkoutDetail = lazyRetry(() => import("@/pages/WorkoutDetail"));
 const Space = lazyRetry(() => import("@/pages/Space"));
+const SpacePost = lazyRetry(() => import("@/pages/SpacePost"));
 const ActivityPost = lazyRetry(() => import("@/pages/ActivityPost"));
 const Social = lazyRetry(() => import("@/pages/Social"));
 const Routine = lazyRetry(() => import("@/pages/Routine"));
@@ -859,6 +860,14 @@ function SignedInRoutes({
                           element={
                             <RouteErrorBoundary>
                               <Space />
+                            </RouteErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/space/:spaceId/post/:postId"
+                          element={
+                            <RouteErrorBoundary>
+                              <SpacePost />
                             </RouteErrorBoundary>
                           }
                         />

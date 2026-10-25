@@ -10,6 +10,26 @@ without a file ("the Cloud Functions deploy gotchas", "the Food9 lock",
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+## Space post notices open the post (2026-10-25)
+
+Props and a comment on someone's Space post now open that post at
+`/space/{spaceId}/post/{postId}`, with the comments showing for a comment,
+instead of the Space's list. The page reads the one post, draws it with the
+Space page's own card and comment sheet, and opens the Space when the post
+is gone, refused, or someone else's across a block. Client only: the
+callables already store both ids on the notification. The unit suites drive
+the tray and the page against the Firestore fake; only two real accounts
+show the round trip.
+
+- [ ] **Open a props and a comment notice on a Space post.** On two phones
+      (or a phone and the web build), A posts in a Space; B gives the post
+      props and comments on it. Passing, on A: the props row opens the post,
+      with the Space's name above it opening the Space and A's flame state
+      as A left it; the comment row opens it with the comments showing and
+      B's comment in the list, and a reply from A there raises the card's
+      count. A deletes the post from its menu and lands on the Space; the
+      comment row then opens the Space too.
+
 ## Names that follow you, and notices that open the post (survey items 57 and 58, 2026-10-24)
 
 A new public name or photo is carried to the person's recent posts,

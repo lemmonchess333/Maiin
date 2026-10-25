@@ -99,6 +99,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `WeeklyReview.tsx`                     | `/review`                          | Sunday recap — passive narration of the week (Rev1)                            |
 | `Social.tsx`                           | `/social`                          | Social feed, Circles/Spaces, leaderboards                                      |
 | `Space.tsx`                            | `/space/:spaceId`                  | Community Space — hero, join/leave, post list + composer                       |
+| `SpacePost.tsx`                        | `/space/:spaceId/post/:postId`     | One Space post with its props and comments (the tray's Space post rows)        |
 | `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: this week's shared sessions, badges, their posts           |
 | `ActivityPost.tsx`                     | `/activity/:activityId`            | One shared session with its props and comments (the tray's props/comment rows) |
 | `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                    |

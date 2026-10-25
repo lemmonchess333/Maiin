@@ -225,23 +225,60 @@ describe("NotificationsSheet — NOTIFICATION-TRUST-01 error state", () => {
 describe("NotificationsSheet — space-post engagement rows (SOC-P2g)", () => {
   beforeEach(() => navigateMock.mockClear());
 
-  it("a space_post_like row navigates to the SPACE, not the actor", () => {
-    renderSheet([
+  it("props on a space post open the post, and the Space if it is gone", () => {
+    const { onOpenChange } = renderSheet([
       item({
         id: "sl1",
         type: "space_post_like",
         spaceId: "runners",
+        postId: "p-1",
         message: "Alex gave your space post props",
       }),
     ]);
     fireEvent.click(screen.getByText("Alex gave your space post props"));
-    expect(navigateMock).toHaveBeenCalledWith("/space/runners");
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(navigateMock).toHaveBeenCalledWith("/space/runners/post/p-1", {
+      state: { fallbackToSpace: true },
+    });
   });
 
-  it("a space_post_comment row navigates to the SPACE", () => {
+  it("a comment on a space post opens the post with its comments open", () => {
     renderSheet([
       item({
         id: "sc1",
+        type: "space_post_comment",
+        spaceId: "lifters",
+        postId: "p-2",
+        message: "Sam commented on your space post",
+      }),
+    ]);
+    fireEvent.click(screen.getByText("Sam commented on your space post"));
+    expect(navigateMock).toHaveBeenCalledWith(
+      "/space/lifters/post/p-2?comments=1",
+      { state: { fallbackToSpace: true } }
+    );
+  });
+
+  it("a post id is spelled safely into the path", () => {
+    renderSheet([
+      item({
+        id: "sl3",
+        type: "space_post_like",
+        spaceId: "runners",
+        postId: "a/b?c",
+        message: "Props on a strange id",
+      }),
+    ]);
+    fireEvent.click(screen.getByText("Props on a strange id"));
+    expect(navigateMock).toHaveBeenCalledWith("/space/runners/post/a%2Fb%3Fc", {
+      state: { fallbackToSpace: true },
+    });
+  });
+
+  it("a space row stored without its post opens the SPACE", () => {
+    renderSheet([
+      item({
+        id: "sc2",
         type: "space_post_comment",
         spaceId: "lifters",
         message: "Sam commented on your space post",
@@ -253,7 +290,12 @@ describe("NotificationsSheet — space-post engagement rows (SOC-P2g)", () => {
 
   it("falls back to the actor when a space row is missing spaceId", () => {
     renderSheet([
-      item({ id: "sl2", type: "space_post_like", message: "Props!" }),
+      item({
+        id: "sl2",
+        type: "space_post_like",
+        postId: "p-1",
+        message: "Props!",
+      }),
     ]);
     fireEvent.click(screen.getByText("Props!"));
     expect(navigateMock).toHaveBeenCalledWith("/user/u-actor");
