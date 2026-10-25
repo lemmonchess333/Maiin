@@ -301,6 +301,32 @@ describe("TrainingBlockCard (Blk2) — the active block", () => {
     });
   });
 
+  // The order above only protects the record if a failed archive STOPS the
+  // close. It used to carry on: the archive's false was dropped, the block
+  // was released and "Block closed." shown, and what was trained was gone.
+  it("keeps the block open when its archive fails", async () => {
+    archiveBlockMock.mockResolvedValueOnce(false);
+    const error = vi.spyOn(toast, "error").mockImplementation(() => "");
+    const success = vi.spyOn(toast, "success").mockImplementation(() => "");
+    renderCard({ block: activeBlock() });
+    fireEvent.click(screen.getByText(/Get stronger/));
+    fireEvent.click(await screen.findByText("End block early"));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "End block", hidden: true })
+    );
+    await waitFor(() =>
+      expect(error.mock.calls.map(([text]) => text)).toContain(
+        "Couldn't close the block. Try again."
+      )
+    );
+    expect(archiveBlockMock).toHaveBeenCalledTimes(1);
+    expect(onRelease).not.toHaveBeenCalled();
+    expect(onKeepFocus).not.toHaveBeenCalled();
+    expect(success).not.toHaveBeenCalled();
+    error.mockRestore();
+    success.mockRestore();
+  });
+
   // Lift4: ending one says plainly what happens. It said the lifts went back
   // to how they were before the block, and the release keeps the weights
   // lifted now.
