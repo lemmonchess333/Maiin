@@ -200,7 +200,7 @@ blocker's public profile or of either's post. The unit, rules and emulator
 suites cover each half; only a deploy and two real accounts can confirm the
 trigger runs in production and the two apps agree.
 
-- [ ] **Backfill the blocks made before the deploy.** Once Deploy
+- [x] **Backfill the blocks made before the deploy.** Once Deploy
       production has shipped `onBlockWritten` (check its deployed source),
       run the backfill with credentials that can write Firestore:
       `node functions/scripts/backfill-block-mirror.js adaptive-fitness-af8bb`,
@@ -210,6 +210,10 @@ trigger runs in production and the two apps agree.
       tab on demand.
       Passing: it prints its totals, and a second run prints `mirrored: 0`
       and `removed: 0` (the workflow runs it twice and checks this).
+      STATUS 2026-10-25: done by the workflow's first run, on the merge
+      that made it run by itself. Both passes printed `checked: 0`,
+      `mirrored: 0`, `removed: 0`: production had no blocks yet, so the
+      trigger alone keeps the mirror from here.
 - [ ] **Block from one account, look from the other.** On two phones (or
       a phone and the web build), account A follows B and both have shared
       a public session; A blocks B from B's profile. Passing, on B, without
