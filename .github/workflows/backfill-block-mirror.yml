@@ -1,0 +1,55 @@
+name: Backfill block mirror
+
+# onBlockWritten keeps blockedBy/{blocked}/users/{blocker} matching each
+# block, but only for blocks written after it was deployed. This sets the
+# copy for every block made before then, and removes any copy whose block
+# is gone (functions/scripts/backfill-block-mirror.js). It is safe to run
+# at any time, so it stays as the repair for a mirror that has drifted.
+#
+# Manual only. The second run is the check: once the first has set every
+# pair, nothing is left to change.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: block-mirror-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    # Install and two passes over the block lists: a few minutes.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+
+      - name: Install function dependencies
+        run: npm ci --prefix functions
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Backfill
+        run: node functions/scripts/backfill-block-mirror.js adaptive-fitness-af8bb
+
+      - name: Run again and expect nothing left to change
+        run: |
+          set -euo pipefail
+          node functions/scripts/backfill-block-mirror.js adaptive-fitness-af8bb | tee second-run.json
+          node -e '
+            const t = JSON.parse(require("fs").readFileSync("second-run.json", "utf8"));
+            if (t.mirrored !== 0 || t.removed !== 0) {
+              console.error(`The second run still changed ${t.mirrored} copies and removed ${t.removed}.`);
+              process.exit(1);
+            }
+          '
