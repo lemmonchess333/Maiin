@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   act,
   cleanup,
@@ -8,18 +8,29 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import type { ComponentProps } from "react";
+import { StrictMode, useState, type ComponentProps } from "react";
+import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
+import { BackDismissProvider } from "@/lib/BackDismissProvider";
+import { useBackDismiss, useBackDismissController } from "@/lib/backDismiss";
 import type { Workout } from "@/lib/savedWorkouts";
 import { resetFirestore, readDoc } from "@/test/firestoreHarness";
 
 const h = vi.hoisted(() => ({
   user: { uid: "strength-audit" },
+  signedIn: true,
   error: vi.fn(),
   success: vi.fn(),
   message: vi.fn(),
 }));
 vi.mock("firebase/firestore");
-vi.mock("@/lib/firebase", () => ({ db: {}, auth: { currentUser: h.user } }));
+vi.mock("@/lib/firebase", () => ({
+  db: {},
+  auth: {
+    get currentUser() {
+      return h.signedIn ? h.user : null;
+    },
+  },
+}));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: h.user,
@@ -151,6 +162,7 @@ beforeEach(() => {
   localStorage.clear();
   resetFirestore();
   vi.clearAllMocks();
+  h.signedIn = true;
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -192,33 +204,228 @@ it("requires an explicit recovery choice and safely leaves the workout on modal 
   expect(props.onCompleteDay).not.toHaveBeenCalled();
 });
 
-/* Close keeps a workout that has a draft, and says so: Home and Train
+/* Leaving keeps a workout that has a draft, and says so: Home and Train
    offer it back with Resume, which carries on without asking again. */
-it("says the workout is kept when it is closed with a set done, and only then", async () => {
-  const onClose = vi.fn();
-  const fresh = await open({ onClose });
-  fireEvent.click(screen.getByRole("button", { name: "Close workout" }));
-  expect(onClose).toHaveBeenCalledOnce();
-  expect(h.message).not.toHaveBeenCalled();
-  fresh.unmount();
-
-  const session = await open({ onClose });
+const KEPT_ROUTINE = [
+  "Workout kept",
+  { description: "Open this routine again to carry on." },
+] as const;
+const KEPT_PROGRAMME = [
+  "Workout kept",
+  { description: "Resume it from Home or Train." },
+] as const;
+/** Open the workout as a page does: leaving it takes the screen away. */
+async function openLeaving(
+  overrides: Partial<ComponentProps<typeof WorkoutSession>> = {}
+) {
+  const view: { current?: ReturnType<typeof render> } = {};
+  view.current = await open({
+    ...overrides,
+    onClose: () => view.current?.unmount(),
+  });
+}
+/** The "Workout kept" toasts so far. */
+function keptSaid() {
+  return h.message.mock.calls.filter(([title]) => title === "Workout kept");
+}
+/** Let what the screen says as it goes land. */
+async function settle() {
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+}
+async function doFirstSet() {
   fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
   await waitFor(() => expect(draft()?.setLogs[0][0].completed).toBe(true));
+}
+
+it("says the workout is kept when it is closed with a set done, and only then", async () => {
+  await openLeaving();
   fireEvent.click(screen.getByRole("button", { name: "Close workout" }));
-  expect(h.message).toHaveBeenCalledWith("Workout kept", {
-    description: "Open this routine again to carry on.",
-  });
+  await settle();
+  expect(screen.queryByRole("button", { name: "Close workout" })).toBeNull();
+  expect(keptSaid()).toEqual([]);
+
+  await openLeaving();
+  await doFirstSet();
+  fireEvent.click(screen.getByRole("button", { name: "Close workout" }));
+  await waitFor(() => expect(keptSaid()).toEqual([KEPT_ROUTINE]));
   expect(draft()?.setLogs[0][0].completed).toBe(true);
-  session.unmount();
 
   // A programme day's workout comes back from Home or Train.
   h.message.mockClear();
-  await open({ onClose, draftScope: "programme", dayIndex: 0 });
-  fireEvent.click(screen.getByRole("button", { name: "Complete set 1" }));
+  await openLeaving({ draftScope: "programme", dayIndex: 0 });
+  await doFirstSet();
   fireEvent.click(screen.getByRole("button", { name: "Close workout" }));
-  expect(h.message).toHaveBeenCalledWith("Workout kept", {
-    description: "Resume it from Home or Train.",
+  await waitFor(() => expect(keptSaid()).toEqual([KEPT_PROGRAMME]));
+});
+
+describe("every way out of a kept workout says so, once", () => {
+  let back: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => {
+    window.history.replaceState({}, "", "/program");
+    // The browser answers the provider's own Back with a popstate, which
+    // it must not take for the person's.
+    back = vi
+      .spyOn(window.history, "back")
+      .mockImplementation(() =>
+        window.dispatchEvent(new PopStateEvent("popstate"))
+      );
+  });
+  afterEach(() => back.mockRestore());
+
+  /** Train: the session is opened over the page, and Back closes it. */
+  function Train(sessionProps: Partial<ComponentProps<typeof WorkoutSession>>) {
+    const [open, setOpen] = useState(true);
+    const close = () => setOpen(false);
+    useBackDismiss(open, close);
+    const { dispatchBack } = useBackDismissController();
+    return (
+      <>
+        {/* What the Android back button calls. */}
+        <button type="button" onClick={() => dispatchBack()}>
+          Android back
+        </button>
+        {open ? (
+          <WorkoutSession
+            {...props}
+            draftScope="programme"
+            dayIndex={0}
+            {...sessionProps}
+            onClose={close}
+          />
+        ) : (
+          <p>Train</p>
+        )}
+      </>
+    );
+  }
+  async function openTrain() {
+    await act(async () => {
+      render(
+        <BackDismissProvider>
+          <Train />
+        </BackDismissProvider>
+      );
+    });
+  }
+
+  it("Train's Back in the browser", async () => {
+    await openTrain();
+    await doFirstSet();
+    act(() => {
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    expect(await screen.findByText("Train")).toBeInTheDocument();
+    await waitFor(() => expect(keptSaid()).toEqual([KEPT_PROGRAMME]));
+    await settle();
+    expect(keptSaid()).toHaveLength(1);
+  });
+
+  it("Close, which goes back over its own history entry", async () => {
+    await openTrain();
+    await doFirstSet();
+    fireEvent.click(screen.getByRole("button", { name: "Close workout" }));
+    expect(await screen.findByText("Train")).toBeInTheDocument();
+    await waitFor(() => expect(back).toHaveBeenCalledOnce());
+    await settle();
+    expect(keptSaid()).toEqual([KEPT_PROGRAMME]);
+  });
+
+  it("the Android back button", async () => {
+    await openTrain();
+    await doFirstSet();
+    fireEvent.click(screen.getByRole("button", { name: "Android back" }));
+    expect(await screen.findByText("Train")).toBeInTheDocument();
+    await waitFor(() => expect(keptSaid()).toEqual([KEPT_PROGRAMME]));
+  });
+
+  it("Back from a routine's page, which leaves the page", async () => {
+    function DeviceBack() {
+      const navigate = useNavigate();
+      return (
+        <button type="button" onClick={() => navigate(-1)}>
+          Device back
+        </button>
+      );
+    }
+    await act(async () => {
+      render(
+        <MemoryRouter initialEntries={["/program", "/routine/audit"]}>
+          <DeviceBack />
+          <Routes>
+            <Route path="/program" element={<p>Train</p>} />
+            <Route
+              path="/routine/:routineId"
+              element={<WorkoutSession {...props} />}
+            />
+          </Routes>
+        </MemoryRouter>
+      );
+    });
+    await doFirstSet();
+    fireEvent.click(screen.getByRole("button", { name: "Device back" }));
+    expect(await screen.findByText("Train")).toBeInTheDocument();
+    await waitFor(() => expect(keptSaid()).toEqual([KEPT_ROUTINE]));
+  });
+
+  it("nothing for a workout finished, or started afresh with nothing done", async () => {
+    await openLeaving();
+    await doFirstSet();
+    await finishRemaining();
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    await settle();
+    expect(screen.queryByRole("button", { name: "Done" })).toBeNull();
+    expect(keptSaid()).toEqual([]);
+
+    // Kept, then opened again and started afresh.
+    const first = await open();
+    await doFirstSet();
+    first.unmount();
+    await waitFor(() => expect(keptSaid()).toEqual([KEPT_ROUTINE]));
+    h.message.mockClear();
+    await openLeaving();
+    fireEvent.click(screen.getByRole("button", { name: "Start fresh" }));
+    expect(draft()).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Close workout" }));
+    await settle();
+    expect(screen.queryByRole("button", { name: "Close workout" })).toBeNull();
+    expect(keptSaid()).toEqual([]);
+  });
+
+  it("nothing on opening a kept workout, though development sets every effect up twice", async () => {
+    const first = await open();
+    await doFirstSet();
+    first.unmount();
+    await waitFor(() => expect(keptSaid()).toHaveLength(1));
+    h.message.mockClear();
+
+    let resumed: ReturnType<typeof render>;
+    await act(async () => {
+      resumed = render(
+        <StrictMode>
+          <WorkoutSession {...props} resumeDraft />
+        </StrictMode>
+      );
+    });
+    await settle();
+    expect(
+      screen.getByRole("button", { name: "Edit completed set 1" })
+    ).toBeInTheDocument();
+    expect(keptSaid()).toEqual([]);
+    resumed!.unmount();
+    await waitFor(() => expect(keptSaid()).toEqual([KEPT_ROUTINE]));
+  });
+
+  it("nothing once the account has signed out", async () => {
+    const first = await open();
+    await doFirstSet();
+    h.signedIn = false;
+    first.unmount();
+    await settle();
+    expect(draft()?.setLogs[0][0].completed).toBe(true);
+    expect(keptSaid()).toEqual([]);
   });
 });
 

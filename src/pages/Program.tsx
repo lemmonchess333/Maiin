@@ -444,9 +444,10 @@ function ProgramInner() {
   // Opened from Resume: the workout carries on without asking again.
   const [resumeOnOpen, setResumeOnOpen] = useState(false);
   /* Back during a lift does what the session's own Close does: the
-     session closes to Train and its draft waits to be resumed. Without
-     it, Back would leave the page with no word. A sheet in the session
-     registers after this one, so Back closes that first. */
+     session closes to Train, its draft waits to be resumed, and the
+     session says it was kept as it goes. Without it, Back would leave the
+     page. A sheet in the session registers after this one, so Back closes
+     that first. */
   const closeSession = () => {
     setSessionDayIndex(null);
     setSessionVariant("full");

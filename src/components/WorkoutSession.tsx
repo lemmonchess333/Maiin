@@ -636,19 +636,34 @@ export default function WorkoutSession({
 
   const formatElapsed = formatClock;
 
-  /* Closing keeps a workout that has a draft: Home and Train offer it back
-     with Resume. The toast says so, so a close does not read as a
-     discard. */
-  const closeKeepingDraft = () => {
-    if (hasRecoveryDraft.current && !completionPendingRef.current) {
-      toast.message("Workout kept", {
-        description: draftScope?.startsWith("routine:")
-          ? "Open this routine again to carry on."
-          : "Resume it from Home or Train.",
+  /* Leaving keeps a workout that has a draft, and Home and Train offer it
+     back with Resume, so every way out says so, once, and a close does not
+     read as a discard: Close, the device's Back (Train closes the session
+     over it; a routine's page is left), and anything else that takes the
+     screen away. The screen going is the one moment they all share, so it
+     is said here and nowhere else. Nothing is said for a workout finished
+     or waiting for the server, for one started afresh with nothing done
+     since, or once its account has signed out. */
+  const sessionUid = user?.uid;
+  const keptDescription = draftScope?.startsWith("routine:")
+    ? "Open this routine again to carry on."
+    : "Resume it from Home or Train.";
+  const onScreen = useRef(false);
+  useEffect(() => {
+    onScreen.current = true;
+    return () => {
+      onScreen.current = false;
+      // Development runs each cleanup once at mount and sets the effect up
+      // again at once, so the screen has gone only if nothing set it up by
+      // the time this runs.
+      queueMicrotask(() => {
+        if (onScreen.current) return;
+        if (!hasRecoveryDraft.current || completionPendingRef.current) return;
+        if (!sessionUid || auth.currentUser?.uid !== sessionUid) return;
+        toast.message("Workout kept", { description: keptDescription });
       });
-    }
-    onClose();
-  };
+    };
+  }, [sessionUid, keptDescription]);
 
   // Rest timer: the rest fixed in Settings → Workout preferences, or the
   // plan's suggestion by role and reps, shorter in a plan built for 30
@@ -1712,7 +1727,7 @@ export default function WorkoutSession({
       {showResumePrompt && initialDraft && (
         <Dialog
           open
-          onClose={closeKeepingDraft}
+          onClose={onClose}
           title="Resume workout?"
           description="You left this workout in progress earlier."
           size="md"
@@ -1798,7 +1813,7 @@ export default function WorkoutSession({
           <IconButton
             variant="ghost"
             aria-label="Close workout"
-            onClick={closeKeepingDraft}
+            onClick={onClose}
             icon={<X className="size-5 text-muted-foreground" />}
           />
         </div>

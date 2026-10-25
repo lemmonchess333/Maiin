@@ -30,6 +30,30 @@ show the round trip.
       count. A deletes the post from its menu and lands on the Space; the
       comment row then opens the Space too.
 
+## Leaving a workout says it was kept (2026-10-25)
+
+Every way out of a workout with a set done says "Workout kept" once, as
+the workout screen goes: Close, the browser's Back, Android's back button
+and leaving a routine's page. The unit suite drives each of those
+(`WorkoutSessionDraftRecovery.test.tsx`); the gestures only a phone has
+are below.
+
+- [ ] **The edge swipe in the iPhone app.** Capacitor's web view leaves
+      back and forward swipes off, and the app does not turn them on, so
+      swiping in from the left edge during a workout with a set done
+      should do nothing. Passing: nothing happens; or, if the swipe does
+      go back, "Workout kept" shows once and Home's In progress strip
+      offers the workout.
+- [ ] **The edge swipe in Safari on an iPhone.** In the web build, on
+      Train with a set done, swipe back from the left edge. Passing: the
+      workout closes to Train, "Workout kept · Resume it from Home or
+      Train." shows once, and the day's card offers Resume. Tap Close on
+      another workout instead: one toast, not two.
+- [ ] **Android's back button**, once the Android app exists. Passing:
+      Back during a workout with a set done closes it to Train with one
+      "Workout kept", and Back on a routine's workout leaves the page with
+      one too.
+
 ## Names that follow you, and notices that open the post (survey items 57 and 58, 2026-10-24)
 
 A new public name or photo is carried to the person's recent posts,
