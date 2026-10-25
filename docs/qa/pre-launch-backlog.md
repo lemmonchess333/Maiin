@@ -1427,6 +1427,21 @@ meal photos" is true of everything written from 2026-08-18 onward and
 NOT of what came before — do not read the Food9 lock as meaning the
 bucket is empty.
 
+STATUS 2026-10-25 — `storage.rules` now refuses every upload under
+`food-photos/` (`allow write: if false`), so even a client that tried could
+not add to the legacy set; read and delete stay for the owner. The sweep of
+what is already there is still not done.
+
+- [ ] **Public photos can be fetched, not listed (2026-10-25).** Space-post
+      and profile photos grant `get`, not `read`, so nobody can list a
+      person's folder; a deleted Space post's photo is now deleted with it
+      (`functions/lib/spacePostPhoto.js`, run by onSpacePostWritten). Passing:
+      after the release, post a Space photo from a test account, delete the
+      post, and the file is gone from Storage within a minute; a post photo
+      and an avatar still load in the feed and on a profile, on web and on
+      the phone. Photos from posts deleted before the release stay until
+      their account is deleted.
+
 ## Scan failure beat + no-food prompt contract (2026-08-18, PR #2066)
 
 Affects: `functions/index.js` (analyzeFood prompt), `src/components/FoodCameraModal.tsx`, `src/components/FoodAnalyzer.tsx`.

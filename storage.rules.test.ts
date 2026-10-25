@@ -16,8 +16,11 @@
  * Pinned invariants, per prefix:
  *   - default deny for any unmatched path
  *   - progress-photos/{uid}: OWNER-only read/write/delete
- *   - food-photos/{uid}:     OWNER-only read/write/delete
- *   - profile-photos/{uid}:  owner-only write/delete, ANY-authenticated read
+ *   - food-photos/{uid}:     no uploads at all (Food9: meal photos stay on
+ *                            the device); OWNER-only read/delete of legacy ones
+ *   - space-photos/{uid},
+ *     profile-photos/{uid}:  owner-only write/delete, ANY-authenticated get,
+ *                            and NOBODY may list a folder
  *   - MIME allowlist is closed-set (jpeg/png/webp) — svg+xml (XSS
  *     carrier) and gif must be rejected
  *   - size caps: 10MB progress/food, 5MB profile
@@ -30,7 +33,13 @@ import {
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "node:fs";
-import { ref, uploadBytes, getBytes, deleteObject } from "firebase/storage";
+import {
+  ref,
+  uploadBytes,
+  getBytes,
+  deleteObject,
+  listAll,
+} from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
 
 const EMULATOR_HOST =
@@ -186,14 +195,24 @@ suite("storage.rules", () => {
     });
   });
 
-  describe("food-photos/{uid} — owner-only", () => {
+  describe("food-photos/{uid} — legacy, owner read and delete only", () => {
     const path = `food-photos/${OWNER}/123.jpg`;
 
-    it("owner can write and read back", async () => {
-      await assertSucceeds(
+    // Food9: a meal photo is kept on the device and never uploaded, so the
+    // prefix takes no uploads, the owner's included. A photo uploaded
+    // before Food9 stays readable, for the old diary row, and deletable.
+    it("nobody can upload, the owner included", async () => {
+      await assertFails(
         uploadBytes(ref(authed(OWNER), path), smallBytes, JPEG)
       );
+    });
+
+    it("the owner can still read and delete a legacy photo", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await uploadBytes(ref(ctx.storage(), path), smallBytes, JPEG);
+      });
       await assertSucceeds(getBytes(ref(authed(OWNER), path)));
+      await assertSucceeds(deleteObject(ref(authed(OWNER), path)));
     });
 
     it("cross-user and unauthenticated access is denied", async () => {
@@ -206,11 +225,6 @@ suite("storage.rules", () => {
         uploadBytes(ref(authed(OTHER), path), smallBytes, JPEG)
       );
     });
-
-    it("rejects SVG and the over-cap size", async () => {
-      await assertFails(uploadBytes(ref(authed(OWNER), path), smallBytes, SVG));
-      await assertFails(uploadBytes(ref(authed(OWNER), path), elevenMB, JPEG));
-    });
   });
 
   describe("space-photos/{uid} — owner write, authenticated read (Spc1 PR4)", () => {
@@ -222,6 +236,21 @@ suite("storage.rules", () => {
       );
       await assertSucceeds(getBytes(ref(authed(OTHER), path)));
       await assertFails(getBytes(ref(anon(), path)));
+    });
+
+    // `read` would grant `list` too: anyone signed in could list a
+    // person's folder and fetch every photo they ever posted, the posts
+    // they deleted included.
+    it("nobody can list a person's post photos, the owner included", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await uploadBytes(ref(ctx.storage(), path), smallBytes, JPEG);
+      });
+      const folder = `space-photos/${OWNER}`;
+      await assertFails(listAll(ref(authed(OTHER), folder)));
+      await assertFails(listAll(ref(authed(OWNER), folder)));
+      await assertFails(listAll(ref(anon(), folder)));
+      // The photo itself is still reached from its post's URL.
+      await assertSucceeds(getBytes(ref(authed(OTHER), path)));
     });
 
     it("another user cannot write or delete the owner's post photo", async () => {
@@ -251,6 +280,16 @@ suite("storage.rules", () => {
       );
       await assertSucceeds(getBytes(ref(authed(OTHER), path)));
       await assertFails(getBytes(ref(anon(), path)));
+    });
+
+    it("nobody can list a person's profile photos, the owner included", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await uploadBytes(ref(ctx.storage(), path), smallBytes, JPEG);
+      });
+      const folder = `profile-photos/${OWNER}`;
+      await assertFails(listAll(ref(authed(OTHER), folder)));
+      await assertFails(listAll(ref(authed(OWNER), folder)));
+      await assertSucceeds(getBytes(ref(authed(OTHER), path)));
     });
 
     it("another user cannot write or delete the owner's avatar", async () => {
@@ -328,14 +367,16 @@ suite("storage.rules", () => {
       "pending_auth_deletion",
       "operator_review",
     ];
+    // `ownerUploads: false` — food-photos takes no uploads in any state
+    // (Food9), so only its delete follows the freeze.
     const PREFIXES = [
-      { name: "progress-photos", ownerReadOnly: true },
-      { name: "food-photos", ownerReadOnly: true },
-      { name: "space-photos", ownerReadOnly: false },
-      { name: "profile-photos", ownerReadOnly: false },
+      { name: "progress-photos", ownerReadOnly: true, ownerUploads: true },
+      { name: "food-photos", ownerReadOnly: true, ownerUploads: false },
+      { name: "space-photos", ownerReadOnly: false, ownerUploads: true },
+      { name: "profile-photos", ownerReadOnly: false, ownerUploads: true },
     ];
 
-    for (const { name, ownerReadOnly } of PREFIXES) {
+    for (const { name, ownerReadOnly, ownerUploads } of PREFIXES) {
       const path = `${name}/${OWNER}/frozen.jpg`;
 
       it(`${name}: an existing object stays readable but the owner cannot re-upload or delete during an active deletion`, async (ctx) => {
@@ -379,9 +420,18 @@ suite("storage.rules", () => {
           await env.clearFirestore();
           await env.clearStorage();
           await seedDeletionRequest(status);
-          await assertSucceeds(
-            uploadBytes(ref(authed(OWNER), path), smallBytes, JPEG)
-          );
+          if (ownerUploads) {
+            await assertSucceeds(
+              uploadBytes(ref(authed(OWNER), path), smallBytes, JPEG)
+            );
+          } else {
+            await assertFails(
+              uploadBytes(ref(authed(OWNER), path), smallBytes, JPEG)
+            );
+            await env.withSecurityRulesDisabled(async (c) => {
+              await uploadBytes(ref(c.storage(), path), smallBytes, JPEG);
+            });
+          }
           await assertSucceeds(deleteObject(ref(authed(OWNER), path)));
         }
       }, 30_000);

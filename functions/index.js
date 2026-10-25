@@ -162,6 +162,7 @@ const challengeMarkers = require("./lib/challengeMarkers");
 const lifetimeAccrual = require("./lib/lifetimeAccrual");
 const workoutVolume = require("./lib/workoutVolume");
 const activityReversal = require("./lib/activityReversal");
+const spacePostPhoto = require("./lib/spacePostPhoto");
 // Account deletion logic. Extracted so the call-ordering invariant
 // (Firestore + Storage before Auth-user delete; pre-W1f had the
 // inverse, leaving orphans) is unit-testable with stub handles —
@@ -6132,14 +6133,25 @@ exports.onSpacePostWritten = functions
   .firestore.document("spaces/{spaceId}/posts/{postId}")
   .onWrite(async (change, context) => {
     const { spaceId, postId } = context.params;
-    // Retried: the removal re-reads the post in its transaction.
+    // Retried: the removal re-reads the post in its transaction, and the
+    // photo's delete treats a file already gone as done.
     if (pastRetryWindow(context)) return null;
+    const before = change.before.exists ? change.before.data() : null;
+    const after = change.after.exists ? change.after.data() : null;
     try {
       await spacePostModeration.removeObjectionableSpacePost({
         firestore: admin.firestore(),
         ref: change.after.ref,
-        before: change.before.exists ? change.before.data() : null,
-        after: change.after.exists ? change.after.data() : null,
+        before,
+        after,
+        logger: functions.logger,
+      });
+      // A deleted post's photo goes with it (lib/spacePostPhoto.js). Only
+      // a file under the author's own prefix in this bucket is deleted.
+      await spacePostPhoto.deleteOrphanedPhoto({
+        before,
+        after,
+        getBucket: () => admin.storage().bucket(),
         logger: functions.logger,
       });
     } catch (err) {
