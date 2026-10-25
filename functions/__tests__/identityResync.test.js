@@ -29,8 +29,10 @@ const NOW = Date.parse("2026-10-24T12:00:00Z");
 const DAY = 86400000;
 const ago = (days) => new Date(NOW - days * DAY);
 const DELETED = "<field deleted>";
-const OLD_PHOTO = "https://firebasestorage.googleapis.com/v0/b/x/o/old.jpg";
-const NEW_PHOTO = "https://firebasestorage.googleapis.com/v0/b/x/o/new.jpg";
+const OLD_PHOTO =
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/old.jpg";
+const NEW_PHOTO =
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/new.jpg";
 
 const OLD = { authorName: "Alice Old", authorPhotoURL: OLD_PHOTO };
 

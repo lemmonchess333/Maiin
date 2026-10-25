@@ -183,6 +183,22 @@ service cloud.firestore {
         && !blockExistsBetween(targetUid, requesterUid);
     }
 
+    /* What a follow edge holds: when it was made and, from an accepted
+       request, that it was one (onFollowerCreated reads `fromRequest` to
+       tell the follower). Nothing else. Both edges are readable by anyone
+       signed in, and an open shape let a follower park up to a megabyte
+       on someone else's followers list, paid for by every reader of it. */
+    function isDirectFollowEdge() {
+      return request.resource.data.keys().hasOnly(['followedAt'])
+        && request.resource.data.followedAt is timestamp;
+    }
+
+    function isAcceptedFollowEdge() {
+      return request.resource.data.keys().hasOnly(['followedAt', 'fromRequest'])
+        && request.resource.data.followedAt is timestamp
+        && request.resource.data.fromRequest == true;
+    }
+
     /* approveFollowers is a boolean when present (Settings → Privacy); a
        null, like the other switches', means none chosen: approval on. */
     function approveFollowersValid() {
@@ -204,7 +220,12 @@ service cloud.firestore {
        identity rows. A URL a stranger's browser fetches is a tracking
        pixel with a per-viewer IP unless its origin is one Tropos already
        trusts to serve avatars:
-         - own-bucket Firebase Storage (custom uploads, space photos)
+         - THIS project's Firebase Storage bucket (custom uploads, space
+           photos). The host alone was not enough: every Firebase project
+           serves from firebasestorage.googleapis.com, so a URL into an
+           attacker's own bucket passed, and its access logs carry every
+           viewer's IP. Both default bucket names a project can have are
+           listed; each is reserved to this project.
          - Google OAuth CDN (lh3.googleusercontent.com)
          - Apple OAuth CDN (appleid.cdn-apple.com)
        `https` only and anchored with `^`, so a downgrade or a
@@ -218,7 +239,7 @@ service cloud.firestore {
       return v is string
         && v.size() <= 2048
         && (
-          v.matches('^https://firebasestorage\\.googleapis\\.com/.*')
+          v.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/adaptive-fitness-af8bb\\.(firebasestorage\\.app|appspot\\.com)/o/.*')
           || v.matches('^https://lh3\\.googleusercontent\\.com/.*')
           || v.matches('^https://appleid\\.cdn-apple\\.com/.*')
         );
@@ -767,6 +788,19 @@ service cloud.firestore {
               && request.resource.data.createdAt
                    == resource.data.get('createdAt', null))
         )
+        // The sanitizer's bound (profileSanitizer.js: 30 characters). Every
+        // search result and profile view downloads this document, so an
+        // unbounded string was a near-megabyte for every reader. A stored
+        // value left as it is passes, as the badges below do.
+        && (
+          !('athleteType' in request.resource.data)
+          || request.resource.data.athleteType == null
+          || (request.resource.data.athleteType is string
+              && request.resource.data.athleteType.size() <= 30)
+          || (resource != null
+              && request.resource.data.athleteType
+                   == resource.data.get('athleteType', null))
+        )
         && publicProfileDaysValid('currentStreak')
         && publicProfileDaysValid('longestStreak')
         && (
@@ -1008,6 +1042,8 @@ service cloud.firestore {
         && resource.data.authorId == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['visibility'])
+        // The same three values a create may hold.
+        && request.resource.data.visibility in ['public', 'followers', 'private']
         // A flagged activity stays private. The word filter
         // (onActivityCreated) and a moderator's Hide content both flag
         // it and make it private; without this its author could make
@@ -1659,8 +1695,9 @@ service cloud.firestore {
           && !blockExistsBetween(uid, targetUid)
           && !isRestricted()
           && !approvesFollowers(targetUid)
+          && isDirectFollowEdge()
         )
-        || acceptsFollowRequest(targetUid, uid);
+        || (acceptsFollowRequest(targetUid, uid) && isAcceptedFollowEdge());
     }
 
     match /followers/{uid}/users/{followerUid} {
@@ -1685,6 +1722,11 @@ service cloud.firestore {
           && exists(/databases/$(database)/documents/blocks/$(uid)/users/$(followerUid))
           && !isWriteFrozen(uid)
         );
+      // Documents this reads: each isWriteFrozen reads a deletion request
+      // and a tombstone, blockExistsBetween two block records, isRestricted
+      // and approvesFollowers one each. Eight, against Firestore's limit of
+      // ten access calls for a single-document request; count before adding
+      // another get() or exists() here.
       allow create: if (
           request.auth != null
           && request.auth.uid == followerUid
@@ -1693,9 +1735,11 @@ service cloud.firestore {
           && !blockExistsBetween(uid, followerUid)
           && !isRestricted()
           && !approvesFollowers(uid)
-          && !('fromRequest' in request.resource.data)
+          // A direct follow never carries `fromRequest`: only the person
+          // asked may say they said yes.
+          && isDirectFollowEdge()
         )
-        || acceptsFollowRequest(uid, followerUid);
+        || (acceptsFollowRequest(uid, followerUid) && isAcceptedFollowEdge());
     }
 
     /* A follow waiting to be accepted (Polish2 call 4): who asked
