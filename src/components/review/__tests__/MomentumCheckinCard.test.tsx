@@ -17,8 +17,12 @@ import { MemoryRouter } from "react-router-dom";
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+vi.mock("@/lib/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}));
 
 import MomentumCheckinCard from "../MomentumCheckinCard";
+import { toast } from "@/lib/toast";
 import {
   seedFirestore,
   resetFirestore,
@@ -27,6 +31,8 @@ import {
   deferReads,
   releaseRead,
   flushSnapshots,
+  deferWrites,
+  releaseAllWrites,
 } from "@/test/firestoreHarness";
 
 const PATH = "users/u1/checkins/2026-07-06";
@@ -144,5 +150,60 @@ describe("MomentumCheckinCard", () => {
     // overwrite it.
     await waitFor(() => expect(container.innerHTML).toBe(""));
     expect(screen.queryByText(/How did this week's plan feel\?/)).toBeNull();
+  });
+});
+
+/* A failed save left the form, or a card a dismissal meant to close, with
+   nothing said. Offline the save waited for the connection with the button
+   spinning: the SDK has the write on the device, but its promise waits
+   for the server (settleWrite.ts). */
+describe("MomentumCheckinCard — a save that does not land", () => {
+  const setOnline = (online: boolean) =>
+    Object.defineProperty(navigator, "onLine", {
+      configurable: true,
+      get: () => online,
+    });
+
+  it("says so when the save fails, and keeps the questions", async () => {
+    renderCard();
+    fireEvent.click(await screen.findByRole("radio", { name: "A bit much" }));
+    failNextFirestore("setDoc", { path: PATH, code: "unavailable" });
+    fireEvent.click(screen.getByText("Save check-in"));
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't save your check-in. Try again."
+      )
+    );
+    expect(screen.getByText("Save check-in")).toBeInTheDocument();
+  });
+
+  it("says so when hiding it fails", async () => {
+    renderCard();
+    const dismiss = await screen.findByRole("button", {
+      name: "Dismiss check-in",
+    });
+    failNextFirestore("setDoc", { path: PATH, code: "unavailable" });
+    fireEvent.click(dismiss);
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't hide the check-in. Try again."
+      )
+    );
+  });
+
+  it("offline, reads back at once while the write waits for the connection", async () => {
+    renderCard();
+    fireEvent.click(await screen.findByRole("radio", { name: "A bit much" }));
+    setOnline(false);
+    deferWrites();
+    try {
+      fireEvent.click(screen.getByText("Save check-in"));
+      expect(await screen.findByText(/Checked in — A bit much/)).toBeVisible();
+      expect(toast.error).not.toHaveBeenCalled();
+    } finally {
+      setOnline(true);
+      releaseAllWrites();
+    }
+    await waitFor(() => expect(readDoc(PATH)?.feel).toBe("a_bit_much"));
   });
 });

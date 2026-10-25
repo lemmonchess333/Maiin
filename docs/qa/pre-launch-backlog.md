@@ -2913,3 +2913,19 @@ reload and no CSP; only a browser and the phone show them doing their part.
       build and on the phone, with no photo uploaded. Passing: the feed,
       the profile and a comment show the Google photo, not an initial, and
       the console shows no CSP refusal for `lh3.googleusercontent.com`.
+
+## Saving offline counts as saved (2026-10-25)
+
+The SDK keeps an offline write on the device and sends it on reconnect,
+but its promise waits for the server, so every profile save offline spun
+until the connection came back (`src/lib/settleWrite.ts`). Unit-tested
+with the fake; only the phone shows the SDK replaying the write.
+
+- [ ] **A Settings change offline sticks.** On the phone, turn on Airplane
+      Mode, change a Settings value (units, max heart rate, a toggle).
+      Passing: it saves at once with no spinner left turning, and after
+      turning the connection back on and reopening the app, the value is
+      still the changed one.
+- [ ] **Connecting Apple Health offline shows steps.** With Airplane Mode
+      on, connect Apple Health from Settings → Health. Passing: today's
+      steps appear without waiting for a connection.

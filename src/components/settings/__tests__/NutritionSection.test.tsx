@@ -885,3 +885,80 @@ describe("NutritionSection — the calorie-target deep-link target", () => {
     }
   });
 });
+
+/* The age field wrote `Number(text) || 25` on every keystroke: a cleared
+   field became 25 at once (typing 3 next read 253), and 0, a negative or
+   300 was saved on blur and fed the TDEE. It holds the typed text now and
+   lets through only an age the profile keeps (bodyMetrics' AGE_YEARS). */
+describe("NutritionSection — the age field", () => {
+  function AgeHarness({
+    profileAge,
+    updateProfile,
+  }: {
+    profileAge: number;
+    updateProfile: (d: Partial<UserProfile>) => Promise<UpdateProfileResult>;
+  }) {
+    const [age, setAge] = useState(profileAge);
+    return (
+      <>
+        <output data-testid="age-in-use">{age}</output>
+        <NutritionSection
+          profile={{ uid: "u-1", age: profileAge } as UserProfile}
+          age={age}
+          setAge={setAge}
+          activityLevel={"moderate" as ActivityLevel}
+          setActivityLevel={vi.fn()}
+          currentKg={75}
+          goalWeightKg={76.5}
+          setGoalWeightKg={vi.fn()}
+          weeklyRateKg={0.5}
+          setWeeklyRateKg={vi.fn()}
+          goalPlan={goalPlan}
+          tdee={DEFAULT_TDEE}
+          updateProfile={updateProfile}
+          inline
+        />
+      </>
+    );
+  }
+
+  function setup(profileAge = 30) {
+    const updateProfile = vi.fn(
+      async (_data: Partial<UserProfile>) =>
+        ({ ok: true }) as UpdateProfileResult
+    );
+    render(
+      <AgeHarness profileAge={profileAge} updateProfile={updateProfile} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /TDEE calculator/ }));
+    const input = screen.getByLabelText("Age") as HTMLInputElement;
+    const inUse = () => screen.getByTestId("age-in-use").textContent;
+    return { updateProfile, input, inUse };
+  }
+
+  it("a cleared field stays empty while typing, and the new age is saved", () => {
+    const { updateProfile, input, inUse } = setup(30);
+    fireEvent.change(input, { target: { value: "" } });
+    expect(input.value).toBe("");
+    // Nothing invented while the field is empty.
+    expect(inUse()).toBe("30");
+    fireEvent.change(input, { target: { value: "3" } });
+    expect(input.value).toBe("3");
+    fireEvent.change(input, { target: { value: "34" } });
+    expect(inUse()).toBe("34");
+    fireEvent.blur(input);
+    expect(updateProfile).toHaveBeenCalledWith({ age: 34 });
+  });
+
+  it.each(["300", "0", "-5", "15", ""])(
+    "puts %j back on blur and saves nothing",
+    (typed) => {
+      const { updateProfile, input, inUse } = setup(30);
+      fireEvent.change(input, { target: { value: typed } });
+      fireEvent.blur(input);
+      expect(updateProfile).not.toHaveBeenCalled();
+      expect(input.value).toBe("30");
+      expect(inUse()).toBe("30");
+    }
+  );
+});

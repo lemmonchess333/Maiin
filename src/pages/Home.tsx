@@ -271,6 +271,7 @@ export default function Home() {
     claimMap,
     unclaimedByDate,
     runs: savedRuns,
+    loading: savedRunsLoading,
   } = useClaimMapForProgram(programState);
 
   // What was done, by date: the strip fills a day for a logged lift
@@ -1081,6 +1082,7 @@ export default function Home() {
                 extras={unclaimedByDate.get(peekDate) ?? []}
                 workouts={peekW}
                 dailyTotals={peekT}
+                sessionsLoading={workoutsLoading || savedRunsLoading}
                 onClose={function () {
                   setPeekDate(null);
                 }}

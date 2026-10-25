@@ -45,6 +45,7 @@ import { runDoseLine } from "@/lib/runDose";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { lazyRetry } from "@/lib/lazyRetry";
+import { Skeleton } from "@/components/LoadingSkeleton";
 
 /* Closed when Home first draws, and it brings the bottom sheet (vaul and
    Radix) with it: it loads once the card has drawn, as Home's
@@ -174,6 +175,7 @@ export default function DayPeekCard({
   extras,
   workouts,
   dailyTotals,
+  sessionsLoading = false,
   onClose,
   onManage,
 }: {
@@ -199,6 +201,11 @@ export default function DayPeekCard({
    *  the Home day peek alongside the planned slot. Wired via
    *  `useClaimMapForProgram(programState).unclaimedByDate.get(dateKey)` in Home. */
   extras: SavedRunDoc[];
+  /** The day's workouts or runs are still being read. A day with nothing
+   *  found yet then shows a placeholder, not "No activity logged": on a
+   *  cold start a returning person who tapped a day before the reads
+   *  landed was told they had done nothing. */
+  sessionsLoading?: boolean;
   workouts: {
     /** Firestore doc id — the /workout/:id destination for the lift row.
      *  Optional because callers historically passed a projection; a row
@@ -643,6 +650,8 @@ export default function DayPeekCard({
                 </button>
               )}
             </div>
+          ) : sessionsLoading ? (
+            <Skeleton className="h-3 w-32" />
           ) : (
             <p className="text-xs text-muted-foreground italic">
               No activity logged

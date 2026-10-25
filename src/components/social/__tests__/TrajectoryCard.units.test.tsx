@@ -1,12 +1,22 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
+
+/** The reader's distance unit, read from their profile (useDistanceUnit). */
+const reader = vi.hoisted(() => ({
+  profile: { preferredDistanceUnit: "km" as string },
+}));
+vi.mock("@/lib/auth", () => ({ useAuth: () => ({ profile: reader.profile }) }));
+
 import TrajectoryCard from "../TrajectoryCard";
 import { LiftUnitContext } from "@/hooks/useLiftUnit";
 import type { LiftUnit } from "@/lib/liftLoad";
 import type { PersonalTrajectory } from "@/lib/personalTrajectory";
 import { groupText } from "@/test/localeGrouping";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  reader.profile.preferredDistanceUnit = "km";
+});
 
 /* Lift18: the week's lifting figure is the reader's own, so it reads in
    their unit. Stored as kg. */
@@ -76,5 +86,28 @@ describe("TrajectoryCard's lifting figure", () => {
     expect(screen.getByText(groupText(9921))).toBeInTheDocument();
     expect(screen.getByText("lb")).toBeInTheDocument();
     expect(screen.queryByText("kg")).not.toBeInTheDocument();
+  });
+});
+
+/* The run column printed the stored kilometres with a literal "km" to a
+   miles reader, beside a lift column that converted. */
+describe("TrajectoryCard's running distance", () => {
+  const ran = (km: number): PersonalTrajectory => ({
+    ...data,
+    thisWeek: { sessions: 3, km, kg: 4500 },
+  });
+
+  it("reads in kilometres for a kilometre reader", () => {
+    renderIn("kg", ran(16.09));
+    expect(screen.getByText("16.1")).toBeInTheDocument();
+    expect(screen.getByText("km")).toBeInTheDocument();
+  });
+
+  it("reads in miles for a miles reader", () => {
+    reader.profile.preferredDistanceUnit = "mi";
+    renderIn("kg", ran(16.09));
+    expect(screen.getByText("10.0")).toBeInTheDocument();
+    expect(screen.getByText("mi")).toBeInTheDocument();
+    expect(screen.queryByText("km")).toBeNull();
   });
 });

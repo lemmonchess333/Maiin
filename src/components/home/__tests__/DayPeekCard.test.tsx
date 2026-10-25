@@ -343,6 +343,47 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     expect(easyWeek).not.toMatch(/quality/);
   });
 
+  /* On a cold start a returning person who tapped a past day before the
+     reads landed was told "No activity logged" for a day they trained. */
+  it("shows a placeholder, not 'No activity logged', while the day's sessions load", () => {
+    const tueKey = dayOfThisWeek(2);
+    const profile = makeProfile(
+      makeSchedule(["rest", "rest", "rest", "rest", "rest", "rest", "rest"])
+    );
+    const { rerender } = render(
+      <DayPeekCard
+        todayKey={localDateString()}
+        dateKey={tueKey}
+        profile={profile}
+        programState={makeProgramState([])}
+        claimMap={emptyClaimMap}
+        extras={emptyExtras}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        sessionsLoading
+        onClose={vi.fn()}
+      />
+    );
+    expect(screen.queryByText("No activity logged")).not.toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Loading" })).toBeInTheDocument();
+
+    rerender(
+      <DayPeekCard
+        todayKey={localDateString()}
+        dateKey={tueKey}
+        profile={profile}
+        programState={makeProgramState([])}
+        claimMap={emptyClaimMap}
+        extras={emptyExtras}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        sessionsLoading={false}
+        onClose={vi.fn()}
+      />
+    );
+    expect(screen.getByText("No activity logged")).toBeInTheDocument();
+  });
+
   it("falls back to 'No activity logged' when there's no planned run + no logged activity", () => {
     const tueKey = dayOfThisWeek(2);
     const schedule = makeSchedule([

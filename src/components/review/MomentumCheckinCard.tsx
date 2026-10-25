@@ -18,6 +18,8 @@ import { X, CheckCircle2, CalendarCheck } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { logger } from "@/lib/logger";
+import { settleWrite } from "@/lib/settleWrite";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { Button } from "@/components/ui/Button";
@@ -145,13 +147,25 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
     };
   }, [uid, weekKey]);
 
+  /* A failed save left the form, or the card a dismissal meant to close,
+     with nothing said; offline the save waited for the connection, with
+     the button saying so the whole time (settleWrite.ts). */
   const save = async (record: MomentumCheckin) => {
     setSaving(true);
     try {
-      await setDocGuarded(checkinRef(uid, weekKey), record);
+      await settleWrite(setDocGuarded(checkinRef(uid, weekKey), record), {
+        label: "momentumCheckin",
+        onLateFailure: () =>
+          toast.error("Your check-in from offline couldn't be saved."),
+      });
       setExisting(record);
     } catch (err) {
       logger.error("momentumCheckin: save failed", err);
+      toast.error(
+        record.dismissed
+          ? "Couldn't hide the check-in. Try again."
+          : "Couldn't save your check-in. Try again."
+      );
     } finally {
       setSaving(false);
     }

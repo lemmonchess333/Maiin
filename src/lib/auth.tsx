@@ -28,6 +28,7 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { clearEmailChange } from "./emailChangeNote";
+import { settleWrite } from "./settleWrite";
 import {
   reloadToClearFirestoreCache,
   writesSettled,
@@ -1586,6 +1587,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // call sites that want to handle the error themselves.
       try {
         const { doc, writeBatch, setDocGuarded, db } = await firestore();
+        let write: Promise<void>;
         if (Object.keys(publicPatch).length > 0) {
           // Strip undefined from both writes — Firestore rejects any doc
           // containing an explicit `undefined` outright. The non-batch
@@ -1601,12 +1603,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             stripUndefined(publicPatch),
             { merge: true }
           );
-          await batch.commit();
+          write = batch.commit();
         } else {
-          await setDocGuarded(doc(db, "users", writeUid), writeData, {
+          write = setDocGuarded(doc(db, "users", writeUid), writeData, {
             merge: true,
           });
         }
+        // Offline the write is on the device and goes up on reconnect, but
+        // its promise waits for the server, so every Settings save spun
+        // until then (settleWrite.ts). Offline it counts as made; a refusal
+        // once back online is said then.
+        await settleWrite(write, {
+          label: "auth.updateProfile",
+          onLateFailure: () => {
+            if (auth.currentUser?.uid !== writeUid) return;
+            toast.error(
+              "A change you made offline couldn't be saved. Check your settings.",
+              { id: "update-profile-error" }
+            );
+          },
+        });
 
         // The remote write for A is committed and NOT rolled back — only stale
         // LOCAL hydration + theme mutation are suppressed if B is now current.
