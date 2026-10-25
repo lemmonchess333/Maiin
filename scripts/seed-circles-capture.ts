@@ -126,6 +126,8 @@ async function main() {
     targetDate: null,
     active: true,
     inviteCode: "K7P49M2H",
+    // Made with the Circle, so it works for one more day of its seven.
+    inviteCodeExpiresAt: now + 86_400_000,
     createdAt: now - 6 * 86_400_000,
   });
   await db.doc(`goalSpaces/${SPACE_ID}/members/${uid}`).set({

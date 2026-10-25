@@ -34,6 +34,7 @@ function circle(id: string, title: string): CircleSummary {
       createdAt: 1,
     },
     inviteCode: null,
+    inviteCodeExpiresAt: null,
   };
 }
 

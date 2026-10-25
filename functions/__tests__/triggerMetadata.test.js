@@ -480,6 +480,11 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  renewGoalSpaceInviteCode: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   leaveGoalSpace: {
     kind: "callable",
     maxInstances: 100,

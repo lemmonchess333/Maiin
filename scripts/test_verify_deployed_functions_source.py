@@ -116,6 +116,15 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
         self.assertEqual(len(paths), len(set(paths)))
         self.assertIn("onPublicProfileIdentityChanged", verifier.RETRY_REQUIRED)
 
+    def test_circle_invite_callables_read_back_the_expiry_they_enforce(self):
+        targets = verifier.source_targets()
+        for name in ("joinGoalSpace", "renewGoalSpaceInviteCode"):
+            with self.subTest(function=name):
+                self.assertTrue({"index.js", "package-lock.json", "lib/goalSpaceMembership.js",
+                                 "lib/restriction.js", "lib/accountDeletionLocks.js"}
+                                .issubset(targets[name]))
+                self.assertEqual(len(targets[name]), len(set(targets[name])))
+
     def test_block_mirror_reads_back_its_reconciler_and_retry_guard(self):
         paths = verifier.source_targets()["onBlockWritten"]
         self.assertTrue({"index.js", "package-lock.json", "lib/blockMirror.js",

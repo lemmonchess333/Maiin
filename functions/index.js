@@ -7932,6 +7932,29 @@ exports.joinGoalSpace = functions
     }
   });
 
+/* The owner's new invite code: the old one stops working at once, and
+   the new one works for seven days (lib/goalSpaceMembership). Handing
+   out a way in reaches the people who use it, so a restricted owner is
+   refused it as they are refused starting a Circle. */
+exports.renewGoalSpaceInviteCode = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceCallableGate(context, "goalSpaceRenewCode", 10, {
+      reachesOthers: true,
+    });
+    try {
+      return await goalSpaceMembership.renewGoalSpaceInviteCode({
+        firestore: admin.firestore(),
+        uid,
+        spaceId: String(data?.spaceId || ""),
+        now: Date.now(),
+        makeCode: goalSpaceInviteCode,
+      });
+    } catch (err) {
+      throw mapGoalSpaceError(err);
+    }
+  });
+
 exports.leaveGoalSpace = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {

@@ -76,6 +76,7 @@ function summary(id: string, title: string, active: boolean): CircleSummary {
       createdAt: 1,
     },
     inviteCode: null,
+    inviteCodeExpiresAt: null,
   };
 }
 

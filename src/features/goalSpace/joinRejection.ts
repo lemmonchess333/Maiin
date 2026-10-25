@@ -45,6 +45,12 @@ const BY_MESSAGE: [needle: string, copy: string][] = [
   ["circle inactive", "That circle has been closed."],
   ["no such circle", "That circle no longer exists."],
   ["bad invite", "That invite code isn't right. Check it and try again."],
+  /* An expired code, or one its owner has replaced. Checking it again
+     cannot help; only a new code can. */
+  [
+    "invite expired",
+    "That invite code has expired. Ask whoever invited you for a new one.",
+  ],
   [
     "invite code required",
     "That doesn't look like an invite code. Paste the whole code you were sent.",

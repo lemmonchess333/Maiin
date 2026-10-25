@@ -108,6 +108,27 @@ real history can confirm the timing.
       open Home and see no welcome back (the absence is measured only from
       a server-confirmed read).
 
+## Circle invite codes expire (2026-10-25)
+
+A Circle's invite code works for seven days after it is made, and
+`joinGoalSpace` refuses it after that; the owner makes a new one from the
+Circle's sheet (`renewGoalSpaceInviteCode`), which stops the old one at
+once. A code made before this deploy is as old as its Circle, so a Circle
+more than a week old needs a new code before anyone else can join; nobody
+already in one is affected. The unit suites hold the rule on both sides;
+only a deploy can confirm the callables run it.
+
+- [ ] **A new code, a replaced code, an old Circle's code.** After Deploy
+      production has shipped (`joinGoalSpace` and
+      `renewGoalSpaceInviteCode` are on the deployed-source list), on
+      account A start a Circle. Passing: the invite sheet shows the code
+      and "Works until HH:MM on Ddd D Mmm", seven days on. In the Circle's
+      sheet tap New code, then on account B join with the first code:
+      "That invite code has expired. Ask whoever invited you for a new
+      one." Join with the new code: B is in. A Circle A made more than a
+      week before the deploy shows "This code has expired." and Make a new
+      code, and everyone already in it still opens it.
+
 ## Names that follow you, and notices that open the post (survey items 57 and 58, 2026-10-24)
 
 A new public name or photo is carried to the person's recent posts,

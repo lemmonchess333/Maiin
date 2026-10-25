@@ -61,6 +61,10 @@ import {
   type CircleSummary,
 } from "@/features/goalSpace/useGoalSpaces";
 import { isFull, memberLine } from "@/features/goalSpace/circleCapacity";
+import {
+  inviteCodeExpiryLine,
+  isInviteCodeExpired,
+} from "@/features/goalSpace/inviteCode";
 import CircleWeeklyFocusSheet from "./CircleWeeklyFocusSheet";
 import RestrictedNotice from "./RestrictedNotice";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
@@ -253,6 +257,7 @@ export default function CirclesSection({
     loadFailed,
     reload,
     createCircle,
+    renewInviteCode,
     joinCircle,
     leaveCircle,
     loadDetail,
@@ -305,6 +310,9 @@ export default function CirclesSection({
   const [chooserOpen, setChooserOpen] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
   const [detailOf, setDetailOf] = useState<CircleSummary | null>(null);
+  /* When the detail sheet was opened (or its code last replaced): the
+     moment its invite code's expiry is read against. */
+  const [detailSeenAt, setDetailSeenAt] = useState(0);
   const [members, setMembers] = useState<GoalSpaceMember[] | null>(null);
   const [events, setEvents] = useState<GoalSpaceEvent[]>([]);
   const [template, setTemplate] = useState<GoalSpaceType>("strength_block");
@@ -508,6 +516,7 @@ export default function CirclesSection({
   const openDetail = async (c: CircleSummary) => {
     haptic("light");
     setDetailOf(c);
+    setDetailSeenAt(Date.now());
     setMembers(null);
     const detail = await loadDetail(c.space.id);
     setMembers(detail.members);
@@ -522,7 +531,42 @@ export default function CirclesSection({
     title: string;
     spaceId: string;
     inviteCode: string;
+    inviteCodeExpiresAt: number;
+    /** When the sheet was opened: the moment the expiry is read against. */
+    seenAt: number;
   } | null>(null);
+
+  /* The owner's new code, at any time: the old one stops working at once.
+     Carried into whichever sheet is showing this Circle's code. */
+  const [renewing, setRenewing] = useState(false);
+  const renewCode = async (spaceId: string) => {
+    if (refused()) return;
+    setRenewing(true);
+    const invite = await renewInviteCode(spaceId);
+    setRenewing(false);
+    if (!invite) {
+      toast.error("Couldn't make a new code. Try again.");
+      return;
+    }
+    const seenAt = Date.now();
+    setDetailOf((d) => (d && d.space.id === spaceId ? { ...d, ...invite } : d));
+    setDetailSeenAt(seenAt);
+    setInviteHandoff((h) =>
+      h && h.spaceId === spaceId ? { ...h, ...invite, seenAt } : h
+    );
+    toast.success("New invite code. The old one no longer works.");
+  };
+  const detailCodeExpiresAt = detailOf?.inviteCodeExpiresAt ?? 0;
+  const detailCodeExpired = isInviteCodeExpired(
+    detailCodeExpiresAt,
+    detailSeenAt
+  );
+  const handoffCodeExpired =
+    inviteHandoff !== null &&
+    isInviteCodeExpired(
+      inviteHandoff.inviteCodeExpiresAt,
+      inviteHandoff.seenAt
+    );
 
   const shareInvite = async (h: {
     title: string;
@@ -595,7 +639,7 @@ export default function CirclesSection({
       setPendingTargetDate(null);
       trackSocialEvent("circle_created", { circleType: template });
       // Straight into the invite hand-off — a circle of one isn't done.
-      setInviteHandoff({ title: trimmed, ...res });
+      setInviteHandoff({ title: trimmed, ...res, seenAt: Date.now() });
     } else {
       toast.error("Couldn't start the circle. Check the title and try again.");
     }
@@ -950,6 +994,8 @@ export default function CirclesSection({
                     title: circleTitle(featured.space, wordFilter),
                     spaceId: featured.space.id,
                     inviteCode: code,
+                    inviteCodeExpiresAt: featured.inviteCodeExpiresAt ?? 0,
+                    seenAt: Date.now(),
                   });
                 }}
               >
@@ -1329,30 +1375,70 @@ export default function CirclesSection({
                     there is room.
                   </p>
                 )}
+                {/* A code works for seven days. An expired one is not
+                    offered for copying, only replaced; a live one can be
+                    replaced at any time, which stops it working at once. */}
                 {detailOf.inviteCode && !isFull(detailOf.space) && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      void navigator.clipboard
-                        ?.writeText(
-                          inviteString(detailOf.space.id, detailOf.inviteCode!)
-                        )
-                        .then(() => {
-                          toast.success("Invite code copied.");
-                          trackSocialEvent("circle_invite_sent", {
-                            inviteMethod: "copy",
-                          });
-                        })
-                        .catch(() =>
-                          toast.error("Couldn't copy. Long-press to select it.")
-                        );
-                    }}
-                  >
-                    <Copy className="size-4 mr-1.5" aria-hidden="true" />
-                    Copy invite code
-                  </Button>
+                  <div className="space-y-1">
+                    {detailCodeExpired ? (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="w-full"
+                        loading={renewing}
+                        onClick={() => void renewCode(detailOf.space.id)}
+                      >
+                        Make a new code
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          void navigator.clipboard
+                            ?.writeText(
+                              inviteString(
+                                detailOf.space.id,
+                                detailOf.inviteCode!
+                              )
+                            )
+                            .then(() => {
+                              toast.success("Invite code copied.");
+                              trackSocialEvent("circle_invite_sent", {
+                                inviteMethod: "copy",
+                              });
+                            })
+                            .catch(() =>
+                              toast.error(
+                                "Couldn't copy. Long-press to select it."
+                              )
+                            );
+                        }}
+                      >
+                        <Copy className="size-4 mr-1.5" aria-hidden="true" />
+                        Copy invite code
+                      </Button>
+                    )}
+                    <div className="flex flex-wrap items-center justify-between gap-x-2">
+                      <p className="text-xs text-muted-foreground">
+                        {inviteCodeExpiryLine(
+                          detailCodeExpiresAt,
+                          detailSeenAt
+                        )}
+                      </p>
+                      {!detailCodeExpired && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          loading={renewing}
+                          onClick={() => void renewCode(detailOf.space.id)}
+                        >
+                          New code
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 )}
 
                 <div className="flex gap-2">
@@ -1489,22 +1575,44 @@ export default function CirclesSection({
       >
         {inviteHandoff && (
           <div className="px-4 space-y-3 pb-2">
-            <p className="w-full px-3 py-2.5 rounded-xl bg-muted text-sm text-foreground font-mono break-all select-all">
-              {inviteString(inviteHandoff.spaceId, inviteHandoff.inviteCode)}
+            {/* An expired code is not shown or offered; the one way on is
+                a new code, which this sheet then shows. */}
+            {!handoffCodeExpired && (
+              <p className="w-full px-3 py-2.5 rounded-xl bg-muted text-sm text-foreground font-mono break-all select-all">
+                {inviteString(inviteHandoff.spaceId, inviteHandoff.inviteCode)}
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {inviteCodeExpiryLine(
+                inviteHandoff.inviteCodeExpiresAt,
+                inviteHandoff.seenAt
+              )}
             </p>
-            <Button
-              className="w-full"
-              onClick={() => void shareInvite(inviteHandoff)}
-            >
-              Share invite
-            </Button>
-            <Button
-              variant="secondary"
-              className="w-full"
-              onClick={() => void copyInviteCode(inviteHandoff)}
-            >
-              Copy code
-            </Button>
+            {handoffCodeExpired ? (
+              <Button
+                className="w-full"
+                loading={renewing}
+                onClick={() => void renewCode(inviteHandoff.spaceId)}
+              >
+                Make a new code
+              </Button>
+            ) : (
+              <>
+                <Button
+                  className="w-full"
+                  onClick={() => void shareInvite(inviteHandoff)}
+                >
+                  Share invite
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => void copyInviteCode(inviteHandoff)}
+                >
+                  Copy code
+                </Button>
+              </>
+            )}
             <Button
               variant="ghost"
               className="w-full"
