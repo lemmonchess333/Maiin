@@ -437,6 +437,65 @@ async function main() {
   for (const [id, docData] of Object.entries(feedActivities)) {
     await db.collection("activities").doc(id).set(docData);
   }
+
+  /* Props and comments on Maya's push day, in the shapes the callables
+     write, so the one-post page (`/activity/:id`) shows a session with
+     both. Five props to match its kudosCount, from five people with
+     public profiles so the props list names them; two comments to match
+     its commentCount, the second the seeded user's own, whose row has the
+     delete menu, with a reaction on the first. None of the props is the
+     seeded user's, so Explore draws the card as before. */
+  const propsGivers = [
+    "Jordan Reyes",
+    "Sam Okafor",
+    "Priya Nair",
+    "Leo Martins",
+    "Aisha Bello",
+  ];
+  for (const [i, name] of propsGivers.entries()) {
+    const giver = `rich-props-${i + 1}`;
+    await db
+      .collection("users")
+      .doc(giver)
+      .collection("public")
+      .doc("profile")
+      .set({
+        uid: giver,
+        displayName: name,
+        displayNameLower: name.toLowerCase(),
+        photoURL: null,
+        athleteType: "Hybrid",
+      });
+    await db
+      .collection("kudos")
+      .doc("rich-feed-push")
+      .collection("users")
+      .doc(giver)
+      .set({ createdAt: hoursAgo(8 - i) });
+  }
+  await db
+    .collection("comments")
+    .doc("rich-feed-push")
+    .collection("items")
+    .doc("rich-c0")
+    .set({
+      authorId: "rich-props-1",
+      authorName: propsGivers[0],
+      text: "That bench is moving. Is 70 kg next?",
+      reactions: { fire: ["rich-feed-author"] },
+      createdAt: hoursAgo(8),
+    });
+  await db
+    .collection("comments")
+    .doc("rich-feed-push")
+    .collection("items")
+    .doc("rich-c1")
+    .set({
+      authorId: uid,
+      authorName: "E2E Tester",
+      text: "Strong session. Same split as mine this week.",
+      createdAt: hoursAgo(7),
+    });
   // ── Challenge fixtures (Social uplift v2): the Together-tab challenge
   //    cards were invisible to the screenshot channel (production
   //    challenges are materialised by the rolloverChallenges cron,
@@ -513,6 +572,35 @@ async function main() {
     .doc(uid)
     .set({ followedAt });
 
+  /* Maya's push day, saved as a routine from her post, so Train lists a
+     saved routine and its page (`/routine/:id`) has a workout to run. In
+     the shape `saveRoutine` writes for someone else's workout: the
+     structure, with her loads left out. */
+  const pushDay: [string, string, number, number][] = [
+    ["Bench Press", "bench-press", 4, 8],
+    ["Overhead Press", "overhead-press", 3, 10],
+    ["Rope Tricep Pushdown", "rope-tricep-pushdown", 3, 12],
+  ];
+  await base
+    .collection("savedRoutines")
+    .doc("rich-routine-push")
+    .set({
+      name: "Push day",
+      sourceActivityId: "rich-feed-push",
+      sourceAuthorId: feedAuthor.authorId,
+      sourceAuthorName: feedAuthor.authorName,
+      sourceWorkoutName: "Push day",
+      exercises: pushDay.map(([name, exerciseId, setCount, targetReps]) => ({
+        name,
+        exerciseId,
+        summary: `${setCount}×${targetReps}`,
+        setCount,
+        targetReps,
+        targetWeightKg: 0,
+      })),
+      createdAt: hoursAgo(20),
+    });
+
   // ── Community Spaces fixtures (Spc1 PR2): memberships + pinned
   //    Tropos Team intro posts so the Space pages and captures show
   //    the designed populated state (admin writes bypass rules; in
@@ -556,6 +644,21 @@ async function main() {
       likeCount: 6,
       commentCount: 1,
       createdAt: hoursAgo(8),
+    });
+  // Its one comment, as `addSpacePostCommentCallable` writes it, so the
+  // post's own page (`/space/:spaceId/post/:postId`) opens on a thread.
+  await db
+    .collection("spaces")
+    .doc("womens-running")
+    .collection("posts")
+    .doc("seed-maya")
+    .collection("comments")
+    .doc("seed-maya-c0")
+    .set({
+      authorId: "rich-props-3",
+      authorName: "Priya Nair",
+      text: "Go for it. The half was the best block I've trained for.",
+      createdAt: hoursAgo(6),
     });
   // A member's post with a workout attached, so the Space capture shows
   // a lift post's picture: the lead lift drawn (`leadExerciseId`).

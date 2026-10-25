@@ -23,6 +23,7 @@ import {
 } from "@/hooks/useScanStages";
 import { useBackDismiss } from "@/lib/backDismiss";
 import { logger } from "@/lib/logger";
+import { toast } from "@/lib/toast";
 import { THEME } from "@/lib/theme";
 
 type CaptureMode = "food" | "label";
@@ -606,15 +607,12 @@ export default function FoodCameraModal({
     }
   };
 
-  const takePhoto = async () => {
-    if (busy || loading) return;
-
+  /** The frame on screen as a JPEG, or null when it could not be taken. */
+  const captureFrame = (): { dataUrl: string; base64: string } | null => {
     try {
-      setBusy(true);
-
       const videoEl = videoRef.current;
       const canvas = canvasRef.current;
-      if (!videoEl || !canvas) return;
+      if (!videoEl || !canvas) return null;
 
       const w = videoEl.videoWidth || 1280;
       const h = videoEl.videoHeight || 720;
@@ -623,15 +621,33 @@ export default function FoodCameraModal({
       canvas.height = h;
 
       const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+      if (!ctx) return null;
 
       ctx.drawImage(videoEl, 0, 0, w, h);
 
       const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-      const base64 = dataUrlToBase64(dataUrl);
+      return { dataUrl, base64: dataUrlToBase64(dataUrl) };
+    } catch (e) {
+      logger.error(e);
+      return null;
+    }
+  };
 
-      setPreview(dataUrl);
-      await onCaptureBase64(base64, tab === "label" ? "label" : "food");
+  const takePhoto = async () => {
+    if (busy || loading) return;
+
+    try {
+      setBusy(true);
+      /* A shutter tap that takes nothing used to do nothing at all. The
+         analysis says its own failures (onCaptureBase64); this is only
+         the capture. */
+      const frame = captureFrame();
+      if (!frame) {
+        toast.error("Couldn't take the photo. Try again.");
+        return;
+      }
+      setPreview(frame.dataUrl);
+      await onCaptureBase64(frame.base64, tab === "label" ? "label" : "food");
     } catch (e) {
       logger.error(e);
     } finally {

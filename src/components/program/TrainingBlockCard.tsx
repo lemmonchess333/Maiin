@@ -304,7 +304,13 @@ export default function TrainingBlockCard({
   ) => {
     if (!block) return false;
     setBusy(true);
-    await archiveBlock(toArchive(block, outcome, opts.endedEarly));
+    // The block stays open until its record is saved. The archive id is the
+    // block's own, so trying again rewrites the same document.
+    if (!(await archiveBlock(toArchive(block, outcome, opts.endedEarly)))) {
+      setBusy(false);
+      toast.error("Couldn't close the block. Try again.");
+      return false;
+    }
     const ok = opts.keepFocus ? await onKeepFocus() : await onRelease();
     setBusy(false);
     if (!ok) {

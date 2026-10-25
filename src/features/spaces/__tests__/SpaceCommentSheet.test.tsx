@@ -231,6 +231,20 @@ describe("your own comment", () => {
   });
 });
 
+/* jsdom lays nothing out, so the room is read off the classes. At large
+   text on a small phone a rem-sized control doubles with the text and
+   takes the comment's width: at 320 px and 200% a comment's words ran
+   past its column. */
+describe("a comment's row at large text", () => {
+  it("keeps each row's control at 44 px and lets a long word wrap", async () => {
+    await openSheet();
+    for (const name of ["Delete comment", "More options for Priya's comment"]) {
+      expect(screen.getByRole("button", { name })).toHaveClass("size-[44px]");
+    }
+    expect(screen.getByText("Strong finish")).toHaveClass("break-words");
+  });
+});
+
 describe("the word filter", () => {
   it("refuses objectionable text before sending it", async () => {
     await openSheet();

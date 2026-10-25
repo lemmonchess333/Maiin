@@ -162,6 +162,7 @@ const challengeMarkers = require("./lib/challengeMarkers");
 const lifetimeAccrual = require("./lib/lifetimeAccrual");
 const workoutVolume = require("./lib/workoutVolume");
 const activityReversal = require("./lib/activityReversal");
+const spacePostPhoto = require("./lib/spacePostPhoto");
 // Account deletion logic. Extracted so the call-ordering invariant
 // (Firestore + Storage before Auth-user delete; pre-W1f had the
 // inverse, leaving orphans) is unit-testable with stub handles —
@@ -3666,8 +3667,10 @@ exports.sendTestPush = functions
     }
     const uid = context.auth.uid;
     // Outside the try below, which converts every throw into an
-    // `ok: false` result: a rate limit is a refusal the client must see
-    // as an error, not as a delivery report.
+    // `ok: false` result: a deleting account and a rate limit are refusals
+    // the client must see as errors, not as delivery reports. The lock
+    // goes first because the limiter writes, and so does the send lease.
+    await accountDeletionLocks.assertCallableActorNotDeleting(db, uid);
     if (await isRateLimited(uid, "sendTestPush", 5, 600_000)) {
       throw new functions.https.HttpsError(
         "resource-exhausted",
@@ -5270,6 +5273,8 @@ exports.onWorkoutUpdated = functions
     const before = change.before.data() || {};
     const after = change.after.data() || {};
     const { uid, workoutId } = context.params;
+    // Reconciles from the current source documents, so a retry is safe.
+    if (pastRetryWindow(context)) return null;
     if (
       !(await accountDeletionLocks.shouldSystemWriteProceed(
         db,
@@ -5316,6 +5321,8 @@ exports.onRunUpdated = functions
   .firestore.document("users/{uid}/runs/{runId}")
   .onUpdate(async (change, context) => {
     const { uid } = context.params;
+    // Reconciles from the current source documents, so a retry is safe.
+    if (pastRetryWindow(context)) return null;
     if (
       !(await accountDeletionLocks.shouldSystemWriteProceed(
         db,
@@ -5378,6 +5385,13 @@ exports.onWorkoutDeleted = functions
   .firestore.document("users/{uid}/workouts/{workoutId}")
   .onDelete(async (snap, context) => {
     const { uid, workoutId } = context.params;
+    if (pastRetryWindow(context)) {
+      console.error("onWorkoutDeleted: retry window closed, dropping", {
+        uid,
+        workoutId,
+      });
+      return null;
+    }
     if (
       !(await accountDeletionLocks.shouldSystemWriteProceed(
         db,
@@ -5398,29 +5412,28 @@ exports.onWorkoutDeleted = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
-    try {
-      const data = snap.data() || {};
-      await activityReversal.reverseChallengeProgressForSource(
-        db,
-        uid,
-        workoutId
-      );
-      await activityReversal.reverseLifetimeStat(
+    // Each reversal runs whatever happens to the other, and a failure
+    // fails the event so failurePolicy delivers it again. The source is
+    // already gone, so nothing else would ever re-fire: caught and logged,
+    // as it was, a contended transaction left the deleted workout's credit
+    // standing for good. Both reversals delete their marker in the same
+    // transaction, so the retry applies only what did not land.
+    const data = snap.data() || {};
+    const steps = triggerSteps(`onWorkoutDeleted ${uid}/${workoutId}`);
+    await steps.run("challenges", () =>
+      activityReversal.reverseChallengeProgressForSource(db, uid, workoutId)
+    );
+    await steps.run("lifetime volume", () =>
+      activityReversal.reverseLifetimeStat(
         db,
         uid,
         "lift",
         workoutId,
         lifetimeAccrual.liftVolumeKgFor(data)
-      );
-      console.log(`onWorkoutDeleted: reversed ${workoutId} for ${uid}`);
-    } catch (err) {
-      console.error("onWorkoutDeleted: fatal error:", {
-        uid,
-        workoutId,
-        message: err.message,
-        stack: err.stack,
-      });
-    }
+      )
+    );
+    steps.settle();
+    console.log(`onWorkoutDeleted: reversed ${workoutId} for ${uid}`);
     return null;
   });
 
@@ -5429,6 +5442,13 @@ exports.onRunDeleted = functions
   .firestore.document("users/{uid}/runs/{runId}")
   .onDelete(async (snap, context) => {
     const { uid, runId } = context.params;
+    if (pastRetryWindow(context)) {
+      console.error("onRunDeleted: retry window closed, dropping", {
+        uid,
+        runId,
+      });
+      return null;
+    }
     if (
       !(await accountDeletionLocks.shouldSystemWriteProceed(
         db,
@@ -5449,31 +5469,28 @@ exports.onRunDeleted = functions
     // Polish2: the week this person shares on friends' boards, if they
     // do. Outside the steps, like the line above: a failure retries.
     await friendsBoard.refreshBoardWeek(db, uid, sessionDays);
-    try {
-      const data = snap.data() || {};
-      // No isVolumeEligibleRun re-check here, unlike the create side. An
-      // ineligible run never credited, so it has no markers and every
-      // reversal below is already a no-op for it. The marker is the
-      // record of what happened; re-deriving that judgement from flags
-      // that may since have been edited would be a second opinion where a
-      // fact is available.
-      await activityReversal.reverseChallengeProgressForSource(db, uid, runId);
-      await activityReversal.reverseLifetimeStat(
+    const data = snap.data() || {};
+    // No isVolumeEligibleRun re-check here, unlike the create side. An
+    // ineligible run never credited, so it has no markers and every
+    // reversal below is already a no-op for it. The marker is the record
+    // of what happened; re-deriving that judgement from flags that may
+    // since have been edited would be a second opinion where a fact is
+    // available. Retried on failure, as onWorkoutDeleted says why.
+    const steps = triggerSteps(`onRunDeleted ${uid}/${runId}`);
+    await steps.run("challenges", () =>
+      activityReversal.reverseChallengeProgressForSource(db, uid, runId)
+    );
+    await steps.run("lifetime distance", () =>
+      activityReversal.reverseLifetimeStat(
         db,
         uid,
         "run",
         runId,
         lifetimeAccrual.runMetersFor(data)
-      );
-      console.log(`onRunDeleted: reversed ${runId} for ${uid}`);
-    } catch (err) {
-      console.error("onRunDeleted: fatal error:", {
-        uid,
-        runId,
-        message: err.message,
-        stack: err.stack,
-      });
-    }
+      )
+    );
+    steps.settle();
+    console.log(`onRunDeleted: reversed ${runId} for ${uid}`);
     return null;
   });
 
@@ -5619,6 +5636,10 @@ exports.backfillMyActivityCategories = functions
     }
     const uid = context.auth.uid;
 
+    // Before the limiter, which writes: a deleting account receives no new
+    // server writes, and this one rewrites its activities.
+    await accountDeletionLocks.assertCallableActorNotDeleting(db, uid);
+
     // A 500-document scan plus a batched write per call; the client runs
     // it once per account per device. Three an hour covers every honest
     // retry and bounds the read cost a looping caller can incur.
@@ -5749,6 +5770,11 @@ exports.recreditMyLiftVolume = functions
         );
       }
     }
+
+    // Before the limiter, which writes: a deleting account receives no new
+    // server writes, and this one would credit lifetime totals and
+    // challenge markers the deletion executor may already have swept.
+    await accountDeletionLocks.assertCallableActorNotDeleting(db, uid);
 
     // Before the first read. The client drains a history page by page in
     // ONE session, so the window must fit a whole drain: thirty pages is
@@ -6150,14 +6176,25 @@ exports.onSpacePostWritten = functions
   .firestore.document("spaces/{spaceId}/posts/{postId}")
   .onWrite(async (change, context) => {
     const { spaceId, postId } = context.params;
-    // Retried: the removal re-reads the post in its transaction.
+    // Retried: the removal re-reads the post in its transaction, and the
+    // photo's delete treats a file already gone as done.
     if (pastRetryWindow(context)) return null;
+    const before = change.before.exists ? change.before.data() : null;
+    const after = change.after.exists ? change.after.data() : null;
     try {
       await spacePostModeration.removeObjectionableSpacePost({
         firestore: admin.firestore(),
         ref: change.after.ref,
-        before: change.before.exists ? change.before.data() : null,
-        after: change.after.exists ? change.after.data() : null,
+        before,
+        after,
+        logger: functions.logger,
+      });
+      // A deleted post's photo goes with it (lib/spacePostPhoto.js). Only
+      // a file under the author's own prefix in this bucket is deleted.
+      await spacePostPhoto.deleteOrphanedPhoto({
+        before,
+        after,
+        getBucket: () => admin.storage().bucket(),
         logger: functions.logger,
       });
     } catch (err) {

@@ -86,7 +86,7 @@ def source_targets():
         "addSpacePostCommentCallable": comment_paths + ["lib/objectionableText.js"],
         # Moderation (App Review 1.2): the report alert and the Space post filter.
         "createReport": ["index.js", "lib/reportAlert.js", "lib/reportTargets.js"],
-        "onSpacePostWritten": ["index.js", "lib/spacePostModeration.js"],
+        "onSpacePostWritten": ["index.js", "lib/spacePostModeration.js", "lib/spacePostPhoto.js"],
         "onPublicProfileWritten": ["index.js", "package-lock.json", "lib/objectionableText.js",
                                    "profanityFilter.js", "lib/hateTerms.js", "lib/triggerRetry.js",
                                    "lib/accountDeletionLocks.js"],
@@ -128,8 +128,12 @@ def source_targets():
         "rolloverChallenges": ["index.js", "package-lock.json", "lib/challengeDefs.js"],
         "onChallengeParticipantCreated": challenge_paths,
         "onRunUpdated": challenge_paths,
-        "onWorkoutDeleted": challenge_paths,
-        "onRunDeleted": challenge_paths,
+        # The reversal is what a delete runs, and it fails the event when it
+        # does not land so the retry can apply it.
+        "onWorkoutDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
+                                              "lib/triggerRetry.js"],
+        "onRunDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
+                                              "lib/triggerRetry.js"],
         # Read back the privacy-safe feed index writer and the Circle
         # admission receipt before a release can report either trigger current.
         "onActivityCreated": ["index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js"],
