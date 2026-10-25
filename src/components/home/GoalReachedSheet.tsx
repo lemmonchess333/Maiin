@@ -60,8 +60,15 @@ export default function GoalReachedSheet({
 
   const switchToMaintenance = async () => {
     const payload = buildMaintenancePayload(profile);
-    if (!payload) throw new Error("no current weight to anchor maintenance");
-    await updateProfile(payload, { throwOnError: true });
+    // Asked with throwOnError, so auth's own toast stays quiet and this
+    // one speaks; it throws on so the sheet stays open to try again.
+    try {
+      if (!payload) throw new Error("no current weight to anchor maintenance");
+      await updateProfile(payload, { throwOnError: true });
+    } catch (err) {
+      toast.error("Couldn't switch to maintenance. Try again.");
+      throw err;
+    }
     // Same programState.goal mirror as SettingsNutrition — the profile copy
     // (macros) and the programState copy (lift rep scheme / header) must not
     // drift after a phase change. Best-effort with the same error discipline.
