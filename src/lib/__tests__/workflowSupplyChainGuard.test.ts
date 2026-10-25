@@ -159,3 +159,22 @@ describe("dependabot-auto-merge.yml never runs PR code", () => {
     expect(offenders).toEqual([]);
   });
 });
+
+/* A workflow without a `permissions:` block gets the repository's default
+   token, which can be read-write for everything. Four had none (the
+   emulator tests, which run on pull requests, the iOS build, the race-event
+   sync and the visual capture); none of them writes with the token, so
+   each now asks for what it uses. A job may narrow or widen it under its
+   own key; this holds the workflow to saying so at the top. */
+describe("every workflow names its token's permissions", () => {
+  it("has a top-level permissions block", () => {
+    const missing = workflowFiles.filter(
+      (file) =>
+        !/^permissions:/m.test(
+          readFileSync(resolve(workflowsDir, file), "utf8")
+        )
+    );
+    expect(workflowFiles.length).toBeGreaterThan(15);
+    expect(missing).toEqual([]);
+  });
+});

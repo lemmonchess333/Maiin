@@ -387,8 +387,9 @@ const EXPECTED = {
     kind: "callable",
     maxInstances: 10,
     // S4e, STATUS 2026-10-20: forgets the hashed identities a deleted
-    // restricted account left.
-    secrets: ["BILLING_HMAC_SECRET"],
+    // restricted account left, under the active key and the one before a
+    // rotation (2026-10-25: it read the active key only).
+    secrets: ["BILLING_HMAC_SECRET", "BILLING_PREVIOUS_HMAC_SECRET"],
   },
   // Survey item 18: the public name held to the word filter on the server.
   onPublicProfileWritten: {
@@ -414,7 +415,8 @@ const EXPECTED = {
   onAuthUserCreated: {
     kind: "event",
     maxInstances: 50,
-    secrets: ["BILLING_HMAC_SECRET"],
+    // Both keys, as liftRestriction: the lookup tries the previous one.
+    secrets: ["BILLING_HMAC_SECRET", "BILLING_PREVIOUS_HMAC_SECRET"],
     eventType: "providers/firebase.auth/eventTypes/user.create",
     resource: "projects/{project}",
   },

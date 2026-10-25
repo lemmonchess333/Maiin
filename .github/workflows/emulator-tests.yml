@@ -49,6 +49,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+# Reads the repository and nothing else; it writes nothing with the token.
+permissions:
+  contents: read
+
 jobs:
   emulator-tests:
     runs-on: ubuntu-latest

@@ -22,6 +22,10 @@ concurrency:
   group: race-events-writer
   cancel-in-progress: false
 
+# Reads the repository and nothing else; it writes nothing with the token.
+permissions:
+  contents: read
+
 jobs:
   sync:
     runs-on: ubuntu-latest

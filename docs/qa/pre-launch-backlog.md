@@ -2868,6 +2868,19 @@ Rollout sequence (operator, not agent) — do these in order, ideally after pack
 - [x] **(Optional) re-enable CI auto-deploy** — set 2026-09-15, between the first attempt of run 34976838538 (deploy skipped) and its re-run (deployed). For future storage.rules changes: set the repo variable `STORAGE_XSERVICE_APPROVED=true` (GitHub → Settings → Secrets and variables → Actions → Variables). Until then the ONLY way to ship a storage-rules change is the manual `firebase deploy` above — **re-running Deploy production (`workflow_dispatch`) does not work as an escape hatch here**, unlike for functions. The `deploy` job's `if: vars.STORAGE_XSERVICE_APPROVED == 'true'` is evaluated for dispatch runs too, so a manual re-run skips the deploy and still reports green. (This doc line claimed the opposite until 2026-07-26; an operator following it in an incident would have believed the rules shipped when nothing had.) The `report-not-deployed` job now fails on any gated run so the skip is legible instead of silent.
 - [x] Spot-check the deployed rule in the Firebase Console (Storage → Rules) contains `isDeletionWriteFrozen`. Automated: each backend release's `Verify active Storage Rules source` step matches the live ruleset to `storage.rules`, which carries it.
 
+## Console checks a fix depends on (2026-10-25)
+
+- [ ] **Email Enumeration Protection is on.** Firebase console →
+      Authentication → Settings → User actions. A failed password sign-in
+      asks `fetchSignInMethods` for the address and, for a Google- or
+      Apple-only account, says which button to use (`src/pages/Login.tsx`,
+      `authErrors.ts`). With protection on, that call answers nothing for
+      any address, so Login cannot be used to learn whether an account
+      exists. With it off, typing any email reveals that, and the provider.
+      Passing: the switch reads enabled, and a wrong password for a
+      Google-only test account shows "Invalid email or password", not the
+      Google hint.
+
 ## App Check enforcement rollout — operator-in-loop
 
 Affects: every callable in `functions/`. NOT a code change — a Firebase Console + monitoring exercise.

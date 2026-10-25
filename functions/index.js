@@ -176,6 +176,8 @@ const profanityFilter = require("./profanityFilter");
 // (comments, display names) and the sentences a refused person reads.
 const objectionableText = require("./lib/objectionableText");
 const { commentRejection } = require("./lib/commentRejection");
+const { engagementRejection } = require("./lib/engagementRejection");
+const { isDocumentId } = require("./lib/documentId");
 // The same filter over Community Space posts (onSpacePostWritten).
 const spacePostModeration = require("./lib/spacePostModeration");
 // The email that tells the owner a report has come in (createReport).
@@ -292,6 +294,16 @@ const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 // same BILLING_HMAC_SECRET restoreApplePurchases reads with. Already
 // provisioned (bound on restoreApplePurchases) — no new secret to set.
 const BILLING_HMAC_SECRET = defineSecret("BILLING_HMAC_SECRET");
+// The key before a rotation. lib/restrictedIdentities looks a restricted
+// identity up under the active AND the previous key, so a function that
+// reads or forgets them must be able to read both: bound on
+// onAuthUserCreated and liftRestriction for that, as restoreApplePurchases
+// binds it (appleIAP.js). Already provisioned there, so no new secret and
+// no new accessor grant. Without it a restricted person who deleted and
+// signed up again during a rotation was not restricted again.
+const BILLING_PREVIOUS_HMAC_SECRET = defineSecret(
+  "BILLING_PREVIOUS_HMAC_SECRET"
+);
 // Run11 (Mapbox supersession 2026-07-17): the Directions token lives ONLY
 // here — never in a VITE_* var, Actions variable, browser bundle, or
 // native app. A key in the client can be extracted and cannot enforce
@@ -860,7 +872,10 @@ exports.completeOnboarding = functions
 
       // Force correct ownership + subscription tier. These overwrite
       // any sanitiser-passing values from the input — they're
-      // server-managed regardless of what the client sent.
+      // server-managed regardless of what the client sent. The tier is
+      // "free" for an account that has none yet; one billing has already
+      // set is left alone below, as configurePlan leaves it, so setup run
+      // again cannot downgrade a Pro account until the next store sync.
       profileData.uid = uid;
       profileData.subscriptionTier = "free";
       profileData.onboardingComplete = true;
@@ -921,6 +936,9 @@ exports.completeOnboarding = functions
         profileData.raceGoal !== undefined
           ? profileData.raceGoal
           : storedRaceGoal;
+      if (existing.exists && existing.data().subscriptionTier !== undefined) {
+        delete profileData.subscriptionTier;
+      }
       const batch = db.batch();
       if (existing.exists) {
         batch.set(
@@ -6755,7 +6773,10 @@ exports.listRestrictedUsers = functions
  * succeeds with `lifted: false`, so a second tap is harmless.
  */
 exports.liftRestriction = functions
-  .runWith({ ...ADMIN_HTTP_CAP, secrets: [BILLING_HMAC_SECRET] })
+  .runWith({
+    ...ADMIN_HTTP_CAP,
+    secrets: [BILLING_HMAC_SECRET, BILLING_PREVIOUS_HMAC_SECRET],
+  })
   .https.onCall(async (data, context) => {
     if (!context.auth) {
       throw new functions.https.HttpsError(
@@ -6936,7 +6957,7 @@ exports.onAuthUserCreated = functions
   .runWith({
     ...TRIGGER_CAP,
     failurePolicy: true,
-    secrets: [BILLING_HMAC_SECRET],
+    secrets: [BILLING_HMAC_SECRET, BILLING_PREVIOUS_HMAC_SECRET],
   })
   .auth.user()
   .onCreate(async (user, context) => {
@@ -6973,7 +6994,8 @@ exports.toggleKudosCallable = functions
       );
     }
     const activityId = data && data.activityId;
-    if (typeof activityId !== "string" || !activityId.trim()) {
+    // One document's id: a "/" would point .doc() somewhere else.
+    if (!isDocumentId(activityId)) {
       throw new functions.https.HttpsError(
         "invalid-argument",
         "activityId required."
@@ -7021,7 +7043,14 @@ exports.toggleKudosCallable = functions
         context.auth.uid
       ))
     ) {
-      throw blockGuard.blockedError(functions);
+      // Answered exactly as a private or missing activity is below: a
+      // different sentence would tell the person blocked that the activity
+      // exists and that its author blocked them (lib/blockGuard says why
+      // that must not be said).
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "This activity is unavailable."
+      );
     }
 
     try {
@@ -7085,13 +7114,14 @@ exports.toggleKudosCallable = functions
       });
       // A visibility denial maps to a GENERIC permission-denied — never
       // disclose whether the activity exists, is private, or followers-only.
-      const isAccessError = err && err.code === "activity-not-accessible";
-      throw new functions.https.HttpsError(
-        isAccessError ? "permission-denied" : "failed-precondition",
-        isAccessError
-          ? "This activity is unavailable."
-          : (err && err.message) || "Couldn't give props. Try again."
-      );
+      // Anything else is a sentence for the person or a generic internal,
+      // never the engine's own message (lib/engagementRejection.js).
+      throw engagementRejection(err, {
+        functions,
+        isAccessError: err && err.code === "activity-not-accessible",
+        accessMessage: "This activity is unavailable.",
+        fallback: "Couldn't give props. Try again.",
+      });
     }
   });
 
@@ -7118,8 +7148,7 @@ exports.toggleSpacePostLikeCallable = functions
     if (
       typeof spaceId !== "string" ||
       !KNOWN_SPACE_IDS.includes(spaceId) ||
-      typeof postId !== "string" ||
-      !postId.trim()
+      !isDocumentId(postId)
     ) {
       throw new functions.https.HttpsError(
         "invalid-argument",
@@ -7207,14 +7236,13 @@ exports.toggleSpacePostLikeCallable = functions
         postId,
         error: err && err.message,
       });
-      const isAccessError =
-        err && err.code === spacePostEngagement.POST_NOT_ACCESSIBLE;
-      throw new functions.https.HttpsError(
-        isAccessError ? "permission-denied" : "failed-precondition",
-        isAccessError
-          ? "This post is unavailable."
-          : (err && err.message) || "Like toggle failed."
-      );
+      throw engagementRejection(err, {
+        functions,
+        isAccessError:
+          err && err.code === spacePostEngagement.POST_NOT_ACCESSIBLE,
+        accessMessage: "This post is unavailable.",
+        fallback: "Couldn't like the post. Try again.",
+      });
     }
   });
 
@@ -7434,7 +7462,7 @@ exports.addCommentCallable = functions
     }
     assertCallerEmailVerified(context);
     const { activityId, text, authorName, authorPhotoURL } = data || {};
-    if (typeof activityId !== "string" || !activityId.trim()) {
+    if (!isDocumentId(activityId)) {
       throw new functions.https.HttpsError(
         "invalid-argument",
         "activityId required."
@@ -7481,7 +7509,13 @@ exports.addCommentCallable = functions
         context.auth.uid
       ))
     ) {
-      throw blockGuard.blockedError(functions);
+      // Answered exactly as an activity the person cannot see is below, so
+      // the refusal does not confirm the activity or the block (blockGuard).
+      throw commentRejection(null, {
+        functions,
+        isAccessError: true,
+        accessMessage: "This activity is unavailable.",
+      });
     }
 
     // The name on the comment and in the notification is the commenter's
@@ -7616,10 +7650,8 @@ exports.toggleCommentReactionCallable = functions
     }
     const { activityId, commentId, reaction } = data || {};
     if (
-      typeof activityId !== "string" ||
-      !activityId.trim() ||
-      typeof commentId !== "string" ||
-      !commentId.trim() ||
+      !isDocumentId(activityId) ||
+      !isDocumentId(commentId) ||
       !commentReactions.REACTION_KEYS.includes(reaction)
     ) {
       throw new functions.https.HttpsError(
@@ -7667,13 +7699,12 @@ exports.toggleCommentReactionCallable = functions
         commentId,
         error: err && err.message,
       });
-      const isAccessError = err && err.code === "activity-not-accessible";
-      throw new functions.https.HttpsError(
-        isAccessError ? "permission-denied" : "failed-precondition",
-        isAccessError
-          ? "This activity is unavailable."
-          : (err && err.message) || "Reaction failed."
-      );
+      throw engagementRejection(err, {
+        functions,
+        isAccessError: err && err.code === "activity-not-accessible",
+        accessMessage: "This activity is unavailable.",
+        fallback: "Couldn't react. Try again.",
+      });
     }
   });
 
