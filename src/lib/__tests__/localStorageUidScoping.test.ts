@@ -51,6 +51,8 @@ const DEVICE_SCOPED: Record<string, string> = {
     "review flags for the standalone developer artwork library (src/dev); this page has no signed-in account and reviews the same global artwork catalogue in this browser",
   "tropos.account_deleted":
     "written precisely when there is no longer an account to scope to",
+  "tropos.clear-firestore-cache":
+    "asks the next boot to clear this device's Firestore copy after a sign-out; there is no account to scope it to then, and that boot consumes it",
   "tropos-email-change-pending":
     "the address an email change is going to, read by the signed-out Login after the change ends the session; there is no account to scope it to there, and any sign-in clears it",
   "tropos.last_sign_in_method":

@@ -2881,3 +2881,22 @@ Rollout sequence (operator, not agent):
 - [ ] Open **Firebase Console → App Check → APIs tab → Cloud Functions for Firebase**. Look for "Verified requests %". Target: ≥99% sustained for ≥7 days before any per-callable flip.
 - [ ] If verified % is low and the cause isn't obvious, query Cloud Logging: `resource.type="cloud_function" jsonPayload.appCheck.status=("MISSING" OR "INVALID")` to see exactly which callables would reject and which uids are missing tokens. Usual culprits: ad-blockers killing reCAPTCHA (rare, swallowed) or native iOS (all `MISSING` until the Capacitor App Check plugin is wired).
 - [ ] Flip enforcement per-callable in `functions/index.js` by adding `.runWith({ enforceAppCheck: true })`. Start with low-risk endpoints that the client **actually calls** — `sendTestPush`, `backfillMyActivityCategories`. (This line named `askGeminiText` until 2026-07-26; it had no client caller, so flipping it would have produced no telemetry and no rejection signal. It has since been retired. `docs/app-check-rollout.md` carries the full tier table and the traffic check.) Keep destructive ones (`deleteMyAccount`, `verifyApplePurchase`) until last. Don't bulk-flip.
+
+## Signing out clears the device's copy; sign-in avatars draw (2026-10-25)
+
+Unit-tested with the Firestore fake and jsdom, which have no IndexedDB, no
+reload and no CSP; only a browser and the phone show them doing their part.
+
+- [ ] **A sign-out clears Firestore's copy on the web.** Sign in on the web
+      build, open a few screens, sign out while online. Passing: the page
+      reloads to Login, and DevTools → Application → IndexedDB has no
+      `firestore/[DEFAULT]/…` database holding the account's documents (or
+      it is empty). Sign out with the network off instead: no reload, the
+      copy stays, and the account's offline changes go up on its next sign-in.
+- [ ] **The same on the phone.** Sign out on the iOS build while online.
+      Passing: the app reloads straight to Login, with no second Login flash
+      and no error screen, and signing back in works.
+- [ ] **Google and Apple avatars draw.** Sign in with Google on the web
+      build and on the phone, with no photo uploaded. Passing: the feed,
+      the profile and a comment show the Google photo, not an initial, and
+      the console shows no CSP refusal for `lh3.googleusercontent.com`.

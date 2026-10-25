@@ -19,6 +19,11 @@ import { act } from "@testing-library/react";
 import { firestoreFake, type FailOp } from "./firestoreFake";
 
 /** Wipe all documents, listeners and the write log. Call in `beforeEach`. */
+/** How many times the code asked to clear the device copy of Firestore. */
+export function persistenceClears(): number {
+  return firestoreFake.persistenceClears;
+}
+
 export function resetFirestore(): void {
   if (firestoreFake.armedFailures.length > 0) {
     console.error(

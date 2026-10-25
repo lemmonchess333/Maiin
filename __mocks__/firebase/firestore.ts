@@ -368,3 +368,9 @@ export function memoryLocalCache(): Record<string, never> {
   return {};
 }
 export function connectFirestoreEmulator(): void {}
+/** The fake has no server, so nothing is ever waiting to be sent. */
+export async function waitForPendingWrites(): Promise<void> {}
+/** The fake keeps no device copy to clear; it counts the requests. */
+export async function clearIndexedDbPersistence(): Promise<void> {
+  firestoreFake.persistenceClears += 1;
+}
