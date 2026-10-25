@@ -645,9 +645,6 @@ export default function WorkoutSession({
      or waiting for the server, for one started afresh with nothing done
      since, or once its account has signed out. */
   const sessionUid = user?.uid;
-  const keptDescription = draftScope?.startsWith("routine:")
-    ? "Open this routine again to carry on."
-    : "Resume it from Home or Train.";
   const onScreen = useRef(false);
   useEffect(() => {
     onScreen.current = true;
@@ -660,10 +657,13 @@ export default function WorkoutSession({
         if (onScreen.current) return;
         if (!hasRecoveryDraft.current || completionPendingRef.current) return;
         if (!sessionUid || auth.currentUser?.uid !== sessionUid) return;
-        toast.message("Workout kept", { description: keptDescription });
+        // A programme day's and a routine's alike: both are offered back.
+        toast.message("Workout kept", {
+          description: "Resume it from Home or Train.",
+        });
       });
     };
-  }, [sessionUid, keptDescription]);
+  }, [sessionUid]);
 
   // Rest timer: the rest fixed in Settings → Workout preferences, or the
   // plan's suggestion by role and reps, shorter in a plan built for 30

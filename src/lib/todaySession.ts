@@ -38,10 +38,12 @@ import {
 } from "@/lib/scheduledRunStatus";
 import {
   liftInProgress,
-  resumableLift,
+  resumableWorkout,
+  routineInProgress,
   runInProgress,
   storedRunName,
   storedRunTemplate,
+  type RoutinesInFlight,
   type SessionInProgress,
 } from "@/lib/sessionsInFlight";
 import type { WorkoutDraft } from "@/hooks/useWorkoutDraft";
@@ -92,8 +94,13 @@ export interface TodaySessionInput {
   inFlight?: {
     drafts: readonly WorkoutDraft[];
     run: StoredRunSummary | null;
+    /** The saved routines the drafts were kept from, as they are now.
+     *  Absent reads as none read: no routine's workout is offered. */
+    routines?: RoutinesInFlight;
   };
 }
+
+const NO_ROUTINES: RoutinesInFlight = new Map();
 
 export interface TodayLift {
   /** The workout the card offers, or null when the schedule names a lifting
@@ -267,10 +274,11 @@ export function todaySession(input: TodaySessionInput): TodaySession {
 /**
  * Put each session under way on the card it belongs to, or on a strip of
  * its own. A workout belongs to today's lift card, or a new lifter's first
- * workout, when the card is that programme day. A run belongs to today's
- * run card while that card could still start one, or to a free runner's
- * run card; a run can be under way only one at a time, so the one in
- * flight is the one Start would have begun.
+ * workout, when the card is that programme day; a saved routine's has no
+ * card, so it always has a strip. A run belongs to today's run card while
+ * that card could still start one, or to a free runner's run card; a run
+ * can be under way only one at a time, so the one in flight is the one
+ * Start would have begun.
  */
 function placeInProgress(
   input: TodaySessionInput,
@@ -281,11 +289,14 @@ function placeInProgress(
   const elsewhere: SessionInProgress[] = [];
   let { lift, run, rest } = session;
 
-  const resumable = resumableLift(
+  const workout = resumableWorkout(
     inFlight.drafts,
     programState,
-    sessionDayContext(programState, profile)
+    sessionDayContext(programState, profile),
+    inFlight.routines ?? NO_ROUTINES
   );
+  if (workout?.kind === "routine") elsewhere.push(routineInProgress(workout));
+  const resumable = workout?.kind === "programme" ? workout : null;
   if (resumable) {
     const day = programState?.workouts?.[resumable.dayIndex];
     const strip = liftInProgress(

@@ -443,9 +443,11 @@ export default function Home() {
     useLifetimeRunStats({ enabled: inActivationWindow });
   // A workout closed with its sets kept, or a run left before it was
   // saved, is offered back on the session card (`todaySession`).
-  const { drafts: draftsInFlight, run: runInFlight } = useSessionsInFlight(
-    user?.uid
-  );
+  const {
+    drafts: draftsInFlight,
+    run: runInFlight,
+    routines: routinesInFlight,
+  } = useSessionsInFlight(user?.uid);
   // Today's session card: which card shows and what it says.
   const session = useMemo(
     () =>
@@ -459,7 +461,11 @@ export default function Home() {
         nowMs,
         lifetimeRuns: runStatsLoading ? null : lifetimeRunCount,
         lifetimeMeals: totalLifetimeMeals,
-        inFlight: { drafts: draftsInFlight, run: runInFlight },
+        inFlight: {
+          drafts: draftsInFlight,
+          run: runInFlight,
+          routines: routinesInFlight,
+        },
       }),
     [
       todayKey,
@@ -474,6 +480,7 @@ export default function Home() {
       totalLifetimeMeals,
       draftsInFlight,
       runInFlight,
+      routinesInFlight,
     ]
   );
 

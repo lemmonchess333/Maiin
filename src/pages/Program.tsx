@@ -9,6 +9,8 @@ import { RESUME_PARAM } from "@/lib/resumeParam";
 import {
   liftInProgress,
   resumableLift,
+  resumableWorkout,
+  routineInProgress,
   runInProgress,
   storedRunName,
   storedRunTemplate,
@@ -909,13 +911,17 @@ function ProgramInner() {
     sessionMinutes: programState.sessionMinutes,
   };
   const sessionContext = sessionDayContext(programState, profile);
-  // The workout under way on this phone that Train would open as it was,
-  // and the run under way: each offered back with Resume.
-  const resumable = resumableLift(
+  // The workout under way on this phone that Resume would open as it was,
+  // a programme day's or a saved routine's, and the run under way: each
+  // offered back with Resume.
+  const workoutInFlight = resumableWorkout(
     inFlight.drafts,
     programState,
-    sessionContext
+    sessionContext,
+    inFlight.routines
   );
+  const resumable =
+    workoutInFlight?.kind === "programme" ? workoutInFlight : null;
   const liftStrip = resumable
     ? liftInProgress(
         resumable,
@@ -925,9 +931,11 @@ function ProgramInner() {
           programState.workouts[resumable.dayIndex].dayName
         )
       )
-    : null;
+    : workoutInFlight?.kind === "routine"
+      ? routineInProgress(workoutInFlight)
+      : null;
   const liftStripOnCard =
-    liftStrip !== null && !isViewingHistory && resumable?.dayIndex === idx;
+    resumable !== null && !isViewingHistory && resumable.dayIndex === idx;
   const runStrip = inFlight.run
     ? runInProgress(
         inFlight.run,
@@ -1233,13 +1241,18 @@ function ProgramInner() {
             the lift surface only renders when the user switches to it. */}
       {activeTab === "lift" && (
         <>
-          {/* A workout under way on another day than the one shown leads
-              the tab, so it is the first thing seen; on its own day it
-              sits on the day card instead. */}
-          {liftStrip && resumable && !liftStripOnCard && (
+          {/* A workout under way on another day than the one shown, or a
+              saved routine's, leads the tab, so it is the first thing
+              seen; on its own day it sits on the day card instead. A
+              routine's Resume opens the routine's page. */}
+          {liftStrip && !liftStripOnCard && (
             <InProgressStrip
               session={liftStrip}
-              onResume={() => openResumedLift(resumable)}
+              onResume={() =>
+                resumable
+                  ? openResumedLift(resumable)
+                  : navigate(liftStrip.resumeTarget)
+              }
             />
           )}
           {/* Pgm3: deload banner. Sits ABOVE the week-phase row so

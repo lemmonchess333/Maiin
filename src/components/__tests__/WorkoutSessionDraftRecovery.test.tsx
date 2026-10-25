@@ -9,11 +9,21 @@ import {
   within,
 } from "@testing-library/react";
 import { StrictMode, useState, type ComponentProps } from "react";
-import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
+import {
+  MemoryRouter,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { BackDismissProvider } from "@/lib/BackDismissProvider";
 import { useBackDismiss, useBackDismissController } from "@/lib/backDismiss";
 import type { Workout } from "@/lib/savedWorkouts";
-import { resetFirestore, readDoc } from "@/test/firestoreHarness";
+import {
+  resetFirestore,
+  readDoc,
+  seedFirestore,
+} from "@/test/firestoreHarness";
 
 const h = vi.hoisted(() => ({
   user: { uid: "strength-audit" },
@@ -73,7 +83,11 @@ vi.mock("@/components/workout/SessionShareRow", () => ({
 }));
 
 import WorkoutSession from "@/components/WorkoutSession";
+import Routine from "@/pages/Routine";
 import { completeLift } from "@/lib/liftCompletion";
+import { listWorkoutDrafts } from "@/hooks/useWorkoutDraft";
+import { resumableWorkout, routineInProgress } from "@/lib/sessionsInFlight";
+import { sessionDayContext } from "@/features/program/sessionDay";
 
 const day: ComponentProps<typeof WorkoutSession>["day"] = {
   dayName: "Audit strength",
@@ -205,12 +219,9 @@ it("requires an explicit recovery choice and safely leaves the workout on modal 
 });
 
 /* Leaving keeps a workout that has a draft, and says so: Home and Train
-   offer it back with Resume, which carries on without asking again. */
-const KEPT_ROUTINE = [
-  "Workout kept",
-  { description: "Open this routine again to carry on." },
-] as const;
-const KEPT_PROGRAMME = [
+   offer it back with Resume, a programme day's and a routine's alike,
+   which carries on without asking again. */
+const KEPT = [
   "Workout kept",
   { description: "Resume it from Home or Train." },
 ] as const;
@@ -250,15 +261,15 @@ it("says the workout is kept when it is closed with a set done, and only then", 
   await openLeaving();
   await doFirstSet();
   fireEvent.click(screen.getByRole("button", { name: "Close workout" }));
-  await waitFor(() => expect(keptSaid()).toEqual([KEPT_ROUTINE]));
+  await waitFor(() => expect(keptSaid()).toEqual([KEPT]));
   expect(draft()?.setLogs[0][0].completed).toBe(true);
 
-  // A programme day's workout comes back from Home or Train.
+  // A programme day's workout says the same.
   h.message.mockClear();
   await openLeaving({ draftScope: "programme", dayIndex: 0 });
   await doFirstSet();
   fireEvent.click(screen.getByRole("button", { name: "Close workout" }));
-  await waitFor(() => expect(keptSaid()).toEqual([KEPT_PROGRAMME]));
+  await waitFor(() => expect(keptSaid()).toEqual([KEPT]));
 });
 
 describe("every way out of a kept workout says so, once", () => {
@@ -318,7 +329,7 @@ describe("every way out of a kept workout says so, once", () => {
       window.dispatchEvent(new PopStateEvent("popstate"));
     });
     expect(await screen.findByText("Train")).toBeInTheDocument();
-    await waitFor(() => expect(keptSaid()).toEqual([KEPT_PROGRAMME]));
+    await waitFor(() => expect(keptSaid()).toEqual([KEPT]));
     await settle();
     expect(keptSaid()).toHaveLength(1);
   });
@@ -330,7 +341,7 @@ describe("every way out of a kept workout says so, once", () => {
     expect(await screen.findByText("Train")).toBeInTheDocument();
     await waitFor(() => expect(back).toHaveBeenCalledOnce());
     await settle();
-    expect(keptSaid()).toEqual([KEPT_PROGRAMME]);
+    expect(keptSaid()).toEqual([KEPT]);
   });
 
   it("the Android back button", async () => {
@@ -338,7 +349,7 @@ describe("every way out of a kept workout says so, once", () => {
     await doFirstSet();
     fireEvent.click(screen.getByRole("button", { name: "Android back" }));
     expect(await screen.findByText("Train")).toBeInTheDocument();
-    await waitFor(() => expect(keptSaid()).toEqual([KEPT_PROGRAMME]));
+    await waitFor(() => expect(keptSaid()).toEqual([KEPT]));
   });
 
   it("Back from a routine's page, which leaves the page", async () => {
@@ -367,7 +378,7 @@ describe("every way out of a kept workout says so, once", () => {
     await doFirstSet();
     fireEvent.click(screen.getByRole("button", { name: "Device back" }));
     expect(await screen.findByText("Train")).toBeInTheDocument();
-    await waitFor(() => expect(keptSaid()).toEqual([KEPT_ROUTINE]));
+    await waitFor(() => expect(keptSaid()).toEqual([KEPT]));
   });
 
   it("nothing for a workout finished, or started afresh with nothing done", async () => {
@@ -383,7 +394,7 @@ describe("every way out of a kept workout says so, once", () => {
     const first = await open();
     await doFirstSet();
     first.unmount();
-    await waitFor(() => expect(keptSaid()).toEqual([KEPT_ROUTINE]));
+    await waitFor(() => expect(keptSaid()).toEqual([KEPT]));
     h.message.mockClear();
     await openLeaving();
     fireEvent.click(screen.getByRole("button", { name: "Start fresh" }));
@@ -415,7 +426,7 @@ describe("every way out of a kept workout says so, once", () => {
     ).toBeInTheDocument();
     expect(keptSaid()).toEqual([]);
     resumed!.unmount();
-    await waitFor(() => expect(keptSaid()).toEqual([KEPT_ROUTINE]));
+    await waitFor(() => expect(keptSaid()).toEqual([KEPT]));
   });
 
   it("nothing once the account has signed out", async () => {
@@ -559,4 +570,103 @@ it("keeps entered values after undoing the last completion, and Start fresh stil
     target: { value: "7" },
   });
   expect(draft()).toBeNull();
+});
+
+/* A routine's workout under way. Home's and Train's strip offers it from
+   the draft the routine's page kept, and its Resume opens the page, which
+   carries on without asking again. The page and the reader both build the
+   session from `routineSession.ts`; this pins that they agree. */
+describe("a routine's workout, resumed from the In progress strip", () => {
+  const ROUTINE = {
+    name: "Audit routine",
+    sourceActivityId: "a1",
+    sourceAuthorId: h.user.uid,
+    sourceAuthorName: "Me",
+    exercises: [
+      {
+        name: "Audit press",
+        exerciseId: "audit-press",
+        summary: "3×8",
+        setCount: 3,
+        targetReps: 8,
+        targetWeightKg: 0,
+      },
+    ],
+  };
+  function Address() {
+    const { pathname, search } = useLocation();
+    return <p data-testid="address">{pathname + search}</p>;
+  }
+  async function openRoutinePage(at: string) {
+    await act(async () => {
+      render(
+        <MemoryRouter initialEntries={["/", at]}>
+          <Address />
+          <Routes>
+            <Route path="/" element={<p>Home</p>} />
+            <Route path="/program" element={<p>Train</p>} />
+            <Route path="/routine/:routineId" element={<Routine />} />
+          </Routes>
+        </MemoryRouter>
+      );
+    });
+    await screen.findByRole("button", { name: "Close workout" });
+  }
+  /** What Home and Train offer from the drafts on this phone. */
+  function offered() {
+    const workout = resumableWorkout(
+      listWorkoutDrafts(h.user.uid),
+      null,
+      sessionDayContext(null, null),
+      new Map([["r1", { id: "r1", ...ROUTINE }]])
+    );
+    return workout?.kind === "routine" ? routineInProgress(workout) : null;
+  }
+
+  beforeEach(() => {
+    seedFirestore({ [`users/${h.user.uid}/savedRoutines/r1`]: ROUTINE });
+  });
+
+  it("carries on with the routine's draft without asking, and takes the flag off the address", async () => {
+    await openRoutinePage("/routine/r1");
+    expect(offered()).toBeNull();
+    await doFirstSet();
+    fireEvent.click(screen.getByRole("button", { name: "Close workout" }));
+    expect(await screen.findByText("Train")).toBeInTheDocument();
+    await waitFor(() => expect(keptSaid()).toEqual([KEPT]));
+    cleanup();
+
+    const strip = offered();
+    expect(strip).toEqual({
+      sport: "lift",
+      name: "Audit routine",
+      sets: 1,
+      elapsedSeconds: expect.any(Number),
+      resumeTarget: "/routine/r1?resume=1",
+    });
+
+    await openRoutinePage(strip!.resumeTarget);
+    expect(
+      screen.queryByRole("dialog", { name: "Resume workout?" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Edit completed set 1" })
+    ).toBeInTheDocument();
+    // A reload or a Back to the page asks again.
+    await waitFor(() =>
+      expect(screen.getByTestId("address")).toHaveTextContent(/^\/routine\/r1$/)
+    );
+  });
+
+  it("opened from the routine's own row instead, asks first", async () => {
+    await openRoutinePage("/routine/r1");
+    await doFirstSet();
+    cleanup();
+    expect(offered()).not.toBeNull();
+
+    await openRoutinePage("/routine/r1");
+    expect(
+      screen.getByRole("dialog", { name: "Resume workout?" })
+    ).toBeInTheDocument();
+  });
 });

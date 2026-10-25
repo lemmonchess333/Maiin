@@ -30,6 +30,29 @@ show the round trip.
       count. A deletes the post from its menu and lands on the Space; the
       comment row then opens the Space too.
 
+## A routine's workout under way (2026-10-25)
+
+A saved routine's workout left with a set done is offered on Home and
+Train ("In progress · Arms · 3 sets · 12:40", Resume), and Resume opens
+the routine's page carrying on without asking. It is offered only while
+the routine still builds the same session, which the app learns by
+following that routine's document. The unit suite covers the rules and
+the page; these need a phone and a second device.
+
+- [ ] **Resume from Home, on an iPhone.** Start a routine from Train,
+      tick a set, close it. Passing: Home shows the strip with the
+      routine's name, the sets done and the time; Resume opens the
+      routine with the set ticked and no "Resume workout?" question;
+      Train's lift tab shows the same strip at its top.
+- [ ] **Deleted on another device.** With a routine's workout kept on
+      phone A, delete the routine on device B. Passing: within a few
+      seconds, A's Home and Train stop offering it, without reopening
+      the app.
+- [ ] **Offline in the gym.** In airplane mode, close a routine's workout
+      with a set done and open Home. Passing: the strip shows (the
+      routine was read on this phone when it was started), and Resume
+      opens the workout.
+
 ## Leaving a workout says it was kept (2026-10-25)
 
 Every way out of a workout with a set done says "Workout kept" once, as
