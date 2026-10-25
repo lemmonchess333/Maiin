@@ -6,10 +6,21 @@ name: Backfill block mirror
 # is gone (functions/scripts/backfill-block-mirror.js). It is safe to run
 # at any time, so it stays as the repair for a mirror that has drifted.
 #
-# Manual only. The second run is the check: once the first has set every
-# pair, nothing is left to change.
+# It runs by itself when this workflow, the backfill or the mirror's code
+# changes on main, so a change to how the mirror is kept is followed by a
+# pass over every block; Run workflow repeats it on demand. The second run
+# is the check: once the first has set every pair, nothing is left to
+# change.
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/backfill-block-mirror.yml"
+      - "functions/scripts/backfill-block-mirror.js"
+      - "functions/lib/blockMirror.js"
+      - "functions/lib/accountDeletionLocks.js"
   workflow_dispatch:
 
 permissions:

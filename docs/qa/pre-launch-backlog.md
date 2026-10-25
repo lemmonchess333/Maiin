@@ -101,8 +101,10 @@ trigger runs in production and the two apps agree.
       production has shipped `onBlockWritten` (check its deployed source),
       run the backfill with credentials that can write Firestore:
       `node functions/scripts/backfill-block-mirror.js adaptive-fitness-af8bb`,
-      or run the Backfill block mirror workflow from the Actions tab,
-      which runs it with the deploy's credentials.
+      or let the Backfill block mirror workflow run it with the deploy's
+      credentials: it runs by itself when the workflow, the backfill or
+      `functions/lib/blockMirror.js` changes on main, and from the Actions
+      tab on demand.
       Passing: it prints its totals, and a second run prints `mirrored: 0`
       and `removed: 0` (the workflow runs it twice and checks this).
 - [ ] **Block from one account, look from the other.** On two phones (or
