@@ -3,6 +3,7 @@ import { RefreshCw } from "lucide-react";
 import { isNativePlatform } from "@/lib/platform";
 import { upgradeRequired, type ClientConfig } from "@/lib/versionGate";
 import { Button } from "@/components/ui/Button";
+import { auth } from "@/lib/firebaseApp";
 import { logger } from "@/lib/logger";
 
 declare const __APP_VERSION__: string;
@@ -14,9 +15,10 @@ declare const __APP_VERSION__: string;
  * `config/gemini`-style flags); when `minSupportedVersion` exceeds this
  * build, renders the blocking upgrade screen instead of the app.
  *
- * Firebase is loaded via dynamic import so this component adds nothing to
- * App.tsx's static graph — the check rides the same chunks the app loads
- * anyway, and a failed load simply fails open.
+ * Auth comes from `firebaseApp`, which the entry already carries. Firestore
+ * is imported only once someone is signed in: Login never reads it, and a
+ * first visit should not download it for a check it skips. A failed load
+ * simply fails open.
  */
 export default function MinVersionGate({ children }: { children: ReactNode }) {
   const [blocked, setBlocked] = useState(false);
@@ -25,16 +27,16 @@ export default function MinVersionGate({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const [{ db, auth }, { doc, getDoc }] = await Promise.all([
-          import("@/lib/firebase"),
-          import("firebase/firestore"),
-        ]);
         // config/{doc} rules require a signed-in reader; wait for the boot
         // auth restore or the read races it and permission-denieds (fail
         // open) even for signed-in users. Signed-out users stay ungated by
         // design — every gated surface is behind auth anyway.
         await auth.authStateReady();
         if (!auth.currentUser) return;
+        const [{ db }, { doc, getDoc }] = await Promise.all([
+          import("@/lib/firebase"),
+          import("firebase/firestore"),
+        ]);
         const snap = await getDoc(doc(db, "config", "client"));
         const config = snap.exists()
           ? (snap.data() as ClientConfig)

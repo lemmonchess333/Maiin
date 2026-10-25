@@ -56,10 +56,35 @@ what ships; these need a browser's Network panel or an iPhone.
       app: the Network panel shows both Latin woff2 files requested from
       the HTML (initiator: preload), the text never swaps face, and the
       console has no "preloaded but not used" warning on Home.
+      STATUS 2026-10-25: on the live Hosting build in Chromium, both files
+      were requested from the HTML at the entry's moment and once each (so
+      `crossorigin` matches). The Welcome screen draws no Archivo, so that
+      preload waits there for the first figure; headless Chromium logged
+      no warning for it within 7 s. Home still needs an account.
 - [ ] **A returning launch.** Signed in, reload with the Network panel
       open: the firebase-db, Home and Layout chunks start alongside the
       entry, not after Auth's requests; signed out with the device never
       signed in, none of them load on Login.
+      STATUS 2026-10-25: checked on the live Hosting build in Chromium. A
+      first visit's Welcome screen preloaded both fonts from the HTML, each
+      fetched once, and loaded no Home, Layout or motion code, but it did
+      load firebase-db: `MinVersionGate` imported Firestore before seeing
+      that nobody was signed in. It now waits for Auth first
+      (`MinVersionGate.test.tsx`), so recheck after that deploys. With the
+      signed-in-before mark set, firebase-db, Home, Layout and the motion
+      root started about 270 ms after the entry, ahead of Login and every
+      Google request. The signed-in reload and Home's fonts still need an
+      account.
+- [ ] **Analytics' config read, on the web.** Every web visit logs a 403
+      from `firebase.googleapis.com/.../webConfig`: Google answers
+      `API_KEY_SERVICE_BLOCKED`, because the web API key's API restrictions
+      leave out the Firebase Management API, which Analytics calls for its
+      config. Analytics falls back to the measurement ID in the app's
+      config, so events still arrive; the cost is an error in every
+      visit's console. In Google Cloud → APIs & Services → Credentials, add
+      Firebase Management API to the browser key's allowed APIs. Passing:
+      a private window shows no 403 and no "Failed to fetch this Firebase
+      app's measurement ID" warning.
 
 ## Blocking both ways (Polish3 call 1, 2026-10-24)
 
@@ -75,9 +100,11 @@ trigger runs in production and the two apps agree.
 - [ ] **Backfill the blocks made before the deploy.** Once Deploy
       production has shipped `onBlockWritten` (check its deployed source),
       run the backfill with credentials that can write Firestore:
-      `node functions/scripts/backfill-block-mirror.js adaptive-fitness-af8bb`.
+      `node functions/scripts/backfill-block-mirror.js adaptive-fitness-af8bb`,
+      or run the Backfill block mirror workflow from the Actions tab,
+      which runs it with the deploy's credentials.
       Passing: it prints its totals, and a second run prints `mirrored: 0`
-      and `removed: 0`.
+      and `removed: 0` (the workflow runs it twice and checks this).
 - [ ] **Block from one account, look from the other.** On two phones (or
       a phone and the web build), account A follows B and both have shared
       a public session; A blocks B from B's profile. Passing, on B, without
