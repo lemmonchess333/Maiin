@@ -356,13 +356,16 @@ export default function CommentSheet({
               supporting metadata. Previously author, body AND meta
               were all text-xs with the body in muted grey. */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm leading-snug">
+                <p className="text-sm leading-snug break-words">
                   <span className="text-xs font-semibold text-foreground">
                     {c.authorName}
                   </span>{" "}
                   <span className="text-foreground/90">{c.text}</span>
                 </p>
-                <div className="flex items-center gap-2 mt-0.5">
+                {/* The time and the reactions wrap under each other when
+                    the column is too narrow for both (large text on a
+                    small phone) rather than running past the sheet. */}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
                   <p className="text-caption text-muted-foreground">
                     {timeAgo}
                   </p>
@@ -406,13 +409,14 @@ export default function CommentSheet({
               </div>
               {/* Always visible (W10): the old opacity-0 group-hover reveal
               made delete unreachable on touch — this is a mobile bottom
-              sheet; there is no hover. */}
+              sheet; there is no hover. 44 px at every text size, so the
+              comment keeps the width the text gains. */}
               {isOwn ? (
                 <button
                   type="button"
                   onClick={() => setPanel({ kind: "delete", comment: c })}
                   disabled={deletingId === c.id}
-                  className="size-11 inline-flex items-center justify-center text-muted-foreground hover:text-destructive-strong active:text-destructive-strong transition-colors shrink-0"
+                  className="size-[44px] inline-flex items-center justify-center text-muted-foreground hover:text-destructive-strong active:text-destructive-strong transition-colors shrink-0"
                   aria-label="Delete comment"
                 >
                   <Trash2 className="size-3.5" />
@@ -428,7 +432,7 @@ export default function CommentSheet({
                   }
                   onClick={() => setPanel({ kind: "options", comment: c })}
                   icon={<MoreHorizontal className="size-4" />}
-                  className="text-muted-foreground"
+                  className="size-[44px] text-muted-foreground"
                 />
               ) : null}
             </motion.div>
