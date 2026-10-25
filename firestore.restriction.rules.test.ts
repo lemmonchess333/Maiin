@@ -200,20 +200,9 @@ suite("firestore.rules — a restricted account", () => {
           requestedAt: serverTimestamp(),
         }),
     },
-    {
-      name: "starting a partner streak",
-      write: async (uid, c) => {
-        // The two follow each other, which a bond needs.
-        await seed(`following/${uid}/users/${OTHER}`, { at: 1 });
-        await seed(`following/${OTHER}/users/${uid}`, { at: 1 });
-        const members = [uid, OTHER].sort();
-        return setDoc(doc(c, "partnerBonds", members.join("__")), {
-          members,
-          ...emptyStreakState(),
-          createdAt: serverTimestamp(),
-        });
-      },
-    },
+    // Starting a partner streak is not here: no client creates a bond, so
+    // the startPartnerStreak callable refuses a restricted account
+    // (functions/__tests__/partnerBonds.test.js).
     {
       name: "a Circle event",
       write: (uid, c) =>

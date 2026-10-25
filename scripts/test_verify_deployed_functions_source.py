@@ -125,6 +125,13 @@ class ChallengeSourceTargetsTest(unittest.TestCase):
                                 .issubset(targets[name]))
                 self.assertEqual(len(targets[name]), len(set(targets[name])))
 
+    def test_partner_streak_start_reads_back_the_limit_it_counts(self):
+        paths = verifier.source_targets()["startPartnerStreak"]
+        self.assertTrue({"index.js", "package-lock.json", "lib/partnerBonds.js",
+                         "lib/deletionTransactionGuard.js", "lib/restriction.js",
+                         "lib/accountDeletionLocks.js"}.issubset(paths))
+        self.assertEqual(len(paths), len(set(paths)))
+
     def test_block_mirror_reads_back_its_reconciler_and_retry_guard(self):
         paths = verifier.source_targets()["onBlockWritten"]
         self.assertTrue({"index.js", "package-lock.json", "lib/blockMirror.js",

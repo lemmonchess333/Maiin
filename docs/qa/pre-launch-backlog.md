@@ -108,6 +108,34 @@ real history can confirm the timing.
       open Home and see no welcome back (the absence is measured only from
       a server-confirmed read).
 
+## Partner streaks are counted on the server (2026-10-25)
+
+The rules no longer let an app create a partner bond. The
+`startPartnerStreak` callable makes each one, counting both people's bonds
+against the limit of five in the transaction that creates it, with the
+mutual follow, a block either way, both accounts' deletion state and a
+restriction checked as the rules checked them. An iPhone build from before
+this change writes the bond itself, so on it Start streak now fails with
+"Couldn't start the streak. Try again."; nothing is lost, and an existing
+streak still shows and can be ended. The unit, rules and emulator suites
+cover each part, including two starts racing for one person's last place;
+only a deploy confirms the callable in production.
+
+- [ ] **Start a streak, then hit the limit.** After Deploy production has
+      shipped (`startPartnerStreak` is on the deployed-source list), on
+      two accounts that follow each other, tap Start streak on one's
+      profile from the other. Passing: "Streak started with …", and in the
+      console `partnerBonds/{a}__{b}` with streak 0 and a server
+      `createdAt`. With five streaks on either account, a sixth says whose
+      five it is ("You have 5 streak partners already. End one to start
+      another." or "{name} has 5 streak partners already.") and writes no
+      bond.
+- [ ] **Older iPhone builds.** Once a build carrying `startPartnerStreak`
+      is on TestFlight or the App Store, and if anyone still runs an
+      older one, set `config/client.minSupportedVersion` to that build's
+      version, so the older build shows the update screen instead of a
+      Start streak button that fails.
+
 ## Circle invite codes expire (2026-10-25)
 
 A Circle's invite code works for seven days after it is made, and

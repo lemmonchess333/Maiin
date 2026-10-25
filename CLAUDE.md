@@ -190,8 +190,11 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 invites, weekly focus, check-ins. `spaces/` owns the space definitions,
 including the race spaces a `raceGoal.eventSpaceId` binds to.
 `partnerStreak/` owns partner bonds and shared-day streaks (the SERVER is
-the sole writer of bond streak state — see `docs/qa/pre-launch-backlog.md`). `run/` holds
-run-surface feature modules.
+the sole writer of bond streak state — see `docs/qa/pre-launch-backlog.md` —
+and makes every bond: the `startPartnerStreak` callable counts both people's
+bonds against `MAX_PARTNERS` in the transaction that creates one, and the
+rules refuse a client create; `partnerLimit.cross.test.ts` pins the limit
+both sides). `run/` holds run-surface feature modules.
 
 ### challenges/
 

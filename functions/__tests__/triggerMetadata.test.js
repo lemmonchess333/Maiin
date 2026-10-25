@@ -470,6 +470,11 @@ const EXPECTED = {
     schedule: "0 5 * * 1",
     timeoutSeconds: 540,
   },
+  startPartnerStreak: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   createGoalSpace: {
     kind: "callable",
     maxInstances: 100,

@@ -103,6 +103,11 @@ def source_targets():
         # A Circle's invite code expires, and its owner replaces it.
         "joinGoalSpace": circle_paths,
         "renewGoalSpaceInviteCode": circle_paths,
+        # The one writer of partner bonds: the limit for both people, counted
+        # in the transaction that makes the bond. The rules refuse a client's.
+        "startPartnerStreak": ["index.js", "package-lock.json", "lib/partnerBonds.js",
+                               "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js",
+                               "lib/restriction.js", "lib/accountDeletionLocks.js"],
         # Ship1: the photos other people see, screened for nudity.
         "screenPhoto": ["index.js", "lib/photoScreen.js"],
         "screenUploadedPhoto": ["index.js", "lib/photoScreen.js"],
