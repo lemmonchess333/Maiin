@@ -17,6 +17,10 @@
  * weeklyFocus, so the timeline shows the focus copy and a live
  * "Back this focus" button.
  *
+ * A second capture user owns a Circle of one whose invite code has
+ * expired, so the large-text and axe captures can open the invite sheets
+ * at "Make a new code"; the first user's code is live.
+ *
  * Idempotent: deterministic doc ids; re-runs overwrite.
  *
  * Operator setup (same as seed-e2e-user.ts):
@@ -39,44 +43,55 @@ export const CIRCLES_CAPTURE_USER = {
   displayName: "Circle Tester",
 } as const;
 
+export const CIRCLES_EXPIRED_CODE_USER = {
+  email: "circles-expired-capture@tropos.test",
+  password: "test-password-123",
+  displayName: "Code Expired",
+} as const;
+
 const PARTNER_UID = "capture-maya";
 const SPACE_ID = "capture-circle-1";
+const EXPIRED_SPACE_ID = "capture-circle-expired";
 
 const PROJECT_ID = process.env.GCLOUD_PROJECT || "adaptive-fitness-af8bb";
 if (!getApps().length) initializeApp({ projectId: PROJECT_ID });
 const auth = getAuth();
 const db = getFirestore();
 
-async function ensureUser(): Promise<string> {
+async function ensureUser(account: {
+  email: string;
+  password: string;
+  displayName: string;
+}): Promise<string> {
   try {
-    const existing = await auth.getUserByEmail(CIRCLES_CAPTURE_USER.email);
+    const existing = await auth.getUserByEmail(account.email);
     return existing.uid;
   } catch (err: unknown) {
     if ((err as { code?: string }).code !== "auth/user-not-found") throw err;
   }
   const created = await auth.createUser({
-    email: CIRCLES_CAPTURE_USER.email,
-    password: CIRCLES_CAPTURE_USER.password,
-    displayName: CIRCLES_CAPTURE_USER.displayName,
+    email: account.email,
+    password: account.password,
+    displayName: account.displayName,
     emailVerified: true,
   });
   return created.uid;
 }
 
-async function main() {
-  const uid = await ensureUser();
-  const now = Date.now();
-  const weekKey = localWeekKey();
-
-  // Minimal onboarded profile (mirrors seed-e2e-user.ts shape).
+/** A minimal onboarded profile (mirrors seed-e2e-user.ts shape) and its
+ *  public mirror. */
+async function ensureProfile(
+  uid: string,
+  account: { email: string; displayName: string }
+): Promise<void> {
   await db
     .collection("users")
     .doc(uid)
     .set(
       {
         uid,
-        displayName: CIRCLES_CAPTURE_USER.displayName,
-        email: CIRCLES_CAPTURE_USER.email,
+        displayName: account.displayName,
+        email: account.email,
         photoURL: null,
         athleteType: "Lifter",
         weightKg: 70,
@@ -103,8 +118,8 @@ async function main() {
   await db.collection("users").doc(uid).collection("public").doc("profile").set(
     {
       uid,
-      displayName: CIRCLES_CAPTURE_USER.displayName,
-      displayNameLower: CIRCLES_CAPTURE_USER.displayName.toLowerCase(),
+      displayName: account.displayName,
+      displayNameLower: account.displayName.toLowerCase(),
       photoURL: null,
       athleteType: "Lifter",
       currentStreak: 0,
@@ -113,6 +128,58 @@ async function main() {
     },
     { merge: true }
   );
+}
+
+/** A Circle of one made nine days ago, whose code stopped working two
+ *  days ago: its card offers the invite, and both sheets offer only a new
+ *  code. */
+async function seedExpiredCode(now: number): Promise<void> {
+  const uid = await ensureUser(CIRCLES_EXPIRED_CODE_USER);
+  await ensureProfile(uid, CIRCLES_EXPIRED_CODE_USER);
+  const made = now - 9 * 86_400_000;
+  await db.doc(`goalSpaces/${EXPIRED_SPACE_ID}`).set({
+    id: EXPIRED_SPACE_ID,
+    type: "strength_block",
+    title: "Lunchtime Lifters",
+    visibility: "invite_only",
+    ownerId: uid,
+    memberCount: 1,
+    maxMembers: 8,
+    targetDate: null,
+    active: true,
+    inviteCode: "Q3M8T6WZ",
+    inviteCodeExpiresAt: now - 2 * 86_400_000,
+    createdAt: made,
+  });
+  await db.doc(`goalSpaces/${EXPIRED_SPACE_ID}/members/${uid}`).set({
+    uid,
+    displayName: CIRCLES_EXPIRED_CODE_USER.displayName,
+    photoURL: null,
+    role: "owner",
+    joinedAt: made,
+  });
+  await db.doc(`users/${uid}/journeys/${EXPIRED_SPACE_ID}`).set({
+    id: EXPIRED_SPACE_ID,
+    type: "strength_block",
+    title: "Lunchtime Lifters",
+    goalSpaceId: EXPIRED_SPACE_ID,
+    targetDate: null,
+    createdAt: made,
+  });
+  await db.doc(`goalSpaces/${EXPIRED_SPACE_ID}/events/capture-join-1`).set({
+    uid,
+    kind: "joined",
+    text: null,
+    weekKey: null,
+    createdAt: made,
+  });
+}
+
+async function main() {
+  const uid = await ensureUser(CIRCLES_CAPTURE_USER);
+  const now = Date.now();
+  const weekKey = localWeekKey();
+  await ensureProfile(uid, CIRCLES_CAPTURE_USER);
 
   // The Circle — server-shaped docs (goalSpaceMembership.js contract).
   await db.doc(`goalSpaces/${SPACE_ID}`).set({
@@ -188,8 +255,11 @@ async function main() {
     createdAt: now - 26 * 3_600_000,
   });
 
+  await seedExpiredCode(now);
+
   console.log(
-    `[seed-circles-capture] Done — ${CIRCLES_CAPTURE_USER.email} owns ${SPACE_ID} (week ${weekKey}).`
+    `[seed-circles-capture] Done — ${CIRCLES_CAPTURE_USER.email} owns ${SPACE_ID} (week ${weekKey}); ` +
+      `${CIRCLES_EXPIRED_CODE_USER.email} owns ${EXPIRED_SPACE_ID}, its code expired.`
   );
 }
 

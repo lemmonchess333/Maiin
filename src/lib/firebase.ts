@@ -18,10 +18,12 @@ import {
   persistentMultipleTabManager,
   memoryLocalCache,
   connectFirestoreEmulator,
+  clearIndexedDbPersistence,
 } from "firebase/firestore";
 import { connectStorageEmulator, getStorage } from "firebase/storage";
 import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
 import { logger } from "@/lib/logger";
+import { takeFirestoreCacheClearMark } from "./firestoreCacheClear";
 import { app, firebaseConfig } from "./firebaseApp";
 
 // Re-exported so existing call sites are untouched by the split. App Check
@@ -31,12 +33,14 @@ export { app, auth, firebaseConfig } from "./firebaseApp";
 // Try persistent cache first; fall back to memory cache if IndexedDB is unavailable
 // (e.g. Safari private browsing, restricted environments)
 let db_: ReturnType<typeof initializeFirestore>;
+let persistent = false;
 try {
   db_ = initializeFirestore(app, {
     localCache: persistentLocalCache({
       tabManager: persistentMultipleTabManager(),
     }),
   });
+  persistent = true;
 } catch (e) {
   logger.warn("Persistent cache unavailable, falling back to memory cache:", e);
   db_ = initializeFirestore(app, {
@@ -65,4 +69,15 @@ if (import.meta.env.VITE_USE_EMULATORS === "true") {
   // getFunctions() callers share this default-app instance. Emulator builds
   // must never fall through to cloud callables when a local service is absent.
   connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+}
+
+// The last sign-out asked for the device's copy to go
+// (firestoreCacheClear.ts). Here, with the instance configured and before
+// anything has used it, is the one moment Firestore allows that: the clear
+// is queued ahead of every later operation. Another tab still holding the
+// database terminates its own instance so the delete can finish.
+if (persistent && takeFirestoreCacheClearMark()) {
+  void clearIndexedDbPersistence(db).catch((err) =>
+    logger.warn("[Firebase] could not clear the signed-out cache:", err)
+  );
 }

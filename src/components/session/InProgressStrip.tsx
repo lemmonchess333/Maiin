@@ -48,7 +48,10 @@ export default function InProgressStrip({
         className
       )}
     >
-      <div className="min-w-[9em] flex-1">
+      {/* Resume sits beside the words while they have 9em, and below them
+          when they do not. The floor stops at the strip's own width, which
+          9em passes at large text on a small phone. */}
+      <div className="min-w-[min(9em,100%)] flex-1">
         <p
           className={cn(
             "text-sm font-bold",

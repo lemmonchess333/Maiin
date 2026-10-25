@@ -1441,10 +1441,15 @@ export default function CirclesSection({
                   </div>
                 )}
 
-                <div className="flex gap-2">
+                {/* Three across while each label fits on one line, and
+                    wrapping when one does not: a button's floor is its
+                    one-line width (`min-w-fit`), so at large text "Need a
+                    nudge" takes a row of its own instead of running off
+                    the sheet. */}
+                <div className="flex flex-wrap gap-2">
                   <Button
                     size="sm"
-                    className="flex-1"
+                    className="min-w-fit flex-1"
                     onClick={() => {
                       haptic("light");
                       setFocusSource("detail");
@@ -1460,7 +1465,7 @@ export default function CirclesSection({
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="flex-1"
+                    className="min-w-fit flex-1"
                     onClick={() => void publish("milestone")}
                   >
                     Milestone
@@ -1468,7 +1473,7 @@ export default function CirclesSection({
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="flex-1"
+                    className="min-w-fit flex-1"
                     onClick={() => void publish("needs_support")}
                   >
                     Need a nudge
