@@ -75,6 +75,11 @@ what ships; these need a browser's Network panel or an iPhone.
       root started about 270 ms after the entry, ahead of Login and every
       Google request. The signed-in reload and Home's fonts still need an
       account.
+      STATUS 2026-10-25 (later): with the gate's fix live, a first visit
+      still loaded firebase-db. The share sheet and the one-time
+      maintenance were mounted at the root for everyone, and both import
+      Firestore; they now mount only for a signed-in person
+      (`signedInRootOverlays.test.tsx`). Recheck after that deploys.
 - [ ] **Analytics' config read, on the web.** Every web visit logs a 403
       from `firebase.googleapis.com/.../webConfig`: Google answers
       `API_KEY_SERVICE_BLOCKED`, because the web API key's API restrictions
