@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { toast } from "@/lib/toast";
 import {
   listSavedRoutes,
   saveRoute,
@@ -134,6 +135,8 @@ export function useSavedRoutes() {
         await deleteSavedRoute(uid, id);
       } catch (e) {
         logger.warn("[useSavedRoutes] delete failed", e);
+        // The refresh below puts the route back; say why it came back.
+        toast.error("Couldn't delete the route. Try again.");
       }
       // Settle the invalidated reload against the current server list. On
       // failure this also restores the route; a failed read stays retryable.
