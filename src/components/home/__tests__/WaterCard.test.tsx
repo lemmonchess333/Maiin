@@ -319,7 +319,7 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
     ).toHaveLength(2);
   });
 
-  it("an empty day's sheet offers presets and no removals", () => {
+  it("an empty day's sheet offers presets and no removals", async () => {
     render(
       <WaterCard
         compact
@@ -331,8 +331,10 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
       />
     );
     fireEvent.click(screen.getByRole("button", { name: /add water/i }));
+    // The sheet is lazy: it arrives after the tap, as in the test above,
+    // and only from a warm module cache does it arrive at once.
     expect(
-      screen.getByRole("button", { name: /^Add 250 ml glass$/i })
+      await screen.findByRole("button", { name: /^Add 250 ml glass$/i })
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Remove/ })).toBeNull();
   });
