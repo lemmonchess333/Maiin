@@ -86,7 +86,7 @@ def source_targets():
         "addSpacePostCommentCallable": comment_paths + ["lib/objectionableText.js"],
         # Moderation (App Review 1.2): the report alert and the Space post filter.
         "createReport": ["index.js", "lib/reportAlert.js", "lib/reportTargets.js"],
-        "onSpacePostWritten": ["index.js", "lib/spacePostModeration.js"],
+        "onSpacePostWritten": ["index.js", "lib/spacePostModeration.js", "lib/spacePostPhoto.js"],
         "onPublicProfileWritten": ["index.js", "package-lock.json", "lib/objectionableText.js",
                                    "profanityFilter.js", "lib/hateTerms.js", "lib/triggerRetry.js",
                                    "lib/accountDeletionLocks.js"],
