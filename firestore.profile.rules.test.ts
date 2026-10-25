@@ -345,7 +345,7 @@ suite("users/{uid}/public/profile — the uid identity gate", () => {
       setDoc(
         doc(db, `users/${ME}/public/profile`),
         {
-          photoURL: `https://firebasestorage.googleapis.com/v0/b/demo/o/profile-photos%2F${ME}%2Fp.jpg`,
+          photoURL: `https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2F${ME}%2Fp.jpg`,
           photoStoragePath: `profile-photos/${ME}/p.jpg`,
         },
         { merge: true }
@@ -435,6 +435,32 @@ suite(
         await setDoc(doc(ctx.firestore(), `users/${ME}/public/profile`), {
           uid: ME,
           currentStreak: 2.5,
+        });
+      });
+      await assertSucceeds(
+        setDoc(ref(), { displayName: "Sam" }, { merge: true })
+      );
+    });
+
+    /* Every search result and profile view downloads this document, and
+       athleteType had no bound: one account could park most of a megabyte
+       in it for every reader. The sanitizer's bound, 30 characters. */
+    it("holds athleteType to a short string, as the sanitizer does", async () => {
+      for (const ok of ["Lifter", "Runner", "Hybrid", null]) {
+        await assertSucceeds(
+          setDoc(ref(), { athleteType: ok }, { merge: true })
+        );
+      }
+      for (const bad of ["x".repeat(31), "x".repeat(5000), 42, { a: 1 }]) {
+        await assertFails(setDoc(ref(), { athleteType: bad }, { merge: true }));
+      }
+    });
+
+    it("lets a profile holding an oversized stored athleteType write its other fields", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `users/${ME}/public/profile`), {
+          uid: ME,
+          athleteType: "x".repeat(100),
         });
       });
       await assertSucceeds(

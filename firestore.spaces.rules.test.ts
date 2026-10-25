@@ -64,14 +64,16 @@ const UNVERIFIED = { email_verified: false };
    host, http downgrade, non-http schemes, and a 2049-char value on an
    allowed origin (the size cap). */
 const ALLOWED_PHOTO_URLS = [
-  "https://firebasestorage.googleapis.com/v0/b/tropos-fitness.firebasestorage.app/o/space-photos%2Fmember-uid%2Fp1.jpg?alt=media",
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/space-photos%2Fmember-uid%2Fp1.jpg?alt=media",
   "https://lh3.googleusercontent.com/a/ACg8ocIabcdefg=s96-c",
   "https://appleid.cdn-apple.com/static/bin/avatar/123.jpg",
 ];
 const REJECTED_PHOTO_URLS = [
   "https://pixel-tracker.example/pixel?uid=victim",
+  // Another Firebase project's bucket: the same host, someone else's logs.
+  "https://firebasestorage.googleapis.com/v0/b/attacker.appspot.com/o/pixel.jpg",
   "https://lh3.googleusercontent.com.evil.com/a/x",
-  "http://firebasestorage.googleapis.com/v0/b/x/o/y.jpg",
+  "http://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/y.jpg",
   "javascript:alert(1)",
   "data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+",
   "https://firebasestorage.googleapis.com/" + "a".repeat(2010),

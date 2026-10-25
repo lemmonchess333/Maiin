@@ -141,7 +141,7 @@ suite("comment HTTP boundary with emulator identities", () => {
     "%s preserves a supported avatar",
     async (name, target, path) => {
       const authorPhotoURL =
-        "https://firebasestorage.googleapis.com/v0/b/demo-tropos.appspot.com/o/profile-photos%2Fa.jpg?alt=media";
+        "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Fa.jpg?alt=media";
       const response = await call(name, {
         ...target,
         text: "Synthetic",

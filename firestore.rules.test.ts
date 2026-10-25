@@ -75,17 +75,22 @@ const VERIFIED = { email_verified: true };
  * stranger's device, so it is a tracking pixel.
  */
 const ALLOWED_PHOTO_URLS = [
-  "https://firebasestorage.googleapis.com/v0/b/tropos-fitness.firebasestorage.app/o/profile-photos%2Fowner-uid%2Favatar.jpg?alt=media&v=1",
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Fowner-uid%2Favatar.jpg?alt=media&v=1",
   "https://lh3.googleusercontent.com/a/ACg8ocIabcdefg=s96-c",
   "https://appleid.cdn-apple.com/static/bin/avatar/123.jpg",
 ];
-const PHOTO_URL_ORIGIN = "https://firebasestorage.googleapis.com/";
+/** This project's bucket: the host alone admits any Firebase project's. */
+const PHOTO_URL_ORIGIN =
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/";
 /** Arbitrary host, suffix-phishing host, http downgrade, two non-http
  *  schemes, and a 2049-char value on an allowed origin (the size cap). */
 const REJECTED_PHOTO_URLS = [
   "https://pixel-tracker.example/pixel?uid=victim",
+  // Another Firebase project's bucket: the same host, someone else's
+  // access logs.
+  "https://firebasestorage.googleapis.com/v0/b/attacker.appspot.com/o/pixel.jpg",
   "https://lh3.googleusercontent.com.evil.com/a/ACg8ocIabcdefg=s96-c",
-  "http://firebasestorage.googleapis.com/v0/b/x/o/y.jpg",
+  "http://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/y.jpg",
   "javascript:alert(1)",
   "data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+",
   PHOTO_URL_ORIGIN + "a".repeat(2049 - PHOTO_URL_ORIGIN.length),
@@ -314,7 +319,7 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         {
           photoURL:
-            "https://firebasestorage.googleapis.com/v0/b/tropos-fitness.firebasestorage.app/o/profile-photos%2Fowner-uid%2Favatar.jpg?alt=media",
+            "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Fowner-uid%2Favatar.jpg?alt=media",
         },
         { merge: true }
       )
@@ -412,7 +417,10 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
     await assertFails(
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
-        { photoURL: "http://firebasestorage.googleapis.com/v0/b/x/o/y.jpg" },
+        {
+          photoURL:
+            "http://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/y.jpg",
+        },
         { merge: true }
       )
     );
@@ -1254,7 +1262,7 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertFails(
       setDoc(doc(ownerDb, "following", OWNER_UID, "users", OTHER_UID), {
-        createdAt: serverTimestamp(),
+        followedAt: Timestamp.now(),
       })
     );
   });
@@ -1265,7 +1273,7 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertFails(
       setDoc(doc(ownerDb, "following", OWNER_UID, "users", OTHER_UID), {
-        createdAt: serverTimestamp(),
+        followedAt: Timestamp.now(),
       })
     );
   });
@@ -1296,13 +1304,13 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
     const blockedDb = env.authenticatedContext(OTHER_UID).firestore();
     await assertFails(
       setDoc(doc(blockedDb, "following", OTHER_UID, "users", OWNER_UID), {
-        createdAt: serverTimestamp(),
+        followedAt: Timestamp.now(),
       })
     );
     // The followers doc is the one that drives fan-out.
     await assertFails(
       setDoc(doc(blockedDb, "followers", OWNER_UID, "users", OTHER_UID), {
-        createdAt: serverTimestamp(),
+        followedAt: Timestamp.now(),
       })
     );
   });
@@ -1314,7 +1322,7 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertFails(
       setDoc(doc(ownerDb, "following", OWNER_UID, "users", OTHER_UID), {
-        createdAt: serverTimestamp(),
+        followedAt: Timestamp.now(),
       })
     );
   });
@@ -1328,12 +1336,12 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(
       setDoc(doc(ownerDb, "following", OWNER_UID, "users", OTHER_UID), {
-        createdAt: serverTimestamp(),
+        followedAt: Timestamp.now(),
       })
     );
     await assertSucceeds(
       setDoc(doc(ownerDb, "followers", OTHER_UID, "users", OWNER_UID), {
-        createdAt: serverTimestamp(),
+        followedAt: Timestamp.now(),
       })
     );
   });
@@ -1564,7 +1572,7 @@ suite("firestore.rules — tombstone freeze (completed deletion)", () => {
     });
     await assertFails(
       setDoc(doc(aliceDb(), "following", ALICE, "users", BOB), {
-        createdAt: serverTimestamp(),
+        followedAt: Timestamp.now(),
       })
     );
   });
@@ -1989,7 +1997,8 @@ suite(
           makeValidActivity({
             type: "workout",
             visibility: "followers",
-            authorPhotoURL: "https://firebasestorage.googleapis.com/foo",
+            authorPhotoURL:
+              "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/foo.jpg",
             workoutName: "Push day",
             exerciseCount: 6,
             totalVolume: 5400,
@@ -2526,6 +2535,34 @@ suite(
         setDoc(
           doc(ownerDb, "activities", "A1"),
           { visibility: "private" },
+          { merge: true }
+        )
+      );
+    });
+
+    // A create is held to the three values; an update was not, so a post
+    // could be given any string as its visibility.
+    it("owner can change visibility only to one of the three values", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "activities", "A1"), {
+          ...makeValidActivity(),
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      for (const bad of ["everyone", "", 1, null]) {
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", "A1"),
+            { visibility: bad },
+            { merge: true }
+          )
+        );
+      }
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "A1"),
+          { visibility: "followers" },
           { merge: true }
         )
       );

@@ -2895,6 +2895,25 @@ Rollout sequence (operator, not agent):
 - [ ] If verified % is low and the cause isn't obvious, query Cloud Logging: `resource.type="cloud_function" jsonPayload.appCheck.status=("MISSING" OR "INVALID")` to see exactly which callables would reject and which uids are missing tokens. Usual culprits: ad-blockers killing reCAPTCHA (rare, swallowed) or native iOS (all `MISSING` until the Capacitor App Check plugin is wired).
 - [ ] Flip enforcement per-callable in `functions/index.js` by adding `.runWith({ enforceAppCheck: true })`. Start with low-risk endpoints that the client **actually calls** — `sendTestPush`, `backfillMyActivityCategories`. (This line named `askGeminiText` until 2026-07-26; it had no client caller, so flipping it would have produced no telemetry and no rejection signal. It has since been retired. `docs/app-check-rollout.md` carries the full tier table and the traffic check.) Keep destructive ones (`deleteMyAccount`, `verifyApplePurchase`) until last. Don't bulk-flip.
 
+## Follow edges, photo URLs and profile fields, held by the rules (2026-10-25)
+
+Rules-tested on the emulator; only the deployed rules and real profiles
+show whether anything already stored falls outside them.
+
+- [ ] **Every stored photo URL is in this project's bucket.** The photo
+      gate (`isAllowedPhotoUrl`, and `functions/lib/publicPhotoUrl.js` on the
+      server) now takes a Storage URL only from
+      `adaptive-fitness-af8bb.firebasestorage.app` or `.appspot.com`. A
+      profile whose stored `photoURL` names another bucket could not save
+      any profile change until its photo is replaced. Before the release,
+      in the Firestore console query `users/*/public/profile` (a collection
+      group on `public`) for `photoURL` values starting
+      `https://firebasestorage.googleapis.com/` and check each names this
+      project's bucket. Passing: none names another.
+- [ ] **Following still works after the release.** Follow an account that
+      accepts followers, and accept a request on one that approves them.
+      Passing: both land, and the accepted follower is told.
+
 ## Signing out clears the device's copy; sign-in avatars draw (2026-10-25)
 
 Unit-tested with the Firestore fake and jsdom, which have no IndexedDB, no
