@@ -736,7 +736,7 @@ describe("DayPeekCard — Q5 extras rows (chunk B3g)", () => {
     ).toBeInTheDocument();
   });
 
-  it("tapping '+N more' opens the dedicated extras expand sheet (Q5 P71, chunk B3i)", () => {
+  it("tapping '+N more' opens the dedicated extras expand sheet (Q5 P71, chunk B3i)", async () => {
     // Pre-B3i this navigated to /history as a functional fallback.
     // Post-B3i a date-scoped sheet opens with the full list +
     // per-run pace/duration detail.
@@ -774,9 +774,13 @@ describe("DayPeekCard — Q5 extras rows (chunk B3g)", () => {
       />
     );
     fireEvent.click(screen.getByRole("button", { name: /1 more extra run/i }));
-    // Sheet header + previously-overflowed entry are now visible.
+    // Sheet header + previously-overflowed entry are now visible. The
+    // sheet loads on demand, so wait for it: only a test that ran first
+    // in the file meets it before its module has loaded.
     // Exact match to avoid colliding with the sr-only Drawer.Title.
-    expect(screen.getByText("Extra runs")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Extra runs", {}, { timeout: 5000 })
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Extra run: 5\.0 km, long/i })
     ).toBeInTheDocument();
