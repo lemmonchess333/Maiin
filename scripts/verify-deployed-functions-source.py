@@ -127,8 +127,12 @@ def source_targets():
         "rolloverChallenges": ["index.js", "package-lock.json", "lib/challengeDefs.js"],
         "onChallengeParticipantCreated": challenge_paths,
         "onRunUpdated": challenge_paths,
-        "onWorkoutDeleted": challenge_paths,
-        "onRunDeleted": challenge_paths,
+        # The reversal is what a delete runs, and it fails the event when it
+        # does not land so the retry can apply it.
+        "onWorkoutDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
+                                              "lib/triggerRetry.js"],
+        "onRunDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
+                                              "lib/triggerRetry.js"],
         # Read back the privacy-safe feed index writer and the Circle
         # admission receipt before a release can report either trigger current.
         "onActivityCreated": ["index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js"],
