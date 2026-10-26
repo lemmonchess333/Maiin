@@ -4,6 +4,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
+import { Timestamp } from "firebase/firestore";
 import { act, cleanup, renderHook } from "@testing-library/react";
 import {
   flushSnapshots,
@@ -17,9 +18,13 @@ import {
   useDailyLogs,
   useWeeklyDayMap,
 } from "../DailyLogsProvider";
+import { flushQueue } from "@/lib/offlineQueue";
 
 vi.mock("firebase/firestore");
-vi.mock("@/lib/firebase", () => ({ db: {} }));
+vi.mock("@/lib/firebase", () => ({
+  db: {},
+  auth: { currentUser: { uid: "u1" } },
+}));
 // One object for the session, as AuthProvider holds it: the provider
 // subscribes again whenever `user` changes.
 const session = vi.hoisted(() => ({ user: { uid: "u1" }, profile: null }));
@@ -55,6 +60,30 @@ describe("dailyLogsFrom", () => {
 });
 
 describe("DailyLogsProvider", () => {
+  it("keeps a food-day save's createdAt as a timestamp after offline sync", async () => {
+    const originalNavigator = navigator;
+    localStorage.clear();
+    vi.stubGlobal("navigator", { onLine: false });
+    try {
+      vi.setSystemTime(new Date(2026, 9, 23, 12, 30, 0, 456));
+      const { result } = renderHook(() => useDailyLogs(), { wrapper });
+      await act(async () => {
+        await result.current.saveLog({ date: "2026-10-23", meals: 2 });
+      });
+      vi.stubGlobal("navigator", { onLine: true });
+      await act(async () => {
+        await flushQueue({} as Parameters<typeof flushQueue>[0], "u1");
+      });
+      const saved = readDoc("users/u1/logs/2026-10-23")!;
+      expect(saved.meals).toBe(2);
+      expect(saved.createdAt).toBeInstanceOf(Timestamp);
+      expect((saved.createdAt as Timestamp).toMillis()).toBe(Date.now());
+    } finally {
+      localStorage.clear();
+      vi.stubGlobal("navigator", originalNavigator);
+    }
+  });
+
   it("updates an emptied food day without erasing its training, PR, weight or notes", async () => {
     vi.setSystemTime(new Date(2026, 9, 15, 12));
     const date = "2026-10-15";

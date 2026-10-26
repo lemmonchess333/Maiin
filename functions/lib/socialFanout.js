@@ -1,4 +1,5 @@
 const { FieldPath } = require("firebase-admin/firestore");
+const { createHash } = require("node:crypto");
 const { transactionAccountsLive } = require("./deletionTransactionGuard");
 const { categoryFor, wantsNotification } = require("./notificationPreferences");
 /**
@@ -312,6 +313,46 @@ async function recipientWants(firestore, toUid, type) {
   return wantsNotification(prefs, type);
 }
 
+function eventTime(value) {
+  const seconds = value?.seconds;
+  const nanoseconds = value?.nanoseconds;
+  return Number.isSafeInteger(seconds) && Number.isInteger(nanoseconds) &&
+    nanoseconds >= 0 && nanoseconds < 1_000_000_000
+    ? { seconds, nanoseconds }
+    : null;
+}
+
+/** Trusted trigger metadata only. Keep nanoseconds: two distinct creations
+ * of the same follow edge can occur within one millisecond. The fixed-size
+ * hash and one latest timestamp are bounded by the notification's own TTL. */
+function notificationSourceEvent(snapshot, context) {
+  if (typeof context?.eventId !== "string" || !context.eventId) return undefined;
+  let time = eventTime(snapshot?.createTime);
+  if (!time && typeof context.timestamp === "string") {
+    const match = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,9}))?(Z|[+-]\d{2}:\d{2})$/.exec(context.timestamp);
+    const ms = match ? Date.parse(match[1] + match[3]) : NaN;
+    if (Number.isFinite(ms)) {
+      time = { seconds: ms / 1000, nanoseconds: Number((match[2] || "").padEnd(9, "0")) };
+    }
+  }
+  // Older callers/tests without complete event metadata keep their existing
+  // behavior; the deployed Firestore triggers supply both ID and createTime.
+  if (!time) return undefined;
+  return { id: createHash("sha256").update(context.eventId).digest("hex"), ...time };
+}
+
+function validSourceEvent(value) {
+  const time = eventTime(value);
+  return time && typeof value.id === "string" && /^[a-f0-9]{64}$/.test(value.id)
+    ? { id: value.id, ...time }
+    : null;
+}
+
+function laterThan(a, b) {
+  return a.seconds > b.seconds ||
+    (a.seconds === b.seconds && a.nanoseconds > b.nanoseconds);
+}
+
 /**
  * Write a notification doc into the recipient's
  * `notifications/{toUid}/items/` collection. Server-controlled:
@@ -339,6 +380,7 @@ async function createNotification({
   serverTimestamp,
   anonymous = false,
   notificationId,
+  sourceEvent,
 }) {
   if (!firestore || !fromUid || !toUid) {
     throw new Error("createNotification: firestore, fromUid, toUid required");
@@ -382,13 +424,15 @@ async function createNotification({
     .doc(toUid)
     .collection("items");
   // A deterministic id makes a fan-out from an at-least-once Firestore
-  // trigger idempotent: a re-delivery overwrites the same doc instead
-  // of minting a duplicate. Auto-id (the default) stays for the
-  // callable senders where each call is a distinct notification.
+  // trigger one row. Its source receipt below also preserves the first
+  // delivery time on retries, so opening the tray stays meaningful.
+  // Auto-id stays for callables where every call is a distinct notice.
   const itemRef =
     typeof notificationId === "string" && notificationId
       ? items.doc(notificationId)
       : items.doc();
+  const receipt = typeof notificationId === "string" && notificationId
+    ? validSourceEvent(sourceEvent) : null;
 
   const notif = {
     ...sanitiseNotificationData(data),
@@ -396,6 +440,7 @@ async function createNotification({
     read: false,
     createdAt: serverTimestamp(),
     expiresAt: new Date(Date.now() + NOTIFICATION_RETENTION_DAYS * DAY_MS),
+    ...(receipt ? { _sourceEvent: receipt } : {}),
   };
 
   return firestore.runTransaction(async (tx) => {
@@ -407,6 +452,19 @@ async function createNotification({
       }))
     )
       return { skipped: true, deleting: true };
+    if (receipt) {
+      const previous = await tx.get(itemRef);
+      if (previous.exists) {
+        const data = previous.data() || {};
+        const prior = validSourceEvent(data._sourceEvent);
+        // A legacy row's createdAt is delivery time, not source time. It
+        // cannot identify a duplicate or order a delayed new source, so its
+        // first receipted event follows the existing refresh behavior.
+        if (prior && (prior.id === receipt.id || !laterThan(receipt, prior))) {
+          return { notificationId: itemRef.id, skipped: true, duplicate: true };
+        }
+      }
+    }
     tx.set(itemRef, notif);
     return { notificationId: itemRef.id };
   });
@@ -438,6 +496,7 @@ module.exports = {
   removeActivityFromFeeds,
   createNotification,
   senderDisplayName,
+  notificationSourceEvent,
   VALID_NOTIFICATION_TYPES,
   FEED_COPY_RETENTION_DAYS,
   NOTIFICATION_RETENTION_DAYS,

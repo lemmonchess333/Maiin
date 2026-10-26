@@ -130,8 +130,7 @@ function routineDraftResumable(
   const routineId = draftRoutineId(draft);
   if (routineId === null) return null;
   const routine = routines.get(routineId);
-  if (!routine || routineDraftIdentity(routine) !== draft.identity)
-    return null;
+  if (!routine || routineDraftIdentity(routine) !== draft.identity) return null;
   return {
     routineId,
     name: routine.name,
