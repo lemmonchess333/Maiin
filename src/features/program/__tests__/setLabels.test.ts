@@ -77,6 +77,13 @@ describe("the menu says what each type does", () => {
     );
   });
 
+  it("says each in one short line", () => {
+    // The sheet fits about 45 characters to a line on a 393 px phone;
+    // three-line descriptions made four choices a page of reading.
+    for (const type of SET_TYPE_ORDER)
+      expect(SET_TYPE_COPY[type].detail.length).toBeLessThanOrEqual(45);
+  });
+
   it("matches what the session does with each type", () => {
     /* The sentences restate sessionSetPolicy; if a rule changes, the
        words must change with it. */

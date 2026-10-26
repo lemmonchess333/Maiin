@@ -254,7 +254,7 @@ interface Props {
    *  `day.dayName` stays the stored name, which the draft and the save
    *  key on; without this the screen names the day without its week. */
   dayLabel?: string;
-  planContext?: { progress: string; next: string };
+  planContext?: { next: string };
   /** LIFT-01 draft-identity scope: `"programme"` (default) for
    *  scheduled programme days, `"routine:<id>"` for saved-routine
    *  sessions so each routine gets its own draft isolation. */
@@ -845,15 +845,18 @@ export default function WorkoutSession({
 
   const currentExercise = day.exercises[safeExIndex];
 
-  // #985 — barbell plate breakdown for the prescribed weight. Read-only hint;
-  // barbell-only (dumbbell/machine lifts don't load plates). The standard set
-  // runs down to 1.25 kg a side, which is the plan's 2.5 kg step.
+  // Plates belong to a barbell only: the per-side hint and the plate
+  // calculator both read this, so a cable or dumbbell lift offers neither.
+  const isBarbell = currentExercise
+    ? getExerciseById(currentExercise.exerciseId)?.equipment === "Barbell"
+    : false;
+  // Barbell plate breakdown for the prescribed weight, a read-only hint. The
+  // standard set runs down to 1.25 kg a side, which is the plan's 2.5 kg step.
   const plateLoad = useMemo(() => {
-    if (!currentExercise || currentExercise.weight <= 0) return null;
-    if (getExerciseById(currentExercise.exerciseId)?.equipment !== "Barbell")
+    if (!currentExercise || currentExercise.weight <= 0 || !isBarbell)
       return null;
     return platesInKit(currentExercise.weight, liftUnit);
-  }, [currentExercise, liftUnit]);
+  }, [currentExercise, isBarbell, liftUnit]);
 
   const currentSets = setLogs[currentExIndex] ?? [];
   // Warm-ups are optional, so the session's progress counts the sets that
@@ -1891,11 +1894,12 @@ export default function WorkoutSession({
                     </span>
                   )}
                 </span>
-                {/* Two lines, not one: cut to one, "Barbell Row" and
-                    "Barbell Curl" both read "Barbell…". */}
+                {/* Up to three lines: cut to one, "Barbell Row" and
+                    "Barbell Curl" both read "Barbell…", and cut to two,
+                    "Straight-Arm Pulldown" reads "Straight-Arm…". */}
                 <span
                   className={cn(
-                    "line-clamp-2 w-full text-center text-xs leading-tight break-words",
+                    "line-clamp-3 w-full text-center text-xs leading-tight break-words",
                     active
                       ? "font-bold text-foreground"
                       : "font-medium text-muted-foreground"
@@ -2121,17 +2125,19 @@ export default function WorkoutSession({
                   </div>
                   <div className="flex items-center justify-center">
                     {liftUnitLabel(liftUnit)}
-                    <button
-                      type="button"
-                      aria-label="Plate calculator"
-                      onClick={() => {
-                        haptic("light");
-                        setShowPlates(true);
-                      }}
-                      className="-my-3 flex size-[44px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      <Disc className="size-3.5" aria-hidden="true" />
-                    </button>
+                    {isBarbell && (
+                      <button
+                        type="button"
+                        aria-label="Plate calculator"
+                        onClick={() => {
+                          haptic("light");
+                          setShowPlates(true);
+                        }}
+                        className="-my-3 flex size-[44px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        <Disc className="size-3.5" aria-hidden="true" />
+                      </button>
+                    )}
                   </div>
                   <div className="text-center">
                     {isTimedExercise ? "Seconds" : "Reps"}
@@ -2337,20 +2343,25 @@ export default function WorkoutSession({
                       {/* Pick effort before completion so it reaches the
                           progression call made when the final set is logged. */}
                       {showRPE && !set.completed && set.type !== "warmup" && (
-                        <div className="flex flex-wrap items-center gap-1 px-4 py-1.5 border-t border-border/30 bg-muted/30">
-                          <span className="text-xs text-muted-foreground mr-1 self-center">
-                            RPE:
-                          </span>
+                        /* One row of nine, never wrapping: a label in
+                           front of the chips pushed "10" onto a line of
+                           its own. The group carries the name. */
+                        <div
+                          role="group"
+                          aria-label={`RPE for ${lowerFirst(name)}`}
+                          className="grid grid-cols-9 gap-1 border-t border-border/30 bg-muted/30 px-3 py-1.5"
+                        >
                           {RPE_OPTIONS.map((rpe) => (
                             <button
                               type="button"
                               key={rpe}
+                              aria-pressed={set.rpe === rpe}
                               onClick={() => {
                                 haptic(10);
                                 updateSetRPE(currentExIndex, setIdx, rpe);
                               }}
                               className={cn(
-                                "min-h-11 px-2.5 rounded text-xs font-mono tabular-nums transition-colors",
+                                "min-h-11 min-w-0 rounded text-xs font-mono tabular-nums transition-colors",
                                 set.rpe === rpe
                                   ? "bg-primary-strong text-primary-foreground"
                                   : "bg-muted text-muted-foreground hover:text-foreground"
@@ -2360,7 +2371,7 @@ export default function WorkoutSession({
                             </button>
                           ))}
                           {typeof set.rpe === "number" && (
-                            <span className="w-full pl-1 pt-0.5 text-xs text-muted-foreground">
+                            <span className="col-span-9 pl-1 pt-0.5 text-xs text-muted-foreground">
                               <span className="font-mono tabular-nums">
                                 {set.rpe}
                               </span>{" "}
@@ -2413,15 +2424,15 @@ export default function WorkoutSession({
             </p>
             <LoweredLine exercise={currentExercise} />
             <StretchedLine exercise={currentExercise} />
-            {/* #985 — plate breakdown per side (barbell only). */}
+            {/* The plates for each side of the bar, in the lifter's unit. */}
             {plateLoad && plateLoad.perSide.length > 0 && (
               <p className="font-mono tabular-nums">
-                Per side:{" "}
                 {plateLoad.perSide
                   .flatMap(({ plate, count }) =>
                     Array<number>(count).fill(plate)
                   )
-                  .join(" + ")}
+                  .join(" + ")}{" "}
+                {liftUnitLabel(liftUnit)} a side
                 {plateLoad.remainder > 0 &&
                   ` · ${plateLoad.remainder} ${liftUnitLabel(liftUnit)} short`}
               </p>

@@ -290,8 +290,9 @@ describe("Swap for today", () => {
     expect(
       screen.queryByRole("button", { name: /^Swap for today/ })
     ).toBeNull();
+    // One line a choice: the label says it is for today.
     expect(
-      screen.getByRole("button", { name: /Leave the rest out/ })
-    ).toBeInTheDocument();
+      screen.getByRole("button", { name: "Skip today" })
+    ).toHaveTextContent(/^Skip today$/);
   });
 });

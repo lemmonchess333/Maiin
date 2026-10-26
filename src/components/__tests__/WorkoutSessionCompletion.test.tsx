@@ -19,6 +19,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProgramExercise } from "@/features/program/programTypes";
@@ -909,7 +910,7 @@ it("keeps the recovery draft while queued, then clears it only when synced", asy
     expect.objectContaining({ completionPending: true, completionId: "test" })
   );
   await act(async () => settle("synced"));
-  expect(screen.getByText("Synced")).toBeVisible();
+  expect(screen.getByText("Saved")).toBeVisible();
   expect(
     screen.getByRole("heading", { name: "Workout saved" })
   ).toBeInTheDocument();
@@ -938,7 +939,7 @@ it("a reconnect rejection keeps the session and retries the same completion", as
   ).toBeInTheDocument();
   expect(h.clear).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Retry sync" }));
-  await vi.waitFor(() => expect(screen.getByText("Synced")).toBeVisible());
+  await vi.waitFor(() => expect(screen.getByText("Saved")).toBeVisible());
   expect(complete.mock.calls[0][1]).toEqual(complete.mock.calls[1][1]);
 });
 
@@ -1029,7 +1030,7 @@ it("reopens an unsynced completion with its original date and retry identity", a
   openSession(complete);
   expect(screen.queryByText("Resume workout?")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Retry sync" }));
-  await vi.waitFor(() => expect(screen.getByText("Synced")).toBeVisible());
+  await vi.waitFor(() => expect(screen.getByText("Saved")).toBeVisible());
   expect(complete).toHaveBeenCalledWith(
     0,
     expect.objectContaining({
@@ -1064,7 +1065,7 @@ it("recognises a server-acknowledged completion after reopening instead of writi
   });
   const complete = vi.fn();
   await act(async () => openSession(complete));
-  await vi.waitFor(() => expect(screen.getByText("Synced")).toBeVisible());
+  await vi.waitFor(() => expect(screen.getByText("Saved")).toBeVisible());
   expect(complete).not.toHaveBeenCalled();
   expect(h.clear).toHaveBeenCalledWith("landed-original");
 });
@@ -2173,9 +2174,7 @@ describe("the plate hint (Lift4 (6))", () => {
       name: "Bench Press",
       weight: 62.5,
     });
-    expect(screen.getByText(/Per side:/)).toHaveTextContent(
-      "Per side: 20 + 1.25"
-    );
+    expect(screen.getByText(/a side/)).toHaveTextContent("20 + 1.25 kg a side");
     expect(screen.queryByText(/kg short/)).toBeNull();
   });
 
@@ -2185,9 +2184,62 @@ describe("the plate hint (Lift4 (6))", () => {
       name: "Bench Press",
       weight: 61,
     });
-    expect(screen.getByText(/Per side:/)).toHaveTextContent(
-      "Per side: 20 · 1 kg short"
+    expect(screen.getByText(/a side/)).toHaveTextContent(
+      "20 kg a side · 1 kg short"
     );
+  });
+
+  it("offers the plate calculator on a barbell only", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 60,
+    });
+    expect(
+      screen.getByRole("button", { name: "Plate calculator" })
+    ).toBeInTheDocument();
+    cleanup();
+    // A cable lift loads no plates: the calculator said "That's below the
+    // bar (20 kg)" for a Straight-Arm Pulldown.
+    openSession(writer(), vi.fn(), {
+      exerciseId: "straight-arm-pulldown",
+      name: "Straight-Arm Pulldown",
+      weight: 15,
+    });
+    expect(
+      screen.queryByRole("button", { name: "Plate calculator" })
+    ).toBeNull();
+    expect(screen.queryByText(/a side/)).toBeNull();
+  });
+});
+
+describe("the RPE row", () => {
+  it("is one row of nine named chips, with no label in front", () => {
+    openSession(writer(), vi.fn(), {
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      weight: 60,
+      sets: 1,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Show RPE" }));
+    const row = screen.getByRole("group", { name: "RPE for set 1" });
+    expect(row).toHaveClass("grid", "grid-cols-9");
+    expect(screen.queryByText("RPE:")).toBeNull();
+    const chips = within(row).getAllByRole("button");
+    expect(chips.map((chip) => chip.textContent)).toEqual([
+      "6",
+      "6.5",
+      "7",
+      "7.5",
+      "8",
+      "8.5",
+      "9",
+      "9.5",
+      "10",
+    ]);
+    for (const chip of chips) expect(chip).toHaveClass("min-h-11");
+    fireEvent.click(chips[4]);
+    expect(chips[4]).toHaveAttribute("aria-pressed", "true");
   });
 });
 
@@ -2203,7 +2255,7 @@ describe("the plan's lines caption the set table", () => {
       weight: 62.5,
     });
     const target = screen.getByText(/^Target:/);
-    const plates = screen.getByText(/Per side:/);
+    const plates = screen.getByText(/a side/);
     const note = screen.getByRole("textbox", { name: "Exercise notes" });
     expect(target.parentElement).toBe(plates.parentElement);
     expect(

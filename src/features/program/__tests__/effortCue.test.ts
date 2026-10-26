@@ -31,7 +31,7 @@ describe("effortCueFor (backlog #4 — effort cues as words)", () => {
     ).toBeNull();
     const cue = effortCueFor(ex("rope-tricep-pushdown", "arms_triceps"), last);
     expect(cue?.kind).toBe("push");
-    expect(cue?.text).toBe("Last set — OK to go to your limit.");
+    expect(cue?.text).toBe("Last set. OK to go to your limit.");
     expect(cue?.tooltip).toBeUndefined();
   });
 
@@ -85,9 +85,7 @@ describe("effortCueFor (backlog #4 — effort cues as words)", () => {
     ]) {
       const cue = effortCueFor(exercise, { isLastSet: true, deloadWeek: true });
       expect(cue?.kind).toBe("deload");
-      expect(cue?.text).toBe(
-        "Lighter week — keep everything comfortably easy."
-      );
+      expect(cue?.text).toBe("Lighter week. Keep everything comfortably easy.");
     }
   });
 });

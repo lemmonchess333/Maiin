@@ -2214,12 +2214,7 @@ function ProgramInner() {
                 sessionDayIndex,
                 storedDay.dayName
               )}
-              planContext={liftCompletionContext(
-                programState,
-                sessionDayIndex,
-                todayKey,
-                profile?.experience
-              )}
+              planContext={liftCompletionContext(programState, sessionDayIndex)}
               draftEpoch={programState.weekNumber}
               // Variant-scoped draft namespace (PROGRAM-ADAPT-01
               // follow-up): the draft identity fingerprints the
