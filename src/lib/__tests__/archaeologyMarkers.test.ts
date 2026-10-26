@@ -91,9 +91,11 @@ function countMarkers() {
  *  branches of FoodHeroCard and PerformanceHeroCard went, 733 after the
  *  lint pass rewrote the effects it touched, 730 once the Social pass
  *  deleted the solo-first feed's cards, 727 once Train's plateau review
- *  went with its detector. Lower it when you move narrative out; never
- *  raise it without the reason written here. */
-const MARKER_BASELINE = 727;
+ *  went with its detector, 723 once five comments from the 2026-10-25
+ *  audit fixes said what their code does rather than what it did. Lower
+ *  it when you move narrative out; never raise it without the reason
+ *  written here. */
+const MARKER_BASELINE = 723;
 
 describe("archaeology markers in non-test comments (ratchet)", () => {
   const { files, total, byFile, byKind } = countMarkers();

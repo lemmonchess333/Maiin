@@ -116,9 +116,9 @@ export function useSteps(): UseStepsResult {
       setFlags(merged);
       if (!ref) return;
       // Settled for the screen (settleWrite.ts): connecting reads today's
-      // steps from the phone after this, which needs no connection, and
-      // offline it used to wait for one first. A failed save went
-      // unsaid, and the next launch asked again.
+      // steps from the phone after this, which needs no connection, so
+      // offline it does not wait for one. A failed save says so, or the
+      // next launch would ask again with no reason given.
       try {
         await settleWrite(setDocGuarded(ref, merged, { merge: true }), {
           label: "steps.settings",

@@ -47,11 +47,11 @@
  * that applies the decrement, so a redelivery finds nothing and no-ops.
  *
  * FAILURE. Both reversals throw when any part of them failed, so the
- * delete trigger fails and failurePolicy delivers it again. They used to
- * catch and log, and with the source document already gone nothing ever
- * re-fired: a contended transaction left the deleted session's credit in
- * the challenge and the lifetime total for good. The marker makes the
- * retry apply only what did not land.
+ * delete trigger fails and failurePolicy delivers it again. The source
+ * document is already gone, so nothing else re-fires: a reversal that
+ * caught its own failure would leave the deleted session's credit in the
+ * challenge and the lifetime total for good. The marker makes the retry
+ * apply only what did not land.
  *
  * Deleting the marker is also what makes re-logging work: the ids are
  * deterministic for programme and routine sessions (`programme-{id}`,
