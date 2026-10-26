@@ -61,7 +61,7 @@ import rigatoniUrl from "@/assets/pro-demo/rigatoni.webp";
 
 /** What the scanner said about this photo. Where the photo came from and
  *  where these numbers must come from: src/assets/pro-demo/README.md. */
-export const SCAN_DEMO_RESULT = {
+const SCAN_DEMO_RESULT = {
   title: "Rigatoni with prawns",
   calories: 720,
   protein: 32,
