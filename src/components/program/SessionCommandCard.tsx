@@ -120,13 +120,16 @@ export default function SessionCommandCard({
             {/* The description and the dose take the foreground: on the
                 sport wash the grey misses AA. */}
             {description && (
-              <p className="mt-2 text-sm text-foreground">
+              <p className="mt-2 text-sm font-medium text-foreground">
                 <InlineNumerals>{description}</InlineNumerals>
               </p>
             )}
             {meta.length > 0 && (
               <div className="mt-2">
-                <MetaLine items={meta} className="text-foreground" />
+                <MetaLine
+                  items={meta}
+                  className="font-medium text-foreground"
+                />
               </div>
             )}
             {figure && onFigurePress && figureLabel && (

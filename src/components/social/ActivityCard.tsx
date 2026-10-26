@@ -458,7 +458,7 @@ function ActivityCard({
       {activityTitle && (
         <p
           dir="auto"
-          className="text-sm font-bold text-foreground mb-2 break-words"
+          className="text-base font-bold text-foreground mb-2 break-words"
         >
           {activityTitle}
         </p>

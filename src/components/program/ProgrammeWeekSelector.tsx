@@ -146,7 +146,7 @@ export default function ProgrammeWeekSelector({
             bColor = "transparent";
             glow = `0 0 0 4px ${SPORT}1A`;
             content = (
-              <span className="text-sm font-bold text-white">
+              <span className="text-sm font-semibold font-mono tabular-nums text-white">
                 {cell.center}
               </span>
             );
@@ -157,7 +157,10 @@ export default function ProgrammeWeekSelector({
             bColor = SPORT;
             glow = `0 0 0 4px ${SPORT}1A`;
             content = (
-              <span className="text-sm font-bold" style={{ color: SPORT_TEXT }}>
+              <span
+                className="text-sm font-semibold font-mono tabular-nums"
+                style={{ color: SPORT_TEXT }}
+              >
                 {cell.center}
               </span>
             );
@@ -167,7 +170,7 @@ export default function ProgrammeWeekSelector({
             bWidth = 0;
             bColor = "transparent";
             content = (
-              <span className="text-sm font-bold text-white">
+              <span className="text-sm font-semibold font-mono tabular-nums text-white">
                 {cell.center}
               </span>
             );
@@ -180,7 +183,7 @@ export default function ProgrammeWeekSelector({
             bColor = "hsl(var(--border))";
             content = (
               <span
-                className="text-sm font-bold text-muted-foreground"
+                className="text-sm font-semibold font-mono tabular-nums text-muted-foreground"
                 style={isRest ? { opacity: 0.55 } : undefined}
               >
                 {cell.center}
