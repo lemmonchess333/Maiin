@@ -220,7 +220,7 @@ function PIGauge({
       {/* Score */}
       <div className="text-center -mt-2">
         <p
-          className="text-4xl font-extrabold font-mono tabular-nums"
+          className="text-4xl font-extrabold font-figure tabular-nums"
           style={{ color }}
         >
           {Math.round(clamped)}

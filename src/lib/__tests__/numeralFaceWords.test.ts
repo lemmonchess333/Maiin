@@ -6,9 +6,8 @@ import { fileURLToPath } from "node:url";
 /**
  * `font-mono` means NUMBERS here, not a typeface.
  *
- * Archivo replaced JetBrains Mono in the brand bake-off, so the utility is
- * proportional with tabular figures forced on — it buys digit alignment and
- * nothing else. On a word it buys nothing and quietly says "this is a
+ * It is the inline number tier: the text face with tabular figures forced
+ * on (DESIGN_GUIDE §4), so it buys digit alignment and nothing else. On a word it buys nothing and quietly says "this is a
  * readout" about something that is not one. CLAUDE.md scopes the treatment
  * to numeric displays, and the Analytics summary card's own test asserted it
  * for its column labels ("NOT font-mono: this is a word, and that
@@ -46,7 +45,7 @@ function tsxFiles(dir: string, out: string[] = []): string[] {
  *  filter can never fire, and a reader cannot tell whether the rule is
  *  "no words" or "no digits" — a dead branch dressed as a decision. */
 const NUMERAL_FACE_LITERAL =
-  /className="[^"]*\bfont-mono\b[^"]*"[^>]*>\s*([A-Za-z][A-Za-z0-9 /·:.,—-]{0,24}?)\s*</g;
+  /className="[^"]*\bfont-(?:mono|figure)\b[^"]*"[^>]*>\s*([A-Za-z][A-Za-z0-9 /·:.,—-]{0,24}?)\s*</g;
 
 function offenders(): string[] {
   const found: string[] = [];

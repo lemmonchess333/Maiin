@@ -277,7 +277,7 @@ export default function WeightLogSheet({
       <div className="min-h-0 overflow-y-auto px-4 pb-4 pt-3">
         <div className="flex items-baseline justify-center gap-1 py-2">
           <div
-            className="min-w-0 rounded-xl text-display font-mono font-extrabold tabular-nums"
+            className="min-w-0 rounded-xl text-display font-figure font-extrabold tabular-nums"
             style={{
               width: `${Math.max(3, Math.min(7, value.length)) + 0.5}ch`,
             }}
@@ -289,7 +289,7 @@ export default function WeightLogSheet({
               id="weight-value"
               inputMode="decimal"
               placeholder="—"
-              className="ds-input h-16 min-w-0 px-1 py-0 text-center text-display font-extrabold font-mono tabular-nums"
+              className="ds-input h-16 min-w-0 px-1 py-0 text-center text-display font-extrabold font-figure tabular-nums"
               style={readoutStyle}
               value={value}
               disabled={saving}
@@ -331,7 +331,7 @@ export default function WeightLogSheet({
           </Select>
           {selectedUnit === "st" && (
             <div
-              className="min-w-0 rounded-xl text-display font-mono font-extrabold tabular-nums"
+              className="min-w-0 rounded-xl text-display font-figure font-extrabold tabular-nums"
               style={{
                 width: `${Math.max(3, Math.min(5, pounds.length)) + 0.5}ch`,
               }}
@@ -341,7 +341,7 @@ export default function WeightLogSheet({
               </label>
               <input
                 id="weight-pounds"
-                className="ds-input h-16 min-w-0 px-1 py-0 text-center text-display font-extrabold font-mono tabular-nums"
+                className="ds-input h-16 min-w-0 px-1 py-0 text-center text-display font-extrabold font-figure tabular-nums"
                 style={readoutStyle}
                 inputMode="decimal"
                 value={pounds}

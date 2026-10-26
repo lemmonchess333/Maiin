@@ -191,7 +191,7 @@ export default function IntervalStepShell({
             </p>
           )}
           <p
-            className={`${manualDistance && isDistanceBased ? "text-lg" : "text-2xl"} font-extrabold font-mono tabular-nums text-white shrink-0 leading-none`}
+            className={`${manualDistance && isDistanceBased ? "text-lg" : "text-2xl"} font-extrabold font-figure tabular-nums text-white shrink-0 leading-none`}
           >
             {isDistanceBased
               ? manualDistance

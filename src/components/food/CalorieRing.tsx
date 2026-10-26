@@ -215,7 +215,7 @@ export default function CalorieRing({
                   like any other number. */}
               <p
                 className={cn(
-                  "font-extrabold font-mono tabular-nums leading-none tracking-tight text-foreground",
+                  "font-extrabold font-figure tabular-nums leading-none tracking-tight text-foreground",
                   compact ? "text-2xl" : "text-4xl"
                 )}
               >

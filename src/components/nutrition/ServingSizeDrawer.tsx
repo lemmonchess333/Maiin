@@ -132,7 +132,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             style={{ backgroundColor: `${accent.nutrition}1A` }}
           >
             <p
-              className="text-lg font-bold font-mono tabular-nums"
+              className="text-lg font-bold font-figure tabular-nums"
               style={{ color: macroText.nutrition }}
             >
               {Math.round(food.calories * previewServings)}
@@ -146,7 +146,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             style={{ backgroundColor: `${accent.protein}1A` }}
           >
             <p
-              className="text-lg font-bold font-mono tabular-nums"
+              className="text-lg font-bold font-figure tabular-nums"
               style={{ color: macroText.protein }}
             >
               {Math.round(food.protein * previewServings)}g
@@ -160,7 +160,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             style={{ backgroundColor: `${accent.carbs}1A` }}
           >
             <p
-              className="text-lg font-bold font-mono tabular-nums"
+              className="text-lg font-bold font-figure tabular-nums"
               style={{ color: macroText.carbs }}
             >
               {Math.round(food.carbs * previewServings)}g
@@ -174,7 +174,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             style={{ backgroundColor: `${accent.fat}1A` }}
           >
             <p
-              className="text-lg font-bold font-mono tabular-nums"
+              className="text-lg font-bold font-figure tabular-nums"
               style={{ color: macroText.fat }}
             >
               {Math.round(food.fat * previewServings)}g
@@ -205,7 +205,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
               inputMode="decimal"
               value={qty}
               onChange={(e) => setQty(e.target.value)}
-              className="w-20 min-h-11 rounded-lg bg-muted text-center text-2xl font-bold font-mono tabular-nums text-foreground"
+              className="w-20 min-h-11 rounded-lg bg-muted text-center text-2xl font-bold font-figure tabular-nums text-foreground"
             />
             <p className="text-xs text-muted-foreground">
               {perHundred ? "grams" : "servings"}

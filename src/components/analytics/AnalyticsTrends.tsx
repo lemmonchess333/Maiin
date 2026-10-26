@@ -73,7 +73,7 @@ export default function AnalyticsTrends({
             <span className="ml-auto flex min-w-min items-center gap-3">
               {row.value && (
                 <span className="text-right">
-                  <span className="text-lg font-bold font-mono tabular-nums text-foreground">
+                  <span className="text-lg font-bold font-figure tabular-nums text-foreground">
                     {row.value}
                   </span>
                   {row.unit && (

@@ -56,7 +56,7 @@ export function TrendWeight() {
         {hideNumber ? (
           <p className="text-lg font-bold text-foreground">First weigh-in</p>
         ) : (
-          <p className="text-lg font-bold text-foreground font-mono tabular-nums">
+          <p className="text-lg font-bold text-foreground font-figure tabular-nums">
             {convert(entry.weight)} {unit}
           </p>
         )}

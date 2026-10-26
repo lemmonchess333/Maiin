@@ -46,7 +46,8 @@ describe("StatCard value treatment", () => {
     render(<StatCard label="Volume" value="20,000" />);
     const el = valueEl("20,000");
     expect(el).toHaveClass("text-3xl");
-    expect(el).toHaveClass("font-mono");
+    // A 30px headline is a stand-alone figure: Archivo (DESIGN_GUIDE §4).
+    expect(el).toHaveClass("font-figure");
     expect(el).toHaveClass("tabular-nums");
     expect(el).toHaveClass("whitespace-nowrap");
   });
@@ -58,6 +59,7 @@ describe("StatCard value treatment", () => {
     const el = valueEl("Establishing");
     expect(el).toHaveClass("text-xl");
     expect(el).not.toHaveClass("font-mono");
+    expect(el).not.toHaveClass("font-figure");
     expect(el).not.toHaveClass("tabular-nums");
     expect(el).toHaveClass("break-words");
     expect(el).not.toHaveClass("truncate");

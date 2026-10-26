@@ -453,7 +453,7 @@ export default function RunDetail() {
               <p className="text-sm font-bold text-running-strong">
                 {runTitle(kind)}
               </p>
-              <h1 className="mt-1 text-display font-extrabold font-mono tabular-nums leading-none text-foreground">
+              <h1 className="mt-1 text-display font-extrabold font-figure tabular-nums leading-none text-foreground">
                 {distanceValue(run.distance, unit, 2)}{" "}
                 <span className="font-sans text-h3 font-bold text-muted-foreground">
                   {distanceUnitLabel(unit)}

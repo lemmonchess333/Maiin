@@ -67,7 +67,7 @@ function StatRow({
         <p
           className={cn(
             "text-display font-extrabold leading-none text-foreground",
-            numeral && "font-mono tabular-nums"
+            numeral && "font-figure tabular-nums"
           )}
         >
           {value}
@@ -350,14 +350,14 @@ function BestMoment({
           {best.exerciseName}
         </p>
         <p className="text-foreground">
-          <span className="text-display font-extrabold font-mono tabular-nums">
+          <span className="text-display font-extrabold font-figure tabular-nums">
             {loadIn(best.weight, liftUnit)}
           </span>
           <span className="text-xl font-semibold text-muted-foreground">
             {" "}
             {liftUnitLabel(liftUnit)} ×{" "}
           </span>
-          <span className="text-display font-extrabold font-mono tabular-nums">
+          <span className="text-display font-extrabold font-figure tabular-nums">
             {best.reps}
           </span>
         </p>

@@ -329,7 +329,7 @@ export default function SessionCompleteScreen({
                     <p className="truncate text-sm font-semibold text-foreground">
                       {name}
                     </p>
-                    <p className="text-lg font-extrabold font-mono tabular-nums text-achievement-strong">
+                    <p className="text-lg font-extrabold font-figure tabular-nums text-achievement-strong">
                       {formatLoad(result.weight, liftUnit)} × {result.reps}
                     </p>
                     {result.bestBeforeSession && (

@@ -1292,7 +1292,7 @@ export default function RunSummary() {
                 said, beside a pace that also ignored it. It counts up as
                 the finish screen's figures do on a lift (StatFigure's
                 0.6s); a corrected distance counts from the one shown. */}
-            <p className="mt-1 text-display font-extrabold font-mono tabular-nums leading-none text-foreground">
+            <p className="mt-1 text-display font-extrabold font-figure tabular-nums leading-none text-foreground">
               <AnimatedNumber
                 value={distance}
                 format={(metres) => distanceValue(metres, unit, 2)}
@@ -1581,7 +1581,7 @@ export default function RunSummary() {
               other run goes from the headline to the stats card. */}
           {primaryStat && (
             <div className="mx-4 mb-3 p-4 rounded-2xl text-center card-shadow bg-running/8">
-              <p className="text-3xl font-extrabold font-mono tabular-nums leading-tight text-running">
+              <p className="text-3xl font-extrabold font-figure tabular-nums leading-tight text-running">
                 {primaryStat.value}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
