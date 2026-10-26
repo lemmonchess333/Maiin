@@ -91,7 +91,11 @@ import {
   rollLiftWeeks,
   rollRunWeeks,
 } from "./weekRollover";
-import { loadContextFrom, weightAfterExerciseSwap } from "./startingLoads";
+import {
+  addedExerciseWeight,
+  loadContextFrom,
+  weightAfterExerciseSwap,
+} from "./startingLoads";
 import { showsRpeByDefault, toExperience } from "./experienceModel";
 import { sessionMinutesFor } from "./sessionFit";
 import { logger } from "@/lib/logger";
@@ -2668,15 +2672,15 @@ export function useProgram() {
   /**
    * Append exercises to a day, through the boundary.
    *
-   * Equivalent because both sides start an added movement UNCALIBRATED: the
-   * reducer's own comment says it matches "the client add default (3×10×0)",
-   * and it does. That is what separates this from `replaceExercise`, where the
-   * client calibrates against the profile and the server deliberately does not
-   * — migrating that one would regress every swap to 0 kg.
+   * An added lift starts at a first weight, as Replace's does: the client
+   * seeds it against the profile (`addedExerciseWeight`) and sends it, and
+   * the reducer takes `weight` as sent, defaulting to 0 only when it is
+   * absent. A loaded lift at 0 kg can't be ticked, so an unseeded add would
+   * be a lift the person has to type a weight into before the first set.
    *
    * The server derives the name and category from the catalog rather than
    * trusting a client-supplied exercise object, which is the boundary's whole
-   * security stance, so only ids cross the wire.
+   * security stance, so only ids and the weight cross the wire.
    */
   const addExercisesToDayCmd = useCallback(
     async (dayIndex: number, exerciseIds: string[]): Promise<boolean> => {
@@ -2684,12 +2688,19 @@ export function useProgram() {
       const commandId = generateInstanceId();
       const precondition = workoutDayPrecondition(programState, dayIndex);
       if (!precondition) return false;
+      const ctx = loadContextFrom(profile);
+      const weights = exerciseIds.map((exerciseId) =>
+        addedExerciseWeight(exerciseId, ctx, repUnitForExerciseId(exerciseId))
+      );
       const outcome = await runProgramCommand(
         {
           kind: "addExercises",
           commandId,
           ...precondition,
-          exercises: exerciseIds.map((exerciseId) => ({ exerciseId })),
+          exercises: exerciseIds.map((exerciseId, n) => ({
+            exerciseId,
+            weight: weights[n],
+          })),
         },
         (state) => {
           const added = state.workouts.map((d, i) =>
@@ -2709,7 +2720,7 @@ export function useProgram() {
                         instanceId: `cmd-${commandId}-${n}`,
                         sets: 3,
                         reps: repUnit === "seconds" ? 30 : 10,
-                        weight: 0,
+                        weight: weights[n],
                         ...(repUnit !== undefined ? { repUnit } : {}),
                       });
                     }),

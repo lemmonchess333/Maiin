@@ -13,7 +13,7 @@ export default function ShoesSection({
     <AccordionSection
       inline={inline}
       icon={<Footprints className="size-5 text-primary" />}
-      title="My shoes"
+      title="Shoes"
       subtitle="Track mileage, get replacement alerts"
     >
       <ShoesManager />

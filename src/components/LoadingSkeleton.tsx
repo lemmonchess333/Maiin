@@ -239,6 +239,41 @@ export function PerformanceCardSkeleton() {
 }
 
 /**
+ * Social's Circles card while the list of Circles loads: an icon tile, a
+ * title, two lines of words and two buttons, the card an account with no
+ * Circle meets (every account starts there). The list arrives after the
+ * rest of the Together tab's reads, seconds after the heading on a phone,
+ * and a bare block in the page's grey reads as an empty box for all that
+ * time. The buttons sit side by side while they fit and stack on a narrow
+ * card, as the real ones do.
+ */
+export function CirclesCardSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-label="Loading"
+      data-skeleton="circles-card"
+      className="@container rounded-2xl bg-card p-4 space-y-3"
+    >
+      <div className="flex items-start gap-3">
+        <Bar className="size-9 shrink-0 rounded-xl" />
+        <div className="min-w-0 flex-1">
+          <LineBar text="text-sm font-semibold" className="w-2/5" />
+          <div className="mt-1">
+            <LineBar text="text-xs" className="w-full" />
+            <LineBar text="text-xs" className="w-3/4" />
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-2 @max-[18em]:flex-col">
+        <Bar className="h-[44px] flex-1 rounded-xl" />
+        <Bar className="h-[44px] flex-1 rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+/**
  * The range card's shape while the range loads (Pol1): its title and the
  * line under it, three figures with their change, the bar chart at its
  * own proportions, its dates and its key, so the chart arriving moves

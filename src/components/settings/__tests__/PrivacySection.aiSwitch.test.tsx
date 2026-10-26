@@ -70,7 +70,7 @@ describe("PrivacySection — the AI food analysis switch", () => {
     renderWith(undefined);
     expect(
       screen.getByText(
-        /Sends the meal photos you take and the meals you type to Google's Gemini AI/
+        /Sends your meal photos and typed meals to Google's Gemini AI/
       )
     ).toBeTruthy();
   });

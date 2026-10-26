@@ -494,4 +494,87 @@ describe("WaterCard — an empty day's tile", () => {
     render(<WaterCard ml={0} targetMl={2500} onLog={vi.fn()} />);
     expect(screen.queryByRole("button", { name: "Log 250 ml" })).toBeNull();
   });
+
+  it("does not show the plus's serving while the size buttons name it", () => {
+    /* "Tap + for 500 ml" sat beside a + and two buttons reading 250 ml
+       and 500 ml: the same amounts said three times. */
+    render(
+      <WaterCard
+        compact
+        ml={0}
+        targetMl={2500}
+        servingMl={500}
+        onLog={vi.fn()}
+      />
+    );
+    expect(
+      screen.getByRole("button", { name: "Add 500 ml" })
+    ).toBeInTheDocument();
+    /* The line keeps its place, unseen and unread, wrapped as it would
+       be, so the tile is exactly as tall as before at every text size.
+       On a narrow phone the two buttons stack and this tile sets the
+       row's height, so a missing line shrank the row and the glass. */
+    const line = screen.getByText("Tap + for 500 ml");
+    expect(line).toHaveClass("invisible", "text-micro", "mt-1");
+    expect(line).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("shows the serving again from the first drink, when the size buttons go", () => {
+    const { rerender } = render(
+      <WaterCard
+        compact
+        ml={0}
+        targetMl={2500}
+        servingMl={500}
+        onLog={vi.fn()}
+      />
+    );
+    expect(screen.getByText("Tap + for 500 ml")).toHaveClass("invisible");
+    rerender(
+      <WaterCard
+        compact
+        ml={500}
+        targetMl={2500}
+        servingMl={500}
+        onLog={vi.fn()}
+      />
+    );
+    const line = screen.getByText("Tap + for 500 ml");
+    expect(line).not.toHaveClass("invisible");
+    expect(line).not.toHaveAttribute("aria-hidden");
+    expect(screen.queryByRole("button", { name: "Log 500 ml" })).toBeNull();
+  });
+});
+
+/* Under 9em of tile the plus drops to the foot, where an empty day's size
+   buttons sit. On an empty day it gives way there rather than cover them;
+   once there is water the buttons are gone and the plus stays. */
+describe("WaterCard tile — the plus on a narrow empty day", () => {
+  it("gives way to the size buttons only while the day is empty", () => {
+    const { unmount } = render(
+      <WaterCard
+        compact
+        ml={0}
+        targetMl={2000}
+        servingMl={500}
+        onLog={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("button", { name: "Add 500 ml" })).toHaveClass(
+      "@max-[9em]:hidden"
+    );
+    unmount();
+    render(
+      <WaterCard
+        compact
+        ml={500}
+        targetMl={2000}
+        servingMl={500}
+        onLog={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("button", { name: "Add 500 ml" })).not.toHaveClass(
+      "@max-[9em]:hidden"
+    );
+  });
 });

@@ -60,18 +60,23 @@ function renderRow(people = PEOPLE) {
 }
 
 describe("PeopleToFollowRow", () => {
-  it("says why each person is suggested, as People search does", () => {
+  it("says why a person is suggested when there is a reason, as People search does", () => {
     renderRow();
     const rows = screen.getAllByRole("listitem");
     expect(within(rows[0]).getByText("Priya Shah")).toBeInTheDocument();
     expect(
       within(rows[0]).getByText("Also in Women's Running")
     ).toBeInTheDocument();
-    expect(within(rows[1]).getByText("Recent post")).toBeInTheDocument();
     expect(within(rows[0]).getByRole("link")).toHaveAttribute(
       "href",
       "/user/priya"
     );
+    // A recent poster has no reason to give, so their card has no line
+    // under the name: the link holds the avatar and the name alone.
+    const tom = within(rows[1]).getByRole("link");
+    expect(within(tom).getByText("Tom Okafor")).toBeInTheDocument();
+    expect(tom.textContent).toBe("Tom Okafor");
+    expect(within(rows[1]).queryByText("Recent post")).toBeNull();
   });
 
   it("a follow takes the person out of the row and is counted", () => {
@@ -107,5 +112,15 @@ describe("PeopleToFollowRow", () => {
         sharedSpaceId: "no-such-space",
       })
     ).toBe("Also in a space you joined");
+  });
+
+  it("gives no reason for a recent poster, or a shared space it cannot name", () => {
+    expect(
+      suggestionReason({ uid: "x", displayName: "X", reason: "recent_post" })
+    ).toBeNull();
+    // A shared-space suggestion with no space id has no space to name.
+    expect(
+      suggestionReason({ uid: "x", displayName: "X", reason: "shared_space" })
+    ).toBeNull();
   });
 });

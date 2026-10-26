@@ -59,23 +59,48 @@ describe("PageShell header", () => {
     expect(screen.getByRole("button", { name: "More" })).toBeInTheDocument();
   });
 
-  it("reserves two subtitle lines only when asked", () => {
-    // Train's subtitle is tab-aware and changes length; without the
-    // reserve everything under it moved ~12px on Lift↔Run.
-    const { rerender } = render(
-      <PageShell title="Train" subtitle="one line">
+  it("wraps the subtitle rather than cutting it off", () => {
+    // Train's five-day split ran "Push / Pull / Legs + Upper / Lower · 5…"
+    // on a 393px phone, clamped to one line.
+    render(
+      <PageShell title="Train" subtitle="Push / Pull / Legs + Upper / Lower">
         x
       </PageShell>
     );
-    expect(screen.getByText("one line").className).not.toMatch(/min-h-/);
-    rerender(
-      <PageShell title="Train" subtitle="one line" subtitleReserveLines={2}>
+    const p = screen.getByText("Push / Pull / Legs + Upper / Lower");
+    expect(p.className).not.toMatch(/line-clamp|truncate|min-h-/);
+  });
+
+  it("holds the height of the longest line a switching subtitle can show", () => {
+    // Train's subtitle is tab-aware and changes length. The other tab's
+    // line sits in the same grid cell, unseen and unread, so the cell is
+    // as tall as the longer of the two and Lift↔Run moves nothing below.
+    render(
+      <PageShell
+        title="Train"
+        subtitle="Free running · Start whenever"
+        subtitleAlternates={[
+          "Push / Pull / Legs + Upper / Lower · 5 days/week",
+        ]}
+      >
         x
       </PageShell>
     );
-    const p = screen.getByText("one line");
-    expect(p.className).toMatch(/min-h-\[2.5rem\]/);
-    expect(p.className).toMatch(/line-clamp-2/);
+    const shown = screen.getByText("Free running · Start whenever");
+    const held = screen.getByText(
+      "Push / Pull / Legs + Upper / Lower · 5 days/week"
+    );
+    expect(shown.parentElement).toBe(held.parentElement);
+    expect(shown.parentElement!.className).toMatch(/\bgrid\b/);
+    for (const line of [shown, held]) {
+      expect(line.className).toMatch(/\bcol-start-1\b/);
+      expect(line.className).toMatch(/\brow-start-1\b/);
+    }
+    expect(shown.className).not.toMatch(/\binvisible\b/);
+    expect(shown).not.toHaveAttribute("aria-hidden");
+    expect(held.className).toMatch(/\binvisible\b/);
+    expect(held).toHaveAttribute("aria-hidden", "true");
+    expect(shown.parentElement!.className).not.toMatch(/line-clamp|truncate/);
   });
 
   it("draws every header the same plain way", () => {

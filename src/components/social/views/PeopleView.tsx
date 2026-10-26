@@ -429,9 +429,12 @@ export default function PeopleView({
                       <FollowsYouBadge uid={p.uid} />
                       <PartnerReadyBadge uid={p.uid} />
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {suggestionReason(p)}
-                    </p>
+                    {/* No reason, no line: the name sits alone. */}
+                    {suggestionReason(p) && (
+                      <p className="text-sm text-muted-foreground">
+                        {suggestionReason(p)}
+                      </p>
+                    )}
                   </div>
                   <FollowButton
                     targetUid={p.uid}

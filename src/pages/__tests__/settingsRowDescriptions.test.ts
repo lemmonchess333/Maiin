@@ -23,7 +23,7 @@
  * register, and those are long by a wide margin, not by two characters.
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
@@ -64,5 +64,33 @@ describe("Settings row descriptions", () => {
         `like its neighbours, not a sentence — the row's title already ` +
         `carries the subject.`
     ).toEqual([]);
+  });
+});
+
+describe("Settings row names", () => {
+  it("each row opens a page with the row's own name", () => {
+    // "Workouts" opened "Workout preferences" and "Shoes" opened "My
+    // shoes": two names for one place.
+    const index = readFileSync(
+      resolve(repoRoot, "src/pages/SettingsIndex.tsx"),
+      "utf8"
+    );
+    const labels = [...index.matchAll(/^\s*label: "([^"]*)",/gm)].map(
+      (m) => m[1]
+    );
+    expect(labels.length).toBeGreaterThanOrEqual(12);
+    const dir = resolve(repoRoot, "src/pages/settings");
+    const titles = new Set(
+      readdirSync(dir)
+        .filter((f) => f.endsWith(".tsx"))
+        .flatMap((f) =>
+          [
+            ...readFileSync(resolve(dir, f), "utf8").matchAll(
+              /title="([^"]*)"/g
+            ),
+          ].map((m) => m[1])
+        )
+    );
+    expect(labels.filter((label) => !titles.has(label))).toEqual([]);
   });
 });

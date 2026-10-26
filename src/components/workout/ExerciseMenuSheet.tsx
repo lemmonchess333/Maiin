@@ -36,57 +36,26 @@ export default function ExerciseMenuSheet({
   onSkip,
   onUnskip,
 }: ExerciseMenuSheetProps) {
-  // The sheet closes itself once a choice resolves (`ChoiceSheet`).
-  const choice = (
-    id: string,
-    label: string,
-    sublabel: string,
-    run: () => void
-  ): Choice => ({
+  // The sheet closes itself once a choice resolves (`ChoiceSheet`). Each
+  // label says it is for today, so no choice carries a second line.
+  const choice = (id: string, label: string, run: () => void): Choice => ({
     id,
     label,
-    sublabel,
     variant: "secondary",
     onSelect: async () => run(),
   });
   const choices: Choice[] = skipped
-    ? [
-        choice(
-          "unskip",
-          "Don't skip",
-          "Bring it back into today's session",
-          onUnskip
-        ),
-      ]
+    ? [choice("unskip", "Don't skip", onUnskip)]
     : [
         ...(nothingDone
           ? [
-              choice(
-                "swap",
-                "Swap for today",
-                "Do another exercise in its place",
-                onSwap
-              ),
+              choice("swap", "Swap for today", onSwap),
               ...(swappedFor
-                ? [
-                    choice(
-                      "swap-back",
-                      `Back to ${swappedFor}`,
-                      "Do the planned exercise after all",
-                      onSwapBack
-                    ),
-                  ]
+                ? [choice("swap-back", `Back to ${swappedFor}`, onSwapBack)]
                 : []),
             ]
           : []),
-        choice(
-          "skip",
-          "Skip",
-          nothingDone
-            ? "Leave it out of today's session"
-            : "Leave the rest out of today's session",
-          onSkip
-        ),
+        choice("skip", "Skip today", onSkip),
       ];
 
   return (
@@ -94,7 +63,6 @@ export default function ExerciseMenuSheet({
       open={open}
       onClose={onClose}
       title={exerciseName}
-      description="Just for today's session"
       choices={choices}
       logTag="exerciseMenu"
     />
