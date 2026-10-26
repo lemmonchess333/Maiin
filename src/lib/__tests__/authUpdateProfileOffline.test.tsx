@@ -104,6 +104,7 @@ function Probe() {
     <div
       data-testid="s"
       data-max-hr={String(auth.profile?.maxHeartRate ?? "none")}
+      data-ready={auth.profile ? "yes" : "no"}
     />
   );
 }
@@ -130,6 +131,11 @@ beforeEach(async () => {
     H.authCb?.(H.mockAuth.currentUser);
   });
   await waitFor(() => expect(H.update).not.toBeNull());
+  /* The profile's first read lands after updateProfile exists. A test that
+     updated before it would see the read replace the change. */
+  await waitFor(() =>
+    expect(screen.getByTestId("s").getAttribute("data-ready")).toBe("yes")
+  );
 });
 afterEach(() => {
   cleanup();
