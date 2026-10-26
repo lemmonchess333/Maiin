@@ -1271,6 +1271,7 @@ export function upcomingRaceSpaceDefs(todayKey: string): SpaceDef[] {
   return raceSpaceDefs().filter((d) => (d.event?.dateKey ?? "") >= todayKey);
 }
 
-/** Density gate (Spc1c, Soc8 idiom): member counts below this render
- *  as "New space" instead of a shame-count. */
+/** Density gate (Spc1c, Soc8 idiom): a member count below this is never
+ *  shown. The directory card shows nothing in its place; the Space page's
+ *  hero says "New space" when it has nothing else to say. */
 export const SPACE_MEMBER_COUNT_MIN_VISIBLE = 5;

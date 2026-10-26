@@ -1326,7 +1326,7 @@ export default function RunSummary() {
                 the same time and never wired, so only lifters got it —
                 an odd gap in an app whose identity is hybrid. Lives in
                 the VALID branch, so a sub-threshold GPS glitch never
-                claims "4 Great Wall sections". */}
+                claims "40 Olympic pool lengths". */}
             {funComparison && (
               <p className="mt-2 text-sm text-muted-foreground">
                 {funComparison}

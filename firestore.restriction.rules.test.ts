@@ -37,6 +37,7 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
+  Timestamp,
   type Firestore,
 } from "firebase/firestore";
 import { emptyStreakState } from "./src/features/partnerStreak/streakEngine";
@@ -183,14 +184,14 @@ suite("firestore.rules — a restricted account", () => {
       name: "following someone",
       write: (uid, c) =>
         setDoc(doc(c, `following/${uid}/users/${OTHER}`), {
-          createdAt: serverTimestamp(),
+          followedAt: Timestamp.now(),
         }),
     },
     {
       name: "the follower edge",
       write: (uid, c) =>
         setDoc(doc(c, `followers/${OTHER}/users/${uid}`), {
-          createdAt: serverTimestamp(),
+          followedAt: Timestamp.now(),
         }),
     },
     {

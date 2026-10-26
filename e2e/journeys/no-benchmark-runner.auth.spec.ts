@@ -197,12 +197,18 @@ test("a runner with no benchmark, through every surface that explains a planned 
 
     await expectTrainExplains(page, quality!);
 
-    // The Run page's launch card, opened from Train's card (Home's Start
-    // goes straight into the run): the session by name and its one feel
-    // line, where a pace would be with one.
-    await page
-      .getByRole("button", { name: TRAIN.viewRun, exact: true })
-      .click();
+    // Train's card starts today's run as Home's Start does, straight into
+    // the run (`TRAIN.startRun`); "View run" opens the run's own card for
+    // a day ahead.
+    await expect(
+      page.getByRole("button", { name: TRAIN.startRun, exact: true })
+    ).toBeVisible();
+    // The Run page's launch card, at the address "View run" opens: the
+    // session by name and its one feel line, where a pace would be with
+    // one.
+    await page.goto(
+      `run?template=${session.id}&scheduledRunId=${encodeURIComponent(quality!.id!)}`
+    );
     await expect(
       page.getByRole("heading", {
         name: runSessionName(session, null, "km"),

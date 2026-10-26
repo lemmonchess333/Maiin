@@ -1039,8 +1039,8 @@ need a phone and a deploy.
 
 - [ ] **Maps on the phone.** A live run, a saved run (RunDetail), the
       finish screen and the route planner draw OpenFreeMap's basemap in
-      both themes. The credit shows as each map opens and folds to its
-      (i) after five seconds; the (i) opens it again, and its links open
+      both themes. The credit starts folded to its (i) on each map; the
+      (i) opens it, a tap on the map folds it again, and its links open
       outside the app. On the live run it sits top-right, clear of the
       GPS pill and the sheet; on RunDetail bottom-left, clear of Replay.
 - [ ] **Weather after the deploy.** `getCurrentWeather` is a new function
@@ -2672,6 +2672,32 @@ shared (pinned by the "profile:" cases in `firestore.rules.test.ts`).
       mode. It says "Couldn't load comments" with Try again, never "No
       comments yet" (which it also used to show while comments loaded).
 
+## The Together copy pass (owner, 2026-10-26)
+
+Affects: `ChallengeList`, `ChallengeCard`, the new `ChallengeRow`,
+`challengeEditions.ts`, `challengeFormat.ts` (`challengeGoal`),
+`CollectivePulse`, `SpacesDirectory`, and the descriptions in
+`functions/lib/challengeDefs.js` (deploys with the functions; the daily
+`rolloverChallenges` rewrites a running challenge's description).
+
+The intro paragraph went; joining confirms the edition and when the next
+one opens. Time left is said once for the month. Cards say their goal
+from the target in the reader's units, the "See N more" list is compact
+rows, no founding or "New space" line stands in for a count, the
+collective card shows "0 of 1,000 km", and an unjoined Weekly Warrior in
+its last day offers no Join.
+
+- [ ] **The new words reach the running challenges.** After the functions
+      deploy and the next 00:05 UTC `rolloverChallenges`, read
+      `challenges/strength-monthly-<YYYY-MM-01>`: its description is
+      "Everything you lift this month adds up.", and
+      `global-monthly-<YYYY-MM-01>`'s is "Running and lifting both count,
+      toward one score." (The cards show the goal either way.)
+- [ ] **On a phone:** join a monthly challenge from the "See N more" rows
+      and read the toast ("You're in for … opens on 1 …"); on a Sunday,
+      with Weekly Warrior not joined, the card says "Ends tonight. The
+      next one starts Monday." and offers no Join.
+
 ## The Settings pass (owner, 2026-10-01)
 
 Affects: `SettingsIndex.tsx`, `settings/SettingsList.tsx` (new),
@@ -2895,6 +2921,25 @@ Rollout sequence (operator, not agent):
 - [ ] If verified % is low and the cause isn't obvious, query Cloud Logging: `resource.type="cloud_function" jsonPayload.appCheck.status=("MISSING" OR "INVALID")` to see exactly which callables would reject and which uids are missing tokens. Usual culprits: ad-blockers killing reCAPTCHA (rare, swallowed) or native iOS (all `MISSING` until the Capacitor App Check plugin is wired).
 - [ ] Flip enforcement per-callable in `functions/index.js` by adding `.runWith({ enforceAppCheck: true })`. Start with low-risk endpoints that the client **actually calls** — `sendTestPush`, `backfillMyActivityCategories`. (This line named `askGeminiText` until 2026-07-26; it had no client caller, so flipping it would have produced no telemetry and no rejection signal. It has since been retired. `docs/app-check-rollout.md` carries the full tier table and the traffic check.) Keep destructive ones (`deleteMyAccount`, `verifyApplePurchase`) until last. Don't bulk-flip.
 
+## Follow edges, photo URLs and profile fields, held by the rules (2026-10-25)
+
+Rules-tested on the emulator; only the deployed rules and real profiles
+show whether anything already stored falls outside them.
+
+- [ ] **Every stored photo URL is in this project's bucket.** The photo
+      gate (`isAllowedPhotoUrl`, and `functions/lib/publicPhotoUrl.js` on the
+      server) now takes a Storage URL only from
+      `adaptive-fitness-af8bb.firebasestorage.app` or `.appspot.com`. A
+      profile whose stored `photoURL` names another bucket could not save
+      any profile change until its photo is replaced. Before the release,
+      in the Firestore console query `users/*/public/profile` (a collection
+      group on `public`) for `photoURL` values starting
+      `https://firebasestorage.googleapis.com/` and check each names this
+      project's bucket. Passing: none names another.
+- [ ] **Following still works after the release.** Follow an account that
+      accepts followers, and accept a request on one that approves them.
+      Passing: both land, and the accepted follower is told.
+
 ## Signing out clears the device's copy; sign-in avatars draw (2026-10-25)
 
 Unit-tested with the Firestore fake and jsdom, which have no IndexedDB, no
@@ -2913,3 +2958,19 @@ reload and no CSP; only a browser and the phone show them doing their part.
       build and on the phone, with no photo uploaded. Passing: the feed,
       the profile and a comment show the Google photo, not an initial, and
       the console shows no CSP refusal for `lh3.googleusercontent.com`.
+
+## Saving offline counts as saved (2026-10-25)
+
+The SDK keeps an offline write on the device and sends it on reconnect,
+but its promise waits for the server, so every profile save offline spun
+until the connection came back (`src/lib/settleWrite.ts`). Unit-tested
+with the fake; only the phone shows the SDK replaying the write.
+
+- [ ] **A Settings change offline sticks.** On the phone, turn on Airplane
+      Mode, change a Settings value (units, max heart rate, a toggle).
+      Passing: it saves at once with no spinner left turning, and after
+      turning the connection back on and reopening the app, the value is
+      still the changed one.
+- [ ] **Connecting Apple Health offline shows steps.** With Airplane Mode
+      on, connect Apple Health from Settings → Health. Passing: today's
+      steps appear without waiting for a connection.

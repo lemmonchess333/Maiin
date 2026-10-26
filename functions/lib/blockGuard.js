@@ -74,8 +74,7 @@ async function isBlockedBetween(db, ownerUid, actorUid) {
    already has for that case. Confirming a block to the blocked party tells
    them something the blocker did not choose to disclose, and invites them
    around it; and a refusal of its own, even a vague one, does both, because
-   it differs from the one a private or missing activity gets. There used to
-   be a shared "This content isn't available." here, which did exactly that.
+   it differs from the one a private or missing activity gets.
    blockRefusalParity.test.js drives each callable both ways. */
 
 module.exports = { isBlockedBetween };

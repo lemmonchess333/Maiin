@@ -223,13 +223,12 @@ export default function RunFitnessSection({
                 Set your fitness
               </p>
               <p className="text-xs text-muted-foreground">
-                Add a recent race and we'll personalise every run pace to you.
+                Add a recent race to set your paces.
               </p>
             </div>
             {!editing && (
               <Button
-                variant="primary"
-                size="sm"
+                variant="sport"
                 className="ml-auto"
                 onClick={() => {
                   haptic("light");

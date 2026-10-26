@@ -5,6 +5,9 @@ import { THEME } from "@/lib/theme";
 import Tooltip from "@/components/ui/Tooltip";
 import { Spinner } from "@/components/ui/Spinner";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { storedKmLabel } from "@/lib/runLabels";
+import { distanceUnitLabel } from "@/lib/distanceUnits";
 import { liftUnitLabel, liftVolumeIn } from "@/lib/liftLoad";
 import { withSign } from "@/utils/formatters";
 
@@ -35,6 +38,7 @@ export default function TrajectoryCard({
   const lastWeek = data?.lastWeek;
   const delta = data?.delta ?? 0;
   const liftUnit = useLiftUnit();
+  const distanceUnit = useDistanceUnit();
   const sessionsUnit = (n: number) => (n === 1 ? "session" : "sessions");
 
   // Colour the delta: green = ahead, coral = behind, muted grey = level.
@@ -135,10 +139,12 @@ export default function TrajectoryCard({
           <div className="flex items-center gap-4 pt-3 border-t border-border/30">
             <div className="flex-1">
               <SectionLabel>Running</SectionLabel>
+              {/* Stored in km, shown in the reader's unit, as the lift
+                  column beside it is. */}
               <p className="text-sm font-mono tabular-nums font-bold mt-0.5">
-                {thisWeek.km.toFixed(1)}{" "}
+                {storedKmLabel(thisWeek.km, distanceUnit, false, 1)}{" "}
                 <span className="text-xs text-muted-foreground font-normal">
-                  km
+                  {distanceUnitLabel(distanceUnit)}
                 </span>
               </p>
             </div>

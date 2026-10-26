@@ -45,6 +45,24 @@ describe("shoe surfaces deep-link to /settings/shoes", () => {
     expect(navigateMock).toHaveBeenCalledWith("/settings/shoes");
   });
 
+  /* The empty state sits on the run start screens, so its "Add shoes" is
+     the running colour's text step. It was the lifting purple. */
+  it("ShoeSelector's Add shoes is coral, not the lifting purple", () => {
+    shoesMock.mockReturnValue({
+      activeShoes: [],
+      defaultShoe: null,
+      loading: false,
+    });
+    render(
+      <MemoryRouter>
+        <ShoeSelector selectedShoeId={null} onSelect={() => {}} />
+      </MemoryRouter>
+    );
+    const add = screen.getByText("Add shoes");
+    expect(add.className).toContain("text-running-strong");
+    expect(add.className).not.toContain("text-lifting-strong");
+  });
+
   it("ShoeMileageSection card links to the shoes page", () => {
     shoesMock.mockReturnValue({
       activeShoes: [

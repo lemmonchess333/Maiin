@@ -27,11 +27,6 @@ const DISTANCE_COMPARISONS: Comparison[] = [
     unit: "km",
     text: (v) => `That's ${Math.round((v * 1000) / 50)} Olympic pool lengths`,
   },
-  {
-    threshold: 5,
-    unit: "km",
-    text: (v) => `That's a ${(v / 8.851).toFixed(1)}× Great Wall section`,
-  },
 ];
 
 export function getDistanceComparison(km: number): string | null {

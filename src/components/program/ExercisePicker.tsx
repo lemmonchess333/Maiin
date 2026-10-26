@@ -17,11 +17,11 @@ import { EXERCISE_CATEGORIES, getExercisesByCategory } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
-import { Search, X, Plus, Check, Dumbbell } from "lucide-react";
+import { Search, X, Plus, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMotionSafe } from "@/hooks/useMotionSafe";
 import { haptic } from "@/lib/haptic";
-import { categoryFigureUri } from "@/lib/muscleFigureSvg";
+import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Button } from "@/components/ui/Button";
@@ -491,10 +491,10 @@ export default function ExercisePicker({
   );
 }
 
-/** One picker row — compact card grammar: anatomy-figure tile (shared
- *  data-URI per category, cheap in a 151-row list), name + meta, and a
- *  lifting-tinted selection state (the old green + floating plus-circle
- *  predates the token guardrail). */
+/** One picker row: the exercise's picture (`ExerciseThumb`, as on Train's
+ *  list, so the drawing where there is one and the category's muscles
+ *  where there is not), name and meta, and a lifting-tinted selection
+ *  state. Tapping the picture or the name opens the exercise's form. */
 function ExerciseRow({
   exercise,
   isSelected,
@@ -509,7 +509,6 @@ function ExerciseRow({
   onToggle: (id: string) => void;
   onOpen: (exercise: Exercise) => void;
 }) {
-  const figure = categoryFigureUri(exercise.category);
   return (
     <div
       className={cn(
@@ -526,16 +525,7 @@ function ExerciseRow({
         aria-label={`${exercise.name} details`}
         className="flex-1 min-w-0 flex items-center gap-3 text-left min-h-[44px] active:opacity-80"
       >
-        <div
-          className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
-          style={{ background: `${THEME.lifting}0F` }}
-        >
-          {figure ? (
-            <img src={figure} alt="" aria-hidden className="h-9 w-auto" />
-          ) : (
-            <Dumbbell className="size-4" style={{ color: THEME.lifting }} />
-          )}
-        </div>
+        <ExerciseThumb exerciseId={exercise.id} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground truncate">
             {exercise.name}

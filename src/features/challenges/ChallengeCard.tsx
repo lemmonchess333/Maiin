@@ -28,11 +28,12 @@ import {
   isTierAchieved,
 } from "./useChallenges";
 import { THEME } from "@/lib/theme";
-import { formatChallengeValue } from "./challengeFormat";
+import { challengeGoal, formatChallengeValue } from "./challengeFormat";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import { challengeEditorialImage } from "@/lib/editorialImages";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import { useChallengePercentile } from "./useChallengePercentile";
@@ -48,6 +49,9 @@ interface ChallengeCardProps {
      "Joining…" / "Leaving…" and double-tap is suppressed. */
   onJoin: () => void | Promise<void>;
   onLeave: () => void | Promise<void>;
+  /** Off when another card already says how long this one has left:
+   *  the monthly challenges all end on the same day. */
+  showTimeLeft?: boolean;
 }
 
 const TIER_LABELS: Record<ChallengeTier, string> = {
@@ -56,11 +60,10 @@ const TIER_LABELS: Record<ChallengeTier, string> = {
   gold: "Gold",
 };
 
-/* SOC-P1a — founding state. Below this many participants the meta row
-   withholds the number and reads as a founding invitation instead:
-   "0 joined" (the loudest locked-lobby signal on the Social tab, and
-   the most-seen state for every cold-start user) never renders. Counts
-   are real or withheld — never inflated. */
+/* Below this many participants the meta row says nothing about who has
+   joined: "0 joined" is the loudest empty-lobby signal on the Social tab
+   and the most-seen state for every cold-start user. Counts are real or
+   withheld, never inflated, and nothing stands in for one. */
 const FOUNDING_COUNT_MIN = 3;
 
 /** A tier's metal as a ring around something drawn in the text colour,
@@ -176,6 +179,7 @@ export function ChallengeCard({
   joined,
   onJoin,
   onLeave,
+  showTimeLeft = true,
 }: ChallengeCardProps) {
   const liftUnit = useLiftUnit();
   const distanceUnit = useDistanceUnit();
@@ -212,7 +216,12 @@ export function ChallengeCard({
   });
   const maxTier = challenge.tiers.gold;
   const pct = Math.min((currentValue / maxTier) * 100, 100);
-  const timeLeft = getTimeRemaining(challenge.endDate);
+  const timeLeft = showTimeLeft ? getTimeRemaining(challenge.endDate) : "";
+  const goal = challengeGoal(challenge, liftUnit, distanceUnit);
+  const joinedCount =
+    challenge.participantCount >= FOUNDING_COUNT_MIN
+      ? challenge.participantCount
+      : null;
   /* The card wears its sport (`challengeSport`): the hero band, the icon,
      Join and the bar's fill. The tier metal never fills the bar. */
   const sport = challengeSport(challenge.metric);
@@ -312,12 +321,14 @@ export function ChallengeCard({
         <div
           className={`absolute bottom-3 left-[16px] min-w-0 ${heroPhoto ? "right-[16px]" : "right-[80px]"}`}
         >
-          <SectionLabel
-            className={`flex items-center gap-1 ${heroPhoto ? "text-white/85" : ""}`}
-          >
-            <Clock className="size-3" aria-hidden />
-            {timeLeft}
-          </SectionLabel>
+          {timeLeft && (
+            <SectionLabel
+              className={`flex items-center gap-1 ${heroPhoto ? "text-white/85" : ""}`}
+            >
+              <Clock className="size-3" aria-hidden />
+              {timeLeft}
+            </SectionLabel>
+          )}
           {/* Two lines before it gives way: at 320 px and 135% text one
               line cut "July Distance Club" to "July Distan…". */}
           <p
@@ -340,36 +351,48 @@ export function ChallengeCard({
         )}
       </div>
       <div className="p-4 space-y-3">
+        {/* The goal, from the challenge's own target in the reader's
+            units; the stored description only for a metric it cannot
+            phrase. */}
         <p className="text-small text-muted-foreground">
-          {challenge.description}
+          {goal ? (
+            <InlineNumerals>{goal}</InlineNumerals>
+          ) : (
+            challenge.description
+          )}
         </p>
 
-        {/* Meta row — timeLeft lives on the hero band now. Facts (joined
-            count, season) are one line; the percentile is the user's
-            STANDING, so it keeps a status pill in the shared chip form. */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-small text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Users className="size-3.5" aria-hidden="true" />
-            <span>
-              {challenge.participantCount >= FOUNDING_COUNT_MIN
-                ? `${challenge.participantCount} joined`
-                : joined
-                  ? "You're in — founding member"
-                  : "Just launched · founding spots open"}
-            </span>
-            {challenge.season && (
-              <>
-                <span aria-hidden="true">·</span>
-                <span>{challenge.season}</span>
-              </>
+        {/* Meta row: the facts (a real joined count, the season) on one
+            line, and the person's STANDING as a status pill in the shared
+            chip form. Drawn only when it has one of them. */}
+        {(joinedCount !== null || challenge.season || percentile !== null) && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-small text-muted-foreground">
+            {(joinedCount !== null || challenge.season) && (
+              <span className="flex items-center gap-1">
+                {joinedCount !== null && (
+                  <>
+                    <Users className="size-3.5" aria-hidden="true" />
+                    <span>
+                      <span className="font-mono tabular-nums">
+                        {joinedCount.toLocaleString()}
+                      </span>{" "}
+                      joined
+                    </span>
+                  </>
+                )}
+                {joinedCount !== null && challenge.season && (
+                  <span aria-hidden="true">·</span>
+                )}
+                {challenge.season && <span>{challenge.season}</span>}
+              </span>
             )}
-          </span>
-          {percentile !== null && (
-            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-lifting-strong text-xs font-semibold font-mono tabular-nums">
-              Top {percentile}%
-            </span>
-          )}
-        </div>
+            {percentile !== null && (
+              <span className="px-2 py-0.5 rounded-full bg-primary/10 text-lifting-strong text-xs font-semibold font-mono tabular-nums">
+                Top {percentile}%
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Top 3 leaderboard preview.
             Only rendered for *joined and progressing* participants.
@@ -501,19 +524,20 @@ export function ChallengeCard({
              challenge yet, the full tiered progress bar + leaderboard
              slot reads as broken (an empty bar, "You're at 0",
              markers with no fill). Especially loud on fastest_effort
-             where a 0 currentValue means "no qualifying run yet" —
-             the rest of the chrome is irrelevant until they log one.
-             Compact variant: just the next-tier hint + leave action,
-             so the card stays informative without occupying half a
-             screen. The full progress bar reappears the moment the
-             user has any progress to show. */
-          <div className="space-y-1.5">
-            <p className="text-sm text-muted-foreground">
-              {nextTier && nextValue
-                ? `${TIER_LABELS[nextTier]} at ${formatChallengeValue(challenge.metric, nextValue, liftUnit, distanceUnit)}`
-                : "Log your first qualifying activity to start the board"}
-            </p>
-          </div>
+             where a 0 currentValue means "no qualifying run yet".
+             The goal line above already names the first tier's
+             target, so a card with a goal adds nothing here; one
+             without gets the next-tier hint. The full progress bar
+             appears the moment the user has any progress to show. */
+          goal ? null : (
+            <div className="space-y-1.5">
+              <p className="text-sm text-muted-foreground">
+                {nextTier && nextValue
+                  ? `${TIER_LABELS[nextTier]} at ${formatChallengeValue(challenge.metric, nextValue, liftUnit, distanceUnit)}`
+                  : "Log your first qualifying activity to start the board"}
+              </p>
+            </div>
+          )
         ) : (
           <div className="space-y-2">
             {/* Tiered progress bar.
@@ -608,9 +632,9 @@ export function ChallengeCard({
                       token is the same celebration register with a real
                       text step. The trophy keeps the metal. */}
                   <span className="font-semibold text-achievement-strong">
-                    Gold achieved!
+                    Gold achieved
                   </span>
-                  {" — "}
+                  {" · "}
                   {formatChallengeValue(
                     challenge.metric,
                     currentValue,
@@ -629,7 +653,7 @@ export function ChallengeCard({
                       distanceUnit
                     )}
                   </span>
-                  {" — "}
+                  {" · "}
                   {TIER_LABELS[nextTier]} at{" "}
                   {formatChallengeValue(
                     challenge.metric,

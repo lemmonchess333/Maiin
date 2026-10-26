@@ -35,9 +35,8 @@ export default function BoardSharingRow({
           Show my week on friends&rsquo; boards
         </p>
         <p className="text-xs text-muted-foreground">
-          Your followers see how many sessions you did this week, how far you
-          ran and how much you lifted. Off, nothing of your week is kept for
-          them.
+          Followers see this week&rsquo;s sessions, distance and weight lifted.
+          Off, none of it is kept.
         </p>
       </div>
       <Toggle

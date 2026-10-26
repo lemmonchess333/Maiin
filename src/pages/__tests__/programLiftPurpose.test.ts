@@ -44,15 +44,14 @@ describe("Train's lift tab explains the session", () => {
   });
 });
 
-describe("Train's lift tab keeps the plan's rules behind an ⓘ", () => {
-  it("puts it beside the week label, on any day (Lift4 (3))", () => {
+describe("Train's lift tab has one way into the rules sheet", () => {
+  it("is 'Why this session', with nothing beside the week label", () => {
+    /* Owner: an ⓘ beside the week label opened the same sheet as "Why
+       this session" a few rows down, and one of the two was not needed. */
     const row = code.indexOf("<WeekPhaseRow");
     expect(row).toBeGreaterThan(-1);
-    const props = code.slice(
-      row,
-      code.indexOf("/>", code.indexOf("info=", row))
-    );
-    expect(props).toMatch(/info=\{\s*<LiftRulesInfo/);
+    expect(code.slice(row, code.indexOf("/>", row))).not.toMatch(/info=/);
+    expect(code).not.toMatch(/LiftRulesInfo/);
   });
 });
 
