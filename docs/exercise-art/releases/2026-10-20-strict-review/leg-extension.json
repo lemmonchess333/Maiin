@@ -1,0 +1,167 @@
+{
+  "exerciseId": "leg-extension",
+  "version": "anatomy-v3-2026-10-15-material-endpoint-leg-extension-v1",
+  "width": 1319,
+  "height": 1056,
+  "reference": {
+    "path": "form-frames/leg-extension/3.webp",
+    "sha256": "67009ad87ae8a8d5d12215fda6cc375e94d5898db1ee2afef4f76dbf1fe30d59"
+  },
+  "cueSha256": "0b7340927b7411ffc0dc033a8d802b1b122fe8ff5b93aeac6b8c35cc01adf14a",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:50.095534+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Back and pelvis remain supported, both knees extend and lower legs move against the pad; hands stay on side handles. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Fixed seat/towers and rotating shin-pad lever meet the same physical pivot. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Back and pelvis remain supported, both knees extend and lower legs move against the pad; hands stay on side handles. Actual named native supports are measured in all six frames: fixedTowerTopCapMaterialFeature1, fixedTowerTopCapMaterialFeature2. Maximum axis drift 0px. Dimensions: fixedTowerTopCapProjectedFeatureSpan, oppositeFixedSupportProjectedFeatureSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Back and pelvis remain supported, both knees extend and lower legs move against the pad; hands stay on side handles. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Quads #7B72E9; secondary Hip Flexors #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Set: Keep your back supported and hips seated. / Brace: Brace your torso and grip the handles. / Squeeze: Straighten your legs and squeeze your quads. / Hold: Keep your hips down and hands gripping. / Return: Bend your knees slowly; control the resistance. / Reset: Return to bent knees without losing control.. Preparation remains [\"Sit in the machine, adjust the pad so it sits on your shins, just above the ankle.\"]. Back and pelvis remain supported, both knees extend and lower legs move against the pad; hands stay on side handles."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Back and pelvis remain supported, both knees extend and lower legs move against the pad; hands stay on side handles. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-15/leg-extension.json (sha256 437a56c9df0a73095211742322ff2d48f36092c8dab1c5a59a5e83fd8c2ba4c0). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-15/leg-extension.json (sha256 437a56c9df0a73095211742322ff2d48f36092c8dab1c5a59a5e83fd8c2ba4c0). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/leg-extension/1.webp",
+      "sha256": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826",
+      "anchors": {
+        "fixedTowerTopCapMaterialFeature1": { "x": 76, "y": 36 },
+        "fixedTowerTopCapMaterialFeature2": { "x": 254, "y": 65 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCapProjectedFeatureSpan": 180.34688796871433,
+        "oppositeFixedSupportProjectedFeatureSpan": 199
+      }
+    },
+    {
+      "path": "form-frames/leg-extension/2.webp",
+      "sha256": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826",
+      "anchors": {
+        "fixedTowerTopCapMaterialFeature1": { "x": 76, "y": 36 },
+        "fixedTowerTopCapMaterialFeature2": { "x": 254, "y": 65 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCapProjectedFeatureSpan": 180.34688796871433,
+        "oppositeFixedSupportProjectedFeatureSpan": 199
+      }
+    },
+    {
+      "path": "form-frames/leg-extension/3.webp",
+      "sha256": "67009ad87ae8a8d5d12215fda6cc375e94d5898db1ee2afef4f76dbf1fe30d59",
+      "anchors": {
+        "fixedTowerTopCapMaterialFeature1": { "x": 76, "y": 36 },
+        "fixedTowerTopCapMaterialFeature2": { "x": 254, "y": 65 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCapProjectedFeatureSpan": 180.34688796871433,
+        "oppositeFixedSupportProjectedFeatureSpan": 199
+      }
+    },
+    {
+      "path": "form-frames/leg-extension/4.webp",
+      "sha256": "67009ad87ae8a8d5d12215fda6cc375e94d5898db1ee2afef4f76dbf1fe30d59",
+      "anchors": {
+        "fixedTowerTopCapMaterialFeature1": { "x": 76, "y": 36 },
+        "fixedTowerTopCapMaterialFeature2": { "x": 254, "y": 65 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCapProjectedFeatureSpan": 180.34688796871433,
+        "oppositeFixedSupportProjectedFeatureSpan": 199
+      }
+    },
+    {
+      "path": "form-frames/leg-extension/5.webp",
+      "sha256": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826",
+      "anchors": {
+        "fixedTowerTopCapMaterialFeature1": { "x": 76, "y": 36 },
+        "fixedTowerTopCapMaterialFeature2": { "x": 254, "y": 65 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCapProjectedFeatureSpan": 180.34688796871433,
+        "oppositeFixedSupportProjectedFeatureSpan": 199
+      }
+    },
+    {
+      "path": "form-frames/leg-extension/6.webp",
+      "sha256": "833abbc71004713a2c29066516d0fab023b97621ba3755c2f8bd85cdc651a826",
+      "anchors": {
+        "fixedTowerTopCapMaterialFeature1": { "x": 76, "y": 36 },
+        "fixedTowerTopCapMaterialFeature2": { "x": 254, "y": 65 }
+      },
+      "invariantDimensions": {
+        "fixedTowerTopCapProjectedFeatureSpan": 180.34688796871433,
+        "oppositeFixedSupportProjectedFeatureSpan": 199
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-15/leg-extension.json",
+    "sha256": "437a56c9df0a73095211742322ff2d48f36092c8dab1c5a59a5e83fd8c2ba4c0"
+  },
+  "historicalFindings": [
+    "Independent generic covered selectorized apparatus, not an exact branded replica.",
+    "A constructed common apparatus camera is used, not an original human-camera/depth recovery.",
+    "Covered resistance routing and unseen cams/belts/weights are not verified.",
+    "Original source body/seat/head/hand variations remain; human pixels are not fitted.",
+    "The held middle source2 and earlier long-pad diagnostic are not delivered.",
+    "Minor neutral-metal facet bands and simplified covered panels remain.",
+    "Only a constructed apparatus camera is proven; original human depth and covered resistance routing remain uncertain."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/leg-extension.json",
+    "sha256": "83c73447d5028d0d7df097d98224c1b5f03a7b65d3a82637b1b3f2a48b8ba9a4"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false
+}

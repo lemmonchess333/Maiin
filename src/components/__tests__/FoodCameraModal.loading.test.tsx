@@ -27,6 +27,7 @@
  * FileReader — no camera needed.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { restoreRealTimers } from "@/test/fakeTimers";
 import {
   render,
   renderHook,
@@ -76,10 +77,10 @@ function stubReducedMotion(reduced: boolean) {
 
 beforeEach(() => stubCamera("pending"));
 
-afterEach(() => {
+afterEach(async () => {
+  await restoreRealTimers();
   cleanup();
   window.matchMedia = realMatchMedia;
-  vi.useRealTimers();
   vi.clearAllMocks();
 });
 
@@ -420,11 +421,13 @@ describe("FoodCameraModal — the failure beat", () => {
         {...props}
         loading={false}
         failure="error"
-        failureDetail="Rate limit reached. Please wait a moment."
+        failureDetail="Rate limit reached. Wait a few minutes before analysing more food."
       />
     );
     const failureText = screen.getByTestId("scan-failure").textContent ?? "";
-    expect(failureText).toContain("Rate limit reached. Please wait a moment.");
+    expect(failureText).toContain(
+      "Rate limit reached. Wait a few minutes before analysing more food."
+    );
     expect(failureText).not.toContain("Might be the connection");
   });
 

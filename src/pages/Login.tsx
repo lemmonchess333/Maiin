@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  readSessionJson,
+  removeSessionKey,
+  writeSessionJson,
+} from "@/lib/sessionStore";
 import { readString, remove } from "@/lib/localStore";
+import { pendingEmailChange } from "@/lib/emailChangeNote";
 import { hasSignedInOnThisDevice, useAuth } from "@/lib/auth";
 import {
   friendlyAuthError,
   providerHint,
   duplicateEmailHint,
+  isSignInCancelled,
 } from "@/lib/authErrors";
 import { AlertCircle, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import appIconUrl from "@/assets/brand/app-icon.svg";
@@ -14,6 +21,17 @@ import { IconButton } from "@/components/ui/IconButton";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
 import { FoodTabIcon } from "@/components/icons/TabIcons";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
+import { readLastSignInMethod, type SignInMethod } from "@/lib/signInMethod";
+
+/** The mark on the way in this phone last used (Polish2 call 3): with Hide
+ *  My Email, signing in another way makes a second, empty account. */
+function LastUsed() {
+  return (
+    <span className="ml-2 shrink-0 whitespace-nowrap rounded-full border border-current/30 px-2 py-0.5 text-xs font-semibold">
+      Last used
+    </span>
+  );
+}
 
 // Pre-recovery this page tracked a single `loading: boolean` shared
 // across the email submit, the Apple button, and the Google button.
@@ -32,6 +50,26 @@ type View = "welcome" | "signIn" | "signUp";
    without relying on colour; 44px tall for the thumb, with the negative
    margin keeping the sentence's own line height (the Sign up toggle below
    uses the same trick). */
+/* The form, kept while the person reads the Terms or the Privacy Policy:
+   those are pages of their own, so opening one leaves this screen, and
+   Back would otherwise bring an empty form. The screen and the email come
+   back once; a password is never written down, so it is typed again. */
+const LOGIN_FORM_KEY = "tropos.login.form";
+
+function takeLoginForm(): { view: View; email: string } | null {
+  const form = readSessionJson<{ view?: unknown; email?: unknown }>(
+    LOGIN_FORM_KEY
+  );
+  removeSessionKey(LOGIN_FORM_KEY);
+  if (!form) return null;
+  const view =
+    form.view === "welcome" || form.view === "signIn" || form.view === "signUp"
+      ? form.view
+      : null;
+  if (!view) return null;
+  return { view, email: typeof form.email === "string" ? form.email : "" };
+}
+
 const AGREEMENT_LINK =
   "inline-flex items-center align-middle min-h-[44px] -my-3 font-medium text-foreground underline underline-offset-2 hover:text-lifting-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-sm";
 
@@ -44,8 +82,17 @@ export default function Login() {
     resetPassword,
     fetchSignInMethods,
   } = useAuth();
-  const [view, setView] = useState<View>(() =>
-    hasSignedInOnThisDevice() ? "signIn" : "welcome"
+  /* An email change, once confirmed, signs this phone out; say so, and
+     offer the new address (emailChangeNote.ts). */
+  const [changedEmail] = useState(() => pendingEmailChange());
+  const [returning] = useState(takeLoginForm);
+  const [lastMethod] = useState<SignInMethod | null>(() =>
+    readLastSignInMethod()
+  );
+  const [view, setView] = useState<View>(
+    () =>
+      returning?.view ??
+      (changedEmail || hasSignedInOnThisDevice() ? "signIn" : "welcome")
   );
   const isSignUp = view === "signUp";
   // The first rungs of the funnel: who sees the welcome screen, and who
@@ -61,7 +108,13 @@ export default function Login() {
     });
   }, [view]);
   const setIsSignUp = (next: boolean) => setView(next ? "signUp" : "signIn");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(
+    () => returning?.email || changedEmail || ""
+  );
+  // Opening a legal page keeps the form for the way back.
+  const keepForm = () => {
+    writeSessionJson(LOGIN_FORM_KEY, { view, email });
+  };
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -80,6 +133,13 @@ export default function Login() {
   // Neutral confirmation for the password-reset flow (shown in a calm banner,
   // not the destructive error one).
   const [notice, setNotice] = useState("");
+  // An email change that ended the session says so until anything else
+  // has something to say.
+  const shownNotice =
+    notice ||
+    (changedEmail && !isSignUp
+      ? `Changing your email signs you out once the change is confirmed. Sign in with ${changedEmail}.`
+      : "");
   const [loadingAction, setLoadingAction] = useState<LoadingAction>(null);
 
   const isLoading = loadingAction !== null;
@@ -109,7 +169,9 @@ export default function Login() {
         !message.includes("user-not-found") &&
         !message.includes("invalid-credential")
       ) {
-        setError(friendlyAuthError(message));
+        setError(
+          friendlyAuthError(message, "Couldn't send the link. Try again.")
+        );
         setLoadingAction(null);
         return;
       }
@@ -146,7 +208,14 @@ export default function Login() {
           return;
         }
       }
-      setError(friendlyAuthError(message));
+      setError(
+        friendlyAuthError(
+          message,
+          isSignUp
+            ? "Couldn't create your account. Try again."
+            : "Couldn't sign in. Try again."
+        )
+      );
     } finally {
       setLoadingAction(null);
     }
@@ -160,8 +229,7 @@ export default function Login() {
      right button by name. */
   const surfaceOAuthError = async (err: unknown) => {
     const message = err instanceof Error ? err.message : "Something went wrong";
-    /* popup-closed = user cancelled. Silent, no error toast. */
-    if (message.includes("popup-closed")) return;
+    if (isSignInCancelled(err)) return;
     if (message.includes("account-exists-with-different-credential")) {
       const collidingEmail = (err as { customData?: { email?: string } })
         ?.customData?.email;
@@ -175,7 +243,7 @@ export default function Login() {
         }
       }
     }
-    setError(friendlyAuthError(message));
+    setError(friendlyAuthError(message, "Couldn't sign in. Try again."));
   };
 
   const handleGoogle = async () => {
@@ -283,6 +351,7 @@ export default function Login() {
           <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
             <Link
               to="/privacy"
+              onClick={keepForm}
               className="inline-flex items-center min-h-[44px] px-1 hover:text-foreground transition-colors"
             >
               Privacy Policy
@@ -290,6 +359,7 @@ export default function Login() {
             <span aria-hidden="true">·</span>
             <Link
               to="/terms"
+              onClick={keepForm}
               className="inline-flex items-center min-h-[44px] px-1 hover:text-foreground transition-colors"
             >
               Terms of Service
@@ -354,7 +424,7 @@ export default function Login() {
             </div>
           )}
 
-          {notice && (
+          {shownNotice && (
             <div
               role="status"
               className="flex items-start gap-2.5 p-3 rounded-xl bg-primary/8 border border-primary/15 text-foreground text-sm font-medium"
@@ -363,7 +433,7 @@ export default function Login() {
                 className="size-4 shrink-0 mt-0.5 text-primary"
                 aria-hidden="true"
               />
-              <span>{notice}</span>
+              <span>{shownNotice}</span>
             </div>
           )}
 
@@ -450,6 +520,7 @@ export default function Login() {
             size="md"
           >
             {isSignUp ? "Create account" : "Sign In"}
+            {!isSignUp && lastMethod === "password" && <LastUsed />}
           </Button>
         </form>
 
@@ -478,6 +549,7 @@ export default function Login() {
             }
           >
             Continue with Apple
+            {lastMethod === "apple" && <LastUsed />}
           </Button>
 
           <Button
@@ -488,6 +560,7 @@ export default function Login() {
             variant="outline"
           >
             Continue with Google
+            {lastMethod === "google" && <LastUsed />}
           </Button>
         </div>
 
@@ -500,11 +573,11 @@ export default function Login() {
             links are the signed-out /terms and /privacy routes. */}
         <p className="text-center text-xs text-muted-foreground">
           By continuing, you agree to the{" "}
-          <Link to="/terms" className={AGREEMENT_LINK}>
+          <Link to="/terms" onClick={keepForm} className={AGREEMENT_LINK}>
             Terms
           </Link>{" "}
           and{" "}
-          <Link to="/privacy" className={AGREEMENT_LINK}>
+          <Link to="/privacy" onClick={keepForm} className={AGREEMENT_LINK}>
             Privacy Policy
           </Link>
           .

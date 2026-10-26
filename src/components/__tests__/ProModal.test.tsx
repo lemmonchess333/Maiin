@@ -55,11 +55,13 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 const purchaseMock = vi.fn();
 const restoreMock = vi.fn();
 const isNativeIOSMock = vi.fn();
+const canSellMock = vi.fn();
 
 vi.mock("@/lib/purchaseProvider", () => ({
   purchase: (...args: unknown[]) => purchaseMock(...args),
   restorePurchases: (...args: unknown[]) => restoreMock(...args),
   isNativeIOS: () => isNativeIOSMock(),
+  canSellInThisBuild: () => canSellMock(),
 }));
 
 // The App Store's answer on the trial: none on the web (null), and what a
@@ -92,8 +94,10 @@ beforeEach(() => {
   restoreMock.mockReset();
   isNativeIOSMock.mockReset();
   authProfileMock.mockReset();
-  // Default: web (most common case)
+  // Default: web (most common case), in a build with the store.
   isNativeIOSMock.mockReturnValue(false);
+  canSellMock.mockReset();
+  canSellMock.mockReturnValue(true);
   // Sub1a P1 — default profile to a post-trial user so the
   // plan-priced "Start Pro — £X" CTA is the rendered baseline.
   // Pre-#P1 tests in this file all expect the priced CTA. Trial-
@@ -445,6 +449,25 @@ describe("ProModal — restore purchases visibility", () => {
     isNativeIOSMock.mockReturnValue(true);
     renderModal({ onClose: () => {} });
     expect(screen.getByText("Restore purchases")).toBeTruthy();
+  });
+
+  it("in a build that cannot sell, shows no plans, checkout or Restore", () => {
+    isNativeIOSMock.mockReturnValue(true);
+    canSellMock.mockReturnValue(false);
+    const onClose = vi.fn();
+    renderModal({ onClose });
+    expect(screen.getByRole("note")).toHaveTextContent(
+      "Pro isn't on sale in this version of the app yet."
+    );
+    expect(screen.queryByText(/£/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /Start/ })).toBeNull();
+    expect(screen.queryByText("Restore purchases")).toBeNull();
+    // What Pro does is still there, and the sheet closes.
+    expect(
+      screen.getByRole("list", { name: "Pro features" })
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(onClose).toHaveBeenCalled();
   });
 
   it("on iOS, says to manage or cancel in the Apple Account", () => {

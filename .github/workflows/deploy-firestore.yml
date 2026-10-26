@@ -27,7 +27,7 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: Install Firebase CLI
-        run: npm install -g firebase-tools
+        run: npm install -g firebase-tools@15.34.0
 
       - name: Deploy Firestore rules
         run: firebase deploy --only firestore:rules --project adaptive-fitness-af8bb --force

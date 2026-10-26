@@ -4,6 +4,8 @@
  * Stores recent errors in memory and logs critical errors to Firestore.
  */
 
+import { recordNonFatal, setCrashReportingUser } from "./crashReporting";
+
 /* Firestore is loaded on first WRITE, not at import.
    This module is reached from App.tsx and RouteErrorBoundary, so a static
    import here put the whole Firestore SDK ahead of the login screen's
@@ -85,6 +87,8 @@ let _currentUid: string | null = null;
  *  attributed to the next account on a shared device. */
 export function setErrorReportingUid(uid: string | null): void {
   _currentUid = uid;
+  // On the phone, Crashlytics files its crashes under the same account.
+  setCrashReportingUser(uid);
   if (uid) {
     if (pendingPreAuth.length > 0) {
       const toFlush = pendingPreAuth.splice(0, pendingPreAuth.length);
@@ -158,6 +162,10 @@ export function captureError(
   if (isCritical(report)) {
     persistToFirestore(report);
   }
+  // On the phone every error also reaches Crashlytics, as a non-fatal
+  // report beside the native crashes it catches itself; on the web this
+  // does nothing (crashReporting.ts says why).
+  recordNonFatal(error, type, context);
 }
 
 /** Test-only: the in-memory error buffer. Same category as

@@ -75,9 +75,11 @@ vi.mock("@/features/spaces/SpacePostComposer", () => ({
 import Space from "../Space";
 import { Timestamp } from "firebase/firestore";
 import {
+  failNextFirestore,
   readDoc,
   resetFirestore,
   seedFirestore,
+  setSnapshotMetadata,
   unfiredFailures,
 } from "@/test/firestoreHarness";
 import { toast } from "@/lib/toast";
@@ -280,6 +282,102 @@ describe("Space page", () => {
       "data-attach-latest",
       "true"
     );
+  });
+
+  it("says the posts couldn't load, rather than that there are none, and tries again", async () => {
+    failNextFirestore("getDocs", { path: `${SPACE}/posts` });
+    seedFirestore({ [`${SPACE}/posts/coach-2026-09-21`]: COACH });
+    renderSpace();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Couldn't load posts"
+    );
+    expect(unfiredFailures()).toEqual([]);
+    expect(screen.queryByText("No posts from members yet")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    // The retry reads again; the space really has no member posts.
+    await screen.findByText("No posts from members yet");
+    expect(screen.queryByText("Couldn't load posts")).toBeNull();
+  });
+
+  it("an empty answer from this phone's cache is not an empty space", async () => {
+    setSnapshotMetadata(`${SPACE}/posts`, { fromCache: true });
+    renderSpace();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Couldn't load posts"
+    );
+  });
+
+  describe("more than a page of posts", () => {
+    /* Space.tsx reads 50 posts a page. 51 member posts this week, a
+       minute apart: post 1 is the newest, post 51 the oldest, which the
+       first page leaves out. */
+    const POSTS_PAGE_SIZE = 50;
+    function seedPosts(n: number) {
+      const tree: Record<string, Record<string, unknown>> = {};
+      for (let i = 1; i <= n; i++) {
+        tree[`${SPACE}/posts/p${i}`] = {
+          ...PRIYA,
+          body: `Post ${i}`,
+          createdAt: at(new Date(NOW.getTime() - i * 60_000)),
+        };
+      }
+      seedFirestore(tree);
+    }
+
+    it("reads one page, then the next from where it stopped", async () => {
+      seedPosts(POSTS_PAGE_SIZE + 1);
+      renderSpace();
+      await screen.findByText(/Post 1$/);
+      expect(screen.getAllByTestId("space-post")).toHaveLength(POSTS_PAGE_SIZE);
+      expect(screen.queryByText(/Post 51$/)).toBeNull();
+      // More wait and the oldest loaded is from this week: "50+".
+      expect(screen.getByText(/this week/).textContent).toBe(
+        `${POSTS_PAGE_SIZE}+ posts this week`
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Load more posts" }));
+      await screen.findByText(/Post 51$/);
+      expect(screen.getAllByTestId("space-post")).toHaveLength(
+        POSTS_PAGE_SIZE + 1
+      );
+      // The second page was short: nothing more to load, and the count is
+      // the whole week.
+      expect(
+        screen.queryByRole("button", { name: "Load more posts" })
+      ).toBeNull();
+      expect(screen.getByText(/this week/).textContent).toBe(
+        `${POSTS_PAGE_SIZE + 1} posts this week`
+      );
+    });
+
+    it("offers no Load more when one page holds every post", async () => {
+      seedPosts(3);
+      renderSpace();
+      await screen.findByText(/Post 3$/);
+      expect(
+        screen.queryByRole("button", { name: "Load more posts" })
+      ).toBeNull();
+    });
+
+    it("a failed Load more keeps the posts shown and the button to try again", async () => {
+      seedPosts(POSTS_PAGE_SIZE + 1);
+      renderSpace();
+      await screen.findByText(/Post 1$/);
+      failNextFirestore("getDocs", { path: `${SPACE}/posts` });
+      fireEvent.click(screen.getByRole("button", { name: "Load more posts" }));
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith(
+          "Couldn't load more posts. Try again."
+        )
+      );
+      expect(screen.getAllByTestId("space-post")).toHaveLength(POSTS_PAGE_SIZE);
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Load more posts" })
+      );
+      await screen.findByText(/Post 51$/);
+    });
   });
 
   it("with no session to share, the empty state opens a plain post", async () => {

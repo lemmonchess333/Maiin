@@ -1,5 +1,6 @@
 import { useRef, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useMotionSafe } from "@/hooks/useMotionSafe";
 import { cn } from "@/lib/utils";
 
 /* Entering and leaving, so the strong ease-out; a section is small, so
@@ -26,8 +27,8 @@ const CLOSING = { height: 0, opacity: 0, pointerEvents: "none" } as const;
  * under the finger would take the second tap of a double tap. Its content
  * sits in a flow root, so a child's margin stays inside the height being
  * measured. A section already open when it mounts just shows (Pol1).
- * Under Reduce Motion, `MotionConfig` settles the height and the fade
- * stays.
+ * Under Reduce Motion, `MotionConfig` settles the height and
+ * `useMotionSafe` takes the fade out, so the section is simply there.
  *
  * Closed, the children are not mounted, as with the conditional it
  * replaces; `id` goes on the section, for the control's `aria-controls`.
@@ -48,6 +49,7 @@ export function Collapse({
   children: ReactNode | (() => ReactNode);
 }) {
   const section = useRef<HTMLDivElement>(null);
+  const motionSafe = useMotionSafe();
   return (
     <AnimatePresence initial={false}>
       {open && (
@@ -55,9 +57,9 @@ export function Collapse({
           key="collapse"
           ref={section}
           id={id}
-          initial={CLOSED}
+          initial={motionSafe(CLOSED)}
           animate={OPEN}
-          exit={CLOSING}
+          exit={motionSafe(CLOSING)}
           transition={OPEN_CLOSE}
           onAnimationStart={() => {
             if (section.current) section.current.style.overflow = "hidden";

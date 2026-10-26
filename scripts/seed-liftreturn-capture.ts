@@ -22,6 +22,10 @@
  * suppress the very sheet this seed exists to photograph, since the lift
  * surface stands down when the run side is speaking about the same lapse.
  *
+ * It also stages the runner's twin, `RunReturnSheet`: a free runner (no
+ * race, so the fell-behind sheet has nothing to say) whose last run is
+ * RUN_DAYS_AWAY back, which the large-text and axe captures open on Home.
+ *
  * Same emulator-only safety gate as every other seed.
  */
 import { initializeApp, getApps } from "firebase-admin/app";
@@ -60,16 +64,32 @@ export const LIFTRETURN_CAPTURE_USER = {
  *  are both still detrained. `liftReturnCaptureFixture.test.ts` pins that. */
 const DAYS_AWAY = 23;
 
-async function ensureUser(): Promise<string> {
+export const RUNRETURN_CAPTURE_USER = {
+  email: "runreturn-capture@tropos.test",
+  password: "test-password-123",
+  displayName: "Returning Robin",
+};
+
+/** From two weeks away (`WELCOME_BACK_DAYS`) a free runner is greeted, and
+ *  the sheet says "about 2 weeks" from 11 to 17 days. 15 leaves the line
+ *  and the greeting where they are if the capture runs a day or two after
+ *  the seed. `runReturnCaptureFixture.test.tsx` pins that. */
+const RUN_DAYS_AWAY = 15;
+
+async function ensureUser(account: {
+  email: string;
+  password: string;
+  displayName: string;
+}): Promise<string> {
   try {
-    const existing = await auth.getUserByEmail(LIFTRETURN_CAPTURE_USER.email);
+    const existing = await auth.getUserByEmail(account.email);
     return existing.uid;
   } catch {
     const created = await auth.createUser({
-      email: LIFTRETURN_CAPTURE_USER.email,
-      password: LIFTRETURN_CAPTURE_USER.password,
+      email: account.email,
+      password: account.password,
       emailVerified: true,
-      displayName: LIFTRETURN_CAPTURE_USER.displayName,
+      displayName: account.displayName,
     });
     return created.uid;
   }
@@ -84,7 +104,7 @@ const daysAgo = (n: number) => {
 };
 
 async function run() {
-  const uid = await ensureUser();
+  const uid = await ensureUser(LIFTRETURN_CAPTURE_USER);
   const base = db.collection("users").doc(uid);
 
   const plan = buildPlan({
@@ -184,10 +204,94 @@ async function run() {
   );
 }
 
-run().then(
-  () => process.exit(0),
-  (err) => {
-    console.error("[seed-liftreturn] failed:", err);
-    process.exit(1);
+/** The free runner: a run-only plan from the same planBuilder call
+ *  Onboarding makes for someone who only runs, and two runs, the newer
+ *  RUN_DAYS_AWAY back. */
+async function seedRunner() {
+  const uid = await ensureUser(RUNRETURN_CAPTURE_USER);
+  const base = db.collection("users").doc(uid);
+
+  const plan = buildPlan({
+    primaryGoal: "running",
+    nutritionPhase: "recomp",
+    experience: "intermediate",
+    bodyweightKg: 66,
+    sex: "female",
+    liftDays: 0,
+    preferredSplit: "auto",
+    runMode: "freeform",
+    weeklyRunDays: 3,
+    equipment: "full_gym",
+    injuries: [],
+    currentDate: localDateString(new Date()),
+    preserveHistory: false,
+  } as Parameters<typeof buildPlan>[0]);
+
+  await base.set(
+    {
+      uid,
+      displayName: RUNRETURN_CAPTURE_USER.displayName,
+      email: RUNRETURN_CAPTURE_USER.email,
+      photoURL: null,
+      athleteType: "Runner",
+      weightKg: 66,
+      heightCm: 168,
+      age: 30,
+      sex: "female",
+      weeklyMealsTarget: 10,
+      preferredWeightUnit: "kg",
+      preferredHeightUnit: "cm",
+      darkMode: false,
+      onboardingComplete: true,
+      subscriptionTier: "free",
+      currentStreak: 0,
+      longestStreak: 0,
+      lastLogDate: null,
+      adjustCaloriesForTraining: true,
+      targetCalories: 2100,
+      targetProtein: 120,
+      ...plan.profileUpdates,
+    },
+    { merge: true }
+  );
+  await base
+    .collection("programState")
+    .doc("current")
+    .set(stripUndefined(plan.programState));
+
+  const runs = [
+    { at: daysAgo(RUN_DAYS_AWAY + 4), km: 6 },
+    { at: daysAgo(RUN_DAYS_AWAY), km: 5 },
+  ];
+  for (const [i, r] of runs.entries()) {
+    await base
+      .collection("runs")
+      .doc(`runreturn-r${i}`)
+      .set({
+        date: ymd(r.at),
+        distance: r.km * 1000,
+        duration: r.km * 345,
+        avgPace: 345,
+        elevationGain: 18,
+        calories: Math.round(r.km * 60),
+        activityType: "freerun",
+        completedAt: Timestamp.fromDate(r.at),
+        createdAt: Timestamp.fromDate(r.at),
+      });
   }
-);
+
+  console.log(
+    `[seed-liftreturn] ready: ${RUNRETURN_CAPTURE_USER.email} (uid ${uid})\n` +
+      `  last run ${ymd(daysAgo(RUN_DAYS_AWAY))} (${RUN_DAYS_AWAY} days back), free running`
+  );
+}
+
+run()
+  .then(seedRunner)
+  .then(
+    () => process.exit(0),
+    (err) => {
+      console.error("[seed-liftreturn] failed:", err);
+      process.exit(1);
+    }
+  );

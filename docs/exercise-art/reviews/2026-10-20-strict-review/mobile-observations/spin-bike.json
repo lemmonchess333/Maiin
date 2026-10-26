@@ -1,0 +1,230 @@
+{
+  "id": "spin-bike",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Spin Bike, Seated drive",
+              "decoded": true,
+              "height": 707,
+              "src": "/Maiin/.strict33.local/candidate/spin-bike/1.webp",
+              "width": 432
+            }
+          ],
+          "caption": "Seated drive 1/6",
+          "id": "spin-bike",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Spin Bike, Seated recovery",
+              "decoded": true,
+              "height": 707,
+              "src": "/Maiin/.strict33.local/candidate/spin-bike/2.webp",
+              "width": 432
+            }
+          ],
+          "caption": "Seated recovery 2/6",
+          "id": "spin-bike",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Spin Bike, Hold seated",
+              "decoded": true,
+              "height": 707,
+              "src": "/Maiin/.strict33.local/candidate/spin-bike/3.webp",
+              "width": 432
+            }
+          ],
+          "caption": "Hold seated 3/6",
+          "id": "spin-bike",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Spin Bike, Standing drive",
+              "decoded": true,
+              "height": 707,
+              "src": "/Maiin/.strict33.local/candidate/spin-bike/4.webp",
+              "width": 432
+            }
+          ],
+          "caption": "Standing drive 4/6",
+          "id": "spin-bike",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Spin Bike, Hold standing",
+              "decoded": true,
+              "height": 707,
+              "src": "/Maiin/.strict33.local/candidate/spin-bike/5.webp",
+              "width": 432
+            }
+          ],
+          "caption": "Hold standing 5/6",
+          "id": "spin-bike",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Spin Bike, Return seated",
+              "decoded": true,
+              "height": 707,
+              "src": "/Maiin/.strict33.local/candidate/spin-bike/6.webp",
+              "width": 432
+            }
+          ],
+          "caption": "Return seated 6/6",
+          "id": "spin-bike",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 84,\n    \"alt\": \"Spin Bike, Seated drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1202,\n    \"alt\": \"Spin Bike, Seated recovery\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Spin Bike, Hold seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2405,\n    \"alt\": \"Spin Bike, Standing drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2963,\n    \"alt\": \"Spin Bike, Hold standing\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3521,\n    \"alt\": \"Spin Bike, Return seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5206,\n    \"alt\": \"Spin Bike, Seated drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Spin Bike, Seated recovery",
+            "decoded": true,
+            "height": 707,
+            "src": "/Maiin/.strict33.local/candidate/spin-bike/2.webp",
+            "width": 432
+          }
+        ],
+        "caption": "Seated recovery 2/6",
+        "id": "spin-bike",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / spin-bike\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nSpin Bike\nCardio\nMachine\n\nSEATED RECOVERY 2/6\n\nPause\nNormal\nPRIMARY\nQuads\nSECONDARY\nCore, Calves, Hamstrings\n\nInstructions\n\nPreparation: Dial in seat and bar height — seat level with the bars for most. Clip or strap in, grip the bars with a firm but relaxed hold.\n\n1\n\nStay seated; pedal with controlled resistance.\n\n2\n\nKeep your knees tracking over your feet.\n\n3\n\nKeep a relaxed hold on the bars.\n\n4\n\nRise from the saddle; keep pedalling controlled.\n\n5\n\nSupport yourself through the pedals and bars.\n\n6\n\nSit back onto the saddle smoothly.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 84,\n    \"alt\": \"Spin Bike, Seated drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1202,\n    \"alt\": \"Spin Bike, Seated recovery\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Spin Bike, Hold seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2405,\n    \"alt\": \"Spin Bike, Standing drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2963,\n    \"alt\": \"Spin Bike, Hold standing\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3521,\n    \"alt\": \"Spin Bike, Return seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5206,\n    \"alt\": \"Spin Bike, Seated drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6641,\n    \"alt\": \"Spin Bike, Seated recovery\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Spin Bike, Hold seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9121,\n    \"alt\": \"Spin Bike, Standing drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10320,\n    \"alt\": \"Spin Bike, Hold standing\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11520,\n    \"alt\": \"Spin Bike, Return seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12720,\n    \"alt\": \"Spin Bike, Seated drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13923,\n    \"alt\": \"Spin Bike, Seated recovery\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Spin Bike, Seated drive",
+              "decoded": true,
+              "height": 707,
+              "src": "/Maiin/.strict33.local/candidate/spin-bike/1.webp",
+              "width": 432
+            }
+          ],
+          "caption": "Seated drive 1/6",
+          "id": "spin-bike",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Spin Bike, Seated recovery",
+              "decoded": true,
+              "height": 707,
+              "src": "/Maiin/.strict33.local/candidate/spin-bike/2.webp",
+              "width": 432
+            }
+          ],
+          "caption": "Seated recovery 2/6",
+          "id": "spin-bike",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Spin Bike, Hold seated",
+              "decoded": true,
+              "height": 707,
+              "src": "/Maiin/.strict33.local/candidate/spin-bike/3.webp",
+              "width": 432
+            }
+          ],
+          "caption": "Hold seated 3/6",
+          "id": "spin-bike",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Spin Bike, Standing drive",
+              "decoded": true,
+              "height": 707,
+              "src": "/Maiin/.strict33.local/candidate/spin-bike/4.webp",
+              "width": 432
+            }
+          ],
+          "caption": "Standing drive 4/6",
+          "id": "spin-bike",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Spin Bike, Hold standing",
+              "decoded": true,
+              "height": 707,
+              "src": "/Maiin/.strict33.local/candidate/spin-bike/5.webp",
+              "width": 432
+            }
+          ],
+          "caption": "Hold standing 5/6",
+          "id": "spin-bike",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Spin Bike, Return seated",
+              "decoded": true,
+              "height": 707,
+              "src": "/Maiin/.strict33.local/candidate/spin-bike/6.webp",
+              "width": 432
+            }
+          ],
+          "caption": "Return seated 6/6",
+          "id": "spin-bike",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 84,\n    \"alt\": \"Spin Bike, Seated drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1202,\n    \"alt\": \"Spin Bike, Seated recovery\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Spin Bike, Hold seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2405,\n    \"alt\": \"Spin Bike, Standing drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2963,\n    \"alt\": \"Spin Bike, Hold standing\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3521,\n    \"alt\": \"Spin Bike, Return seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5206,\n    \"alt\": \"Spin Bike, Seated drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6641,\n    \"alt\": \"Spin Bike, Seated recovery\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Spin Bike, Hold seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9121,\n    \"alt\": \"Spin Bike, Standing drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10320,\n    \"alt\": \"Spin Bike, Hold standing\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11520,\n    \"alt\": \"Spin Bike, Return seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12720,\n    \"alt\": \"Spin Bike, Seated drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13923,\n    \"alt\": \"Spin Bike, Seated recovery\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15041,\n    \"alt\": \"Spin Bike, Seated drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15683,\n    \"alt\": \"Spin Bike, Seated recovery\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16241,\n    \"alt\": \"Spin Bike, Hold seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16805,\n    \"alt\": \"Spin Bike, Standing drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17364,\n    \"alt\": \"Spin Bike, Hold standing\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17921,\n    \"alt\": \"Spin Bike, Return seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19602,\n    \"alt\": \"Spin Bike, Seated drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Spin Bike, Seated recovery",
+            "decoded": true,
+            "height": 707,
+            "src": "/Maiin/.strict33.local/candidate/spin-bike/2.webp",
+            "width": 432
+          }
+        ],
+        "caption": "Seated recovery 2/6",
+        "id": "spin-bike",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / spin-bike\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nSpin Bike\nCardio\nMachine\n\nSEATED RECOVERY 2/6\n\nPause\nNormal\nPRIMARY\nQuads\nSECONDARY\nCore, Calves, Hamstrings\n\nInstructions\n\nPreparation: Dial in seat and bar height — seat level with the bars for most. Clip or strap in, grip the bars with a firm but relaxed hold.\n\n1\n\nStay seated; pedal with controlled resistance.\n\n2\n\nKeep your knees tracking over your feet.\n\n3\n\nKeep a relaxed hold on the bars.\n\n4\n\nRise from the saddle; keep pedalling controlled.\n\n5\n\nSupport yourself through the pedals and bars.\n\n6\n\nSit back onto the saddle smoothly.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 84,\n    \"alt\": \"Spin Bike, Seated drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1202,\n    \"alt\": \"Spin Bike, Seated recovery\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1763,\n    \"alt\": \"Spin Bike, Hold seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2405,\n    \"alt\": \"Spin Bike, Standing drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2963,\n    \"alt\": \"Spin Bike, Hold standing\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3521,\n    \"alt\": \"Spin Bike, Return seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5206,\n    \"alt\": \"Spin Bike, Seated drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6641,\n    \"alt\": \"Spin Bike, Seated recovery\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Spin Bike, Hold seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9121,\n    \"alt\": \"Spin Bike, Standing drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10320,\n    \"alt\": \"Spin Bike, Hold standing\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11520,\n    \"alt\": \"Spin Bike, Return seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12720,\n    \"alt\": \"Spin Bike, Seated drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13923,\n    \"alt\": \"Spin Bike, Seated recovery\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15041,\n    \"alt\": \"Spin Bike, Seated drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15683,\n    \"alt\": \"Spin Bike, Seated recovery\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16241,\n    \"alt\": \"Spin Bike, Hold seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16805,\n    \"alt\": \"Spin Bike, Standing drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17364,\n    \"alt\": \"Spin Bike, Hold standing\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17921,\n    \"alt\": \"Spin Bike, Return seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19602,\n    \"alt\": \"Spin Bike, Seated drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21044,\n    \"alt\": \"Spin Bike, Seated recovery\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22320,\n    \"alt\": \"Spin Bike, Hold seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23526,\n    \"alt\": \"Spin Bike, Standing drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24726,\n    \"alt\": \"Spin Bike, Hold standing\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25921,\n    \"alt\": \"Spin Bike, Return seated\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27126,\n    \"alt\": \"Spin Bike, Seated drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28320,\n    \"alt\": \"Spin Bike, Seated recovery\",\n    \"src\": \"/Maiin/.strict33.local/candidate/spin-bike/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

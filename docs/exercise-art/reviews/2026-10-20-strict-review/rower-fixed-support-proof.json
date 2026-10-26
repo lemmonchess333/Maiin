@@ -1,0 +1,68 @@
+[
+  {
+    "frame": 1,
+    "fixedApparatusRegions": [
+      [0, 510, 220, 830],
+      [1160, 650, 1416, 830]
+    ],
+    "changedPixels": 0,
+    "outsideApparatusChangedPixels": 0,
+    "allAthleteHandsFeetSeatChainAndPaletteOutsideRegionsExact": true,
+    "outputSha256": "8cbdcdc1c0267864785b40e7497ce392e5aaa44f13635ff1912d6c75581463d7"
+  },
+  {
+    "frame": 2,
+    "fixedApparatusRegions": [
+      [0, 510, 220, 830],
+      [1160, 650, 1416, 830]
+    ],
+    "changedPixels": 80953,
+    "outsideApparatusChangedPixels": 0,
+    "allAthleteHandsFeetSeatChainAndPaletteOutsideRegionsExact": true,
+    "outputSha256": "b88d0d906e6afc178a8d7c520bfbb466117b3fb514a3862fc060c372cfba3108"
+  },
+  {
+    "frame": 3,
+    "fixedApparatusRegions": [
+      [0, 510, 220, 830],
+      [1160, 650, 1416, 830]
+    ],
+    "changedPixels": 74294,
+    "outsideApparatusChangedPixels": 0,
+    "allAthleteHandsFeetSeatChainAndPaletteOutsideRegionsExact": true,
+    "outputSha256": "4bd891911c658cae161dc536b2e1d6683fb1a5edf8db4abe823bebea3ad9a6ad"
+  },
+  {
+    "frame": 4,
+    "fixedApparatusRegions": [
+      [0, 510, 220, 830],
+      [1160, 650, 1416, 830]
+    ],
+    "changedPixels": 74294,
+    "outsideApparatusChangedPixels": 0,
+    "allAthleteHandsFeetSeatChainAndPaletteOutsideRegionsExact": true,
+    "outputSha256": "4bd891911c658cae161dc536b2e1d6683fb1a5edf8db4abe823bebea3ad9a6ad"
+  },
+  {
+    "frame": 5,
+    "fixedApparatusRegions": [
+      [0, 510, 220, 830],
+      [1160, 650, 1416, 830]
+    ],
+    "changedPixels": 80953,
+    "outsideApparatusChangedPixels": 0,
+    "allAthleteHandsFeetSeatChainAndPaletteOutsideRegionsExact": true,
+    "outputSha256": "b88d0d906e6afc178a8d7c520bfbb466117b3fb514a3862fc060c372cfba3108"
+  },
+  {
+    "frame": 6,
+    "fixedApparatusRegions": [
+      [0, 510, 220, 830],
+      [1160, 650, 1416, 830]
+    ],
+    "changedPixels": 0,
+    "outsideApparatusChangedPixels": 0,
+    "allAthleteHandsFeetSeatChainAndPaletteOutsideRegionsExact": true,
+    "outputSha256": "8cbdcdc1c0267864785b40e7497ce392e5aaa44f13635ff1912d6c75581463d7"
+  }
+]

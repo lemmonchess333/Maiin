@@ -37,7 +37,9 @@ These need a person signed in to a console. Most unblock later steps.
    - `RESEND_FROM`: `Tropos <no-reply@troposfit.com>`. First check Resend →
      Domains shows troposfit.com as Verified.
    - `REVENUECAT_SANDBOX_UIDS`: your uid and the App Review demo account's uid.
-   - the rest listed in `docs/LAUNCH_TODO.md` §19.
+   - `PUBLIC_APP_BASE_URL`: `https://troposfit.com/`, once troposfit.com
+     serves the app. `docs/launch/owner-steps-2026-10-14.md` step 1.2 has
+     the whole table.
 
    Then Actions → **Deploy production** → Run workflow. Its "Write
    functions/.env" step should list those names. Today's deploy logged none of
@@ -53,9 +55,12 @@ These need a person signed in to a console. Most unblock later steps.
 ## 2. The first build
 
 6. **Run "Deploy iOS to TestFlight" once.** Add the five secrets from
-   `docs/ios-release.md`, then GitHub → Actions → Deploy iOS to TestFlight → Run
-   workflow. It has never run, and every phone step below needs its build. You
-   should see the run go green and the build appear in TestFlight. Run it a
+   `docs/ios-release.md`, and do the one-time setup in
+   `docs/ios-push-notifications.md`: Push Notifications on the `com.tropos.app`
+   App ID (the build stops without it) and the APNs key in Firebase. Then
+   GitHub → Actions → Deploy iOS to TestFlight → Run workflow. It has never
+   run, and every phone step below needs its build. You should see the run go
+   green and the build appear in TestFlight. Run it a
    second time: Apple Developer → Certificates should show one Apple
    Distribution certificate, not two.
 7. **No tracking warnings.** After the upload, App Store Connect's build page
@@ -80,7 +85,10 @@ core flow, an App Review rejection, or wrong data.
 9. **Email sign-up.** Sign up with a fresh email address you can open on the
    phone. Setup should start straight away. The verification email should
    arrive while you answer. Tap its link in Mail, switch back, and Home's
-   "Verify your email" notice should be gone.
+   "Verify your email" notice should be gone. Then sign out, and sign in with
+   Apple, then with Google, each with an account that has never signed in:
+   each should reach setup with no error. The phone's sign-in has only run
+   against mocks, and App Review tries every button.
 10. **The AI question.** On a Pro or trial account that has never been asked,
     open Food and take a meal photo. "Send food to Google for analysis?" should
     appear over the scanner. Tap Allow, and that photo is analysed. On a second
@@ -106,7 +114,10 @@ core flow, an App Review rejection, or wrong data.
     should show the new week with nothing ticked, and Home should match.
 16. **Locked-phone run.** Start a run outdoors, lock the phone and run 1–2 km,
     then unlock and finish. The route should have no straight-line jump across
-    the locked stretch, and that split's pace should look right.
+    the locked stretch, and that split's pace should look right. With audio
+    cues on, listen too: the kilometre cue should be spoken while the phone is
+    locked. Cues use the web view's speech, and the app's only background mode
+    is location, so silence here is the thing to report.
 17. **Auto-pause.** With auto-pause on, stand still for a minute at a
     crossing. The time should stop and the distance shouldn't creep. Then tap
     Pause while auto-paused, and resume: no time should be counted twice.
@@ -207,6 +218,15 @@ Not launch blockers. Worth one pass on the TestFlight build, a section at a time
 
 - [ ] In both light and dark theme, open a live run, a saved run, the finish screen and the route planner. The map draws each time. The OpenFreeMap credit shows and shrinks to an (i) after 5 seconds; tapping (i) shows it again, and its links open outside the app. On the live run the credit sits top-right, clear of the GPS pill and the sheet. On a saved run it sits bottom-left, clear of Replay.
 - [ ] On the iPhone app, open Settings > Your data > Export workouts. The share sheet opens. Save to Files, open the .csv in Numbers, and the 'Workouts exported' toast shows. Closing the sheet shows nothing. Export GPX on the run finish screen and on a saved run opens the sheet with a .gpx file.
+
+### Push on the iPhone
+
+- [ ] Run the "Device acceptance check" in `docs/ios-push-notifications.md`: a test push in the foreground and in the background, the switches, and a second account on the same phone.
+
+### Haptics, and your account's password and email
+
+- [ ] Tick a set in a workout, then follow someone: a tap should be felt each time.
+- [ ] On an email account, Settings → Account → Sign-in & security: change the password, sign out and sign in with the new one. Then change the email and tap the link sent to the new address. Only the new password should work, and the sign-in email should change only once the link is tapped.
 
 ### Photos other people see are screened for nudity
 
@@ -331,6 +351,14 @@ Not launch blockers. Worth one pass on the TestFlight build, a section at a time
 
 Not launch blockers.
 
+### The minimum-version gate
+
+- [ ] Firestore console → `config/client` → string field `minSupportedVersion` = `"99.0.0"`. Open the app: an update screen should show (the App Store on the iPhone, Reload on the web). Delete the field and reopen: the app as normal. Every installed app is blocked while it is set, so delete it straight away.
+
+### The scheduled sweeps at real scale
+
+- [ ] After launch, once there are real users: in Cloud Logging, one run each of weeklyPerformanceRollup, dailyPerformanceRefresh, dailyRaceReconciliationSweep, hourlyStreakNudge and hourlyChallengeAnnouncements. Each run's first and last lines should be well under 540 s apart; one near it is cut off with no error.
+
 ### The food scan's model
 
 - [ ] After one successful scan, open Google Cloud Console → Logging and search for analyzeFood.usage. You should see a line with prompt and output token counts. Multiply them by Vertex's 3.8 Flash prices and check the cost per scan is acceptable.
@@ -445,6 +473,8 @@ No phone or console needed; I'll work through these and tick them in the backlog
 
 Real engineering or owner items, kept in the backlog as they are.
 
+- A lawyer reads the Privacy Policy and the Terms. Every claim in them was checked against the code, which is not a legal review.
+- The run's lock-screen card has no widget extension yet. The app's half and the plugin are in (`src/lib/runLiveActivity.ts`), but the Xcode target in `docs/run-live-activity.md` was never added, so nothing appears on the lock screen or in the Dynamic Island. Engineering, after 1.0.
 - Who the "trader" is. Before the UK rules start in: This is a legal question for a qualified adviser: who is the trader under the UK subscription rules when Apple sells as commissionaire. No test or console can answer it. Its deadline is January 2027, not 1.0.
 - No tracking framework in the binary: otool -L on the built app: The owner has no Mac, and deploy-ios.yml has no otool step (grep finds none) and uploads no artifact. As things stand, nothing can run this check.
 - The six panels are not one scene (dips station drifts): Still live: public/form-frames/dips/1-6.webp unchanged since 3c8793f3 (2026-09-04), and src/lib/formArtwork.ts:235 still serves them as existing('dips') with status 'existing-needs-review'. Fix is regenerating the art (owner/art pipeline), not a device or console check.

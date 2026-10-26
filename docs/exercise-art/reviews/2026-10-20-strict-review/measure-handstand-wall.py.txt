@@ -1,0 +1,17 @@
+"""Real wall edges/corners; no canvas, floor-crop or occluded-head anchors."""
+from pathlib import Path
+from PIL import Image
+import numpy as np,json,hashlib
+H=Path(__file__).resolve().parent;R=H.parent/'Maiin-burpees';rows=[]
+for n in range(1,7):
+ p=R/f'public/form-frames/handstand-push-ups/{n}.webp';a=np.asarray(Image.open(p).convert('RGB')).mean(2);profile=a[100:300].mean(0)
+ left=263+int(np.diff(profile[263:272]).argmax())+.5
+ front=620+int(np.diff(profile[620:636]).argmin())+.5
+ back=635+int(np.diff(profile[635:646]).argmin())+.5
+ xf=int(front);xb=int(back)-1
+ yf=1340+int(a[1340:1380,xf].argmin());yb=1340+int(a[1340:1380,xb].argmin())
+ rows.append({'frame':n,'path':f'form-frames/handstand-push-ups/{n}.webp','sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'anchors':{'wallFrontRightFloorJunction':{'x':front,'y':yf},'wallBackRightFloorJunction':{'x':back,'y':yb}},'invariantDimensions':{'visibleWallFrontWidthAtY200':front-left,'visibleWallSideFaceWidthAtY200':back-front},'observedVisibleWallEdgesAtY200':{'left':left,'frontRight':front,'backRight':back}})
+anchor=max(abs(r['anchors'][k][axis]-rows[0]['anchors'][k][axis])for r in rows for k in rows[0]['anchors']for axis in ['x','y'])
+dimension=max(abs(r['invariantDimensions'][k]/rows[0]['invariantDimensions'][k]-1)for r in rows for k in rows[0]['invariantDimensions'])
+out={'id':'handstand-push-ups','method':'Actual unoccluded wall front/side vertical boundaries averaged at rows100:300, gradient-edge pixel centres; actual two unoccluded wall-floor seam minima. The left lower wall corner is occluded by the lowered head and is not measured. The outer image crop/floor-panel corners are not adopted.','maximumAnchorDriftPx':anchor,'maximumDimensionDriftRatio':dimension,'numericPass':anchor<=1 and dimension<=.01,'samples':rows}
+(H/'handstand-wall-measurements.json').write_text(json.dumps(out,indent=2)+'\n');print(json.dumps(out,indent=2))

@@ -196,6 +196,23 @@ describe("addSpacePostComment", () => {
     });
   });
 
+  it("caps the stored name at the display-name limit", async () => {
+    const firestore = makeFirestoreStub({
+      initial: { [POST]: { authorId: "bob", commentCount: 0 } },
+    });
+    await addSpacePostComment({
+      firestore,
+      uid: "alice",
+      spaceId: "runners",
+      postId: "coach-2026-07-20",
+      text: "Loving this block",
+      authorName: "A".repeat(80),
+      increment,
+      serverTimestamp,
+    });
+    expect(firestore._writes[0].data.authorName).toBe("A".repeat(50));
+  });
+
   it("rejects empty and over-long text before any write", async () => {
     const firestore = makeFirestoreStub({
       initial: { [POST]: { authorId: "bob", commentCount: 0 } },

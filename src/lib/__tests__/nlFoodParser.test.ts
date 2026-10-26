@@ -1006,3 +1006,192 @@ describe("measured quantities require a compatible nutrition reference", () => {
     }
   );
 });
+
+describe("a measure written after the food", () => {
+  /* extractQty read a measure only from the start, so "chicken breast 200g"
+     logged the row's 150 g serving (248 kcal) under a name that said 200g.
+     References: chicken breast 248 per 150 g, milk 150 per 240 ml. */
+  it.each([
+    ["chicken breast 200g", "200g chicken breast", 331, "200g"],
+    ["chicken breast 200 g", "200g chicken breast", 331, "200g"],
+    ["chicken breast 0.2kg", "0.2kg chicken breast", 331, "0.2kg"],
+    ["milk 300ml", "300ml milk", 188, "300ml"],
+    ["a chicken breast 200g", "200g chicken breast", 331, "200g"],
+  ] as const)("%s logs the typed amount", (text, name, calories, label) => {
+    expect(parseFoodText(text)).toEqual([
+      expect.objectContaining({ name, calories, portionLabel: label }),
+    ]);
+  });
+
+  it("logs the same as the measure written first", () => {
+    expect(parseFoodText("chicken breast 200g")).toEqual(
+      parseFoodText("200g chicken breast")
+    );
+  });
+
+  it("a base food's own measure stands inside a with phrase", () => {
+    // 331 for the chicken; the rice keeps its normal serving.
+    const rice = parseFoodText("rice")[0].calories;
+    expect(parseFoodText("chicken breast 200g with rice")[0].calories).toBe(
+      331 + rice
+    );
+  });
+
+  it("a leading count still wins over a trailing number", () => {
+    expect(parseFoodText("2 eggs")[0]).toMatchObject({ calories: 156 });
+  });
+});
+
+describe("a count written as a fraction or a word", () => {
+  /* A fraction was no count (half an avocado logged the whole one, 240 kcal)
+     and a number word was part of the name ("two eggs" logged one egg).
+     References: avocado 240 per one, egg 78 per one, lager 245 per pint. */
+  it.each([
+    ["half an avocado", "Avocado (x0.5)", 120],
+    ["half avocado", "Avocado (x0.5)", 120],
+    ["a half of an avocado", "Avocado (x0.5)", 120],
+    ["1/2 avocado", "Avocado (x0.5)", 120],
+    ["½ avocado", "Avocado (x0.5)", 120],
+    ["1 1/2 avocados", "Avocados (x1.5)", 360],
+    ["two eggs", "Eggs (x2)", 156],
+    ["Three eggs", "Eggs (x3)", 234],
+    ["one egg", "Egg", 78],
+  ] as const)("%s", (text, name, calories) => {
+    expect(parseFoodText(text)).toEqual([
+      expect.objectContaining({ name, calories }),
+    ]);
+  });
+
+  it("two pints are two pints, and half a pint written as a fraction", () => {
+    expect(parseFoodText("two pints of lager")[0]).toMatchObject({
+      name: "2 pints of lager",
+      calories: 490,
+      portionLabel: "2 pints",
+    });
+    expect(parseFoodText("1/2 pint of milk")).toEqual(
+      parseFoodText("half a pint of milk")
+    );
+  });
+});
+
+describe("oats by their packet names are weighed dry", () => {
+  /* "porridge" is a cooked bowl (234 g), so "50g porridge oats" found it and
+     logged 32 kcal. Oats are 150 per 40 g dry: 50 g is 188. "50g porridge"
+     stays the cooked bowl: by weight, porridge is the porridge. */
+  it.each([
+    ["50g porridge oats", 188],
+    ["50g rolled oats", 188],
+    ["50g oats", 188],
+    ["50g porridge", 32],
+  ] as const)("%s", (text, calories) => {
+    expect(parseFoodText(text)[0]).toMatchObject({ calories });
+  });
+
+  it("a bowl of porridge and a portion of porridge oats are the same food", () => {
+    expect(parseFoodText("porridge")[0].calories).toBe(
+      parseFoodText("porridge oats")[0].calories
+    );
+  });
+});
+
+describe("a count of the unit a serving is written in", () => {
+  /* G4-12: a row whose serving counts its own units ("2 tbsp (32g)",
+     "2 slices (16g)", "1 omelette (2 eggs)") was multiplied by the typed
+     count again, so "2 tbsp peanut butter" logged 376 kcal where its own
+     row says 188, and "3 egg omelette" logged six eggs. References:
+     peanut butter 188 per 2 tbsp, bacon 90 per 2 slices, omelette 154
+     per 2 eggs. */
+  it.each([
+    ["2 tbsp peanut butter", 188],
+    ["1 tbsp peanut butter", 94],
+    ["4 tbsp peanut butter", 376],
+    ["2 slices of bacon", 90],
+    ["4 slices of bacon", 180],
+    ["a slice of bacon", 45],
+    ["3 egg omelette", 231],
+  ] as const)("%s", (text, calories) => {
+    expect(parseFoodText(text)[0]).toMatchObject({ calories });
+  });
+
+  it("keeps counting servings when the serving counts something else", () => {
+    // The anchors: toast is "1 slice", rice a weighed bowl, an egg "1 large".
+    expect(parseFoodText("2 slices of toast")[0].calories).toBe(
+      2 * parseFoodText("toast")[0].calories
+    );
+    expect(parseFoodText("2 cups of rice")[0].calories).toBe(
+      2 * parseFoodText("rice")[0].calories
+    );
+    expect(parseFoodText("2 eggs")[0].calories).toBe(
+      2 * parseFoodText("egg")[0].calories
+    );
+  });
+});
+
+describe("a dish is the food it is named for", () => {
+  /* G4-14: the longest food name in a phrase won and the rest of it
+     vanished. "chicken wrap" logged a chicken breast (0 g carbs),
+     "blueberry muffin" 1 kcal of blueberries, "strawberry yogurt" 4 kcal,
+     "chicken curry" and "chicken rice" a chicken breast. The dish is the
+     last food named, as English names a dish. A made dish (a wrap, a
+     sandwich, a curry) carries its filling; a plain base (a salad, an
+     omelette, rice, pasta) adds the foods named with it; a condiment is
+     added to whatever it is on. */
+  const one = (text: string) => parseFoodText(text)[0];
+  const macros = (text: string) => {
+    const row = one(text);
+    return [row.calories, row.protein, row.carbs, row.fat];
+  };
+  const together = (...foods: string[]) =>
+    foods.reduce((sum, food) => sum + one(food).calories, 0);
+
+  it.each([
+    ["chicken wrap", "wrap"],
+    ["blueberry muffin", "muffin"],
+    ["chocolate cake", "cake"],
+    ["strawberry yogurt", "yogurt"],
+    ["chicken curry", "curry"],
+    ["beef burrito", "burrito"],
+    ["peanut butter sandwich", "sandwich"],
+    ["fried egg sandwich", "sandwich"],
+    ["egg fried rice", "fried rice"],
+    ["cheese toastie", "toastie"],
+  ] as const)("%s is a %s", (dish, food) => {
+    expect(macros(dish)).toEqual(macros(food));
+    expect(one(dish).name.toLowerCase()).toBe(dish);
+  });
+
+  it.each([
+    ["chicken salad", ["chicken", "salad"]],
+    ["chicken caesar salad", ["chicken", "salad"]],
+    ["cheese omelette", ["cheese", "omelette"]],
+    ["tuna pasta", ["tuna", "pasta"]],
+    ["chicken rice", ["chicken", "rice"]],
+    ["chicken noodles", ["chicken", "noodles"]],
+    ["tuna mayo", ["tuna", "mayo"]],
+  ] as const)("%s is %j together", (dish, foods) => {
+    expect(one(dish).calories).toBe(together(...foods));
+  });
+
+  it("counts the dish", () => {
+    expect(one("2 chicken wraps").calories).toBe(2 * one("wrap").calories);
+    expect(one("2 chicken salads").calories).toBe(
+      2 * together("chicken", "salad")
+    );
+  });
+
+  it("keeps a food named once, and a dish with its own row, as they were", () => {
+    // The anchors: these logged right before and still do.
+    expect(macros("ham sandwich")).toEqual(macros("sandwich"));
+    expect(one("chicken breast").calories).toBe(248);
+    expect(one("salt and vinegar crisps").calories).toBe(152);
+    expect(macros("chicken stir fry")).toEqual(macros("stir fry"));
+    expect(one("grilled chicken").calories).toBe(one("chicken").calories);
+  });
+
+  it("asks rather than splitting a measure across a base and what is on it", () => {
+    expect(one("200g chicken salad").quantityIssue).toBeDefined();
+    // A measure of a made dish still scales the dish's own row, or asks
+    // as that row always did.
+    expect(one("200g chicken").calories).toBe(331);
+  });
+});

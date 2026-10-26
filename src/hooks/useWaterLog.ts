@@ -152,16 +152,19 @@ export function useWaterLog() {
   const removeDrink = useCallback(
     (receiptId: string) => {
       if (!uid || !receiptId) return false;
+      // The drink's own day: the list shows `today`'s drinks, and just
+      // past midnight, before `today` moves on, the clock's date names a
+      // document that holds no receipt for it.
       return queueWater(uid, {
         id: crypto.randomUUID(),
-        date: localDateString(),
+        date: today,
         delta: 0,
         targetMl: target,
         undoOf: receiptId,
         queuedAt: Date.now(),
       });
     },
-    [uid, target]
+    [uid, target, today]
   );
   const preferenceKey = uid ? scopedKey("tropos-water-serving", uid) : "";
   const storedServing = uid

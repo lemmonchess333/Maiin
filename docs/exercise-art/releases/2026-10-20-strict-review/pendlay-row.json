@@ -1,0 +1,164 @@
+{
+  "exerciseId": "pendlay-row",
+  "version": "anatomy-v3-2026-10-15-retained-whole-pair-pendlay-v1",
+  "width": 1180,
+  "height": 892,
+  "reference": {
+    "path": "form-frames/pendlay-row/3.webp",
+    "sha256": "562e35b61473e979dfb727ea3bcf24187dc6009feb704a5e91ba174eb0208850"
+  },
+  "cueSha256": "57dddd767a5e13aa2127fef977f9af5cbb7467a44734031cbdfc33b3b82869ff",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:50.077595+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 1px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Floor start and row-to-torso endpoints preserve the hip hinge, planted feet and clear bar path. Minor projected grip/torso contour redraw is retained, without a calibrated-3D claim. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One modest plate on each bar end with both hands closing around the shaft. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Floor start and row-to-torso endpoints preserve the hip hinge, planted feet and clear bar path. Minor projected grip/torso contour redraw is retained, without a calibrated-3D claim. Actual named native supports are measured in all six frames: leftImageSupportLowestContourMidpoint, rightImageSupportLowestContourMidpoint. Maximum axis drift 1px. Dimensions: leftImageSupportProjectedHorizontalSpan, rightImageSupportProjectedHorizontalSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Floor start and row-to-torso endpoints preserve the hip hinge, planted feet and clear bar path. Minor projected grip/torso contour redraw is retained, without a calibrated-3D claim. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Lats #7B72E9; secondary Rhomboids, Rear Delts, Biceps, Core #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Set: Brace flat-backed with the bar over midfoot. / Brace: Keep your torso low and feet planted. / Row: Row the bar toward your lower chest. / Squeeze: Draw elbows back; squeeze your shoulder blades. / Lower: Lower under control to a dead stop. / Reset: Keep feet planted; brace before each row.. Preparation remains [\"Set up with torso parallel to the floor, bar on the ground over midfoot.\", \"Grip just outside your knees, back flat, core braced hard.\"]. Floor start and row-to-torso endpoints preserve the hip hinge, planted feet and clear bar path. Minor projected grip/torso contour redraw is retained, without a calibrated-3D claim."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Floor start and row-to-torso endpoints preserve the hip hinge, planted feet and clear bar path. Minor projected grip/torso contour redraw is retained, without a calibrated-3D claim. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-15/pendlay-row.json (sha256 ebe7c1edb732fc0fa305e01737db4f42e5a97e520dce7abb5998ea7447fd1b0e). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-15/pendlay-row.json (sha256 ebe7c1edb732fc0fa305e01737db4f42e5a97e520dce7abb5998ea7447fd1b0e). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/pendlay-row/1.webp",
+      "sha256": "7e41133d75b99596b1854caaccd630b21064c18a144aac9a156063d34312aed4",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 446.5, "y": 792 },
+        "rightImageSupportLowestContourMidpoint": { "x": 649, "y": 820 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 190,
+        "rightImageSupportProjectedHorizontalSpan": 182
+      }
+    },
+    {
+      "path": "form-frames/pendlay-row/2.webp",
+      "sha256": "7e41133d75b99596b1854caaccd630b21064c18a144aac9a156063d34312aed4",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 446.5, "y": 792 },
+        "rightImageSupportLowestContourMidpoint": { "x": 649, "y": 820 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 190,
+        "rightImageSupportProjectedHorizontalSpan": 182
+      }
+    },
+    {
+      "path": "form-frames/pendlay-row/3.webp",
+      "sha256": "562e35b61473e979dfb727ea3bcf24187dc6009feb704a5e91ba174eb0208850",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 446.5, "y": 792 },
+        "rightImageSupportLowestContourMidpoint": { "x": 648, "y": 820 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 190,
+        "rightImageSupportProjectedHorizontalSpan": 182
+      }
+    },
+    {
+      "path": "form-frames/pendlay-row/4.webp",
+      "sha256": "562e35b61473e979dfb727ea3bcf24187dc6009feb704a5e91ba174eb0208850",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 446.5, "y": 792 },
+        "rightImageSupportLowestContourMidpoint": { "x": 648, "y": 820 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 190,
+        "rightImageSupportProjectedHorizontalSpan": 182
+      }
+    },
+    {
+      "path": "form-frames/pendlay-row/5.webp",
+      "sha256": "7e41133d75b99596b1854caaccd630b21064c18a144aac9a156063d34312aed4",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 446.5, "y": 792 },
+        "rightImageSupportLowestContourMidpoint": { "x": 649, "y": 820 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 190,
+        "rightImageSupportProjectedHorizontalSpan": 182
+      }
+    },
+    {
+      "path": "form-frames/pendlay-row/6.webp",
+      "sha256": "7e41133d75b99596b1854caaccd630b21064c18a144aac9a156063d34312aed4",
+      "anchors": {
+        "leftImageSupportLowestContourMidpoint": { "x": 446.5, "y": 792 },
+        "rightImageSupportLowestContourMidpoint": { "x": 649, "y": 820 }
+      },
+      "invariantDimensions": {
+        "leftImageSupportProjectedHorizontalSpan": 190,
+        "rightImageSupportProjectedHorizontalSpan": 182
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred",
+    "maxAnchorAxisDriftPx": 1,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-15/pendlay-row.json",
+    "sha256": "ebe7c1edb732fc0fa305e01737db4f42e5a97e520dce7abb5998ea7447fd1b0e"
+  },
+  "historicalFindings": [
+    "Minor original head/neck/upperbody lift and knee/hip variation after ground registration; no strict fixed-torso certification.",
+    "Modest original far-hand/bar grip spacing variation remains; no exact rigid hand placement certification.",
+    "Two physical endpoints repeated across6separatepaths; no authored intermediate or continuous trajectory claim.",
+    "Biceps/Core remain neutral original source anatomy; legend includes their secondary functional role. No new highlight boundary is invented."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/pendlay-row.json",
+    "sha256": "993583cd415172130cb301ba4556cdb270c8d70b8b62111757582f2f77c21b81"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false
+}

@@ -3,6 +3,7 @@ import { Plus, Minus, AlertTriangle } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { Button } from "@/components/ui/Button";
 import { OFF_CREDIT } from "@/lib/offNutrition";
 
 interface Props {
@@ -220,19 +221,18 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
           </button>
         </div>
 
-        {/* Log food button */}
-        <button
-          type="button"
+        {/* Logging food is the food orange wherever it happens
+            (DESIGN_GUIDE §14i): the colour says what the button does. */}
+        <Button
+          variant="nutrition"
+          size="lg"
+          fullWidth
+          className="mt-4"
           onClick={() => onConfirm(servings)}
           disabled={!valid}
-          className="w-full py-3 rounded-xl text-base font-semibold text-white mt-4 disabled:opacity-50"
-          style={{
-            background: THEME.gradient.brand,
-            boxShadow: "var(--ds-shadow-purple-glow)",
-          }}
         >
           Log food
-        </button>
+        </Button>
 
         {/* The food is an Open Food Facts search result (Food opens this
             sheet for nothing else), and the database's licence (ODbL)

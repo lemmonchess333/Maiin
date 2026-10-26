@@ -157,4 +157,18 @@ describe("today's cell", () => {
     expect(src).toMatch(/const CELL_PX = 40;/);
     expect(src).not.toMatch(/animate=\{\{[^}]*width/s);
   });
+
+  /* On a 320px phone "Easy 30" and "+ strides" ended in "…" (measured:
+     "+ strides" 46px in a 41px label). Under 21em of row the strip drops
+     its inset and half of each gap and a run's name sets tighter; the
+     capture rig measured "+ strides" at 41px in 41px. */
+  it("gives a run's name more room on a narrow row", () => {
+    const { container } = renderSelector();
+    const strip = container.querySelector('[role="tablist"]')!;
+    expect(strip.parentElement!.className).toContain("@container");
+    expect(strip.className).toContain("@max-[21em]:px-0");
+    expect(strip.className).toContain("@max-[21em]:gap-0.5");
+    const label = container.querySelector("[data-cell-label]")!;
+    expect(label.className).toContain("@max-[21em]:tracking-tighter");
+  });
 });

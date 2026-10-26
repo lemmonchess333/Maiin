@@ -98,7 +98,7 @@ test.describe("live run HUD", () => {
     await page.goto("run");
     await page.waitForLoadState("domcontentloaded");
 
-    /* Freeform users land on the tile picker; "Free Run" is the first
+    /* Freeform users land on the tile picker; "Free run" is the first
        outdoor tile (ACTIVITY_TYPES[0].name in runConfigDefaults.ts). A
        programme user would get RunLaunchCard instead, so accept either
        entry rather than assuming which one the seed produces. */

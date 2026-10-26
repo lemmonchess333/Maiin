@@ -1,0 +1,112 @@
+[
+  {
+    "mode": "original",
+    "method": "Actual neutral outer shoe silhouette above40 on black background, no mask morphology; white/grey calf and shoe connected component, actual shoe is widest portion in this low ROI. Not a calf/ankle brightness-core bound.",
+    "maximumDimensionDriftRatio": 0.010638297872340496,
+    "samples": [
+      {
+        "frame": 1,
+        "input": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\public\\form-frames\\barbell-row\\1.webp",
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 188,
+          "nearShoeOuterNeutralContourSpan": 177
+        }
+      },
+      {
+        "frame": 2,
+        "input": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\public\\form-frames\\barbell-row\\2.webp",
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 190,
+          "nearShoeOuterNeutralContourSpan": 178
+        }
+      },
+      {
+        "frame": 3,
+        "input": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\public\\form-frames\\barbell-row\\3.webp",
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 189,
+          "nearShoeOuterNeutralContourSpan": 178
+        }
+      },
+      {
+        "frame": 4,
+        "input": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\public\\form-frames\\barbell-row\\4.webp",
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 189,
+          "nearShoeOuterNeutralContourSpan": 178
+        }
+      },
+      {
+        "frame": 5,
+        "input": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\public\\form-frames\\barbell-row\\5.webp",
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 189,
+          "nearShoeOuterNeutralContourSpan": 178
+        }
+      },
+      {
+        "frame": 6,
+        "input": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\Maiin-burpees\\public\\form-frames\\barbell-row\\6.webp",
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 188,
+          "nearShoeOuterNeutralContourSpan": 177
+        }
+      }
+    ]
+  },
+  {
+    "mode": "staged",
+    "method": "Actual neutral outer shoe silhouette above40 on black background, no mask morphology; white/grey calf and shoe connected component, actual shoe is widest portion in this low ROI. Not a calf/ankle brightness-core bound.",
+    "maximumDimensionDriftRatio": 0.005649717514124353,
+    "samples": [
+      {
+        "frame": 1,
+        "input": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\barbell-row\\1.png",
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 188,
+          "nearShoeOuterNeutralContourSpan": 177
+        }
+      },
+      {
+        "frame": 2,
+        "input": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\barbell-row\\2.png",
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 189,
+          "nearShoeOuterNeutralContourSpan": 178
+        }
+      },
+      {
+        "frame": 3,
+        "input": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\barbell-row\\3.png",
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 188,
+          "nearShoeOuterNeutralContourSpan": 177
+        }
+      },
+      {
+        "frame": 4,
+        "input": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\barbell-row\\4.png",
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 189,
+          "nearShoeOuterNeutralContourSpan": 178
+        }
+      },
+      {
+        "frame": 5,
+        "input": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\barbell-row\\5.png",
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 188,
+          "nearShoeOuterNeutralContourSpan": 177
+        }
+      },
+      {
+        "frame": 6,
+        "input": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\strict33-review-20261020\\staged\\barbell-row\\6.png",
+        "invariantDimensions": {
+          "farShoeOuterNeutralContourSpan": 188,
+          "nearShoeOuterNeutralContourSpan": 177
+        }
+      }
+    ]
+  }
+]

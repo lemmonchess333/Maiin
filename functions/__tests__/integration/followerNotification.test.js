@@ -1,6 +1,6 @@
 /**
  * Integration: "X started following you" reaches only the people who asked
- * for it.
+ * for it, and "X accepted your follow request" reaches the person who asked.
  *
  * S3 put new followers behind a switch that is off by default (Settings →
  * Notifications → Activity). `onFollowerCreated` is the only sender: the
@@ -24,40 +24,55 @@ const suite = EMULATOR_HOST ? describe : describe.skip;
 
 let db;
 let onFollowerCreated;
+let onFollowRequestCreated;
 
 const RECIPIENT = "follownotif-alice";
 const FOLLOWER = "follownotif-bob";
 
 beforeAll(() => {
   if (!EMULATOR_HOST) return;
-  onFollowerCreated = require("../../index").onFollowerCreated;
+  ({ onFollowerCreated, onFollowRequestCreated } = require("../../index"));
   db = require("firebase-admin").firestore();
 });
 
 async function wipe() {
   for (const path of [
     `notifications/${RECIPIENT}/items`,
+    `notifications/${FOLLOWER}/items`,
     `followers/${RECIPIENT}/users`,
+    `followRequests/${RECIPIENT}/users`,
   ]) {
     for (const ref of await db.collection(path).listDocuments()) {
       await ref.delete();
     }
   }
   await db.doc(`users/${RECIPIENT}`).delete();
+  await db.doc(`users/${FOLLOWER}`).delete();
+  await db.doc(`users/${RECIPIENT}/public/profile`).delete();
   await db.doc(`users/${FOLLOWER}/public/profile`).delete();
 }
 
-/** Bob follows Alice as the client does, then the trigger runs. */
-async function follow() {
+/** Bob follows Alice as the client does, then the trigger runs. An
+ *  accepted request is written by Alice, with `fromRequest`. */
+async function follow(edge = {}) {
   const ref = db.doc(`followers/${RECIPIENT}/users/${FOLLOWER}`);
-  await ref.set({ followedAt: new Date() });
+  await ref.set({ followedAt: new Date(), ...edge });
   await onFollowerCreated.run(await ref.get(), {
     params: { uid: RECIPIENT, followerUid: FOLLOWER },
   });
 }
 
-async function items() {
-  const snap = await db.collection(`notifications/${RECIPIENT}/items`).get();
+/** Bob asks to follow Alice, then the trigger runs. */
+async function ask() {
+  const ref = db.doc(`followRequests/${RECIPIENT}/users/${FOLLOWER}`);
+  await ref.set({ requestedAt: new Date() });
+  await onFollowRequestCreated.run(await ref.get(), {
+    params: { uid: RECIPIENT, requesterUid: FOLLOWER },
+  });
+}
+
+async function items(uid = RECIPIENT) {
+  const snap = await db.collection(`notifications/${uid}/items`).get();
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
@@ -100,5 +115,87 @@ suite("a new follower is announced only to someone who turned it on", () => {
       fromName: "Bob",
       message: "Bob started following you",
     });
+  });
+});
+
+suite("a follow request is announced unless switched off", () => {
+  beforeEach(async () => {
+    await wipe();
+    await db
+      .doc(`users/${FOLLOWER}/public/profile`)
+      .set({ displayName: "Bob" });
+  });
+
+  it("names the asker for someone who never chose (on by default), once", async () => {
+    await db.doc(`users/${RECIPIENT}`).set({ displayName: "Alice" });
+    await ask();
+    await ask();
+    const rows = await items();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      id: `follow_request_${FOLLOWER}`,
+      type: "follow_request",
+      fromUserId: FOLLOWER,
+      message: "Bob asked to follow you",
+    });
+  });
+
+  it("writes nothing when the switch is off", async () => {
+    await db
+      .doc(`users/${RECIPIENT}`)
+      .set({ notificationPreferences: { followRequests: false } });
+    await ask();
+    expect(await items()).toEqual([]);
+  });
+
+  it("an accepted request is not announced again as a new follower", async () => {
+    // Alice said yes herself: "Bob started following you" would be noise,
+    // even for someone who turned New followers on.
+    await db
+      .doc(`users/${RECIPIENT}`)
+      .set({ notificationPreferences: { follows: true } });
+    await follow({ fromRequest: true });
+    expect(await items()).toEqual([]);
+  });
+});
+
+suite("the person who asked hears that they were accepted", () => {
+  beforeEach(async () => {
+    await wipe();
+    await db
+      .doc(`users/${RECIPIENT}/public/profile`)
+      .set({ displayName: "Alice" });
+    await db
+      .doc(`users/${FOLLOWER}/public/profile`)
+      .set({ displayName: "Bob" });
+  });
+
+  it("names who said yes, on by default, in one row however often it runs", async () => {
+    await db.doc(`users/${FOLLOWER}`).set({ displayName: "Bob" });
+    await follow({ fromRequest: true });
+    await follow({ fromRequest: true });
+    const rows = await items(FOLLOWER);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      id: `follow_accepted_${RECIPIENT}`,
+      type: "follow_accepted",
+      fromUserId: RECIPIENT,
+      fromName: "Alice",
+      message: "Alice accepted your follow request",
+    });
+  });
+
+  it("writes nothing when the asker switched follow requests off", async () => {
+    await db
+      .doc(`users/${FOLLOWER}`)
+      .set({ notificationPreferences: { followRequests: false } });
+    await follow({ fromRequest: true });
+    expect(await items(FOLLOWER)).toEqual([]);
+  });
+
+  it("a direct follow tells the follower nothing", async () => {
+    await db.doc(`users/${FOLLOWER}`).set({ displayName: "Bob" });
+    await follow();
+    expect(await items(FOLLOWER)).toEqual([]);
   });
 });

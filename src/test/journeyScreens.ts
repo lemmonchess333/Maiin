@@ -11,7 +11,8 @@
  * - A planned run's: `StackedCTACards.test.tsx`, `RunLaunchCard.test.tsx`,
  *   `RunSetupModal.journeyNames.test.tsx` (the run type, the treadmill and
  *   its start), `RunSummary.savedRunState.test.tsx` and `WeekStrip.test.tsx`.
- * - Welcome back's: `LiftReturnSheet.test.tsx`.
+ * - Welcome back's: `LiftReturnSheet.test.tsx`, and the runner's:
+ *   `RunReturnSheet.test.tsx`.
  * - Train's rows, its Start workout, its two halves, the run week, the
  *   lift week's banners and the recovery count, "Why this run", Home's
  *   title and the tab bar: `journeyScreens.test.tsx`.
@@ -100,7 +101,7 @@ export const RUN = {
   /** A button on the GPS screen (`Run`). */
   gpsTreadmill: "On a treadmill",
   customise: "Customise",
-  /** The setup's run type, by the type's name ("Easy Run"). */
+  /** The setup's run type, by the type's name ("Easy run"). */
   runType: (typeName: string) =>
     `Selected run type: ${typeName}. Tap to change.`,
   /** A switch. */
@@ -108,7 +109,7 @@ export const RUN = {
   startTreadmill: "Start on the treadmill",
   elapsedTime: "Elapsed time",
   distance: "Distance from treadmill",
-  saveTreadmill: "Save Treadmill Run",
+  saveTreadmill: "Save treadmill run",
   /** The summary's heading, by the planned session's name ("Easy 30"). */
   summary: (sessionName: string) => `${sessionName} complete ✓`,
   save: "Save run",
@@ -122,6 +123,14 @@ export const WELCOME_BACK = {
   sheet: "Welcome back",
   easeBack: /^Ease back in/,
   keep: /^Keep my old weights/,
+} as const;
+
+/** Home's greeting for a free runner back from two weeks or more away
+ *  (`RunReturnSheet`). A race plan's opens the fell-behind sheet instead. */
+export const RUN_RETURN = {
+  sheet: "Welcome back",
+  easyRun: /^Start with an easy run/,
+  notNow: "Not now",
 } as const;
 
 /** Home's week strip: the words a day's label ends on (`WeekStrip`). */
@@ -143,6 +152,8 @@ export const TRAIN = {
   runWeek: "Run week",
   /** A planned day's card opens the run's own card (`ProgrammeRunSection`). */
   viewRun: "View run",
+  /** Today's planned run starts from its card, straight into the run. */
+  startRun: "Start run",
 } as const;
 
 /** A run's name on Train's run week, from its template: the function

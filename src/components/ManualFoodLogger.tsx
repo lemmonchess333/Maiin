@@ -231,6 +231,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
               state. */}
         <div className="shrink-0 px-4 pt-1 pb-4">
           <Button
+            variant="nutrition"
             fullWidth
             size="lg"
             onClick={handleSave}

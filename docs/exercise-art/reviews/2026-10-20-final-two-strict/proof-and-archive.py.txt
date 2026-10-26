@@ -1,0 +1,63 @@
+from pathlib import Path
+from PIL import Image,ImageDraw
+import numpy as np, hashlib,json,shutil,subprocess,sys,zipfile,io,xml.etree.ElementTree as ET
+H=Path(__file__).resolve().parent; R=H.parent/'Maiin-burpees'; F='2026-10-20-final-two-strict'
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+write=lambda p,v:p.write_text(json.dumps(v,indent=2)+'\n',encoding='utf-8')
+allproof={}
+for eid in ['swimming','turkish-get-up']:
+ E=H/'exports'/eid; P=H/'packages'/eid; Q=H/'independent'/eid
+ subprocess.run([sys.executable,str(P/'reproduce.py'),'--root',str(P),'--output',str(Q)],check=True)
+ facts=[]
+ for n in range(1,7):
+  for part in ['frames/'+str(n)+'.webp','source/'+str(n)+'.png','editables/'+str(n)+'.ora']:
+   assert sha(E/part)==sha(Q/part),(eid,part)
+  with zipfile.ZipFile(Q/f'editables/{n}.ora')as z:
+   root=ET.fromstring(z.read('stack.xml')); layers=list(root.find('stack')); im=Image.new('RGBA',Image.open(io.BytesIO(z.read('mergedimage.png'))).size)
+   for layer in reversed(layers):im=Image.alpha_composite(im,Image.open(io.BytesIO(z.read(layer.attrib['src']))).convert('RGBA'))
+   assert im.tobytes()==Image.open(E/f'frames/{n}.webp').convert('RGBA').tobytes()
+  facts.append({'frame':n,'webpSha256':sha(E/f'frames/{n}.webp'),'oraLayersRecomposeExactly':True,'freshIndependentReproductionExact':True})
+ # Manually scoped visible material corners; locate their complete raw RGB patches independently in each delivered frame.
+ coords={'poolTileTopLeft':[128,214],'poolTileTopRight':[336,214],'poolTileBottomLeft':[128,279],'poolTileBottomRight':[336,279]}if eid=='swimming'else{'matFarLeft':[20,935],'matFarRight':[870,885],'matNearRight':[1000,1085],'matNearLeft':[150,1135]}
+ base=np.asarray(Image.open(E/'frames/1.webp').convert('RGB')); measured=[]; panels=[]
+ for n in range(1,7):
+  rgb=np.asarray(Image.open(E/f'frames/{n}.webp').convert('RGB')); anchors={};detail=Image.open(E/f'frames/{n}.webp').convert('RGB');d=ImageDraw.Draw(detail)
+  for name,(x,y)in coords.items():
+   template=base[y-7:y+8,x-7:x+8]; matches=[]
+   assert np.unique(template.reshape(-1,3),axis=0).shape[0]>=3
+   for dy in range(-6,7):
+    for dx in range(-6,7):
+     patch=rgb[y+dy-7:y+dy+8,x+dx-7:x+dx+8]
+     if patch.shape==template.shape and np.array_equal(template,patch):matches.append((dx,dy))
+   assert len(matches)==1,(eid,n,name,matches)
+   dx,dy=matches[0];anchors[name]={'x':x+dx,'y':y+dy};d.ellipse((x-8,y-8,x+8,y+8),outline='#ffb400',width=2);d.text((x+10,y-12),name,fill='#ffb400')
+  point=lambda name:np.array(list(anchors[name].values()),dtype=float)
+  if eid=='swimming':dims={'copingTileWidth':float(np.linalg.norm(point('poolTileTopRight')-point('poolTileTopLeft'))),'copingVisibleDepth':float(np.linalg.norm(point('poolTileBottomLeft')-point('poolTileTopLeft')))}
+  else:dims={'matLongEdge':float(np.linalg.norm(point('matFarRight')-point('matFarLeft'))),'matShortEdge':float(np.linalg.norm(point('matNearLeft')-point('matFarLeft')))}
+  measured.append({'frame':n,'anchors':anchors,'invariantDimensions':dims,'uniqueRawMaterialPatchMatches':True});detail.thumbnail((500,560));panels.append(detail)
+ maxaxis=max(abs(m['anchors'][k][axis]-measured[0]['anchors'][k][axis])for m in measured for k in coords for axis in ['x','y']);maxdim=max(abs(m['invariantDimensions'][k]/measured[0]['invariantDimensions'][k]-1)for m in measured for k in dims)
+ assert maxaxis<=1 and maxdim<=.01
+ proof={'id':eid,'method':'Manually scoped genuine material corners, unique 15x15 raw native RGB patch match searched independently within +/-6px in every lossless delivered frame. Two independent physical edge lengths derived from located corners. No canvas, padding, crosshair or artificial marker is measured. This scene measurement is separate from visual anatomy/contact/physics review.','frames':measured,'maxAnchorAxisDriftPx':maxaxis,'maxInvariantRelativeDrift':maxdim,'limitsUnchanged':{'anchorAxisPx':1,'invariantRelative':.01},'reproduction':facts}
+ if eid=='turkish-get-up':proof['equipment']='One complete generated charcoal kettlebell master, 91x108px, rigid integer placement behind exact native grip/forearm pixels in all six poses. Its movement is not misused as a fixed scene anchor.'
+ write(H/eid/'strict-proof.json',proof);allproof[eid]=proof
+ sheet=Image.new('RGB',(1500,1120),(18,18,20))
+ for i,panel in enumerate(panels):sheet.paste(panel,((i%3)*500,(i//3)*560))
+ sheet.save(H/eid/'measured-material-corners.png')
+ shutil.copyfile(H/eid/'strict-proof.json',P/'strict-proof.json');shutil.copyfile(H/eid/'measured-material-corners.png',P/'measured-material-corners.png')
+ shutil.copytree(E/'editables',P/'editables',dirs_exist_ok=True)
+ if eid=='turkish-get-up':shutil.copyfile(H/eid/'equipment-prompt.txt',P/'equipment-prompt.txt')
+ (P/'README.md').write_text('Native source package for '+eid+'.\n\nRun `python reproduce.py --root . --output OUTPUT` with Pillow and NumPy. Original complete athlete sources, canonical identity reference, manifest, layered native ORA editables and measured material evidence are included. No anatomical deformation, individual limb fitting or isolated head/shoe grafts. Swimming uses whole-athlete integer translation; get-up replaces old equipment with one complete rigid master behind the original grip. All original retained athlete RGB pixels are asserted exact. Scene corner measurements do not replace visual body/contact review.\n\nPrimary coaching comparison: '+('https://www.swimming.org/masters/improving-front-crawl-technique/ and https://www.swimming.org/justswim/improving-your-breathing-in-front-crawl/ — long body line, body roll and side breathing with small continuous kicks. This depicts six forward-moving stroke phases and stops before replay; it does not claim calibrated stroke distance or speed.\n'if eid=='swimming'else'https://www.strongfirst.com/the-get-up-change-your-perspective-to-build-strength/ — sequential elbow, hand, bridge, half-kneel and standing support with a locked loaded arm and neutral wrist. Individual base width and joint angles vary. This guide depicts the ascent and instructs the controlled reverse; it does not interpolate the omitted descent.\n'),encoding='utf-8')
+ Z=H/'archives'/eid/'native-source.zip';Z.parent.mkdir(parents=True,exist_ok=True)
+ with zipfile.ZipFile(Z,'w')as z:
+  for p in sorted(P.rglob('*')):
+   if p.is_file():
+    zi=zipfile.ZipInfo(p.relative_to(P).as_posix(),(2026,10,20,0,0,0));zi.compress_type=zipfile.ZIP_DEFLATED;z.writestr(zi,p.read_bytes())
+ assert Z.stat().st_size<50_000_000
+ X=H/'archive-extracted'/eid
+ with zipfile.ZipFile(Z)as z:z.extractall(X)
+ A=H/'archive-reproduced'/eid;subprocess.run([sys.executable,str(X/'reproduce.py'),'--root',str(X),'--output',str(A)],check=True)
+ for n in range(1,7):assert sha(A/f'frames/{n}.webp')==sha(E/f'frames/{n}.webp')
+ D=R/f'docs/exercise-art/sources/{eid}/{F}';D.mkdir(parents=True,exist_ok=True);shutil.copyfile(Z,D/'native-source.zip')
+ allproof[eid]['archive']={'path':(D/'native-source.zip').relative_to(R).as_posix(),'sha256':sha(Z),'bytes':Z.stat().st_size,'independentReproductionExact':True,'archiveExtractionReproductionExact':True}
+write(H/'registration-input.json',allproof)
+print(json.dumps({eid:{'anchorDrift':v['maxAnchorAxisDriftPx'],'dimensionDrift':v['maxInvariantRelativeDrift'],'archive':v['archive']}for eid,v in allproof.items()},indent=2))

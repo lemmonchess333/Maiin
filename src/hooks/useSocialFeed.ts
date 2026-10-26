@@ -9,58 +9,11 @@ import { getFeed, fetchActivitiesByIds, batchGetKudos } from "../lib/socialApi";
 import { useUid } from "../lib/auth";
 import type { DocumentSnapshot } from "firebase/firestore";
 import { logger } from "../lib/logger";
-
-export interface ActivityData {
-  authorId?: string;
-  authorName?: string;
-  type?: string;
-  distance?: number;
-  avgPace?: number | string;
-  duration?: number;
-  elevationGain?: number;
-  routePreview?: { lat: number; lon: number }[];
-  totalVolume?: number;
-  exerciseCount?: number;
-  muscleGroups?: string[];
-  commentCount?: number;
-  prHit?: boolean;
-  prExercise?: string;
-  prWeight?: number;
-  badgeEarned?: string;
-  challengeMilestone?: string;
-  kudosCount?: number;
-  exercises?: { name: string; summary: string }[];
-  prCount?: number;
-  activityTitle?: string;
-  [key: string]: unknown;
-}
-
-export interface FeedItem {
-  id: string;
-  activityId: string;
-  authorId: string;
-  authorName: string;
-  /**
-   * Denormalised author avatar URL. Carried on each feed item so
-   * ActivityCard renders the author row without a per-card profile
-   * fetch. Absent on pre-W1d feed items (written before the
-   * denormalization) — UI falls back to initials.
-   */
-  authorPhotoURL?: string;
-  type: "run" | "workout";
-  summary: string;
-  createdAt: { toDate: () => Date } | unknown;
-  // Enriched at feed level — no per-card reads needed
-  activity?: ActivityData;
-  liked?: boolean;
-  kudosCount?: number;
-  // Highlight fields for filtering
-  prHit?: boolean;
-  prExercise?: string;
-  prWeight?: number;
-  badgeEarned?: string;
-  challengeMilestone?: string;
-}
+import { captureError } from "../lib/errorReporting";
+import { activityToFeedItem } from "../lib/activityFeedItem";
+import type { FeedIndex } from "../lib/feedIndex";
+import type { FeedItem } from "../lib/activityFeedTypes";
+export type { ActivityData, FeedItem } from "../lib/activityFeedTypes";
 
 /* `enabled` defaults true for backwards compatibility but lets the
  * caller defer the network read when the feed isn't visible. Social.tsx
@@ -127,7 +80,7 @@ export function useSocialFeed(
           refresh ? undefined : lastDocRef.current
         );
         if (!isCurrent()) return;
-        const feedItems = result.items as FeedItem[];
+        const feedItems = result.items as FeedIndex[];
 
         // Single batched read for all activities + kudos
         const activityIds = feedItems.map((i) => i.activityId);
@@ -136,29 +89,20 @@ export function useSocialFeed(
           batchGetKudos(activityIds, uid),
         ]);
 
-        let enriched: FeedItem[] = feedItems.map((item) => {
-          const act = activityMap[item.activityId] as ActivityData | undefined;
-          return {
-            ...item,
-            activity: (act || null) as ActivityData | undefined,
-            liked: kudosMap[item.activityId] || false,
-            kudosCount: (act?.kudosCount as number) || 0,
-            prHit: !!(act?.prHit || item.prHit),
-            prExercise: (act?.prExercise as string) || item.prExercise,
-            prWeight: (act?.prWeight as number) || item.prWeight,
-            badgeEarned: (act?.badgeEarned as string) || item.badgeEarned,
-            challengeMilestone:
-              (act?.challengeMilestone as string) || item.challengeMilestone,
-          };
+        // A row only points to a post. Derive every display field from a
+        // successful parent read, including for old cached feed responses:
+        // no summary/highlight/avatar fallback can outlive revoked access.
+        let enriched: FeedItem[] = feedItems.flatMap((item) => {
+          const act = activityMap[item.activityId];
+          if (!act) return [];
+          return [
+            {
+              ...activityToFeedItem(item.activityId, act),
+              id: item.id,
+              liked: kudosMap[item.activityId] || false,
+            },
+          ];
         });
-
-        // A copy whose post is gone, or can no longer be read, is not
-        // drawn. Deleting a post removes its copies on the server
-        // (onActivityDeleted), but a copy can outlive the post for a
-        // moment, and copies of posts removed before that trigger existed
-        // stay. Drawn from the copy's summary, it would be a card for a
-        // post that no longer exists, whose kudos and comments cannot land.
-        enriched = enriched.filter((item) => item.activity);
 
         // Filter out blocked users
         if (blockedUsers && blockedUsers.size > 0) {
@@ -212,7 +156,9 @@ export function useSocialFeed(
       } catch (e) {
         if (!isCurrent()) return;
         logger.error("Feed error:", e);
-        setError(e instanceof Error ? e.message : "Failed to load feed");
+        const msg = e instanceof Error ? e.message : String(e);
+        setError(msg);
+        captureError(e instanceof Error ? e : new Error(msg), "network");
       }
       if (isCurrent()) setInternalLoading(false);
     },

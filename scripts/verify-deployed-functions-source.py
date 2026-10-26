@@ -22,6 +22,8 @@ RETRY_DELAYS = (5, 15, 45)
 RETRY_REQUIRED = frozenset({
     "onChallengeParticipantCreated", "onWorkoutCreated", "onRunCreated",
     "onWorkoutUpdated", "onRunUpdated", "onWorkoutDeleted", "onRunDeleted",
+    "onActivityCreated", "onGoalSpaceEventCreated", "onPublicProfileWritten",
+    "onBlockWritten", "onPublicProfileIdentityChanged",
 })
 PUSH_RUNTIME_LIMITS = {
     "claimPushDeviceToken": (100, None),
@@ -56,13 +58,13 @@ def read(request, timeout, opener=urllib.request.urlopen, sleep=time.sleep):
 def source_targets():
     """The executing exports and source artifacts each release must read back."""
     comment_paths = ["index.js", "package-lock.json", "lib/publicPhotoUrl.js", "lib/socialCounters.js", "lib/spacePostEngagement.js",
-                     "lib/restriction.js"]
+                     "lib/restriction.js", "lib/commentLimit.js", "lib/commentRejection.js"]
     training_paths = ["index.js", "package-lock.json", "lib/stateTransition.js", "lib/workoutCorrections.js", "lib/programCommands.js"]
     deletion_paths = ["index.js", "package-lock.json", "accountDeletion.js", "lib/spaceIds.js",
                       "lib/accountDeletionSocial.js", "lib/accountDeletionRetry.js",
                       "lib/accountDeletionLocks.js", "lib/accountDeletionAuth.js",
                       "lib/accountDeletionLedger.js", "lib/accountDeletionMinimisation.js",
-                      "lib/accountDeletionStatus.js"]
+                      "lib/accountDeletionStatus.js", "lib/commentReactions.js"]
     challenge_paths = ["index.js", "package-lock.json", "lib/challengeDefs.js",
                        "lib/challengeBackfill.js", "lib/challengeActivityWindow.js",
                        "lib/challengeTiers.js", "lib/challengeMarkers.js",
@@ -73,6 +75,8 @@ def source_targets():
                    "lib/deletedAccountsTombstone.js"]
     push_paths = token_paths + ["lib/pushConsent.js", "lib/pushSend.js",
                                 "lib/pushSchedule.js", "lib/accountDeletionLocks.js"]
+    circle_paths = ["index.js", "package-lock.json", "lib/goalSpaceMembership.js",
+                    "lib/restriction.js", "lib/accountDeletionLocks.js"]
     return {
         "deleteMyAccount": deletion_paths,
         "resumeAccountDeletions": deletion_paths,
@@ -82,12 +86,34 @@ def source_targets():
         "addSpacePostCommentCallable": comment_paths + ["lib/objectionableText.js"],
         # Moderation (App Review 1.2): the report alert and the Space post filter.
         "createReport": ["index.js", "lib/reportAlert.js", "lib/reportTargets.js"],
-        "onSpacePostWritten": ["index.js", "lib/spacePostModeration.js"],
+        "onSpacePostWritten": ["index.js", "lib/spacePostModeration.js", "lib/spacePostPhoto.js"],
+        "onPublicProfileWritten": ["index.js", "package-lock.json", "lib/objectionableText.js",
+                                   "profanityFilter.js", "lib/hateTerms.js", "lib/triggerRetry.js",
+                                   "lib/accountDeletionLocks.js"],
+        # A new public name or photo, carried to the person's recent copies.
+        "onPublicProfileIdentityChanged": ["index.js", "package-lock.json", "lib/identityResync.js",
+                                           "lib/publicPhotoUrl.js", "lib/objectionableText.js",
+                                           "profanityFilter.js", "lib/hateTerms.js",
+                                           "lib/deletionTransactionGuard.js", "lib/restriction.js",
+                                           "lib/spaceIds.js", "lib/triggerRetry.js",
+                                           "lib/accountDeletionLocks.js"],
+        # Who has blocked each account, the copy the blocked person's app reads.
+        "onBlockWritten": ["index.js", "package-lock.json", "lib/blockMirror.js",
+                           "lib/triggerRetry.js", "lib/accountDeletionLocks.js"],
+        # A Circle's invite code expires, and its owner replaces it.
+        "joinGoalSpace": circle_paths,
+        "renewGoalSpaceInviteCode": circle_paths,
+        # The one writer of partner bonds: the limit for both people, counted
+        # in the transaction that makes the bond. The rules refuse a client's.
+        "startPartnerStreak": ["index.js", "package-lock.json", "lib/partnerBonds.js",
+                               "lib/deletionTransactionGuard.js", "lib/accountDeletionStatus.js",
+                               "lib/restriction.js", "lib/accountDeletionLocks.js"],
         # Ship1: the photos other people see, screened for nudity.
         "screenPhoto": ["index.js", "lib/photoScreen.js"],
         "screenUploadedPhoto": ["index.js", "lib/photoScreen.js"],
         # S4e: a restriction refuses props and comments; the moderation page lifts one.
-        "toggleKudosCallable": ["index.js", "lib/restriction.js", "lib/socialCounters.js"],
+        "toggleKudosCallable": ["index.js", "lib/restriction.js", "lib/socialCounters.js",
+                                "lib/engagementRejection.js", "lib/documentId.js"],
         "liftRestriction": ["index.js"],
         # Race day: the daily no-show and recovery checks, and the recovery
         # entry a saved race run makes.
@@ -102,8 +128,16 @@ def source_targets():
         "rolloverChallenges": ["index.js", "package-lock.json", "lib/challengeDefs.js"],
         "onChallengeParticipantCreated": challenge_paths,
         "onRunUpdated": challenge_paths,
-        "onWorkoutDeleted": challenge_paths,
-        "onRunDeleted": challenge_paths,
+        # The reversal is what a delete runs, and it fails the event when it
+        # does not land so the retry can apply it.
+        "onWorkoutDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
+                                              "lib/triggerRetry.js"],
+        "onRunDeleted": challenge_paths + ["lib/activityReversal.js", "lib/fastestEffortRebuild.js",
+                                              "lib/triggerRetry.js"],
+        # Read back the privacy-safe feed index writer and the Circle
+        # admission receipt before a release can report either trigger current.
+        "onActivityCreated": ["index.js", "package-lock.json", "lib/socialFanout.js", "lib/feedIndex.js"],
+        "onGoalSpaceEventCreated": ["index.js", "package-lock.json", "rateLimiter.js"],
         "getCurrentWeather": ["index.js", "currentWeather.js", "lib/metWeather.js"],
         # The reminder before a free trial is charged, and the sync it reads.
         "trialReminderSweep": ["index.js", "trialReminders.js", "lib/trialReminder.js",
@@ -122,6 +156,7 @@ def source_targets():
         "sendTestPush": push_paths,
         "hourlyStreakNudge": push_paths + ["lib/streakNudge.js", "lib/activeDates.js", "lib/badgeNudge.js"],
         "hourlyChallengeAnnouncements": push_paths + ["lib/challengeAnnouncements.js",
+                                                      "lib/challengeTiers.js",
                                                       "lib/challengeDefs.js", "lib/challengeActivityWindow.js", "lib/dateUtils.js",
                                                       "lib/streakNudge.js"],
     }

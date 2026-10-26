@@ -5,8 +5,7 @@
  * PR F (audit P0 #6): pre-PR-F the native branch was a hardcoded
  * stub that always returned false. The current `initAppCheck`
  * routes through `setNativeAppCheckProvider` on native and through
- * `ReCaptchaV3Provider` on web. Listed in LAUNCH_TODO.md item 23
- * for test coverage.
+ * `ReCaptchaV3Provider` on web.
  *
  * Invariants pinned here:
  *  - Provider routing follows isNativePlatform().

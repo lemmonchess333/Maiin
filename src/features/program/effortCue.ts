@@ -9,7 +9,7 @@
  *
  *   - Main lifts and free-weight compounds: "Finish with 2 reps to spare"
  *   - Isolations, and other compounds on a machine, final set:
- *                                          "Last set — OK to go to your limit."
+ *                                          "Last set. OK to go to your limit."
  *   - Step-back (deload) week:              overrides everything
  *
  * Copy rules honoured (docs/voice-and-tone.md): no decode-metaphors ("in
@@ -52,14 +52,14 @@ export function effortCueFor(
   if (opts.deloadWeek) {
     return {
       kind: "deload",
-      text: "Lighter week — keep everything comfortably easy.",
+      text: "Lighter week. Keep everything comfortably easy.",
     };
   }
   if (exercise.movementCategory === "core") return null;
   const role = exerciseRole(exercise);
   const push: EffortCue = {
     kind: "push",
-    text: "Last set — OK to go to your limit.",
+    text: "Last set. OK to go to your limit.",
   };
   if (role === "isolation") return opts.isLastSet ? push : null;
   const onMachine = MACHINE_EQUIPMENT.has(

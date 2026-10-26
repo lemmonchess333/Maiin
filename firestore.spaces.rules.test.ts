@@ -23,7 +23,14 @@ import {
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "node:fs";
-import { doc, getDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 
 const EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST;
 const REQUIRE_EMULATOR = process.env.REQUIRE_FIRESTORE_EMULATOR === "1";
@@ -57,14 +64,16 @@ const UNVERIFIED = { email_verified: false };
    host, http downgrade, non-http schemes, and a 2049-char value on an
    allowed origin (the size cap). */
 const ALLOWED_PHOTO_URLS = [
-  "https://firebasestorage.googleapis.com/v0/b/tropos-fitness.firebasestorage.app/o/space-photos%2Fmember-uid%2Fp1.jpg?alt=media",
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/space-photos%2Fmember-uid%2Fp1.jpg?alt=media",
   "https://lh3.googleusercontent.com/a/ACg8ocIabcdefg=s96-c",
   "https://appleid.cdn-apple.com/static/bin/avatar/123.jpg",
 ];
 const REJECTED_PHOTO_URLS = [
   "https://pixel-tracker.example/pixel?uid=victim",
+  // Another Firebase project's bucket: the same host, someone else's logs.
+  "https://firebasestorage.googleapis.com/v0/b/attacker.appspot.com/o/pixel.jpg",
   "https://lh3.googleusercontent.com.evil.com/a/x",
-  "http://firebasestorage.googleapis.com/v0/b/x/o/y.jpg",
+  "http://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/y.jpg",
   "javascript:alert(1)",
   "data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+",
   "https://firebasestorage.googleapis.com/" + "a".repeat(2010),
@@ -124,7 +133,7 @@ suite("firestore.rules — community spaces", () => {
     body: "First run of the block done — legs are toast.",
     likeCount: 0,
     commentCount: 0,
-    createdAt: new Date(),
+    createdAt: serverTimestamp(),
   });
 
   describe("parent doc", () => {
@@ -247,6 +256,100 @@ suite("firestore.rules — community spaces", () => {
       await seedMember(MEMBER);
       await assertFails(
         setDoc(doc(db(MEMBER), `spaces/${SPACE}/posts/p1`), validPost(OTHER))
+      );
+    });
+
+    describe("the attached session", () => {
+      /* The composer's snapshot (spacePostSnapshot), served to every viewer of the
+         Space. The rule checked only `is map`, which took 500 KB of anything. */
+      const run = {
+        type: "run",
+        distance: 10200,
+        avgPace: 312,
+        duration: 3180,
+        elevationGain: 42,
+        routePreview: Array.from({ length: 40 }, (_, i) => ({
+          lat: 51.5 + i / 1000,
+          lon: -0.12,
+        })),
+      };
+      const lift = {
+        type: "workout",
+        totalVolume: 8200,
+        exerciseCount: 5,
+        muscleGroups: ["squat", "hinge"],
+        duration: 3600,
+        leadExerciseId: "back-squat",
+      };
+      const post = (activity: Record<string, unknown>) => ({
+        ...validPost(MEMBER),
+        activity,
+      });
+
+      it("accepts the run and lift snapshots the composer sends", async () => {
+        await seedMember(MEMBER);
+        await assertSucceeds(
+          setDoc(doc(db(MEMBER), `spaces/${SPACE}/posts/run`), post(run))
+        );
+        await assertSucceeds(
+          setDoc(doc(db(MEMBER), `spaces/${SPACE}/posts/lift`), post(lift))
+        );
+      });
+
+      it("refuses a field the snapshot does not have, or a type it cannot be", async () => {
+        await seedMember(MEMBER);
+        await assertFails(
+          setDoc(
+            doc(db(MEMBER), `spaces/${SPACE}/posts/p1`),
+            post({ ...run, blob: "x".repeat(1000) })
+          )
+        );
+        await assertFails(
+          setDoc(
+            doc(db(MEMBER), `spaces/${SPACE}/posts/p2`),
+            post({ ...run, type: "swim" })
+          )
+        );
+        await assertFails(
+          setDoc(doc(db(MEMBER), `spaces/${SPACE}/posts/p3`), post({}))
+        );
+      });
+
+      it("refuses a route, a muscle list or a lead name past its size", async () => {
+        await seedMember(MEMBER);
+        const route = Array.from({ length: 101 }, () => ({ lat: 0, lon: 0 }));
+        await assertFails(
+          setDoc(
+            doc(db(MEMBER), `spaces/${SPACE}/posts/p1`),
+            post({ ...run, routePreview: route })
+          )
+        );
+        await assertFails(
+          setDoc(
+            doc(db(MEMBER), `spaces/${SPACE}/posts/p2`),
+            post({
+              ...lift,
+              muscleGroups: Array.from({ length: 21 }, () => "x"),
+            })
+          )
+        );
+        await assertFails(
+          setDoc(
+            doc(db(MEMBER), `spaces/${SPACE}/posts/p3`),
+            post({ ...lift, leadExerciseId: "x".repeat(201) })
+          )
+        );
+      });
+    });
+
+    it("refuses a createdAt that is not the server's time", async () => {
+      // The Space lists its posts newest first by it.
+      await seedMember(MEMBER);
+      await assertFails(
+        setDoc(doc(db(MEMBER), `spaces/${SPACE}/posts/p1`), {
+          ...validPost(MEMBER),
+          createdAt: new Date("2099-01-01T00:00:00Z"),
+        })
       );
     });
 

@@ -5,7 +5,7 @@
 process.env.TZ = "America/New_York";
 
 import { describe, it, expect } from "vitest";
-import { computeCurrentStreak } from "../useStreaks";
+import { computeStreakSpan } from "../useStreaks";
 
 // Guard: if the runtime didn't actually apply America/New_York, the assertions
 // below would vacuously pass under UTC and hide a regression. Fail loudly
@@ -17,7 +17,7 @@ describe("DST test environment", () => {
   });
 });
 
-describe("computeCurrentStreak — DST anchor safety", () => {
+describe("the streak walk — DST anchor safety", () => {
   it("fall-back day (25h): does not collapse a live streak to 0 (C1)", () => {
     // 2026-11-01 is the US fall-back day. Evaluated late in the 25h day, a
     // `now - 86400000` anchor lands back on today's own date and returns 0.
@@ -28,7 +28,7 @@ describe("computeCurrentStreak — DST anchor safety", () => {
       "2026-10-30",
       "2026-10-31",
     ]);
-    expect(computeCurrentStreak(active, now)).toBe(4);
+    expect(computeStreakSpan(active, now).streak).toBe(4);
   });
 
   it("day after spring-forward (23h): does not skip the anchor day (C2)", () => {
@@ -43,6 +43,6 @@ describe("computeCurrentStreak — DST anchor safety", () => {
       "2026-03-07",
       "2026-03-08",
     ]);
-    expect(computeCurrentStreak(active, now)).toBe(5);
+    expect(computeStreakSpan(active, now).streak).toBe(5);
   });
 });

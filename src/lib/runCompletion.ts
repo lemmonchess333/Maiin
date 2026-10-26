@@ -30,14 +30,15 @@ import { CALORIE_UNIT } from "@/utils/formatNutrition";
 export interface FinishedRun {
   /** The trace, after privacy zones are cut out of it. */
   points: GPSPoint[];
+  /** Original first-fix epoch, before privacy zones remove any points.
+   *  Absent for older callers and runs with no recorded trace. */
+  startedAt?: number;
   /** Metres: the distance edited on the finish screen, else as tracked. */
   distance: number;
   /** Seconds. */
   elapsed: number;
   /** Seconds a kilometre. */
   avgPaceSeconds: number;
-  /** The pace as the post shows it ("5:12"). */
-  avgPace: string;
   calories: number;
   elevationGain: number;
   splits: Split[];
@@ -61,9 +62,10 @@ export interface FinishedRun {
   bestEfforts: { distance: number; time: number; label: string }[];
 }
 
-/** The run's start: its first point, or now for a run with no trace. */
+/** Privacy cuts change the route, not when the run started. Older callers
+ *  fall back to their first point, or now for a run with no trace. */
 function startOf(run: FinishedRun, now: Date): Date {
-  const first = run.points[0]?.timestamp;
+  const first = run.startedAt ?? run.points[0]?.timestamp;
   return first ? new Date(first) : now;
 }
 
@@ -226,7 +228,8 @@ export function runPost(
     activityTitle: name,
     distance: run.distance,
     duration: run.elapsed,
-    avgPace: run.avgPace,
+    // Seconds a kilometre, so each reader's card shows it in their unit.
+    avgPace: run.avgPaceSeconds,
     elevationGain: run.elevationGain,
     calories: run.calories,
     routePreview: route.routePreview,

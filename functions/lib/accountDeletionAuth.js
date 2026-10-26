@@ -158,7 +158,7 @@ async function assertTokenNotRevoked({ rawRequest, verifyIdToken }) {
     // verification failure.
     if (err && err.code === "auth/id-token-revoked") {
       throw makeRevokedError(
-        "Session revoked. Please sign in again before deleting your account.",
+        "Session revoked. Sign in again before deleting your account.",
       );
     }
     throw makeUnauthenticatedError(

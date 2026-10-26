@@ -21,7 +21,7 @@ import {
  *
  * Mounted on a completion surface (SessionCompleteScreen / RunSummary). After
  * the user finishes, if someone they follow also trained TODAY, surface a calm,
- * one-tap "Send kudos?" prompt. Social after achievement, never before action.
+ * one-tap "Give them props?" prompt. Social after achievement, never before action.
  *
  * Guardrails:
  *  - Rate-limited to once per local day per uid (localStorage), so finishing
@@ -87,11 +87,11 @@ export function usePostCompletionKudos(opts: {
         fromName ? { fromName } : undefined
       );
       setSent(true);
-      toast.success(`Kudos sent to ${candidate.authorName}`);
+      toast.success(`Props given to ${candidate.authorName}`);
     } catch (e) {
       logger.error("[kudos] send failed", e);
       if (isRestrictedRefusal(e)) showRestrictedToast();
-      else toast.error("Couldn't send kudos");
+      else toast.error("Couldn't give props. Try again.");
     } finally {
       setSending(false);
     }

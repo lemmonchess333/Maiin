@@ -186,6 +186,12 @@ export interface ProgramExercise {
   lastSuccessfulWeight: number;
   lastAttemptedWeight: number;
   consecutiveFailures: number;
+  /**
+   * Times the lift has been lowered since its last success (`countMiss`),
+   * back to 0 on a success. Nothing reads it, by design: the engine never
+   * swaps a lift on its own (Lift4 (2)). It stays as the record of a lift's
+   * stalls that a suggestion on one would need (Lift20).
+   */
   plateauCount: number;
   performanceHistory: PerformanceRecord[];
   // Legacy compat

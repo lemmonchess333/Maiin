@@ -1,0 +1,446 @@
+{
+  "scope": "Exact-tree baseline evidence for the final artwork batch; previously executed at80b05f97, not relabelled as a new execution at merged main.",
+  "mergedMain": "7e382a7b7983b0800c3d6c2575b8347cbecf9e67",
+  "testedHead": "80b05f97a29125ebb9eb71377412935cc2f08013",
+  "identicalTree": "d9694b97d9eeb9aa9026002556eb36f9e0a8e84f",
+  "fullRuns": [
+    {
+      "label": "remaining33-baseline-1d100f0f-20261019",
+      "head": "1d100f0f2d85efd4f70874e61306a2278edcf105",
+      "startedAt": "2026-10-19T21:21:00.662008+00:00",
+      "finishedAt": "2026-10-19T21:31:36.945882+00:00",
+      "command": "npm run verify",
+      "exitCode": 1,
+      "allNormalStagesPresent": true,
+      "testFiles": {
+        "failed": 2,
+        "passed": 1203,
+        "skipped": 10,
+        "total": 1215,
+        "verbatim": "Test Files  2 failed | 1203 passed | 10 skipped (1215)",
+        "proof": {
+          "startLine": 597,
+          "endLineInclusive": 597,
+          "byteStart": 55911,
+          "byteEndExclusive": 55967,
+          "rawSha256": "f7743f02d141b51d87db65e60d41306debe424f76f2fda44a5755ced60b07d90",
+          "byteLength": 56
+        }
+      },
+      "tests": {
+        "passed": 13921,
+        "skipped": 418,
+        "total": 14339,
+        "verbatim": "Tests  13921 passed | 418 skipped (14339)",
+        "proof": {
+          "startLine": 598,
+          "endLineInclusive": 598,
+          "byteStart": 55967,
+          "byteEndExclusive": 56015,
+          "rawSha256": "8f45c2c72aa537e017d3bd2eefbe76f9c70a5889c25c22b1024f58a1eb531cc4",
+          "byteLength": 48
+        }
+      },
+      "failures": [
+        {
+          "canonicalId": "root-node|scripts/write-functions-env.test.ts|[suite]",
+          "kind": "suite"
+        },
+        {
+          "canonicalId": "root-node|scripts/ios/asc-signing.test.ts|[suite]",
+          "kind": "suite"
+        }
+      ],
+      "all2756RuntimeInputsUnchanged": true,
+      "snapshotRestoredExactly": [
+        {
+          "path": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+          "originalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+          "testOutputSha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+          "restoredExact": true
+        }
+      ],
+      "logSha256": "bb1bce73bc5e75edf85d5784b0301f12e1894f6e01b0455b2e3dac9e653e908b"
+    },
+    {
+      "label": "remaining33-batch1-candidate-80b05f97-20261019",
+      "head": "80b05f97a29125ebb9eb71377412935cc2f08013",
+      "startedAt": "2026-10-19T22:54:26.934047+00:00",
+      "finishedAt": "2026-10-19T23:05:08.008972+00:00",
+      "command": "npm run verify",
+      "exitCode": 1,
+      "allNormalStagesPresent": true,
+      "testFiles": {
+        "failed": 6,
+        "passed": 1199,
+        "skipped": 10,
+        "total": 1215,
+        "verbatim": "Test Files  6 failed | 1199 passed | 10 skipped (1215)",
+        "proof": {
+          "startLine": 690,
+          "endLineInclusive": 690,
+          "byteStart": 61222,
+          "byteEndExclusive": 61278,
+          "rawSha256": "4e2f27dd5679d128b8b27391f856795ae4b907054f95cf5f713f63cecd85f695",
+          "byteLength": 56
+        }
+      },
+      "tests": {
+        "failed": 4,
+        "passed": 13917,
+        "skipped": 418,
+        "total": 14339,
+        "verbatim": "Tests  4 failed | 13917 passed | 418 skipped (14339)",
+        "proof": {
+          "startLine": 691,
+          "endLineInclusive": 691,
+          "byteStart": 61278,
+          "byteEndExclusive": 61337,
+          "rawSha256": "a89524519e9d4d4ab59bb9a04abba5039f65a8e92c8d95235400f4a5013dbdc8",
+          "byteLength": 59
+        }
+      },
+      "failures": [
+        {
+          "canonicalId": "root-node|scripts/write-functions-env.test.ts|[suite]",
+          "kind": "suite"
+        },
+        {
+          "canonicalId": "root-node|scripts/ios/asc-signing.test.ts|[suite]",
+          "kind": "suite"
+        },
+        {
+          "canonicalId": "dom|src/components/__tests__/FoodCameraModal.photoLock.test.tsx|FoodCameraModal \u2014 photo scanning not on the tier > names the offer the way the Pro line under the composer does once the trial is used",
+          "kind": "test"
+        },
+        {
+          "canonicalId": "node|src/lib/__tests__/bodyRig.test.ts|supplied placard frames > all of a sequence's frames share one canvas",
+          "kind": "test"
+        },
+        {
+          "canonicalId": "node|src/lib/__tests__/noDisabledTests.test.ts|no test is switched off outright > finds no unconditional skip in src/ or functions/",
+          "kind": "test"
+        },
+        {
+          "canonicalId": "node|src/features/program/__tests__/useProgramWriters.test.ts|RUN-RESCHEDULE-01 \u2014 moveRunDay > refuses to move a race slot (immovable identity)",
+          "kind": "test"
+        }
+      ],
+      "all2756RuntimeInputsUnchanged": true,
+      "snapshotRestoredExactly": [
+        {
+          "path": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+          "originalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+          "testOutputSha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+          "restoredExact": true
+        }
+      ],
+      "logSha256": "cfc0feaca2730970760248f43754113c9b2ac668238a15ebfa49b01996395834"
+    },
+    {
+      "label": "remaining33-batch1-candidate-quiet-80b05f97-20261019",
+      "head": "80b05f97a29125ebb9eb71377412935cc2f08013",
+      "startedAt": "2026-10-19T23:07:13.625089+00:00",
+      "finishedAt": "2026-10-19T23:17:31.116256+00:00",
+      "command": "npm run verify",
+      "exitCode": 1,
+      "allNormalStagesPresent": true,
+      "testFiles": {
+        "failed": 4,
+        "passed": 1201,
+        "skipped": 10,
+        "total": 1215,
+        "verbatim": "Test Files  4 failed | 1201 passed | 10 skipped (1215)",
+        "proof": {
+          "startLine": 649,
+          "endLineInclusive": 649,
+          "byteStart": 58393,
+          "byteEndExclusive": 58449,
+          "rawSha256": "8e1735239404b435f33c586e99a255f6493a83aa802fabc2adbdaa84eed0caea",
+          "byteLength": 56
+        }
+      },
+      "tests": {
+        "failed": 2,
+        "passed": 13919,
+        "skipped": 418,
+        "total": 14339,
+        "verbatim": "Tests  2 failed | 13919 passed | 418 skipped (14339)",
+        "proof": {
+          "startLine": 650,
+          "endLineInclusive": 650,
+          "byteStart": 58449,
+          "byteEndExclusive": 58508,
+          "rawSha256": "4fb5eca7b49761ea91db1a3b853270efd38591be0e96a67a717789fe5dc98a02",
+          "byteLength": 59
+        }
+      },
+      "failures": [
+        {
+          "canonicalId": "root-node|scripts/write-functions-env.test.ts|[suite]",
+          "kind": "suite"
+        },
+        {
+          "canonicalId": "root-node|scripts/ios/asc-signing.test.ts|[suite]",
+          "kind": "suite"
+        },
+        {
+          "canonicalId": "node|src/features/program/__tests__/generatorAudit.test.ts|generator audit \u2014 every prescribed lift is calibrated > never ships a 0 kg prescription through the whole plan pipeline",
+          "kind": "test"
+        },
+        {
+          "canonicalId": "node|src/features/program/__tests__/useProgramWriters.test.ts|RUN-RESCHEDULE-01 \u2014 moveRunDay > refuses to move a race slot (immovable identity)",
+          "kind": "test"
+        }
+      ],
+      "all2756RuntimeInputsUnchanged": true,
+      "snapshotRestoredExactly": [
+        {
+          "path": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+          "originalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+          "testOutputSha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+          "restoredExact": true
+        }
+      ],
+      "logSha256": "56b8b0816b8fec1692c83cf1383e28ec4fb4b84bfd0ec0d62c93ddb91665f032"
+    }
+  ],
+  "focusedComparisons": {
+    "four-whole-suites": [
+      {
+        "label": "candidate",
+        "head": "80b05f97a29125ebb9eb71377412935cc2f08013",
+        "startedAt": "2026-10-19T23:06:15.875529+00:00",
+        "finishedAt": "2026-10-19T23:06:30.510836+00:00",
+        "command": [
+          "npm",
+          "run",
+          "test",
+          "--",
+          "src/components/__tests__/FoodCameraModal.photoLock.test.tsx",
+          "src/lib/__tests__/bodyRig.test.ts",
+          "src/lib/__tests__/noDisabledTests.test.ts",
+          "src/features/program/__tests__/useProgramWriters.test.ts"
+        ],
+        "exitCode": 0,
+        "inputCount": 2756,
+        "allInputsUnchanged": true,
+        "logSha256": "02910d54708dd73f8c916487544e094607cd94b256820dafdc2ac39f772c1c18"
+      },
+      {
+        "label": "baseline",
+        "head": "1d100f0f2d85efd4f70874e61306a2278edcf105",
+        "startedAt": "2026-10-19T23:06:32.037004+00:00",
+        "finishedAt": "2026-10-19T23:06:44.588436+00:00",
+        "command": [
+          "npm",
+          "run",
+          "test",
+          "--",
+          "src/components/__tests__/FoodCameraModal.photoLock.test.tsx",
+          "src/lib/__tests__/bodyRig.test.ts",
+          "src/lib/__tests__/noDisabledTests.test.ts",
+          "src/features/program/__tests__/useProgramWriters.test.ts"
+        ],
+        "exitCode": 0,
+        "inputCount": 2756,
+        "allInputsUnchanged": true,
+        "logSha256": "7a8b393633fe07630d6bac60660044a475c2c98ebce4928b99a60e62e5f986ee"
+      }
+    ],
+    "five-whole-suites": [
+      {
+        "label": "candidate",
+        "head": "80b05f97a29125ebb9eb71377412935cc2f08013",
+        "startedAt": "2026-10-19T23:18:49.448936+00:00",
+        "finishedAt": "2026-10-19T23:19:25.672897+00:00",
+        "command": [
+          "npm",
+          "run",
+          "test",
+          "--",
+          "src/features/program/__tests__/generatorAudit.test.ts",
+          "src/components/__tests__/FoodCameraModal.photoLock.test.tsx",
+          "src/lib/__tests__/bodyRig.test.ts",
+          "src/lib/__tests__/noDisabledTests.test.ts",
+          "src/features/program/__tests__/useProgramWriters.test.ts"
+        ],
+        "exitCode": 1,
+        "inputCount": 2756,
+        "allInputsUnchanged": true,
+        "logSha256": "4f64701606b21bcd59b6c735acb374ba360f9ccd367d18700d20c43a577eabb2"
+      },
+      {
+        "label": "baseline",
+        "head": "1d100f0f2d85efd4f70874e61306a2278edcf105",
+        "startedAt": "2026-10-19T23:19:27.163738+00:00",
+        "finishedAt": "2026-10-19T23:19:40.115269+00:00",
+        "command": [
+          "npm",
+          "run",
+          "test",
+          "--",
+          "src/features/program/__tests__/generatorAudit.test.ts",
+          "src/components/__tests__/FoodCameraModal.photoLock.test.tsx",
+          "src/lib/__tests__/bodyRig.test.ts",
+          "src/lib/__tests__/noDisabledTests.test.ts",
+          "src/features/program/__tests__/useProgramWriters.test.ts"
+        ],
+        "exitCode": 0,
+        "inputCount": 2756,
+        "allInputsUnchanged": true,
+        "logSha256": "cf5eebbd9f6a8d3611ae9f1f6406a9a777a17af9ba48719551750d8b32c976b8"
+      }
+    ],
+    "five-whole-suites-reverse-order": [
+      {
+        "label": "baseline",
+        "head": "1d100f0f2d85efd4f70874e61306a2278edcf105",
+        "startedAt": "2026-10-19T23:21:52.296332+00:00",
+        "finishedAt": "2026-10-19T23:22:05.005188+00:00",
+        "command": [
+          "npm",
+          "run",
+          "test",
+          "--",
+          "src/features/program/__tests__/generatorAudit.test.ts",
+          "src/components/__tests__/FoodCameraModal.photoLock.test.tsx",
+          "src/lib/__tests__/bodyRig.test.ts",
+          "src/lib/__tests__/noDisabledTests.test.ts",
+          "src/features/program/__tests__/useProgramWriters.test.ts"
+        ],
+        "exitCode": 0,
+        "inputCount": 2756,
+        "allInputsUnchanged": true,
+        "logSha256": "38e304d06cea16dcaf49fcbd91d762ca9002403301c7b190da0db6ac21a4b27c"
+      },
+      {
+        "label": "candidate",
+        "head": "80b05f97a29125ebb9eb71377412935cc2f08013",
+        "startedAt": "2026-10-19T23:22:06.653346+00:00",
+        "finishedAt": "2026-10-19T23:22:19.781293+00:00",
+        "command": [
+          "npm",
+          "run",
+          "test",
+          "--",
+          "src/features/program/__tests__/generatorAudit.test.ts",
+          "src/components/__tests__/FoodCameraModal.photoLock.test.tsx",
+          "src/lib/__tests__/bodyRig.test.ts",
+          "src/lib/__tests__/noDisabledTests.test.ts",
+          "src/features/program/__tests__/useProgramWriters.test.ts"
+        ],
+        "exitCode": 0,
+        "inputCount": 2756,
+        "allInputsUnchanged": true,
+        "logSha256": "bd1eeb4ab986d50d577e392a39fb12f15e350b0b3a6d61c7dbdd604707be7be1"
+      }
+    ]
+  },
+  "interpretation": "Local Windows full runs are not wholly green. Two suite-load SyntaxErrors were measured on original main and both candidates. Other timing-sensitive failures varied between runs; final normal whole-file comparisons passed196 tests on each unchanged commit, with no test or timeout changes. Original failing logs remain in the local task evidence.",
+  "firstMergedPR": 2903,
+  "ci": [
+    {
+      "name": "auto-merge",
+      "status": "completed",
+      "conclusion": "skipped",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338206829/job/118352918185"
+    },
+    {
+      "name": "unit-locale (fr_FR.UTF-8)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338206586/job/118352914470"
+    },
+    {
+      "name": "unit-timezone (Pacific/Midway)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338206586/job/118352914454"
+    },
+    {
+      "name": "unit-timezone (Pacific/Kiritimati)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338206586/job/118352914440"
+    },
+    {
+      "name": "unit-shuffle (5)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338206586/job/118352914434"
+    },
+    {
+      "name": "unit-future",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338206586/job/118352914387"
+    },
+    {
+      "name": "unit-shuffle (23)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338206586/job/118352914349"
+    },
+    {
+      "name": "unit-timezone (Pacific/Auckland)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338206586/job/118352914338"
+    },
+    {
+      "name": "audit",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338206586/job/118352914329"
+    },
+    {
+      "name": "unit",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338206586/job/118352914327"
+    },
+    {
+      "name": "signed-out-specs",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338206576/job/118352914040"
+    },
+    {
+      "name": "unit-locale (de_DE.UTF-8)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338206586/job/118352914015"
+    },
+    {
+      "name": "capture-specs",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338206576/job/118352913875"
+    },
+    {
+      "name": "emulator-tests",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338206576/job/118352913812"
+    },
+    {
+      "name": "journeys",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338206576/job/118352913438"
+    },
+    {
+      "name": "review-sources",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338182766/job/118352834592"
+    },
+    {
+      "name": "review-player",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/lemmonchess333/Maiin/actions/runs/39338182766/job/118352834234"
+    }
+  ]
+}

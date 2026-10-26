@@ -4,6 +4,7 @@ import LiftCTACard from "@/components/home/LiftCTACard";
 import RunCTACard from "@/components/home/RunCTACard";
 import RestDayCard from "@/components/home/RestDayCard";
 import FirstMealCard from "@/components/home/FirstMealCard";
+import InProgressStrip from "@/components/session/InProgressStrip";
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
@@ -32,7 +33,8 @@ const fadeUp = {
  * no action — one voice per screen).
  *
  * Which cards show, and what each says, is decided by `todaySession`; this
- * draws its answer. Each card carries the `data-guide-stop` the first-visit
+ * draws its answer. A session under way that is not today's card leads the
+ * stack on a strip of its own, so it is the first thing seen. Each card carries the `data-guide-stop` the first-visit
  * walk points at (`todayCardTarget` in firstGuide.ts names the same three).
  */
 export default function StackedCTACards({
@@ -55,6 +57,19 @@ export default function StackedCTACards({
       animate="visible"
       variants={stagger}
     >
+      {session.inProgressElsewhere?.map((strip) => (
+        <motion.div key={`in-progress-${strip.sport}`} variants={fadeUp}>
+          <InProgressStrip
+            session={strip}
+            onResume={() => {
+              trackHomeEvent("home_card_tapped", {
+                card: strip.sport === "run" ? "today_run" : "today_workout",
+              });
+              navigate(strip.resumeTarget);
+            }}
+          />
+        </motion.div>
+      ))}
       {lift?.workout && (
         <motion.div key="lift" variants={fadeUp} data-guide-stop="today-lift">
           <LiftCTACard
@@ -66,6 +81,7 @@ export default function StackedCTACards({
             dayIndex={lift.index}
             isStartable={lift.isStartable}
             status={lift.status}
+            inProgress={lift.inProgress}
           />
         </motion.div>
       )}
@@ -103,6 +119,7 @@ export default function StackedCTACards({
             isFirst={run.isFirst}
             dose={run.dose}
             unit={unit}
+            inProgress={run.inProgress}
           />
         </motion.div>
       )}
@@ -129,6 +146,7 @@ export default function StackedCTACards({
               navigate={navigate}
               dayIndex={rest.index}
               eyebrowLabel="Your first workout"
+              inProgress={rest.inProgress}
             />
           ) : rest.kind === "free-run" ? (
             <RunCTACard
@@ -136,6 +154,7 @@ export default function StackedCTACards({
               navigate={navigate}
               eyebrowLabel="Run when it suits you"
               unit={unit}
+              inProgress={rest.inProgress}
             />
           ) : rest.kind === "first-meal" ? (
             <FirstMealCard navigate={navigate} />

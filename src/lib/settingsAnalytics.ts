@@ -71,11 +71,14 @@ export type SettingsToggle =
   | "streak_reminder"
   | "ai_analysis_enabled"
   | "hide_shared_route_ends"
+  | "approve_followers"
+  | "show_week_on_board"
   | "push_notifications"
   | "push_streak"
   | "push_recap"
   | "push_badge"
   | "push_challenges"
+  | "push_challengeReminders"
   /** One of the activity notification switches (S3). Sends
    *  `"{category}:{on|off}"` (e.g. `"follows:on"`), like
    *  `share_default_set` pairs its value with the type it applies to. */

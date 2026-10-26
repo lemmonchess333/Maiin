@@ -7,7 +7,7 @@
 #   3. dependabot/fetch-metadata classifies the update type (major /
 #      minor / patch). For minor + patch, we call `gh pr merge --auto`
 #      which enables GitHub's auto-merge — the PR then merges
-#      automatically when the required emulator-tests check passes.
+#      automatically when the required `unit` check (ci.yml) passes.
 #   4. Major bumps fall through with no auto-merge call; they sit in
 #      your queue for human review since they may carry breaking
 #      changes.
@@ -33,6 +33,8 @@ permissions:
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
+    # Two steps: read Dependabot's metadata, maybe enable auto-merge.
+    timeout-minutes: 5
     # Defence in depth — both the `if` and the metadata fetch require
     # Dependabot. The fetch-metadata step itself errors out cleanly on
     # non-Dependabot PRs, so this guard saves a wasted job.

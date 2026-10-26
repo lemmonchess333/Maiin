@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { logger } from "@/lib/logger";
 import { toast } from "@/lib/toast";
+import { settleWrite } from "@/lib/settleWrite";
 import {
   isHealthAvailable,
   requestStepsReadPermission,
@@ -68,6 +69,10 @@ export interface UseStepsResult {
    *  Where Health isn't available (the web) nothing loads, and it stays
    *  false. */
   ready: boolean;
+  /** The first load (availability, the saved answer, and today's steps
+   *  when connected) has not finished. A step count of 0 or "No steps
+   *  yet" means nothing until it has. */
+  pending: boolean;
 }
 
 export function useSteps(): UseStepsResult {
@@ -82,6 +87,8 @@ export function useSteps(): UseStepsResult {
    *  account's answer never counts as this one's. */
   const [flagsLoadedFor, setFlagsLoadedFor] = useState<string | null>(null);
   const [steps, setSteps] = useState<number | null>(null);
+  /** Whose first load has finished ("" when signed out). */
+  const [settledFor, setSettledFor] = useState<string | null>(null);
   // Latest flags for the visibilitychange handler (registered once) without
   // re-subscribing on every flag change.
   const flagsRef = useRef(flags);
@@ -108,10 +115,17 @@ export function useSteps(): UseStepsResult {
       const merged = { ...flagsRef.current, ...next };
       setFlags(merged);
       if (!ref) return;
+      // Settled for the screen (settleWrite.ts): connecting reads today's
+      // steps from the phone after this, which needs no connection, so
+      // offline it does not wait for one. A failed save says so, or the
+      // next launch would ask again with no reason given.
       try {
-        await setDocGuarded(ref, merged, { merge: true });
+        await settleWrite(setDocGuarded(ref, merged, { merge: true }), {
+          label: "steps.settings",
+        });
       } catch (err) {
         logger.error("[steps] settings save failed", err);
+        toast.error("Couldn't save your Apple Health setting. Try again.");
       }
     },
     [settingsRef]
@@ -129,7 +143,10 @@ export function useSteps(): UseStepsResult {
       const avail = await isHealthAvailable();
       if (!alive) return;
       setAvailable(avail);
-      if (!avail || !uid) return;
+      if (!avail || !uid) {
+        setSettledFor(uid ?? "");
+        return;
+      }
       const ref = doc(db, "users", uid, "settings", "healthKit");
       let loaded = DEFAULT_FLAGS;
       let answered = false;
@@ -157,10 +174,15 @@ export function useSteps(): UseStepsResult {
         // never asked, and every read comes back empty. Asking again
         // shows Apple's sheet only when this install hasn't answered;
         // otherwise it returns at once.
-        await requestStepsReadPermission();
-        if (!alive) return;
-        await fetchSteps();
+        try {
+          await requestStepsReadPermission();
+          if (!alive) return;
+          await fetchSteps();
+        } catch (err) {
+          logger.error("[steps] first read failed", err);
+        }
       }
+      if (alive) setSettledFor(uid);
     })();
     return () => {
       alive = false;
@@ -218,5 +240,6 @@ export function useSteps(): UseStepsResult {
     primingShown: flags.primingShown,
     dismissPriming,
     ready: uid !== null && flagsLoadedFor === uid,
+    pending: settledFor !== (uid ?? ""),
   };
 }

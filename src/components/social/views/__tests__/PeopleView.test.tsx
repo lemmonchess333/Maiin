@@ -1,5 +1,11 @@
 import { vi, expect, it, afterEach, beforeEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import PeopleView from "@/components/social/views/PeopleView";
 
@@ -8,7 +14,12 @@ vi.mock("@/lib/firebase", () => ({ db: {}, auth: { currentUser: null } }));
 vi.mock("@/lib/auth", () => ({ useUid: () => "me" }));
 
 const H = vi.hoisted(() => ({
-  people: [] as { uid: string; displayName: string; reason: string }[],
+  people: [] as {
+    uid: string;
+    displayName: string;
+    reason: string;
+    sharedSpaceId?: string;
+  }[],
   loading: false,
   activeArgs: [] as boolean[],
   spacesReady: true,
@@ -44,6 +55,8 @@ vi.mock("@/components/social/PartnerReadyBadge", () => ({
   default: () => null,
 }));
 vi.mock("@/lib/socialAnalytics", () => ({ track: vi.fn() }));
+const toasts = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+vi.mock("@/lib/toast", () => ({ toast: toasts }));
 
 afterEach(cleanup);
 beforeEach(() => {
@@ -104,11 +117,24 @@ it("asks someone in no space to join one, and someone in a space where suggestio
   ).toBeInTheDocument();
 });
 
-it("lists suggestions with their reason once they arrive", () => {
-  H.people = [{ uid: "priya", displayName: "Priya", reason: "recent_post" }];
+it("lists suggestions with their reason once they arrive, and no line where there is none", () => {
+  H.people = [
+    {
+      uid: "priya",
+      displayName: "Priya",
+      reason: "shared_space",
+      sharedSpaceId: "womens-running",
+    },
+    { uid: "tom", displayName: "Tom", reason: "recent_post" },
+  ];
   renderPeople(true);
   expect(screen.getByText("Priya")).toBeInTheDocument();
-  expect(screen.getByText("Recent post")).toBeInTheDocument();
+  expect(screen.getByText("Also in Women's Running")).toBeInTheDocument();
+  // A recent poster is listed with no reason under the name: "Recent
+  // post" stood under every such name and said nothing.
+  const tom = screen.getByText("Tom");
+  expect(tom.parentElement?.nextElementSibling).toBeNull();
+  expect(screen.queryByText("Recent post")).toBeNull();
   expect(
     screen.getByRole("button", { name: "Refresh suggestions" })
   ).toBeInTheDocument();
@@ -122,4 +148,23 @@ it("waits for the joined spaces too, so the list is asked for once", () => {
   expect(H.activeArgs.every((a) => a === false)).toBe(true);
   expect(screen.getByLabelText("Loading suggested people")).toBeInTheDocument();
   expect(screen.queryByText("No suggestions yet")).toBeNull();
+});
+
+it("says so when the invite link can't be copied", async () => {
+  // No share sheet (desktop web), so the link goes to the clipboard, which
+  // can refuse.
+  vi.stubGlobal("navigator", {
+    ...navigator,
+    share: undefined,
+    clipboard: { writeText: vi.fn().mockRejectedValue(new Error("denied")) },
+  });
+  renderPeople(true);
+  fireEvent.click(screen.getByRole("button", { name: "Share invite link" }));
+  await waitFor(() =>
+    expect(toasts.error).toHaveBeenCalledWith(
+      "Couldn't copy the invite link. Try again."
+    )
+  );
+  expect(toasts.success).not.toHaveBeenCalled();
+  vi.unstubAllGlobals();
 });

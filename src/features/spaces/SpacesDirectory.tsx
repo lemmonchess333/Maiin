@@ -14,9 +14,9 @@
  * pass). The Feed's compact "Spaces for you" row went in the same pass:
  * Together already leads with this directory.
  *
- * Density gate (Spc1c): member counts below
- * SPACE_MEMBER_COUNT_MIN_VISIBLE render as a "New space" chip, never a
- * shame-count. No animation loops (WKWebView).
+ * Density gate (Spc1c): a member count below
+ * SPACE_MEMBER_COUNT_MIN_VISIBLE is not shown, and nothing stands in for
+ * it until the count is real. No animation loops (WKWebView).
  */
 import { useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
@@ -47,6 +47,7 @@ import { THEME } from "@/lib/theme";
 import { spaceEditorialImage } from "@/lib/editorialImages";
 import { localDateString } from "@/lib/dateHelpers";
 import { formatRaceEventDate } from "./raceDates";
+import { SPACE_ACCENT_HEX } from "./spaceAccent";
 import { SPACE_MEMBER_COUNT_MIN_VISIBLE, type SpaceDef } from "./spaceDefs";
 import {
   useSpacesDirectory,
@@ -65,12 +66,6 @@ const ICON_MAP: Record<string, LucideIcon> = {
   flag: Flag,
 };
 
-const ACCENT_HEX: Record<SpaceDef["accent"], string> = {
-  running: THEME.running,
-  lifting: THEME.lifting,
-  brand: THEME.brand,
-};
-
 /* The same accents as chip INK — theme-aware -strong steps for the
    tinted (no-photo) chips, where the raw identities measured ~3.1:1 as
    10-11px text on the light card (2026-08-22 frame sweep). Photo chips
@@ -85,7 +80,7 @@ const ACCENT_INK: Record<SpaceDef["accent"], string> = {
 function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
   const { def, memberCount, joined } = entry;
   const photo = spaceEditorialImage(def.id);
-  const accent = ACCENT_HEX[def.accent];
+  const accent = SPACE_ACCENT_HEX[def.accent];
   const Icon = ICON_MAP[def.icon] ?? Users;
   const showCount =
     memberCount !== null && memberCount >= SPACE_MEMBER_COUNT_MIN_VISIBLE;
@@ -182,38 +177,43 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
         >
           {def.name}
         </p>
-        <p
-          className={`text-caption font-medium mt-0.5 flex items-center gap-1 ${
-            photo ? "text-white/85" : "text-muted-foreground"
-          }`}
-        >
-          {event ? (
-            /* Runna's race-card anatomy: race day + city, not a member
+        {(event || showCount) && (
+          <p
+            className={`text-caption font-medium mt-0.5 flex items-center gap-1 ${
+              photo ? "text-white/85" : "text-muted-foreground"
+            }`}
+          >
+            {event ? (
+              /* Runna's race-card anatomy: race day + city, not a member
                count (membership lives on the space page header). */
-            <span className="truncate">
-              <span
-                className={
-                  event.dateKey < localDateString()
-                    ? undefined
-                    : "font-mono tabular-nums"
-                }
-              >
-                {event.dateKey < localDateString()
-                  ? "Next date TBA"
-                  : formatRaceEventDate(event)}
+              <span className="truncate">
+                <span
+                  className={
+                    event.dateKey < localDateString()
+                      ? undefined
+                      : "font-mono tabular-nums"
+                  }
+                >
+                  {event.dateKey < localDateString()
+                    ? "Next date TBA"
+                    : formatRaceEventDate(event)}
+                </span>
+                {" · "}
+                {event.city} {event.countryFlag}
               </span>
-              {" · "}
-              {event.city} {event.countryFlag}
-            </span>
-          ) : (
-            <>
-              <Users className="size-3" aria-hidden />
-              {showCount
-                ? `${memberCount.toLocaleString()} members`
-                : "New space"}
-            </>
-          )}
-        </p>
+            ) : (
+              <>
+                <Users className="size-3" aria-hidden />
+                <span>
+                  <span className="font-mono tabular-nums">
+                    {memberCount?.toLocaleString()}
+                  </span>{" "}
+                  members
+                </span>
+              </>
+            )}
+          </p>
+        )}
       </div>
     </Link>
   );

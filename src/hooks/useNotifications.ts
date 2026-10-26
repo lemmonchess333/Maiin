@@ -13,9 +13,9 @@ import { useUid } from "@/lib/auth";
 import { useBlockedUsers } from "./useBlockedUsers";
 
 /**
- * In-app reader for social notifications (kudos / comment / follow /
- * challenge_milestone). The docs are written SERVER-SIDE only — by
- * `toggleKudosCallable` / `addCommentCallable` via `createNotification`
+ * In-app reader for social notifications (the types are listed below). The
+ * docs are written SERVER-SIDE only — by the callables and triggers that
+ * call `createNotification`
  * (functions/lib/socialFanout.js) into `notifications/{uid}/items`. Until
  * this hook + NotificationsSheet shipped, those writes had no client reader,
  * so kudos/comments were invisible to the recipient — a broken engagement
@@ -28,27 +28,42 @@ import { useBlockedUsers } from "./useBlockedUsers";
  * the tray. That's exactly the badge semantics the category leaders use, and
  * it needs no write permission.
  */
-export type NotificationType =
-  | "kudos"
-  | "comment"
-  | "follow"
-  | "challenge_milestone"
+
+/** Every type the tray shows. A stored type outside this list is dropped
+ *  on read, so the server's list (VALID_NOTIFICATION_TYPES in
+ *  functions/lib/socialFanout.js) is pinned to it by
+ *  notificationTypes.cross.test.ts: a type the server sends and the tray
+ *  does not know would never be seen. */
+export const TRAY_NOTIFICATION_TYPES = [
+  "kudos",
+  "comment",
+  "follow",
+  // Polish2 — someone asked to follow the recipient. The row opens the
+  // asker's profile, where it can be accepted.
+  "follow_request",
+  // The person the recipient asked to follow said yes. The row opens
+  // their profile, which the recipient now follows.
+  "follow_accepted",
+  "challenge_milestone",
   // SOCIAL-FOCUS-01 — a Circle member backed the recipient's weekly
   // focus. Deliberately generic: the copy never names the backer or
   // the focus, and the tray row doesn't deep-link to a profile.
-  | "circle_focus_backed"
+  "circle_focus_backed",
   // CIRCLE-ACTIVITY-NOTIFICATIONS — a co-member published a high-signal
   // Circle event. Named (the recipient already sees them in the shared
   // timeline) and deep-links to the actor's profile.
-  | "circle_milestone"
-  | "circle_needs_support"
-  | "circle_joined"
-  | "circle_routine_shared"
+  "circle_milestone",
+  "circle_needs_support",
+  "circle_joined",
+  "circle_routine_shared",
   // SOC-P2g — Space-post engagement: props / a comment on the
-  // recipient's space post. Rows deep-link to the SPACE (the post
-  // lives there), not the actor's profile.
-  | "space_post_like"
-  | "space_post_comment";
+  // recipient's space post. Rows open the post (the Space when the row
+  // carries no post id), not the actor's profile.
+  "space_post_like",
+  "space_post_comment",
+] as const;
+
+export type NotificationType = (typeof TRAY_NOTIFICATION_TYPES)[number];
 
 export interface NotificationItem {
   id: string;
@@ -56,8 +71,10 @@ export interface NotificationItem {
   fromUserId: string;
   fromName?: string;
   activityId?: string;
-  /** SOC-P2g — present on space_post_* types; drives the space deep-link. */
+  /** SOC-P2g — present on space_post_* types, with `postId`: the row
+   *  opens that post in that Space. */
   spaceId?: string;
+  postId?: string;
   message?: string;
   /** Resolved server timestamp; null only in the brief pending window. */
   createdAt: Date | null;
@@ -78,19 +95,9 @@ function lastSeenKey(uid: string): string {
 // is not a use case worth streaming.
 const NOTIF_CAP = 50;
 
-const VALID_TYPES: ReadonlySet<string> = new Set<NotificationType>([
-  "kudos",
-  "comment",
-  "follow",
-  "challenge_milestone",
-  "circle_focus_backed",
-  "circle_milestone",
-  "circle_needs_support",
-  "circle_joined",
-  "circle_routine_shared",
-  "space_post_like",
-  "space_post_comment",
-]);
+const VALID_TYPES: ReadonlySet<string> = new Set<string>(
+  TRAY_NOTIFICATION_TYPES
+);
 
 /** Pure: count items strictly newer than the last-seen instant. */
 export function countUnread(
@@ -191,6 +198,7 @@ export function useNotifications() {
               typeof data.activityId === "string" ? data.activityId : undefined,
             spaceId:
               typeof data.spaceId === "string" ? data.spaceId : undefined,
+            postId: typeof data.postId === "string" ? data.postId : undefined,
             message:
               typeof data.message === "string" ? data.message : undefined,
             createdAt:

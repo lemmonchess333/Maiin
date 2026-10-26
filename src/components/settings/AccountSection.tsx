@@ -16,7 +16,7 @@ import {
   isSupportedReauthProvider,
   type SupportedReauthProviderId,
 } from "@/lib/reauth";
-import { friendlyAuthError } from "@/lib/authErrors";
+import { friendlyAuthError, isSignInCancelled } from "@/lib/authErrors";
 import { modalReducer, initialModalState } from "./accountDeletionReducer";
 import AccordionSection from "@/components/AccordionSection";
 import type { User } from "firebase/auth";
@@ -24,6 +24,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth";
+import { isAppleRelayEmail } from "@/lib/appleRelay";
 
 /** Apple manage-subscriptions deep-link. Works on iOS (opens
  *  Settings → Apple ID → Subscriptions) and on web (opens the
@@ -56,23 +57,11 @@ function listSupportedProviders(user: User): SupportedReauthProviderId[] {
   return out;
 }
 
-/**
- * Apple's private-relay addresses are random@privaterelay.appleid.com, and
- * from late 2026 random@private.icloud.com for new ones (Apple developer
- * news, 24 August 2026; the old domain keeps working). Showing one in the
- * "Re-enter password for <email>" line would be confusing; the user can't
- * recognise it. Hide and show a generic fallback instead.
- */
-const APPLE_RELAY_DOMAINS = [
-  "@privaterelay.appleid.com",
-  "@private.icloud.com",
-];
-
+/** A relay address in the "Re-enter password for <email>" line would be
+ *  confusing (`appleRelay.ts`); a generic fallback shows instead. */
 function displayEmail(user: User): string | null {
   const email = user.email;
-  if (!email) return null;
-  const lower = email.toLowerCase();
-  if (APPLE_RELAY_DOMAINS.some((domain) => lower.endsWith(domain))) return null;
+  if (!email || isAppleRelayEmail(email)) return null;
   return email;
 }
 
@@ -169,7 +158,13 @@ function AccountSectionContent({
       await signOut();
     } catch (error) {
       logger.error("AccountSection sign-out failed", error);
-      toast.error("Couldn't sign out. Please try again.");
+      // Offline is the usual reason: signing out first stops this phone
+      // getting the account's notifications, which needs the server.
+      toast.error(
+        navigator.onLine === false
+          ? "Signing out needs a connection, so this phone stops getting this account's notifications. Try again when you're online."
+          : "Couldn't sign out. Try again."
+      );
     }
   };
 
@@ -208,7 +203,7 @@ function AccountSectionContent({
     } catch (error) {
       logger.error("Deleted-account sign-out failed", error);
       setDeleteError(
-        "Your account has been deleted. Sign-out didn't finish. Please try again."
+        "Your account has been deleted. Sign-out didn't finish. Try again."
       );
     } finally {
       setFinishing(false);
@@ -236,9 +231,7 @@ function AccountSectionContent({
         fe?.details?.reason === "executor-disabled" ||
         msg.includes("executor-disabled")
       ) {
-        toast.error(
-          "Account deletion is temporarily paused. Please try again later."
-        );
+        toast.error("Account deletion is temporarily paused. Try again later.");
         closeAndReset();
       } else if (
         fe?.details?.errorCode === "requires-recent-auth" ||
@@ -270,7 +263,7 @@ function AccountSectionContent({
               : fe?.code === "functions/deadline-exceeded" ||
                   fe?.code === "functions/unavailable"
                 ? "We couldn't confirm deletion. Check your connection and retry. If cleanup is still running, it will continue on the server."
-                : "Account cleanup couldn't finish. Please retry account deletion. Your sign-in is kept until cleanup succeeds.";
+                : "Account cleanup couldn't finish. Try deleting your account again. Your sign-in is kept until cleanup succeeds.";
         setDeleteError(message);
         dispatchModal({ type: "CANCEL_REAUTH" });
       }
@@ -300,11 +293,7 @@ function AccountSectionContent({
       if (activeUser.current?.uid !== user.uid) return;
       const code = String((err as { code?: string } | null)?.code ?? "");
       const msg = err instanceof Error ? err.message : "";
-      if (
-        /popup-closed-by-user|cancelled-popup-request|canceled|cancelled|1001/i.test(
-          code + " " + msg
-        )
-      ) {
+      if (isSignInCancelled(err)) {
         dispatchModal({ type: "REAUTH_CANCEL" });
         return;
       }
@@ -325,11 +314,11 @@ function AccountSectionContent({
         closeAndReset();
         return;
       }
-      const friendly = friendlyAuthError(code || msg);
       setReauthError(
-        friendly === (code || msg)
-          ? "Couldn't confirm your identity. Use the same sign-in account and try again."
-          : friendly
+        friendlyAuthError(
+          code || msg,
+          "Couldn't confirm your identity. Use the same sign-in account and try again."
+        )
       );
       dispatchModal({ type: "REAUTH_FAIL" });
     } finally {
@@ -605,7 +594,7 @@ function AccountSectionContent({
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="Password"
                   disabled={busy}
-                  className="min-h-11 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
+                  className="ds-input text-base"
                 />
               )}
               <div className="space-y-2">

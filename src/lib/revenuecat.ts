@@ -57,18 +57,24 @@ export async function configureRevenueCat(appUserID: string): Promise<void> {
 }
 
 /** Bind the RC identity to a Firebase uid on sign-in. Configures on first use,
- *  otherwise switches the App User ID (account switch on a shared device). */
-export async function rcLogIn(appUserID: string): Promise<void> {
-  if (!isRevenueCatEnabled()) return;
+ *  otherwise switches the App User ID (account switch on a shared device).
+ *  Resolves whether RevenueCat now has this account (true with nothing to
+ *  do), so useRevenueCatIdentity can try a failed one again. */
+export async function rcLogIn(appUserID: string): Promise<boolean> {
+  if (!isRevenueCatEnabled()) return true;
   try {
     if (!configured) {
       await configureRevenueCat(appUserID);
-      return;
+      // configureRevenueCat logs SDK failures without throwing. Report its
+      // actual result so the identity hook can retry this same account.
+      return configured;
     }
     const Purchases = await loadPurchases();
     await Purchases.logIn({ appUserID });
+    return true;
   } catch (err) {
     logger.error("[RevenueCat] logIn failed", err);
+    return false;
   }
 }
 
@@ -102,7 +108,11 @@ export interface RcPurchaseOutcome {
    *  server keeps it for the trial reminder's email, since RevenueCat holds
    *  no renewal price for a trial. */
   price?: StorePrice;
+  /** A sentence for the person. */
   error?: string;
+  /** The SDK's own text ("There was a problem with the App Store."), for
+   *  logs and telemetry. Never shown. */
+  detail?: string;
 }
 
 /** Best-effort cancellation detection. The RC SDK rejects a cancelled
@@ -158,7 +168,7 @@ export async function rcPurchase(
       return {
         success: false,
         isProActive: false,
-        error: "This plan isn't available right now. Please try again later.",
+        error: "This plan isn't available right now. Try again later.",
       };
     }
     const result = await Purchases.purchasePackage({ aPackage: pkg });
@@ -181,7 +191,8 @@ export async function rcPurchase(
     return {
       success: false,
       isProActive: false,
-      error: err instanceof Error ? err.message : "Purchase failed. Try again.",
+      error: "Purchase failed. Try again.",
+      detail: err instanceof Error ? err.message : String(err),
     };
   }
 }
@@ -212,8 +223,8 @@ export async function rcRestore(): Promise<RcPurchaseOutcome> {
     return {
       success: false,
       isProActive: false,
-      error:
-        err instanceof Error ? err.message : "Failed to restore purchases.",
+      error: "Failed to restore purchases.",
+      detail: err instanceof Error ? err.message : String(err),
     };
   }
 }

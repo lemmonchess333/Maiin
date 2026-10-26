@@ -33,11 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     # 30, not 15. The 15 was set when the capture was much smaller; by
     # 2026-09-04 a full pass took ~14 minutes and adding ONE exercise to
-    # the form-demo list tipped it over. A timeout is the worst way for
-    # this job to fail, because the commit/diff steps below are
-    # `if: always()` — so a killed run still force-pushes a TRUNCATED
-    # frame set as the new baseline, and the diff reports every
-    # never-captured frame as "removed". Keep real headroom here.
+    # the form-demo list tipped it over. A timeout leaves only partial
+    # frames, so keep headroom for capture, diff and review artifacts.
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -79,7 +76,7 @@ jobs:
         timeout-minutes: 10
         run: bash scripts/ci/install-playwright-chromium.sh install-deps 140
 
-      - run: npm install -g firebase-tools
+      - run: npm install -g firebase-tools@15.34.0
 
       - name: Build app with emulator wiring
         run: npm run build:e2e
@@ -134,8 +131,21 @@ jobs:
           fi
           cat screenshot-diff/DIFF_REPORT.md >> "$GITHUB_STEP_SUMMARY" || true
 
+      - name: Preserve screenshots from a failed run for review
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: app-screenshots-review
+          path: |
+            screenshots/
+            screenshot-diff/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      # Keep the last complete baseline when capture, diff or the run fails.
+      # Partial frames remain available in the review artifact above.
       - name: Commit screenshots to the app-screenshots branch
-        if: always()
+        if: success() && steps.capture.outcome == 'success'
         run: |
           if [ -z "$(ls -A screenshots 2>/dev/null)" ]; then
             echo "no screenshots produced"; exit 0

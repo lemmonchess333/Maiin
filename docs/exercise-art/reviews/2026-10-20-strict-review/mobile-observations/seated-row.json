@@ -1,0 +1,230 @@
+{
+  "id": "seated-row",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Seated Cable Row, Reach",
+              "decoded": true,
+              "height": 942,
+              "src": "/Maiin/.strict33.local/candidate/seated-row/1.webp",
+              "width": 1335
+            }
+          ],
+          "caption": "Reach 1/6",
+          "id": "seated-row",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Seated Cable Row, Set",
+              "decoded": true,
+              "height": 942,
+              "src": "/Maiin/.strict33.local/candidate/seated-row/2.webp",
+              "width": 1335
+            }
+          ],
+          "caption": "Set 2/6",
+          "id": "seated-row",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Seated Cable Row, Row",
+              "decoded": true,
+              "height": 942,
+              "src": "/Maiin/.strict33.local/candidate/seated-row/3.webp",
+              "width": 1335
+            }
+          ],
+          "caption": "Row 3/6",
+          "id": "seated-row",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Seated Cable Row, Squeeze",
+              "decoded": true,
+              "height": 942,
+              "src": "/Maiin/.strict33.local/candidate/seated-row/4.webp",
+              "width": 1335
+            }
+          ],
+          "caption": "Squeeze 4/6",
+          "id": "seated-row",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Seated Cable Row, Return",
+              "decoded": true,
+              "height": 942,
+              "src": "/Maiin/.strict33.local/candidate/seated-row/5.webp",
+              "width": 1335
+            }
+          ],
+          "caption": "Return 5/6",
+          "id": "seated-row",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Seated Cable Row, Reset",
+              "decoded": true,
+              "height": 942,
+              "src": "/Maiin/.strict33.local/candidate/seated-row/6.webp",
+              "width": 1335
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "seated-row",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 85,\n    \"alt\": \"Seated Cable Row, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1201,\n    \"alt\": \"Seated Cable Row, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1765,\n    \"alt\": \"Seated Cable Row, Row\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2402,\n    \"alt\": \"Seated Cable Row, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2966,\n    \"alt\": \"Seated Cable Row, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3524,\n    \"alt\": \"Seated Cable Row, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5125,\n    \"alt\": \"Seated Cable Row, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Seated Cable Row, Set",
+            "decoded": true,
+            "height": 942,
+            "src": "/Maiin/.strict33.local/candidate/seated-row/2.webp",
+            "width": 1335
+          }
+        ],
+        "caption": "Set 2/6",
+        "id": "seated-row",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / seated-row\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nSeated Cable Row\nBack\nCable Machine\n\nSET 2/6\n\nPause\nNormal\nPRIMARY\nUpper Back\nSECONDARY\nBiceps\n\nInstructions\n\nPreparation: Controlled torso-hinge variation: start light and move smoothly. Sit on the fixed bench; brace both feet with knees slightly bent.\n\n1\n\nReach forward; keep both feet braced.\n\n2\n\nKeep knees soft and wrists straight.\n\n3\n\nDraw elbows back; bring chest upright.\n\n4\n\nBring the handle toward your lower ribs.\n\n5\n\nExtend arms; hinge forward under control.\n\n6\n\nKeep feet braced; avoid bouncing.\n\nWatch out\n\nUse a small, comfortable torso hinge. Avoid bouncing or leaning far back to move the load.\n\nCOMMON MISTAKES\n\nJerking the handle or using excessive momentum.\nStraightening the knees to drive the movement.\nPulling high toward the shoulders instead of the lower ribs.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 85,\n    \"alt\": \"Seated Cable Row, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1201,\n    \"alt\": \"Seated Cable Row, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1765,\n    \"alt\": \"Seated Cable Row, Row\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2402,\n    \"alt\": \"Seated Cable Row, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2966,\n    \"alt\": \"Seated Cable Row, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3524,\n    \"alt\": \"Seated Cable Row, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5125,\n    \"alt\": \"Seated Cable Row, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6644,\n    \"alt\": \"Seated Cable Row, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Seated Cable Row, Row\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9123,\n    \"alt\": \"Seated Cable Row, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10323,\n    \"alt\": \"Seated Cable Row, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11522,\n    \"alt\": \"Seated Cable Row, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12723,\n    \"alt\": \"Seated Cable Row, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13923,\n    \"alt\": \"Seated Cable Row, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Seated Cable Row, Reach",
+              "decoded": true,
+              "height": 942,
+              "src": "/Maiin/.strict33.local/candidate/seated-row/1.webp",
+              "width": 1335
+            }
+          ],
+          "caption": "Reach 1/6",
+          "id": "seated-row",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Seated Cable Row, Set",
+              "decoded": true,
+              "height": 942,
+              "src": "/Maiin/.strict33.local/candidate/seated-row/2.webp",
+              "width": 1335
+            }
+          ],
+          "caption": "Set 2/6",
+          "id": "seated-row",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Seated Cable Row, Row",
+              "decoded": true,
+              "height": 942,
+              "src": "/Maiin/.strict33.local/candidate/seated-row/3.webp",
+              "width": 1335
+            }
+          ],
+          "caption": "Row 3/6",
+          "id": "seated-row",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Seated Cable Row, Squeeze",
+              "decoded": true,
+              "height": 942,
+              "src": "/Maiin/.strict33.local/candidate/seated-row/4.webp",
+              "width": 1335
+            }
+          ],
+          "caption": "Squeeze 4/6",
+          "id": "seated-row",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Seated Cable Row, Return",
+              "decoded": true,
+              "height": 942,
+              "src": "/Maiin/.strict33.local/candidate/seated-row/5.webp",
+              "width": 1335
+            }
+          ],
+          "caption": "Return 5/6",
+          "id": "seated-row",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Seated Cable Row, Reset",
+              "decoded": true,
+              "height": 942,
+              "src": "/Maiin/.strict33.local/candidate/seated-row/6.webp",
+              "width": 1335
+            }
+          ],
+          "caption": "Reset 6/6",
+          "id": "seated-row",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 85,\n    \"alt\": \"Seated Cable Row, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1201,\n    \"alt\": \"Seated Cable Row, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1765,\n    \"alt\": \"Seated Cable Row, Row\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2402,\n    \"alt\": \"Seated Cable Row, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2966,\n    \"alt\": \"Seated Cable Row, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3524,\n    \"alt\": \"Seated Cable Row, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5125,\n    \"alt\": \"Seated Cable Row, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6644,\n    \"alt\": \"Seated Cable Row, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Seated Cable Row, Row\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9123,\n    \"alt\": \"Seated Cable Row, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10323,\n    \"alt\": \"Seated Cable Row, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11522,\n    \"alt\": \"Seated Cable Row, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12723,\n    \"alt\": \"Seated Cable Row, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13923,\n    \"alt\": \"Seated Cable Row, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15041,\n    \"alt\": \"Seated Cable Row, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15605,\n    \"alt\": \"Seated Cable Row, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16167,\n    \"alt\": \"Seated Cable Row, Row\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16801,\n    \"alt\": \"Seated Cable Row, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17365,\n    \"alt\": \"Seated Cable Row, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17922,\n    \"alt\": \"Seated Cable Row, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19602,\n    \"alt\": \"Seated Cable Row, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Seated Cable Row, Set",
+            "decoded": true,
+            "height": 942,
+            "src": "/Maiin/.strict33.local/candidate/seated-row/2.webp",
+            "width": 1335
+          }
+        ],
+        "caption": "Set 2/6",
+        "id": "seated-row",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / seated-row\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nSeated Cable Row\nBack\nCable Machine\n\nSET 2/6\n\nPause\nNormal\nPRIMARY\nUpper Back\nSECONDARY\nBiceps\n\nInstructions\n\nPreparation: Controlled torso-hinge variation: start light and move smoothly. Sit on the fixed bench; brace both feet with knees slightly bent.\n\n1\n\nReach forward; keep both feet braced.\n\n2\n\nKeep knees soft and wrists straight.\n\n3\n\nDraw elbows back; bring chest upright.\n\n4\n\nBring the handle toward your lower ribs.\n\n5\n\nExtend arms; hinge forward under control.\n\n6\n\nKeep feet braced; avoid bouncing.\n\nWatch out\n\nUse a small, comfortable torso hinge. Avoid bouncing or leaning far back to move the load.\n\nCOMMON MISTAKES\n\nJerking the handle or using excessive momentum.\nStraightening the knees to drive the movement.\nPulling high toward the shoulders instead of the lower ribs.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 85,\n    \"alt\": \"Seated Cable Row, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1201,\n    \"alt\": \"Seated Cable Row, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1765,\n    \"alt\": \"Seated Cable Row, Row\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2402,\n    \"alt\": \"Seated Cable Row, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2966,\n    \"alt\": \"Seated Cable Row, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3524,\n    \"alt\": \"Seated Cable Row, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5125,\n    \"alt\": \"Seated Cable Row, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6644,\n    \"alt\": \"Seated Cable Row, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Seated Cable Row, Row\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9123,\n    \"alt\": \"Seated Cable Row, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10323,\n    \"alt\": \"Seated Cable Row, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11522,\n    \"alt\": \"Seated Cable Row, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12723,\n    \"alt\": \"Seated Cable Row, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13923,\n    \"alt\": \"Seated Cable Row, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15041,\n    \"alt\": \"Seated Cable Row, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15605,\n    \"alt\": \"Seated Cable Row, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16167,\n    \"alt\": \"Seated Cable Row, Row\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16801,\n    \"alt\": \"Seated Cable Row, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17365,\n    \"alt\": \"Seated Cable Row, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17922,\n    \"alt\": \"Seated Cable Row, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19602,\n    \"alt\": \"Seated Cable Row, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21041,\n    \"alt\": \"Seated Cable Row, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22243,\n    \"alt\": \"Seated Cable Row, Row\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23444,\n    \"alt\": \"Seated Cable Row, Squeeze\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24643,\n    \"alt\": \"Seated Cable Row, Return\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25922,\n    \"alt\": \"Seated Cable Row, Reset\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27122,\n    \"alt\": \"Seated Cable Row, Reach\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28322,\n    \"alt\": \"Seated Cable Row, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/seated-row/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

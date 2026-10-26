@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 
 // framer-motion → plain elements
@@ -108,6 +108,24 @@ describe("ExerciseHistory — empty states (shared hexagon EmptyState)", () => {
     ).toBeInTheDocument();
     const cta = screen.getByRole("link", { name: "Go to Train" });
     expect(cta).toHaveAttribute("href", "/program");
+  });
+
+  it("a failed read says so, offers Try again, and claims no empty history", () => {
+    const refresh = vi.fn();
+    workoutsMock.value = {
+      workouts: [],
+      loading: false,
+      failed: true,
+      refresh,
+    } as any;
+    renderAt("Bench Press");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Couldn't load your sessions"
+    );
+    expect(screen.queryByText("No sessions logged yet")).toBeNull();
+    expect(screen.queryByText("Exercise not found")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(refresh).toHaveBeenCalledTimes(1);
   });
 
   it("renders the loading skeleton (neither empty state) while workouts load", () => {

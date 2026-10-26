@@ -15,6 +15,7 @@
  * post comments), which differ only in how a comment is reported and
  * deleted.
  */
+import { BLOCK_DIALOG_DESCRIPTION } from "@/lib/blockCopy";
 import { useEffect, useId, useRef, useState } from "react";
 import { Ban, Flag } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -154,8 +155,7 @@ export default function CommentPanels({
               Block {name}?
             </h3>
             <p className="text-sm text-muted-foreground">
-              They won&apos;t be able to see your activities and you won&apos;t
-              see theirs.
+              {BLOCK_DIALOG_DESCRIPTION}
             </p>
           </div>
           <ConfirmDialogActions

@@ -25,101 +25,35 @@ const { categoryFor, wantsNotification } = require("./notificationPreferences");
  *     per activity create which is itself bounded by /activities
  *     create-rate (PR 1 schema + per-actor lock).
  *
- * Why these helpers live OUTSIDE a transaction:
- *   Fan-out writes are independent appends to N follower feeds.
- *   Wrapping them in a txn would force serialisation under load and
- *   double the cost (txns retry on contention). The cost-benefit
- *   shape differs from kudos/comment counters, which require atomic
- *   sub-doc + counter consistency.
+ * How a post reaches its followers:
+ *   A page of followers at a time, each page one transaction that reads
+ *   the deletion state of the author and of every recipient before it
+ *   writes, so no copy lands in a feed whose account is being deleted nor
+ *   carries an author who is. Author-side R1A is also enforced by the
+ *   trigger wrapper in `index.js` via
+ *   `accountDeletionLocks.shouldSystemWriteProceed` + compensating delete
+ *   (matches the `onWorkoutCreated` pattern).
  *
- * Why no per-recipient R1A check inside fan-out:
- *   Skipping deleting recipients would cost N extra reads per
- *   activity post. The deletion executor's Phase D sweeps each
- *   user's `feeds/{uid}/items` collection regardless, so any feed
- *   item written between deletion start and Phase D is cleaned
- *   within the cascade. Author-side R1A is enforced by the trigger
- *   wrapper in `index.js` via `accountDeletionLocks.shouldSystemWriteProceed`
- *   + compensating delete (matches the `onWorkoutCreated` pattern).
+ * How long the copies are kept:
+ *   A feed copy carries an `expiresAt` 180 days on and a notification 90
+ *   days on, and the `items` TTL policy (firestore.indexes.json) deletes
+ *   each then. The post itself stays on its author's profile; the copy is
+ *   only its row in a follower's Following feed, and the tray shows the
+ *   newest 50 notifications, so a notification months old is one nobody
+ *   can reach. Comments share the `items` collection group and carry no
+ *   `expiresAt`, so the policy never touches them.
  */
 
 const blockGuard = require("./blockGuard");
 const { MAX_DISPLAY_NAME_LENGTH } = require("../profileSanitizer");
+const {
+  FEED_COPY_RETENTION_DAYS,
+  FEED_COPY_PATH,
+  buildFeedIndex,
+} = require("./feedIndex");
 
-function formatDuration(seconds) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-function formatPace(secPerKm) {
-  const m = Math.floor(secPerKm / 60);
-  const s = Math.round(secPerKm % 60);
-  // Spaced, as the app writes every pace ("5:00 /km"; unitTreatment.test.ts).
-  return `${m}:${s.toString().padStart(2, "0")} /km`;
-}
-
-function buildSummary(activity) {
-  if (activity.type === "run") {
-    const km = ((activity.distance || 0) / 1000).toFixed(1);
-    const time = activity.duration ? formatDuration(activity.duration) : "";
-    const pace =
-      typeof activity.avgPace === "number"
-        ? formatPace(activity.avgPace)
-        : activity.avgPace || "";
-    const name = activity.runName || "Run";
-    return `${name} · ${km} km · ${time} · ${pace} pace`;
-  }
-  const name = activity.workoutName || "Workout";
-  const exCount = activity.exerciseCount || 0;
-  /* Explicit locale, like every other formatter in functions/. This
-     string is PERSISTED and fanned out to every follower's feed, so it
-     is formatted once on the server and read by everyone — there is no
-     viewer whose locale it could follow. A bare `toLocaleString()` takes
-     the Cloud Functions CONTAINER's locale, which is nobody's choice and
-     can change under the runtime: the same feed would then carry "5,200"
-     on old items and "5.200" on new ones.
-
-     `en-GB` for the comma grouping the house numeric style uses
-     ("2,633 cal"). The siblings already do this — `en-CA` in
-     `streakNudge`, `programCommands` and `aiScanQuota` for ISO-shaped
-     dates, `en-GB` and `en-US` in `pushSchedule` for a 24h hour and a
-     weekday name. This line was the only one left guessing. */
-  const vol = activity.totalVolume
-    ? `${Math.round(activity.totalVolume).toLocaleString("en-GB")} kg volume`
-    : "";
-  const dur = activity.duration
-    ? `${Math.round(activity.duration / 60)} min`
-    : "";
-  return [name, `${exCount} exercises`, vol, dur].filter(Boolean).join(" · ");
-}
-
-function buildFeedItem(activityId, authorId, activity, serverTimestamp) {
-  const item = {
-    activityId,
-    authorId,
-    authorName:
-      typeof activity.authorName === "string" && activity.authorName.trim()
-        ? activity.authorName.slice(0, MAX_DISPLAY_NAME_LENGTH)
-        : "Athlete",
-    type: activity.type,
-    summary: buildSummary(activity),
-    createdAt: serverTimestamp(),
-  };
-  if (typeof activity.authorPhotoURL === "string" && activity.authorPhotoURL) {
-    item.authorPhotoURL = activity.authorPhotoURL.slice(0, 500);
-  }
-  if (activity.prHit) item.prHit = true;
-  if (typeof activity.badgeEarned === "string" && activity.badgeEarned) {
-    item.badgeEarned = activity.badgeEarned.slice(0, 100);
-  }
-  if (
-    typeof activity.challengeMilestone === "string" &&
-    activity.challengeMilestone
-  ) {
-    item.challengeMilestone = activity.challengeMilestone.slice(0, 100);
-  }
-  return item;
-}
+const DAY_MS = 86_400_000;
+const NOTIFICATION_RETENTION_DAYS = 90;
 
 /**
  * Fan out a single activity creation to follower feeds + author's
@@ -143,55 +77,110 @@ async function fanoutActivityToFeeds({
 }) {
   if (!firestore || !activityId || !authorId) {
     throw new Error(
-      "fanoutActivityToFeeds: firestore, activityId, authorId required",
+      "fanoutActivityToFeeds: firestore, activityId, authorId required"
     );
   }
   if (!activityData || activityData.visibility === "private") {
     return { fanned: 0 };
   }
 
-  const feedItem = buildFeedItem(
+  const feedItem = buildFeedIndex({
     activityId,
     authorId,
-    activityData,
-    serverTimestamp,
-  );
+    createdAt: serverTimestamp(),
+    expiresAt: new Date(Date.now() + FEED_COPY_RETENTION_DAYS * DAY_MS),
+  });
 
-  const followersSnap = await firestore
+  // The author's own feed, then the followers a page at a time, so a post
+  // from someone with thousands of followers reaches all of them inside
+  // the trigger's time.
+  const author = await writeFeedPage({
+    firestore,
+    authorId,
+    activityId,
+    feedItem,
+    recipientIds: [authorId],
+  });
+  if (!author.authorLive) return { fanned: 0 };
+  let fanned = author.written;
+  const followers = firestore
     .collection("followers")
     .doc(authorId)
     .collection("users")
-    .get();
-
-  const recipientIds = new Set(followersSnap.docs.map((d) => d.id));
-  recipientIds.add(authorId); // author's own feed
-
-  let fanned = 0;
-  for (const rid of recipientIds) {
-    // Deterministic doc id (= activityId) so an at-least-once trigger
-    // re-delivery overwrites the same feed item instead of appending a
-    // duplicate. One activity → exactly one item per recipient feed
-    // (CROSS-H1). feeds are server-only writes, so no reader depends on the
-    // previous auto-generated id.
-    const itemRef = firestore
-      .collection("feeds")
-      .doc(rid)
-      .collection("items")
-      .doc(activityId);
-    const written = await firestore.runTransaction(async (tx) => {
-      if (!(await transactionAccountsLive({ firestore, tx, uids: [authorId, rid] }))) return false;
-      tx.set(itemRef, feedItem);
-      return true;
-    });
-    if (written) fanned += 1;
+    .orderBy(FieldPath.documentId())
+    .limit(FANOUT_PAGE_SIZE);
+  let cursor = null;
+  for (;;) {
+    const page = await (
+      cursor ? followers.startAfter(cursor) : followers
+    ).get();
+    const recipientIds = page.docs
+      .map((d) => d.id)
+      .filter((id) => id !== authorId);
+    if (recipientIds.length > 0) {
+      const result = await writeFeedPage({
+        firestore,
+        authorId,
+        activityId,
+        feedItem,
+        recipientIds,
+      });
+      if (!result.authorLive) break;
+      fanned += result.written;
+    }
+    if (page.docs.length < FANOUT_PAGE_SIZE) break;
+    cursor = page.docs[page.docs.length - 1];
   }
   return { fanned };
 }
 
-/** A feed copy's path. The `items` collection group also holds
- *  notifications and comments, and a kudos or comment notification carries
- *  the activityId of the post it is about; those are not copies. */
-const FEED_COPY_PATH = /^feeds\/[^/]+\/items\/[^/]+$/;
+/** Followers written per transaction: well inside a transaction's 500
+ *  writes, and each one's two deletion reads with it. */
+const FANOUT_PAGE_SIZE = 100;
+
+/**
+ * One page of feed copies, in one transaction that reads the deletion state
+ * of the author and of each recipient it writes to, so a copy never lands
+ * in a feed whose account is being deleted, nor carries an author who is.
+ * Deterministic doc id (= activityId), so an at-least-once trigger
+ * re-delivery overwrites the same feed item instead of appending a
+ * duplicate: one activity, exactly one item per recipient feed (CROSS-H1).
+ */
+async function writeFeedPage({
+  firestore,
+  authorId,
+  activityId,
+  feedItem,
+  recipientIds,
+}) {
+  return firestore.runTransaction(async (tx) => {
+    if (!(await transactionAccountsLive({ firestore, tx, uids: [authorId] }))) {
+      return { authorLive: false, written: 0 };
+    }
+    const live = await Promise.all(
+      recipientIds.map((rid) =>
+        transactionAccountsLive({ firestore, tx, uids: [rid] })
+      )
+    );
+    let written = 0;
+    recipientIds.forEach((rid, i) => {
+      if (!live[i]) return;
+      tx.set(
+        firestore
+          .collection("feeds")
+          .doc(rid)
+          .collection("items")
+          .doc(activityId),
+        feedItem
+      );
+      written += 1;
+    });
+    return { authorLive: true, written };
+  });
+}
+
+/** The `items` collection group also holds notifications and comments;
+ * FEED_COPY_PATH keeps their same-activityId documents out of removal. */
 const REMOVE_PAGE_SIZE = 300;
 
 /**
@@ -239,6 +228,11 @@ const VALID_NOTIFICATION_TYPES = [
   "kudos",
   "comment",
   "follow",
+  // Polish2: someone asked to follow the recipient, who approves each
+  // follower (onFollowRequestCreated).
+  "follow_request",
+  // The person asked said yes (onFollowerCreated, on an accepted edge).
+  "follow_accepted",
   "challenge_milestone",
   // SOCIAL-FOCUS-01: a Circle member backed the recipient's weekly
   // focus. Deliberately GENERIC — the message never names the backer
@@ -255,7 +249,8 @@ const VALID_NOTIFICATION_TYPES = [
   "circle_routine_shared",
   // SOC-P2g: space-post engagement (like = "props" flame, comment). NAMED
   // types — the actor is already visible on the post itself, so naming is
-  // consistent, not a leak. These deep-link via spaceId (see the sanitiser).
+  // consistent, not a leak. These open the post via spaceId and postId
+  // (see the sanitiser).
   //
   // Added 2026-07-27, AFTER the callables shipped emitting them: the P2g
   // callables threw here on every single notification, the throw landed in
@@ -279,9 +274,10 @@ function sanitiseNotificationData(data) {
   if (typeof data.message === "string" && data.message) {
     out.message = data.message.slice(0, 200);
   }
-  // SOC-P2g deep-link payload. The tray navigates to the space via
-  // data.spaceId (useNotifications.ts parses it; NotificationsSheet routes
-  // on it), so stripping it here ships rows that render but go nowhere —
+  // SOC-P2g deep-link payload. The tray opens the post via data.spaceId
+  // and data.postId (useNotifications.ts parses them; notificationTarget.ts
+  // routes on them), so stripping them here ships rows that render but go
+  // nowhere —
   // which is exactly what happened before 2026-07-27: the callables SENT
   // spaceId/postId and this allowlist dropped them. spaceId is a closed
   // server-side vocabulary (SPACE_IDS, ~20 short ids) and postId is a
@@ -345,9 +341,7 @@ async function createNotification({
   notificationId,
 }) {
   if (!firestore || !fromUid || !toUid) {
-    throw new Error(
-      "createNotification: firestore, fromUid, toUid required",
-    );
+    throw new Error("createNotification: firestore, fromUid, toUid required");
   }
   if (fromUid === toUid) return { skipped: true };
 
@@ -371,7 +365,7 @@ async function createNotification({
 
   if (!data || !VALID_NOTIFICATION_TYPES.includes(data.type)) {
     throw new Error(
-      `createNotification: type must be one of ${VALID_NOTIFICATION_TYPES.join(", ")}`,
+      `createNotification: type must be one of ${VALID_NOTIFICATION_TYPES.join(", ")}`
     );
   }
 
@@ -401,18 +395,50 @@ async function createNotification({
     ...(anonymous ? {} : { fromUserId: fromUid }),
     read: false,
     createdAt: serverTimestamp(),
+    expiresAt: new Date(Date.now() + NOTIFICATION_RETENTION_DAYS * DAY_MS),
   };
 
   return firestore.runTransaction(async (tx) => {
-    if (!(await transactionAccountsLive({ firestore, tx, uids: [fromUid, toUid] }))) return { skipped: true, deleting: true };
+    if (
+      !(await transactionAccountsLive({
+        firestore,
+        tx,
+        uids: [fromUid, toUid],
+      }))
+    )
+      return { skipped: true, deleting: true };
     tx.set(itemRef, notif);
     return { notificationId: itemRef.id };
   });
+}
+
+/**
+ * The name a notification shows for whoever caused it: the sender's own
+ * public profile name, read here, never one the caller sends. The props
+ * and space-post-like callables took `data.fromName` from the client and
+ * put it in the recipient's tray as written ("{name} gave you props"),
+ * unfiltered and uncut in the message, so any text could appear there in
+ * the app's own words. The follow notification reads the same document.
+ * Falls back to "Someone", as those callers did, when there is no name or
+ * the read fails: a notification is never worth failing the props for.
+ */
+async function senderDisplayName(firestore, uid) {
+  try {
+    const snap = await firestore.doc(`users/${uid}/public/profile`).get();
+    const name = snap.exists ? snap.data().displayName : null;
+    if (typeof name !== "string" || !name.trim()) return "Someone";
+    return name.trim().slice(0, MAX_DISPLAY_NAME_LENGTH);
+  } catch {
+    return "Someone";
+  }
 }
 
 module.exports = {
   fanoutActivityToFeeds,
   removeActivityFromFeeds,
   createNotification,
+  senderDisplayName,
   VALID_NOTIFICATION_TYPES,
+  FEED_COPY_RETENTION_DAYS,
+  NOTIFICATION_RETENTION_DAYS,
 };

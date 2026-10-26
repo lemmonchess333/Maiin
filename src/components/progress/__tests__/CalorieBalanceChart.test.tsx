@@ -159,6 +159,26 @@ describe("the chart draws only once there are bars to compare", () => {
   });
 });
 
+describe("whose maintenance the balance is measured against", () => {
+  it("the learned one, when the targets are learned from it", () => {
+    render(
+      <CalorieBalanceChart
+        meals={loggedPast(ENOUGH, 2100)}
+        learnedMaintenance={2400}
+      />
+    );
+    const logged = points().filter((point) => point.balance !== null);
+    expect(logged).toHaveLength(ENOUGH);
+    expect(logged.every((point) => point.balance === 300)).toBe(true);
+  });
+
+  it("the formula's otherwise", () => {
+    render(<CalorieBalanceChart meals={loggedPast(ENOUGH, 2100)} />);
+    const logged = points().filter((point) => point.balance !== null);
+    expect(logged.every((point) => point.balance === 300)).toBe(false);
+  });
+});
+
 describe("nutrition evidence limits", () => {
   it("does not chart unlogged days as zero-intake deficits", () => {
     /* Was asserted against an EMPTY account, where the T5 gate now
@@ -269,7 +289,8 @@ describe("calorie balance footer", () => {
 
   it("groups them in the other direction too", () => {
     render(<CalorieBalanceChart meals={[meal(1, 9000)]} />);
-    expect(gap()).toMatch(new RegExp(`^-\\d{1,3}${SEP_RE}\\d{3} kcal$`));
+    // The true minus, U+2212, not the hyphen toLocaleString prints.
+    expect(gap()).toMatch(new RegExp(`^\u2212\\d{1,3}${SEP_RE}\\d{3} kcal$`));
   });
 
   it("counts against the window it actually charts", () => {

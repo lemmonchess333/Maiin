@@ -13,11 +13,12 @@
  * feature exists for (`useMeals` paginates). It is pure, so the whole
  * retention policy is testable with no device and no Capacitor.
  *
- * `toStorableJpeg` / `saveFoodPhoto` are deliberately NOT exercised here:
- * they need `<img>` + canvas, which jsdom does not implement, so a test
- * of them would be a test of a stub wearing the name of a real thing.
- * The downscale is called out as device-only in the QA backlog — same
- * status it had under the Storage implementation.
+ * `saveFoodPhoto`'s encode is deliberately NOT exercised here: it needs
+ * `<img>` + canvas, which jsdom does not implement, so a test of it would
+ * be a test of a stub wearing the name of a real thing. What it scales to
+ * is (`downscaleFactor`, pure); the encode itself, photo and thumbnail,
+ * is called out as device-only in the QA backlog — same status it had
+ * under the Storage implementation.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
@@ -68,8 +69,11 @@ vi.mock("@/lib/logger", () => ({
 
 import {
   MAX_AGE_DAYS,
+  MAX_EDGE_PX,
   MAX_TOTAL_BYTES,
+  THUMB_EDGE_PX,
   deleteFoodPhoto,
+  downscaleFactor,
   listFoodPhotos,
   mealIdFromFileName,
   planEviction,
@@ -358,5 +362,103 @@ describe("sweepFoodPhotosOnce", () => {
 
   it("does nothing without a uid", async () => {
     await expect(sweepFoodPhotosOnce("")).resolves.toBeUndefined();
+  });
+});
+
+/** Write a thumbnail straight into the fake, as `saveFoodPhoto` would. */
+async function seedThumb(
+  uid: string,
+  mealId: string,
+  ageDays: number,
+  size = 100
+) {
+  files.set(`food-photos/${uid}/${mealId}.thumb.jpg`, {
+    data: "VEhVTUI=",
+    mtime: NOW - ageDays * DAY,
+    size,
+  });
+}
+
+describe("the diary thumbnail", () => {
+  it("is what the row reads when there is one", async () => {
+    await seed("u1", "m1", 0);
+    await seedThumb("u1", "m1", 0);
+    expect(await readFoodPhotoSrc("u1", "m1")).toBe(
+      "data:image/jpeg;base64,VEhVTUI="
+    );
+  });
+
+  it("falls back to the photo for one saved before thumbnails", async () => {
+    await seed("u1", "m1", 0);
+    expect(await readFoodPhotoSrc("u1", "m1")).toBe(
+      "data:image/jpeg;base64,QUJD"
+    );
+  });
+
+  it("is listed with its photo, as one meal whose bytes count both", async () => {
+    await seed("u1", "m1", 3, 1000);
+    await seedThumb("u1", "m1", 3, 40);
+    expect(await listFoodPhotos("u1")).toEqual([
+      { mealId: "m1", mtime: NOW - 3 * DAY, bytes: 1040 },
+    ]);
+  });
+
+  it("is deleted with its photo", async () => {
+    await seed("u1", "m1", 0);
+    await seedThumb("u1", "m1", 0);
+    await deleteFoodPhoto("u1", "m1");
+    expect(await readFoodPhotoSrc("u1", "m1")).toBeNull();
+    expect([...files.keys()]).toEqual([]);
+  });
+
+  it("leaves with its photo at the age cap", async () => {
+    await seed("u1", "fresh", 2);
+    await seedThumb("u1", "fresh", 2);
+    await seed("u1", "stale", 120);
+    await seedThumb("u1", "stale", 120);
+    expect(await sweepFoodPhotos("u1")).toBe(1);
+    expect([...files.keys()].sort()).toEqual([
+      "food-photos/u1/fresh.jpg",
+      "food-photos/u1/fresh.thumb.jpg",
+    ]);
+  });
+
+  it("is swept by the age cap even if its photo has gone", async () => {
+    // A thumbnail is never kept longer than the photo it stands for.
+    await seedThumb("u1", "lone", 120);
+    expect(await sweepFoodPhotos("u1")).toBe(1);
+    expect([...files.keys()]).toEqual([]);
+  });
+
+  it("is purged with the account's photos", async () => {
+    await seed("u1", "m1", 0);
+    await seedThumb("u1", "m1", 0);
+    await purgeFoodPhotos("u1");
+    expect([...files.keys()]).toEqual([]);
+  });
+
+  it("names the same meal as its photo", () => {
+    expect(mealIdFromFileName("abc123.thumb.jpg")).toBe("abc123");
+  });
+});
+
+describe("what a capture is scaled to", () => {
+  it("fits the stored photo to MAX_EDGE_PX on its long side", () => {
+    const scale = downscaleFactor(4032, 3024, MAX_EDGE_PX, "long");
+    expect(Math.round(4032 * scale)).toBe(1280);
+    expect(Math.round(3024 * scale)).toBe(960);
+  });
+
+  it("brings the thumbnail's short side to THUMB_EDGE_PX: the row's square at 3x", () => {
+    // The row crops to a 52 pt square, so the short side is what it needs.
+    expect(THUMB_EDGE_PX).toBeGreaterThanOrEqual(52 * 3);
+    const scale = downscaleFactor(4032, 3024, THUMB_EDGE_PX, "short");
+    expect(Math.round(3024 * scale)).toBe(THUMB_EDGE_PX);
+    expect(Math.round(4032 * scale)).toBe(213);
+  });
+
+  it("never scales a small capture up", () => {
+    expect(downscaleFactor(120, 90, THUMB_EDGE_PX, "short")).toBe(1);
+    expect(downscaleFactor(800, 600, MAX_EDGE_PX, "long")).toBe(1);
   });
 });

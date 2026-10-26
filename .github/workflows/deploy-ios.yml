@@ -61,6 +61,10 @@ concurrency:
   group: ios-testflight
   cancel-in-progress: false
 
+# Reads the repository and nothing else; it writes nothing with the token.
+permissions:
+  contents: read
+
 jobs:
   testflight:
     # macos-14 is deprecated (actions/runner-images#13518). macos-26 carries
@@ -196,9 +200,8 @@ jobs:
       # GoogleSignIn raises an NSException from signIn(withPresenting:) when
       # the app declares no URL scheme for its REVERSED_CLIENT_ID, so without
       # this "Continue with Google" would crash rather than fail. The value
-      # lives in the plist just placed; derive it rather than commit it. This
-      # is LAUNCH_TODO §15 step 2, done for the CI build — a local Xcode build
-      # still needs it added by hand.
+      # lives in the plist just placed; derive it rather than commit it. A
+      # local Xcode build still needs it added by hand (docs/ios-release.md).
       - name: Register the Google sign-in URL scheme
         run: |
           set -euo pipefail
@@ -255,7 +258,7 @@ jobs:
           # Absent on purpose, so nobody has to re-derive why:
           #
           #   VITE_FIREBASE_MEASUREMENT_ID — web Analytics SDK only; the
-          #     native shell reads GoogleService-Info.plist (LAUNCH_TODO #6a).
+          #     native shell reads GoogleService-Info.plist, placed above.
           #   VITE_FIREBASE_VAPID_KEY — FCM *web* push; native push is APNs.
           #   VITE_RECAPTCHA_V3_SITE_KEY — the web App Check provider.
           #     appCheck.ts takes its isNativePlatform() branch before it ever
@@ -603,6 +606,24 @@ jobs:
           xcrun altool --upload-app -f "$VERIFIED_IPA" -t ios \
             --apiKey "$ASC_API_KEY_ID" \
             --apiIssuer "$ASC_API_ISSUER_ID"
+
+      # Crashlytics reads a native crash through the build's symbol files. A
+      # local Xcode build uploads them from a run-script phase; this archive
+      # is built on a runner, so they go up here, from the archive just sent
+      # to TestFlight. After that upload, so a failure here turns the run red
+      # without keeping the build from testers.
+      - name: Upload Crashlytics symbol files
+        run: |
+          set -euo pipefail
+          UPLOAD=$(find "$HOME/Library/Developer/Xcode/DerivedData" \
+            -path '*/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/upload-symbols' \
+            -type f | head -n 1)
+          if [ -z "$UPLOAD" ]; then
+            echo "::error::upload-symbols not found; did the archive resolve FirebaseCrashlytics?"
+            exit 1
+          fi
+          "$UPLOAD" -gsp ios/App/App/GoogleService-Info.plist -p ios \
+            "$RUNNER_TEMP/App.xcarchive/dSYMs"
 
       # The runner is thrown away after the job, but the signing key should
       # not outlive the steps that needed it.

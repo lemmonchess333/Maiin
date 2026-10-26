@@ -12,6 +12,19 @@
  * `bodyMetrics.cross.test.ts`.
  */
 export const HEIGHT_CM = { min: 120, max: 230 } as const;
+/** Whole years; the sanitizer drops a fraction as well as a value outside. */
+export const AGE_YEARS = { min: 16, max: 120 } as const;
+
+/**
+ * An age as typed, or null when it is not one the profile keeps: empty,
+ * not a whole number, or outside `AGE_YEARS`.
+ */
+export function parseAgeYears(text: string): number | null {
+  const trimmed = text.trim();
+  if (!/^\d+$/.test(trimmed)) return null;
+  const years = Number(trimmed);
+  return years >= AGE_YEARS.min && years <= AGE_YEARS.max ? years : null;
+}
 export const WEIGHT_KG = { min: 30, max: 300 } as const;
 
 const CM_PER_INCH = 2.54;

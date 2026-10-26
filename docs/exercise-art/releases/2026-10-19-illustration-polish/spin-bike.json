@@ -1,0 +1,164 @@
+{
+  "exerciseId": "spin-bike",
+  "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+  "width": 432,
+  "height": 707,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex native illustration polish review",
+  "reviewedAt": "2026-10-19T19:53:58.334695+00:00",
+  "reference": {
+    "path": "form-frames/spin-bike/1.webp",
+    "sha256": "4778b11213b83f0a6574bf61a5084764c406fdbd0e4949edc0c9ee42f81d3bab"
+  },
+  "cueSha256": "d6997bc7cd1379bd76522147e488ef0b05a67aed395c658a6bac4687d9222d53",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 25-pixel horizontal old-equipment stub left of the calf in the standing position. Original athlete and remaining equipment are exact. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 25-pixel horizontal old-equipment stub left of the calf in the standing position. Original athlete and remaining equipment are exact. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 25-pixel horizontal old-equipment stub left of the calf in the standing position. Original athlete and remaining equipment are exact. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 25-pixel horizontal old-equipment stub left of the calf in the standing position. Original athlete and remaining equipment are exact. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 25-pixel horizontal old-equipment stub left of the calf in the standing position. Original athlete and remaining equipment are exact. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 25-pixel horizontal old-equipment stub left of the calf in the standing position. Original athlete and remaining equipment are exact. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 25-pixel horizontal old-equipment stub left of the calf in the standing position. Original athlete and remaining equipment are exact. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 25-pixel horizontal old-equipment stub left of the calf in the standing position. Original athlete and remaining equipment are exact. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 25-pixel horizontal old-equipment stub left of the calf in the standing position. Original athlete and remaining equipment are exact. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 25-pixel horizontal old-equipment stub left of the calf in the standing position. Original athlete and remaining equipment are exact. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Removed the detached 25-pixel horizontal old-equipment stub left of the calf in the standing position. Original athlete and remaining equipment are exact. Actual registered component checks are recorded separately; no strict certificate asserted."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/spin-bike/1.webp",
+      "sha256": "4778b11213b83f0a6574bf61a5084764c406fdbd0e4949edc0c9ee42f81d3bab",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/spin-bike/2026-10-19-illustration-polish/1.png",
+        "sha256": "9c76887ae951ae212534a026b01b967a57ec0225ab28a6d2cf05aa45638c4052"
+      },
+      "sourcePose": "A"
+    },
+    {
+      "path": "form-frames/spin-bike/2.webp",
+      "sha256": "a9d2b4c9fa3fdf3e80696c8be36e56081b7beb31ecc8e81d9bb19d793eef2b3e",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/spin-bike/2026-10-19-illustration-polish/2.png",
+        "sha256": "61efe6539e39039c7451576462d7a1e3236ef02d0a7886cbe7c208f737c78afb"
+      },
+      "sourcePose": "B"
+    },
+    {
+      "path": "form-frames/spin-bike/3.webp",
+      "sha256": "a9d2b4c9fa3fdf3e80696c8be36e56081b7beb31ecc8e81d9bb19d793eef2b3e",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/spin-bike/2026-10-19-illustration-polish/3.png",
+        "sha256": "61efe6539e39039c7451576462d7a1e3236ef02d0a7886cbe7c208f737c78afb"
+      },
+      "sourcePose": "B"
+    },
+    {
+      "path": "form-frames/spin-bike/4.webp",
+      "sha256": "658e14ccd367ef2e86845a7939051fb20b4b26ad9c576ce8be9a161b64406a8c",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/spin-bike/2026-10-19-illustration-polish/4.png",
+        "sha256": "8385c9a2771a52d60f76262739b4b8c48b946fc6fc267121d2534f8a58039965"
+      },
+      "sourcePose": "C"
+    },
+    {
+      "path": "form-frames/spin-bike/5.webp",
+      "sha256": "658e14ccd367ef2e86845a7939051fb20b4b26ad9c576ce8be9a161b64406a8c",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/spin-bike/2026-10-19-illustration-polish/5.png",
+        "sha256": "8385c9a2771a52d60f76262739b4b8c48b946fc6fc267121d2534f8a58039965"
+      },
+      "sourcePose": "C"
+    },
+    {
+      "path": "form-frames/spin-bike/6.webp",
+      "sha256": "4778b11213b83f0a6574bf61a5084764c406fdbd0e4949edc0c9ee42f81d3bab",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/spin-bike/2026-10-19-illustration-polish/6.png",
+        "sha256": "9c76887ae951ae212534a026b01b967a57ec0225ab28a6d2cf05aa45638c4052"
+      },
+      "sourcePose": "A"
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "What minor illustration issues are still left? Fix those too, same model and colours, no shorts, and get them merged. Stop asking for approval.",
+    "context": "Explicit authority for scoped native colour/equipment/cutout corrections, local registration, verification and normal merge. Not strict certification."
+  },
+  "findings": [
+    "Removed the detached 25-pixel horizontal old-equipment stub left of the calf in the standing position. Original athlete and remaining equipment are exact.",
+    "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+  ],
+  "resolvedIllustrationIssues": [
+    "Removed the detached 25-pixel horizontal old-equipment stub left of the calf in the standing position. Original athlete and remaining equipment are exact."
+  ],
+  "priorFindings": {
+    "record": "docs/exercise-art/releases/2026-10-16/spin-bike.json",
+    "sha256": "36d5fd811a8810dab0eecf7d109e71cec2e4d9ec83beed4f4070c939fb5e8c4d",
+    "disposition": "Historical record preserved verbatim. Cosmetic issues addressed here are described separately; prior strict-measurement and source-provenance statements are not erased.",
+    "hashScope": "Exact repository blob bytes, independent of Windows checkout CRLF."
+  },
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/spin-bike/2026-10-19-illustration-polish",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/spin-bike/2026-10-19-illustration-polish/spin-bike-native-polish.zip",
+      "sha256": "ac4a72aa45751cddacacfdee7227288c4da69ee71ccef759381ab83bd846fb53",
+      "bytes": 2853916
+    },
+    "priorRelease": "docs/exercise-art/releases/2026-10-16/spin-bike.json",
+    "method": "Exact native original drawings plus sparse editable colour/equipment pixels; alpha-only stray-mark cleanup for prepared cards. Portable source layers and deterministic lossless exports independently re-executed byte-for-byte.",
+    "reproductionScope": "Same-layer composition and export reproduction; no independent anatomy/physics certification.",
+    "newImageGenerationCalls": 0,
+    "anatomicalTransforms": []
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-19-illustration-polish/review.json",
+  "physicalPoses": 3,
+  "sourcePoseOrder": ["A", "B", "B", "C", "C", "A"]
+}

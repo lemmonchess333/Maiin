@@ -47,8 +47,16 @@ const DEVICE_SCOPED: Record<string, string> = {
   "tropos-dark-mode":
     "theme is a property of this screen; scoping it would flash the wrong theme on sign-in",
   "bk-font-combo": "dev-only font bake-off switch (src/dev)",
+  "tropos.exercise-library.flags.v1":
+    "review flags for the standalone developer artwork library (src/dev); this page has no signed-in account and reviews the same global artwork catalogue in this browser",
   "tropos.account_deleted":
     "written precisely when there is no longer an account to scope to",
+  "tropos.clear-firestore-cache":
+    "asks the next boot to clear this device's Firestore copy after a sign-out; there is no account to scope it to then, and that boot consumes it",
+  "tropos-email-change-pending":
+    "the address an email change is going to, read by the signed-out Login after the change ends the session; there is no account to scope it to there, and any sign-in clears it",
+  "tropos.last_sign_in_method":
+    'the sign-in method this phone used last, which the signed-out Login marks "Last used"; there is no account to scope it to there',
   "tropos.signed_in_before":
     "whether ANY account has signed in on this phone: the signed-out screen reads it to choose the welcome screen or Sign in, and there is no account to scope it to there",
   "tropos.food.calorieRingMode":

@@ -14,6 +14,7 @@ const { artworkRef, setupInstructions, advice } = vi.hoisted(() => ({
 vi.mock("../releasedFormPlacards", () => ({
   RELEASED_FORM_PLACARDS: {
     "setup-guide": {
+      playback: "sequence",
       authoredSetupInstructions: setupInstructions,
       advice,
       beats: Array.from({ length: 6 }, (_, i) => ({
@@ -30,7 +31,7 @@ vi.mock("../formArtwork", () => ({
   getReleasedFormArtwork: () => artworkRef.current,
 }));
 
-import { getFormAdvice, getFormSetup } from "../formGuides";
+import { getFormAdvice, getFormPlayback, getFormSetup } from "../formGuides";
 
 beforeEach(() => {
   artworkRef.current = null;
@@ -39,6 +40,7 @@ beforeEach(() => {
 describe("released placard preparation", () => {
   it("returns setup only when all six released frames match the placard", () => {
     expect(getFormSetup("setup-guide")).toBeNull();
+    expect(getFormPlayback("setup-guide")).toBe("cycle");
     expect(getFormAdvice("setup-guide")).toBeNull();
     artworkRef.current = {
       frames: Array.from(
@@ -47,9 +49,11 @@ describe("released placard preparation", () => {
       ),
     };
     expect(getFormSetup("setup-guide")).toBe(setupInstructions);
+    expect(getFormPlayback("setup-guide")).toBe("sequence");
     expect(getFormAdvice("setup-guide")).toBe(advice);
     artworkRef.current.frames[5] = "form-frames/another-guide/6.webp";
     expect(getFormSetup("setup-guide")).toBeNull();
+    expect(getFormPlayback("setup-guide")).toBe("cycle");
     expect(getFormAdvice("setup-guide")).toBeNull();
     expect(getFormSetup("unknown-guide")).toBeNull();
     expect(getFormAdvice("unknown-guide")).toBeNull();

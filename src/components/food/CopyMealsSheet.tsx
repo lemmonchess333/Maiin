@@ -12,6 +12,7 @@ import {
   type MealCopySelection,
 } from "@/lib/mealCopy";
 import { MEAL_LABELS, MEAL_ORDER } from "./mealConstants";
+import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 
 interface Props {
   sources: readonly Meal[];
@@ -186,11 +187,11 @@ export default function CopyMealsSheet({ sources, onClose, onSave }: Props) {
                         {multiplier !== null && (
                           <span className="shrink-0 whitespace-nowrap">
                             <span className="font-mono tabular-nums">
-                              {Math.round(
+                              {formatCalories(
                                 row.source.totalCalories * multiplier
                               )}
                             </span>{" "}
-                            kcal
+                            {CALORIE_UNIT}
                           </span>
                         )}
                       </div>
@@ -224,9 +225,9 @@ export default function CopyMealsSheet({ sources, onClose, onSave }: Props) {
                 {" "}
                 ·{" "}
                 <span className="font-mono tabular-nums">
-                  {Math.round(totals.calories)}
+                  {formatCalories(totals.calories)}
                 </span>{" "}
-                kcal
+                {CALORIE_UNIT}
               </>
             )}
           </p>

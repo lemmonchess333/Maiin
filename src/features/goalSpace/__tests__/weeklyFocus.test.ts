@@ -85,6 +85,16 @@ describe("countWeeklyFocusSet", () => {
       event({ id: "5", uid: "d", kind: "milestone" }), // not a check-in → out
       event({ id: "6", uid: "e", weeklyFocus: "recovery" }),
     ];
-    expect(countWeeklyFocusSet(events, WEEK)).toBe(2);
+    const members = new Set(["a", "b", "c", "d", "e"]);
+    expect(countWeeklyFocusSet(events, WEEK, members)).toBe(2);
+  });
+
+  it("stops counting a member who left this week", () => {
+    const events = [
+      event({ id: "1", uid: "a" }),
+      event({ id: "2", uid: "gone" }), // set a focus, then left
+    ];
+    expect(countWeeklyFocusSet(events, WEEK, new Set(["a", "gone"]))).toBe(2);
+    expect(countWeeklyFocusSet(events, WEEK, new Set(["a"]))).toBe(1);
   });
 });

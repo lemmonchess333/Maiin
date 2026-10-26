@@ -10,13 +10,12 @@ export interface NotificationPayload {
   /** If set, schedule for this time. If omitted, fire immediately. */
   scheduleAt?: Date;
   /**
-   * When true on native, the notification re-arms at the cadence
-   * given by `repeatEvery` (defaults to 'day') after the initial
-   * `scheduleAt` fire. Without this the meal / streak / workout
-   * reminders silently stopped working after their first delivery —
-   * the OS doesn't auto-repeat a `schedule.at` payload. Web fallback
-   * ignores this flag (the setTimeout path only fires while the tab
-   * is open anyway, so recurrence there is moot).
+   * When true on native, the notification repeats at `scheduleAt`'s
+   * wall-clock time every day (or, with `repeatEvery: 'week'`, on its
+   * weekday) — see `nativeSchedule`. Without this the meal / streak /
+   * workout reminders silently stopped working after their first
+   * delivery. Web fallback ignores this flag (the setTimeout path only
+   * fires while the tab is open anyway, so recurrence there is moot).
    */
   repeats?: boolean;
   /**
@@ -30,6 +29,93 @@ export interface NotificationPayload {
 
 const isNative = Capacitor.isNativePlatform();
 const webTimers = new Map<number, ReturnType<typeof setTimeout>>();
+
+/** The plugin's schedule shapes this module sends. Weekday is iOS's
+ *  calendar weekday, 1 = Sunday (`Date.getDay() + 1`). */
+export type NativeSchedule =
+  | { at: Date }
+  | { on: { hour: number; minute: number; weekday?: number } };
+
+/** The first time after `now` that falls on `at`'s hour and minute (and, for
+ *  a weekly reminder, its weekday). */
+function nextNaturalOccurrence(
+  at: Date,
+  every: "day" | "week",
+  now: Date
+): Date {
+  const next = new Date(now);
+  next.setHours(at.getHours(), at.getMinutes(), 0, 0);
+  const step = () => next.setDate(next.getDate() + 1);
+  if (next.getTime() <= now.getTime()) step();
+  if (every === "week") while (next.getDay() !== at.getDay()) step();
+  return next;
+}
+
+/**
+ * The schedule a native reminder is sent with.
+ *
+ * A repeating reminder is a calendar trigger on its hour and minute (and
+ * weekday). It used to be `{ at, every, repeats: true }`, and the iOS plugin
+ * reads `at` first and arms a time-interval trigger of now → `at` that
+ * repeats (LocalNotificationsPlugin.swift, the `at` branch returns before
+ * `every` is read): a breakfast reminder set at 05:00 for 08:00 fired every
+ * three hours until the app was next opened, and one set under a minute
+ * ahead threw.
+ *
+ * A calendar trigger fires at the next matching time and cannot skip one.
+ * When the caller has deferred the first fire past the next one (today's
+ * meal is already logged, so the reminder starts tomorrow), the reminder is
+ * sent once, at that time: the hooks schedule again on their next pass and
+ * the series resumes then.
+ */
+export function nativeSchedule(
+  payload: Pick<NotificationPayload, "scheduleAt" | "repeats" | "repeatEvery">,
+  now: Date = new Date()
+): NativeSchedule | undefined {
+  const at = payload.scheduleAt;
+  if (!at) return undefined;
+  if (!payload.repeats) return { at };
+  const every = payload.repeatEvery ?? "day";
+  const natural = nextNaturalOccurrence(at, every, now);
+  const sameMinute =
+    Math.floor(natural.getTime() / 60_000) ===
+    Math.floor(at.getTime() / 60_000);
+  if (!sameMinute) return { at };
+  return {
+    on: {
+      hour: at.getHours(),
+      minute: at.getMinutes(),
+      ...(every === "week" ? { weekday: at.getDay() + 1 } : {}),
+    },
+  };
+}
+
+/** When a pending native reminder will next fire: its `at` (a Date, or the
+ *  ISO string iOS returns it as), or the next time its calendar trigger
+ *  matches. */
+export function nextFireOf(
+  schedule: unknown,
+  now: Date = new Date()
+): Date | null {
+  if (!schedule || typeof schedule !== "object") return null;
+  const { at, on } = schedule as { at?: unknown; on?: unknown };
+  if (at instanceof Date) return Number.isNaN(at.getTime()) ? null : at;
+  if (typeof at === "string") {
+    const parsed = new Date(at);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  if (!on || typeof on !== "object") return null;
+  const { hour, minute, weekday } = on as Record<string, unknown>;
+  if (typeof hour !== "number" || typeof minute !== "number") return null;
+  const template = new Date(now);
+  template.setHours(hour, minute, 0, 0);
+  if (typeof weekday === "number") {
+    const offset = (weekday - 1 - template.getDay() + 7) % 7;
+    template.setDate(template.getDate() + offset);
+    return nextNaturalOccurrence(template, "week", now);
+  }
+  return nextNaturalOccurrence(template, "day", now);
+}
 
 /**
  * Request notification permission from the user.
@@ -117,23 +203,7 @@ export async function scheduleNotification(
 
   try {
     if (isNative) {
-      // Native schedule shape:
-      //   `at` for the first fire time;
-      //   `every: 'day'` plus `repeats: true` so the OS keeps re-arming
-      //   the notification daily — without it the entry is one-shot and
-      //   silently stops working after day 1. We always also send `at`
-      //   alongside `every` because Capacitor uses `at` as the anchor
-      //   for the first occurrence; omitting it makes the first fire
-      //   ambiguous on some platform builds.
-      const schedule = payload.scheduleAt
-        ? payload.repeats
-          ? {
-              at: payload.scheduleAt,
-              every: (payload.repeatEvery ?? "day") as "day" | "week",
-              repeats: true,
-            }
-          : { at: payload.scheduleAt }
-        : undefined;
+      const schedule = nativeSchedule(payload);
       await LocalNotifications.schedule({
         notifications: [
           {
@@ -249,16 +319,10 @@ export async function getPendingNotifications(): Promise<
       id: n.id,
       title: n.title ?? null,
       body: n.body ?? null,
-      // Capacitor's schedule.at is a Date when the at form is used;
-      // it can also be undefined / cron-style on more complex
-      // schedules. Defensive read.
-      scheduleAt:
-        n.schedule &&
-        typeof n.schedule === "object" &&
-        "at" in n.schedule &&
-        n.schedule.at instanceof Date
-          ? n.schedule.at.toISOString()
-          : null,
+      // iOS returns `at` as an ISO string, not the Date it was sent as,
+      // and a repeating reminder has no `at` at all, only its calendar
+      // trigger: read either.
+      scheduleAt: nextFireOf(n.schedule)?.toISOString() ?? null,
     }));
   } catch (err) {
     logger.error("getPendingNotifications failed", err);

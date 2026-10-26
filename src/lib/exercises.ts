@@ -909,14 +909,14 @@ export const EXERCISES: Exercise[] = [
     category: "Shoulders",
     muscleGroup: "Deltoids",
     mechanic: "isolation",
-    secondaryMuscles: ["Front Delts", "Side Delts"],
+    secondaryMuscles: ["Traps"],
     equipment: "Dumbbells",
     caloriesPerMinute: 5,
     instructions: [
       "Stand tall with light dumbbells at your sides, palms facing in.",
       "Raise your arms out to shoulder height like a lateral raise.",
-      "At the top, rotate forward and bring the dumbbells together in front.",
-      "Reverse through both segments back to the starting position.",
+      "Continue out and up overhead, allowing your arms to rotate naturally.",
+      "Lower through the same lateral arc under control to your sides.",
     ],
   },
   {
@@ -2384,7 +2384,7 @@ export const EXERCISES: Exercise[] = [
       "Keep the arm locked and bell vertical through every position.",
       "Reverse the sequence with the same control back to the start.",
     ],
-    tip: "Eyes lock on the bell from start to finish. If you lose sight of it or the arm bends, stop the set — a falling bell on a shoulder ends seasons.",
+    tip: "Keep the loaded elbow straight and wrist neutral. Move through each support under control, then reverse the steps to lower.",
   },
   {
     id: "man-maker",
@@ -2674,12 +2674,53 @@ export function getExercisesByCategory(category: string): Exercise[] {
 
 // O(1) id → exercise lookup. getExerciseById is called inside the
 // render path of WorkoutSession + Program tab (typically 8-12 calls
-// per render against a 2400-entry array) — replacing the linear
-// `find` with a Map cuts ~20k string comparisons per render to one.
+// per render), so each call is one Map lookup rather than a scan of
+// the whole catalogue.
 const EXERCISES_BY_ID = new Map(EXERCISES.map((e) => [e.id, e]));
 
 export function getExerciseById(id: string): Exercise | undefined {
   return EXERCISES_BY_ID.get(id);
+}
+
+/** Case, spaces, hyphens and underscores do not tell two names apart:
+ *  "Back Squat", "back-squat" and "back_squat" are one key. */
+const nameKey = (s: string) =>
+  s
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, " ");
+
+/**
+ * Other names a catalogue exercise is logged under: the SAME movement by a
+ * second name, never a variant. "Back Squat" is the catalogue's Barbell
+ * Squat, bar on the back. A front, goblet or box squat is its own exercise
+ * and must not borrow this one's drawing or its guide, which is why form
+ * art is otherwise keyed by exact id (`formArtwork.ts`). Keys are
+ * `nameKey`s; values are catalogue ids.
+ */
+const EXERCISE_ALIASES: ReadonlyMap<string, string> = new Map([
+  ["back squat", "squat"],
+  ["barbell back squat", "squat"],
+]);
+
+const EXERCISES_BY_NAME = new Map(EXERCISES.map((e) => [nameKey(e.name), e]));
+
+/**
+ * The catalogue exercise a logged id or name refers to: the exact id, else
+ * the catalogue name, else a listed alias. Undefined for a custom exercise
+ * the catalogue does not know. For what a logged row SHOWS (its picture);
+ * the engines keep reading exact ids through `getExerciseById`.
+ */
+export function findCatalogueExercise(idOrName: string): Exercise | undefined {
+  const exact = EXERCISES_BY_ID.get(idOrName);
+  if (exact) return exact;
+  const key = nameKey(idOrName);
+  if (!key) return undefined;
+  const alias = EXERCISE_ALIASES.get(key);
+  return (
+    EXERCISES_BY_NAME.get(key) ??
+    (alias ? EXERCISES_BY_ID.get(alias) : undefined)
+  );
 }
 
 /**

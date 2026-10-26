@@ -1,0 +1,172 @@
+{
+  "exerciseId": "barbell-row",
+  "version": "anatomy-v3-2026-10-20-strict-native-correction-v1",
+  "width": 1140,
+  "height": 1024,
+  "reference": {
+    "path": "form-frames/barbell-row/4.webp",
+    "sha256": "9ed1076fc250c1e12778cf7438d8b402cd16f0501be5ce0a2e5a5fc15aea7730"
+  },
+  "cueSha256": "21983fa876a9c461eb26ccca60277665ccd4866edec284eb51f43dac6c2a9ef9",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:53.477544+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 1px; independent invariant dimensions maximum relative drift 0.005649718. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. Normalize each entire source with one uniform scale and translation, below 0.4% scale change. No per-part transforms."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Braced hip hinge, pull toward ribs and controlled return. Only whole-source scale/translation corrected framing; planted heel features and independently measured outer soles now pass. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Same continuous bar, modest paired plates and both closed grips. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Braced hip hinge, pull toward ribs and controlled return. Only whole-source scale/translation corrected framing; planted heel features and independently measured outer soles now pass. Actual named native supports are measured in all six frames: plantedFarTrainerHeelContour, plantedNearTrainerHeelContour. Maximum axis drift 1px. Dimensions: farShoeOuterNeutralContourSpan, nearShoeOuterNeutralContourSpan; max 0.56497%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Braced hip hinge, pull toward ribs and controlled return. Only whole-source scale/translation corrected framing; planted heel features and independently measured outer soles now pass. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Lats #7B72E9; secondary Rhomboids, Rear deltoids, Biceps #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Hang: Hinge steady; arms hang below shoulders. / Initiate pull: Bend elbows; keep both wrists straight. / Continue pull: Drive elbows back beside the torso. / Top contraction: Bring the bar to lower ribs. / Lower: Lower smoothly; maintain the hip hinge. / Full stretch: Arms extend; plates stay off floor.. Preparation remains [\"Hinge at the hips with soft knees and a neutral back.\", \"Hold the bar overhand outside the knees, with plates clear of the floor.\"]. Braced hip hinge, pull toward ribs and controlled return. Only whole-source scale/translation corrected framing; planted heel features and independently measured outer soles now pass."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Braced hip hinge, pull toward ribs and controlled return. Only whole-source scale/translation corrected framing; planted heel features and independently measured outer soles now pass. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-17/barbell-row.json (sha256 793ecce5ace6fbb9e796c17cb9df4500913dd896d4611ef2660fdcd2e366ca0c). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-17/barbell-row.json (sha256 793ecce5ace6fbb9e796c17cb9df4500913dd896d4611ef2660fdcd2e366ca0c). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/barbell-row/1.webp",
+      "sha256": "3d1708536445f65a0734b51d596830fabbc5824ff904d42128a687aeefe1ecf8",
+      "anchors": {
+        "plantedFarTrainerHeelContour": { "x": 511, "y": 859 },
+        "plantedNearTrainerHeelContour": { "x": 734, "y": 922 }
+      },
+      "invariantDimensions": {
+        "farShoeOuterNeutralContourSpan": 188,
+        "nearShoeOuterNeutralContourSpan": 177
+      }
+    },
+    {
+      "path": "form-frames/barbell-row/2.webp",
+      "sha256": "8175ecc0681f0e2eb5c7621abe6ec0a1f00e9b79ba95efb876c9e3925621b70a",
+      "anchors": {
+        "plantedFarTrainerHeelContour": { "x": 511, "y": 860 },
+        "plantedNearTrainerHeelContour": { "x": 733, "y": 922 }
+      },
+      "invariantDimensions": {
+        "farShoeOuterNeutralContourSpan": 189,
+        "nearShoeOuterNeutralContourSpan": 178
+      }
+    },
+    {
+      "path": "form-frames/barbell-row/3.webp",
+      "sha256": "998e34786cac216ab057c7e26d219a97111231edf31100b1c12acf4cc95bd9e6",
+      "anchors": {
+        "plantedFarTrainerHeelContour": { "x": 511, "y": 859 },
+        "plantedNearTrainerHeelContour": { "x": 734, "y": 922 }
+      },
+      "invariantDimensions": {
+        "farShoeOuterNeutralContourSpan": 188,
+        "nearShoeOuterNeutralContourSpan": 177
+      }
+    },
+    {
+      "path": "form-frames/barbell-row/4.webp",
+      "sha256": "9ed1076fc250c1e12778cf7438d8b402cd16f0501be5ce0a2e5a5fc15aea7730",
+      "anchors": {
+        "plantedFarTrainerHeelContour": { "x": 512, "y": 859 },
+        "plantedNearTrainerHeelContour": { "x": 734, "y": 922 }
+      },
+      "invariantDimensions": {
+        "farShoeOuterNeutralContourSpan": 189,
+        "nearShoeOuterNeutralContourSpan": 178
+      }
+    },
+    {
+      "path": "form-frames/barbell-row/5.webp",
+      "sha256": "998e34786cac216ab057c7e26d219a97111231edf31100b1c12acf4cc95bd9e6",
+      "anchors": {
+        "plantedFarTrainerHeelContour": { "x": 511, "y": 859 },
+        "plantedNearTrainerHeelContour": { "x": 734, "y": 922 }
+      },
+      "invariantDimensions": {
+        "farShoeOuterNeutralContourSpan": 188,
+        "nearShoeOuterNeutralContourSpan": 177
+      }
+    },
+    {
+      "path": "form-frames/barbell-row/6.webp",
+      "sha256": "3d1708536445f65a0734b51d596830fabbc5824ff904d42128a687aeefe1ecf8",
+      "anchors": {
+        "plantedFarTrainerHeelContour": { "x": 511, "y": 859 },
+        "plantedNearTrainerHeelContour": { "x": 734, "y": 922 }
+      },
+      "invariantDimensions": {
+        "farShoeOuterNeutralContourSpan": 188,
+        "nearShoeOuterNeutralContourSpan": 177
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 1,
+    "maxInvariantRelativeDrift": 0.005649717514124353,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-17/barbell-row.json",
+    "sha256": "793ecce5ace6fbb9e796c17cb9df4500913dd896d4611ef2660fdcd2e366ca0c"
+  },
+  "historicalFindings": [
+    "Four genuine native continuous-hinge row poses, not a relabelled Pendlay floor reset.",
+    "Late middle is about72% projected shaft travel; early about25%; phase values describe the actual images, not equal spacing.",
+    "Small generated shoulder/chest/back/grip contour and width variations retained for native motion review. Whole head and trainers visually steady, not a calibrated3D or exact pixel identity claim.",
+    "Colour masks follow already tinted source fields; visible lat mask is traced per pose, remaining visible rear deltoid/rhomboid/biceps secondary. Anatomical ownership needs native inspection.",
+    "Current source colours retain inherited neutral contour/shading, with exact primary/secondary base palette; source and fresh reproduction proofs retained. Strict certification is not asserted."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/barbell-row.json",
+    "sha256": "11b631463722622229c568bd1f945067c2f2ea2ccf5e42ddc01a6780a6293cf7"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false,
+  "nativeSourceArchive": {
+    "path": "docs/exercise-art/sources/barbell-row/2026-10-20-strict-review/native-source.zip",
+    "sha256": "964f45d007115e27be6a11af260d50c1f759bbd2c320cfc9ddde2b44b3b296a9",
+    "bytes": 22833303,
+    "scope": "Normalize each entire source with one uniform scale and translation, below 0.4% scale change. No per-part transforms.",
+    "independentReproductionExact": true
+  }
+}

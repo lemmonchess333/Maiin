@@ -45,6 +45,30 @@ describe("ExerciseThumb — each exercise's picture", () => {
     }
   });
 
+  it.each(["Back Squat", "back-squat", "Barbell Back Squat"])(
+    "draws %s with the squat's drawing, not the generic tile",
+    (logged) => {
+      /* The PRs tab passes a lift's NAME when the name is not a catalogue
+         name, and a seeded or imported session carries "back-squat" as its
+         id: both fell through to the dumbbell while Squat had art. */
+      const { container } = render(<ExerciseThumb exerciseId={logged} />);
+      const tile = container.firstElementChild as HTMLElement;
+      expect(tile.dataset.thumb).toBe("drawing");
+      expect(tile.querySelector("img")!.getAttribute("src")).toMatch(
+        /form-art\/squat\.webp$/
+      );
+    }
+  );
+
+  it("keeps a squat variant on its own drawing", () => {
+    const { container } = render(<ExerciseThumb exerciseId="Front Squat" />);
+    const tile = container.firstElementChild as HTMLElement;
+    expect(tile.dataset.thumb).toBe("drawing");
+    expect(tile.querySelector("img")!.getAttribute("src")).toMatch(
+      /form-art\/front-squat\.webp$/
+    );
+  });
+
   it("falls back to a dumbbell for an exercise the library does not know", () => {
     const { container } = render(<ExerciseThumb exerciseId="my-own-lift" />);
     const tile = container.firstElementChild as HTMLElement;

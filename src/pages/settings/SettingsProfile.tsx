@@ -14,7 +14,7 @@ import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
 
 export default function SettingsProfile() {
   const navigate = useNavigate();
-  const { user, profile, updateProfile } = useAuth();
+  const { user, profile, updateProfile, refreshProfile } = useAuth();
   const [name, setName] = useState(profile?.displayName ?? "");
 
   if (!profile) return <SettingsSection title="Profile" />;
@@ -39,6 +39,7 @@ export default function SettingsProfile() {
         name={name}
         setName={setName}
         updateProfile={updateProfile}
+        refreshProfile={refreshProfile}
       />
       {user && (
         <SettingsGroup>

@@ -1,5 +1,9 @@
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
-import { parseLocalDate } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import {
   pendingBadgeIds,
   subscribePendingBadges,
@@ -24,6 +28,7 @@ import {
   orderBy,
   query,
   runTransaction,
+  where,
   writeBatch,
   limit,
   Timestamp,
@@ -33,6 +38,7 @@ import { useUid } from "@/lib/auth";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import type { RunWindow } from "@/lib/savedRuns";
 import { SAVED_WORKOUTS, type WorkoutWindow } from "@/lib/savedWorkouts";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { useSavedRuns } from "@/hooks/useSavedRuns";
 import { useSavedSessions } from "@/hooks/useSavedSessions";
 import { BADGE_DEFINITIONS, initBadges, type EarnedBadge } from "./badges";
@@ -47,23 +53,32 @@ import { format } from "date-fns";
 import { logger } from "@/lib/logger";
 import { cancelNotification } from "@/lib/notifications";
 import { STREAK_NOTIFICATION_ID } from "@/hooks/streakNotificationId";
+import { earlyDaysOf, keptEarlyDays, storedEarlyDays } from "./earlyLogDays";
 
 export interface StreakData {
+  /** The streak as shown: the today/yesterday rule, 0 when neither is active. */
   currentStreak: number;
   longestStreak: number;
+  /** The last day with activity that the streak counted up to. */
   lastActiveDate: string;
   /**
+   * The walk's certificate: `anchorStreak` days of streak ended on
+   * `anchorDate`. True of that date for good, so a stale one is harmless,
+   * and kept while the streak is alive even when `currentStreak` reads 0 the
+   * morning after a rest day. Absent on documents written before
+   * 2026-10-20, which anchor on {currentStreak, lastActiveDate}.
+   */
+  anchorStreak?: number;
+  anchorDate?: string;
+  /**
    * WINDOWED, not lifetime (D13). Recomputed each load as the size of the
-   * active-date set built from the recent-window subscriptions (≤400 workout /
-   * 400 run / 500 meal docs), so it saturates around ~400 distinct days — a
-   * 2-year daily user does NOT see 730 here. NOTE the window is DOC-bounded,
-   * and meals are several docs per day, so the meal horizon is
-   * ~500/mealsPerDay days (~167 at three meals a day) — this count saturates
-   * EARLIER for meal-driven users. `currentStreak` survives the window via
+   * active-date set built from the subscriptions' window
+   * (STREAK_WINDOW_DAYS), so it stays near 90 at most — a 2-year daily
+   * user does NOT see 730 here. `currentStreak` survives the window via
    * the persisted anchor (`computeStreakSpanAnchored` — the stored
    * {count, lastActiveDate} pair certifies days that aged out);
-   * `longestStreak` is persisted monotonically. This count alone is
-   * genuinely capped.
+   * `longestStreak` is persisted monotonically, and early_bird's days are
+   * kept in `earlyLogDays`. This count alone is genuinely capped.
    *
    * HONESTY CONTRACT: any UI that renders this MUST label it as recent/windowed
    * ("active days", "active days · last 400") — NEVER "total" or "lifetime"
@@ -72,6 +87,12 @@ export interface StreakData {
    * `streakWindowing.test.ts`.
    */
   totalActiveDays: number;
+  /**
+   * Up to five distinct days with a log before 07:00 (`earlyLogDays.ts`),
+   * so early_bird's count outlives the window. Absent on a document that
+   * predates it, which is seeded once from a deeper read.
+   */
+  earlyLogDays?: string[];
   badges: EarnedBadge[];
 }
 
@@ -83,30 +104,32 @@ const DEFAULT_STREAKS: StreakData = {
   badges: initBadges(),
 };
 
-// ── Subscription window sizes ────────────────────────────────────────────
-// DOC-bounded, not day-bounded — and meals are the one source with several
-// documents per day, so the 500-doc meal window covers only ~500/mealsPerDay
-// DAYS (~167 at three meals a day). This comment used to claim "any
-// realistic streak fits the window", which was true only at ≤1.37 meals/day:
-// the windowed recompute truncated a meal-driven streak at the horizon and
-// PERSISTED the truncation back, freezing the display while the user kept
-// logging (probe sweep 2026-08-05, verifier-confirmed). Long streaks now
-// survive via the persisted anchor instead of via window size
-// (computeStreakSpanAnchored) — which is why these limits do NOT need to
-// grow: the window only has to cover the days since the streak state was
-// last persisted, plus grace. totalActiveDays remains
-// windowed, not truly lifetime (D13 — the saturation is a DELIBERATE accepted
-// limit, documented on the StreakData.totalActiveDays field; any consumer that
-// displays it must label it as windowed, never "total/lifetime"). The honest
-// alternative — a server-maintained lifetime aggregate — is deferred until a
-// surface actually needs a true-lifetime number.
-const WORKOUT_LIMIT = 400;
-const RUN_LIMIT = 400;
-/** The newest RUN_LIMIT runs: the streak's run window. */
-const STREAK_RUN_WINDOW: RunWindow = { latest: RUN_LIMIT };
-/** The newest WORKOUT_LIMIT workouts: the streak's workout window. */
-const STREAK_WORKOUT_WINDOW: WorkoutWindow = { latest: WORKOUT_LIMIT };
-const MEAL_LIMIT = 500;
+// ── Subscription windows ─────────────────────────────────────────────────
+// The streak reads STREAK_WINDOW_DAYS back: as far as Food lets a meal be
+// added (its FOOD_TAP_BACK_DAYS), so a meal logged today for any day the
+// diary reaches still counts. Meals are bounded by when they were logged,
+// so a backfilled meal is read whatever its date. A long streak outlives
+// the window through the persisted anchor (computeStreakSpanAnchored): the
+// window only has to reach the last save plus grace, and every active day
+// saves. Earned badges stay earned, and the one rule that counts over all
+// time, early_bird, keeps its days on the streak document (earlyLogDays).
+// The caps are a backstop for a heavy logger, not the bound.
+// totalActiveDays remains windowed, not truly lifetime (D13 — the
+// saturation is a DELIBERATE accepted limit, documented on the
+// StreakData.totalActiveDays field; any consumer that displays it must
+// label it as windowed, never "total/lifetime"). The honest alternative — a
+// server-maintained lifetime aggregate — is deferred until a surface
+// actually needs a true-lifetime number.
+export const STREAK_WINDOW_DAYS = 90;
+const WORKOUT_CAP = 400;
+const RUN_CAP = 400;
+const MEAL_CAP = 500;
+/** The first day the streak reads. */
+function streakWindowStart(todayKey: string): string {
+  return localDateString(
+    addLocalDays(parseLocalDate(todayKey), -STREAK_WINDOW_DAYS)
+  );
+}
 
 // ── Timezone notes ───────────────────────────────────────────────────────
 // All date math uses date-fns format() which respects the device timezone.
@@ -276,24 +299,6 @@ function yesterdayKey(now: Date): string {
   return format(y, "yyyy-MM-dd");
 }
 
-/**
- * Today/yesterday rule — the streak does NOT drop to zero at midnight.
- * - If today is active: streak ends on today (live).
- * - Else if yesterday is active: streak ends on yesterday (at risk).
- * - Else: streak = 0 (broken).
- * Walks backwards from the ending date, incrementing while days are in the
- * set, bridging isolated non-active days per the grace rule above.
- *
- * `now` is injectable for deterministic tests; production callers omit it.
- */
-// eslint-disable-next-line react-refresh/only-export-components
-export function computeCurrentStreak(
-  activeDates: Set<string>,
-  now: Date = new Date()
-): number {
-  return computeStreakSpan(activeDates, now).streak;
-}
-
 export interface StreakSpan {
   /** Streak length including any bridged grace days. */
   streak: number;
@@ -304,6 +309,12 @@ export interface StreakSpan {
    * day is covered") — never a pre-emptive warning.
    */
   bridgedDates: string[];
+  /**
+   * The day the streak ends on: today when today is active, else yesterday.
+   * Null when the streak is 0. The persisted pair stores this with the
+   * count, so the pair always names the span it counts.
+   */
+  endDate: string | null;
 }
 
 /**
@@ -319,14 +330,32 @@ export interface StreakAnchor {
 }
 
 /**
- * Walk the streak once and return both the length and the grace days it
- * bridged. `computeCurrentStreak` is the thin number-only wrapper over this.
+ * Walk the streak once and return its length, the grace days it bridged and
+ * the day it ends on.
+ *
+ * Today/yesterday rule — the streak does NOT drop to zero at midnight.
+ * - If today is active: streak ends on today (live).
+ * - Else if yesterday is active: streak ends on yesterday (at risk).
+ * - Else: streak = 0 (broken).
+ * Walks backwards from the ending date, incrementing while days are in the
+ * set, bridging isolated non-active days per the grace rule above.
+ *
+ * `now` is injectable for deterministic tests; production callers omit it.
  *
  * `anchor` (optional) is what makes long streaks computable from a bounded
  * window — see `computeStreakSpanAnchored`, which is the entry point that
  * also guards against a stale-LOW anchor. When the walk reaches the
  * anchor's `lastActiveDate` unbroken, it credits the anchored count and
  * stops; a chain that breaks before reaching it ignores the anchor.
+ *
+ * The anchor certifies its own forgiven days against each other, not against
+ * one this walk has just spent. So when the walk reaches the anchor within
+ * GRACE_MIN_SPACING_DAYS of its own grace, it walks on through the anchored
+ * span's newest days (they are in the window: the pair is saved on every
+ * visit) until the spacing no longer binds, and credits the rest of the
+ * count only then. Crediting at once let every-other-day logging, with the
+ * pair written back each day, add two days a day: day 20 read 21 where the
+ * rule allows 3.
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function computeStreakSpan(
@@ -334,19 +363,21 @@ export function computeStreakSpan(
   now: Date = new Date(),
   anchor?: StreakAnchor
 ): StreakSpan {
-  if (activeDates.size === 0) return { streak: 0, bridgedDates: [] };
+  if (activeDates.size === 0)
+    return { streak: 0, bridgedDates: [], endDate: null };
 
   const today = format(now, "yyyy-MM-dd");
   const yesterday = yesterdayKey(now);
 
-  let endDate: Date;
+  let endKey: string;
   if (activeDates.has(today)) {
-    endDate = new Date(today + "T12:00:00");
+    endKey = today;
   } else if (activeDates.has(yesterday)) {
-    endDate = new Date(yesterday + "T12:00:00");
+    endKey = yesterday;
   } else {
-    return { streak: 0, bridgedDates: [] };
+    return { streak: 0, bridgedDates: [], endDate: null };
   }
+  const endDate = new Date(endKey + "T12:00:00");
 
   let streak = 0;
   // Grace days tentatively bridged, awaiting a confirming older active day.
@@ -357,18 +388,28 @@ export function computeStreakSpan(
   const bridged: string[] = [];
   let pendingBridged: string[] = [];
 
+  // Days of the anchored span walked one by one, while its credit waits for
+  // this walk's last grace to fall a full spacing behind (see above). Null
+  // when the walk is not inside the anchored span.
+  let anchoredDaysWalked: number | null = null;
+  let anchorLeft = anchor;
+
   const cursor = new Date(endDate);
   while (true) {
     const cursorKey = format(cursor, "yyyy-MM-dd");
     if (activeDates.has(cursorKey)) {
-      // Anchor day reached with the chain unbroken: everything older is
-      // already certified — credit the anchored count (which includes this
-      // day) and stop. This is what lets a 300-day streak survive a meal
-      // window that only covers ~167 days of documents.
-      if (anchor && cursorKey === anchor.lastActiveDate) {
-        streak += pendingGrace + anchor.streak;
-        if (pendingBridged.length > 0) bridged.push(...pendingBridged);
-        return { streak, bridgedDates: bridged };
+      if (anchorLeft && cursorKey === anchorLeft.lastActiveDate) {
+        // Anchor day reached with the chain unbroken and no grace near it:
+        // everything older is already certified — credit the anchored count
+        // (which includes this day) and stop. This is what lets a 300-day
+        // streak survive a meal window that only covers ~167 days of
+        // documents.
+        if (stepsSinceGrace >= GRACE_MIN_SPACING_DAYS) {
+          streak += pendingGrace + anchorLeft.streak;
+          if (pendingBridged.length > 0) bridged.push(...pendingBridged);
+          return { streak, bridgedDates: bridged, endDate: endKey };
+        }
+        anchoredDaysWalked = 0;
       }
       // An active day confirms any pending grace bridge before it.
       streak += pendingGrace + 1;
@@ -376,6 +417,24 @@ export function computeStreakSpan(
       if (pendingBridged.length > 0) {
         bridged.push(...pendingBridged);
         pendingBridged = [];
+      }
+      if (anchorLeft && anchoredDaysWalked !== null) {
+        anchoredDaysWalked++;
+        // From the next step back a missed day is a week from this walk's
+        // grace, so the anchored span's own forgiving holds: credit the rest.
+        if (stepsSinceGrace + 1 >= GRACE_MIN_SPACING_DAYS) {
+          const rest = anchorLeft.streak - anchoredDaysWalked;
+          if (rest > 0) {
+            return {
+              streak: streak + rest,
+              bridgedDates: bridged,
+              endDate: endKey,
+            };
+          }
+          // A stale-low anchor this walk has already outrun: walk on plain.
+          anchorLeft = undefined;
+          anchoredDaysWalked = null;
+        }
       }
     } else {
       // Non-active day — bridge it only if far enough from the last grace.
@@ -388,7 +447,30 @@ export function computeStreakSpan(
     stepsSinceGrace++;
   }
   // Any unconfirmed pending grace (trailing gap into pre-history) is dropped.
-  return { streak, bridgedDates: bridged };
+  return { streak, bridgedDates: bridged, endDate: endKey };
+}
+
+/**
+ * The anchor as the active set can attest it. The anchor's span counts
+ * every calendar day through its last one, so when that day is no longer
+ * active (its only log deleted) the same span still certifies the streak
+ * through the latest active day inside it, that many days shorter: 200
+ * ending today is 199 ending yesterday. Without this the walk fell back to
+ * what the window can see, and the save then stored that over the
+ * certificate. Null when no active day inside the span is left.
+ */
+function attestedAnchor(
+  activeDates: Set<string>,
+  anchor: StreakAnchor
+): StreakAnchor | null {
+  if (activeDates.has(anchor.lastActiveDate)) return anchor;
+  const end = parseLocalDate(anchor.lastActiveDate);
+  for (let back = 1; back < anchor.streak; back++) {
+    const day = localDateString(addLocalDays(end, -back));
+    if (activeDates.has(day))
+      return { streak: anchor.streak - back, lastActiveDate: day };
+  }
+  return null;
 }
 
 /**
@@ -424,13 +506,85 @@ export function computeStreakSpanAnchored(
   if (!anchor) return pure;
   if (!Number.isFinite(anchor.streak) || anchor.streak <= 0) return pure;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(anchor.lastActiveDate)) return pure;
+  const attested = attestedAnchor(activeDates, anchor);
   // Early-out, not a guard: the walk credits the anchor only on a day the
   // active set already attests (the branch lives inside the has() check),
   // so an unattested anchor can never alter the result — skipping the
   // second walk here just saves the work of proving that.
-  if (!activeDates.has(anchor.lastActiveDate)) return pure;
-  const anchored = computeStreakSpan(activeDates, now, anchor);
+  if (!attested) return pure;
+  const anchored = computeStreakSpan(activeDates, now, attested);
   return anchored.streak >= pure.streak ? anchored : pure;
+}
+
+export interface StreakState {
+  /** The streak shown now: the today/yesterday rule, 0 when neither day is
+   *  active. */
+  live: StreakSpan;
+  /**
+   * The streak logging today keeps. `live` while it is alive; on the morning
+   * after a rest day, when `live` is 0, the streak through the day before
+   * yesterday, which logging today saves with yesterday as its forgiven day.
+   * 0 when nothing is left to save. The evening reminders read this: they
+   * exist for exactly that morning-after.
+   */
+  savable: number;
+  /**
+   * The pair to persist: the streak through its last active day, with that
+   * day. Null leaves the stored pair as it is (a streak already broken).
+   */
+  anchor: StreakAnchor | null;
+}
+
+/**
+ * The live streak, the streak still savable today, and the pair to store.
+ *
+ * The stored pair is the anchor of the next walk, so it must name the span
+ * it counts and must not be thrown away while the streak lives. It held the
+ * live count with "today, if active, else the last stored day", which went
+ * wrong two ways: on the morning after a rest day the live count is 0, and
+ * saving it replaced a 100-day certificate with 0, so the evening's log
+ * read only what the window could see; and a backfilled yesterday saved 101
+ * against the day before, so the next day read 103 for 102.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function computeStreakState(
+  activeDates: Set<string>,
+  stored: StreakAnchor | null | undefined,
+  now: Date = new Date()
+): StreakState {
+  const live = computeStreakSpanAnchored(activeDates, stored, now);
+  if (live.streak > 0 && live.endDate) {
+    return {
+      live,
+      savable: live.streak,
+      anchor: { streak: live.streak, lastActiveDate: live.endDate },
+    };
+  }
+  // Today and yesterday are both empty: the walk as of yesterday is the
+  // streak through the day before it, which today's log would still keep.
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const held = computeStreakSpanAnchored(activeDates, stored, yesterday);
+  return held.streak > 0 && held.endDate
+    ? {
+        live,
+        savable: held.streak,
+        anchor: { streak: held.streak, lastActiveDate: held.endDate },
+      }
+    : { live, savable: 0, anchor: null };
+}
+
+/** The certificate a stored document carries: its anchor fields, or the
+ *  {currentStreak, lastActiveDate} pair a document from before them has. */
+function storedAnchorOf(
+  data: Pick<
+    StreakData,
+    "currentStreak" | "lastActiveDate" | "anchorStreak" | "anchorDate"
+  >
+): StreakAnchor {
+  return data.anchorStreak !== undefined && data.anchorDate !== undefined
+    ? { streak: data.anchorStreak, lastActiveDate: data.anchorDate }
+    : { streak: data.currentStreak, lastActiveDate: data.lastActiveDate };
 }
 
 // ── Internal hook (single instance — lives inside <StreaksProvider>) ────
@@ -459,10 +613,19 @@ function useStreaksInternal() {
      signed-in account and settles out of loading on a failed read. */
   /* Workouts the same way, through the one workout reader: the day each
      belongs to and workouts finished on this phone but not yet synced. */
+  const windowStart = streakWindowStart(todayKey);
+  const workoutWindow = useMemo<WorkoutWindow>(
+    () => ({ since: windowStart, cap: WORKOUT_CAP }),
+    [windowStart]
+  );
+  const runWindow = useMemo<RunWindow>(
+    () => ({ since: windowStart, cap: RUN_CAP }),
+    [windowStart]
+  );
   const savedWorkouts = useSavedSessions(
     SAVED_WORKOUTS,
     uid,
-    uid ? STREAK_WORKOUT_WINDOW : null
+    uid ? workoutWindow : null
   );
   const workoutsLoaded = !!uid && savedWorkouts.answered;
   const workouts = useMemo<WorkoutRow[]>(
@@ -474,7 +637,7 @@ function useStreaksInternal() {
       })),
     [savedWorkouts.items]
   );
-  const savedRuns = useSavedRuns(uid ? STREAK_RUN_WINDOW : null);
+  const savedRuns = useSavedRuns(uid ? runWindow : null);
   // The run list itself, not a run waiting to sync: the streak is saved
   // once everything has loaded, and a streak counted from that one run
   // would overwrite the saved one.
@@ -495,6 +658,14 @@ function useStreaksInternal() {
   // badges that already have an earnedAt set in Firestore.
   const [streaksDocLoaded, setStreaksDocLoaded] = useState(false);
   const [mealsLoaded, setMealsLoaded] = useState(false);
+  // A failed read settles its loaded flag (below) so nothing hangs, but
+  // what it left behind is the defaults, not the data: the streak counted
+  // from it must not be saved over the stored one.
+  const [streaksDocFailed, setStreaksDocFailed] = useState(false);
+  const [mealsFailed, setMealsFailed] = useState(false);
+  // Bumped by retryLoad: Firestore ends a listener that fails, so trying
+  // again means opening the two below afresh.
+  const [streamsAttempt, setStreamsAttempt] = useState(0);
 
   // Account-switch reset (React "adjust state during render" idiom). Every
   // stream above belongs to the account it was read for, so any uid change
@@ -513,6 +684,8 @@ function useStreaksInternal() {
     setMeals([]);
     setStreaksDocLoaded(false);
     setMealsLoaded(false);
+    setStreaksDocFailed(false);
+    setMealsFailed(false);
   }
 
   // Reveal only confirmed awards from this account. Intent may be queued
@@ -537,7 +710,9 @@ function useStreaksInternal() {
       .find(Boolean) ?? null;
 
   // Refs — track state across renders without triggering re-runs
-  const lastWrittenStreakRef = useRef<number | null>(null);
+  // What the last streak save wrote (its fields, as JSON), so a recompute
+  // that changes nothing writes nothing.
+  const lastWrittenStreakRef = useRef<string | null>(null);
   const hasLoadedRef = useRef(false);
   // Badge ids with an award write currently in flight — prevents the
   // check effect from firing duplicate concurrent commits for the same
@@ -577,11 +752,17 @@ function useStreaksInternal() {
     // Error callback applied to every subscription below: if any one fails,
     // flip its *Loaded flag true so `allLoaded` still resolves and the UI
     // doesn't hang in a skeleton state. State for the failed source stays
-    // at its previous value (empty by default, stale if we already had data).
+    // at its previous value (empty by default, stale if we already had data),
+    // and its *Failed flag holds the streak save off (`readFailed`).
     const onSubscriptionError =
-      (source: string, setLoadedFlag: (v: boolean) => void) =>
+      (
+        source: string,
+        setLoadedFlag: (v: boolean) => void,
+        setFailedFlag: (v: boolean) => void
+      ) =>
       (err: unknown) => {
         logger.error(`[useStreaks] ${source} subscription failed`, err);
+        setFailedFlag(true);
         setLoadedFlag(true);
       };
 
@@ -634,12 +815,24 @@ function useStreaksInternal() {
             sanitizedLongestRaw,
             impliedFromBadges
           );
+          const anchorStreak =
+            Number.isFinite(data.anchorStreak) && (data.anchorStreak ?? 0) > 0
+              ? data.anchorStreak
+              : undefined;
+          const anchorDate =
+            typeof data.anchorDate === "string" &&
+            /^\d{4}-\d{2}-\d{2}$/.test(data.anchorDate)
+              ? data.anchorDate
+              : undefined;
           setStreakData({
             ...DEFAULT_STREAKS,
             ...data,
             currentStreak: sanitizedCurrent,
             longestStreak: sanitizedLongest,
             totalActiveDays: sanitizedTotal,
+            anchorStreak,
+            anchorDate,
+            earlyLogDays: storedEarlyDays(data.earlyLogDays),
             badges: merged,
           });
 
@@ -669,14 +862,15 @@ function useStreaksInternal() {
         }
         setStreaksDocLoaded(true);
       },
-      onSubscriptionError("streaks", setStreaksDocLoaded)
+      onSubscriptionError("streaks", setStreaksDocLoaded, setStreaksDocFailed)
     );
 
     const mealsRef = collection(db, "users", uid, "meals");
     const mealsQ = query(
       mealsRef,
+      where("createdAt", ">=", Timestamp.fromDate(parseLocalDate(windowStart))),
       orderBy("createdAt", "desc"),
-      limit(MEAL_LIMIT)
+      limit(MEAL_CAP)
     );
     const unsubMeals = onSnapshot(
       mealsQ,
@@ -718,17 +912,22 @@ function useStreaksInternal() {
         setMeals(rows);
         setMealsLoaded(true);
       },
-      onSubscriptionError("meals", setMealsLoaded)
+      onSubscriptionError("meals", setMealsLoaded, setMealsFailed)
     );
 
     return () => {
       unsubStreaks();
       unsubMeals();
     };
-  }, [uid]);
+  }, [uid, streamsAttempt, windowStart]);
 
   const allLoaded =
     streaksDocLoaded && workoutsLoaded && runsLoaded && mealsLoaded;
+  // Any stream that settled by failing. The saved-session readers report
+  // `failed` only when they hold no rows for this account; rows already
+  // read stay the evidence they were.
+  const readFailed =
+    streaksDocFailed || mealsFailed || savedWorkouts.failed || savedRuns.failed;
 
   // Per-day macro-target snapshots + water docs for the nutrition badges
   // (its own two listeners, owned here so they're singular per session).
@@ -736,50 +935,66 @@ function useStreaksInternal() {
 
   // ── Derived state ──────────────────────────────────────────────────────
 
-  const { activeDateSet, currentStreak, totalActiveDays, bridgedDates } =
-    useMemo(() => {
-      if (!allLoaded) {
-        return {
-          activeDateSet: new Set<string>(),
-          currentStreak: 0,
-          totalActiveDays: 0,
-          bridgedDates: [] as string[],
-        };
-      }
-      const set = computeActiveDateSet(workouts, runs, meals);
-      // Anchored on the persisted {currentStreak, lastActiveDate} pair, so a
-      // streak longer than the read window survives the recompute instead of
-      // being truncated to what the window can see and then PERSISTED back
-      // (the freeze the probe sweep measured at ~167 days for a 3-meals/day
-      // logger). streakData is sanitized on read (finite-or-0), and the
-      // anchored walk ignores anchors the active set can't attest. The
-      // recompute is a fixed point of its own persist — re-running with the
-      // just-written anchor returns the same number — so this cannot
-      // oscillate with the subscription.
-      const span = computeStreakSpanAnchored(
-        set,
-        {
-          streak: streakData.currentStreak,
-          lastActiveDate: streakData.lastActiveDate,
-        },
-        parseLocalDate(todayKey)
-      );
+  const {
+    currentStreak: storedCurrent,
+    lastActiveDate: storedLastActive,
+    anchorStreak: storedAnchorStreak,
+    anchorDate: storedAnchorDate,
+  } = streakData;
+  const storedAnchor = useMemo(
+    () =>
+      storedAnchorOf({
+        currentStreak: storedCurrent,
+        lastActiveDate: storedLastActive,
+        anchorStreak: storedAnchorStreak,
+        anchorDate: storedAnchorDate,
+      }),
+    [storedCurrent, storedLastActive, storedAnchorStreak, storedAnchorDate]
+  );
+
+  const {
+    activeDateSet,
+    currentStreak,
+    savableStreak,
+    anchorToStore,
+    totalActiveDays,
+    bridgedDates,
+  } = useMemo(() => {
+    if (!allLoaded) {
       return {
-        activeDateSet: set,
-        currentStreak: span.streak,
-        // Grace days never inflate the honest "days you showed up" count.
-        totalActiveDays: set.size,
-        bridgedDates: span.bridgedDates,
+        activeDateSet: new Set<string>(),
+        currentStreak: 0,
+        savableStreak: 0,
+        anchorToStore: null as StreakAnchor | null,
+        totalActiveDays: 0,
+        bridgedDates: [] as string[],
       };
-    }, [
-      todayKey,
-      allLoaded,
-      workouts,
-      runs,
-      meals,
-      streakData.currentStreak,
-      streakData.lastActiveDate,
-    ]);
+    }
+    const set = computeActiveDateSet(workouts, runs, meals);
+    // Anchored on the persisted {currentStreak, lastActiveDate} pair, so a
+    // streak longer than the read window survives the recompute instead of
+    // being truncated to what the window can see and then PERSISTED back
+    // (the freeze the probe sweep measured at ~167 days for a 3-meals/day
+    // logger). streakData is sanitized on read (finite-or-0), and the
+    // anchored walk ignores anchors the active set can't attest. The
+    // recompute is a fixed point of its own persist — re-running with the
+    // just-written anchor returns the same number — so this cannot
+    // oscillate with the subscription.
+    const state = computeStreakState(
+      set,
+      storedAnchor,
+      parseLocalDate(todayKey)
+    );
+    return {
+      activeDateSet: set,
+      currentStreak: state.live.streak,
+      savableStreak: state.savable,
+      anchorToStore: state.anchor,
+      // Grace days never inflate the honest "days you showed up" count.
+      totalActiveDays: set.size,
+      bridgedDates: state.live.bridgedDates,
+    };
+  }, [todayKey, allLoaded, workouts, runs, meals, storedAnchor]);
 
   const longestStreak = Math.max(currentStreak, streakData.longestStreak);
 
@@ -799,28 +1014,91 @@ function useStreaksInternal() {
     [meals]
   );
 
-  // Distinct dates with a log before 7am LOCAL — feeds early_bird. Uses the
+  // Distinct dates with a log before 7am LOCAL in the window. Uses the
   // best per-source timestamp: run completedAt (event time), workout + meal
   // createdAt (log time). Hour is read in the device timezone, consistent with
   // every other date key in this hook.
-  const earlyLogDays = useMemo(() => {
+  const windowEarlyDays = useMemo(() => {
     if (!allLoaded) return [] as string[];
-    const EARLY_HOUR = 7;
-    const set = new Set<string>();
-    const addIfEarly = (ts: Timestamp | Date | null | undefined) => {
-      if (!ts) return;
-      try {
-        const d = ts instanceof Date ? ts : ts.toDate();
-        if (d.getHours() < EARLY_HOUR) set.add(format(d, "yyyy-MM-dd"));
-      } catch {
-        // unparseable timestamp — skip
-      }
-    };
-    for (const w of workouts) addIfEarly(w.createdAt);
-    for (const r of runs) addIfEarly(r.completedAt);
-    for (const m of meals) addIfEarly(m.createdAt);
-    return Array.from(set);
+    return earlyDaysOf([
+      ...workouts.map((w) => w.createdAt),
+      ...runs.map((r) => r.completedAt),
+      ...meals.map((m) => m.createdAt),
+    ]);
   }, [allLoaded, workouts, runs, meals]);
+
+  // early_bird's days: the window's, with the ones kept on the streak
+  // document and, for a document that predates them, the seed's. The
+  // badge counts over all time, so a day that ages out of the window stays
+  // counted.
+  const earlyBirdEarned = streakData.badges.some(
+    (b) => b.id === "early_bird" && !!b.earnedAt
+  );
+  const storedEarly = streakData.earlyLogDays;
+  const [seededEarly, setSeededEarly] = useState<{
+    uid: string;
+    days: string[];
+  } | null>(null);
+  const seededDays = seededEarly?.uid === uid ? seededEarly.days : null;
+  const earlyLogDays = useMemo(
+    () =>
+      allLoaded ? keptEarlyDays(storedEarly, seededDays, windowEarlyDays) : [],
+    [allLoaded, storedEarly, seededDays, windowEarlyDays]
+  );
+
+  // The seed: a document without the field gets one deeper read, so early
+  // days older than the window are kept. Once per account and mount; a
+  // failed read writes nothing, and the next load tries again.
+  const seedTriedForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!allLoaded || !uid || readFailed) return;
+    if (storedEarly !== undefined || earlyBirdEarned) return;
+    if (seedTriedForRef.current === uid) return;
+    seedTriedForRef.current = uid;
+    void (async () => {
+      try {
+        const { readSeedEarlyDays } = await import("./earlyBirdSeed");
+        const days = await readSeedEarlyDays(uid, {
+          meals: MEAL_CAP,
+          workouts: WORKOUT_CAP,
+          runs: RUN_CAP,
+        });
+        setSeededEarly({ uid, days });
+      } catch (err) {
+        logger.error("[useStreaks] early-bird seed read failed", err);
+      }
+    })();
+  }, [allLoaded, uid, readFailed, storedEarly, earlyBirdEarned]);
+
+  // Keep the days on the streak document when they grow, or once the seed
+  // has counted a document that had none. Never with a read failed: the
+  // window's days would be missing, not absent.
+  const lastWrittenEarlyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!allLoaded || !uid || readFailed || earlyBirdEarned) return;
+    if (storedEarly === undefined && seededDays === null) return;
+    if (storedEarly !== undefined && earlyLogDays.length <= storedEarly.length)
+      return;
+    const signature = `${uid}:${earlyLogDays.join(",")}`;
+    if (signature === lastWrittenEarlyRef.current) return;
+    lastWrittenEarlyRef.current = signature;
+    setDocGuarded(
+      doc(db, "users", uid, "streaks", "data"),
+      { earlyLogDays },
+      { merge: true }
+    ).catch((err) => {
+      lastWrittenEarlyRef.current = null;
+      logger.error("[useStreaks] early-bird days save failed", err);
+    });
+  }, [
+    allLoaded,
+    uid,
+    readFailed,
+    earlyBirdEarned,
+    storedEarly,
+    seededDays,
+    earlyLogDays,
+  ]);
 
   // Earned badge count (excl. ultimate_athlete itself) — drives the
   // ultimate_athlete progress ring; the earning pass derives the same number
@@ -901,9 +1179,11 @@ function useStreaksInternal() {
     if (activeDateSet.has(yesterday)) return 0;
     const augmented = new Set(activeDateSet);
     augmented.add(yesterday);
-    const restored = computeCurrentStreak(augmented);
+    // Through the stored pair, as the streak itself is: the window alone
+    // offered a 300-day streaker the ~167 days it can see.
+    const restored = computeStreakSpanAnchored(augmented, storedAnchor).streak;
     return restored >= 3 ? restored : 0;
-  }, [allLoaded, currentStreak, activeDateSet]);
+  }, [allLoaded, currentStreak, activeDateSet, storedAnchor]);
 
   // Merge streakData.badges with BADGE_DEFINITIONS order (streakData.badges
   // is already in definition order from the merge above, so this is a
@@ -1106,23 +1386,51 @@ function useStreaksInternal() {
   // only the two summary numbers we denormalise for cross-surface reads.
 
   useEffect(() => {
-    if (!allLoaded || !uid) return;
-    if (currentStreak === lastWrittenStreakRef.current) return;
-    // Skip initial write if Firestore already has the right value (avoids
-    // a pointless write on every fresh mount).
+    // A failed read is not an empty one: with the streaks document unread,
+    // longestStreak and the last active day are the defaults, and saving
+    // would write them over the stored record and both mirrors.
+    if (!allLoaded || !uid || readFailed) return;
+    const today = format(new Date(), "yyyy-MM-dd");
+    // The certificate after this write: the streak through its last active
+    // day, or the stored one where the streak is already broken. Never the
+    // morning-after 0, which threw a long streak's certificate away.
+    const anchor = anchorToStore ?? storedAnchor;
+    // The last active day is the day the counted span ends on. It was
+    // "today if active, else the stored day", so a backfilled yesterday
+    // saved 101 against the day before.
+    const lastActiveDate = anchorToStore?.lastActiveDate ?? storedLastActive;
+    const nextLongest = Math.max(
+      currentStreak,
+      anchor.streak,
+      streakData.longestStreak
+    );
+    const next = {
+      currentStreak,
+      lastActiveDate,
+      anchorStreak: anchor.streak,
+      anchorDate: anchor.lastActiveDate,
+      longestStreak: nextLongest,
+    };
+    const signature = JSON.stringify(next);
+    if (signature === lastWrittenStreakRef.current) return;
+    // Skip the first write when Firestore already holds all of it (avoids a
+    // pointless write on every fresh mount).
     if (
       lastWrittenStreakRef.current === null &&
-      currentStreak === streakData.currentStreak
+      currentStreak === storedCurrent &&
+      lastActiveDate === storedLastActive &&
+      (anchor.streak <= 0 ||
+        (anchor.streak === storedAnchorStreak &&
+          anchor.lastActiveDate === storedAnchorDate)) &&
+      nextLongest === streakData.longestStreak
     ) {
-      lastWrittenStreakRef.current = currentStreak;
+      lastWrittenStreakRef.current = signature;
       return;
     }
 
     const streaksRef = doc(db, "users", uid, "streaks", "data");
     const userRef = doc(db, "users", uid);
     const publicProfileRef = doc(db, "users", uid, "public", "profile");
-    const today = format(new Date(), "yyyy-MM-dd");
-    const nextLongest = Math.max(currentStreak, streakData.longestStreak);
 
     const batch = writeBatch(db);
     batch.set(
@@ -1130,10 +1438,11 @@ function useStreaksInternal() {
       {
         currentStreak,
         longestStreak: nextLongest,
-        lastActiveDate: activeDateSet.has(today)
-          ? today
-          : streakData.lastActiveDate,
+        lastActiveDate,
         totalActiveDays,
+        ...(anchor.streak > 0
+          ? { anchorStreak: anchor.streak, anchorDate: anchor.lastActiveDate }
+          : {}),
       },
       { merge: true }
     );
@@ -1147,22 +1456,31 @@ function useStreaksInternal() {
     );
     // Mirror onto the cross-user-readable public profile doc.
     // Readable by any authenticated user per firestore.rules match /users/{uid}/public/{doc}.
+    // With the day it last counted, so a reader can tell a streak that has
+    // lapsed since this device last wrote it (publicStreakAsOf).
     batch.set(
       publicProfileRef,
       {
         uid,
         currentStreak,
         longestStreak: nextLongest,
+        ...(typeof lastActiveDate === "string" &&
+        /^\d{4}-\d{2}-\d{2}$/.test(lastActiveDate)
+          ? { lastActiveDate }
+          : {}),
       },
       { merge: true }
     );
 
+    const loggedToday = activeDateSet.has(today);
     batch
       .commit()
       .then(() => {
-        lastWrittenStreakRef.current = currentStreak;
-        // Cancel any pending streak-at-risk reminder. The user has just
-        // logged something, so the reminder is stale by definition. The
+        lastWrittenStreakRef.current = signature;
+        // Cancel any pending streak-at-risk reminder once today is logged:
+        // the reminder is stale by definition then. Only then: a write on
+        // the morning after a rest day is not a log, and cancelling there
+        // took away the one evening the reminder exists for. The
         // useStreakReminder hook re-evaluates on the next foreground /
         // state change and reschedules if the new post-mutation state
         // still warrants a reminder (rare, but cheap to re-evaluate).
@@ -1170,6 +1488,7 @@ function useStreaksInternal() {
         // and this must never block or fail the streak write. Logged at
         // warn (dev-only) in case the platform starts reporting real
         // failures we need to debug.
+        if (!loggedToday) return;
         void cancelNotification(STREAK_NOTIFICATION_ID).catch((err) => {
           logger.warn("[Streaks] cancel streak-at-risk reminder failed", err);
         });
@@ -1180,12 +1499,17 @@ function useStreaksInternal() {
   }, [
     allLoaded,
     uid,
+    readFailed,
     currentStreak,
+    anchorToStore,
+    storedAnchor,
+    storedCurrent,
+    storedLastActive,
+    storedAnchorStreak,
+    storedAnchorDate,
     totalActiveDays,
     activeDateSet,
-    streakData.currentStreak,
     streakData.longestStreak,
-    streakData.lastActiveDate,
   ]);
 
   // ── Public API ─────────────────────────────────────────────────────────
@@ -1241,14 +1565,33 @@ function useStreaksInternal() {
     [awardEventBadges]
   );
 
+  // Open all four streams again after a failure. The pass after it is a
+  // first load, as on opening the app: badges found then are backfilled
+  // quietly rather than celebrated one by one.
+  const retryLoad = () => {
+    hasLoadedRef.current = false;
+    setStreaksDocFailed(false);
+    setMealsFailed(false);
+    setStreaksDocLoaded(false);
+    setMealsLoaded(false);
+    setStreamsAttempt((n) => n + 1);
+    savedWorkouts.refresh();
+    savedRuns.refresh();
+  };
+
   return {
     currentStreak,
+    /** The streak logging today keeps (see `StreakState.savable`). */
+    savableStreak,
     longestStreak,
     totalActiveDays,
     hasLoggedToday,
     forgivenYesterday,
     backfillRescueStreak,
     loading: !allLoaded,
+    /** A stream failed to load, so the figures above are not the person's. */
+    loadFailed: readFailed,
+    retryLoad,
     earnedBadges,
     lockedBadges,
     allBadges,

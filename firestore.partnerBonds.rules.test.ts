@@ -1,28 +1,20 @@
 /**
  * `partnerBonds/{bondId}` writes, against the real rules engine.
  *
- * Why the CREATE shape matters here more than it usually would. `update` is
- * `if false` — the Admin SDK is the sole writer of streak state — so create
- * is the one client-reachable moment, and whatever it stores is what
- * `applyPartnerActivity` picks up. That function reads `lastSharedDay`,
- * `lastActive` and `freezeWeek` straight off the document and feeds them to
- * the engine; it does not re-derive them.
+ * No client creates a bond. Each person holds at most MAX_PARTNERS, and a
+ * rule cannot count the bonds someone already has, so a create the rules
+ * allowed was a create past the limit: the app checked the count, and a
+ * script sending the same document did not have to. The startPartnerStreak
+ * callable is the one writer (functions/lib/partnerBonds.js): it counts
+ * both people's bonds, the mutual follow, a block either way and both
+ * accounts' deletion state in the transaction that creates the bond, and
+ * writes the cold initial state itself.
  *
- * The rule pinned `streak == 0` and nothing else, under a client-side
- * comment reading "Cold state (streak 0) — the rules reject any forged
- * head-start". They rejected one forged head-start. A bond created with the
- * PARTNER's `lastActive` already set to today makes the very next real
- * session register as a shared day that never happened, and a pre-filled
- * `freezeWeek` hands out streak freezes.
- *
- * Nothing was holding it: `allow update: if false` is asserted by prose in
- * three module headers, and no test drove this collection at all.
- *
- * Impact is bounded — a bond needs both members, and the number it inflates
- * is their own shared streak — so this is hardening, not an incident. It is
- * the same `hasOnly` guard the public-profile projection already uses, for
- * the same reason: a field the rule doesn't name is one the engine will
- * nonetheless trust.
+ * So the first case below is the document the app sent when it wrote
+ * bonds directly, from a member, with the follows in place and nothing
+ * blocking it: accepted by the rules before, refused now. The rest pin
+ * what stays: `update` is server-only (the engine's state is written by
+ * the Admin SDK), and either member may still end a bond.
  *
  * Run: `npm run test:rules`. Skipped when FIRESTORE_EMULATOR_HOST is unset
  * so a plain `npm test` still passes, and a hard failure when CI sets
@@ -32,10 +24,7 @@
  * The projectId is distinct on purpose, per the convention the spaces and
  * goalSpaces suites already document: vitest runs these files in PARALLEL
  * workers against one emulator, so a shared projectId means one file's
- * `clearFirestore()` wipes another's seeds mid-test. This suite first
- * copied `firestore.profile.rules.test.ts`'s literal "demo-tropos" — which
- * was safe only while that file was the sole occupant — and made the
- * profile suite's seed-then-merge tests flaky.
+ * `clearFirestore()` wipes another's seeds mid-test.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import {
@@ -44,7 +33,7 @@ import {
   assertSucceeds,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, setDoc, deleteDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc, updateDoc } from "firebase/firestore";
 import { readFileSync } from "node:fs";
 import { emptyStreakState } from "./src/features/partnerStreak/streakEngine";
 
@@ -78,8 +67,23 @@ afterAll(async () => {
   await env?.cleanup();
 });
 
+/** A and B follow each other: the consent a bond stands on. */
+async function seedMutualFollow() {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    for (const [from, to] of [
+      [A, B],
+      [B, A],
+    ]) {
+      await setDoc(doc(ctx.firestore(), `following/${from}/users/${to}`), {
+        createdAt: new Date(),
+      });
+    }
+  });
+}
+
 beforeEach(async () => {
   await env?.clearFirestore();
+  if (env) await seedMutualFollow();
 });
 
 const A = "user-a";
@@ -87,13 +91,8 @@ const B = "user-b";
 const BOND = `${A}__${B}`;
 
 /**
- * The exact document `createBond` sends — `members` sorted, the engine's own
- * `emptyStreakState()` spread in, `createdAt` a serverTimestamp (a literal
- * stands in; the rule checks the key, not the type).
- *
- * Built from the REAL `emptyStreakState` rather than a hand-written copy, so
- * adding a field to the engine's state fails HERE — where the rule that has
- * to allow it lives — instead of silently at a user's first bond.
+ * The cold bond: `members` sorted, the engine's own `emptyStreakState()`
+ * spread in, `createdAt` a date standing in for a server timestamp.
  */
 function bondDoc(overrides: Record<string, unknown> = {}) {
   return {
@@ -104,114 +103,65 @@ function bondDoc(overrides: Record<string, unknown> = {}) {
   };
 }
 
+async function seedBond() {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "partnerBonds", BOND), bondDoc());
+  });
+}
+
 suite("partnerBonds rules", () => {
-  it("accepts the document createBond actually sends", async () => {
-    // The control that keeps every rejection below honest: tighten the rule
-    // past what the app sends and this fails first.
+  it("refuses the cold bond a member would send, with every precondition met", async () => {
+    /* The two follow each other, nobody is blocked or being deleted, the
+       id is the pair's sorted one and the state is cold: everything the
+       create rule held. What it could not hold is the count, so the
+       create is the callable's alone. */
     const a = env.authenticatedContext(A).firestore();
-    await assertSucceeds(setDoc(doc(a, "partnerBonds", BOND), bondDoc()));
+    await assertFails(setDoc(doc(a, "partnerBonds", BOND), bondDoc()));
+    const b = env.authenticatedContext(B).firestore();
+    await assertFails(setDoc(doc(b, "partnerBonds", BOND), bondDoc()));
   });
 
-  it("refuses a forged partner head-start in lastActive", async () => {
-    /* The gap this suite was written for. `streak: 0` is honest; the
-       partner's last-active day is not, and `applyPartnerActivity` trusts
-       it — so A's next logged session pairs with a day B never trained. */
+  it("refuses a create under any other id, or from someone not in it", async () => {
     const a = env.authenticatedContext(A).firestore();
-    await assertFails(
-      setDoc(
-        doc(a, "partnerBonds", BOND),
-        bondDoc({ lastActive: { [B]: "2026-08-13" } })
-      )
-    );
-  });
-
-  it("refuses a pre-filled freeze ledger", async () => {
-    const a = env.authenticatedContext(A).firestore();
-    await assertFails(
-      setDoc(
-        doc(a, "partnerBonds", BOND),
-        bondDoc({ freezeWeek: { [A]: "1970-01-05" } })
-      )
-    );
-  });
-
-  it("refuses a forged lastSharedDay", async () => {
-    const a = env.authenticatedContext(A).firestore();
-    await assertFails(
-      setDoc(doc(a, "partnerBonds", BOND), bondDoc({ lastSharedDay: "2026-08-13" }))
-    );
-  });
-
-  it("refuses an unlisted field the engine might later read", async () => {
-    // What `hasOnly` buys beyond the value pins: the shape can't grow.
-    const a = env.authenticatedContext(A).firestore();
-    await assertFails(
-      setDoc(doc(a, "partnerBonds", BOND), bondDoc({ freezesRemaining: 99 }))
-    );
-  });
-
-  it("still refuses a non-zero streak", async () => {
-    // The one pin that already existed — kept, so hardening can't drop it.
-    const a = env.authenticatedContext(A).firestore();
-    await assertFails(
-      setDoc(doc(a, "partnerBonds", BOND), bondDoc({ streak: 40 }))
-    );
-  });
-
-  it("refuses a bond the author is not a member of", async () => {
+    await assertFails(setDoc(doc(a, "partnerBonds", "bond-2"), bondDoc()));
     const c = env.authenticatedContext("user-c").firestore();
     await assertFails(setDoc(doc(c, "partnerBonds", BOND), bondDoc()));
   });
 
   it("refuses any client update — streak state is server-only", async () => {
-    /* `allow update: if false` is asserted by prose in three module headers
-       and by nothing else. This is the executable version. */
-    await env.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), "partnerBonds", BOND), bondDoc());
-    });
+    await seedBond();
     const a = env.authenticatedContext(A).firestore();
-    await assertFails(
-      updateDoc(doc(a, "partnerBonds", BOND), { streak: 99 })
-    );
+    await assertFails(updateDoc(doc(a, "partnerBonds", BOND), { streak: 99 }));
   });
 
-  it("lets a member read and dissolve their own bond", async () => {
-    // The paired positives: hardening create must not lock members out of
-    // the two operations they legitimately have.
-    await env.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), "partnerBonds", BOND), bondDoc());
-    });
+  it("lets a member read and end their own bond", async () => {
+    // The paired positives: the server making bonds must not lock members
+    // out of the two things they still do.
+    await seedBond();
+    const a = env.authenticatedContext(A).firestore();
+    await assertSucceeds(getDoc(doc(a, "partnerBonds", BOND)));
     const b = env.authenticatedContext(B).firestore();
     await assertSucceeds(deleteDoc(doc(b, "partnerBonds", BOND)));
   });
 
-  it("refuses a non-member dissolving someone else's bond", async () => {
-    await env.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), "partnerBonds", BOND), bondDoc());
-    });
+  it("refuses a non-member reading or ending someone else's bond", async () => {
+    await seedBond();
     const c = env.authenticatedContext("user-c").firestore();
+    await assertFails(getDoc(doc(c, "partnerBonds", BOND)));
     await assertFails(deleteDoc(doc(c, "partnerBonds", BOND)));
   });
 });
 
-describe("partnerBonds create shape", () => {
-  it("the rule's field list matches the engine's state, plus members/createdAt", () => {
-    /* Runs WITHOUT the emulator, so a plain `npm test` still catches the
-       drift that matters most: adding a field to `emptyStreakState` without
-       adding it to `hasOnly` makes every bond creation fail for every user,
-       and the suite above would only say so on a machine with the emulator
-       up. */
+describe("partnerBonds create", () => {
+  it("the rules leave no client create of a bond", () => {
+    /* Runs WITHOUT the emulator, so a plain `npm test` still says so if a
+       create rule comes back: one would let a client past the limit the
+       callable counts. */
     const rules = readFileSync("firestore.rules", "utf8");
-    const block = rules.slice(rules.indexOf("match /partnerBonds/"));
-    const listed = (block.match(/hasOnly\(\[([\s\S]*?)\]\)/)?.[1] ?? "")
-      .split(",")
-      .map((s) => s.trim().replace(/^'|'$/g, ""))
-      .filter(Boolean);
-    const expected = [
-      "members",
-      ...Object.keys(emptyStreakState()),
-      "createdAt",
-    ];
-    expect([...listed].sort()).toEqual([...expected].sort());
+    const start = rules.indexOf("match /partnerBonds/");
+    const block = rules.slice(start, rules.indexOf("\n    }", start));
+    const creates = block.match(/allow\s+[a-z,\s]*\bcreate\b[^;]*;/g) ?? [];
+    expect(creates).toEqual(["allow create: if false;"]);
+    expect(block).not.toMatch(/allow\s+[a-z,\s]*\bwrite\b/);
   });
 });

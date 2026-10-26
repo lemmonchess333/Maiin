@@ -25,7 +25,7 @@ vi.mock("../../../hooks/useRestrictedStatus", () => ({
   useRestrictedStatus: () => ({ isRestricted: false, loading: false }),
 }));
 vi.mock("../../../hooks/useBlockedUsers", () => ({
-  useBlockedUsers: () => ({ addBlocked: vi.fn(), blockedUsers: new Set() }),
+  useBlockedUsers: () => ({ addBlocked: vi.fn(), blocked: new Set() }),
 }));
 vi.mock("../../../hooks/useDistanceUnit", () => ({
   useDistanceUnit: () => reader.unit,
@@ -85,6 +85,14 @@ describe("a run's numbers on a feed card", () => {
     expect(screen.getByText("8:32")).toBeTruthy();
     expect(screen.getByText("/mi")).toBeTruthy();
     expect(screen.queryByText("5:18")).toBeNull();
+  });
+
+  it("label a pace posted as text per km, even for a reader in miles", () => {
+    reader.unit = "mi";
+    renderCard(run({ avgPace: "5:18" }));
+    expect(screen.getByText("5:18")).toBeTruthy();
+    expect(screen.getByText("/km")).toBeTruthy();
+    expect(screen.queryByText("/mi")).toBeNull();
   });
 
   it("leave the time out of a run with none", () => {

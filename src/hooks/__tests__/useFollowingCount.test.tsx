@@ -42,8 +42,11 @@ it("does not turn a failed follow read into zero and can resubscribe", async () 
   await flushSnapshots();
   expect(unfiredFailures()).toHaveLength(0);
   expect(result.current.count).toBeNull();
+  // Failed, not loading: the feed says so where the board would be.
+  expect(result.current.failed).toBe(true);
   act(() => result.current.refresh());
   await waitFor(() => expect(result.current.count).toBe(1));
+  expect(result.current.failed).toBe(false);
 });
 
 it("never supplies the previous account's follow count after an account switch", async () => {

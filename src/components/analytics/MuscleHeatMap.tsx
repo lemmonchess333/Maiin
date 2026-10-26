@@ -1,6 +1,7 @@
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo } from "react";
 import Model, { type IExerciseData } from "react-body-highlighter";
 import { THEME } from "@/lib/theme";
+import { useIsDarkTheme } from "@/hooks/useIsDarkTheme";
 import BodyMapGlow from "@/components/BodyMapGlow";
 import { getShareTier, getFrequencyForShare } from "./muscleShare";
 import { CATEGORY_DISPLAY, MUSCLE_MAP } from "./muscleGroupTaxonomy";
@@ -45,21 +46,6 @@ function getLegendDotColor(sets: number, totalSets: number): string {
   return HIGH_COLOR;
 }
 
-// Subscribe to documentElement class changes so the body diagram recolours
-// when the user toggles dark mode at runtime (Settings writes .dark on
-// document.documentElement, see Settings.tsx:205).
-function subscribeDarkMode(cb: () => void) {
-  const observer = new MutationObserver(cb);
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["class"],
-  });
-  return () => observer.disconnect();
-}
-function getIsDark() {
-  return document.documentElement.classList.contains("dark");
-}
-
 /** Legend recovery chip colours: still-loaded muscles stay in the lifting
  *  register (the map's own palette); READY gets the success token. */
 function recoveryDotColor(status: GroupRecovery["status"]): string {
@@ -73,11 +59,9 @@ export default function MuscleHeatMap({
   recovery,
   variant = "full",
 }: MuscleHeatMapProps) {
-  const isDark = useSyncExternalStore(
-    subscribeDarkMode,
-    getIsDark,
-    () => false
-  );
+  // Recolours when the theme flips at runtime (Settings writes .dark on
+  // the root element).
+  const isDark = useIsDarkTheme();
   // Light: near-white silhouette (#e8e8f0) → calm iOS grouped-bg vibe.
   // Dark: mid-neutral (#2A2A30) so the silhouette sits cleanly on
   // bg-card (hsl 240 4% 10%) without bleaching out like the #e8e8f0

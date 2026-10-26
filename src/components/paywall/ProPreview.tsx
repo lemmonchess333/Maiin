@@ -19,14 +19,14 @@ function TargetFrame() {
       aria-label={`Sample: a calorie target of 2,336 ${CALORIE_UNIT}, adapted down by 120 ${CALORIE_UNIT} this week from the weight trend`}
     >
       <div aria-hidden="true">
-        <p className="text-caption font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="text-micro font-semibold text-muted-foreground">
           Calorie target
         </p>
         <p className="text-2xl font-extrabold text-foreground font-mono tabular-nums leading-tight">
           2,336
           <span className="text-xs font-medium text-muted-foreground">
             {" "}
-            kcal
+            {CALORIE_UNIT}
           </span>
         </p>
       </div>
@@ -47,7 +47,7 @@ function TargetFrame() {
             <span className="font-mono tabular-nums">−120 {CALORIE_UNIT}</span>{" "}
             this week
           </p>
-          <p className="text-caption text-muted-foreground leading-snug">
+          <p className="text-micro text-muted-foreground leading-snug">
             Weight trend flat at your last target, so it moved.
           </p>
         </div>

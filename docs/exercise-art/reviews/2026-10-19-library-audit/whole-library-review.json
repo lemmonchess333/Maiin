@@ -1,0 +1,135 @@
+{
+  "reviewedAt": "2026-10-19T18:00:16.595890+00:00",
+  "reviewer": "Root Codex, no independent peer claimed",
+  "baselineHead": "33710e2680bf4bf50cda05353371345ba58379ea",
+  "implementationHeadBeforeSupportedLabelAndEvidenceCommit": "84f01c87140fee7f71deab7c3c21f04488f5990a",
+  "scope": {
+    "guides": 152,
+    "guideFrames": 912,
+    "physicalCards": 154,
+    "visualScreen": "All26six-frame overview sheets and7card sheets personally viewed, plus focused enlarged/native source review for suspects and corrections.",
+    "registeredMobile": {
+      "configuredViewport": [390, 844],
+      "manualGuidesBothThemes": 152,
+      "settledObservations": 2128,
+      "validationErrors": [],
+      "browserConsoleErrors": []
+    },
+    "naturalPlayback": "Six actual modes for two changed guides: normaldark, normallight, slowerdark. Full Lu cycle and6-to1; get-up1-to6then stopped3/5sec; explicit Replay1-to2."
+  },
+  "corrections": [
+    "Lu Raise: former forward sweep replaced by an outward overhead pose with matching catalogue/cues, supportedTraps label and canonical existing-field palette.",
+    "Turkish Get-Up: ascent-only guide stops at standing and offers explicitReplay, removing the automatic standing-to-supine jump."
+  ],
+  "preservation": {
+    "other150RuntimeRowsExact": true,
+    "other1059PublicAssetsExact": true,
+    "all281PriorReleaseJsonsExact": true,
+    "canonicalFA56Exact": true,
+    "noShortsOrNewModel": true,
+    "strictStatuses": "119strict /33owner with findings; no conversion-count increment and no new strict certificate."
+  },
+  "rootNativeAndFourMobileScreenshotsAccepted": true,
+  "modes": [
+    {
+      "id": "lu-raise",
+      "theme": "dark",
+      "slower": false,
+      "path": "mobile/lu-raise-dark-normal-natural.json",
+      "sha256": "75621d791ea6fe4f8a8dbf4a873542a05ceda31a699dee4bfd14ecef7ddac85d",
+      "orderedFrames": [1, 2, 3, 4, 5, 6, 1],
+      "stopHoldMs": null
+    },
+    {
+      "id": "lu-raise",
+      "theme": "light",
+      "slower": false,
+      "path": "mobile/lu-raise-light-normal-natural.json",
+      "sha256": "976c2779ce31dd24e51bda754f0f725e424982fea9d6ce29859929c036a5885c",
+      "orderedFrames": [1, 2, 3, 4, 5, 6, 1],
+      "stopHoldMs": null
+    },
+    {
+      "id": "lu-raise",
+      "theme": "dark",
+      "slower": true,
+      "path": "mobile/lu-raise-dark-slower-natural.json",
+      "sha256": "749ad7eab2092821747f3fb33c14f602974d4b153c4f04ef25c64dfe5b81f6a8",
+      "orderedFrames": [1, 2, 3, 4, 5, 6, 1],
+      "stopHoldMs": null
+    },
+    {
+      "id": "turkish-get-up",
+      "theme": "dark",
+      "slower": false,
+      "path": "mobile/turkish-get-up-dark-normal-natural.json",
+      "sha256": "439e229dbfe10d85bf018722e3f30aaede1d85d8259cae4a73a77fa4f5417f83",
+      "orderedFrames": [1, 2, 3, 4, 5, 6],
+      "stopHoldMs": 3000
+    },
+    {
+      "id": "turkish-get-up",
+      "theme": "light",
+      "slower": false,
+      "path": "mobile/turkish-get-up-light-normal-natural.json",
+      "sha256": "64793eb486836a99d9989f3a146e326b5456f6dc44076afa0376b9449ad51943",
+      "orderedFrames": [1, 2, 3, 4, 5, 6],
+      "stopHoldMs": 3000
+    },
+    {
+      "id": "turkish-get-up",
+      "theme": "dark",
+      "slower": true,
+      "path": "mobile/turkish-get-up-dark-slower-natural.json",
+      "sha256": "6903cac7f8d6a04b284777233fcd879e6c22e986f8707da8d26bdb943f47aa88",
+      "orderedFrames": [1, 2, 3, 4, 5, 6],
+      "stopHoldMs": 5000
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "mobile/lu-raise-dark-overhead.png",
+      "sha256": "a4cbc37729ab7a5ba79b742a09d6420c50a79ca09c630bd5e341421ad55cfe00",
+      "rasterSize": [380, 1178],
+      "rootPersonallyViewed": true
+    },
+    {
+      "path": "mobile/lu-raise-light-overhead.png",
+      "sha256": "a9a1b1283b296c1032c472f8d7cd038a0cea1d452e28d924e4be2b3e7ba3b17a",
+      "rasterSize": [380, 1178],
+      "rootPersonallyViewed": true
+    },
+    {
+      "path": "mobile/turkish-get-up-dark-stopped.png",
+      "sha256": "6a2d397a1a2d7484138c96213290f61a91491c02d881a1d05c01cf7238b827f1",
+      "rasterSize": [380, 822],
+      "rootPersonallyViewed": true
+    },
+    {
+      "path": "mobile/turkish-get-up-light-stopped.png",
+      "sha256": "338449683c84fa03277f23a91acc33cfc33eafe37d37cfec55fe8996b0563e5d",
+      "rasterSize": [380, 822],
+      "rootPersonallyViewed": true
+    }
+  ],
+  "evidenceArchive": {
+    "path": "docs/exercise-art/reviews/2026-10-19-library-audit/whole-library-review.zip",
+    "sha256": "b46d4c2aac9e56c2a8cd1d78739ed4894c8f9ca26e5d4d8e9781fb345e70df35",
+    "bytes": 18019715,
+    "members": 63
+  },
+  "sourceArchive": {
+    "path": "docs/exercise-art/sources/lu-raise/2026-10-19-overhead-correction/portable-lu-overhead-source.zip",
+    "sha256": "dc718e29e9c1fe7a20dbf4b3ef38b43f1eb5baa4cd604f19c05b436b56ea29af",
+    "bytes": 22460027,
+    "members": 47
+  },
+  "retainedLimits": [
+    "Fresh whole-library visual screen and actual registered manual checks, not every-pixel native certification or calibrated3D biomechanics. Existing minor illustrative/source findings remain recorded per guide.",
+    "Ordinary guides intentionally reuse matching physical poses; no continuous interpolation or six-unique-drawings claim.",
+    "Light normal cards have fine white-grey contours with lower contrast than the dark guide stage; no blanket athlete/cutout redesign is supplied.",
+    "Raw early readings taken between image and parent-cue updates remain in manual-initial-transients.json.105affected themes were rechecked with current image, decodedcanvas and selectedcue all settled; final validator has zero errors.",
+    "Configuredviewport and actual screenshot raster sizes are distinct; retained screenshots record their own dimensions. Two get-up full-page capture attempts failed; accepted fixed-viewport captures are the saved reviewed images."
+  ],
+  "projectChecks": "Normal verification, exact baseline failure comparison, exact-head CI and normal merge are separate publication gates; no all-tests-green assertion in this artwork review."
+}

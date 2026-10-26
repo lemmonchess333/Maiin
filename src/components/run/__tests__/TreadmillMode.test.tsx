@@ -64,7 +64,7 @@ describe("typed run distance", () => {
       const input = screen.getByRole("textbox", {
         name: "Distance from treadmill",
       });
-      const save = screen.getByRole("button", { name: "Save Treadmill Run" });
+      const save = screen.getByRole("button", { name: "Save treadmill run" });
       expect(screen.getByText(unit)).toBeInTheDocument();
       expect(save).toBeDisabled();
       fireEvent.change(input, { target: { value: tooShort } });

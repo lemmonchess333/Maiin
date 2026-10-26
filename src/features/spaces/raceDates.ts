@@ -1,5 +1,9 @@
-import { format } from "date-fns";
 import { parseLocalDate } from "@/lib/dateHelpers";
+import {
+  formatDayMonthYear,
+  formatDayMonthYearLong,
+  formatWeekdayDayMonthYear,
+} from "@/utils/formatters";
 import type { SpaceEventInfo } from "./spaceDefs";
 
 export function validRaceDateKeys(
@@ -37,12 +41,16 @@ export function formatRaceEventDate(
   event: SpaceEventInfo,
   long = false
 ): string {
-  const dates = raceEventDates(event);
-  const pattern = long ? "EEEE d MMMM yyyy" : "d MMM yyyy";
-  if (dates.length === 1) return format(parseLocalDate(dates[0]), pattern);
-  if (dates[0].slice(0, 7) === dates[1].slice(0, 7))
-    return `${format(parseLocalDate(dates[0]), "d")}–${format(parseLocalDate(dates[1]), long ? "d MMMM yyyy" : "d MMM yyyy")}`;
-  return dates
-    .map((d) => format(parseLocalDate(d), long ? "d MMMM yyyy" : "d MMM yyyy"))
-    .join(" / ");
+  const dates = raceEventDates(event).map(parseLocalDate);
+  if (dates.length === 1)
+    return long
+      ? formatWeekdayDayMonthYear(dates[0])
+      : formatDayMonthYear(dates[0]);
+  const dated = long ? formatDayMonthYearLong : formatDayMonthYear;
+  if (
+    dates[0].getFullYear() === dates[1].getFullYear() &&
+    dates[0].getMonth() === dates[1].getMonth()
+  )
+    return `${dates[0].getDate()}–${dated(dates[1])}`;
+  return dates.map(dated).join(" / ");
 }

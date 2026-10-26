@@ -41,6 +41,7 @@ import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { Spinner } from "@/components/ui/Spinner";
+import { CirclesCardSkeleton } from "@/components/LoadingSkeleton";
 import { getTimeAgo } from "@/lib/timeAgo";
 import { formatDayMonth } from "@/utils/formatters";
 import { localWeekKey, localDateString } from "@/lib/dateHelpers";
@@ -61,14 +62,17 @@ import {
   type CircleSummary,
 } from "@/features/goalSpace/useGoalSpaces";
 import { isFull, memberLine } from "@/features/goalSpace/circleCapacity";
+import {
+  inviteCodeExpiryLine,
+  isInviteCodeExpired,
+} from "@/features/goalSpace/inviteCode";
 import CircleWeeklyFocusSheet from "./CircleWeeklyFocusSheet";
 import RestrictedNotice from "./RestrictedNotice";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import { showRestrictedToast } from "@/lib/accountRestriction";
-import {
-  containsProfanity,
-  OBJECTIONABLE_NAME_MESSAGE,
-} from "@/lib/profanityFilter";
+import { OBJECTIONABLE_NAME_MESSAGE } from "@/lib/objectionableMessages";
+import { loadWordFilter } from "@/lib/wordFilter";
+import { useWordFilter } from "@/hooks/useWordFilter";
 import { circleTitle } from "@/features/goalSpace/circleTitle";
 
 // weekly_check_in copy is dynamic (checkInTimelineCopy — the focus
@@ -249,11 +253,12 @@ export default function CirclesSection({
   refreshRef?: MutableRefObject<(() => Promise<void>) | null>;
 }) {
   const {
-    loading,
+    loading: circlesLoading,
     circles,
     loadFailed,
     reload,
     createCircle,
+    renewInviteCode,
     joinCircle,
     leaveCircle,
     loadDetail,
@@ -262,6 +267,12 @@ export default function CirclesSection({
     backCheckIn,
     resolveTarget,
   } = useGoalSpaces(uid);
+  /* Circle names go through the word filter (circleTitle), so a list with
+     Circles in it waits for it as it waits for the Circles: no name is
+     drawn unseen. A list with none has no name to draw, so the empty card
+     shows as soon as the list lands. */
+  const wordFilter = useWordFilter();
+  const loading = circlesLoading || (circles.length > 0 && !wordFilter);
 
   /* A restricted account can read its Circles and leave them, but not
      start, join, check in, back a check-in or share (S4e). The section
@@ -302,6 +313,9 @@ export default function CirclesSection({
   const [chooserOpen, setChooserOpen] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
   const [detailOf, setDetailOf] = useState<CircleSummary | null>(null);
+  /* When the detail sheet was opened (or its code last replaced): the
+     moment its invite code's expiry is read against. */
+  const [detailSeenAt, setDetailSeenAt] = useState(0);
   const [members, setMembers] = useState<GoalSpaceMember[] | null>(null);
   const [events, setEvents] = useState<GoalSpaceEvent[]>([]);
   const [template, setTemplate] = useState<GoalSpaceType>("strength_block");
@@ -377,7 +391,7 @@ export default function CirclesSection({
         haptic("light");
         toast.success("Circle wrapped. Nice work.");
       } else {
-        toast.error("Couldn't wrap the Circle. Try again.");
+        toast.error("Couldn't wrap the circle. Try again.");
       }
     },
     [targetBusy, resolveTarget]
@@ -485,10 +499,7 @@ export default function CirclesSection({
       (e) =>
         e.kind === "weekly_check_in" && e.uid === uid && e.weekKey === thisWeek
     ) ?? null;
-  const focusSetCount = countWeeklyFocusSet(
-    events.filter((e) => memberUids.has(e.uid)),
-    thisWeek
-  );
+  const focusSetCount = countWeeklyFocusSet(events, thisWeek, memberUids);
 
   /* Featured-card equivalents of the sheet derivations above, from the
      eager featuredDetail (member-filtered for the same mid-week-
@@ -502,15 +513,13 @@ export default function CirclesSection({
         e.kind === "weekly_check_in" && e.uid === uid && e.weekKey === thisWeek
     ) ?? null;
   const featuredFocusCount = featuredDetail
-    ? countWeeklyFocusSet(
-        featuredDetail.events.filter((e) => featuredMemberUids.has(e.uid)),
-        thisWeek
-      )
+    ? countWeeklyFocusSet(featuredDetail.events, thisWeek, featuredMemberUids)
     : 0;
 
   const openDetail = async (c: CircleSummary) => {
     haptic("light");
     setDetailOf(c);
+    setDetailSeenAt(Date.now());
     setMembers(null);
     const detail = await loadDetail(c.space.id);
     setMembers(detail.members);
@@ -525,7 +534,42 @@ export default function CirclesSection({
     title: string;
     spaceId: string;
     inviteCode: string;
+    inviteCodeExpiresAt: number;
+    /** When the sheet was opened: the moment the expiry is read against. */
+    seenAt: number;
   } | null>(null);
+
+  /* The owner's new code, at any time: the old one stops working at once.
+     Carried into whichever sheet is showing this Circle's code. */
+  const [renewing, setRenewing] = useState(false);
+  const renewCode = async (spaceId: string) => {
+    if (refused()) return;
+    setRenewing(true);
+    const invite = await renewInviteCode(spaceId);
+    setRenewing(false);
+    if (!invite) {
+      toast.error("Couldn't make a new code. Try again.");
+      return;
+    }
+    const seenAt = Date.now();
+    setDetailOf((d) => (d && d.space.id === spaceId ? { ...d, ...invite } : d));
+    setDetailSeenAt(seenAt);
+    setInviteHandoff((h) =>
+      h && h.spaceId === spaceId ? { ...h, ...invite, seenAt } : h
+    );
+    toast.success("New invite code. The old one no longer works.");
+  };
+  const detailCodeExpiresAt = detailOf?.inviteCodeExpiresAt ?? 0;
+  const detailCodeExpired = isInviteCodeExpired(
+    detailCodeExpiresAt,
+    detailSeenAt
+  );
+  const handoffCodeExpired =
+    inviteHandoff !== null &&
+    isInviteCodeExpired(
+      inviteHandoff.inviteCodeExpiresAt,
+      inviteHandoff.seenAt
+    );
 
   const shareInvite = async (h: {
     title: string;
@@ -533,11 +577,11 @@ export default function CirclesSection({
     inviteCode: string;
   }) => {
     const code = inviteString(h.spaceId, h.inviteCode);
-    const text = `Join my Tropos Circle "${h.title}" — invite code: ${code}`;
+    const text = `Join my Tropos circle "${h.title}" — invite code: ${code}`;
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Join my Circle on Tropos",
+          title: "Join my circle on Tropos",
           text,
           url: window.location.origin,
         });
@@ -575,7 +619,12 @@ export default function CirclesSection({
     const trimmed = title.trim();
     // Everyone invited reads the name, so it meets the word filter a
     // display name does; the server refuses it with the same sentence.
-    if (containsProfanity(trimmed)) {
+    const filter = wordFilter ?? (await loadWordFilter().catch(() => null));
+    if (!filter) {
+      toast.error("Couldn't start the circle. Try again.");
+      return;
+    }
+    if (filter.containsProfanity(trimmed)) {
       toast.error(OBJECTIONABLE_NAME_MESSAGE);
       return;
     }
@@ -593,7 +642,7 @@ export default function CirclesSection({
       setPendingTargetDate(null);
       trackSocialEvent("circle_created", { circleType: template });
       // Straight into the invite hand-off — a circle of one isn't done.
-      setInviteHandoff({ title: trimmed, ...res });
+      setInviteHandoff({ title: trimmed, ...res, seenAt: Date.now() });
     } else {
       toast.error("Couldn't start the circle. Check the title and try again.");
     }
@@ -732,12 +781,10 @@ export default function CirclesSection({
 
       {isRestricted && <RestrictedNotice />}
 
-      {loading && (
-        <div
-          className="h-16 rounded-xl bg-muted/40 motion-safe:animate-pulse"
-          aria-hidden="true"
-        />
-      )}
+      {/* The card's shape while the list loads, not a bare block: on a
+          phone the list lands seconds after the heading, and a grey box
+          with nothing in it reads as broken. */}
+      {loading && <CirclesCardSkeleton />}
 
       {/* SOCIAL-HOME-01 — a failed list read is NOT an empty list: the
           retry block replaces the list/empty state so a network blip
@@ -745,7 +792,7 @@ export default function CirclesSection({
       {!loading && loadFailed && (
         <div className="p-3 rounded-xl bg-card flex items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            Couldn't load your Circles.
+            Couldn't load your circles.
           </p>
           <Button
             variant="secondary"
@@ -780,28 +827,33 @@ export default function CirclesSection({
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button
-              className="flex-1"
-              onClick={() => {
-                if (refused()) return;
-                haptic("light");
-                setChooserOpen(true);
-              }}
-            >
-              Start a circle
-            </Button>
-            <Button
-              variant="secondary"
-              className="flex-1"
-              onClick={() => {
-                if (refused()) return;
-                haptic("light");
-                setShowJoin(true);
-              }}
-            >
-              Join with code
-            </Button>
+          {/* Side by side while both labels fit on one line, stacked on
+              a narrow card or at larger text, where each wrapped inside
+              its pill. */}
+          <div className="@container">
+            <div className="flex gap-2 @max-[18em]:flex-col">
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  if (refused()) return;
+                  haptic("light");
+                  setChooserOpen(true);
+                }}
+              >
+                Start a circle
+              </Button>
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => {
+                  if (refused()) return;
+                  haptic("light");
+                  setShowJoin(true);
+                }}
+              >
+                Join with code
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -816,7 +868,7 @@ export default function CirclesSection({
             className="block w-full min-h-[44px] text-left active:scale-[0.97] transition-transform"
           >
             <p className="text-base font-bold text-foreground truncate">
-              {circleTitle(featured.space)}
+              {circleTitle(featured.space, wordFilter)}
               {!featured.space.active && (
                 <span className="font-normal text-muted-foreground">
                   {" "}
@@ -862,7 +914,7 @@ export default function CirclesSection({
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">
                 You've reached your target date. Keep training together, or wrap
-                this Circle up.
+                this circle up.
               </p>
               {extendOpen ? (
                 <div className="space-y-2">
@@ -872,7 +924,7 @@ export default function CirclesSection({
                     min={localTomorrowKey()}
                     onChange={(e) => setNewTargetDate(e.target.value)}
                     aria-label="New target date"
-                    className="w-full min-h-[44px] rounded-xl bg-muted border border-border/50 px-3 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    className="ds-input text-sm"
                   />
                   <div className="flex gap-2">
                     <Button
@@ -931,7 +983,7 @@ export default function CirclesSection({
                owner's summaries). */
             <>
               <p className="text-xs text-muted-foreground">
-                Your Circle is ready — invite someone to make it a circle.
+                Your circle is ready — invite someone to make it a circle.
               </p>
               <Button
                 className="w-full"
@@ -940,9 +992,11 @@ export default function CirclesSection({
                   if (!code) return; // narrowing lost across the closure
                   haptic("light");
                   setInviteHandoff({
-                    title: circleTitle(featured.space),
+                    title: circleTitle(featured.space, wordFilter),
                     spaceId: featured.space.id,
                     inviteCode: code,
+                    inviteCodeExpiresAt: featured.inviteCodeExpiresAt ?? 0,
+                    seenAt: Date.now(),
                   });
                 }}
               >
@@ -980,7 +1034,7 @@ export default function CirclesSection({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-foreground truncate">
-                  {circleTitle(c.space)}
+                  {circleTitle(c.space, wordFilter)}
                   {!c.space.active && (
                     <span className="font-normal text-muted-foreground">
                       {" "}
@@ -1005,32 +1059,34 @@ export default function CirclesSection({
           ))}
 
       {!loading && !loadFailed && circles.length > 0 && (
-        <div className="flex gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="flex-1"
-            onClick={() => {
-              if (refused()) return;
-              haptic("light");
-              setGoalPrechosen(false); // manual entry — user still picks a goal
-              setShowCreate(true);
-            }}
-          >
-            Start a circle
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex-1"
-            onClick={() => {
-              if (refused()) return;
-              haptic("light");
-              setShowJoin(true);
-            }}
-          >
-            Join with code
-          </Button>
+        <div className="@container">
+          <div className="flex gap-2 @max-[18em]:flex-col">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="flex-1"
+              onClick={() => {
+                if (refused()) return;
+                haptic("light");
+                setGoalPrechosen(false); // manual entry — user still picks a goal
+                setShowCreate(true);
+              }}
+            >
+              Start a circle
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1"
+              onClick={() => {
+                if (refused()) return;
+                haptic("light");
+                setShowJoin(true);
+              }}
+            >
+              Join with code
+            </Button>
+          </div>
         </div>
       )}
 
@@ -1179,7 +1235,7 @@ export default function CirclesSection({
                 ?.namePlaceholder ?? "e.g. Autumn strength block"
             })`}
             aria-label="Circle name"
-            className="w-full min-h-[44px] px-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="ds-input text-sm"
           />
           {/* PROGRAM-CIRCLE-01 — the hand-off's finish line, saved as
               the circle's targetDate on create. */}
@@ -1221,7 +1277,7 @@ export default function CirclesSection({
                 void openDetail(existing);
               }}
             >
-              Open {circleTitle(trainTogether.existing.space)}
+              Open {circleTitle(trainTogether.existing.space, wordFilter)}
             </Button>
             <Button
               variant="secondary"
@@ -1260,7 +1316,7 @@ export default function CirclesSection({
             onChange={(e) => setJoinInput(e.target.value)}
             placeholder="Invite code"
             aria-label="Invite code"
-            className="w-full min-h-[44px] px-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring font-mono"
+            className="ds-input text-sm font-mono"
           />
           <Button
             className="w-full"
@@ -1279,7 +1335,7 @@ export default function CirclesSection({
         onOpenChange={(open) => {
           if (!open) setDetailOf(null);
         }}
-        title={detailOf ? circleTitle(detailOf.space) : ""}
+        title={detailOf ? circleTitle(detailOf.space, wordFilter) : ""}
         description={detailOf ? memberLine(detailOf.space) : undefined}
       >
         {detailOf && (
@@ -1320,36 +1376,81 @@ export default function CirclesSection({
                     there is room.
                   </p>
                 )}
+                {/* A code works for seven days. An expired one is not
+                    offered for copying, only replaced; a live one can be
+                    replaced at any time, which stops it working at once. */}
                 {detailOf.inviteCode && !isFull(detailOf.space) && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      void navigator.clipboard
-                        ?.writeText(
-                          inviteString(detailOf.space.id, detailOf.inviteCode!)
-                        )
-                        .then(() => {
-                          toast.success("Invite code copied.");
-                          trackSocialEvent("circle_invite_sent", {
-                            inviteMethod: "copy",
-                          });
-                        })
-                        .catch(() =>
-                          toast.error("Couldn't copy. Long-press to select it.")
-                        );
-                    }}
-                  >
-                    <Copy className="size-4 mr-1.5" aria-hidden="true" />
-                    Copy invite code
-                  </Button>
+                  <div className="space-y-1">
+                    {detailCodeExpired ? (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="w-full"
+                        loading={renewing}
+                        onClick={() => void renewCode(detailOf.space.id)}
+                      >
+                        Make a new code
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          void navigator.clipboard
+                            ?.writeText(
+                              inviteString(
+                                detailOf.space.id,
+                                detailOf.inviteCode!
+                              )
+                            )
+                            .then(() => {
+                              toast.success("Invite code copied.");
+                              trackSocialEvent("circle_invite_sent", {
+                                inviteMethod: "copy",
+                              });
+                            })
+                            .catch(() =>
+                              toast.error(
+                                "Couldn't copy. Long-press to select it."
+                              )
+                            );
+                        }}
+                      >
+                        <Copy className="size-4 mr-1.5" aria-hidden="true" />
+                        Copy invite code
+                      </Button>
+                    )}
+                    <div className="flex flex-wrap items-center justify-between gap-x-2">
+                      <p className="text-xs text-muted-foreground">
+                        {inviteCodeExpiryLine(
+                          detailCodeExpiresAt,
+                          detailSeenAt
+                        )}
+                      </p>
+                      {!detailCodeExpired && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          loading={renewing}
+                          onClick={() => void renewCode(detailOf.space.id)}
+                        >
+                          New code
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 )}
 
-                <div className="flex gap-2">
+                {/* Three across while each label fits on one line, and
+                    wrapping when one does not: a button's floor is its
+                    one-line width (`min-w-fit`), so at large text "Need a
+                    nudge" takes a row of its own instead of running off
+                    the sheet. */}
+                <div className="flex flex-wrap gap-2">
                   <Button
                     size="sm"
-                    className="flex-1"
+                    className="min-w-fit flex-1"
                     onClick={() => {
                       haptic("light");
                       setFocusSource("detail");
@@ -1365,7 +1466,7 @@ export default function CirclesSection({
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="flex-1"
+                    className="min-w-fit flex-1"
                     onClick={() => void publish("milestone")}
                   >
                     Milestone
@@ -1373,7 +1474,7 @@ export default function CirclesSection({
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="flex-1"
+                    className="min-w-fit flex-1"
                     onClick={() => void publish("needs_support")}
                   >
                     Need a nudge
@@ -1475,27 +1576,49 @@ export default function CirclesSection({
         onOpenChange={(o) => {
           if (!o) setInviteHandoff(null);
         }}
-        title="Your Circle is ready"
+        title="Your circle is ready"
         description="Invite 1–7 people. The circle only ever sees check-ins, never numbers, meals or photos."
       >
         {inviteHandoff && (
           <div className="px-4 space-y-3 pb-2">
-            <p className="w-full px-3 py-2.5 rounded-xl bg-muted text-sm text-foreground font-mono break-all select-all">
-              {inviteString(inviteHandoff.spaceId, inviteHandoff.inviteCode)}
+            {/* An expired code is not shown or offered; the one way on is
+                a new code, which this sheet then shows. */}
+            {!handoffCodeExpired && (
+              <p className="w-full px-3 py-2.5 rounded-xl bg-muted text-sm text-foreground font-mono break-all select-all">
+                {inviteString(inviteHandoff.spaceId, inviteHandoff.inviteCode)}
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {inviteCodeExpiryLine(
+                inviteHandoff.inviteCodeExpiresAt,
+                inviteHandoff.seenAt
+              )}
             </p>
-            <Button
-              className="w-full"
-              onClick={() => void shareInvite(inviteHandoff)}
-            >
-              Share invite
-            </Button>
-            <Button
-              variant="secondary"
-              className="w-full"
-              onClick={() => void copyInviteCode(inviteHandoff)}
-            >
-              Copy code
-            </Button>
+            {handoffCodeExpired ? (
+              <Button
+                className="w-full"
+                loading={renewing}
+                onClick={() => void renewCode(inviteHandoff.spaceId)}
+              >
+                Make a new code
+              </Button>
+            ) : (
+              <>
+                <Button
+                  className="w-full"
+                  onClick={() => void shareInvite(inviteHandoff)}
+                >
+                  Share invite
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => void copyInviteCode(inviteHandoff)}
+                >
+                  Copy code
+                </Button>
+              </>
+            )}
             <Button
               variant="ghost"
               className="w-full"

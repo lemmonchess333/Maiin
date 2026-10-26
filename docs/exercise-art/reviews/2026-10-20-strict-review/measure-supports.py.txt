@@ -1,0 +1,86 @@
+"""Read-only native projected support contours. No asset edits or approvals."""
+from pathlib import Path
+import json,hashlib
+import numpy as np
+from PIL import Image,ImageDraw,ImageFilter
+def binary_opening(mask,structure=None):
+ return np.asarray(Image.fromarray(mask.astype('uint8')*255).filter(ImageFilter.MinFilter(3)).filter(ImageFilter.MaxFilter(3)))>0
+def label(mask):
+ labels=np.zeros(mask.shape,dtype=np.int32);parent=[0];previous=[]
+ def root(k):
+  while parent[k]!=k:parent[k]=parent[parent[k]];k=parent[k]
+  return k
+ for y,row in enumerate(mask):
+  endpoints=np.flatnonzero(np.diff(np.r_[False,row,False]));current=[]
+  for start,end in zip(endpoints[::2],endpoints[1::2]):
+   neighbours=[root(k)for a,b,k in previous if a<end and b>start]
+   if neighbours:
+    k=min(neighbours)
+    for old in neighbours:parent[root(old)]=k
+   else:k=len(parent);parent.append(k)
+   labels[y,start:end]=k;current.append((start,end,k))
+  previous=current
+ roots=[root(k)for k in range(len(parent))];unique=sorted(set(roots)-{0});renumber={old:i+1 for i,old in enumerate(unique)}
+ lookup=np.array([renumber.get(k,0)for k in roots]);return lookup[labels],len(unique)
+H=Path(__file__).resolve().parent;R=H.parent/'Maiin-burpees'
+inventory=json.loads((H/'current-inventory.json').read_bytes())
+foot_rois={
+ 'lu-raise':(.28,.78,.74,.99),'overhead-extension':(.0,.84,1.,.99),
+ 'pendlay-row':(.25,.80,.70,.99),'front-squat':(.25,.82,.72,.99),
+ 'goblet-squat':(.20,.82,.78,.99),'squat':(.20,.82,.78,.99),
+ 'barbell-curl':(.20,.84,.78,.99),'barbell-row':(.25,.80,.78,.99),
+ 'overhead-press':(.25,.82,.75,.99),'bench-press':(.30,.76,.99,.99),
+ 'skull-crushers':(.30,.76,.99,.99),'incline-db-curl':(.45,.72,.99,.99),
+ 'handstand-push-ups':(.01,.83,.84,.99),
+}
+tower_rois={'rope-tricep-pushdown':(.70,.0,.99,.99),
+ 'face-pulls':(.70,.0,1.,1.),'straight-arm-pulldown':(.0,.0,.24,1.)}
+out=[];gallery=H/'support-proof-v2';gallery.mkdir(exist_ok=True)
+for row in inventory['rows']:
+ eid=row['id']
+ if eid not in foot_rois and eid not in tower_rois:continue
+ samples=[];crops=[]
+ for i,frame in enumerate(row['expected']['frames']):
+  p=R/'public'/frame['path'];im=Image.open(p).convert('RGB');w,h=im.size
+  frac=(foot_rois|tower_rois)[eid];box=tuple(round(v*(w if j%2==0 else h))for j,v in enumerate(frac))
+  a=np.asarray(im.crop(box)).astype(np.int16)
+  if eid in foot_rois:
+   mask=(a.min(2)>=120)&((a.max(2)-a.min(2))<=45)
+   mask=np.asarray(Image.fromarray(mask.astype('uint8')*255).filter(ImageFilter.MaxFilter(3)).filter(ImageFilter.MinFilter(3)))>0
+   if eid=='handstand-push-ups':
+    abs_x=np.arange(box[0],box[2]);mask[:,(abs_x>=.40*w)&(abs_x<.55*w)]=False
+   lab,n=label(mask);objects=[]
+   for k in range(1,n+1):
+    yy,xx=np.nonzero(lab==k)
+    if len(xx)>=30:objects.append((len(xx),xx,yy))
+   objects=sorted(sorted(objects,reverse=True,key=lambda x:x[0])[:2],key=lambda x:x[1].mean())
+   if len(objects)!=2:raise RuntimeError((eid,i,'not two support components'))
+   anchors={};dims={};features=[]
+   for name,(_,xx,yy) in zip(['leftImageSupport','rightImageSupport'],objects):
+    bottom=int(yy.max());xs=xx[yy==bottom]
+    point={'x':float(np.median(xs)+box[0]),'y':bottom+box[1]}
+    anchors[name+'LowestContourMidpoint']=point
+    dims[name+'ProjectedHorizontalSpan']=int(xx.max()-xx.min()+1)
+    features.append({'name':name,'maskPixels':len(xx),'bbox':[int(xx.min()+box[0]),int(yy.min()+box[1]),int(xx.max()+box[0]+1),int(yy.max()+box[1]+1)],'topTouchesROI':bool(yy.min()==0)})
+  else:
+   mask=(a.max(2)>=30)&((a.max(2)-a.min(2))<=20)
+   mask=binary_opening(mask,structure=np.ones((3,3),bool))
+   yy,xx=np.nonzero(mask);left,right=int(xx.min()),int(xx.max());top,bottom=int(yy.min()),int(yy.max())
+   band=yy<=top+int((bottom-top)*.1);left_top,right_top=int(xx[band].min()),int(xx[band].max())
+   ly=yy[band&(xx==left_top)];ry=yy[band&(xx==right_top)]
+   anchors={'towerUpperLeftOuterContour':{'x':left_top+box[0],'y':int(ly.min()+box[1])},'towerUpperRightOuterContour':{'x':right_top+box[0],'y':int(ry.min()+box[1])}}
+   dims={'towerProjectedHorizontalSpan':right-left+1,'towerProjectedVerticalSpan':bottom-top+1}
+   features=[{'bbox':[left+box[0],top+box[1],right+box[0]+1,bottom+box[1]+1],'touchesROI':bool(left==0 or right==a.shape[1]-1 or top==0 or bottom==a.shape[0]-1)}]
+  samples.append({'frame':i+1,**frame,'roi':box,'anchors':anchors,'invariantDimensions':dims,'features':features})
+  crop=im.crop(box);draw=ImageDraw.Draw(crop)
+  for key,point in anchors.items():
+   x,y=point['x']-box[0],point['y']-box[1];draw.ellipse([x-3,y-3,x+3,y+3],outline='#ff4444',width=2)
+  thumb=crop.copy();thumb.thumbnail((400,220));crops.append(thumb)
+ ref=samples[0];anchor_drift=max(abs(s['anchors'][k][axis]-ref['anchors'][k][axis])for s in samples for k in ref['anchors']for axis in ['x','y'])
+ dimension_drift=max(abs(s['invariantDimensions'][k]/ref['invariantDimensions'][k]-1)for s in samples for k in ref['invariantDimensions'])
+ out.append({'id':eid,'method':'thresholded native contours in manually scoped physical support/hardware regions; not calibrated 3D; no approval inferred','maximumAnchorDriftPx':anchor_drift,'maximumDimensionDriftRatio':dimension_drift,'numericPass':anchor_drift<=1 and dimension_drift<=.01,'samples':samples})
+ sheet=Image.new('RGB',(800,3*250),(25,25,28));draw=ImageDraw.Draw(sheet)
+ for i,crop in enumerate(crops):sheet.paste(crop,((i%2)*400,(i//2)*250+25));draw.text(((i%2)*400+3,(i//2)*250+4),f'{eid} {i+1}',fill='white')
+ sheet.save(gallery/f'{eid}.png')
+(H/'support-measurements-v2.json').write_text(json.dumps(out,indent=2)+'\n')
+print(json.dumps([{k:v for k,v in r.items()if k not in ['samples','method']}for r in out],indent=2))

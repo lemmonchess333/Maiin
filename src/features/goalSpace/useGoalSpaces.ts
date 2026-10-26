@@ -42,6 +42,7 @@ import {
   type WeeklyFocus,
 } from "./goalSpaceTypes";
 import { describeJoinRejection } from "./joinRejection";
+import { inviteCodeExpiresAt } from "./inviteCode";
 
 /** A join either landed, or was refused for a reason worth showing. */
 export type JoinOutcome = { ok: true } | { ok: false; reason: string };
@@ -58,6 +59,22 @@ export interface CircleSummary {
   space: GoalSpace;
   /** Present only for the owner (from the create callable / doc). */
   inviteCode: string | null;
+  /** When that code stops working (ms), alongside it; null without one. */
+  inviteCodeExpiresAt: number | null;
+}
+
+/** A Circle's invite code as the owner holds it: the code and its expiry. */
+export interface CircleInvite {
+  inviteCode: string;
+  inviteCodeExpiresAt: number;
+}
+
+/** The expiry a callable answered with, or the rule's own for a code made
+ *  just now (a response from before the field existed). */
+function answeredExpiry(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value)
+    ? value
+    : inviteCodeExpiresAt({ createdAt: Date.now() });
 }
 
 export interface CircleDetail {
@@ -86,12 +103,15 @@ async function readCircleIndex(uid: string): Promise<CircleSummary[]> {
         const data = snap.data();
         const space = parseGoalSpace(data);
         if (!space) return null;
+        const inviteCode =
+          space.ownerId === uid && typeof data.inviteCode === "string"
+            ? data.inviteCode
+            : null;
         return {
           space,
-          inviteCode:
-            space.ownerId === uid && typeof data.inviteCode === "string"
-              ? data.inviteCode
-              : null,
+          inviteCode,
+          inviteCodeExpiresAt:
+            inviteCode === null ? null : inviteCodeExpiresAt(data),
         } satisfies CircleSummary;
       } catch {
         // Removed since the link was written (or rules denied) —
@@ -160,14 +180,48 @@ export function useGoalSpaces(uid: string | undefined) {
       type: GoalSpaceType;
       title: string;
       targetDate?: string;
-    }): Promise<{ spaceId: string; inviteCode: string } | null> => {
+    }): Promise<({ spaceId: string } & CircleInvite) | null> => {
       try {
         const call = httpsCallable(fns(), "createGoalSpace");
         const res = await call(input);
         await reload();
-        return res.data as { spaceId: string; inviteCode: string };
+        const data = res.data as {
+          spaceId: string;
+          inviteCode: string;
+          inviteCodeExpiresAt?: unknown;
+        };
+        return {
+          spaceId: data.spaceId,
+          inviteCode: data.inviteCode,
+          inviteCodeExpiresAt: answeredExpiry(data.inviteCodeExpiresAt),
+        };
       } catch (err) {
         logger.error("goalSpaces: create failed", err);
+        return null;
+      }
+    },
+    [reload]
+  );
+
+  /** The owner's new invite code: the old one stops working at once.
+   *  Server-owned (the space doc is rules-locked), so the list reloads to
+   *  carry the new code into every summary. */
+  const renewInviteCode = useCallback(
+    async (spaceId: string): Promise<CircleInvite | null> => {
+      try {
+        const call = httpsCallable(fns(), "renewGoalSpaceInviteCode");
+        const res = await call({ spaceId });
+        await reload();
+        const data = res.data as {
+          inviteCode: string;
+          inviteCodeExpiresAt?: unknown;
+        };
+        return {
+          inviteCode: data.inviteCode,
+          inviteCodeExpiresAt: answeredExpiry(data.inviteCodeExpiresAt),
+        };
+      } catch (err) {
+        logger.error("goalSpaces: renew invite code failed", err);
         return null;
       }
     },
@@ -372,6 +426,7 @@ export function useGoalSpaces(uid: string | undefined) {
     loadFailed: current?.failed ?? false,
     reload,
     createCircle,
+    renewInviteCode,
     joinCircle,
     leaveCircle,
     loadDetail,

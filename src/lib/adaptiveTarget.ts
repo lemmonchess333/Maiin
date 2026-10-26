@@ -191,6 +191,9 @@ export interface AdaptiveTdeeView {
   warmupFraction: number;
   /** True when live progress has slipped behind the rolling window. */
   stalled: boolean;
+  /** The learned maintenance behind a learned target (the target before
+   *  the goal's deficit or surplus); null while the formula wins. */
+  maintenance: number | null;
 }
 
 export interface ResolveAdaptiveTargetInput {
@@ -255,6 +258,7 @@ function inactiveView(formulaTarget: number): AdaptiveTdeeView {
     showWarmup: false,
     warmupFraction: 0,
     stalled: false,
+    maintenance: null,
   };
 }
 
@@ -304,6 +308,7 @@ export function resolveAdaptiveTarget(
         showWarmup: false,
         warmupFraction: Math.max(latched, 1),
         stalled: false,
+        maintenance: capPrev.lastApplied - goalOffset,
       },
       capState: capPrev,
       capChanged: false,
@@ -351,6 +356,7 @@ export function resolveAdaptiveTarget(
         showWarmup: loaded,
         warmupFraction: Math.max(latched, liveFraction),
         stalled: loaded && liveFraction + 0.001 < latched,
+        maintenance: capPrev.lastApplied - goalOffset,
       },
       capState: capPrev,
       capChanged: false,
@@ -399,6 +405,12 @@ export function resolveAdaptiveTarget(
       showWarmup: loaded && resolved.showWarmup,
       warmupFraction,
       stalled,
+      maintenance:
+        resolved.source !== "learned"
+          ? null
+          : result.learnedTDEE != null
+            ? Math.round(result.learnedTDEE)
+            : resolved.value - goalOffset,
     },
     capState: cap?.capState ?? null,
     capChanged: cap?.changed ?? false,

@@ -21,6 +21,7 @@ import {
 } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { groupText } from "@/test/localeGrouping";
 
 const h = vi.hoisted(() => ({
   profile: null as any,
@@ -215,6 +216,13 @@ vi.mock("@/components/program/FellBehindSheet", () => ({
 vi.mock("@/components/program/LiftReturnSheet", () => ({
   default: () => null,
 }));
+/* The runner's return has its own suite (Home.runReturn.test.tsx). */
+vi.mock("@/components/program/RunReturnSheet", () => ({
+  default: () => null,
+}));
+vi.mock("@/features/program/useRunReturn", () => ({
+  useRunReturn: () => ({ daysAway: null, dismissKey: null, offer: null }),
+}));
 vi.mock("@/components/program/DayActionSheet", () => ({
   default: () => null,
 }));
@@ -371,6 +379,10 @@ describe("the first-visit walk on Home", () => {
       { name: "Your first workout" },
       { timeout: 3000 }
     );
+    // FV3: it names this person's session, as its card does.
+    expect(screen.getByRole("dialog")).toHaveTextContent(
+      /Full Body Circuit A: 1 exercise, about \d+ min, starting with Squat\./
+    );
     await press("Next");
     await screen.findByRole("dialog", { name: "Your first week" });
     expect(screen.getByRole("dialog")).toHaveTextContent(
@@ -378,6 +390,10 @@ describe("the first-visit walk on Home", () => {
     );
     await press("Next");
     await screen.findByRole("dialog", { name: "Food" });
+    // And today's target, as Home's food card shows it.
+    expect(screen.getByRole("dialog")).toHaveTextContent(
+      `Today’s target is ${groupText(2200)} kcal`
+    );
     await press("Done");
 
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
@@ -494,13 +510,20 @@ describe("the first-week card's rows open their step", () => {
     );
   });
 
-  it("the weigh-ins open the weigh-in sheet", () => {
+  it("the weigh-ins open the weigh-in sheet", async () => {
     renderHome();
     expect(screen.queryByText("Weigh-in sheet")).toBeNull();
+    /* The sheet is lazy, and Home fetches it once it has drawn; tap once
+       that has landed, as a person would. (A factory-mocked module asked
+       for again while its first import is still in flight never wakes a
+       suspended lazy() in vitest; a real module does.) */
+    await act(async () => {
+      await import("@/components/home/WeightLogSheet");
+    });
     fireEvent.click(
       screen.getByRole("button", { name: /Weigh in on three mornings/ })
     );
-    expect(screen.getByText("Weigh-in sheet")).toBeInTheDocument();
+    expect(await screen.findByText("Weigh-in sheet")).toBeInTheDocument();
   });
 
   it("the first workout is pointed out on today's card", async () => {

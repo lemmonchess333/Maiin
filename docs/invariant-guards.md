@@ -25,7 +25,7 @@ inflated new-user PI).
 | `validatePlanPayload.cross.test.ts`     | plan-payload validation identical                                                                                                                  |
 | `challengeTiers.cross.test.ts`          | challenge-tier resolution identical                                                                                                                |
 | `aiScanQuota.parity.cross.test.ts`      | AI scan-quota accounting identical                                                                                                                 |
-| `scheduledRunCompletion.cross.test.ts`  | scheduled-run completion identical                                                                                                                 |
+| `raceDayCompletion.test.js` (functions) | not a cross-test: the server's race-day rule is a deliberate non-mirror of the client's slot rule (ADR-0008), so golden fixtures hold it           |
 | `mirrorCrossTestGate.test.ts`           | **meta-guard:** every `functions/*.js` that declares a mirror is either pinned by a cross-test or consciously classified as not-an-equality-mirror |
 
 ## Persisted-field integrity
@@ -51,9 +51,16 @@ must carry every mirrored/derived companion.
 
 ## Supply chain
 
-| Guard                              | Pins                                                                                                                                                                                                                                                                                                                                         |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `workflowSupplyChainGuard.test.ts` | every third-party GitHub Action in `.github/workflows` is pinned to a 40-hex commit sha with a `# vX` comment (Dependabot keeps pinned actions updated via that comment); `dependabot-auto-merge.yml` stays on `pull_request_target` with the dependabot-actor gate, no `actions/checkout`, and no `run:` step that executes repository code |
+| Guard                              | Pins                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `workflowSupplyChainGuard.test.ts` | every third-party GitHub Action in `.github/workflows` is pinned to a 40-hex commit sha with a `# vX` comment (Dependabot keeps pinned actions updated via that comment); `dependabot-auto-merge.yml` stays on `pull_request_target` with the dependabot-actor gate, no `actions/checkout`, and no `run:` step that executes repository code; every `npm install -g firebase-tools` names one exact version, the same in every workflow (the CLI deploys with the production service account and sits outside the lockfile and Dependabot) |
+
+## CI composition
+
+| Guard                              | Pins                                                                                                                                                                                                                                                                                                                      |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requiredCheckComposition.test.ts` | the required `unit` job runs lint, the suite, the deploy verifiers' offline tests and the dist-size ratchet; `npm run verify` runs exactly the checks `unit` runs, no more and no fewer, and `test:verifiers` runs exactly the verifier step's commands (verify had skipped those tests, and ran a check no workflow ran) |
+| `workflowJobTimeouts.test.ts`      | every job that takes a runner sets its own whole-number `timeout-minutes`; a step-level one does not count (nine jobs had GitHub's six-hour default, six in the release chain, where one hang would hold the `production-release` queue)                                                                                  |
 
 ## State-machine correctness
 

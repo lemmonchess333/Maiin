@@ -259,6 +259,27 @@ async function applySubscriptionToUser(uid, signedTransactionInfo) {
   });
 }
 
+/**
+ * What a purchase callable tells the app when it fails. A thrown
+ * HttpsError is already worded for the person; a transaction bound to
+ * another account says so; anything else is a fixed sentence, never the
+ * error's own text (a bundle id, a verifier's internals), which the
+ * callable logs instead.
+ */
+function purchaseCallableError(err) {
+  if (err instanceof functions.https.HttpsError) return err;
+  if (err && err.code === "transaction-bound-elsewhere") {
+    return new functions.https.HttpsError("failed-precondition", err.message, {
+      errorCode: "transaction-bound-elsewhere",
+    });
+  }
+  return new functions.https.HttpsError(
+    "internal",
+    "Couldn't confirm the purchase. Try again, or contact support."
+  );
+}
+exports._purchaseCallableError = purchaseCallableError;
+
 // Called by the iOS client immediately after a StoreKit purchase completes.
 exports.verifyApplePurchase = functions
   // STRIPE_SECRET_KEY: applySubscriptionToUser may cancel a displaced
@@ -290,7 +311,7 @@ exports.verifyApplePurchase = functions
       return await applySubscriptionToUser(uid, signedTransactionInfo);
     } catch (err) {
       console.error(`verifyApplePurchase: uid=${uid}`, err);
-      throw new functions.https.HttpsError("internal", err.message);
+      throw purchaseCallableError(err);
     }
   });
 
@@ -454,10 +475,12 @@ exports.appleIAPWebhook = functions
               .firestore()
               .collection("appleNotifications")
               .doc(notificationUUID)
+              // No uid: this account is being erased, and the record
+              // outlived it. paymentEventsPostDeletion keeps the hashed
+              // prefix an operator needs.
               .set({
                 type: notificationType,
                 originalTransactionId,
-                uid,
                 processedAt: admin.firestore.FieldValue.serverTimestamp(),
                 result: "skipped_account_deleted",
               });
@@ -666,7 +689,6 @@ exports.restoreApplePurchases = functions
       return await applySubscriptionToUser(uid, signedTransactionInfo);
     } catch (err) {
       console.error(`restoreApplePurchases: uid=${uid}`, err);
-      if (err instanceof functions.https.HttpsError) throw err;
-      throw new functions.https.HttpsError("internal", err.message);
+      throw purchaseCallableError(err);
     }
   });

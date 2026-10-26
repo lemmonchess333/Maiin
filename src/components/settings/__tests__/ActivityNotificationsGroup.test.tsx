@@ -39,10 +39,14 @@ function switchFor(label: string) {
 
 function shown() {
   return Object.fromEntries(
-    ["Props", "Comments", "New followers", "Circles", "Spaces"].map((l) => [
-      l,
-      switchFor(l).getAttribute("aria-checked") === "true",
-    ])
+    [
+      "Props",
+      "Comments",
+      "New followers",
+      "Follow requests",
+      "Circles",
+      "Spaces",
+    ].map((l) => [l, switchFor(l).getAttribute("aria-checked") === "true"])
   );
 }
 
@@ -59,12 +63,13 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe("ActivityNotificationsGroup", () => {
-  it("shows S3's defaults to someone who never chose", () => {
+  it("shows S3's defaults to someone who never chose, and Polish2's follow requests on", () => {
     render(<ActivityNotificationsGroup />);
     expect(shown()).toEqual({
       Props: true,
       Comments: true,
       "New followers": false,
+      "Follow requests": true,
       Circles: true,
       Spaces: true,
     });
@@ -94,6 +99,7 @@ describe("ActivityNotificationsGroup", () => {
         kudos: true,
         comments: true,
         follows: true,
+        followRequests: true,
         circles: true,
         spaces: true,
       },

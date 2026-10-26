@@ -1,0 +1,156 @@
+{
+  "exerciseId": "barbell-curl",
+  "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "reviewer": "Root Codex native illustration polish review",
+  "reviewedAt": "2026-10-19T19:53:56.595270+00:00",
+  "reference": {
+    "path": "form-frames/barbell-curl/1.webp",
+    "sha256": "c90649761627eaaa6da742d67cd8d3873817409b44890b975ed79ac9d4995e2f"
+  },
+  "cueSha256": "be3c8aab267aaf3ff369ada3e64af668f4c366b0988bcedae25bf871e2671a75",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Scoped native polish review: Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers. Actual registered component checks are recorded separately; no strict certificate asserted."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/barbell-curl/1.webp",
+      "sha256": "c90649761627eaaa6da742d67cd8d3873817409b44890b975ed79ac9d4995e2f",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-curl/2026-10-19-illustration-polish/1.png",
+        "sha256": "26dbf037df78ccb1fb300c60f7482f24fd5c7e872ee1f3a94f282371da9bfde2"
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/2.webp",
+      "sha256": "bb2767e5055f12e1fd7d2abad5c28e20819376055fb5b59fbe80a1ef1da651f7",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-curl/2026-10-19-illustration-polish/2.png",
+        "sha256": "4509a2a3636a6ead09f13548ff777c3926364b6631b5663c836628c63458b81c"
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/3.webp",
+      "sha256": "c9af824a7667489d94c663615a2a3efff14e8c43e89982f8eac2014b8483209c",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-curl/2026-10-19-illustration-polish/3.png",
+        "sha256": "30f883000eee8b14ba3845c5feeb238553c3c12460f3fd5916d62f500c65d1a6"
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/4.webp",
+      "sha256": "9e536646540943b503389e416334556333ac84f2d0b8ea3a30e58719d05e1f86",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-curl/2026-10-19-illustration-polish/4.png",
+        "sha256": "f019f71610841d7a2c6c94f000ab712da41791e18a20f735e616dd8db966e036"
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/5.webp",
+      "sha256": "c9af824a7667489d94c663615a2a3efff14e8c43e89982f8eac2014b8483209c",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-curl/2026-10-19-illustration-polish/5.png",
+        "sha256": "30f883000eee8b14ba3845c5feeb238553c3c12460f3fd5916d62f500c65d1a6"
+      }
+    },
+    {
+      "path": "form-frames/barbell-curl/6.webp",
+      "sha256": "bb2767e5055f12e1fd7d2abad5c28e20819376055fb5b59fbe80a1ef1da651f7",
+      "anchors": {},
+      "invariantDimensions": {},
+      "source": {
+        "path": "docs/exercise-art/sources/barbell-curl/2026-10-19-illustration-polish/6.png",
+        "sha256": "4509a2a3636a6ead09f13548ff777c3926364b6631b5663c836628c63458b81c"
+      }
+    }
+  ],
+  "approval": {
+    "actor": "Human owner in this chat",
+    "instruction": "What minor illustration issues are still left? Fix those too, same model and colours, no shorts, and get them merged. Stop asking for approval.",
+    "context": "Explicit authority for scoped native colour/equipment/cutout corrections, local registration, verification and normal merge. Not strict certification."
+  },
+  "findings": [
+    "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers.",
+    "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+  ],
+  "resolvedIllustrationIssues": [
+    "Mapped inherited chromatic muscle fields to the established primary/secondary palette, preserving source per-pixel lightness, contours, native canvas, neutral equipment and trainers."
+  ],
+  "priorFindings": {
+    "record": "docs/exercise-art/releases/2026-09-owner/barbell-curl.json",
+    "sha256": "2b886dc071467438d5f63e47ea2011718d0cea653f6fb6e5b705e67c51724c40",
+    "disposition": "Historical record preserved verbatim. Cosmetic issues addressed here are described separately; prior strict-measurement and source-provenance statements are not erased.",
+    "hashScope": "Exact repository blob bytes, independent of Windows checkout CRLF."
+  },
+  "provenance": {
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "sourceFolder": "docs/exercise-art/sources/barbell-curl/2026-10-19-illustration-polish",
+    "sourceArchive": {
+      "path": "docs/exercise-art/sources/barbell-curl/2026-10-19-illustration-polish/barbell-curl-native-polish.zip",
+      "sha256": "7c493f42f406245d588c9d9470963b8ea8dbdea76a9138bd50f7ff2a2e98bc0c",
+      "bytes": 6387649
+    },
+    "priorRelease": "docs/exercise-art/releases/2026-09-owner/barbell-curl.json",
+    "method": "Exact native original drawings plus sparse editable colour/equipment pixels; alpha-only stray-mark cleanup for prepared cards. Portable source layers and deterministic lossless exports independently re-executed byte-for-byte.",
+    "reproductionScope": "Same-layer composition and export reproduction; no independent anatomy/physics certification.",
+    "newImageGenerationCalls": 0,
+    "anatomicalTransforms": []
+  },
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-19-illustration-polish/review.json"
+}

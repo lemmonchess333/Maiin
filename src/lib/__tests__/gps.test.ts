@@ -1098,6 +1098,32 @@ function meridianPath(n: number, latStep: number, dtSec: number): GPSPoint[] {
   return pts;
 }
 
+describe("a track break joins nothing", () => {
+  /** Two 555 m pieces, the second starting 5 km on behind a break, as a
+   *  GPX file with two track segments arrives. */
+  function brokenTrack(): GPSPoint[] {
+    const first = meridianPath(6, 0.001, 10);
+    const second = meridianPath(6, 0.001, 10).map((p, i) => ({
+      ...p,
+      lat: p.lat + 0.05,
+      timestamp: p.timestamp + 70_000,
+      ...(i === 0 ? { breakBefore: true } : {}),
+    }));
+    return [...first, ...second];
+  }
+
+  it("in the splits: the line across the break is no distance", () => {
+    const pts = brokenTrack();
+    expect(totalDistance(pts)).toBeLessThan(1200);
+    expect(calculateSplits(pts)).toHaveLength(1);
+  });
+
+  it("in the best efforts: no 5K is found across it", () => {
+    const efforts = detectBestEfforts(brokenTrack(), 6000);
+    expect(efforts.map((e) => e.label)).toEqual(["1K"]);
+  });
+});
+
 describe("detectBestEfforts", () => {
   it("returns nothing when the run is shorter than the smallest target", () => {
     const pts = meridianPath(5, 0.001, 10); // ~445m

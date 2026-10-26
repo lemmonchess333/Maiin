@@ -10,6 +10,7 @@
  * over an auto-pause does not stop the timer a second time.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { restoreRealTimers } from "@/test/fakeTimers";
 import {
   act,
   cleanup,
@@ -324,9 +325,9 @@ beforeEach(() => {
   h.timeCue.mockReset();
   h.speak.mockReset();
 });
-afterEach(() => {
+afterEach(async () => {
+  await restoreRealTimers();
   cleanup();
-  vi.useRealTimers();
   localStorage.clear();
 });
 
@@ -409,7 +410,7 @@ describe("recovering coaching and checkpoint durability", () => {
         fireEvent.click(screen.getByRole("button", { name: "Resume run" }))
       );
       expect(
-        screen.getByText("Warm-up", { selector: "p.font-extrabold" })
+        screen.getByText("Warm-up", { selector: "p.text-lg.font-bold" })
       ).toBeInTheDocument();
       for (const [elapsed, metres] of [
         [60, 200],
@@ -425,7 +426,7 @@ describe("recovering coaching and checkpoint durability", () => {
         view.rerender(tree());
       }
       expect(
-        screen.getByText("Recovery two", { selector: "p.font-extrabold" })
+        screen.getByText("Recovery two", { selector: "p.text-lg.font-bold" })
       ).toBeInTheDocument();
       expect(screen.getByText("0:15")).toBeInTheDocument();
       if (savedPhase === "paused")
@@ -440,7 +441,7 @@ describe("recovering coaching and checkpoint durability", () => {
         fireEvent.click(screen.getByRole("button", { name: "Resume run" }))
       );
       expect(
-        screen.getByText("Recovery two", { selector: "p.font-extrabold" })
+        screen.getByText("Recovery two", { selector: "p.text-lg.font-bold" })
       ).toBeInTheDocument();
       expect(screen.getByText("0:15")).toBeInTheDocument();
       expect(h.speak).toHaveBeenCalledTimes(spokenBefore);
@@ -451,7 +452,7 @@ describe("recovering coaching and checkpoint durability", () => {
       h.gps.distance = 1150;
       restoredView.rerender(tree());
       expect(
-        screen.getByText("Rep three", { selector: "p.font-extrabold" })
+        screen.getByText("Rep three", { selector: "p.text-lg.font-bold" })
       ).toBeInTheDocument();
       expect(
         h.speak.mock.calls.filter(([cue]) => cue === "Third rep")
@@ -511,7 +512,7 @@ describe("recovering coaching and checkpoint durability", () => {
         screen.getByText(/Continuing without coaching/)
       ).toBeInTheDocument();
       expect(
-        document.querySelector("p.font-extrabold.leading-tight")
+        document.querySelector("p.text-lg.font-bold.leading-tight")
       ).toBeNull();
       fireEvent.click(screen.getByRole("button", { name: "Finish" }));
       const payload = JSON.parse(
@@ -1027,7 +1028,7 @@ describe("interrupted manual distance entry", () => {
       expect(h.gpsCalls).not.toContain("start");
       fireEvent.click(
         screen.getByRole("button", {
-          name: mode === "manual" ? "Save Manual Run" : "Save Treadmill Run",
+          name: mode === "manual" ? "Save manual run" : "Save treadmill run",
         })
       );
       const payload = JSON.parse(
@@ -1068,7 +1069,7 @@ describe("interrupted manual distance entry", () => {
         screen.getByRole("textbox", { name: "Distance covered" })
       ).toHaveValue(raw);
       expect(
-        screen.getByRole("button", { name: "Save Manual Run" })
+        screen.getByRole("button", { name: "Save manual run" })
       ).toBeDisabled();
       expect(h.timer.isRunning).toBe(false);
       expect(h.gpsCalls).not.toContain("start");
@@ -1253,7 +1254,7 @@ describe("a run on the treadmill", () => {
       fireEvent.change(distance, { target: { value: "6" } });
       await act(async () => {
         fireEvent.click(
-          screen.getByRole("button", { name: "Save Treadmill Run" })
+          screen.getByRole("button", { name: "Save treadmill run" })
         );
       });
       expect(screen.getByText(handed)).toBeInTheDocument();
@@ -1274,7 +1275,7 @@ describe("manual structured coaching through the real player", () => {
     }
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Selected run type: Easy Run. Tap to change.",
+        name: "Selected run type: Easy run. Tap to change.",
       })
     );
     fireEvent.click(
@@ -1286,7 +1287,7 @@ describe("manual structured coaching through the real player", () => {
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", {
-          name: treadmill ? "Start on the treadmill" : "Start Intervals",
+          name: treadmill ? "Start on the treadmill" : "Start intervals",
           hidden: true,
         })
       );
@@ -1334,7 +1335,7 @@ describe("manual structured coaching through the real player", () => {
         target: { value: "2.75" },
       }
     );
-    fireEvent.click(screen.getByRole("button", { name: "Save Treadmill Run" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save treadmill run" }));
     const payload = JSON.parse(
       screen.getByTestId("finish-payload").textContent!
     );
@@ -1362,7 +1363,7 @@ describe("manual structured coaching through the real player", () => {
       }
     );
     expect(screen.getByText("mi")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Save Manual Run" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save manual run" }));
     const payload = JSON.parse(
       screen.getByTestId("finish-payload").textContent!
     );
@@ -1373,5 +1374,55 @@ describe("manual structured coaching through the real player", () => {
       runConfig: { activityType: "manual" },
     });
     expect(payload.runConfig.segments).toHaveLength(9);
+  });
+});
+
+/* Home's and Train's In progress strip offer a run left unsaved, and the
+   finish screen holds a run only in memory until it is saved. */
+describe("a run picked up from the In progress strip", () => {
+  function openAt(url: string) {
+    return render(
+      <MemoryRouter initialEntries={[url]}>
+        <Routes>
+          <Route path="/run" element={<Run />} />
+          <Route path="/run-summary" element={<Summary />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+
+  it("carries on with the stored run without asking again", async () => {
+    const snapshot = saveInterruptedRun("paused");
+    h.gps.points = snapshot.points;
+    await act(async () => {
+      openAt("/run?resume=1");
+    });
+    expect(screen.queryByRole("button", { name: "Resume run" })).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Carry on" })
+    ).toBeInTheDocument();
+    expect(h.gpsCalls).toContain("appendPoints");
+  });
+
+  it("without the flag, still asks", async () => {
+    saveInterruptedRun("paused");
+    await act(async () => {
+      openAt("/run");
+    });
+    expect(
+      screen.getByRole("button", { name: "Resume run" })
+    ).toBeInTheDocument();
+  });
+
+  it("keeps a finished run stopped, so recovering it never runs on", async () => {
+    await resumeFromSnapshot("active");
+    expect(h.timer.isRunning).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+    expect(screen.getByTestId("finish-payload")).toBeInTheDocument();
+    expect(readStoredRun("recording-test")).toMatchObject({
+      phase: "paused",
+      isRunning: false,
+      accumulatedSeconds: 600,
+    });
   });
 });

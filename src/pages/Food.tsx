@@ -24,6 +24,7 @@ import PageShell from "@/components/ui/PageShell";
 import { pageItemVariant } from "@/components/ui/pageMotion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
+import { appErrorMessage } from "@/lib/callableErrors";
 import {
   commitMealDeletes,
   deleteAfterUndoWindow,
@@ -45,6 +46,7 @@ import { usualMeal, usualMealHeading, usualMealPortion } from "@/lib/usualMeal";
 import { duplicatedServingPayload } from "@/lib/servingEdit";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
+import { modelNumber, parseModelNumber, safeNum } from "@/lib/foodParseHelpers";
 import { Pencil, RotateCcw, X } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 const FoodAnalyzer = lazyRetry(() => import("@/components/FoodAnalyzer"));
@@ -74,12 +76,15 @@ import FoodWeekStrip from "@/components/food/FoodWeekStrip";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { foodWeek, foodWeekStart } from "@/lib/foodWeek";
 import { parseLocalDate } from "@/lib/dateHelpers";
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
+import { keepFoodDraft, keptFoodDraft } from "@/lib/foodDraft";
 import { useDailyTargetsInRange } from "@/hooks/useDailyTargetsInRange";
 import FoodOfflineBanner from "@/components/food/FoodOfflineBanner";
 import EditServingsSheet from "@/components/food/EditServingsSheet";
 import CopyMealsSheet from "@/components/food/CopyMealsSheet";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import { useInFlightGuard } from "@/hooks/useInFlightGuard";
+import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
 import FoodComposerCard from "@/components/food/FoodComposerCard";
 import ScanGrow from "@/components/food/ScanGrow";
@@ -176,9 +181,11 @@ export default function Food() {
     closed: composerHintClosed,
   });
   const FOOD_TAP_BACK_DAYS = 90;
-  const todayStr = format(new Date(), "yyyy-MM-dd");
+  // Today, from the shared day key: it moves at midnight and when the app
+  // comes back, so a diary left open overnight opens on the new day.
+  const todayStr = useLocalDateKey();
   const minDateStr = format(
-    addDays(new Date(), -FOOD_TAP_BACK_DAYS),
+    addDays(parseLocalDate(todayStr), -FOOD_TAP_BACK_DAYS),
     "yyyy-MM-dd"
   );
   const selectedDate = useMemo(() => {
@@ -215,10 +222,13 @@ export default function Food() {
   const [scanGrowFrom, setScanGrowFrom] = useState<DOMRect | null>(null);
   const [scannerShown, setScannerShown] = useState(false);
   const reducedMotion = useReducedMotion();
-  const [{ text: nlInput, revision: nlInputRevision }, setNlDraft] = useState({
-    text: "",
-    revision: 0,
-  });
+  // A meal typed and not yet logged survives a tab switch (`foodDraft`).
+  const [{ text: nlInput, revision: nlInputRevision }, setNlDraft] = useState(
+    () => ({ text: keptFoodDraft(uid, selectedDate), revision: 0 })
+  );
+  useEffect(() => {
+    keepFoodDraft(uid, nlInput, selectedDate);
+  }, [uid, nlInput, selectedDate]);
   const setNlInput = useCallback((text: string) => {
     setNlDraft((draft) => ({ text, revision: draft.revision + 1 }));
   }, []);
@@ -409,7 +419,10 @@ export default function Food() {
     addDays(parseLocalDate(weekStartKey), -1),
     "yyyy-MM-dd"
   );
-  const recentMealsFrom = format(addDays(new Date(), -30), "yyyy-MM-dd");
+  const recentMealsFrom = format(
+    addDays(parseLocalDate(todayStr), -30),
+    "yyyy-MM-dd"
+  );
   const mealsFrom =
     dayBeforeWeek < recentMealsFrom ? dayBeforeWeek : recentMealsFrom;
   const {
@@ -419,6 +432,7 @@ export default function Food() {
     editMeal,
     loading: mealsLoading,
     error: mealsError,
+    serverConfirmed: mealsServerConfirmed,
     refresh: refreshMeals,
   } = useMeals({
     from: mealsFrom,
@@ -525,11 +539,6 @@ export default function Food() {
      other toast / caption surfaces without copy-pasting the
      three-branch ladder. */
 
-  const safeNum = (value: unknown): number => {
-    const num = Number(value);
-    return isNaN(num) || value == null ? 0 : num;
-  };
-
   /* Slot derivation (explicit meal field first, else local log hour)
      lives in `@/lib/mealSlots` since the timeline migration — the
      timeline derives each row's slot chip from the same function, so
@@ -569,7 +578,10 @@ export default function Food() {
      read's 24-hour arithmetic across a clock change. */
   const { targets: dayTargets } = useDailyTargetsInRange(
     uid,
-    differenceInCalendarDays(new Date(), parseLocalDate(mealsFrom)) + 1
+    differenceInCalendarDays(
+      parseLocalDate(todayStr),
+      parseLocalDate(mealsFrom)
+    ) + 1
   );
   const weekDays = useMemo(
     () =>
@@ -674,7 +686,11 @@ export default function Food() {
 
   useEffect(() => {
     const mealCount = todaysMeals.length;
-    if (mealCount === 0 || mealsLoading || mealsError) return;
+    if (mealsLoading || mealsError) return;
+    // Deleting/moving the final meal must also clear Home's food-day signal.
+    // A cached empty query or a durable delete still waiting to sync is not
+    // evidence of an empty server diary, so keep the old count until confirmed.
+    if (mealCount === 0 && !mealsServerConfirmed) return;
     // Fire-and-forget previously: a failed log write (permission, offline)
     // would silently desync the streak system from the user's actual
     // activity. We removed the meal success toast in 0f68ff3
@@ -684,15 +700,19 @@ export default function Food() {
     // food-save-error so rapid retries collapse into one message.
     saveLog({
       date: selectedDate,
-      workouts: 0,
       meals: mealCount,
-      hasPR: false,
-      notes: "",
     }).catch((err) => {
       logger.error("[Food] daily log save failed", err);
       toast.error("Couldn't update today's log", { id: "food-save-error" });
     });
-  }, [todaysMeals.length, selectedDate, saveLog, mealsLoading, mealsError]);
+  }, [
+    todaysMeals.length,
+    selectedDate,
+    saveLog,
+    mealsLoading,
+    mealsError,
+    mealsServerConfirmed,
+  ]);
 
   // Food6a-3: tap-back limited to 90 days; beyond that the History
   // page is the surface for review (privacy + data freshness).
@@ -974,13 +994,21 @@ export default function Food() {
     if (consent === "allowed") {
       try {
         const result = await analyzeFoodText(nlInput);
-        if (result && result.items?.length > 0) {
+        // Every item needs a calorie figure to log. One the model wrote as
+        // words is read as the local parser would read the meal; a macro it
+        // left out is 0, as the scan path counts it, never the NaN total
+        // the raw value made.
+        if (
+          result &&
+          result.items?.length > 0 &&
+          result.items.every((i) => parseModelNumber(i.calories) !== null)
+        ) {
           items = result.items.map((i) => ({
             name: i.name,
-            calories: i.calories,
-            protein: i.protein,
-            carbs: i.carbs,
-            fat: i.fat,
+            calories: modelNumber(i.calories),
+            protein: modelNumber(i.protein),
+            carbs: modelNumber(i.carbs),
+            fat: modelNumber(i.fat),
             // Carry the AI's portion estimate ("1 cup", "200g", etc.)
             // through to the save path so the diary row records what
             // the AI thought it identified instead of a placeholder.
@@ -1002,6 +1030,7 @@ export default function Food() {
     if (items.length === 0) {
       toast.error("Couldn't read that. Try rewording it, or add it manually.", {
         id: "food-nl-error",
+        action: { label: "Log manually", onClick: () => setManualOpen(true) },
       });
       setNlParsing(false);
       return;
@@ -1027,6 +1056,10 @@ export default function Food() {
                 inputRef.current?.focus();
               },
             },
+            cancel: {
+              label: "Log manually",
+              onClick: () => setManualOpen(true),
+            },
           }
         );
         setNlParsing(false);
@@ -1044,6 +1077,10 @@ export default function Food() {
                 event.currentTarget.blur();
                 inputRef.current?.focus();
               },
+            },
+            cancel: {
+              label: "Log manually",
+              onClick: () => setManualOpen(true),
             },
           }
         );
@@ -1340,7 +1377,7 @@ export default function Food() {
        user's perspective. Looping over every ID in the group makes the
        row's visible state and the underlying data agree.
 
-       Optimistic hide / 3-second undo / Firestore delete logic is
+       Optimistic hide / undo window / Firestore delete logic is
        symmetric across all IDs — they go in and out of pending together
        so the toast's "Undo" action restores the entire group. */
     if (mealIds.length === 0) return;
@@ -1475,7 +1512,7 @@ export default function Food() {
     //    `meal.date` is a local `YYYY-MM-DD` string; lexical comparison
     //    against the (also-local) cutoff string is correct and avoids
     //    parsing every meal's date into a Date object.
-    const cutoff = format(addDays(new Date(), -30), "yyyy-MM-dd");
+    const cutoff = format(addDays(parseLocalDate(todayStr), -30), "yyyy-MM-dd");
     // Collect every log per food-name so FOOD-03 can pick the MODAL
     // portion (below) instead of whichever version was logged last.
     const byFood = new Map<
@@ -1574,7 +1611,7 @@ export default function Food() {
     /* The day reaches this list through `timeRelevantHour`, which is
        keyed on selectedDate: the body never reads the date itself, so
        listing it too only recomputed an identical list. */
-  }, [meals, getTimeRelevant, timeRelevantHour, pendingRemovalIds]);
+  }, [meals, getTimeRelevant, timeRelevantHour, pendingRemovalIds, todayStr]);
 
   const cachedQuickOrder = quickAddOrderCache.get(selectedDate);
   if (!cachedQuickOrder) {
@@ -1598,13 +1635,13 @@ export default function Food() {
     // selectedDate, which derives from a local `format`), so the cutoff
     // must be local too — a UTC toISOString cutoff skews the window by a
     // day near midnight in non-UTC zones (CLAUDE.md: no local/UTC mix).
-    const cutoff = format(addDays(new Date(), -30), "yyyy-MM-dd");
+    const cutoff = format(addDays(parseLocalDate(todayStr), -30), "yyyy-MM-dd");
 
     return meals.some((meal) => {
       if (!meal.date || meal.date < cutoff) return false;
       return !isGenericAiFoodName(meal.foodName);
     });
-  }, [favourites.length, meals, quickMeals.length]);
+  }, [favourites.length, meals, quickMeals.length, todayStr]);
 
   const [quickAdding, setQuickAdding] = useState<string | null>(null);
   // Synchronous latch closing the same-frame double-tap window that the
@@ -1723,9 +1760,8 @@ export default function Food() {
                 await undo();
                 toast.success("Meal entry undone");
               } catch (err) {
-                toast.error(
-                  err instanceof Error ? err.message : "Couldn't undo meal."
-                );
+                logger.error("[Food] meal undo failed", err);
+                toast.error(appErrorMessage(err, "Couldn't undo meal."));
                 undoing = false;
               }
             },
@@ -1735,9 +1771,10 @@ export default function Food() {
       return true;
     } catch (err) {
       toast.error(
-        err instanceof Error && !("code" in err)
-          ? err.message
-          : "Couldn't save. Check your connection and retry this meal.",
+        appErrorMessage(
+          err,
+          "Couldn't save. Check your connection and retry this meal."
+        ),
         { id: "food-save-error" }
       );
       return false;
@@ -2120,9 +2157,10 @@ export default function Food() {
             </p>
             <p className="text-xs leading-tight text-muted-foreground truncate">
               <span className="font-mono tabular-nums">
-                {Math.round(usual.cal)}
+                {formatCalories(usual.cal)}
               </span>{" "}
-              kcal{usualPortion && ` · ${usualPortion}`}
+              {CALORIE_UNIT}
+              {usualPortion && ` · ${usualPortion}`}
             </p>
           </div>
           <div className="ml-auto flex items-center gap-2">

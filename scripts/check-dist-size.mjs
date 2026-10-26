@@ -17,6 +17,14 @@
  *   - the TOTAL more than GROWTH_TOLERANCE above baseline fails;
  *   - shrinkage never fails, and is reported so the baseline can be lowered.
  *
+ * It also holds the cold-start set: the chunks dist/index.html preloads,
+ * which every launch fetches and parses before the first paint. A chunk
+ * joining that list fails, since a lazy chunk lands there without any
+ * size changing: a module shared with eager code that Rollup hosts in the
+ * lazy chunk gives the entry a static edge to all of it. One leaving it
+ * is reported. And it holds index.html's two first-paint font preloads
+ * (scripts/first-paint-fonts.ts) to files the build emitted.
+ *
  * Bumping the baseline is allowed — in the same PR as the growth, with the
  * reason in the PR body. `node scripts/check-dist-size.mjs --update`
  * rewrites the baseline from the current dist.
@@ -34,6 +42,7 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const assetsDir = resolve(root, "dist/assets");
 const baselinePath = resolve(root, "scripts/dist-size.baseline.json");
+const indexPath = resolve(root, "dist/index.html");
 const GROWTH_TOLERANCE = 0.05;
 /** Below this, growth is judged against SMALL_ALLOWANCE bytes, not a percentage. */
 const LARGE_CHUNK = 20 * 1024;
@@ -50,19 +59,26 @@ if (!existsSync(assetsDir)) {
 const sizes = {};
 for (const file of readdirSync(assetsDir)) {
   if (!file.endsWith(".js")) continue;
-  const name = file.replace(/-[A-Za-z0-9_-]{8}\.js$/, "").replace(/\.js$/, "");
+  const name = chunkName(file);
   sizes[name] = (sizes[name] ?? 0) + statSync(resolve(assetsDir, file)).size;
 }
 const total = Object.values(sizes).reduce((a, b) => a + b, 0);
 const sorted = Object.fromEntries(
   Object.entries(sizes).sort(([a], [b]) => a.localeCompare(b))
 );
+const coldStart = [
+  ...readFileSync(indexPath, "utf8").matchAll(
+    /<link rel="modulepreload"[^>]*href="[^"]*\/assets\/([^"]+)\.js"/g
+  ),
+]
+  .map(([, file]) => chunkName(`${file}.js`))
+  .sort();
 
 if (process.argv.includes("--update")) {
   writeFileSync(
     baselinePath,
     JSON.stringify(
-      { tolerance: GROWTH_TOLERANCE, total, chunks: sorted },
+      { tolerance: GROWTH_TOLERANCE, total, coldStart, chunks: sorted },
       null,
       2
     ) + "\n"
@@ -106,13 +122,47 @@ for (const name of Object.keys(baseline.chunks)) {
     );
 }
 
+for (const name of coldStart) {
+  if (!(baseline.coldStart ?? []).includes(name))
+    failures.push(
+      `${name}: now preloaded by index.html, so every cold start loads it (${kb(sorted[name] ?? 0)})`
+    );
+}
+for (const name of baseline.coldStart ?? []) {
+  if (!coldStart.includes(name))
+    shrunk.push(`${name}: no longer preloaded — remove it from coldStart`);
+}
+
+/* The first-paint fonts (scripts/first-paint-fonts.ts): both preloaded from
+   index.html, each a file the build emitted. A preload that names a missing
+   file fetches nothing useful, and one that goes missing brings back the
+   swap from the fallback face on a first web visit. */
+const html = readFileSync(indexPath, "utf8");
+const fontPreloads = [...html.matchAll(/<link\b[^>]*\bas="font"[^>]*>/g)].map(
+  ([tag]) => tag
+);
+if (fontPreloads.length !== 2) {
+  failures.push(
+    `index.html preloads ${fontPreloads.length} fonts, not the two first-paint faces (scripts/first-paint-fonts.ts)`
+  );
+}
+for (const tag of fontPreloads) {
+  const file = /href="[^"]*\/assets\/([^"]+)"/.exec(tag)?.[1];
+  if (
+    !/\bcrossorigin\b/.test(tag) ||
+    !file ||
+    !existsSync(resolve(assetsDir, file))
+  )
+    failures.push(`index.html font preload is broken: ${tag}`);
+}
+
 if (total - baseline.total > baseline.total * GROWTH_TOLERANCE) {
   failures.push(
     `total: ${kb(baseline.total)} → ${kb(total)} (+${(((total - baseline.total) / baseline.total) * 100).toFixed(1)}%, tolerance ${GROWTH_TOLERANCE * 100}%)`
   );
 }
 console.log(
-  `check-dist-size: ${Object.keys(sorted).length} chunks, ${kb(total)} total (baseline ${kb(baseline.total)}).`
+  `check-dist-size: ${Object.keys(sorted).length} chunks, ${kb(total)} total (baseline ${kb(baseline.total)}); cold start preloads ${coldStart.join(", ")}.`
 );
 if (added.length)
   console.log(
@@ -129,6 +179,10 @@ if (failures.length) {
   process.exit(1);
 }
 console.log("check-dist-size: OK");
+
+function chunkName(file) {
+  return file.replace(/-[A-Za-z0-9_-]{8}\.js$/, "").replace(/\.js$/, "");
+}
 
 function kb(n) {
   return `${(n / 1024).toFixed(1)} kB`;

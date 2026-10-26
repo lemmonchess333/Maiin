@@ -4,8 +4,8 @@ import type { SpacePostDoc } from "./spaceTypes";
 
 /**
  * How many of `posts` (what the viewer can see) were written since local
- * Monday. `capped` is true when the page's fetch hit its limit and the
- * oldest post it fetched is still from this week, so the real number may
+ * Monday. `capped` is true when there are older posts still to load and
+ * the oldest post loaded is still from this week, so the real number may
  * be higher and the line says "50+".
  *
  * A post still waiting for its server timestamp was written moments ago,
@@ -15,8 +15,8 @@ export function countPostsThisWeek(
   posts: Pick<SpacePostDoc, "createdAt">[],
   now: Date,
   fetch: {
-    size: number;
-    limit: number;
+    /** The last page read came back full, so another may follow. */
+    hasMore: boolean;
     oldest?: Pick<SpacePostDoc, "createdAt">;
   }
 ): { count: number; capped: boolean } {
@@ -28,9 +28,7 @@ export function countPostsThisWeek(
   return {
     count: posts.filter(isThisWeek).length,
     capped:
-      fetch.size >= fetch.limit &&
-      fetch.oldest !== undefined &&
-      isThisWeek(fetch.oldest),
+      fetch.hasMore && fetch.oldest !== undefined && isThisWeek(fetch.oldest),
   };
 }
 

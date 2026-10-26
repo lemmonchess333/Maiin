@@ -136,6 +136,7 @@ afterEach(() => {
 
 import { useProgram } from "../useProgram";
 import { __resetCommandOutboxForTests, outboxLength } from "../commandOutbox";
+import { addedExerciseWeight } from "../startingLoads";
 
 const PROGRAM = "users/test-user-1/programState/current";
 
@@ -451,19 +452,55 @@ describe("removeExerciseFromDay", () => {
 });
 
 describe("addExercisesToDayCmd", () => {
-  it("sends only exercise IDS, never a client-built exercise", async () => {
+  it("sends exercise ids and a seeded weight, never a client-built exercise", async () => {
     // The boundary's security stance: the server derives name and category
     // from the catalog. A client-supplied exercise object is rejected by the
     // validator by construction, so sending one would be a latent failure.
+    // The weight is the one scalar the validator takes (`weight`, bounded),
+    // seeded as Replace seeds its own: a loaded lift can't be ticked at 0 kg.
     const hook = await mounted();
 
     await act(async () => {
-      await hook.result.current.addExercisesToDayCmd(0, ["bench-press"]);
+      await hook.result.current.addExercisesToDayCmd(0, [
+        "bench-press",
+        "pull-ups",
+      ]);
     });
 
     const sent = sendProgramCommand.mock.calls[0][0] as any;
     expect(sent.kind).toBe("addExercises");
-    expect(sent.exercises).toEqual([{ exerciseId: "bench-press" }]);
+    // This profile has no bodyweight, so the bench starts at the bar and
+    // the pull-ups, a bodyweight lift, at 0.
+    expect(sent.exercises).toEqual([
+      {
+        exerciseId: "bench-press",
+        weight: addedExerciseWeight("bench-press", undefined),
+      },
+      { exerciseId: "pull-ups", weight: 0 },
+    ]);
+    expect(sent.exercises[0].weight).toBeGreaterThanOrEqual(20);
+  });
+
+  it("shows the added lift at the weight it sent while the send is in flight", async () => {
+    const hook = await mounted();
+    let release: (() => void) | undefined;
+    sendProgramCommand.mockImplementation(
+      () => new Promise<undefined>((r) => (release = () => r(undefined)))
+    );
+    let pending: Promise<boolean> | undefined;
+    await act(async () => {
+      pending = hook.result.current.addExercisesToDayCmd(0, ["bench-press"]);
+    });
+    const sent = sendProgramCommand.mock.calls[0][0] as any;
+    const added = (
+      hook.result.current.programState as ProgramState
+    ).workouts[0].exercises.at(-1);
+    expect(added?.weight).toBe(sent.exercises[0].weight);
+    expect(added?.weight).toBeGreaterThan(0);
+    await act(async () => {
+      release?.();
+      await pending;
+    });
   });
 
   it("mints the SAME instanceIds the reducer will, so rows do not remount", async () => {

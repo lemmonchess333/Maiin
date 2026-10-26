@@ -136,7 +136,8 @@ describe.skipIf(!enabled)(
         });
         const event = {
           params: { uid, challengeId: id(metric) },
-          timestamp: new Date().toISOString(),
+          // Joined while the challenge runs, as joinedAt says.
+          timestamp: "2025-01-20T12:00:00Z",
         };
         await fns.onChallengeParticipantCreated.run(null, event);
         await fns.onChallengeParticipantCreated.run(null, event);

@@ -22,6 +22,7 @@ import Button from "@/components/ui/Button";
 import IconButton from "@/components/ui/IconButton";
 import ShoeSelector from "./ShoeSelector";
 import { paceMinSec } from "@/lib/runLabels";
+import { formatDuration } from "@/utils/formatters";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
   distanceIn,
@@ -51,7 +52,7 @@ interface RunLaunchCardProps {
   purpose?: string | null;
 }
 
-/** Compact interval summary, e.g. "5 × 1K" or "6 × 3min". */
+/** Compact interval summary, e.g. "5 × 1K" or "6 × 3 min". */
 function intervalSummary(intervals: RunConfig["intervals"]): string | null {
   if (!intervals) return null;
   const { reps, workDistance, workDuration } = intervals;
@@ -60,8 +61,9 @@ function intervalSummary(intervals: RunConfig["intervals"]): string | null {
       workDistance >= 1000 ? `${workDistance / 1000}K` : `${workDistance} m`;
     return `${reps} × ${unit}`;
   }
-  if (workDuration) return `${reps} × ${Math.round(workDuration / 60)}min`;
-  return `${reps} reps`;
+  if (workDuration)
+    return `${reps} × ${formatDuration(workDuration, { seconds: true })}`;
+  return `${reps} ${reps === 1 ? "rep" : "reps"}`;
 }
 
 export default function RunLaunchCard({

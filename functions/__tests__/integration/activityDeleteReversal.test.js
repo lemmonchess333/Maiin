@@ -517,4 +517,79 @@ suite("deleting a session reverses the accumulators", () => {
 
     expect(await participant(VOL_CHALLENGE)).toBeNull();
   });
+
+  /* Trigger delivery is not ordered. A session logged and deleted within
+     moments (the finish screen's Undo, a mis-log taken back) can have its
+     delete trigger run first: it finds no marker, because nothing has
+     credited yet, and reverses nothing. The create trigger then runs on
+     its snapshot of a document that no longer exists. Each credit
+     transaction reads the source document, so it credits nothing; read
+     inside the transaction, a delete landing mid-credit either comes
+     first (nothing credits) or after (the reversal finds the marker). */
+  it("credits nothing for a workout whose delete ran before its create", async () => {
+    await join(VOL_CHALLENGE);
+    // Anchor: a workout logged normally credits, so a create trigger that
+    // credited nothing at all could not pass the assertions below.
+    await logWorkout("w-kept", { totalVolume: 4000 });
+    expect((await participant(VOL_CHALLENGE)).currentValue).toBe(4000);
+    expect(await lifetime("liftVolumeKg")).toBe(4000);
+
+    const ref = db
+      .collection("users")
+      .doc(UID)
+      .collection("workouts")
+      .doc("w-gone");
+    await ref.set({ date: "2026-08-05", totalVolume: 6000, exercises: [] });
+    const created = await ref.get();
+    await ref.delete();
+    await onWorkoutDeleted.run(created, {
+      params: { uid: UID, workoutId: "w-gone" },
+    });
+    await onWorkoutCreated.run(created, {
+      params: { uid: UID, workoutId: "w-gone" },
+    });
+
+    expect((await participant(VOL_CHALLENGE)).currentValue).toBe(4000);
+    expect(await lifetime("liftVolumeKg")).toBe(4000);
+    expect(await markerIds(VOL_CHALLENGE)).toEqual([
+      markerDocId(new Date(JOINED_AT), "w-kept", "unused"),
+    ]);
+    expect((await lifetimeMarkerRef("lift", "w-gone").get()).exists).toBe(
+      false
+    );
+  });
+
+  it("credits nothing for a run whose delete ran before its create", async () => {
+    await join(KM_CHALLENGE);
+    await join(FAST_CHALLENGE);
+    // Anchor, as above: 6 km at 28:20 credits the km challenge, the
+    // fastest 5K and the lifetime distance.
+    await logRun("r-kept", { distance: 6000, duration: 1700 });
+    expect((await participant(KM_CHALLENGE)).currentValue).toBe(6);
+    expect((await participant(FAST_CHALLENGE)).currentValue).toBe(1700);
+    expect(await lifetime("runMeters")).toBe(6000);
+
+    // A qualifying 5K faster than the anchor, so a credit from it would
+    // show on all three: 11 km, a 1300 s best, 11000 m.
+    const ref = db
+      .collection("users")
+      .doc(UID)
+      .collection("runs")
+      .doc("r-gone");
+    await ref.set({
+      date: "2026-08-06",
+      distance: 5000,
+      duration: 1300,
+      completedAt: tsFromIso("2026-08-06T09:00:00Z"),
+    });
+    const created = await ref.get();
+    await ref.delete();
+    await onRunDeleted.run(created, { params: { uid: UID, runId: "r-gone" } });
+    await onRunCreated.run(created, { params: { uid: UID, runId: "r-gone" } });
+
+    expect((await participant(KM_CHALLENGE)).currentValue).toBe(6);
+    expect((await participant(FAST_CHALLENGE)).currentValue).toBe(1700);
+    expect(await lifetime("runMeters")).toBe(6000);
+    expect((await lifetimeMarkerRef("run", "r-gone").get()).exists).toBe(false);
+  });
 });

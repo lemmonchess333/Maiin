@@ -20,9 +20,10 @@
   --ds-purple-600: #6560c8; /* THEME.brandStrong */
   --ds-purple-700: #4e4aa8;
 
-  /* GENERIC warm orange ramp — PR-celebration flash, streak flame, the "NEW"
-     badge, the progress-ring fill, achievement accents. This is NOT the
-     nutrition/food/macro orange: that identity is `--nutrition` (#D9884E, in
+  /* GENERIC warm orange ramp — PR-celebration flash, the partner streak's
+     flame, the "NEW" badge, the progress-ring fill, achievement accents.
+     The activity streak's flame is brand purple (flameTiers.ts).
+     This is NOT the nutrition/food/macro orange: that identity is `--nutrition` (#D9884E, in
      index.css). Renamed-by-comment after the #E87316↔#D9884E drift where these
      two oranges were confused (~8 nutrition uses repointed to --nutrition;
      this ramp kept for the genuinely non-nutrition warm-accent uses). Do NOT
@@ -102,8 +103,13 @@
   --ds-shadow-input-focus-nutrition:
     0 4px 14px -8px rgba(217, 136, 78, 0.28),
     0 0 0 2.5px rgba(217, 136, 78, 0.11);
-  --ds-color-input-border-rest: rgba(0, 0, 0, 0.06);
   --ds-color-input-border-focus-nutrition: rgba(217, 136, 78, 0.5);
+  /* `.ds-input` at rest. Light: a card-white box whose edge is the shared
+     control boundary, muted-foreground at 80% (3.19:1 on the page, 3.57:1
+     on the card), since a light fill barely parts from a white card.
+     Dark overrides both below. */
+  --ds-color-input-fill-rest: hsl(var(--card));
+  --ds-color-input-border-rest: hsl(var(--muted-foreground) / 0.8);
 
   /* Font Weights
      ─ Use 700 (bold) for section headings, card titles, inline emphasis
@@ -140,6 +146,15 @@
   --ds-shadow-input-focus-nutrition:
     0 4px 14px -8px rgba(217, 136, 78, 0.4),
     0 0 0 2.5px rgba(217, 136, 78, 0.18);
-  --ds-color-input-border-rest: rgba(255, 255, 255, 0.1);
   --ds-color-input-border-focus-nutrition: rgba(217, 136, 78, 0.65);
+  /* Dark: a filled field, the raised --muted the app's search bars use,
+     with the --border hairline as its rim. Light's 80% grey edge would
+     measure 4.9–5.2:1 on these surfaces and reads as a white outline
+     round every field. The fill parts from the page at 1.20:1 and the
+     card at 1.12:1, and the field is named by its label or placeholder
+     (6.25:1 on this fill); WCAG 1.4.11 asks for a 3:1 boundary only
+     where nothing else identifies the input. Focus turns the edge
+     primary. */
+  --ds-color-input-fill-rest: hsl(var(--muted));
+  --ds-color-input-border-rest: hsl(var(--border));
 }

@@ -24,6 +24,16 @@ test("privacy page renders meaningful content on iPhone-shaped UA", async ({
   await page.goto("privacy");
   await expect(page.locator("#root")).toBeAttached();
 
+  // Wait for the page itself before reading the root. The routes render
+  // only once the auth SDK has settled, and under an iPhone user agent
+  // the SDK first sets up its sign-in redirect frame, which takes about a
+  // second. Until then #root holds nothing but the toaster's stylesheet,
+  // so a read straight after it attaches finds no "privacy" in it, on
+  // every retry.
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Privacy Policy" })
+  ).toBeVisible();
+
   // Privacy page must render real content, not just a shell. >100
   // chars catches an empty-app crash; the explicit "privacy"
   // substring assertion catches a route that loaded the wrong page

@@ -65,7 +65,12 @@ import {
   TRIAL_DAYS,
   type PlanId,
 } from "@/lib/proPlans";
-import { isNativeIOS, manageSubscription } from "@/lib/purchaseProvider";
+import {
+  canSellInThisBuild,
+  isNativeIOS,
+  manageSubscription,
+} from "@/lib/purchaseProvider";
+import ProNotOnSale from "@/components/paywall/ProNotOnSale";
 import { useProCheckout } from "@/hooks/useProCheckout";
 import TrialDetails from "@/components/TrialDetails";
 import { runningTrial } from "@/lib/subscriptionTrial";
@@ -303,12 +308,14 @@ export default function Upgrade() {
   }
 
   const canBuy = (!isPro || isInTrial) && !crossPlatformPro;
+  // A build that cannot take a purchase shows no price and no checkout.
+  const onSale = canSellInThisBuild();
   const leaveLabel = fromOnboarding ? "Continue with Free" : "Not now";
 
   const footer = (
     <div className="space-y-2">
-      {platform === "ios" ? (
-        <p className="text-caption text-muted-foreground text-center">
+      {platform === "ios" && onSale ? (
+        <p className="text-micro text-muted-foreground text-center">
           Already purchased?{" "}
           <button
             type="button"
@@ -559,7 +566,9 @@ export default function Upgrade() {
               reassurance under it rather than the headline over a page
               with no price on it. The plan is the one selected: yearly
               until the person picks another on the plans beat. */}
-          {withTrial ? (
+          {!onSale ? (
+            <ProNotOnSale />
+          ) : withTrial ? (
             <div className="space-y-1 text-center">
               <p className="text-base font-bold text-foreground text-balance">
                 {getBilledPriceLine(selected, true)}
@@ -583,9 +592,11 @@ export default function Upgrade() {
           <div className="space-y-2">
             {/* The app's primary button: it was a purple-to-teal gradient,
                 the one decorative gradient left on a button. */}
-            <Button size="lg" fullWidth onClick={handleContinue}>
-              Continue
-            </Button>
+            {onSale && (
+              <Button size="lg" fullWidth onClick={handleContinue}>
+                Continue
+              </Button>
+            )}
             <Button
               variant="ghost"
               fullWidth
@@ -596,17 +607,19 @@ export default function Upgrade() {
             </Button>
           </div>
 
-          <p className="text-caption text-muted-foreground text-center leading-snug">
-            {withTrial
-              ? `Billing starts when your free trial ends, unless you cancel before then. ${getRenewalTerms(platform)}`
-              : getRenewalTerms(platform)}
-          </p>
+          {onSale && (
+            <p className="text-micro text-muted-foreground text-center leading-snug">
+              {withTrial
+                ? `Billing starts when your free trial ends, unless you cancel before then. ${getRenewalTerms(platform)}`
+                : getRenewalTerms(platform)}
+            </p>
+          )}
           {footer}
         </section>
       )}
 
       {/* ── Beat 2: choose a plan ─────────────────────────────────── */}
-      {canBuy && beat === "plans" && (
+      {canBuy && onSale && beat === "plans" && (
         <section className="space-y-4" aria-labelledby="pro-plans-heading">
           <div className="space-y-1">
             <h1

@@ -1,0 +1,85 @@
+{
+  "scope": "Normal production cutoutWebp recipe, current cardFrameOf and public source/card bytes; no prepared override for these eight sets.",
+  "sets": [
+    {
+      "id": "leg-press",
+      "source": "form-frames/leg-press/1.webp",
+      "sourceSha256": "914544786909e8c84e7c6d9d1029ec9aeb565f88f8b16824b353eacc864fb863",
+      "card": "form-art/leg-press.webp",
+      "cardSha256": "09fad9f3a85d5e96d055742f044ecdb9b65ac4ea0c0bb050412cd8448a359823",
+      "normalCutoutReproductionByteExact": true,
+      "width": 445,
+      "height": 480
+    },
+    {
+      "id": "rowing-machine",
+      "source": "form-frames/rowing-machine/3.webp",
+      "sourceSha256": "da6997e4fc48e388991798cb2b7691c32e5a34796d04b00fa059f9f096470d01",
+      "card": "form-art/rowing-machine.webp",
+      "cardSha256": "c473e15283d009fff85c569abd26b2d4319327405d0b88de2ddabcfc80cf60a5",
+      "normalCutoutReproductionByteExact": true,
+      "width": 480,
+      "height": 281
+    },
+    {
+      "id": "overhead-extension",
+      "source": "form-frames/overhead-extension/3.webp",
+      "sourceSha256": "04aaf33df96a6fd4cfd9e7130d615e639c47f528322ae290f302f52944465428",
+      "card": "form-art/overhead-extension.webp",
+      "cardSha256": "17f7c4572f69d3d8ed4fc7edd935093d3a131c558e62875d7cdf918e0f2231d3",
+      "normalCutoutReproductionByteExact": true,
+      "width": 159,
+      "height": 480
+    },
+    {
+      "id": "t-bar-row",
+      "source": "form-frames/t-bar-row/3.webp",
+      "sourceSha256": "bb76be9f97caee89138d583af15e4540b8986c02b0b138f54b20d41754bf7145",
+      "card": "form-art/t-bar-row.webp",
+      "cardSha256": "109c20d140bcb0899927b67451daa42e0fa109a201f836877ec68fed5732fd98",
+      "normalCutoutReproductionByteExact": true,
+      "width": 425,
+      "height": 480
+    },
+    {
+      "id": "bike",
+      "source": "form-frames/bike/1.webp",
+      "sourceSha256": "ae78bd03701b0703798e7e52db4961edd42dfff2b778759ffc3b095f4169eea6",
+      "card": "form-art/bike.webp",
+      "cardSha256": "7df835345404a62c9d61d915ad68f7962372a18025933e167c0f3526e80f67d7",
+      "normalCutoutReproductionByteExact": true,
+      "width": 311,
+      "height": 480
+    },
+    {
+      "id": "barbell-row",
+      "source": "form-frames/barbell-row/4.webp",
+      "sourceSha256": "9ed1076fc250c1e12778cf7438d8b402cd16f0501be5ce0a2e5a5fc15aea7730",
+      "card": "form-art/barbell-row.webp",
+      "cardSha256": "1032da23d31653846d76ce337cf5ef45346c49990ed3ea8e7af44aaf655cb126",
+      "normalCutoutReproductionByteExact": true,
+      "width": 480,
+      "height": 439
+    },
+    {
+      "id": "dips",
+      "source": "form-frames/dips/4.webp",
+      "sourceSha256": "aec984bed1f2db0aa37c8db9fd5fb3783486b4053d9be89db1f130d234f61feb",
+      "card": "form-art/dips.webp",
+      "cardSha256": "8f3a1a812502ec91eb80c18bbf4ffb5f3964c5581364b38e054553ed380273bd",
+      "normalCutoutReproductionByteExact": true,
+      "width": 421,
+      "height": 480
+    },
+    {
+      "id": "lu-raise",
+      "source": "form-frames/lu-raise/4.webp",
+      "sourceSha256": "791f568184a3fbfa56b9e18e5e398bec9599b80a0abf527d48b6050674744ec2",
+      "card": "form-art/lu-raise.webp",
+      "cardSha256": "457e786f1a188cac656eff02b230f4048832e4b638840fa3db047e69e270182a",
+      "normalCutoutReproductionByteExact": true,
+      "width": 180,
+      "height": 480
+    }
+  ]
+}

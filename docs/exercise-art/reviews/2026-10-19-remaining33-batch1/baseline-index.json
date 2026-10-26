@@ -1,0 +1,612 @@
+{
+  "schemaVersion": 1,
+  "scope": "Measured completed-run evidence, not failure disposition or release approval",
+  "folder": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining19-execution-20261015\\checks\\remaining33-baseline-1d100f0f-20261019",
+  "result": {
+    "startedAt": "2026-10-19T21:21:00.662008+00:00",
+    "finishedAt": "2026-10-19T21:31:36.945882+00:00",
+    "normalCommand": "npm run verify",
+    "exitCode": 1,
+    "durationSeconds": 635.219000000041,
+    "headBefore": "1d100f0f2d85efd4f70874e61306a2278edcf105",
+    "headAfter": "1d100f0f2d85efd4f70874e61306a2278edcf105",
+    "headUnchanged": true,
+    "statusBefore": "",
+    "statusAfterTestBeforeSnapshotRestore": " M src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap\n",
+    "statusAfter": "",
+    "statusRestored": true,
+    "snapshotRestores": [
+      {
+        "path": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+        "originalSha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+        "testOutputSha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+        "restoredExact": true
+      }
+    ],
+    "inputCount": 2756,
+    "changedInputsAfterRestoration": [],
+    "allInputsUnchanged": true,
+    "log": "C:\\Users\\myles\\Documents\\Codex\\2026-10-04\\lg\\work\\remaining19-execution-20261015\\checks\\remaining33-baseline-1d100f0f-20261019\\verify.log",
+    "logSha256": "bb1bce73bc5e75edf85d5784b0301f12e1894f6e01b0455b2e3dac9e653e908b",
+    "fullVerificationPassed": false
+  },
+  "sourceProofHashes": {
+    "result.json": "5fafa87ffb6dd1a7a2938161ea6a1ead88909687af8f2adf619ea196baff31c5",
+    "verify.log": "bb1bce73bc5e75edf85d5784b0301f12e1894f6e01b0455b2e3dac9e653e908b",
+    "inputs-before.json": "edbe3c8ffbd4793b1133fdc979f1205efb382131725d3e64bc25b46471233d66",
+    "inputs-after.json": "edbe3c8ffbd4793b1133fdc979f1205efb382131725d3e64bc25b46471233d66",
+    "start.json": "8ca9f82ac9b24ea5cc98ddcdd17de99360d9adbb8e23bc1b29b69782cbfa40cf"
+  },
+  "snapshotProofHashes": {
+    "snapshot-before-0.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-1.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-2.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-3.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-4.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-5.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-6.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-7.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-8.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-9.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-10.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-11.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-12.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-13.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-14.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-15.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-16.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-17.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-18.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-19.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-20.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-21.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-22.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-23.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-24.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-25.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-26.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-27.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-28.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-29.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-30.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-31.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-32.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-33.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-34.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-35.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-36.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+    "snapshot-before-37.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-38.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-39.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-40.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-41.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-before-42.snap": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+    "snapshot-test-output-42.snap": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f"
+  },
+  "capturedSnapshots": [
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-0.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-1.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-2.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-3.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/checks/branch-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-4.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/ab-wheel/2026-10-14/project-check-evidence/checks/branch-planSweep-before.snap",
+      "capturedFile": "snapshot-before-5.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-6.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-7.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+      "capturedFile": "snapshot-before-8.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+      "capturedFile": "snapshot-before-9.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-10.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+      "capturedFile": "snapshot-before-11.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-12.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+      "capturedFile": "snapshot-before-13.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+      "capturedFile": "snapshot-before-14.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+      "capturedFile": "snapshot-before-15.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+      "capturedFile": "snapshot-before-16.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/bike/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+      "capturedFile": "snapshot-before-17.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-18.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-19.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+      "capturedFile": "snapshot-before-20.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+      "capturedFile": "snapshot-before-21.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-22.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+      "capturedFile": "snapshot-before-23.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-24.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+      "capturedFile": "snapshot-before-25.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+      "capturedFile": "snapshot-before-26.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+      "capturedFile": "snapshot-before-27.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+      "capturedFile": "snapshot-before-28.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/pull-ups/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+      "capturedFile": "snapshot-before-29.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/baseline/baseline-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-30.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/baseline/baseline-planSweep-before.snap",
+      "capturedFile": "snapshot-before-31.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch-planSweep-before.snap",
+      "capturedFile": "snapshot-before-32.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch2-planSweep-before.snap",
+      "capturedFile": "snapshot-before-33.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch3-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-34.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch3-planSweep-before.snap",
+      "capturedFile": "snapshot-before-35.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch4-planSweep-after-run.snap",
+      "capturedFile": "snapshot-before-36.snap",
+      "sha256": "1b94e41ce3ab2e464f5717943e3eba542c65c81bfb4921f8382e3dfb57df242f",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/branch4-planSweep-before.snap",
+      "capturedFile": "snapshot-before-37.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/focus-branch4-installer-host-planSweep-before.snap",
+      "capturedFile": "snapshot-before-38.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/focus-branch4-installer-planSweep-before.snap",
+      "capturedFile": "snapshot-before-39.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-final-planSweep-before.snap",
+      "capturedFile": "snapshot-before-40.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "docs/exercise-art/sources/t-bar-row/2026-10-15/project-check-evidence/checks/genuine-fix-preflight-planSweep-before.snap",
+      "capturedFile": "snapshot-before-41.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": false
+    },
+    {
+      "sourcePath": "src/features/program/__tests__/__snapshots__/planSweep.golden.test.ts.snap",
+      "capturedFile": "snapshot-before-42.snap",
+      "sha256": "fb60028b126ee15f7175847f406172f91c0eb5893f1c1b3bc335f773986b5f11",
+      "boundByInputMap": true
+    }
+  ],
+  "inputCount": 2756,
+  "inputBytesPreserved": true,
+  "overallGreen": false,
+  "diagnosticHashMethod": "Exact UTF8 raw byte range after last grouped FAIL header and before separator, trimming blank padding only; header, padding and separator also separately hash-pinned. No diagnostic is borrowed from a later unrelated failure.",
+  "allNormalVerifyStagesPresent": true,
+  "normalStages": [
+    {
+      "name": "lint",
+      "proof": {
+        "startLine": 6,
+        "endLineInclusive": 6,
+        "byteStart": 179,
+        "byteEndExclusive": 199,
+        "rawSha256": "a4f8b2c8d32b2439915ecf707c8d49fd71ce6fd6760ee2d53a796f1982f9c4ea",
+        "byteLength": 20
+      }
+    },
+    {
+      "name": "check:form-art",
+      "proof": {
+        "startLine": 10,
+        "endLineInclusive": 10,
+        "byteStart": 229,
+        "byteEndExclusive": 259,
+        "rawSha256": "ba7411a844c779a0015926b5c9fd8bf0a41b02dff43a0f199ba0726701c8e78e",
+        "byteLength": 30
+      }
+    },
+    {
+      "name": "check:form-drafts",
+      "proof": {
+        "startLine": 23,
+        "endLineInclusive": 23,
+        "byteStart": 474,
+        "byteEndExclusive": 507,
+        "rawSha256": "bad0a19101177e5e2d4acd32919d491f1e36c5d8bacfc6087d049463aab2ce17",
+        "byteLength": 33
+      }
+    },
+    {
+      "name": "check:cycles",
+      "proof": {
+        "startLine": 35,
+        "endLineInclusive": 35,
+        "byteStart": 699,
+        "byteEndExclusive": 727,
+        "rawSha256": "56262e88261c728e32576536d83f3052f363020ecf2a01b320e6d2d0adbedc98",
+        "byteLength": 28
+      }
+    },
+    {
+      "name": "build",
+      "proof": {
+        "startLine": 44,
+        "endLineInclusive": 44,
+        "byteStart": 896,
+        "byteEndExclusive": 917,
+        "rawSha256": "deb23f2fda5594fe5e10eb8cf5665853fe255092698f42d7e7ca1172206d4e1f",
+        "byteLength": 21
+      }
+    },
+    {
+      "name": "check:dist-size",
+      "proof": {
+        "startLine": 556,
+        "endLineInclusive": 556,
+        "byteStart": 54276,
+        "byteEndExclusive": 54307,
+        "rawSha256": "4dd3ee7775ae72deb97c38996d78fe403165c1a6ec767a9b9e3654a200148256",
+        "byteLength": 31
+      }
+    },
+    {
+      "name": "test",
+      "proof": {
+        "startLine": 566,
+        "endLineInclusive": 566,
+        "byteStart": 54619,
+        "byteEndExclusive": 54639,
+        "rawSha256": "d6b835dac15e4af35a81a747c41de8d6cd16b9c84642bafc5ec35c7015702dc8",
+        "byteLength": 20
+      }
+    }
+  ],
+  "testFiles": {
+    "failed": 2,
+    "passed": 1203,
+    "skipped": 10,
+    "total": 1215,
+    "verbatim": "Test Files  2 failed | 1203 passed | 10 skipped (1215)",
+    "proof": {
+      "startLine": 597,
+      "endLineInclusive": 597,
+      "byteStart": 55911,
+      "byteEndExclusive": 55967,
+      "rawSha256": "f7743f02d141b51d87db65e60d41306debe424f76f2fda44a5755ced60b07d90",
+      "byteLength": 56
+    }
+  },
+  "tests": {
+    "passed": 13921,
+    "skipped": 418,
+    "total": 14339,
+    "verbatim": "Tests  13921 passed | 418 skipped (14339)",
+    "proof": {
+      "startLine": 598,
+      "endLineInclusive": 598,
+      "byteStart": 55967,
+      "byteEndExclusive": 56015,
+      "rawSha256": "8f45c2c72aa537e017d3bd2eefbe76f9c70a5889c25c22b1024f58a1eb531cc4",
+      "byteLength": 48
+    }
+  },
+  "unitSummaryComplete": true,
+  "failureHeaderCount": 2,
+  "testFailureHeaders": 0,
+  "suiteFailureHeaders": 2,
+  "diagnosticGroupCount": 2,
+  "sharedDiagnosticGroups": 0,
+  "failureAccountingComplete": true,
+  "unhandledErrorMarkers": [],
+  "indexComplete": true,
+  "groups": [
+    {
+      "id": "diagnostic-group-1",
+      "headerCount": 1,
+      "identities": ["root-node|scripts/write-functions-env.test.ts|[suite]"],
+      "headersAndDiagnostic": {
+        "startLine": 588,
+        "endLineInclusive": 589,
+        "byteStart": 55482,
+        "byteEndExclusive": 55618,
+        "rawSha256": "908fb6ccd481f5a4c45f51bcbae30d88ef97750732b895a54b23e878de84f676",
+        "byteLength": 136
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 589,
+        "endLineInclusive": 589,
+        "byteStart": 55577,
+        "byteEndExclusive": 55618,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41
+      },
+      "diagnostic": {
+        "startLine": 589,
+        "endLineInclusive": 589,
+        "byteStart": 55577,
+        "byteEndExclusive": 55618,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": ["SyntaxError: Invalid or unexpected token"]
+      },
+      "separator": {
+        "startLine": 590,
+        "endLineInclusive": 590,
+        "byteStart": 55618,
+        "byteEndExclusive": 55699,
+        "rawSha256": "f3d70aecc9f33f96cf3cfe850ebec52fb344d1772b2a2da98f507bda500dcf82",
+        "byteLength": 81,
+        "reportedOrdinal": 1,
+        "reportedTotal": 2
+      }
+    },
+    {
+      "id": "diagnostic-group-2",
+      "headerCount": 1,
+      "identities": ["root-node|scripts/ios/asc-signing.test.ts|[suite]"],
+      "headersAndDiagnostic": {
+        "startLine": 592,
+        "endLineInclusive": 593,
+        "byteStart": 55700,
+        "byteEndExclusive": 55828,
+        "rawSha256": "102e6df0abebb61e0eb4bbec996e397b962dba23442ab197a7aa12bbafbf17a0",
+        "byteLength": 128
+      },
+      "diagnosticWithBlankPadding": {
+        "startLine": 593,
+        "endLineInclusive": 593,
+        "byteStart": 55787,
+        "byteEndExclusive": 55828,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41
+      },
+      "diagnostic": {
+        "startLine": 593,
+        "endLineInclusive": 593,
+        "byteStart": 55787,
+        "byteEndExclusive": 55828,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": ["SyntaxError: Invalid or unexpected token"]
+      },
+      "separator": {
+        "startLine": 594,
+        "endLineInclusive": 594,
+        "byteStart": 55828,
+        "byteEndExclusive": 55909,
+        "rawSha256": "025bdfb4d180a7589ceeec303f6575757618b9a820331126448ecf354cfc5e89",
+        "byteLength": 81,
+        "reportedOrdinal": 2,
+        "reportedTotal": 2
+      }
+    }
+  ],
+  "failures": [
+    {
+      "canonicalId": "root-node|scripts/write-functions-env.test.ts|[suite]",
+      "project": "root-node",
+      "file": "scripts/write-functions-env.test.ts",
+      "kind": "suite",
+      "case": null,
+      "headerLine": 588,
+      "headerVerbatim": " FAIL  |root-node| scripts/write-functions-env.test.ts [ scripts/write-functions-env.test.ts ]",
+      "header": {
+        "startLine": 588,
+        "endLineInclusive": 588,
+        "byteStart": 55482,
+        "byteEndExclusive": 55577,
+        "rawSha256": "106d0a219ee689c698953dc2b9e6acf09062b42c7f63335d24834d628db3254b",
+        "byteLength": 95
+      },
+      "diagnosticGroupId": "diagnostic-group-1",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 589,
+        "endLineInclusive": 589,
+        "byteStart": 55577,
+        "byteEndExclusive": 55618,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": ["SyntaxError: Invalid or unexpected token"]
+      }
+    },
+    {
+      "canonicalId": "root-node|scripts/ios/asc-signing.test.ts|[suite]",
+      "project": "root-node",
+      "file": "scripts/ios/asc-signing.test.ts",
+      "kind": "suite",
+      "case": null,
+      "headerLine": 592,
+      "headerVerbatim": " FAIL  |root-node| scripts/ios/asc-signing.test.ts [ scripts/ios/asc-signing.test.ts ]",
+      "header": {
+        "startLine": 592,
+        "endLineInclusive": 592,
+        "byteStart": 55700,
+        "byteEndExclusive": 55787,
+        "rawSha256": "e0a80464cefd95fa376b838268c66668b45caacf35a16a4ac1f7a17466737263",
+        "byteLength": 87
+      },
+      "diagnosticGroupId": "diagnostic-group-2",
+      "sharedDiagnosticHeaderCount": 1,
+      "diagnostic": {
+        "startLine": 593,
+        "endLineInclusive": 593,
+        "byteStart": 55787,
+        "byteEndExclusive": 55828,
+        "rawSha256": "a7b96e65d6ca94ffc18e5ba84ad9160f5e22ebcdb053e13af7b74c173a26a548",
+        "byteLength": 41,
+        "firstOwnLine": "SyntaxError: Invalid or unexpected token",
+        "firstThreeLines": ["SyntaxError: Invalid or unexpected token"]
+      }
+    }
+  ]
+}

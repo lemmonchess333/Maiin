@@ -3,7 +3,71 @@ import {
   resolveTier,
   getTimeRemaining,
   isTierAchieved,
+  rankLeaderboard,
+  type ChallengeParticipant,
 } from "../useChallenges";
+
+describe("rankLeaderboard", () => {
+  const entry = (
+    uid: string,
+    currentValue: number,
+    displayName?: string
+  ): ChallengeParticipant =>
+    ({
+      uid,
+      currentValue,
+      displayName,
+      tierAchieved: null,
+    }) as ChallengeParticipant;
+
+  it("gives a tie one shared rank and skips the places it took", () => {
+    const ranked = rankLeaderboard(
+      [
+        entry("a", 10, "Ann"),
+        entry("b", 8, "Bea"),
+        entry("c", 10, "Cal"),
+        entry("d", 5, "Dee"),
+      ],
+      "workout_count"
+    );
+    expect(ranked.map((p) => [p.uid, p.rank])).toEqual([
+      ["a", 1],
+      ["c", 1],
+      ["b", 3],
+      ["d", 4],
+    ]);
+  });
+
+  it("orders a tie by name, not by the order the ids sort in", () => {
+    // As Firestore returns them: value, then document id.
+    const ranked = rankLeaderboard(
+      [
+        entry("uid-a", 7, "Zoe"),
+        entry("uid-b", 7, "Adam"),
+        entry("uid-c", 7, "Maya"),
+      ],
+      "total_km"
+    );
+    expect(ranked.map((p) => p.displayName)).toEqual(["Adam", "Maya", "Zoe"]);
+    expect(ranked.every((p) => p.rank === 1)).toBe(true);
+  });
+
+  it("ranks a time-based board fastest first, ties shared", () => {
+    const ranked = rankLeaderboard(
+      [
+        entry("a", 1500, "Ann"),
+        entry("b", 1400, "Bea"),
+        entry("c", 1500, "Abe"),
+      ],
+      "fastest_effort"
+    );
+    expect(ranked.map((p) => [p.displayName, p.rank])).toEqual([
+      ["Bea", 1],
+      ["Abe", 2],
+      ["Ann", 2],
+    ]);
+  });
+});
 
 describe("resolveTier (cumulative)", () => {
   const tiers = { bronze: 10, silver: 25, gold: 50 };
@@ -86,15 +150,18 @@ describe("getTimeRemaining", () => {
     );
   });
 
-  it("returns hours inside the final day", () => {
+  it("returns hours inside the final day, in words", () => {
     expect(getTimeRemaining(endDate, endBoundary - 12 * 3_600_000)).toBe(
-      "12h left"
+      "12 hours left"
+    );
+    expect(getTimeRemaining(endDate, endBoundary - 90 * 60_000)).toBe(
+      "1 hour left"
     );
   });
 
-  it("returns minutes inside the final hour", () => {
+  it("returns minutes inside the final hour, spaced as 'min'", () => {
     expect(getTimeRemaining(endDate, endBoundary - 54 * 60_000)).toBe(
-      "54m left"
+      "54 min left"
     );
   });
 });

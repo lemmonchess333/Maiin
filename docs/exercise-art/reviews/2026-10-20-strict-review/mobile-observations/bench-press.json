@@ -1,0 +1,339 @@
+{
+  "id": "bench-press",
+  "viewport": { "width": 390, "height": 844 },
+  "capture": "Actual browser native screenshots after scroll settling. DOM visible-image bounds and decoding checked. Earlier page-capture compositor artefacts are not visual passing evidence.",
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Bench Press, Set",
+              "decoded": true,
+              "height": 1024,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/bench-press/1.webp",
+              "width": 888
+            }
+          ],
+          "caption": "Set 1/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Bench Press, Lower",
+              "decoded": true,
+              "height": 1024,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/bench-press/2.webp",
+              "width": 888
+            }
+          ],
+          "caption": "Lower 2/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Bench Press, Continue down",
+              "decoded": true,
+              "height": 1024,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/bench-press/3.webp",
+              "width": 888
+            }
+          ],
+          "caption": "Continue down 3/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Bench Press, Chest touch",
+              "decoded": true,
+              "height": 1024,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/bench-press/4.webp",
+              "width": 888
+            }
+          ],
+          "caption": "Chest touch 4/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Bench Press, Drive",
+              "decoded": true,
+              "height": 1024,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/bench-press/5.webp",
+              "width": 888
+            }
+          ],
+          "caption": "Drive 5/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Bench Press, Lockout",
+              "decoded": true,
+              "height": 1024,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/bench-press/6.webp",
+              "width": 888
+            }
+          ],
+          "caption": "Lockout 6/6",
+          "scrollY": 0
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 91,\n    \"alt\": \"Bench Press, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5282,\n    \"alt\": \"Bench Press, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6420,\n    \"alt\": \"Bench Press, Continue down\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7575,\n    \"alt\": \"Bench Press, Chest touch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 8746,\n    \"alt\": \"Bench Press, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9872,\n    \"alt\": \"Bench Press, Lockout\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 77844,\n    \"alt\": \"Bench Press, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Bench Press, Set",
+            "decoded": true,
+            "height": 1024,
+            "src": "/Maiin/.strict33.local/candidate/bench-press/1.webp",
+            "width": 888
+          }
+        ],
+        "caption": "Set 1/6",
+        "id": "bench-press",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / bench-press\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nBench Press\nChest\nBarbell\n\nSET 1/6\n\nPause\nNormal\nPRIMARY\nPectorals\nSECONDARY\nTriceps, Anterior Deltoids\n\nInstructions\n\nPreparation: Lie on the bench with both feet planted and shoulder blades set. Grip the bar just outside shoulders and unrack before the shown cycle.\n\n1\n\nShoulder blades set; feet stay planted.\n\n2\n\nBend elbows; keep wrists over elbows.\n\n3\n\nLower smoothly toward the mid-chest.\n\n4\n\nTouch lightly; keep the neck clear.\n\n5\n\nPress upward and back toward shoulders.\n\n6\n\nStraight arms; hips remain on bench.\n\nWatch out\n\nFlared elbows (straight out at 90°) are how shoulders get wrecked. If you can't hold the 45° tuck, drop weight and fix the groove.\n\nCOMMON MISTAKES\n\nFlaring the elbows to 90° instead of a ~45° tuck.\nBouncing the bar off the chest instead of a controlled touch.\nLetting the hips lift off the bench to grind a rep.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 91,\n    \"alt\": \"Bench Press, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5282,\n    \"alt\": \"Bench Press, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6420,\n    \"alt\": \"Bench Press, Continue down\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7575,\n    \"alt\": \"Bench Press, Chest touch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 8746,\n    \"alt\": \"Bench Press, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9872,\n    \"alt\": \"Bench Press, Lockout\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 77844,\n    \"alt\": \"Bench Press, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 80172,\n    \"alt\": \"Bench Press, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 81366,\n    \"alt\": \"Bench Press, Continue down\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 82566,\n    \"alt\": \"Bench Press, Chest touch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 83775,\n    \"alt\": \"Bench Press, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 84963,\n    \"alt\": \"Bench Press, Lockout\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 86244,\n    \"alt\": \"Bench Press, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/1.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Bench Press, Set",
+              "decoded": true,
+              "height": 1024,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/bench-press/1.webp",
+              "width": 888
+            }
+          ],
+          "caption": "Set 1/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Bench Press, Lower",
+              "decoded": true,
+              "height": 1024,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/bench-press/2.webp",
+              "width": 888
+            }
+          ],
+          "caption": "Lower 2/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Bench Press, Continue down",
+              "decoded": true,
+              "height": 1024,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/bench-press/3.webp",
+              "width": 888
+            }
+          ],
+          "caption": "Continue down 3/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Bench Press, Chest touch",
+              "decoded": true,
+              "height": 1024,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/bench-press/4.webp",
+              "width": 888
+            }
+          ],
+          "caption": "Chest touch 4/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Bench Press, Drive",
+              "decoded": true,
+              "height": 1024,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/bench-press/5.webp",
+              "width": 888
+            }
+          ],
+          "caption": "Drive 5/6",
+          "scrollY": 0
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Bench Press, Lockout",
+              "decoded": true,
+              "height": 1024,
+              "rect": {
+                "bottom": 611.1875,
+                "height": 360,
+                "left": 24,
+                "right": 356,
+                "top": 251.1875,
+                "width": 332,
+                "x": 24,
+                "y": 251.1875
+              },
+              "src": "/Maiin/.strict33.local/candidate/bench-press/6.webp",
+              "width": 888
+            }
+          ],
+          "caption": "Lockout 6/6",
+          "scrollY": 0
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 91,\n    \"alt\": \"Bench Press, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5282,\n    \"alt\": \"Bench Press, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6420,\n    \"alt\": \"Bench Press, Continue down\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7575,\n    \"alt\": \"Bench Press, Chest touch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 8746,\n    \"alt\": \"Bench Press, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9872,\n    \"alt\": \"Bench Press, Lockout\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 77844,\n    \"alt\": \"Bench Press, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 80172,\n    \"alt\": \"Bench Press, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 81366,\n    \"alt\": \"Bench Press, Continue down\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 82566,\n    \"alt\": \"Bench Press, Chest touch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 83775,\n    \"alt\": \"Bench Press, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 84963,\n    \"alt\": \"Bench Press, Lockout\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 86244,\n    \"alt\": \"Bench Press, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 87444,\n    \"alt\": \"Bench Press, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 89937,\n    \"alt\": \"Bench Press, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 92081,\n    \"alt\": \"Bench Press, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 93133,\n    \"alt\": \"Bench Press, Continue down\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 94328,\n    \"alt\": \"Bench Press, Chest touch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 95477,\n    \"alt\": \"Bench Press, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 96599,\n    \"alt\": \"Bench Press, Lockout\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 98022,\n    \"alt\": \"Bench Press, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Bench Press, Lower",
+            "decoded": true,
+            "height": 1024,
+            "src": "/Maiin/.strict33.local/candidate/bench-press/2.webp",
+            "width": 888
+          }
+        ],
+        "caption": "Lower 2/6",
+        "id": "bench-press",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / bench-press\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nBench Press\nChest\nBarbell\n\nLOWER 2/6\n\nPause\nNormal\nPRIMARY\nPectorals\nSECONDARY\nTriceps, Anterior Deltoids\n\nInstructions\n\nPreparation: Lie on the bench with both feet planted and shoulder blades set. Grip the bar just outside shoulders and unrack before the shown cycle.\n\n1\n\nShoulder blades set; feet stay planted.\n\n2\n\nBend elbows; keep wrists over elbows.\n\n3\n\nLower smoothly toward the mid-chest.\n\n4\n\nTouch lightly; keep the neck clear.\n\n5\n\nPress upward and back toward shoulders.\n\n6\n\nStraight arms; hips remain on bench.\n\nWatch out\n\nFlared elbows (straight out at 90°) are how shoulders get wrecked. If you can't hold the 45° tuck, drop weight and fix the groove.\n\nCOMMON MISTAKES\n\nFlaring the elbows to 90° instead of a ~45° tuck.\nBouncing the bar off the chest instead of a controlled touch.\nLetting the hips lift off the bench to grind a rep.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 91,\n    \"alt\": \"Bench Press, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5282,\n    \"alt\": \"Bench Press, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6420,\n    \"alt\": \"Bench Press, Continue down\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7575,\n    \"alt\": \"Bench Press, Chest touch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 8746,\n    \"alt\": \"Bench Press, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9872,\n    \"alt\": \"Bench Press, Lockout\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 77844,\n    \"alt\": \"Bench Press, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 80172,\n    \"alt\": \"Bench Press, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 81366,\n    \"alt\": \"Bench Press, Continue down\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 82566,\n    \"alt\": \"Bench Press, Chest touch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 83775,\n    \"alt\": \"Bench Press, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 84963,\n    \"alt\": \"Bench Press, Lockout\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 86244,\n    \"alt\": \"Bench Press, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 87444,\n    \"alt\": \"Bench Press, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 89937,\n    \"alt\": \"Bench Press, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 92081,\n    \"alt\": \"Bench Press, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 93133,\n    \"alt\": \"Bench Press, Continue down\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 94328,\n    \"alt\": \"Bench Press, Chest touch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 95477,\n    \"alt\": \"Bench Press, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 96599,\n    \"alt\": \"Bench Press, Lockout\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 98022,\n    \"alt\": \"Bench Press, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 100244,\n    \"alt\": \"Bench Press, Lower\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 101441,\n    \"alt\": \"Bench Press, Continue down\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 102723,\n    \"alt\": \"Bench Press, Chest touch\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 103923,\n    \"alt\": \"Bench Press, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 105122,\n    \"alt\": \"Bench Press, Lockout\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 106323,\n    \"alt\": \"Bench Press, Set\",\n    \"src\": \"/Maiin/.strict33.local/candidate/bench-press/1.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "exerciseId": "spin-bike",
+  "version": "anatomy-v3-2026-10-19-illustration-polish-v1",
+  "width": 432,
+  "height": 707,
+  "reference": {
+    "path": "form-frames/spin-bike/1.webp",
+    "sha256": "4778b11213b83f0a6574bf61a5084764c406fdbd0e4949edc0c9ee42f81d3bab"
+  },
+  "cueSha256": "d6997bc7cd1379bd76522147e488ef0b05a67aed395c658a6bac4687d9222d53",
+  "decision": "approved",
+  "reviewer": "Codex current native visual review, actual mobile observations and measured physical scene evidence",
+  "reviewedAt": "2026-10-20T11:06:49.030909+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 0px; independent invariant dimensions maximum relative drift 0.000000000. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. No artwork pixels changed during this review."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Seated drive/recovery and standing drive retain both grips and pedal contacts; standing raises the pelvis from the saddle. Named holds reuse the actual poses. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Fixed grey frame, front roller, rear base and crank assembly. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Seated drive/recovery and standing drive retain both grips and pedal contacts; standing raises the pelvis from the saddle. Named holds reuse the actual poses. Actual named native supports are measured in all six frames: fixedFrontBaseRollerMaterialFeature1, fixedFrontBaseRollerMaterialFeature2. Maximum axis drift 0px. Dimensions: fixedFrontBaseRollerProjectedFeatureSpan, oppositeFixedSupportProjectedFeatureSpan; max 0.00000%."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Seated drive/recovery and standing drive retain both grips and pedal contacts; standing raises the pelvis from the saddle. Named holds reuse the actual poses. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Quads #7B72E9; secondary Core, Calves, Hamstrings #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Seated drive: Stay seated; pedal with controlled resistance. / Seated recovery: Keep your knees tracking over your feet. / Hold seated: Keep a relaxed hold on the bars. / Standing drive: Rise from the saddle; keep pedalling controlled. / Hold standing: Support yourself through the pedals and bars. / Return seated: Sit back onto the saddle smoothly.. Preparation remains [\"Dial in seat and bar height \\u2014 seat level with the bars for most.\", \"Clip or strap in, grip the bars with a firm but relaxed hold.\"]. Seated drive/recovery and standing drive retain both grips and pedal contacts; standing raises the pelvis from the saddle. Named holds reuse the actual poses."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Seated drive/recovery and standing drive retain both grips and pedal contacts; standing raises the pelvis from the saddle. Named holds reuse the actual poses. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-19-illustration-polish/spin-bike.json (sha256 bb73bd7886c29412e0b641bc09fc6c58e350dd8599ce5d85afc7bcd6fbc7d9a4). Current six-frame native/contact-sheet inspection completed. "
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual current390x844 production player and source/card review completed. Six current native frames share the same canvas and remain whole. Preparation, captions, legend and normal cards remain consistent; tiny light-card white contours retain the established low contrast. Prior native/source and registered mobile evidence: docs/exercise-art/releases/2026-10-19-illustration-polish/spin-bike.json (sha256 bb73bd7886c29412e0b641bc09fc6c58e350dd8599ce5d85afc7bcd6fbc7d9a4). Current six-frame native/contact-sheet inspection completed. "
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/spin-bike/1.webp",
+      "sha256": "4778b11213b83f0a6574bf61a5084764c406fdbd0e4949edc0c9ee42f81d3bab",
+      "anchors": {
+        "fixedFrontBaseRollerMaterialFeature1": { "x": 44, "y": 515 },
+        "fixedFrontBaseRollerMaterialFeature2": { "x": 63, "y": 523 }
+      },
+      "invariantDimensions": {
+        "fixedFrontBaseRollerProjectedFeatureSpan": 20.615528128088304,
+        "oppositeFixedSupportProjectedFeatureSpan": 32.984845004941285
+      }
+    },
+    {
+      "path": "form-frames/spin-bike/2.webp",
+      "sha256": "a9d2b4c9fa3fdf3e80696c8be36e56081b7beb31ecc8e81d9bb19d793eef2b3e",
+      "anchors": {
+        "fixedFrontBaseRollerMaterialFeature1": { "x": 44, "y": 515 },
+        "fixedFrontBaseRollerMaterialFeature2": { "x": 63, "y": 523 }
+      },
+      "invariantDimensions": {
+        "fixedFrontBaseRollerProjectedFeatureSpan": 20.615528128088304,
+        "oppositeFixedSupportProjectedFeatureSpan": 32.984845004941285
+      }
+    },
+    {
+      "path": "form-frames/spin-bike/3.webp",
+      "sha256": "a9d2b4c9fa3fdf3e80696c8be36e56081b7beb31ecc8e81d9bb19d793eef2b3e",
+      "anchors": {
+        "fixedFrontBaseRollerMaterialFeature1": { "x": 44, "y": 515 },
+        "fixedFrontBaseRollerMaterialFeature2": { "x": 63, "y": 523 }
+      },
+      "invariantDimensions": {
+        "fixedFrontBaseRollerProjectedFeatureSpan": 20.615528128088304,
+        "oppositeFixedSupportProjectedFeatureSpan": 32.984845004941285
+      }
+    },
+    {
+      "path": "form-frames/spin-bike/4.webp",
+      "sha256": "658e14ccd367ef2e86845a7939051fb20b4b26ad9c576ce8be9a161b64406a8c",
+      "anchors": {
+        "fixedFrontBaseRollerMaterialFeature1": { "x": 44, "y": 515 },
+        "fixedFrontBaseRollerMaterialFeature2": { "x": 63, "y": 523 }
+      },
+      "invariantDimensions": {
+        "fixedFrontBaseRollerProjectedFeatureSpan": 20.615528128088304,
+        "oppositeFixedSupportProjectedFeatureSpan": 32.984845004941285
+      }
+    },
+    {
+      "path": "form-frames/spin-bike/5.webp",
+      "sha256": "658e14ccd367ef2e86845a7939051fb20b4b26ad9c576ce8be9a161b64406a8c",
+      "anchors": {
+        "fixedFrontBaseRollerMaterialFeature1": { "x": 44, "y": 515 },
+        "fixedFrontBaseRollerMaterialFeature2": { "x": 63, "y": 523 }
+      },
+      "invariantDimensions": {
+        "fixedFrontBaseRollerProjectedFeatureSpan": 20.615528128088304,
+        "oppositeFixedSupportProjectedFeatureSpan": 32.984845004941285
+      }
+    },
+    {
+      "path": "form-frames/spin-bike/6.webp",
+      "sha256": "4778b11213b83f0a6574bf61a5084764c406fdbd0e4949edc0c9ee42f81d3bab",
+      "anchors": {
+        "fixedFrontBaseRollerMaterialFeature1": { "x": 44, "y": 515 },
+        "fixedFrontBaseRollerMaterialFeature2": { "x": 63, "y": 523 }
+      },
+      "invariantDimensions": {
+        "fixedFrontBaseRollerProjectedFeatureSpan": 20.615528128088304,
+        "oppositeFixedSupportProjectedFeatureSpan": 32.984845004941285
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 0,
+    "maxInvariantRelativeDrift": 0,
+    "limitsUnchanged": { "anchorAxisPx": 1, "invariantRelative": 0.01 },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-19-illustration-polish/spin-bike.json",
+    "sha256": "bb73bd7886c29412e0b641bc09fc6c58e350dd8599ce5d85afc7bcd6fbc7d9a4"
+  },
+  "historicalFindings": [
+    "Removed the detached 25-pixel horizontal old-equipment stub left of the calf in the standing position. Original athlete and remaining equipment are exact.",
+    "Existing discrete pose count, native source contour variation and unmeasured/calibrated3D limitations remain provenance facts; this cosmetic update does not add poses, anatomical transforms or strict certification."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete held/reused poses and small illustrative contour/projection differences remain. Strict review means this repository visual/evidence contract; it does not require or imply calibrated 3D.",
+    "Tiny white athlete details have reduced contrast on the established light card surface. The full mobile form stage remains readable."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-strict-review/mobile-observations/spin-bike.json",
+    "sha256": "4f7c01e69bc98a4227181c49c8ceaf24abe3180166b0b60c9685a6e805942da9"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false
+}

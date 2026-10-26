@@ -34,6 +34,8 @@ import {
   readDoc,
   flushSnapshots,
   failNextFirestore,
+  unfiredFailures,
+  batchLog,
 } from "@/test/firestoreHarness";
 import { savedRunDoc } from "@/test/sessionFixtures";
 
@@ -159,6 +161,40 @@ describe("setDefault / retireShoe", () => {
     expect(
       result.current.shoes.filter((s) => s.isDefault).map((s) => s.id)
     ).toEqual(["b"]);
+    expect(batchLog()).toHaveLength(1);
+    expect(
+      batchLog()[0]
+        .map((write) => write.path)
+        .sort()
+    ).toEqual(["users/u1/shoes/a", "users/u1/shoes/b"]);
+  });
+
+  it("keeps the previous default when the atomic change fails, and can retry", async () => {
+    seedFirestore({
+      "users/u1/shoes/a": shoe("A", { isDefault: true }),
+      "users/u1/shoes/b": shoe("B"),
+    });
+    const result = await mounted();
+    failNextFirestore("commit", { code: "unavailable" });
+
+    await act(async () => {
+      await expect(result.current.setDefault("b")).rejects.toMatchObject({
+        code: "unavailable",
+      });
+    });
+    expect(unfiredFailures()).toEqual([]);
+    expect(readDoc("users/u1/shoes/a")).toMatchObject({ isDefault: true });
+    expect(readDoc("users/u1/shoes/b")).toMatchObject({ isDefault: false });
+    expect(batchLog()).toHaveLength(0);
+    expect(result.current.defaultShoe?.id).toBe("a");
+
+    await act(async () => {
+      await result.current.setDefault("b");
+    });
+    await flushSnapshots();
+    expect(result.current.defaultShoe?.id).toBe("b");
+    expect(readDoc("users/u1/shoes/a")).toMatchObject({ isDefault: false });
+    expect(readDoc("users/u1/shoes/b")).toMatchObject({ isDefault: true });
   });
 
   it("clears the default flag when retiring, so it can't linger", async () => {

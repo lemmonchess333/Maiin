@@ -108,6 +108,17 @@ export function dayFocusLabel(dayName: string): string {
 }
 
 /**
+ * A lift's title on its Home card: a generated day as Train names it in its
+ * week ("Pull B") when that name is known, any other day as `liftDayTitle`
+ * reads it. The first-visit walk names today's lift with the same words.
+ */
+export function liftCardTitle(dayName: string, weekName?: string): string {
+  return weekName && generatedDayType(dayName)
+    ? weekName
+    : liftDayTitle(dayName).title;
+}
+
+/**
  * A lift day's name for a card: the title, and the category above it when
  * a custom name carries one. A generated day is its type alone here;
  * a card that knows the week titles it with `liftDayNameIn`. A custom name

@@ -1,11 +1,36 @@
+import { buildTimeBudgetSession } from "@/features/program/liftTimeBudget";
 import {
-  buildTimeBudgetSession,
-  isLiftTimeBudget,
-} from "@/features/program/liftTimeBudget";
+  sessionDayContext,
+  sessionPlanFor,
+  usualLiftBudget,
+} from "@/features/program/sessionDay";
+import { useSessionsInFlight } from "@/hooks/useSessionsInFlight";
+import { RESUME_PARAM } from "@/lib/resumeParam";
+import {
+  liftInProgress,
+  resumableLift,
+  resumableWorkout,
+  routineInProgress,
+  runInProgress,
+  storedRunName,
+  storedRunTemplate,
+  type ResumableLift,
+} from "@/lib/sessionsInFlight";
+import InProgressStrip from "@/components/session/InProgressStrip";
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
+import {
+  rememberTrainTab,
+  rememberedTrainTab,
+  trainTabFor,
+} from "@/lib/trainTab";
+import { racePaceWorkFor } from "@/lib/racePace";
+import { resolveDistanceUnit } from "@/lib/distanceUnits";
 import { workoutCompletionDayIdentity } from "@/lib/workoutCompletion";
 import { liftCompletionContext } from "@/lib/completionPlanContext";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { useBackDismiss } from "@/lib/backDismiss";
 import { useNavigate } from "react-router-dom";
 import { usePageSearchParams } from "@/hooks/usePageSearchParams";
 import { focusLabel } from "@/features/program/trainingBlock";
@@ -38,7 +63,6 @@ import {
 } from "@/lib/liftDayLabel";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import LiftPurpose from "@/components/program/LiftPurpose";
-import LiftRulesInfo from "@/components/program/LiftRulesInfo";
 import { deloadDismissKey, pickLiftAdvice } from "@/lib/programNotices";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
@@ -59,7 +83,6 @@ import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import ExpressSessionSheet from "@/components/program/ExpressSessionSheet";
 import {
-  buildExpressSession,
   draftScopeForVariant,
   estimateSessionMinutes,
   type SessionVariant,
@@ -70,7 +93,7 @@ import {
   pickLighterDay,
   summarizeEasier,
 } from "@/features/program/easierToday";
-import { localDateString, localWeekKey } from "@/lib/dateHelpers";
+import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import {
   useEasierTodayRecommendation,
   useHardRunBefore,
@@ -93,6 +116,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMotionSafe } from "@/hooks/useMotionSafe";
 import PageShell from "@/components/ui/PageShell";
 import type { Exercise } from "@/lib/exercises";
 import { splitLabel } from "@/features/program/programEngine";
@@ -155,6 +179,7 @@ export default function Program() {
 
 function ProgramInner() {
   const navigate = useNavigate();
+  const motionSafe = useMotionSafe();
   const [searchParams, setSearchParams] = usePageSearchParams();
   const {
     programState,
@@ -196,6 +221,12 @@ function ProgramInner() {
   } = useProgram();
   const { profile, updateProfile } = useAuth();
   const { awardEventBadge } = useStreaks();
+  // Today, from the shared day key: it moves at midnight and when the app
+  // comes back, so a screen left open overnight names the new day.
+  const todayKey = useLocalDateKey();
+  // A workout closed with its sets kept, or a run left unsaved: offered
+  // back on the day card (`InProgressStrip`).
+  const inFlight = useSessionsInFlight(profile?.uid);
   // Latest programState for deferred handlers (e.g. the delete-undo toast,
   // which fires after the removing save has already advanced state).
   const programStateRef = useRef(programState);
@@ -264,12 +295,25 @@ function ProgramInner() {
   type ProgramTab = "lift" | "run";
   // Mirror the Lift|Run tab into the URL (?tab=run) for the same reason as the
   // day selector: navigating into a run/exercise detail and pressing back must
-  // return to the tab the user was on, not snap back to Lift.
-  const urlTab: ProgramTab = searchParams.get("tab") === "run" ? "run" : "lift";
-  const [activeTab, setActiveTab] = useState<ProgramTab>(urlTab);
+  // return to the tab the user was on, not snap back to Lift. The tab bar's
+  // Train link carries no tab, so the choice is also remembered for the
+  // visit (`trainTabFor`), and a plan with no lifting days opens on Run.
+  const [openingTab] = useState(() => ({
+    urlTab: searchParams.get("tab"),
+    remembered: rememberedTrainTab(profile?.uid),
+  }));
+  const [chosenTab, setChosenTab] = useState<ProgramTab | null>(null);
+  const activeTab: ProgramTab =
+    chosenTab ??
+    trainTabFor({
+      ...openingTab,
+      liftDays: programState ? programState.workouts.length : null,
+    });
+  const tabOwner = profile?.uid;
   const selectTab = useCallback(
     (value: ProgramTab) => {
-      setActiveTab(value);
+      setChosenTab(value);
+      rememberTrainTab(tabOwner, value);
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
@@ -279,7 +323,7 @@ function ProgramInner() {
         { replace: true }
       );
     },
-    [setSearchParams]
+    [setSearchParams, tabOwner]
   );
 
   const { workouts: recentWorkouts, loading: workoutsLoading } = useWorkouts();
@@ -390,11 +434,52 @@ function ProgramInner() {
     name: string;
     open: boolean;
   }>({ name: "", open: false });
+
+  /* The plan's More options sheet and an exercise's menu: focus moves in
+     and stays there, Escape and the device's Back close them, and focus
+     goes back to the button that opened them (DESIGN_GUIDE §10). */
+  const overflowRef = useFocusTrap<HTMLDivElement>(showOverflow);
+  const contextMenuRef = useFocusTrap<HTMLDivElement>(contextMenu !== null);
+  useBackDismiss(showOverflow, () => setShowOverflow(false));
+  useBackDismiss(contextMenu !== null, () => setContextMenu(null));
+  // Opened from Resume: the workout carries on without asking again.
+  const [resumeOnOpen, setResumeOnOpen] = useState(false);
+  /* Back during a lift does what the session's own Close does: the
+     session closes to Train, its draft waits to be resumed, and the
+     session says it was kept as it goes. Without it, Back would leave the
+     page. A sheet in the session registers after this one, so Back closes
+     that first. */
+  const closeSession = () => {
+    setSessionDayIndex(null);
+    setSessionVariant("full");
+    setResumeOnOpen(false);
+    // What was kept (or finished) is read again for the day card's strip.
+    inFlight.refresh();
+  };
+  useBackDismiss(sessionOpen, closeSession);
+  useEffect(() => {
+    if (!showOverflow && contextMenu === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setShowOverflow(false);
+      setContextMenu(null);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [showOverflow, contextMenu]);
   const [replaceTarget, setReplaceTarget] = useState<{
     dayIndex: number;
     exIndex: number;
   } | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The drop's green flash, cleared if the page goes before it ends.
+  const dropFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (dropFlashTimer.current) clearTimeout(dropFlashTimer.current);
+    },
+    []
+  );
 
   // Exercise management helpers — accept dayIdx to work on any day (auto-save to Firestore)
   const removeExFromDay = async (dayIdx: number, exIndex: number) => {
@@ -572,7 +657,8 @@ function ProgramInner() {
     // Green flash — track the dropped exercise by its stable id so the flash
     // lands on the right row after the re-render reorders the list.
     setJustDroppedId(rowId(reordered[newIdx], dayIndex, newIdx));
-    setTimeout(() => setJustDroppedId(null), 300);
+    if (dropFlashTimer.current) clearTimeout(dropFlashTimer.current);
+    dropFlashTimer.current = setTimeout(() => setJustDroppedId(null), 300);
 
     // P6: through the command boundary, not `saveProgram`. The reorder applies
     // optimistically first, so the drop still settles immediately; the server
@@ -656,11 +742,10 @@ function ProgramInner() {
     if (!day || day.completed || day.skipped) return;
     // A plan built to fit the person's time (Lift4 (5)) starts in full; one
     // built before that still trims to their usual time at Start.
-    const budget =
-      programState.sessionMinutes === undefined &&
-      isLiftTimeBudget(profile?.liftTimeBudgetMinutes)
-        ? profile!.liftTimeBudgetMinutes!
-        : null;
+    const budget = usualLiftBudget(
+      programState,
+      profile?.liftTimeBudgetMinutes
+    );
     /* eslint-disable react-hooks/set-state-in-effect -- a one-shot reaction
        to the deep link, consumed above so it cannot repeat */
     setSessionBudgetMinutes(budget ?? 60);
@@ -673,6 +758,54 @@ function ProgramInner() {
     viewingHistoryIndex,
     urlDay,
     profile,
+    setSearchParams,
+  ]);
+
+  /* Resume, from the In progress strip, opens the workout as it was
+     started (its variant) and carries on without asking "Resume workout?"
+     again. Home links here with `?day=N&resume=1`, dropped once read like
+     `start`; a workout that can no longer be resumed (finished on another
+     phone, the week moved on) just opens its day. */
+  const liftBudget = profile?.liftTimeBudgetMinutes;
+  const openResumedLift = useCallback(
+    (lift: ResumableLift) => {
+      setSessionBudgetMinutes(usualLiftBudget(programState, liftBudget) ?? 60);
+      setSessionVariant(lift.variant);
+      setResumeOnOpen(true);
+      setSessionDayIndex(lift.dayIndex);
+    },
+    [programState, liftBudget]
+  );
+  const resumeRequested = searchParams.get(RESUME_PARAM) === "1";
+  const draftsInFlight = inFlight.drafts;
+  useEffect(() => {
+    if (!resumeRequested || !programState) return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete(RESUME_PARAM);
+        return next;
+      },
+      { replace: true }
+    );
+    if (viewingHistoryIndex !== null || urlDay === null) return;
+    const lift = resumableLift(
+      draftsInFlight,
+      programState,
+      sessionDayContext(programState, profile)
+    );
+    // A one-shot reaction to the deep link, consumed above so it cannot
+    // repeat.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
+    if (lift?.dayIndex === urlDay) openResumedLift(lift);
+  }, [
+    resumeRequested,
+    programState,
+    viewingHistoryIndex,
+    urlDay,
+    profile,
+    draftsInFlight,
+    openResumedLift,
     setSearchParams,
   ]);
 
@@ -731,8 +864,8 @@ function ProgramInner() {
     !isViewingHistory && selectedWorkout
       ? recentWorkouts.filter(
           (workout) =>
-            workout.date >= localWeekKey() &&
-            workout.date <= localDateString() &&
+            workout.date >= localWeekKey(parseLocalDate(todayKey)) &&
+            workout.date <= todayKey &&
             workout.notes ===
               `${selectedWorkout.dayName} — Programme Week ${displayWeekNumber}`
         )
@@ -776,13 +909,52 @@ function ProgramInner() {
     fixedRest: profile?.defaultRestSeconds,
     sessionMinutes: programState.sessionMinutes,
   };
+  const sessionContext = sessionDayContext(programState, profile);
+  // The workout under way on this phone that Resume would open as it was,
+  // a programme day's or a saved routine's, and the run under way: each
+  // offered back with Resume.
+  const workoutInFlight = resumableWorkout(
+    inFlight.drafts,
+    programState,
+    sessionContext,
+    inFlight.routines
+  );
+  const resumable =
+    workoutInFlight?.kind === "programme" ? workoutInFlight : null;
+  const liftStrip = resumable
+    ? liftInProgress(
+        resumable,
+        liftDayNameIn(
+          programState.workouts.map((w) => w.dayName),
+          resumable.dayIndex,
+          programState.workouts[resumable.dayIndex].dayName
+        )
+      )
+    : workoutInFlight?.kind === "routine"
+      ? routineInProgress(workoutInFlight)
+      : null;
+  const liftStripOnCard =
+    resumable !== null && !isViewingHistory && resumable.dayIndex === idx;
+  const runStrip = inFlight.run
+    ? runInProgress(
+        inFlight.run,
+        storedRunName(
+          inFlight.run.config,
+          racePaceWorkFor(
+            storedRunTemplate(inFlight.run.config),
+            profile,
+            programState.runPlan
+          ),
+          resolveDistanceUnit(profile?.preferredDistanceUnit)
+        )
+      )
+    : null;
   // The trim at Start retires with plans built to fit the time (Lift4 (5)):
   // only a plan from before then still trims to the person's usual time.
-  const usualBudget =
-    programState.sessionMinutes === undefined &&
-    isLiftTimeBudget(profile?.liftTimeBudgetMinutes)
-      ? profile.liftTimeBudgetMinutes
-      : null;
+  const usualBudget = usualLiftBudget(
+    programState,
+    profile?.liftTimeBudgetMinutes
+  );
   const usualPlan =
     selectedWorkout && usualBudget !== null
       ? buildTimeBudgetSession(selectedWorkout, usualBudget, restContext)
@@ -859,7 +1031,10 @@ function ProgramInner() {
     // Settings' words, as everywhere else on Train.
     if (dayCount === 0)
       return `${focusLabel(programState.primaryGoal ?? "general")} · no lift days`;
-    const daysLabel = dayCount === 1 ? "1 day/week" : `${dayCount} days/week`;
+    // A no-break space: the line wraps on a phone, and "5" alone at the end
+    // of one line with "days/week" opening the next reads as two things.
+    const daysLabel =
+      dayCount === 1 ? "1\u00a0day/week" : `${dayCount}\u00a0days/week`;
     // The focus is deliberately absent from this branch. The week row
     // states it on every render, in Settings' words (`focusLabel`), with
     // or without a block running. Carrying it here as well named one
@@ -880,11 +1055,7 @@ function ProgramInner() {
   // half was already canonical, and narrowing it to the resolver's RunMode
   // would drop legacy `structured` profiles to freeform. The derivation
   // moved to src/lib/runHeaderLine.ts so the case could be pinned by a test.
-  const resolvedRunPlan = resolveRunPlan(
-    profile,
-    programState,
-    localDateString(new Date())
-  );
+  const resolvedRunPlan = resolveRunPlan(profile, programState, todayKey);
   /**
    * P1d pin 2 — race-taper exclusivity for the deload-suggest banner.
    *
@@ -999,11 +1170,15 @@ function ProgramInner() {
       title="Train"
       banner={<ProgramOfflineBanner />}
       /* Tab-aware, so the Run tab does not read as an add-on under a
-         lifting-only header. Two lines reserved: the lift line often wraps
-         while the run line is one, and without the reserve everything
-         below shifted ~12px on Lift↔Run. */
+         lifting-only header. It wraps rather than truncating: a five-day
+         split ("Push / Pull / Legs + Upper / Lower · 5 days/week") is two
+         lines on a phone. The other tab's line holds its place unseen, so
+         the header is as tall as the longer of the two and nothing below
+         moves on Lift↔Run. */
       subtitle={activeTab === "run" ? programRunHeaderLine : programHeaderLine}
-      subtitleReserveLines={1}
+      subtitleAlternates={[
+        activeTab === "run" ? programHeaderLine : programRunHeaderLine,
+      ]}
       /* Overflow, plus a "Done" exit only while reordering. */
       actions={
         <>
@@ -1024,6 +1199,8 @@ function ProgramInner() {
             className="p-2 rounded-lg hover:bg-muted transition-colors"
             style={{ minWidth: 44, minHeight: 44 }}
             aria-label="More options"
+            aria-haspopup="dialog"
+            aria-expanded={showOverflow}
           >
             <MoreHorizontal className="size-4 text-muted-foreground" />
           </button>
@@ -1070,6 +1247,20 @@ function ProgramInner() {
             the lift surface only renders when the user switches to it. */}
       {activeTab === "lift" && (
         <>
+          {/* A workout under way on another day than the one shown, or a
+              saved routine's, leads the tab, so it is the first thing
+              seen; on its own day it sits on the day card instead. A
+              routine's Resume opens the routine's page. */}
+          {liftStrip && !liftStripOnCard && (
+            <InProgressStrip
+              session={liftStrip}
+              onResume={() =>
+                resumable
+                  ? openResumedLift(resumable)
+                  : navigate(liftStrip.resumeTarget)
+              }
+            />
+          )}
           {/* Pgm3: deload banner. Sits ABOVE the week-phase row so
                 it's visible regardless of which day the user is
                 inspecting — deload is a week-level signal. Per-week
@@ -1088,7 +1279,7 @@ function ProgramInner() {
               // the snapshot rather than stored — see deloadChangeSummary.
               runsEased={deloadRunSwapCount(programState)}
               raceWeek={programState.raceWeek}
-              raceRest={isRaceRestDay(programState.runPlan, localDateString())}
+              raceRest={isRaceRestDay(programState.runPlan, todayKey)}
               onApply={handleApplyDeload}
             />
           </TrackProgrammeSectionView>
@@ -1109,7 +1300,7 @@ function ProgramInner() {
                           archived: true,
                         }
                       : programState,
-                    localDateString(),
+                    todayKey,
                     profile?.experience
                   ) ?? undefined
                 }
@@ -1117,13 +1308,6 @@ function ProgramInner() {
                 onNextWeek={goForward}
                 canGoPrev={canGoBack}
                 canGoNext={canGoForward}
-                info={
-                  <LiftRulesInfo
-                    purpose={null}
-                    programme={programState}
-                    experience={profile?.experience}
-                  />
-                }
               />
             </div>
           </TrackProgrammeSectionView>
@@ -1207,7 +1391,15 @@ function ProgramInner() {
         // Lift selector lacks, so a little more top padding here lands the
         // circles — not the container — at the same Y, which is what the eye
         // tracks when toggling tabs.
-        <div className="pt-4">
+        <div className="pt-4 space-y-4">
+          {/* A run left before it was saved: Resume picks it up where it
+              stopped. */}
+          {runStrip && (
+            <InProgressStrip
+              session={runStrip}
+              onResume={() => navigate(runStrip.resumeTarget)}
+            />
+          )}
           <ProgrammeRunSection
             profile={profile}
             programState={programState}
@@ -1251,11 +1443,11 @@ function ProgramInner() {
                 <motion.div
                   key={idx}
                   custom={direction}
-                  variants={{
+                  variants={motionSafe.variants({
                     enter: (dir: number) => ({ opacity: 0, x: dir * 50 }),
                     center: { opacity: 1, x: 0 },
                     exit: (dir: number) => ({ opacity: 0, x: dir * -50 }),
-                  }}
+                  })}
                   initial="enter"
                   animate="center"
                   exit="exit"
@@ -1349,6 +1541,15 @@ function ProgramInner() {
                         primaryActionVariant={
                           status === "upcoming" ? "secondary" : undefined
                         }
+                        action={
+                          liftStripOnCard && liftStrip && resumable ? (
+                            <InProgressStrip
+                              session={liftStrip}
+                              onCard
+                              onResume={() => openResumedLift(resumable)}
+                            />
+                          ) : undefined
+                        }
                         onPrimaryAction={
                           status === "upcoming" && !isViewingHistory
                             ? () => {
@@ -1403,7 +1604,7 @@ function ProgramInner() {
                         <LiftPurpose
                           programme={programState}
                           day={selectedWorkout}
-                          date={localDateString()}
+                          date={todayKey}
                           experience={profile?.experience}
                           className="px-3"
                         />
@@ -1584,6 +1785,11 @@ function ProgramInner() {
                                     </button>
                                     <IconButton
                                       aria-label={`More options for ${ex.name}`}
+                                      aria-haspopup="menu"
+                                      aria-expanded={
+                                        contextMenu?.dayIndex === idx &&
+                                        contextMenu?.exIndex === i
+                                      }
                                       icon={
                                         <MoreHorizontal className="size-5" />
                                       }
@@ -1743,7 +1949,7 @@ function ProgramInner() {
                             runMode: profile?.runMode,
                             raceDistance: profile?.raceGoal?.distance,
                             raceTargetDate: profile?.raceGoal?.targetDate,
-                            today: localDateString(),
+                            today: todayKey,
                           })}
                           onStart={startTrainingBlock}
                           onAdoptLegacy={adoptLegacyTrainingBlock}
@@ -1790,16 +1996,23 @@ function ProgramInner() {
         {contextMenu && (
           <>
             <motion.div
-              initial={{ opacity: 0 }}
+              initial={motionSafe({ opacity: 0 })}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              exit={motionSafe({ opacity: 0 })}
               className="fixed inset-0 z-[200]"
               onClick={() => setContextMenu(null)}
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              ref={contextMenuRef}
+              role="menu"
+              aria-label={`Options for ${
+                displayWorkouts[contextMenu.dayIndex]?.exercises[
+                  contextMenu.exIndex
+                ]?.name ?? "exercise"
+              }`}
+              initial={motionSafe({ opacity: 0, scale: 0.95 })}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              exit={motionSafe({ opacity: 0, scale: 0.95 })}
               transition={{ duration: 0.15 }}
               className="fixed z-[201] bg-card rounded-xl shadow-lg border border-border/50 overflow-hidden"
               style={{
@@ -1810,6 +2023,7 @@ function ProgramInner() {
             >
               <button
                 type="button"
+                role="menuitem"
                 onClick={() => {
                   setReplaceTarget({
                     dayIndex: contextMenu.dayIndex,
@@ -1819,31 +2033,41 @@ function ProgramInner() {
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30"
               >
-                <Repeat className="size-4 text-muted-foreground" /> Replace
-                exercise
+                <Repeat
+                  className="size-4 text-muted-foreground"
+                  aria-hidden="true"
+                />{" "}
+                Replace exercise
               </button>
               <button
                 type="button"
+                role="menuitem"
                 onClick={() => {
                   removeExFromDay(contextMenu.dayIndex, contextMenu.exIndex);
                   setContextMenu(null);
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-destructive-strong hover:bg-muted transition-colors border-b border-border/30"
               >
-                <Trash2 className="size-4" /> Remove exercise
+                <Trash2 className="size-4" aria-hidden="true" /> Remove exercise
               </button>
               <button
                 type="button"
+                role="menuitem"
                 onClick={() => {
                   moveExercise(contextMenu.dayIndex, contextMenu.exIndex, -1);
                 }}
                 disabled={contextMenu.exIndex === 0}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30 disabled:opacity-30"
               >
-                <ArrowUp className="size-4 text-muted-foreground" /> Move up
+                <ArrowUp
+                  className="size-4 text-muted-foreground"
+                  aria-hidden="true"
+                />{" "}
+                Move up
               </button>
               <button
                 type="button"
+                role="menuitem"
                 onClick={() => {
                   moveExercise(contextMenu.dayIndex, contextMenu.exIndex, 1);
                 }}
@@ -1855,7 +2079,11 @@ function ProgramInner() {
                 }
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors disabled:opacity-30"
               >
-                <ArrowDown className="size-4 text-muted-foreground" /> Move down
+                <ArrowDown
+                  className="size-4 text-muted-foreground"
+                  aria-hidden="true"
+                />{" "}
+                Move down
               </button>
             </motion.div>
           </>
@@ -1966,21 +2194,12 @@ function ProgramInner() {
           // Easier today (PROGRAM-ADAPT-01) is the same execution-clone
           // contract as Express: a reduced COPY runs; the stored day is
           // untouched, and nothing is dropped.
-          const plan =
-            sessionVariant === "full"
-              ? null
-              : sessionVariant === "easier_today"
-                ? buildEasierSession(storedDay, restContext, {
-                    smallPlates: programState.settings?.smallPlates === true,
-                    loadUnit: programState.settings?.loadUnit,
-                  })
-                : sessionVariant === "time_budget"
-                  ? buildTimeBudgetSession(
-                      storedDay,
-                      sessionBudgetMinutes,
-                      restContext
-                    )
-                  : buildExpressSession(storedDay, sessionVariant, restContext);
+          // Built where the In progress strip's reader builds it
+          // (`sessionDay.ts`), so a draft it offers back is this session's.
+          const plan = sessionPlanFor(storedDay, sessionVariant, {
+            ...sessionContext,
+            budgetMinutes: sessionBudgetMinutes,
+          });
           return (
             <WorkoutSession
               hardRunBefore={hardRunBefore}
@@ -1995,12 +2214,7 @@ function ProgramInner() {
                 sessionDayIndex,
                 storedDay.dayName
               )}
-              planContext={liftCompletionContext(
-                programState,
-                sessionDayIndex,
-                localDateString(),
-                profile?.experience
-              )}
+              planContext={liftCompletionContext(programState, sessionDayIndex)}
               draftEpoch={programState.weekNumber}
               // Variant-scoped draft namespace (PROGRAM-ADAPT-01
               // follow-up): the draft identity fingerprints the
@@ -2027,10 +2241,8 @@ function ProgramInner() {
                 trainingBlockId: programState.trainingBlock?.id,
               }}
               onCompleteDay={completeWithViewToast}
-              onClose={() => {
-                setSessionDayIndex(null);
-                setSessionVariant("full");
-              }}
+              onClose={closeSession}
+              resumeDraft={resumeOnOpen}
             />
           );
         })()}
@@ -2094,15 +2306,17 @@ function ProgramInner() {
         {showOverflow && (
           <>
             <motion.div
-              initial={{ opacity: 0 }}
+              initial={motionSafe({ opacity: 0 })}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              exit={motionSafe({ opacity: 0 })}
               className="fixed inset-0 bg-black/50 z-40"
               onClick={() => setShowOverflow(false)}
             />
             <motion.div
+              ref={overflowRef}
               role="dialog"
               aria-modal="true"
+              aria-label="Plan options"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}

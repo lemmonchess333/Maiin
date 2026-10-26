@@ -21,10 +21,10 @@
  * snapshots the pre-ease runs, so Undo is a row on this sheet for the rest
  * of the week rather than an 8-second toast holding the only copy.
  *
- * Mounted by ProgrammeRunSection (cockpit entry) and SettingsRunPlan; both
- * gate on race_prep + not-recovery + not-elapsed before rendering the entry.
- * Both mounts matter — the A6 eased-week marker used to be a caller's job
- * and the Settings one never did it, which is why this sheet now owns it.
+ * Mounted by ProgrammeRunSection, opened from the race card's Adjust this
+ * week row, which shows only for race_prep, not in recovery and not after
+ * the race. The sheet owns the A6 eased-week marker itself, so a caller
+ * cannot forget it.
  */
 import { useMemo, useRef, useState } from "react";
 import { ArrowRight, CalendarClock, Feather } from "lucide-react";

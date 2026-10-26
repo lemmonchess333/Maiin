@@ -29,6 +29,8 @@ import {
   doc,
   getDoc,
   getDocs,
+  getDocFromServer,
+  getDocsFromServer,
   collection,
   setDoc,
   deleteDoc,
@@ -73,17 +75,22 @@ const VERIFIED = { email_verified: true };
  * stranger's device, so it is a tracking pixel.
  */
 const ALLOWED_PHOTO_URLS = [
-  "https://firebasestorage.googleapis.com/v0/b/tropos-fitness.firebasestorage.app/o/profile-photos%2Fowner-uid%2Favatar.jpg?alt=media&v=1",
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Fowner-uid%2Favatar.jpg?alt=media&v=1",
   "https://lh3.googleusercontent.com/a/ACg8ocIabcdefg=s96-c",
   "https://appleid.cdn-apple.com/static/bin/avatar/123.jpg",
 ];
-const PHOTO_URL_ORIGIN = "https://firebasestorage.googleapis.com/";
+/** This project's bucket: the host alone admits any Firebase project's. */
+const PHOTO_URL_ORIGIN =
+  "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/";
 /** Arbitrary host, suffix-phishing host, http downgrade, two non-http
  *  schemes, and a 2049-char value on an allowed origin (the size cap). */
 const REJECTED_PHOTO_URLS = [
   "https://pixel-tracker.example/pixel?uid=victim",
+  // Another Firebase project's bucket: the same host, someone else's
+  // access logs.
+  "https://firebasestorage.googleapis.com/v0/b/attacker.appspot.com/o/pixel.jpg",
   "https://lh3.googleusercontent.com.evil.com/a/ACg8ocIabcdefg=s96-c",
-  "http://firebasestorage.googleapis.com/v0/b/x/o/y.jpg",
+  "http://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/y.jpg",
   "javascript:alert(1)",
   "data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+",
   PHOTO_URL_ORIGIN + "a".repeat(2049 - PHOTO_URL_ORIGIN.length),
@@ -312,7 +319,7 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         {
           photoURL:
-            "https://firebasestorage.googleapis.com/v0/b/tropos-fitness.firebasestorage.app/o/profile-photos%2Fowner-uid%2Favatar.jpg?alt=media",
+            "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2Fowner-uid%2Favatar.jpg?alt=media",
         },
         { merge: true }
       )
@@ -410,7 +417,10 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
     await assertFails(
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
-        { photoURL: "http://firebasestorage.googleapis.com/v0/b/x/o/y.jpg" },
+        {
+          photoURL:
+            "http://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/y.jpg",
+        },
         { merge: true }
       )
     );
@@ -841,6 +851,48 @@ suite("firestore.rules — /challenges", () => {
       );
     });
   });
+
+  // ── joining closes when the challenge ends ──────────────────────────
+  describe("a join after the challenge has ended", () => {
+    const CHALLENGE = "weekly-2026-01-01";
+    const HOUR = 3_600_000;
+    const seedEndingAt = (endMs: number) =>
+      env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "challenges", CHALLENGE), {
+          ...validChallengeData,
+          startDate: Timestamp.fromMillis(endMs - 7 * 24 * HOUR),
+          endDate: Timestamp.fromMillis(endMs),
+        });
+      });
+    const joinRef = () =>
+      doc(
+        env.authenticatedContext(OWNER_UID).firestore(),
+        "challenges",
+        CHALLENGE,
+        "participants",
+        OWNER_UID
+      );
+    const join = {
+      currentValue: 0,
+      tierAchieved: null,
+      joinedAt: serverTimestamp(),
+    };
+
+    it("is refused once the last local midnight anywhere has passed", async () => {
+      await seedEndingAt(Date.now() - 13 * HOUR);
+      await assertFails(setDoc(joinRef(), join));
+    });
+
+    it("is accepted while the challenge may still be running somewhere", async () => {
+      await seedEndingAt(Date.now() - 11 * HOUR);
+      await assertSucceeds(setDoc(joinRef(), join));
+    });
+
+    it("is accepted for a running challenge", async () => {
+      await seedEndingAt(Date.now() + 3 * 24 * HOUR);
+      await assertSucceeds(setDoc(joinRef(), join));
+    });
+  });
 });
 
 /**
@@ -1114,6 +1166,17 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
     });
   }
 
+  /* An account that accepts every follower (Polish2: absent means each
+     follower waits to be accepted), so a refused follow below is refused
+     for the reason the test names. */
+  async function seedOpenAccount(uid: string) {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", uid), {
+        approveFollowers: false,
+      });
+    });
+  }
+
   it("owner writes meals succeed when no ledger doc exists", async () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(
@@ -1194,27 +1257,30 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
 
   it("follow creation FAILS when EITHER side is mid-deletion", async () => {
     // Owner mid-deletion: cannot create their own follow.
+    await seedOpenAccount(OTHER_UID);
     await seedDeletionStatus(OWNER_UID, "running");
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertFails(
       setDoc(doc(ownerDb, "following", OWNER_UID, "users", OTHER_UID), {
-        createdAt: serverTimestamp(),
+        followedAt: Timestamp.now(),
       })
     );
   });
 
   it("follow creation FAILS when target is mid-deletion", async () => {
+    await seedOpenAccount(OTHER_UID);
     await seedDeletionStatus(OTHER_UID, "running");
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertFails(
       setDoc(doc(ownerDb, "following", OWNER_UID, "users", OTHER_UID), {
-        createdAt: serverTimestamp(),
+        followedAt: Timestamp.now(),
       })
     );
   });
 
   /* Blocking severs the follow edges at block time (`blockUser` deletes all
-     four docs) — but nothing stopped the blocked user simply FOLLOWING AGAIN.
+     four docs, the cases at the end of this block) — but nothing stopped
+     the blocked user simply FOLLOWING AGAIN.
      The follow write is a direct client write, and these rules allowed any
      authenticated user to create `followers/{anyone}/users/{self}`. Fan-out
      reads `followers/{author}`, so a re-follow put the author's activities
@@ -1233,44 +1299,49 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
   }
 
   it("a blocked user CANNOT re-follow the person who blocked them", async () => {
+    await seedOpenAccount(OWNER_UID);
     await seedBlock(OWNER_UID, OTHER_UID);
     const blockedDb = env.authenticatedContext(OTHER_UID).firestore();
     await assertFails(
       setDoc(doc(blockedDb, "following", OTHER_UID, "users", OWNER_UID), {
-        createdAt: serverTimestamp(),
+        followedAt: Timestamp.now(),
       })
     );
     // The followers doc is the one that drives fan-out.
     await assertFails(
       setDoc(doc(blockedDb, "followers", OWNER_UID, "users", OTHER_UID), {
-        createdAt: serverTimestamp(),
+        followedAt: Timestamp.now(),
       })
     );
   });
 
   it("a blocker cannot follow the person they blocked either", async () => {
     // Otherwise the block is a one-way mirror. Unblock first.
+    await seedOpenAccount(OTHER_UID);
     await seedBlock(OWNER_UID, OTHER_UID);
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertFails(
       setDoc(doc(ownerDb, "following", OWNER_UID, "users", OTHER_UID), {
-        createdAt: serverTimestamp(),
+        followedAt: Timestamp.now(),
       })
     );
   });
 
   it("an ordinary follow between unblocked users still works", async () => {
     /* Guards the guard. A rule that denied every follow would satisfy both
-       assertions above and silently break the entire social graph. */
+       assertions above and silently break the entire social graph. To
+       someone who accepts every follower; the rest wait to be accepted
+       (firestore.followRequests.rules.test.ts). */
+    await seedOpenAccount(OTHER_UID);
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(
       setDoc(doc(ownerDb, "following", OWNER_UID, "users", OTHER_UID), {
-        createdAt: serverTimestamp(),
+        followedAt: Timestamp.now(),
       })
     );
     await assertSucceeds(
       setDoc(doc(ownerDb, "followers", OTHER_UID, "users", OWNER_UID), {
-        createdAt: serverTimestamp(),
+        followedAt: Timestamp.now(),
       })
     );
   });
@@ -1289,6 +1360,52 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(
       deleteDoc(doc(ownerDb, "following", OWNER_UID, "users", OTHER_UID))
+    );
+  });
+
+  /* OTHER follows OWNER, then OWNER blocks OTHER. The two docs of OTHER's
+     follow belong to OTHER, so the rules refused OWNER's deletes and the
+     follow survived the block, with OTHER still in followers/OWNER, the
+     list that opens OWNER's followers-only posts. */
+  async function seedFollow(follower: string, followed: string) {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "following", follower, "users", followed), {
+        createdAt: serverTimestamp(),
+      });
+      await setDoc(doc(db, "followers", followed, "users", follower), {
+        createdAt: serverTimestamp(),
+      });
+    });
+  }
+
+  it("a blocker removes the blocked person's follow of them, both docs", async () => {
+    await seedFollow(OTHER_UID, OWNER_UID);
+    await seedBlock(OWNER_UID, OTHER_UID);
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      deleteDoc(doc(ownerDb, "followers", OWNER_UID, "users", OTHER_UID))
+    );
+    await assertSucceeds(
+      deleteDoc(doc(ownerDb, "following", OTHER_UID, "users", OWNER_UID))
+    );
+  });
+
+  it("without a block, nobody removes someone else's follow", async () => {
+    // Anchor for the case above: the block is what allows it.
+    await seedFollow(OTHER_UID, OWNER_UID);
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      deleteDoc(doc(ownerDb, "followers", OWNER_UID, "users", OTHER_UID))
+    );
+    await assertFails(
+      deleteDoc(doc(ownerDb, "following", OTHER_UID, "users", OWNER_UID))
+    );
+    // Nor may a third party remove it, block or not.
+    await seedBlock(OWNER_UID, OTHER_UID);
+    const strangerDb = env.authenticatedContext("stranger-uid").firestore();
+    await assertFails(
+      deleteDoc(doc(strangerDb, "followers", OWNER_UID, "users", OTHER_UID))
     );
   });
 });
@@ -1447,9 +1564,15 @@ suite("firestore.rules — tombstone freeze (completed deletion)", () => {
   });
 
   it("create a follow relationship FAILS", async () => {
+    // Bob accepts everyone, so the tombstone is what refuses it.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", BOB), {
+        approveFollowers: false,
+      });
+    });
     await assertFails(
       setDoc(doc(aliceDb(), "following", ALICE, "users", BOB), {
-        createdAt: serverTimestamp(),
+        followedAt: Timestamp.now(),
       })
     );
   });
@@ -1710,6 +1833,37 @@ suite("firestore.rules — /activities visibility-aware reads (audit #1)", () =>
     await assertFails(getDoc(doc(strangerDb, "activities", "fol-2")));
   });
 
+  it("followers-only activity — NOT readable by a follower after a block, either way", async () => {
+    // The follow edge outlived blocks made before blockUser could remove
+    // it, so the read checks the block itself.
+    await seed({
+      activityId: "fol-blocked",
+      visibility: "followers",
+      follower: FOLLOWER_UID,
+    });
+    const followerDb = env.authenticatedContext(FOLLOWER_UID).firestore();
+    await assertSucceeds(getDoc(doc(followerDb, "activities", "fol-blocked")));
+    for (const [blocker, blocked] of [
+      [OWNER_UID, FOLLOWER_UID],
+      [FOLLOWER_UID, OWNER_UID],
+    ]) {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), "blocks", blocker, "users", blocked),
+          {
+            blockedAt: serverTimestamp(),
+          }
+        );
+      });
+      await assertFails(getDoc(doc(followerDb, "activities", "fol-blocked")));
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await deleteDoc(
+          doc(ctx.firestore(), "blocks", blocker, "users", blocked)
+        );
+      });
+    }
+  });
+
   it("followers-only activity — readable by the owner", async () => {
     await seed({ activityId: "fol-3", visibility: "followers" });
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
@@ -1766,7 +1920,14 @@ suite("firestore.rules — /activities visibility-aware reads (audit #1)", () =>
   it("profile: a stranger sees the public post, follows, and on reopening sees the followers-only one too", async () => {
     /* One visit from Explore, in the page's order: the two queries
        profilePostVisibilities(false) names, the follow written as
-       followUser writes it, then the same two queries again. */
+       followUser writes it, then the same two queries again. The owner
+       accepts every follower (approveFollowers false); otherwise the
+       follow is a request until accepted. */
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", OWNER_UID), {
+        approveFollowers: false,
+      });
+    });
     await seed({ activityId: "pub-v", visibility: "public" });
     await seed({ activityId: "fol-v", visibility: "followers" });
     const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
@@ -1836,7 +1997,8 @@ suite(
           makeValidActivity({
             type: "workout",
             visibility: "followers",
-            authorPhotoURL: "https://firebasestorage.googleapis.com/foo",
+            authorPhotoURL:
+              "https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/foo.jpg",
             workoutName: "Push day",
             exerciseCount: 6,
             totalVolume: 5400,
@@ -1958,6 +2120,26 @@ suite(
           makeValidActivity({ type: "meal" })
         )
       );
+    });
+
+    it("a createdAt that is not the server's time — rejected", async () => {
+      /* Discover orders by createdAt, and the rule checked only that it was
+         a timestamp: a post dated 2099 sat at the top of everyone's Discover
+         for good. postActivity sends serverTimestamp(), which the valid
+         cases above use. */
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      for (const [id, createdAt] of [
+        ["future-post", Timestamp.fromDate(new Date("2099-01-01T00:00:00Z"))],
+        ["past-post", Timestamp.fromDate(new Date("2020-01-01T00:00:00Z"))],
+        ["client-now-post", Timestamp.now()],
+      ] as const) {
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", id),
+            makeValidActivity({ createdAt })
+          )
+        );
+      }
     });
 
     it("non-zero initial kudosCount — rejected (counter-forgery on create)", async () => {
@@ -2358,6 +2540,34 @@ suite(
       );
     });
 
+    // A create is held to the three values; an update was not, so a post
+    // could be given any string as its visibility.
+    it("owner can change visibility only to one of the three values", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "activities", "A1"), {
+          ...makeValidActivity(),
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      for (const bad of ["everyone", "", 1, null]) {
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", "A1"),
+            { visibility: bad },
+            { merge: true }
+          )
+        );
+      }
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "A1"),
+          { visibility: "followers" },
+          { merge: true }
+        )
+      );
+    });
+
     // App Review 1.2: the word filter (onActivityCreated) and a moderator's
     // Hide content flag an activity and make it private. Its author must
     // not be able to make it public again.
@@ -2568,9 +2778,9 @@ suite(
       await env.withSecurityRulesDisabled(async (ctx) => {
         const db = ctx.firestore();
         await setDoc(doc(db, "feeds", OWNER_UID, "items", "I1"), {
+          schemaVersion: 2,
           activityId: "act1",
           authorId: OTHER_UID,
-          summary: "from a friend",
           createdAt: new Date(),
         });
       });
@@ -2578,6 +2788,122 @@ suite(
       await assertSucceeds(
         getDoc(doc(ownerDb, "feeds", OWNER_UID, "items", "I1"))
       );
+    });
+
+    it("refuses historical summaries at server get and list during migration", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), "feeds", OWNER_UID, "items", "legacy"),
+          {
+            activityId: "private-run",
+            authorId: OTHER_UID,
+            summary: "Private run · 5.0 km · 25:00",
+            createdAt: new Date(),
+          }
+        );
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        getDocFromServer(doc(ownerDb, "feeds", OWNER_UID, "items", "legacy"))
+      );
+      await assertFails(
+        getDocsFromServer(
+          query(
+            collection(ownerDb, "feeds", OWNER_UID, "items"),
+            orderBy("createdAt", "desc"),
+            limit(20)
+          )
+        )
+      );
+    });
+
+    it("lists a full page of safe indexes alongside unreadable historical copies", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        const batch = writeBatch(db);
+        batch.set(doc(db, "feeds", OWNER_UID, "items", "legacy"), {
+          activityId: "private-run",
+          authorId: OTHER_UID,
+          summary: "Private session",
+          createdAt: new Date(),
+        });
+        for (let i = 0; i < 25; i += 1) {
+          batch.set(doc(db, "feeds", OWNER_UID, "items", `safe-${i}`), {
+            schemaVersion: 2,
+            activityId: `activity-${i}`,
+            authorId: OTHER_UID,
+            createdAt: new Date(Date.now() + i),
+            expiresAt: new Date(Date.now() + 86_400_000),
+          });
+        }
+        await batch.commit();
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const page = await assertSucceeds(
+        getDocsFromServer(
+          query(
+            collection(ownerDb, "feeds", OWNER_UID, "items"),
+            where("schemaVersion", "==", 2),
+            orderBy("createdAt", "desc"),
+            limit(20)
+          )
+        )
+      );
+      expect(page.docs).toHaveLength(20);
+      expect(page.docs.every((d) => d.data().schemaVersion === 2)).toBe(true);
+      const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+      await assertFails(
+        getDocFromServer(doc(strangerDb, "feeds", OWNER_UID, "items", "safe-0"))
+      );
+    });
+
+    it("a blocked former follower can read only the routing index, never an old session summary", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "a1"), {
+          authorId: OTHER_UID,
+          visibility: "followers",
+          runName: "Private run",
+          distance: 5000,
+        });
+        await setDoc(doc(db, "followers", OTHER_UID, "users", OWNER_UID), {
+          followedAt: new Date(),
+        });
+        await setDoc(doc(db, "feeds", OWNER_UID, "items", "legacy"), {
+          activityId: "a1",
+          authorId: OTHER_UID,
+          summary: "Private run · 5.0 km",
+        });
+        await setDoc(doc(db, "feeds", OWNER_UID, "items", "a1"), {
+          schemaVersion: 2,
+          activityId: "a1",
+          authorId: OTHER_UID,
+          createdAt: new Date(),
+          expiresAt: new Date(Date.now() + 86_400_000),
+        });
+      });
+      const followerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        getDocFromServer(doc(followerDb, "activities", "a1"))
+      );
+      const authorDb = env.authenticatedContext(OTHER_UID).firestore();
+      await setDoc(doc(authorDb, "blocks", OTHER_UID, "users", OWNER_UID), {
+        blockedAt: serverTimestamp(),
+      });
+      await assertFails(getDocFromServer(doc(followerDb, "activities", "a1")));
+      await assertFails(
+        getDocFromServer(doc(followerDb, "feeds", OWNER_UID, "items", "legacy"))
+      );
+      const index = await assertSucceeds(
+        getDocFromServer(doc(followerDb, "feeds", OWNER_UID, "items", "a1"))
+      );
+      expect(Object.keys(index.data() || {}).sort()).toEqual([
+        "activityId",
+        "authorId",
+        "createdAt",
+        "expiresAt",
+        "schemaVersion",
+      ]);
     });
 
     it("owner can still delete their own feed item (regression guard — UI inbox clear)", async () => {
@@ -2829,9 +3155,21 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
 
   beforeEach(async () => {
     await env.clearFirestore();
+    // A and B follow each other: the consent a bond stands on.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      for (const [from, to] of [
+        [A_UID, B_UID],
+        [B_UID, A_UID],
+      ]) {
+        await setDoc(doc(ctx.firestore(), `following/${from}/users/${to}`), {
+          createdAt: serverTimestamp(),
+        });
+      }
+    });
   });
 
-  const BOND = "bond-ab";
+  // The id createBond derives: the pair's uids, sorted.
+  const BOND = `${A_UID}__${B_UID}`;
   const coldBond = (members: string[]) => ({
     members,
     streak: 0,
@@ -2867,9 +3205,12 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
     );
   });
 
-  it("creates a cold bond when the creator is one of two distinct members", async () => {
+  it("refuses even a cold bond from one of its two members: only the server makes bonds", async () => {
+    // The startPartnerStreak callable counts both members' bonds before it
+    // creates one, which a rule cannot; a direct create would skip the
+    // count (firestore.partnerBonds.rules.test.ts has the full case).
     const aDb = env.authenticatedContext(A_UID).firestore();
-    await assertSucceeds(
+    await assertFails(
       setDoc(doc(aDb, "partnerBonds", BOND), coldBond([A_UID, B_UID]))
     );
   });
@@ -3041,6 +3382,35 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
       // Not a follower.
       await assertFails(getDoc(kudosDoc(STRANGER)));
       await assertFails(getDoc(commentDoc(STRANGER)));
+    });
+
+    it("FOLLOWERS: a follower blocked either way reads no children, as the parent", async () => {
+      await seedActivity("followers");
+      await seedFollower(FOLLOWER);
+      for (const [blocker, blocked] of [
+        [AUTHOR, FOLLOWER],
+        [FOLLOWER, AUTHOR],
+      ]) {
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await setDoc(
+            doc(ctx.firestore(), "blocks", blocker, "users", blocked),
+            {
+              blockedAt: serverTimestamp(),
+            }
+          );
+        });
+        await assertFails(getDoc(kudosDoc(FOLLOWER)));
+        await assertFails(getDocs(kudosCol(FOLLOWER)));
+        await assertFails(getDoc(commentDoc(FOLLOWER)));
+        await assertFails(getDocs(commentCol(FOLLOWER)));
+        await env.withSecurityRulesDisabled(async (ctx) => {
+          await deleteDoc(
+            doc(ctx.firestore(), "blocks", blocker, "users", blocked)
+          );
+        });
+      }
+      // Unblocked again: the follower reads, so the refusals were the block.
+      await assertSucceeds(getDoc(kudosDoc(FOLLOWER)));
     });
 
     it("TRANSITION: a stranger who could read a public child loses access when it turns private", async () => {

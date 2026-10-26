@@ -4,7 +4,7 @@ import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import type { KudosCandidate } from "@/lib/postCompletionKudos";
 
 /**
- * Phase 2 — post-completion kudos prompt. Calm, optional, shown only AFTER a
+ * Phase 2 — post-completion props prompt. Calm, optional, shown only AFTER a
  * session completes when someone the user follows also trained today. Pure
  * presentational; all logic + rate-limiting lives in usePostCompletionKudos.
  */
@@ -38,7 +38,7 @@ export default function PostCompletionKudos({
             {candidate.authorName} also {verb} today
           </p>
           <p className="text-xs text-muted-foreground leading-snug">
-            Send them some kudos?
+            Give them props?
           </p>
         </div>
       </div>
@@ -52,7 +52,7 @@ export default function PostCompletionKudos({
           }}
         >
           <Check size={16} />
-          Kudos sent
+          Props given
         </div>
       ) : (
         <div className="flex items-center gap-2 mt-3">
@@ -64,7 +64,7 @@ export default function PostCompletionKudos({
             style={{ background: THEME.brand }}
           >
             <ThumbsUp size={16} />
-            {sending ? "Sending…" : "Send kudos"}
+            {sending ? "Sending…" : "Give props"}
           </button>
           <button
             type="button"

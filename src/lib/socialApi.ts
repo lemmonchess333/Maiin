@@ -7,6 +7,7 @@ import {
   getDocs,
   getDoc,
   getCountFromServer,
+  onSnapshot,
   query,
   orderBy,
   limit,
@@ -14,6 +15,7 @@ import {
   where,
   Timestamp,
   serverTimestamp,
+  writeBatch,
   type DocumentSnapshot,
 } from "firebase/firestore";
 import {
@@ -23,6 +25,7 @@ import {
 } from "@/lib/firestoreWrite";
 import { httpsCallable, getFunctions } from "firebase/functions";
 import type { ActivityPost } from "./activityPost";
+import { FEED_INDEX_VERSION } from "./feedIndex";
 
 // ============================================
 // Auth helper — single source of truth for identity
@@ -53,6 +56,149 @@ export async function unfollowUser(currentUid: string, targetUid: string) {
   if (currentUid !== authedUid) throw new Error("Identity mismatch");
   await deleteDocGuarded(doc(db, "following", currentUid, "users", targetUid));
   await deleteDocGuarded(doc(db, "followers", targetUid, "users", currentUid));
+}
+
+// ============================================
+// Follow requests (Polish2 call 4)
+//
+// An account approves each follower unless its owner turns that off
+// (Settings → Privacy), and then a follow is a request,
+// `followRequests/{target}/users/{asker}`, seen only by the two people. The
+// rules decide which: a direct follow is refused while the person approves
+// followers, so the app tries it and asks instead. Only the person asked
+// writes the follow edges, on accepting.
+// ============================================
+
+/** What a tap on Follow did. */
+export type FollowOutcome = "following" | "requested";
+
+export async function followOrRequest(
+  currentUid: string,
+  targetUid: string
+): Promise<FollowOutcome> {
+  try {
+    await followUser(currentUid, targetUid);
+    return "following";
+  } catch (err) {
+    // Refused: they approve followers (or a block, a restriction or a
+    // deletion stands, which refuses the request too).
+    if (!isPermissionDenied(err)) throw err;
+  }
+  await requestFollow(currentUid, targetUid);
+  return "requested";
+}
+
+export async function requestFollow(currentUid: string, targetUid: string) {
+  const authedUid = getAuthUid();
+  if (currentUid !== authedUid) throw new Error("Identity mismatch");
+  const ref = doc(db, "followRequests", targetUid, "users", currentUid);
+  try {
+    await setDocGuarded(ref, { requestedAt: serverTimestamp() });
+  } catch (err) {
+    // A request already waiting cannot be written again; it still stands.
+    if (isPermissionDenied(err) && (await getDoc(ref)).exists()) return;
+    throw err;
+  }
+}
+
+export async function cancelFollowRequest(
+  currentUid: string,
+  targetUid: string
+) {
+  const authedUid = getAuthUid();
+  if (currentUid !== authedUid) throw new Error("Identity mismatch");
+  await deleteDocGuarded(
+    doc(db, "followRequests", targetUid, "users", currentUid)
+  );
+}
+
+export async function hasRequestedFollow(
+  currentUid: string,
+  targetUid: string
+): Promise<boolean> {
+  const snap = await getDoc(
+    doc(db, "followRequests", targetUid, "users", currentUid)
+  );
+  return snap.exists();
+}
+
+/** Has `requesterUid` asked to follow the signed-in person? */
+export async function hasFollowRequestFrom(
+  currentUid: string,
+  requesterUid: string
+): Promise<boolean> {
+  const snap = await getDoc(
+    doc(db, "followRequests", currentUid, "users", requesterUid)
+  );
+  return snap.exists();
+}
+
+/** Accept: the two follow edges and the request's removal, in one batch.
+ *  `fromRequest` tells onFollowerCreated not to announce a follow the
+ *  person has just accepted. */
+export async function acceptFollowRequest(
+  currentUid: string,
+  requesterUid: string
+) {
+  const authedUid = getAuthUid();
+  if (currentUid !== authedUid) throw new Error("Identity mismatch");
+  const edge = { followedAt: Timestamp.now(), fromRequest: true };
+  const batch = writeBatch(db);
+  batch.set(doc(db, "following", requesterUid, "users", currentUid), edge);
+  batch.set(doc(db, "followers", currentUid, "users", requesterUid), edge);
+  batch.delete(doc(db, "followRequests", currentUid, "users", requesterUid));
+  await batch.commit();
+}
+
+export async function declineFollowRequest(
+  currentUid: string,
+  requesterUid: string
+) {
+  const authedUid = getAuthUid();
+  if (currentUid !== authedUid) throw new Error("Identity mismatch");
+  await deleteDocGuarded(
+    doc(db, "followRequests", currentUid, "users", requesterUid)
+  );
+}
+
+export interface FollowRequest {
+  uid: string;
+  displayName: string;
+  photoURL?: string;
+  requestedAt: Date | null;
+}
+
+/** The requests waiting for the signed-in person, newest first, each with
+ *  the asker's public name and photo. */
+export async function getFollowRequests(
+  currentUid: string,
+  max = 50
+): Promise<FollowRequest[]> {
+  const snap = await getDocs(
+    query(
+      collection(db, "followRequests", currentUid, "users"),
+      orderBy("requestedAt", "desc"),
+      limit(max)
+    )
+  );
+  return Promise.all(
+    snap.docs.map(async (d) => {
+      const profile = await getDoc(
+        doc(db, "users", d.id, "public", "profile")
+      ).catch(() => null);
+      const data = profile?.exists() ? profile.data() : {};
+      const at = d.data().requestedAt;
+      return {
+        uid: d.id,
+        displayName:
+          typeof data.displayName === "string" && data.displayName
+            ? data.displayName
+            : "Athlete",
+        photoURL: typeof data.photoURL === "string" ? data.photoURL : undefined,
+        requestedAt: at instanceof Timestamp ? at.toDate() : null,
+      };
+    })
+  );
 }
 
 export async function isFollowing(
@@ -105,9 +251,8 @@ export async function getFollowerIds(uid: string): Promise<Set<string>> {
 // Post Activity
 //
 // Only the activity doc is written client-side; fan-out to follower feeds runs in the
-// `onActivityCreated` Firestore trigger. `formatDuration` and
-// `formatPace` moved into `functions/lib/socialFanout.js` along
-// with `buildFeedItem`.
+// `onActivityCreated` Firestore trigger. The trigger writes routing-only
+// indexes; every display field is read from the activity itself.
 // ============================================
 export async function postActivity(activity: ActivityPost) {
   const authedUid = getAuthUid();
@@ -115,7 +260,7 @@ export async function postActivity(activity: ActivityPost) {
   // Only the activity doc is written client-side. Fan-out to follower feeds + author feed
   // happens server-side via the `onActivityCreated` Firestore
   // trigger (functions/index.js). The trigger reads followers,
-  // builds the summary, and writes feed items — `/feeds/*` is
+  // writes routing-only feed indexes — `/feeds/*` is
   // rule-denied for client writes post-PR-3.
   //
   // Trade-off: fan-out is now async — a few seconds of latency
@@ -148,11 +293,11 @@ export async function toggleKudos(
 ): Promise<boolean> {
   const authedUid = getAuthUid();
   if (userId !== authedUid) throw new Error("Identity mismatch");
-  // `fromName` is forwarded to
-  // the callable so the server-side notification carries the
-  // sender's display name. The CF sanitises and length-caps it; the
-  // recipient uid is read server-side from the activity doc (no
-  // client trust on target).
+  // `fromName` is still sent, and the callable ignores it: the
+  // notification names the sender from their public profile, read
+  // server-side (socialFanout.senderDisplayName), so no caller can
+  // put text of their choosing in someone else's tray. The recipient
+  // uid is read server-side from the activity doc too.
   const fn = httpsCallable<
     { activityId: string; fromName?: string },
     { kudosed: boolean }
@@ -355,8 +500,11 @@ export async function deleteComment(
   await fn({ activityId, commentId });
 }
 
-/** One-tap comment reactions (💪 = "muscle", 🔥 = "fire"). */
-export type CommentReaction = "muscle" | "fire";
+/** One-tap comment reactions (💪 = "muscle", 🔥 = "fire"). The callable
+ *  takes only REACTION_KEYS (functions/lib/commentReactions.js), and
+ *  commentReactions.cross.test.ts holds this list to it. */
+export const COMMENT_REACTIONS = ["muscle", "fire"] as const;
+export type CommentReaction = (typeof COMMENT_REACTIONS)[number];
 
 /**
  * Toggle the caller's reaction on a comment. Comments are server-write-only
@@ -422,12 +570,14 @@ export async function getFeed(
 ) {
   let q = query(
     collection(db, "feeds", userId, "items"),
+    where("schemaVersion", "==", FEED_INDEX_VERSION),
     orderBy("createdAt", "desc"),
     limit(limitCount)
   );
   if (afterDoc) {
     q = query(
       collection(db, "feeds", userId, "items"),
+      where("schemaVersion", "==", FEED_INDEX_VERSION),
       orderBy("createdAt", "desc"),
       startAfter(afterDoc),
       limit(limitCount)
@@ -863,19 +1013,34 @@ export async function blockUser(currentUid: string, targetUid: string) {
   await setDocGuarded(doc(db, "blocks", currentUid, "users", targetUid), {
     blockedAt: serverTimestamp(),
   });
-  // Also unfollow in both directions
-  await deleteDocGuarded(
-    doc(db, "following", currentUid, "users", targetUid)
-  ).catch(() => {});
-  await deleteDocGuarded(
-    doc(db, "followers", currentUid, "users", targetUid)
-  ).catch(() => {});
-  await deleteDocGuarded(
-    doc(db, "following", targetUid, "users", currentUid)
-  ).catch(() => {});
-  await deleteDocGuarded(
-    doc(db, "followers", targetUid, "users", currentUid)
-  ).catch(() => {});
+  // Unfollow in both directions. The other person's side of their follow
+  // is theirs, and the rules let the blocker remove it once the block
+  // above exists. The rules refuse followers-only posts across a block
+  // whatever is left, so the block stands if a delete fails; the failure
+  // is logged rather than swallowed.
+  const edges = [
+    doc(db, "following", currentUid, "users", targetUid),
+    doc(db, "followers", currentUid, "users", targetUid),
+    doc(db, "following", targetUid, "users", currentUid),
+    doc(db, "followers", targetUid, "users", currentUid),
+    // And any request either way (Polish2): either person may remove one.
+    doc(db, "followRequests", currentUid, "users", targetUid),
+    doc(db, "followRequests", targetUid, "users", currentUid),
+  ];
+  const results = await Promise.allSettled(
+    edges.map((ref) => deleteDocGuarded(ref))
+  );
+  results.forEach((result, i) => {
+    if (result.status === "rejected") {
+      captureError(
+        result.reason instanceof Error
+          ? result.reason
+          : new Error(String(result.reason)),
+        "network",
+        { action: "blockUser", path: edges[i].path }
+      );
+    }
+  });
 }
 
 export async function unblockUser(currentUid: string, targetUid: string) {
@@ -895,6 +1060,24 @@ export async function isBlocked(
 export async function getBlockedUsers(uid: string): Promise<string[]> {
   const snap = await getDocs(collection(db, "blocks", uid, "users"));
   return snap.docs.map((d) => d.id);
+}
+
+/**
+ * Who has blocked this account, live (Polish3 call 1). The server's copy
+ * of their blocks, `blockedBy/{uid}/users/{blocker}`, written by
+ * onBlockWritten and readable only by this account; each row is just the
+ * blocker's id. Returns the unsubscribe.
+ */
+export function subscribeBlockedBy(
+  uid: string,
+  onChange: (ids: string[]) => void,
+  onError: (err: unknown) => void
+): () => void {
+  return onSnapshot(
+    collection(db, "blockedBy", uid, "users"),
+    (snap) => onChange(snap.docs.map((d) => d.id)),
+    onError
+  );
 }
 
 // ============================================

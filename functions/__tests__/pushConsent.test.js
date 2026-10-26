@@ -72,22 +72,25 @@ describe("mayTargetUserConsent — the senders' gate (#969)", () => {
     ).toBe(true);
   });
 
-  it("requires both booleans explicitly true for monthly challenges", () => {
-    expect(
-      mayTargetUserConsent({ enabled: true, challenges: true }, "challenges")
-    ).toBe(true);
-    for (const consent of [
-      null,
-      undefined,
-      {},
-      { enabled: true },
-      { enabled: false, challenges: true },
-      { enabled: 1, challenges: true },
-      { enabled: true, challenges: false },
-      { enabled: true, challenges: "true" },
-      { enabled: true, challenges: 1 },
-    ]) {
-      expect(mayTargetUserConsent(consent, "challenges")).toBe(false);
+  it.each(["challenges", "challengeReminders"])(
+    "requires both booleans explicitly true for %s",
+    (type) => {
+      expect(mayTargetUserConsent({ enabled: true, [type]: true }, type)).toBe(
+        true
+      );
+      for (const consent of [
+        null,
+        undefined,
+        {},
+        { enabled: true },
+        { enabled: false, [type]: true },
+        { enabled: 1, [type]: true },
+        { enabled: true, [type]: false },
+        { enabled: true, [type]: "true" },
+        { enabled: true, [type]: 1 },
+      ]) {
+        expect(mayTargetUserConsent(consent, type)).toBe(false);
+      }
     }
-  });
+  );
 });

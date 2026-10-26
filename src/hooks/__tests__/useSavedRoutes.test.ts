@@ -21,6 +21,8 @@ vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
 vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn(), info: vi.fn() },
 }));
+const toastError = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/toast", () => ({ toast: { error: toastError } }));
 
 let mockUid: string | null = "u1";
 vi.mock("@/lib/auth", () => ({
@@ -41,6 +43,9 @@ import {
   resumeReads,
   pendingReads,
   releaseRead,
+  rejectRead,
+  readDoc,
+  unfiredFailures,
 } from "@/test/firestoreHarness";
 import { Timestamp } from "firebase/firestore";
 
@@ -104,6 +109,171 @@ describe("useSavedRoutes", () => {
     expect(result.current.error).toBe(true);
     expect(result.current.loading).toBe(false);
     expect(names(result.current.routes)).toEqual(["Canal loop"]);
+  });
+
+  it("an initial list answering after a successful save cannot hide the saved route", async () => {
+    deferReads();
+    const { result } = renderHook(() => useSavedRoutes());
+    await waitFor(() => expect(pendingReads()).toHaveLength(1));
+    resumeReads();
+
+    await act(async () => {
+      expect(
+        await result.current.save({
+          name: "Hill repeats",
+          source: "run",
+          points: coordsToPoints([0, 51, 0.01, 51.01]),
+        })
+      ).toBe(true);
+    });
+    expect(names(result.current.routes)).toContain("Hill repeats");
+    await act(async () => {
+      expect(releaseRead()).toBe(true);
+    });
+    expect(names(result.current.routes)).toContain("Hill repeats");
+    expect(result.current.loading).toBe(false);
+  });
+
+  it("an obsolete list failure cannot mark a newer successful save as failed", async () => {
+    deferReads();
+    const { result } = renderHook(() => useSavedRoutes());
+    await waitFor(() => expect(pendingReads()).toHaveLength(1));
+    resumeReads();
+    await act(async () => {
+      expect(
+        await result.current.save({
+          name: "Hill repeats",
+          source: "run",
+          points: coordsToPoints([0, 51, 0.01, 51.01]),
+        })
+      ).toBe(true);
+    });
+    expect(names(result.current.routes)).toContain("Hill repeats");
+    await act(async () => {
+      expect(rejectRead()).toBe(true);
+    });
+    expect(result.current.error).toBe(false);
+    expect(result.current.loading).toBe(false);
+    expect(names(result.current.routes)).toContain("Hill repeats");
+  });
+
+  it("an older refresh cannot resurrect a route deleted while it was pending", async () => {
+    const { result } = renderHook(() => useSavedRoutes());
+    await waitFor(() =>
+      expect(names(result.current.routes)).toEqual(["Canal loop"])
+    );
+    deferReads();
+    let refreshing!: Promise<void>;
+    act(() => {
+      refreshing = result.current.refresh();
+    });
+    await waitFor(() => expect(pendingReads()).toHaveLength(1));
+    resumeReads();
+    await act(async () => {
+      await result.current.remove("a");
+    });
+    expect(readDoc("users/u1/savedRoutes/a")).toBeUndefined();
+    expect(result.current.routes).toEqual([]);
+    await act(async () => {
+      expect(releaseRead()).toBe(true);
+      await refreshing;
+    });
+    expect(result.current.routes).toEqual([]);
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBe(false);
+  });
+
+  it("a failed deletion restores its route and settles despite an obsolete refresh failure", async () => {
+    const { result } = renderHook(() => useSavedRoutes());
+    await waitFor(() =>
+      expect(names(result.current.routes)).toEqual(["Canal loop"])
+    );
+    deferReads();
+    let refreshing!: Promise<void>;
+    act(() => {
+      refreshing = result.current.refresh();
+    });
+    await waitFor(() => expect(pendingReads()).toHaveLength(1));
+    resumeReads();
+    failNextFirestore("deleteDoc", { path: "users/u1/savedRoutes/a" });
+    await act(async () => {
+      await result.current.remove("a");
+    });
+    await waitFor(() =>
+      expect(names(result.current.routes)).toEqual(["Canal loop"])
+    );
+    await act(async () => {
+      expect(rejectRead()).toBe(true);
+      await refreshing;
+    });
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBe(false);
+    expect(readDoc("users/u1/savedRoutes/a")).toBeDefined();
+  });
+
+  /* The route came back with nothing said: it looked like the tap had
+     not registered. */
+  it("a failed deletion says why the route came back", async () => {
+    toastError.mockClear();
+    const { result } = renderHook(() => useSavedRoutes());
+    await waitFor(() =>
+      expect(names(result.current.routes)).toEqual(["Canal loop"])
+    );
+    failNextFirestore("deleteDoc", { path: "users/u1/savedRoutes/a" });
+    await act(async () => {
+      await result.current.remove("a");
+    });
+    expect(toastError).toHaveBeenCalledWith(
+      "Couldn't delete the route. Try again."
+    );
+    expect(names(result.current.routes)).toEqual(["Canal loop"]);
+  });
+
+  it("a deletion that lands says nothing", async () => {
+    toastError.mockClear();
+    const { result } = renderHook(() => useSavedRoutes());
+    await waitFor(() =>
+      expect(names(result.current.routes)).toEqual(["Canal loop"])
+    );
+    await act(async () => {
+      await result.current.remove("a");
+    });
+    expect(names(result.current.routes)).toEqual([]);
+    expect(toastError).not.toHaveBeenCalled();
+  });
+
+  it("a failed mutation reload stays failed until a fresh retry, even if an old list answers", async () => {
+    const { result } = renderHook(() => useSavedRoutes());
+    await waitFor(() =>
+      expect(names(result.current.routes)).toEqual(["Canal loop"])
+    );
+    deferReads();
+    let refreshing!: Promise<void>;
+    act(() => {
+      refreshing = result.current.refresh();
+    });
+    await waitFor(() => expect(pendingReads()).toHaveLength(1));
+    resumeReads();
+    failNextFirestore("deleteDoc", { path: "users/u1/savedRoutes/a" });
+    failNextFirestore("getDocs", { path: "users/u1/savedRoutes" });
+    await act(async () => {
+      await result.current.remove("a");
+    });
+    await waitFor(() => expect(result.current.error).toBe(true));
+    expect(unfiredFailures()).toEqual([]);
+    expect(result.current.loading).toBe(false);
+
+    await act(async () => {
+      expect(releaseRead()).toBe(true);
+      await refreshing;
+    });
+    expect(result.current.error).toBe(true);
+    await act(async () => {
+      await result.current.refresh();
+    });
+    expect(names(result.current.routes)).toEqual(["Canal loop"]);
+    expect(result.current.error).toBe(false);
+    expect(result.current.loading).toBe(false);
   });
 });
 

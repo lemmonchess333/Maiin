@@ -33,7 +33,7 @@ export default function PartnerReadyBadge({ uid }: { uid: string }) {
   if (!candidate || loading || !mutualFollow || bond) return null;
   return (
     <span
-      className="inline-flex items-center gap-1 text-caption font-medium px-1.5 py-0.5 rounded shrink-0"
+      className="inline-flex items-center gap-1 text-micro font-medium px-1.5 py-0.5 rounded shrink-0"
       style={{ background: `${THEME.running}14`, color: THEME.running }}
       aria-label="Partner streak ready — you follow each other"
     >

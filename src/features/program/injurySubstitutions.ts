@@ -94,19 +94,19 @@ function sub(
  * The lifts each injury's promise names, and so the lifts a plan swaps for
  * someone with it (Lift4 (11)). The promises are the injury options' copy:
  *
- *   lower_back  "We'll avoid heavy axial loading": the deadlifts, the
+ *   lower_back  "Avoids heavy loads on your spine": the deadlifts, the
  *               bent-over barbell rows, the barbell squats and the standing
  *               barbell press.
- *   knee        "We'll adjust squat and lunge variations": the barbell and
+ *   knee        "Adjusts squat and lunge variations": the barbell and
  *               machine squats, the lunges and the leg extension. The goblet
  *               squat, the Bulgarian split squat and the step-up are the
  *               adjusted variations, so they stay.
- *   shoulder    "We'll modify pressing movements": overhead pressing, the
+ *   shoulder    "Adjusts pressing movements": overhead pressing, the
  *               barbell bench presses, dips, the upright row and pull-ups.
- *   elbow       "We'll swap heavy curls/dips for cable work": the supinated
+ *   elbow       "Swaps heavy curls and dips for cable work": the supinated
  *               curls, chin-ups and pull-ups, dips, and the triceps work
  *               that loads the elbow at its end range.
- *   wrist       "We'll pick neutral-grip and machine variants": the barbell
+ *   wrist       "Picks neutral-grip and machine variants": the barbell
  *               presses and curls, the front squat's rack, push-ups and
  *               skull crushers.
  *

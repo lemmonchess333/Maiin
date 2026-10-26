@@ -1,0 +1,230 @@
+{
+  "id": "stairmaster",
+  "viewport": { "width": 390, "height": 844 },
+  "themes": [
+    {
+      "theme": "dark",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Stairmaster, Step",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/stairmaster/1.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Step 1/6",
+          "id": "stairmaster",
+          "theme": "dark"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Stairmaster, Drive",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/stairmaster/2.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Drive 2/6",
+          "id": "stairmaster",
+          "theme": "dark"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Stairmaster, Knee up",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/stairmaster/3.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Knee up 3/6",
+          "id": "stairmaster",
+          "theme": "dark"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Stairmaster, Grip",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/stairmaster/4.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Grip 4/6",
+          "id": "stairmaster",
+          "theme": "dark"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Stairmaster, Land",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/stairmaster/5.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Land 5/6",
+          "id": "stairmaster",
+          "theme": "dark"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Stairmaster, Steady",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/stairmaster/6.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Steady 6/6",
+          "id": "stairmaster",
+          "theme": "dark"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 83,\n    \"alt\": \"Stairmaster, Step\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1204,\n    \"alt\": \"Stairmaster, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1768,\n    \"alt\": \"Stairmaster, Knee up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2326,\n    \"alt\": \"Stairmaster, Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2887,\n    \"alt\": \"Stairmaster, Land\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3525,\n    \"alt\": \"Stairmaster, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5123,\n    \"alt\": \"Stairmaster, Step\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Stairmaster, Drive",
+            "decoded": true,
+            "height": 1536,
+            "src": "/Maiin/.strict33.local/candidate/stairmaster/2.webp",
+            "width": 1024
+          }
+        ],
+        "caption": "Drive 2/6",
+        "id": "stairmaster",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / stairmaster\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nStairmaster\nCardio\nMachine\n\nDRIVE 2/6\n\nPause\nNormal\nPRIMARY\nGlutes\nSECONDARY\nHamstrings, Calves\n\nInstructions\n\nPreparation: Step on and start at a slow, steady pace. Rest your hands lightly on the side rails.\n\n1\n\nStand tall; shoulders stacked over hips.\n\n2\n\nDrive the whole foot down each step.\n\n3\n\nBring the other knee through to climb.\n\n4\n\nKeep a light grip on the rails.\n\n5\n\nLand the whole foot on the step.\n\n6\n\nHold a pace you can sustain.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "dark",
+        "trace": "[\n  {\n    \"elapsedMs\": 83,\n    \"alt\": \"Stairmaster, Step\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1204,\n    \"alt\": \"Stairmaster, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1768,\n    \"alt\": \"Stairmaster, Knee up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2326,\n    \"alt\": \"Stairmaster, Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2887,\n    \"alt\": \"Stairmaster, Land\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3525,\n    \"alt\": \"Stairmaster, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5123,\n    \"alt\": \"Stairmaster, Step\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6562,\n    \"alt\": \"Stairmaster, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Stairmaster, Knee up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9041,\n    \"alt\": \"Stairmaster, Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10241,\n    \"alt\": \"Stairmaster, Land\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11520,\n    \"alt\": \"Stairmaster, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12720,\n    \"alt\": \"Stairmaster, Step\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13920,\n    \"alt\": \"Stairmaster, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    },
+    {
+      "theme": "light",
+      "selected": [
+        {
+          "frame": 1,
+          "active": [
+            {
+              "alt": "Stairmaster, Step",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/stairmaster/1.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Step 1/6",
+          "id": "stairmaster",
+          "theme": "light"
+        },
+        {
+          "frame": 2,
+          "active": [
+            {
+              "alt": "Stairmaster, Drive",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/stairmaster/2.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Drive 2/6",
+          "id": "stairmaster",
+          "theme": "light"
+        },
+        {
+          "frame": 3,
+          "active": [
+            {
+              "alt": "Stairmaster, Knee up",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/stairmaster/3.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Knee up 3/6",
+          "id": "stairmaster",
+          "theme": "light"
+        },
+        {
+          "frame": 4,
+          "active": [
+            {
+              "alt": "Stairmaster, Grip",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/stairmaster/4.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Grip 4/6",
+          "id": "stairmaster",
+          "theme": "light"
+        },
+        {
+          "frame": 5,
+          "active": [
+            {
+              "alt": "Stairmaster, Land",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/stairmaster/5.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Land 5/6",
+          "id": "stairmaster",
+          "theme": "light"
+        },
+        {
+          "frame": 6,
+          "active": [
+            {
+              "alt": "Stairmaster, Steady",
+              "decoded": true,
+              "height": 1536,
+              "src": "/Maiin/.strict33.local/candidate/stairmaster/6.webp",
+              "width": 1024
+            }
+          ],
+          "caption": "Steady 6/6",
+          "id": "stairmaster",
+          "theme": "light"
+        }
+      ],
+      "timedStartTrace": "[\n  {\n    \"elapsedMs\": 83,\n    \"alt\": \"Stairmaster, Step\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1204,\n    \"alt\": \"Stairmaster, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1768,\n    \"alt\": \"Stairmaster, Knee up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2326,\n    \"alt\": \"Stairmaster, Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2887,\n    \"alt\": \"Stairmaster, Land\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3525,\n    \"alt\": \"Stairmaster, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5123,\n    \"alt\": \"Stairmaster, Step\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6562,\n    \"alt\": \"Stairmaster, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Stairmaster, Knee up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9041,\n    \"alt\": \"Stairmaster, Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10241,\n    \"alt\": \"Stairmaster, Land\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11520,\n    \"alt\": \"Stairmaster, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12720,\n    \"alt\": \"Stairmaster, Step\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13920,\n    \"alt\": \"Stairmaster, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15040,\n    \"alt\": \"Stairmaster, Step\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15604,\n    \"alt\": \"Stairmaster, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16161,\n    \"alt\": \"Stairmaster, Knee up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16726,\n    \"alt\": \"Stairmaster, Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17282,\n    \"alt\": \"Stairmaster, Land\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17846,\n    \"alt\": \"Stairmaster, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19525,\n    \"alt\": \"Stairmaster, Step\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/1.webp\",\n    \"decoded\": true\n  }\n]",
+      "timedEnd": {
+        "active": [
+          {
+            "alt": "Stairmaster, Drive",
+            "decoded": true,
+            "height": 1536,
+            "src": "/Maiin/.strict33.local/candidate/stairmaster/2.webp",
+            "width": 1024
+          }
+        ],
+        "caption": "Drive 2/6",
+        "id": "stairmaster",
+        "text": "Strict artwork review\n\nStaged assets in actual production content / stairmaster\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse dark\nStairmaster\nCardio\nMachine\n\nDRIVE 2/6\n\nPause\nNormal\nPRIMARY\nGlutes\nSECONDARY\nHamstrings, Calves\n\nInstructions\n\nPreparation: Step on and start at a slow, steady pace. Rest your hands lightly on the side rails.\n\n1\n\nStand tall; shoulders stacked over hips.\n\n2\n\nDrive the whole foot down each step.\n\n3\n\nBring the other knee through to climb.\n\n4\n\nKeep a light grip on the rails.\n\n5\n\nLand the whole foot on the step.\n\n6\n\nHold a pace you can sustain.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+        "theme": "light",
+        "trace": "[\n  {\n    \"elapsedMs\": 83,\n    \"alt\": \"Stairmaster, Step\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1204,\n    \"alt\": \"Stairmaster, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1768,\n    \"alt\": \"Stairmaster, Knee up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2326,\n    \"alt\": \"Stairmaster, Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2887,\n    \"alt\": \"Stairmaster, Land\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3525,\n    \"alt\": \"Stairmaster, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5123,\n    \"alt\": \"Stairmaster, Step\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6562,\n    \"alt\": \"Stairmaster, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7841,\n    \"alt\": \"Stairmaster, Knee up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9041,\n    \"alt\": \"Stairmaster, Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 10241,\n    \"alt\": \"Stairmaster, Land\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 11520,\n    \"alt\": \"Stairmaster, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 12720,\n    \"alt\": \"Stairmaster, Step\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 13920,\n    \"alt\": \"Stairmaster, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15040,\n    \"alt\": \"Stairmaster, Step\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 15604,\n    \"alt\": \"Stairmaster, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16161,\n    \"alt\": \"Stairmaster, Knee up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 16726,\n    \"alt\": \"Stairmaster, Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17282,\n    \"alt\": \"Stairmaster, Land\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 17846,\n    \"alt\": \"Stairmaster, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 19525,\n    \"alt\": \"Stairmaster, Step\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 21046,\n    \"alt\": \"Stairmaster, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 22240,\n    \"alt\": \"Stairmaster, Knee up\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 23445,\n    \"alt\": \"Stairmaster, Grip\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24641,\n    \"alt\": \"Stairmaster, Land\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25840,\n    \"alt\": \"Stairmaster, Steady\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 27044,\n    \"alt\": \"Stairmaster, Step\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28321,\n    \"alt\": \"Stairmaster, Drive\",\n    \"src\": \"/Maiin/.strict33.local/candidate/stairmaster/2.webp\",\n    \"decoded\": true\n  }\n]"
+      }
+    }
+  ]
+}

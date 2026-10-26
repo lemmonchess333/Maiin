@@ -101,74 +101,66 @@ suite("recreditMyLiftVolume — paging past the first page", () => {
     await seedHistory();
   }, 120_000);
 
-  it(
-    "a cursored second call reaches the workout a bare re-run never can",
-    async () => {
-      const first = await recreditMyLiftVolume.run({}, { auth: { uid: UID } });
+  it("a cursored second call reaches the workout a bare re-run never can", async () => {
+    const first = await recreditMyLiftVolume.run({}, { auth: { uid: UID } });
 
-      // The page is full, so there is more history behind it.
-      expect(first.scanned).toBe(PAGE);
-      expect(first.truncated).toBe(true);
-      expect(first.withVolume).toBe(1);
-      // The cursor is what makes `truncated` actionable.
-      expect(first.cursor).toBe(`w-${String(PAGE - 1).padStart(4, "0")}`);
-      expect(await lifetimeKg()).toBe(1000);
+    // The page is full, so there is more history behind it.
+    expect(first.scanned).toBe(PAGE);
+    expect(first.truncated).toBe(true);
+    expect(first.withVolume).toBe(1);
+    // The cursor is what makes `truncated` actionable.
+    expect(first.cursor).toBe(`w-${String(PAGE - 1).padStart(4, "0")}`);
+    expect(await lifetimeKg()).toBe(1000);
 
-      /* THE REGRESSION. Re-running WITHOUT the cursor — the operator action
+    /* THE REGRESSION. Re-running WITHOUT the cursor — the operator action
          the old comment recommended — re-scans the identical page and makes
          no progress. It is not an error and not a no-op-looking failure; it
          reports a full successful scan of work already credited. */
-      const bareRerun = await recreditMyLiftVolume.run(
-        {},
-        { auth: { uid: UID } }
-      );
-      expect(bareRerun.scanned).toBe(PAGE);
-      expect(bareRerun.truncated).toBe(true);
-      expect(await lifetimeKg()).toBe(1000); // the 500 kg is still stranded
+    const bareRerun = await recreditMyLiftVolume.run(
+      {},
+      { auth: { uid: UID } }
+    );
+    expect(bareRerun.scanned).toBe(PAGE);
+    expect(bareRerun.truncated).toBe(true);
+    expect(await lifetimeKg()).toBe(1000); // the 500 kg is still stranded
 
-      // With the cursor, the tail is reached and the history is exhausted.
-      const second = await recreditMyLiftVolume.run(
-        { startAfter: first.cursor },
-        { auth: { uid: UID } }
-      );
-      expect(second.scanned).toBe(1);
-      expect(second.truncated).toBe(false);
-      expect(second.withVolume).toBe(1);
-      expect(await lifetimeKg()).toBe(1500);
-    },
-    240_000
-  );
+    // With the cursor, the tail is reached and the history is exhausted.
+    const second = await recreditMyLiftVolume.run(
+      { startAfter: first.cursor },
+      { auth: { uid: UID } }
+    );
+    expect(second.scanned).toBe(1);
+    expect(second.truncated).toBe(false);
+    expect(second.withVolume).toBe(1);
+    expect(await lifetimeKg()).toBe(1500);
+  }, 240_000);
 
-  it(
-    "paging to completion is idempotent — a full second pass credits nothing",
-    async () => {
-      /* The safety property the whole replay rests on. It has to hold for
+  it("paging to completion is idempotent — a full second pass credits nothing", async () => {
+    /* The safety property the whole replay rests on. It has to hold for
          the PAGED loop, not just for a single call: the client drives this
          to completion and may well do so twice. */
-      const drain = async () => {
-        let cursor;
-        let truncated = true;
-        let calls = 0;
-        while (truncated && calls < 10) {
-          const r = await recreditMyLiftVolume.run(
-            cursor ? { startAfter: cursor } : {},
-            { auth: { uid: UID } }
-          );
-          cursor = r.cursor;
-          truncated = r.truncated;
-          calls++;
-        }
-        return calls;
-      };
+    const drain = async () => {
+      let cursor;
+      let truncated = true;
+      let calls = 0;
+      while (truncated && calls < 10) {
+        const r = await recreditMyLiftVolume.run(
+          cursor ? { startAfter: cursor } : {},
+          { auth: { uid: UID } }
+        );
+        cursor = r.cursor;
+        truncated = r.truncated;
+        calls++;
+      }
+      return calls;
+    };
 
-      expect(await drain()).toBe(2);
-      expect(await lifetimeKg()).toBe(1500);
+    expect(await drain()).toBe(2);
+    expect(await lifetimeKg()).toBe(1500);
 
-      await drain();
-      expect(await lifetimeKg()).toBe(1500);
-    },
-    240_000
-  );
+    await drain();
+    expect(await lifetimeKg()).toBe(1500);
+  }, 240_000);
 
   it("rejects a startAfter that is not a plain document id", async () => {
     /* It reaches a Firestore query, so the shape is checked rather than

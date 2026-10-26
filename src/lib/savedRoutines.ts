@@ -20,6 +20,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
@@ -148,6 +149,23 @@ export async function saveRoutine(
   return ref.id;
 }
 
+/** A routine as it is served: an external source's loads redacted. */
+function servedRoutine(
+  uid: string,
+  id: string,
+  data: Omit<SavedRoutine, "id">
+): SavedRoutine {
+  return {
+    id,
+    ...data,
+    exercises: redactExternalRoutineExercises(
+      uid,
+      data.sourceAuthorId,
+      data.exercises || []
+    ),
+  };
+}
+
 export async function listSavedRoutines(uid: string): Promise<SavedRoutine[]> {
   const snap = await getDocs(
     query(
@@ -155,18 +173,9 @@ export async function listSavedRoutines(uid: string): Promise<SavedRoutine[]> {
       orderBy("createdAt", "desc")
     )
   );
-  return snap.docs.map((d) => {
-    const data = d.data() as Omit<SavedRoutine, "id">;
-    return {
-      id: d.id,
-      ...data,
-      exercises: redactExternalRoutineExercises(
-        uid,
-        data.sourceAuthorId,
-        data.exercises || []
-      ),
-    };
-  });
+  return snap.docs.map((d) =>
+    servedRoutine(uid, d.id, d.data() as Omit<SavedRoutine, "id">)
+  );
 }
 
 export async function deleteSavedRoutine(
@@ -199,16 +208,29 @@ export async function getSavedRoutine(
 ): Promise<SavedRoutine | null> {
   const snap = await getDoc(doc(db, "users", uid, "savedRoutines", routineId));
   if (!snap.exists()) return null;
-  const data = snap.data() as Omit<SavedRoutine, "id">;
-  return {
-    id: snap.id,
-    ...data,
-    exercises: redactExternalRoutineExercises(
-      uid,
-      data.sourceAuthorId,
-      data.exercises || []
-    ),
-  };
+  return servedRoutine(uid, snap.id, snap.data() as Omit<SavedRoutine, "id">);
+}
+
+/**
+ * Follow one routine as its document is now, served as `getSavedRoutine`
+ * serves it: `onChange` gets the routine, or null while it is gone or
+ * cannot be read. Returns the way to stop following it.
+ */
+export function watchSavedRoutine(
+  uid: string,
+  routineId: string,
+  onChange: (routine: SavedRoutine | null) => void
+): () => void {
+  return onSnapshot(
+    doc(db, "users", uid, "savedRoutines", routineId),
+    (snap) =>
+      onChange(
+        snap.exists()
+          ? servedRoutine(uid, snap.id, snap.data() as Omit<SavedRoutine, "id">)
+          : null
+      ),
+    () => onChange(null)
+  );
 }
 
 /**

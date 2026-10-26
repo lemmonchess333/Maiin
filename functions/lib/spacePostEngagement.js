@@ -29,7 +29,9 @@ const POST_NOT_ACCESSIBLE = "space-post-not-accessible";
  *  notifications: it is not a user. Clients hide those posts. */
 const COACH_AUTHOR_ID = "tropos-coach";
 const { publicPhotoUrl } = require("./publicPhotoUrl");
+const { MAX_DISPLAY_NAME_LENGTH } = require("../profileSanitizer");
 const { refusedAddError } = require("./restriction");
+const { MAX_COMMENT_LENGTH } = require("./commentLimit");
 
 async function toggleSpacePostLike({
   firestore,
@@ -98,12 +100,14 @@ async function addSpacePostComment({
     );
   }
   const trimmed = typeof text === "string" ? text.trim() : "";
-  if (trimmed.length < 1 || trimmed.length > 1000) {
-    throw new Error("addSpacePostComment: text must be 1-1000 chars");
+  if (trimmed.length < 1 || trimmed.length > MAX_COMMENT_LENGTH) {
+    throw new Error(
+      `addSpacePostComment: text must be 1-${MAX_COMMENT_LENGTH} chars`
+    );
   }
   const name =
     typeof authorName === "string" && authorName.trim().length > 0
-      ? authorName.trim().slice(0, 100)
+      ? authorName.trim().slice(0, MAX_DISPLAY_NAME_LENGTH)
       : "Athlete";
 
   const postRef = firestore

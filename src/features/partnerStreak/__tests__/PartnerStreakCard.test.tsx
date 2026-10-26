@@ -1,10 +1,16 @@
 /**
  * PartnerStreakCard for a restricted account (S4e): starting a streak
- * reaches the partner and the rules refuse it, so it is not offered. A
+ * reaches the partner and the server refuses it, so it is not offered. A
  * streak that already exists still shows, and can still be ended.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 
 const H = vi.hoisted(() => ({
   partner: {
@@ -49,6 +55,26 @@ describe("PartnerStreakCard", () => {
       <PartnerStreakCard partnerUid="maya" partnerName="Maya" />
     );
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("says why the server refused a new streak", async () => {
+    /* The limit is the server's (startPartnerStreak), and it holds for the
+       partner too, so the refusal names whose set is full rather than
+       saying only that something went wrong. */
+    const { toast } = await import("sonner");
+    H.partner.start.mockRejectedValueOnce({
+      code: "functions/failed-precondition",
+      message: "partner-limit-theirs",
+      details: { reason: "partner-limit-theirs" },
+    });
+    render(<PartnerStreakCard partnerUid="maya" partnerName="Maya" />);
+    fireEvent.click(screen.getByRole("button", { name: "Start streak" }));
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Maya has 5 streak partners already.",
+        expect.anything()
+      )
+    );
   });
 
   it("still shows a restricted account's existing streak, with End", () => {

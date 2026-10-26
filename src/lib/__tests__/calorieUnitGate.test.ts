@@ -27,6 +27,12 @@
  * ("5000 cal absolute"). Comments are stripped first, so a docstring can
  * still quote a past rendering.
  *
+ * The value may also be an element that holds it, `<span>{n}</span> cal`,
+ * and the unit may sit on the next line, as Prettier sets JSX text:
+ * `</span>{" "}` then `cal floor` below it. A line-at-a-time scan sees
+ * neither (the Settings override's "2500 cal" two lines under "2,500
+ * kcal" was both), so the scan reads each file whole.
+ *
  * It also matches the unit handed to a component on its own, `unit:
  * "kcal"`, which the first shape cannot see: the figure and its unit are
  * two props. The run screens' stat grids wrote it that way and printed
@@ -55,8 +61,9 @@ function stripComments(src: string): string {
     .replace(/\/\/[^\n]*/g, (s) => " ".repeat(s.length));
 }
 
-/** A value, then the unit as its own word. */
-const INLINE_UNIT = /(\}|\d)\s*(\{"\s"\})?\s*k?cal\b/;
+/** A value (or the element closing round it), then the unit as its own
+ *  word. `\s` spans a line break, so the scan reads whole files. */
+const INLINE_UNIT = /(\}|\d|<\/\w+>)\s*(\{"\s"\})?\s*k?cal\b/;
 /** The unit as a component's prop or a field's, on its own. */
 const UNIT_PROP = /\bunit\s*[:=]\s*\{?\s*["'`]k?cal["'`]/;
 
@@ -75,10 +82,12 @@ function scan(): Hit[] {
     // The constant's own home.
     if (rel === "src/utils/formatNutrition.ts") continue;
     const src = stripComments(readFileSync(resolve(repoRoot, rel), "utf8"));
-    src.split("\n").forEach((line, i) => {
-      if (INLINE_UNIT.test(line) || UNIT_PROP.test(line))
-        out.push({ site: `${rel}:${i + 1}`, line: line.trim() });
-    });
+    for (const re of [INLINE_UNIT, UNIT_PROP]) {
+      for (const m of src.matchAll(new RegExp(re.source, "g"))) {
+        const line = src.slice(0, m.index).split("\n").length;
+        out.push({ site: `${rel}:${line}`, line: m[0].replace(/\s+/g, " ") });
+      }
+    }
   }
   return out;
 }
@@ -93,6 +102,14 @@ describe("the calorie unit comes from CALORIE_UNIT", () => {
     ).toBe(true);
     expect(INLINE_UNIT.test("`${Math.round(calories)} cal`")).toBe(true);
     expect(INLINE_UNIT.test("/ 2,200 kcal")).toBe(true);
+    // The figure inside an element, and the unit a line below it.
+    expect(INLINE_UNIT.test("{calculatedTarget}</span> cal.")).toBe(true);
+    expect(
+      INLINE_UNIT.test('{MIN_TARGET_CALORIES}\n</span>{" "}\n  cal floor')
+    ).toBe(true);
+    expect(INLINE_UNIT.test('</span>{" "}\n  {CALORIE_UNIT} floor')).toBe(
+      false
+    );
     // The converted form is not an offender.
     expect(INLINE_UNIT.test("{item.cal} {CALORIE_UNIT}")).toBe(false);
     expect(INLINE_UNIT.test("`${n} ${CALORIE_UNIT}/day`")).toBe(false);

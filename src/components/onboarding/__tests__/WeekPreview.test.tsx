@@ -138,3 +138,53 @@ describe("WeekPreview — a run's minutes", () => {
     expect(heading()).toBe("Easy 40 · 40 min");
   });
 });
+
+/* FV3: the week names its lifts in order, and a day's lifts show their
+   pictures. */
+describe("WeekPreview — what the week holds (FV3)", () => {
+  const day = (dayName: string, exerciseId = "squat") => ({
+    dayName,
+    dayType: "full_body" as const,
+    completed: false,
+    exercises: [
+      { name: "Squat", exerciseId, sets: 3, weight: 0, reps: 5 },
+    ] as ProgramExercise[],
+  });
+
+  it("names the lifts in the order they come, as Train names them", () => {
+    render(
+      <WeekPreview
+        schedule={schedule}
+        workouts={[
+          day("Full Body — Squat Focus"),
+          day("Full Body — Deadlift Focus"),
+          day("Full Body — Posterior Focus"),
+        ]}
+        draft
+      />
+    );
+    expect(
+      screen.getByRole("region", { name: "Draft week" })
+    ).toHaveTextContent("Full Body A, Full Body B, Full Body C");
+  });
+
+  it("names no lifts for a week without any", () => {
+    render(
+      <WeekPreview
+        schedule={schedule.map((d) => ({ ...d, type: "rest" as const }))}
+        draft
+      />
+    );
+    expect(
+      screen.getByRole("region", { name: "Draft week" })
+    ).not.toHaveTextContent(/Full Body/);
+  });
+
+  it("shows each lift's picture beside it in a day's detail", () => {
+    const { container } = render(
+      <WeekPreview schedule={schedule} workouts={[day("Full body")]} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Mon: lift" }));
+    expect(container.querySelectorAll("[data-thumb]")).toHaveLength(1);
+  });
+});

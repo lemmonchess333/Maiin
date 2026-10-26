@@ -1,9 +1,9 @@
 {
   "reviewStatus": "reviewed",
   "image": "swimming.png",
-  "imageSha256": "db95d79b0da8173894ac6299cb8b54b76a2ff47f12201e4586224b0f0309f316",
+  "imageSha256": "f8d29e4d8cc11e2e5a4d736231fd12f75bc514a3180b9e254623592e6738a31d",
   "reference": "form-frames/swimming/2.webp",
-  "referenceSha256": "f63e3fd3e9882676ab137d67d88f77ce2b94a212743b9e094138826dc6162bc0",
-  "method": "Frame 2 keyed out of its black backdrop with the standard five steps (scripts/art/keying.ts), then the thin water line made transparent within 12 rows of row 342: every pixel where the swimmer does not cross the band, and dark bluish pixels where it does. Geometry and colours unchanged; the standard card generator trims and scales it.",
-  "reviewEvidence": "Checked as a card picture on white and dark cards: the dark streak the line left on a white card is gone; one pixel-sized speck remains where the line touches the toes."
+  "referenceSha256": "12dc95ebf1cb96a5185c08fa71e02007668669615d83610fe1c3f2580ee0d28e",
+  "method": "Existing reviewed native athlete alpha source remains byte-exact. New registered frame2 uses the same intact athlete with whole-body integer translation and a separate physical coping scene. Card isolates the same athlete without pool material or water-line remnants. Normal cutout exporter supplies the derivative.",
+  "reviewEvidence": "docs/exercise-art/reviews/2026-10-20-final-two-strict/review.json"
 }

@@ -17,6 +17,10 @@ import RangeInput from "@/components/ui/RangeInput";
 import OptionCard from "@/components/onboarding/OptionCard";
 import BodyInputs from "@/components/onboarding/BodyInputs";
 import WeekPreview from "@/components/onboarding/WeekPreview";
+import FirstLiftPreview from "@/components/onboarding/FirstLiftPreview";
+import InjuryChangesList from "@/components/onboarding/InjuryChangesList";
+import DailyTarget from "@/components/onboarding/DailyTarget";
+import { injuryChanges } from "@/features/program/injuryChanges";
 import {
   equipmentLabel,
   experienceLabel,
@@ -54,10 +58,10 @@ import { Check, ChevronRight, ArrowLeft, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
 import SessionLengthLabel from "@/components/program/SessionLengthLabel";
-import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { DISPLAY_NAME_MAX, validateDisplayName } from "@/lib/displayName";
+import { useWordFilter } from "@/hooks/useWordFilter";
 import { describeRejection } from "@/lib/callableErrors";
 import {
   formatWeightInUnit,
@@ -69,8 +73,10 @@ import { newRunnerUntil } from "@/features/program/newRunner";
 import { runDoseLine } from "@/lib/runDose";
 import { smallPlatesHint } from "@/lib/liftRules";
 import { liftUnitForBodyWeight } from "@/lib/liftLoad";
-import { liftDayNameIn } from "@/lib/liftDayLabel";
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
+import NewAccountMethodNote from "@/components/onboarding/NewAccountMethodNote";
+import { startingDisplayName } from "@/lib/onboardingName";
+import { signInMethodOf } from "@/lib/signInMethod";
 
 const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
@@ -145,7 +151,7 @@ const GOALS = [
 ] as const;
 
 export default function Onboarding() {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, signOut } = useAuth();
   const navigate = useNavigate();
   const [draft] = useState(() =>
     user ? loadOnboardingDraft(user.uid, 7) : null
@@ -175,12 +181,19 @@ export default function Onboarding() {
   const [returnToReview, setReturnToReview] = useState(
     draft?.returnToReview ?? false
   );
-  const [displayName, setDisplayName] = useState(
-    draft?.displayName ??
-      user?.displayName ??
-      user?.email?.split("@")[0]?.trim() ??
-      "Athlete"
+  const [displayName, setDisplayName] = useState(() =>
+    startingDisplayName(draft?.displayName, user)
   );
+  /* The name Apple shares is set on the account just after it is made,
+     and setup can open before it lands; it is taken when it arrives, while
+     the person has not typed one of their own. */
+  const [nameTyped, setNameTyped] = useState(draft?.displayName !== undefined);
+  const arrivedName = profile?.displayName?.trim() ?? "";
+  const [seenArrivedName, setSeenArrivedName] = useState(arrivedName);
+  if (arrivedName !== seenArrivedName) {
+    setSeenArrivedName(arrivedName);
+    if (arrivedName && !nameTyped) setDisplayName(arrivedName);
+  }
   const [goalConfirmed, setGoalConfirmed] = useState(
     draft?.goalConfirmed ?? Boolean(draft && draft.step > 0)
   );
@@ -524,6 +537,20 @@ export default function Onboarding() {
       profile?.runFitness,
     ]
   );
+  const dailyTarget = {
+    calories: tdee.targetCalories,
+    protein: tdee.protein,
+    carbs: tdee.carbs,
+    fat: tdee.fat,
+    note:
+      goalPlan.direction === "maintain"
+        ? "Enough to hold your weight while you start. Set a goal weight any time in Settings → Nutrition."
+        : `To ${goalPlan.direction === "lose" ? "lose" : "gain"} about ${paceLabel(paceKgPerWeek)} a week.`,
+  };
+  const limitationChanges = useMemo(
+    () => injuryChanges(plan.programState.workouts, injuries),
+    [plan.programState.workouts, injuries]
+  );
   const effectiveRunMode = plan.profileUpdates.runMode;
   const effectiveRunDays = plan.profileUpdates.weeklyRunDaysTarget;
   // Run21 (5): a long run's minutes at a confirmed easy pace, the one the
@@ -548,7 +575,10 @@ export default function Onboarding() {
       runFrequency,
     ]
   );
-  const displayNameValidation = validateDisplayName(displayName);
+  /* The name step is the last; the word filter loads from the first, and
+     until it has, the name waits (valid false, nothing to say). */
+  const wordFilter = useWordFilter();
+  const displayNameValidation = validateDisplayName(displayName, wordFilter);
   /* A race with no date is not a race plan. Run9a lands a persisted
      race_prep with no usable date on the freeform substrate rather than
      leaving a dangling raceGoal — correct, and it stays as the backstop for
@@ -863,9 +893,9 @@ export default function Onboarding() {
         code === "failed-precondition" ? describeRejection(err) : null;
       setSaveError(
         code === "unauthenticated"
-          ? "Please sign in again to finish setting up your account. Your answers are saved on this device."
+          ? "Sign in again to finish setting up your account. Your answers are saved on this device."
           : code === "resource-exhausted"
-            ? "Please wait a moment, then try creating your plan again. Your answers are saved."
+            ? "Wait a moment, then try creating your plan again. Your answers are saved."
             : refusal
               ? refusal
               : code === "invalid-argument"
@@ -879,7 +909,6 @@ export default function Onboarding() {
       setSaving(false);
     }
   };
-  const firstWorkout = plan.programState.workouts[0];
   const runningFirst =
     trainingActivity === "running" ||
     (trainingActivity === "both" && primaryGoal === "running");
@@ -957,7 +986,7 @@ export default function Onboarding() {
             step === 3 ||
             step === 2 ||
             step === 4) && (
-            <p className="text-caption text-muted-foreground">
+            <p className="text-micro text-muted-foreground">
               {step === 1 || step === 2 ? "1 of 2" : "2 of 2"} in this chapter
             </p>
           )}
@@ -1014,6 +1043,11 @@ export default function Onboarding() {
                   ? "This sets your training focus. You can add a goal weight when you get to About you."
                   : "Choose one to continue. You can revisit it before creating your plan."}
               </p>
+              <NewAccountMethodNote
+                method={signInMethodOf(user?.providerData?.[0]?.providerId)}
+                email={user?.email ?? null}
+                onSignInAnotherWay={() => void signOut()}
+              />
             </div>
           )}
           {step === 1 && (
@@ -1491,6 +1525,11 @@ export default function Onboarding() {
                   />
                 ))}
               </div>
+              {/* What the kit just chosen builds (FV3): the first lift and
+                  its first exercises, which change as the kit does. */}
+              {equipmentConfirmed && (
+                <FirstLiftPreview workouts={plan.programState.workouts} />
+              )}
               {/* Optional here, open everywhere else it appears. The draft
                   week renders on four screens, and on three of them it is
                   the thing being decided: steps 1 and 3 are the "Your week"
@@ -1547,16 +1586,11 @@ export default function Onboarding() {
                   }
                 />
               ))}
-              <details className="text-sm text-muted-foreground">
-                <summary className="min-h-11 py-3 cursor-pointer">
-                  How this affects your plan
-                </summary>
-                <p>
-                  The existing exercise filters use these choices when selecting
-                  movements. You can review the exercises in Train and change
-                  limitations in Settings.
-                </p>
-              </details>
+              {/* What the limitations just chosen changed (FV3), live.
+                  Limitations stay editable in Settings. */}
+              {injuries.some((id) => id !== "none") && (
+                <InjuryChangesList changes={limitationChanges} />
+              )}
             </div>
           )}
           {step === 5 && (
@@ -1636,11 +1670,14 @@ export default function Onboarding() {
                     (optional)
                   </span>
                 </label>
+                {/* The field is 8rem wide, 256px at double text: it may
+                    shrink below that so the unit beside it stays on a 320px
+                    screen, and the unit itself never shrinks. */}
                 <div className="flex items-center gap-2">
                   <input
                     id="onboarding-goal-weight"
                     inputMode="decimal"
-                    className="ds-input w-32 min-h-11 font-mono tabular-nums"
+                    className="ds-input w-32 min-w-0 min-h-11 font-mono tabular-nums"
                     value={goalWeightText}
                     aria-invalid={goalWeightInvalid}
                     aria-describedby={
@@ -1651,7 +1688,7 @@ export default function Onboarding() {
                     placeholder={formatWeightInUnit(weightKg, weightUnit)}
                     onChange={(event) => setGoalWeightText(event.target.value)}
                   />
-                  <span className="text-sm text-muted-foreground">
+                  <span className="shrink-0 text-sm text-muted-foreground">
                     {weightUnit === "lbs" ? "lb" : "kg"}
                   </span>
                 </div>
@@ -1698,84 +1735,52 @@ export default function Onboarding() {
                   </p>
                 )}
               </div>
+              {/* What these numbers set (FV3), moving with goal weight and
+                  pace as they change. */}
+              {validBody && <DailyTarget {...dailyTarget} />}
             </div>
           )}
           {step === 7 && (
             <div className="space-y-5">
-              <section
-                className="rounded-2xl bg-card card-shadow p-5 space-y-3"
-                aria-label={
-                  runningFirst ? "First run preview" : "First lift preview"
-                }
-              >
-                <SectionLabel
-                  className={
-                    runningFirst ? "text-running-strong" : "text-lifting-strong"
-                  }
+              {runningFirst ? (
+                <section
+                  className="rounded-2xl bg-card card-shadow p-5 space-y-3"
+                  aria-label="First run preview"
                 >
-                  {runningFirst
-                    ? firstRunTemplate
+                  <SectionLabel className="text-running-strong">
+                    {firstRunTemplate
                       ? "Your first planned run"
                       : effectiveRunMode === "race_prep"
                         ? "Your race plan"
-                        : "Your running setup"
-                    : "Your first lift"}
-                </SectionLabel>
-                <h2 className="text-xl font-bold">
-                  {runningFirst
-                    ? (firstRunTemplate?.name ??
+                        : "Your running setup"}
+                  </SectionLabel>
+                  <h2 className="text-xl font-bold">
+                    {firstRunTemplate?.name ??
                       (effectiveRunMode === "race_prep"
                         ? `${racePreview.distanceLabel} plan`
-                        : "Free running"))
-                    : firstWorkout &&
-                      liftDayNameIn(
-                        plan.programState.workouts.map((w) => w.dayName),
-                        0,
-                        firstWorkout.dayName
-                      )}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  <InlineNumerals>
-                    {runningFirst
-                      ? firstRunTemplate
+                        : "Free running")}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    <InlineNumerals>
+                      {firstRunTemplate
                         ? `${runDoseLine(firstRunTemplate, easyPaceSPerKm)} · ${firstRun?.date ? formatDayMonth(parseLocalDate(firstRun.date)) : ""}`
                         : effectiveRunMode === "race_prep"
                           ? `${effectiveRunDays} runs per week · see your upcoming week in Train.`
-                          : "Choose your route and pace. No scheduled runs or weekly quota."
-                      : `${firstWorkout?.exercises.length ?? 0} exercises · ${goalLabel(primaryGoal)}`}
-                  </InlineNumerals>
-                </p>
-                {!runningFirst && firstWorkout && (
-                  <ul className="space-y-2">
-                    {firstWorkout.exercises.slice(0, 3).map((exercise) => (
-                      <li
-                        key={exercise.instanceId ?? exercise.name}
-                        className="flex items-center gap-3"
-                      >
-                        <ExerciseThumb
-                          exerciseId={exercise.exerciseId}
-                          size="sm"
-                        />
-                        <span className="text-sm font-medium">
-                          {exercise.name}
-                        </span>
-                      </li>
-                    ))}
-                    {firstWorkout.exercises.length > 3 && (
-                      <li className="text-sm text-muted-foreground pl-[3.25rem]">
-                        <InlineNumerals>
-                          {`and ${firstWorkout.exercises.length - 3} more`}
-                        </InlineNumerals>
-                      </li>
-                    )}
-                  </ul>
-                )}
-                {runningFirst && firstRunTemplate && (
-                  <p className="text-sm text-muted-foreground">
-                    {firstRunTemplate.description}
+                          : "Choose your route and pace. No scheduled runs or weekly quota."}
+                    </InlineNumerals>
                   </p>
-                )}
-              </section>
+                  {firstRunTemplate && (
+                    <p className="text-sm text-muted-foreground">
+                      {firstRunTemplate.description}
+                    </p>
+                  )}
+                </section>
+              ) : (
+                <FirstLiftPreview
+                  workouts={plan.programState.workouts}
+                  meta={goalLabel(primaryGoal)}
+                />
+              )}
               <WeekPreview
                 schedule={plan.weekSchedule}
                 workouts={plan.programState.workouts}
@@ -1792,39 +1797,7 @@ export default function Onboarding() {
                   </p>
                 )}
 
-              {validBody && (
-                <section
-                  className="rounded-2xl bg-card card-shadow p-5 space-y-2"
-                  aria-label="Your daily target"
-                >
-                  <SectionLabel className="text-nutrition-strong">
-                    Your daily target
-                  </SectionLabel>
-                  <p className="text-3xl font-mono tabular-nums font-extrabold">
-                    {Math.round(tdee.targetCalories).toLocaleString()}{" "}
-                    <span className="text-base font-sans font-semibold text-muted-foreground">
-                      kcal
-                    </span>
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-mono tabular-nums">
-                      {tdee.protein} g
-                    </span>{" "}
-                    protein ·{" "}
-                    <span className="font-mono tabular-nums">
-                      {tdee.carbs} g
-                    </span>{" "}
-                    carbs ·{" "}
-                    <span className="font-mono tabular-nums">{tdee.fat} g</span>{" "}
-                    fat
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {goalPlan.direction === "maintain"
-                      ? "Enough to hold your weight while you start. Set a goal weight any time in Settings → Nutrition."
-                      : `To ${goalPlan.direction === "lose" ? "lose" : "gain"} about ${paceLabel(paceKgPerWeek)} a week.`}
-                  </p>
-                </section>
-              )}
+              {validBody && <DailyTarget {...dailyTarget} />}
               <details className="rounded-2xl bg-card card-shadow px-4">
                 <summary className="min-h-11 py-3 cursor-pointer text-base font-semibold">
                   Your answers
@@ -1914,14 +1887,17 @@ export default function Onboarding() {
                   className="ds-input w-full min-h-11"
                   value={displayName}
                   maxLength={DISPLAY_NAME_MAX}
-                  aria-invalid={!displayNameValidation.valid}
-                  onChange={(event) => setDisplayName(event.target.value)}
+                  aria-invalid={displayNameValidation.problem !== null}
+                  onChange={(event) => {
+                    setNameTyped(true);
+                    setDisplayName(event.target.value);
+                  }}
                 />
                 <p className="text-sm text-muted-foreground">
                   Other people can see this name on your profile. You can change
                   it later.
                 </p>
-                {!displayNameValidation.valid && (
+                {displayNameValidation.message && (
                   <p className="text-sm text-destructive-strong" role="alert">
                     {displayNameValidation.message}
                   </p>
@@ -1985,7 +1961,7 @@ export default function Onboarding() {
               ? "Creating your plan…"
               : step === 7
                 ? saveError
-                  ? "Try creating my plan again"
+                  ? "Try again"
                   : "Start my plan"
                 : returnToReview
                   ? "Back to review"

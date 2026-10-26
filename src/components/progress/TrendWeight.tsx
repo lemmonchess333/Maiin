@@ -325,7 +325,7 @@ export function TrendWeight() {
                   // drop the figure from its label when hidden.
                   value: hideNumber ? "Goal" : `Goal: ${goalDisplay}`,
                   position: "right",
-                  fontSize: 10,
+                  fontSize: "0.75rem",
                   fill: THEME.success,
                 }}
               />

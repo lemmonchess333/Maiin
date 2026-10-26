@@ -34,7 +34,8 @@ import {
   deleteObject,
   getDownloadURL,
   ref,
-  uploadBytes,
+  uploadBytesResumable,
+  type StorageReference,
 } from "firebase/storage";
 import { addDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
 import { db, storage } from "@/lib/firebase";
@@ -258,13 +259,42 @@ export async function loadCheckInPoses(
   return checkInPoses(snap.docs.map((d) => d.data()));
 }
 
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("Upload timed out")), ms)
-    ),
-  ]);
+function uploadWithTimeout(
+  fileRef: StorageReference,
+  data: Uint8Array<ArrayBuffer>
+) {
+  const task = uploadBytesResumable(fileRef, data, {
+    // Storage rules allow image types only; the body is ciphertext and
+    // carries no key in Storage metadata.
+    contentType: "image/webp",
+  });
+  return new Promise<void>((resolve, reject) => {
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      task.cancel();
+      reject(new Error("Upload timed out"));
+    }, UPLOAD_TIMEOUT_MS);
+    const settled = () => {
+      clearTimeout(timer);
+      if (timedOut) {
+        // Cancellation can lose a race with a committed upload. Wait for
+        // the task to settle before deleting, including an ambiguous
+        // cancellation response, so it cannot recreate an orphan later.
+        void deleteObject(fileRef).catch(() => undefined);
+      }
+    };
+    task.then(
+      () => {
+        settled();
+        if (!timedOut) resolve();
+      },
+      (error: unknown) => {
+        settled();
+        if (!timedOut) reject(error);
+      }
+    );
+  });
 }
 
 async function compress(file: File): Promise<Blob> {
@@ -326,14 +356,7 @@ export async function uploadProgressPhoto(
   }
 
   const fileRef = ref(storage, storagePath);
-  await withTimeout(
-    uploadBytes(fileRef, new Uint8Array(encrypted), {
-      // Storage rules allow image types only; the body is ciphertext and
-      // carries no key in Storage metadata.
-      contentType: "image/webp",
-    }),
-    UPLOAD_TIMEOUT_MS
-  );
+  await uploadWithTimeout(fileRef, new Uint8Array(encrypted));
 
   const addedAt = Date.now();
   let id: string;

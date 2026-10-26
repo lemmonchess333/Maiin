@@ -14,8 +14,12 @@ const H = vi.hoisted(() => ({
     resolve: (v: boolean) => void;
     reject: (e: unknown) => void;
   }[],
-  follow: vi.fn(async (_viewer: string, _target: string) => {}),
+  follow: vi.fn(
+    async (_viewer: string, _target: string): Promise<string> => "following"
+  ),
   unfollow: vi.fn(async (_viewer: string, _target: string) => {}),
+  cancel: vi.fn(async (_viewer: string, _target: string) => {}),
+  requested: vi.fn(async (_viewer: string, _target: string) => false),
 }));
 
 vi.mock("@/lib/auth", () => ({ useUid: () => H.uid }));
@@ -24,8 +28,12 @@ vi.mock("@/lib/socialApi", () => ({
     new Promise<boolean>((resolve, reject) => {
       H.reads.push({ viewer, target, resolve, reject });
     }),
-  followUser: (viewer: string, target: string) => H.follow(viewer, target),
+  hasRequestedFollow: (viewer: string, target: string) =>
+    H.requested(viewer, target),
+  followOrRequest: (viewer: string, target: string) => H.follow(viewer, target),
   unfollowUser: (viewer: string, target: string) => H.unfollow(viewer, target),
+  cancelFollowRequest: (viewer: string, target: string) =>
+    H.cancel(viewer, target),
 }));
 vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn(), info: vi.fn() },
@@ -40,8 +48,12 @@ import {
 beforeEach(() => {
   H.uid = "me";
   H.reads = [];
-  H.follow = vi.fn(async (_viewer: string, _target: string) => {});
+  H.follow = vi.fn(
+    async (_viewer: string, _target: string): Promise<string> => "following"
+  );
   H.unfollow = vi.fn(async (_viewer: string, _target: string) => {});
+  H.cancel = vi.fn(async (_viewer: string, _target: string) => {});
+  H.requested = vi.fn(async (_viewer: string, _target: string) => false);
   __resetFollowStatesForTests();
 });
 
@@ -60,41 +72,84 @@ describe("useFollowState", () => {
     expect(b.result.current.following).toBe(false);
   });
 
-  it("a follow from one control shows on the other at once", async () => {
+  it("a follow from one control shows on the other once it lands", async () => {
     const a = renderHook(() => useFollowState("maya"));
     const b = renderHook(() => useFollowState("maya"));
     await answer(0, false);
-    let release!: () => void;
+    let release!: (outcome: string) => void;
     H.follow = vi.fn(
       (_viewer: string, _target: string) =>
-        new Promise<void>((r) => (release = r))
+        new Promise<string>((r) => (release = r))
     );
-    let done!: Promise<boolean>;
+    let done!: Promise<string | null>;
     act(() => {
       done = a.result.current.toggle(true);
     });
-    // Before the write lands.
-    expect(b.result.current.following).toBe(true);
+    // It waits to hear whether it became a follow or a request.
+    expect(b.result.current.following).toBe(false);
     expect(a.result.current.busy).toBe(true);
     await act(async () => {
-      release();
-      expect(await done).toBe(true);
+      release("following");
+      expect(await done).toBe("following");
     });
+    expect(b.result.current.following).toBe(true);
     expect(H.follow).toHaveBeenCalledWith("me", "maya");
     expect(a.result.current.busy).toBe(false);
+  });
+
+  it("a follow to someone who approves followers is a request, on every control", async () => {
+    const a = renderHook(() => useFollowState("maya"));
+    const b = renderHook(() => useFollowState("maya"));
+    await answer(0, false);
+    H.follow = vi.fn(
+      async (_viewer: string, _target: string): Promise<string> => "requested"
+    );
+    let now: string | null = null;
+    await act(async () => {
+      now = await a.result.current.toggle(true);
+    });
+    expect(now).toBe("requested");
+    expect(b.result.current.requested).toBe(true);
+    // Not a follower until accepted.
+    expect(b.result.current.following).toBe(false);
+  });
+
+  it("reads a request already waiting as requested", async () => {
+    H.requested = vi.fn(async () => true);
+    const a = renderHook(() => useFollowState("maya"));
+    await answer(0, false);
+    await waitFor(() => expect(a.result.current.requested).toBe(true));
+    expect(H.requested).toHaveBeenCalledWith("me", "maya");
+  });
+
+  it("undoing a request cancels it, at once, rather than unfollowing", async () => {
+    H.requested = vi.fn(async () => true);
+    const a = renderHook(() => useFollowState("maya"));
+    await answer(0, false);
+    await waitFor(() => expect(a.result.current.requested).toBe(true));
+    let now: string | null = null;
+    await act(async () => {
+      now = await a.result.current.toggle(false);
+    });
+    expect(now).toBe("not-following");
+    expect(H.cancel).toHaveBeenCalledWith("me", "maya");
+    expect(H.unfollow).not.toHaveBeenCalled();
+    expect(a.result.current.requested).toBe(false);
   });
 
   it("a failed follow is put back", async () => {
     const a = renderHook(() => useFollowState("maya"));
     await answer(0, false);
-    H.follow = vi.fn(async (_viewer: string, _target: string) => {
-      throw new Error("offline");
-    });
-    let ok = true;
+    H.follow = vi.fn(
+      async (_viewer: string, _target: string): Promise<string> => {
+        throw new Error("offline");
+      }
+    );
+    let now: string | null = "following";
     await act(async () => {
-      ok = await a.result.current.toggle(true);
+      now = await a.result.current.toggle(true);
     });
-    expect(ok).toBe(false);
+    expect(now).toBeNull();
     expect(a.result.current.following).toBe(false);
   });
 

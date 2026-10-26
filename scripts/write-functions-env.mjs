@@ -25,7 +25,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const FUNCTION_SETTINGS = [
-  // Moderation (docs/LAUNCH_TODO.md, section 19).
+  // Moderation (docs/launch/owner-steps-2026-10-14.md, Part 1).
   "ADMIN_UIDS",
   "MODERATION_ALERT_EMAIL",
   // Account and alert email.

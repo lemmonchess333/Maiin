@@ -12,7 +12,10 @@ import {
 
 const H = vi.hoisted(() => ({
   read: null as null | ((v: boolean) => void),
-  follow: vi.fn(async (_viewer: string, _target: string) => {}),
+  asked: false,
+  follow: vi.fn(
+    async (_viewer: string, _target: string): Promise<string | void> => {}
+  ),
   track: vi.fn(),
   toastError: vi.fn(),
 }));
@@ -26,8 +29,11 @@ vi.mock("@/lib/socialApi", () => ({
     new Promise<boolean>((resolve) => {
       H.read = resolve;
     }),
-  followUser: (viewer: string, target: string) => H.follow(viewer, target),
+  hasRequestedFollow: async () => H.asked,
+  followOrRequest: async (viewer: string, target: string) =>
+    (await H.follow(viewer, target)) ?? "following",
   unfollowUser: vi.fn(),
+  cancelFollowRequest: vi.fn(),
 }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/toast", () => ({ toast: { error: H.toastError } }));
@@ -43,7 +49,10 @@ beforeEach(() => {
   restriction.isRestricted = false;
   __resetFollowStatesForTests();
   H.read = null;
-  H.follow = vi.fn(async (_viewer: string, _target: string) => {});
+  H.asked = false;
+  H.follow = vi.fn(
+    async (_viewer: string, _target: string): Promise<string | void> => {}
+  );
   H.track.mockClear();
   H.toastError.mockClear();
 });
@@ -82,6 +91,25 @@ describe("InlineFollow", () => {
     expect(H.track).toHaveBeenCalledWith("social_follow", {
       followSource: "post",
     });
+  });
+
+  it("to someone who approves followers it says Requested, and stays", async () => {
+    H.follow = vi.fn(async () => "requested");
+    render(<InlineFollow targetUid="maya" targetName="Maya" />);
+    await answer(false);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Follow Maya" }));
+    });
+    expect(screen.getByText("Requested")).toBeInTheDocument();
+    expect(screen.queryByText("Following")).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("shows nothing for someone already asked", async () => {
+    H.asked = true;
+    render(<InlineFollow targetUid="maya" targetName="Maya" />);
+    await answer(false);
+    expect(screen.queryByRole("button")).toBeNull();
   });
 
   it("a failed follow comes back as Follow, and says it failed", async () => {

@@ -39,6 +39,7 @@ export default function SettingsPrivacy() {
         profile={profile}
         updateProfile={updateProfile}
         updateShareDefaults={updateShareDefaults}
+        refreshProfile={refreshProfile}
         privacyZones={privacyZones}
         addZone={addZone}
         removeZone={removeZone}

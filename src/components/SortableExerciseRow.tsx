@@ -167,13 +167,10 @@ export default function SortableExerciseRow({
               {[0, 1, 2, 3, 4, 5].map((j) => (
                 <div
                   key={j}
-                  className="bg-muted-foreground"
-                  style={{
-                    width: 3,
-                    height: 3,
-                    borderRadius: "50%",
-                    opacity: 0.22,
-                  }}
+                  // The grip is the row's drag control, so its dots hold
+                  // 3:1 on the card in both themes (3.5:1 light, 4.9:1 dark).
+                  className="bg-muted-foreground/80"
+                  style={{ width: 3, height: 3, borderRadius: "50%" }}
                 />
               ))}
             </div>

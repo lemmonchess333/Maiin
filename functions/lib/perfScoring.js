@@ -24,6 +24,16 @@
 
 // ── Constants ────────────────────────────────
 
+/**
+ * A day counts as logged for food once its meals reach this many kcal. Below
+ * it the day is a coffee or a forgotten dinner, not a day's eating, and
+ * averaging it in scores a cutter on target as 25% under. The adaptive
+ * estimator excludes the same days for the same reason
+ * (`ADAPTIVE_TDEE_DEFAULTS.plausibilityFloorKcal`, src/lib/adaptiveTdee.ts),
+ * and performanceEngineParity.cross.test.ts holds the two equal.
+ */
+const FULL_FOOD_DAY_KCAL = 800;
+
 const PI_WEIGHTS = {
   load: 0.65,
   recovery: 0.25,
@@ -287,6 +297,25 @@ function generatePlanAdjustments(doc) {
 // ── Post-baseline scoring (the parity seam) ──
 
 /**
+ * The sessions a week is scored against: the lift days plus the run days the
+ * person planned, because adherence counts lifts and runs together. A planned
+ * 0 is a real answer (a runner plans no lifts), so the goal's default stands
+ * in only when nothing at all is planned. `weeklyRunDaysTarget` wins over the
+ * legacy `weeklyRunsTarget`, as in `getWeeklyRunTarget` (scheduleUtils.ts)
+ * and `fellBehindWeek.js`. Mirrors src/lib/performanceEngine.ts.
+ */
+function weeklySessionTarget(profile) {
+  const count = (v) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : 0);
+  const runs =
+    typeof profile.weeklyRunDaysTarget === "number"
+      ? count(profile.weeklyRunDaysTarget)
+      : count(profile.weeklyRunsTarget);
+  const planned = count(profile.weeklyWorkoutsTarget) + runs;
+  if (planned > 0) return planned;
+  return profile.goal === "cut" ? 3 : profile.goal === "lean bulk" ? 5 : 4;
+}
+
+/**
  * Pure, deterministic scoring of a window aggregate against a normalised
  * baseline. Returns ONLY the scored fields — the caller assembles the full
  * persisted doc (weekKey, computedAt, confidence, aggregates, baseline,
@@ -295,15 +324,13 @@ function generatePlanAdjustments(doc) {
  *
  * @param {object} agg     window aggregate (lift/run/meal/bodyweight)
  * @param {object} bl       normalised baseline { liftTonnage, liftHardSets, runKm, runLongKm, weeksUsed }
- * @param {object} profile  { goal?, weeklyWorkoutsTarget?, targetCalories?, targetProtein? }
+ * @param {object} profile  { goal?, weeklyWorkoutsTarget?, weeklyRunDaysTarget?, weeklyRunsTarget?, targetCalories?, targetProtein? }
  * @param {number} [previousWeekPI]
  */
 function scorePerformance(agg, bl, profile, previousWeekPI, weekBeforePreviousPI) {
   const goal = profile.goal;
 
-  const targetWorkouts =
-    profile.weeklyWorkoutsTarget ||
-    (goal === "cut" ? 3 : goal === "lean bulk" ? 5 : 4);
+  const targetWorkouts = weeklySessionTarget(profile);
 
   const liftLoadScore = computeLiftLoadScore(agg, bl);
   const runLoadScore = computeRunLoadScore(agg, bl);
@@ -375,6 +402,7 @@ function scorePerformance(agg, bl, profile, previousWeekPI, weekBeforePreviousPI
 }
 
 module.exports = {
+  FULL_FOOD_DAY_KCAL,
   PI_WEIGHTS,
   clamp,
   safeRatio,
@@ -383,6 +411,7 @@ module.exports = {
   computeRunLoadScore,
   computeRecoveryScore,
   computeAdherenceScore,
+  weeklySessionTarget,
   computeLoadBand,
   shouldRecommendDeload,
   generateInsight,

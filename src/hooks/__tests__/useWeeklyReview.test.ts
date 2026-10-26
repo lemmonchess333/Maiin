@@ -11,7 +11,7 @@
  * own layers rather than needing a mock per layer.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
@@ -304,6 +304,13 @@ describe("useWeeklyReview assembly", () => {
     const { result } = renderHook(() => useWeeklyReview());
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.review).toBeNull();
+    // Failed, not empty: the page says so rather than "Your first review".
+    expect(result.current.failed).toBe(true);
+
+    act(() => result.current.retry());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.failed).toBe(false);
+    expect(result.current.review).not.toBeNull();
   });
 });
 

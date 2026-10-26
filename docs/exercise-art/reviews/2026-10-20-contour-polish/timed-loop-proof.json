@@ -1,0 +1,50 @@
+[
+  {
+    "id": "face-pulls",
+    "mode": "normal",
+    "label": "registered-face-pulls-light-normal-loop",
+    "slots": [1, 2, 3, 4, 5, 6, 1],
+    "observedIntervalsMs": [1200, 1196, 1204, 1197, 1282, 1200],
+    "unchangedPlayerTimerMs": 1200
+  },
+  {
+    "id": "face-pulls",
+    "mode": "slower",
+    "label": "registered-face-pulls-light-slower-loop",
+    "slots": [4, 5, 6, 1, 2, 3, 4],
+    "observedIntervalsMs": [2399, 2496, 2390, 2399, 2401, 2400],
+    "unchangedPlayerTimerMs": 2400
+  },
+  {
+    "id": "incline-db-curl",
+    "mode": "normal",
+    "label": "staged-incline-db-curl-light-normal-loop",
+    "slots": [1, 2, 3, 4, 5, 6, 1],
+    "observedIntervalsMs": [1201, 1199, 1201, 1199, 1280, 1200],
+    "unchangedPlayerTimerMs": 1200
+  },
+  {
+    "id": "incline-db-curl",
+    "mode": "slower",
+    "label": "staged-incline-db-curl-light-slower-loop",
+    "slots": [5, 6, 1, 2, 3, 4, 5],
+    "observedIntervalsMs": [2400, 2404, 2395, 2481, 2399, 2400],
+    "unchangedPlayerTimerMs": 2400
+  },
+  {
+    "id": "overhead-extension",
+    "mode": "normal",
+    "label": "staged-overhead-extension-dark-normal-loop",
+    "slots": [1, 2, 3, 4, 5, 6, 1],
+    "observedIntervalsMs": [1198, 1203, 1200, 1198, 1281, 1200],
+    "unchangedPlayerTimerMs": 1200
+  },
+  {
+    "id": "overhead-extension",
+    "mode": "slower",
+    "label": "staged-overhead-extension-dark-slower-loop",
+    "slots": [1, 2, 3, 4, 5, 6, 1],
+    "observedIntervalsMs": [2957, 2479, 2400, 2400, 2406, 2394],
+    "unchangedPlayerTimerMs": 2400
+  }
+]

@@ -1,6 +1,7 @@
 import { AlertTriangle, Footprints } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
 import { Button } from "@/components/ui/Button";
+import { Skeleton } from "@/components/LoadingSkeleton";
 import { haptic } from "@/lib/haptic";
 import { useSteps } from "@/hooks/useSteps";
 import { openHealthSettings } from "@/lib/healthKit";
@@ -20,7 +21,7 @@ export default function HealthSection({
 }: {
   inline?: boolean;
 }) {
-  const { status, steps, connect } = useSteps();
+  const { status, steps, connect, pending } = useSteps();
   const connected = status === "connected" || status === "ambiguous";
 
   return (
@@ -30,7 +31,11 @@ export default function HealthSection({
       title="Apple Health"
       subtitle="Daily step count on Home"
     >
-      {status === "unavailable" && (
+      {/* Until the first load finishes, every state below is a guess:
+          "Not available", "Connect", a 0 or "No steps yet". */}
+      {pending && <Skeleton className="h-[4.5rem] w-full rounded-lg" />}
+
+      {!pending && status === "unavailable" && (
         <div className="p-4 rounded-lg bg-muted">
           <p className="text-sm text-foreground">Not available here</p>
           <p className="text-xs text-muted-foreground">
@@ -39,7 +44,7 @@ export default function HealthSection({
         </div>
       )}
 
-      {status === "unprompted" && (
+      {!pending && status === "unprompted" && (
         <div className="flex items-center justify-between gap-3 p-4 rounded-lg bg-muted">
           <div className="pr-2">
             <p className="text-sm text-foreground">Connect Apple Health</p>
@@ -59,7 +64,7 @@ export default function HealthSection({
         </div>
       )}
 
-      {connected && (
+      {!pending && connected && (
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
           <div>
             <p className="text-sm text-foreground">Apple Health connected</p>
@@ -76,7 +81,7 @@ export default function HealthSection({
       {/* Ambiguous = connected but no step data. Because iOS won't reveal a
           denied READ scope, this is a hint (not an error) with the manual
           recovery path — mirrors the notifications denied-banner. */}
-      {status === "ambiguous" && (
+      {!pending && status === "ambiguous" && (
         <div
           role="alert"
           className="flex items-start gap-3 p-3 rounded-lg border border-warning/15 bg-warning-bg"

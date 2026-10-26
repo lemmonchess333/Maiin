@@ -1,0 +1,88 @@
+{
+  "theme": "dark",
+  "viewport": { "width": 390, "height": 844 },
+  "selected": [
+    {
+      "frame": 1,
+      "active": {
+        "alt": "Lu Raise, Start",
+        "decoded": true,
+        "height": 1374,
+        "src": "/Maiin/form-frames/lu-raise/1.webp",
+        "width": 993
+      },
+      "caption": "Start 1/6"
+    },
+    {
+      "frame": 2,
+      "active": {
+        "alt": "Lu Raise, Raise laterally",
+        "decoded": true,
+        "height": 1374,
+        "src": "/Maiin/form-frames/lu-raise/2.webp",
+        "width": 993
+      },
+      "caption": "Raise laterally 2/6"
+    },
+    {
+      "frame": 3,
+      "active": {
+        "alt": "Lu Raise, Shoulder height",
+        "decoded": true,
+        "height": 1374,
+        "src": "/Maiin/form-frames/lu-raise/3.webp",
+        "width": 993
+      },
+      "caption": "Shoulder height 3/6"
+    },
+    {
+      "frame": 4,
+      "active": {
+        "alt": "Lu Raise, Reach overhead",
+        "decoded": true,
+        "height": 1374,
+        "src": "/Maiin/form-frames/lu-raise/4.webp",
+        "width": 993
+      },
+      "caption": "Reach overhead 4/6"
+    },
+    {
+      "frame": 5,
+      "active": {
+        "alt": "Lu Raise, Lower laterally",
+        "decoded": true,
+        "height": 1374,
+        "src": "/Maiin/form-frames/lu-raise/5.webp",
+        "width": 993
+      },
+      "caption": "Lower laterally 5/6"
+    },
+    {
+      "frame": 6,
+      "active": {
+        "alt": "Lu Raise, Lower",
+        "decoded": true,
+        "height": 1374,
+        "src": "/Maiin/form-frames/lu-raise/6.webp",
+        "width": 993
+      },
+      "caption": "Lower 6/6"
+    }
+  ],
+  "timedStartTrace": "[\n  {\n    \"elapsedMs\": 86,\n    \"alt\": \"Lu Raise, Start\",\n    \"src\": \"/Maiin/form-frames/lu-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1361,\n    \"alt\": \"Lu Raise, Raise laterally\",\n    \"src\": \"/Maiin/form-frames/lu-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2564,\n    \"alt\": \"Lu Raise, Shoulder height\",\n    \"src\": \"/Maiin/form-frames/lu-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3761,\n    \"alt\": \"Lu Raise, Reach overhead\",\n    \"src\": \"/Maiin/form-frames/lu-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5044,\n    \"alt\": \"Lu Raise, Lower laterally\",\n    \"src\": \"/Maiin/form-frames/lu-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6242,\n    \"alt\": \"Lu Raise, Lower\",\n    \"src\": \"/Maiin/form-frames/lu-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7444,\n    \"alt\": \"Lu Raise, Start\",\n    \"src\": \"/Maiin/form-frames/lu-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 8644,\n    \"alt\": \"Lu Raise, Raise laterally\",\n    \"src\": \"/Maiin/form-frames/lu-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9767,\n    \"alt\": \"Lu Raise, Reach overhead\",\n    \"src\": \"/Maiin/form-frames/lu-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24801,\n    \"alt\": \"Lu Raise, Start\",\n    \"src\": \"/Maiin/form-frames/lu-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25044,\n    \"alt\": \"Lu Raise, Raise laterally\",\n    \"src\": \"/Maiin/form-frames/lu-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25365,\n    \"alt\": \"Lu Raise, Shoulder height\",\n    \"src\": \"/Maiin/form-frames/lu-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25600,\n    \"alt\": \"Lu Raise, Reach overhead\",\n    \"src\": \"/Maiin/form-frames/lu-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25923,\n    \"alt\": \"Lu Raise, Lower laterally\",\n    \"src\": \"/Maiin/form-frames/lu-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 26244,\n    \"alt\": \"Lu Raise, Lower\",\n    \"src\": \"/Maiin/form-frames/lu-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 26480,\n    \"alt\": \"Lu Raise, Start\",\n    \"src\": \"/Maiin/form-frames/lu-raise/1.webp\",\n    \"decoded\": true\n  }\n]",
+  "timedEnd": {
+    "active": {
+      "alt": "Lu Raise, Raise laterally",
+      "decoded": true,
+      "height": 1374,
+      "src": "/Maiin/form-frames/lu-raise/2.webp",
+      "width": 993
+    },
+    "caption": "Raise laterally 2/6",
+    "text": "Strict artwork review\n\nRegistered assets / lu-raise\n\nExercise\nLu Raise\nIncline Dumbbell Curl\nLeg Press\nHandstand Push-Ups\nStraight-Arm Pulldown\nFront Squat\nSeated Cable Row\nSwimming\nStairmaster\nTurkish Get-Up\nAssault Bike\nSpin Bike\nElliptical\nRowing Machine\nPendlay Row\nLeg Extension\nSingle-Leg Calf Raise\nSide Plank\nOverhead Tricep Extension\nFace Pulls\nT-Bar Row\nStationary Bike\nGoblet Squat\nBarbell Squat\nBarbell Curl\nBarbell Row\nBench Press\nCalf Raise\nStanding Calf Raise\nDips\nOverhead Press\nRope Tricep Pushdown\nSkull Crushers\nUse light\nLu Raise\nShoulders\nDumbbells\n\nRAISE LATERALLY 2/6\n\nPause\nNormal\nPRIMARY\nDeltoids\nSECONDARY\nTraps\n\nInstructions\n\nPreparation: Stand tall with light dumbbells at your sides and palms facing in. Keep a slight elbow bend and raise outward in a comfortable plane just in front of your shoulders. Allow natural arm and shoulder-blade rotation as you continue overhead; lower along the same arc.\n\n1\n\nStand tall, weights at your sides.\n\n2\n\nRaise outward; keep elbows softly fixed.\n\n3\n\nPass shoulder height with thumbs up.\n\n4\n\nReach overhead without leaning back.\n\n5\n\nLower out to shoulder height under control.\n\n6\n\nLower steadily; continue to your sides.\n\nWatch out\n\nUse light weights, stay tall and control the full outward arc.\n\nCOMMON MISTAKES\n\nBending the elbows to press the weights overhead.\nLeaning backward or swinging the hips to lift.\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace",
+    "theme": "dark",
+    "trace": "[\n  {\n    \"elapsedMs\": 86,\n    \"alt\": \"Lu Raise, Start\",\n    \"src\": \"/Maiin/form-frames/lu-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 1361,\n    \"alt\": \"Lu Raise, Raise laterally\",\n    \"src\": \"/Maiin/form-frames/lu-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2564,\n    \"alt\": \"Lu Raise, Shoulder height\",\n    \"src\": \"/Maiin/form-frames/lu-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3761,\n    \"alt\": \"Lu Raise, Reach overhead\",\n    \"src\": \"/Maiin/form-frames/lu-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 5044,\n    \"alt\": \"Lu Raise, Lower laterally\",\n    \"src\": \"/Maiin/form-frames/lu-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6242,\n    \"alt\": \"Lu Raise, Lower\",\n    \"src\": \"/Maiin/form-frames/lu-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 7444,\n    \"alt\": \"Lu Raise, Start\",\n    \"src\": \"/Maiin/form-frames/lu-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 8644,\n    \"alt\": \"Lu Raise, Raise laterally\",\n    \"src\": \"/Maiin/form-frames/lu-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 9767,\n    \"alt\": \"Lu Raise, Reach overhead\",\n    \"src\": \"/Maiin/form-frames/lu-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 24801,\n    \"alt\": \"Lu Raise, Start\",\n    \"src\": \"/Maiin/form-frames/lu-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25044,\n    \"alt\": \"Lu Raise, Raise laterally\",\n    \"src\": \"/Maiin/form-frames/lu-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25365,\n    \"alt\": \"Lu Raise, Shoulder height\",\n    \"src\": \"/Maiin/form-frames/lu-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25600,\n    \"alt\": \"Lu Raise, Reach overhead\",\n    \"src\": \"/Maiin/form-frames/lu-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 25923,\n    \"alt\": \"Lu Raise, Lower laterally\",\n    \"src\": \"/Maiin/form-frames/lu-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 26244,\n    \"alt\": \"Lu Raise, Lower\",\n    \"src\": \"/Maiin/form-frames/lu-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 26480,\n    \"alt\": \"Lu Raise, Start\",\n    \"src\": \"/Maiin/form-frames/lu-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 28165,\n    \"alt\": \"Lu Raise, Raise laterally\",\n    \"src\": \"/Maiin/form-frames/lu-raise/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 29365,\n    \"alt\": \"Lu Raise, Shoulder height\",\n    \"src\": \"/Maiin/form-frames/lu-raise/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 30565,\n    \"alt\": \"Lu Raise, Reach overhead\",\n    \"src\": \"/Maiin/form-frames/lu-raise/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 31760,\n    \"alt\": \"Lu Raise, Lower laterally\",\n    \"src\": \"/Maiin/form-frames/lu-raise/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 32963,\n    \"alt\": \"Lu Raise, Lower\",\n    \"src\": \"/Maiin/form-frames/lu-raise/6.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 34161,\n    \"alt\": \"Lu Raise, Start\",\n    \"src\": \"/Maiin/form-frames/lu-raise/1.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 35367,\n    \"alt\": \"Lu Raise, Raise laterally\",\n    \"src\": \"/Maiin/form-frames/lu-raise/2.webp\",\n    \"decoded\": true\n  }\n]"
+  },
+  "nextWrap": "Start 1/6",
+  "previousWrap": "Lower 6/6"
+}

@@ -5,7 +5,7 @@ import type {
   WeekMeasure,
 } from "@/lib/performanceWeekBreakdown";
 import { cn } from "@/lib/utils";
-import { formatCalories } from "@/utils/formatNutrition";
+import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 
 /** Headroom past the larger of the two, so neither end sits on the edge. */
 const SCALE_HEADROOM = 1.15;
@@ -115,7 +115,7 @@ export default function PerformanceWeekBreakdown({
               <span className="font-mono tabular-nums">
                 {formatCalories(food.caloriesPerDay)}
               </span>{" "}
-              kcal and{" "}
+              {CALORIE_UNIT} and{" "}
               <span className="font-mono tabular-nums">
                 {food.proteinPerDay}
               </span>{" "}

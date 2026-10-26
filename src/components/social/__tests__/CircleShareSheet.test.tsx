@@ -10,7 +10,16 @@
  *   (c) the note is optional (share without typing → undefined);
  *   (d) a failed publish keeps the sheet open (note + selection kept).
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+  beforeAll,
+} from "vitest";
+import { loadWordFilter } from "@/lib/wordFilter";
 import {
   render,
   screen,
@@ -67,6 +76,7 @@ function summary(id: string, title: string, active: boolean): CircleSummary {
       createdAt: 1,
     },
     inviteCode: null,
+    inviteCodeExpiresAt: null,
   };
 }
 
@@ -116,6 +126,22 @@ describe("no circles", () => {
     fireEvent.click(screen.getByRole("button", { name: /open together/i }));
     expect(navigateMock).toHaveBeenCalledWith("/social");
     expect(hook.publishEvent).not.toHaveBeenCalled();
+  });
+});
+
+describe("a failed read", () => {
+  it("says so and offers Try again, not the no-Circles prompt", () => {
+    const hook = hookValue({ loadFailed: true });
+    mockUseGoalSpaces.mockReturnValue(hook);
+    renderSheet();
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Couldn’t load your circles."
+    );
+    expect(screen.queryByText(/Circles are small/i)).toBeNull();
+    expect(screen.queryByRole("button", { name: /open together/i })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(hook.reload).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -234,4 +260,10 @@ describe("a restricted account (S4e)", () => {
     fireEvent.click(share);
     expect(hook.publishEvent).not.toHaveBeenCalled();
   });
+});
+
+/* The word filter as a session that has used it holds it: loaded, so the
+   sheet draws on its first render (useWordFilter covers the wait). */
+beforeAll(async () => {
+  await loadWordFilter();
 });

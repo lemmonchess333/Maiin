@@ -14,7 +14,11 @@ export function useFollowingCount() {
     count: number;
   } | null>(null);
   const [revision, setRevision] = useState(0);
-  const refresh = useCallback(() => setRevision((n) => n + 1), []);
+  const [failedUid, setFailedUid] = useState<string | null>(null);
+  const refresh = useCallback(() => {
+    setFailedUid(null);
+    setRevision((n) => n + 1);
+  }, []);
 
   useEffect(() => {
     if (!uid) return;
@@ -25,10 +29,14 @@ export function useFollowingCount() {
         limit(SOCIAL_GATES.FOLLOWING_FEED_MIN_FOLLOWS)
       ),
       (result) => {
-        if (active) setSnapshot({ uid, count: result.size });
+        if (!active) return;
+        setSnapshot({ uid, count: result.size });
+        setFailedUid(null);
       },
       (error) => {
-        if (active) logger.error("[useFollowingCount] read failed", error);
+        if (!active) return;
+        logger.error("[useFollowingCount] read failed", error);
+        setFailedUid(uid);
       }
     );
     return () => {
@@ -37,8 +45,11 @@ export function useFollowingCount() {
     };
   }, [uid, revision]);
 
+  const count = uid && snapshot?.uid === uid ? snapshot.count : null;
   return {
-    count: uid && snapshot?.uid === uid ? snapshot.count : null,
+    count,
+    /** The read failed and no count is known: not the same as loading. */
+    failed: Boolean(uid) && failedUid === uid && count === null,
     refresh,
   };
 }

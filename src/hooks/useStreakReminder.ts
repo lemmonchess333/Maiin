@@ -34,8 +34,10 @@ import {
  *   3. `primingShown` is true — the permission priming modal has been
  *      responded to. Without this gate we could schedule a reminder for a
  *      user who's never opted in.
- *   4. `currentStreak >= 2` — no point nagging a brand-new user who
- *      doesn't have a streak yet.
+ *   4. `savableStreak >= 2` — no point nagging a brand-new user who
+ *      doesn't have a streak yet. The streak a log today keeps, not the one
+ *      shown: the morning after a rest day shows 0, and that is the evening
+ *      the reminder is for.
  *   5. `hasLoggedToday` is false — cancel-on-activity in useStreaks also
  *      covers the mid-day case, but we re-check here on every eval to
  *      avoid scheduling a stale reminder right after a fresh log.
@@ -96,14 +98,15 @@ export function shouldScheduleStreakReminder(state: {
   pushOwns?: boolean | null;
   enabled: boolean;
   primingShown: boolean;
-  currentStreak: number;
+  /** The streak a log today keeps (`useStreaks().savableStreak`). */
+  savableStreak: number;
   hasLoggedToday: boolean;
 }): boolean {
   if (state.loading || state.pushOwns === true || state.pushOwns === null)
     return false;
   if (!state.enabled) return false;
   if (!state.primingShown) return false;
-  if (state.currentStreak < 2) return false;
+  if (!(state.savableStreak >= 2)) return false;
   if (state.hasLoggedToday) return false;
   return true;
 }
@@ -186,6 +189,7 @@ export function useStreakReminderInternal(
   const uid = useUid();
   const {
     currentStreak,
+    savableStreak,
     hasLoggedToday,
     loading: streaksLoading,
   } = useStreaks();
@@ -275,7 +279,7 @@ export function useStreakReminderInternal(
         pushOwns,
         enabled: prefs.enabled,
         primingShown: prefs.primingShown,
-        currentStreak,
+        savableStreak,
         hasLoggedToday,
       });
       if (!shouldSchedule) return;
@@ -307,7 +311,7 @@ export function useStreakReminderInternal(
     prefs.enabled,
     prefs.time,
     prefs.primingShown,
-    currentStreak,
+    savableStreak,
     hasLoggedToday,
   ]);
 

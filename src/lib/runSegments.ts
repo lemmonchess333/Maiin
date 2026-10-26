@@ -183,7 +183,7 @@ function workLabel(shape: IntervalShape): string {
     const km = shape.workDistance / 1000;
     return `${km.toFixed(shape.workDistance % 1000 === 0 ? 0 : 1)}K`;
   }
-  if (shape.workDistance) return `${shape.workDistance}m`;
+  if (shape.workDistance) return `${shape.workDistance} m`;
   if (shape.workDuration) return `${min(shape.workDuration)} min`;
   return "interval";
 }
@@ -551,18 +551,21 @@ export function segmentsFromGuided(
   }));
 }
 
-/** Display helper: "20 min" / "90s" / "2 min 30s" / "1K". A part minute
- *  is spelled out: rounded, a 90-second walk read "2 min". */
+/** Display helper: "20 min" / "90 s" / "2 min 30 s" / "400 m" / "1K". A
+ *  part minute is spelled out: rounded, a 90-second walk read "2 min".
+ *  Whole minutes stay minutes past the hour ("90 min"), as a session is
+ *  prescribed. Units spaced, as the launch card's "6 × 3 min" and
+ *  "6 × 400 m" are. */
 export function segmentTargetLabel(target: SegmentTarget): string {
   if (target.kind === "distance") {
     return target.meters >= 1000
       ? `${(target.meters / 1000).toFixed(target.meters % 1000 === 0 ? 0 : 1)}K`
-      : `${target.meters}m`;
+      : `${target.meters} m`;
   }
   const seconds = Math.round(target.seconds);
   const s = seconds % 60;
-  if (seconds < 120 && s !== 0) return `${seconds}s`;
-  if (s !== 0) return `${Math.floor(seconds / 60)} min ${s}s`;
+  if (seconds < 120 && s !== 0) return `${seconds} s`;
+  if (s !== 0) return `${Math.floor(seconds / 60)} min ${s} s`;
   return `${seconds / 60} min`;
 }
 

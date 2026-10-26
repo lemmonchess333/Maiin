@@ -37,6 +37,7 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
+  Timestamp,
   type Firestore,
 } from "firebase/firestore";
 import { emptyStreakState } from "./src/features/partnerStreak/streakEngine";
@@ -91,6 +92,9 @@ suite("firestore.rules — a restricted account", () => {
         lastActionedReport: "report-1",
         strikes: null,
       });
+      // The person followed accepts everyone (Polish2: otherwise a follow
+      // is a request), so a follow is refused for the restriction alone.
+      await setDoc(doc(admin, "users", OTHER), { approveFollowers: false });
       // Both accounts already belong to the Space and the Circle, so a
       // post or an event is refused for the restriction alone.
       for (const uid of [RESTRICTED, CLEAR]) {
@@ -131,7 +135,7 @@ suite("firestore.rules — a restricted account", () => {
     body: "Long run done.",
     likeCount: 0,
     commentCount: 0,
-    createdAt: new Date(),
+    createdAt: serverTimestamp(),
   });
 
   /**
@@ -180,27 +184,26 @@ suite("firestore.rules — a restricted account", () => {
       name: "following someone",
       write: (uid, c) =>
         setDoc(doc(c, `following/${uid}/users/${OTHER}`), {
-          createdAt: serverTimestamp(),
+          followedAt: Timestamp.now(),
         }),
     },
     {
       name: "the follower edge",
       write: (uid, c) =>
         setDoc(doc(c, `followers/${OTHER}/users/${uid}`), {
-          createdAt: serverTimestamp(),
+          followedAt: Timestamp.now(),
         }),
     },
     {
-      name: "starting a partner streak",
-      write: (uid, c) => {
-        const members = [uid, OTHER].sort();
-        return setDoc(doc(c, "partnerBonds", members.join("__")), {
-          members,
-          ...emptyStreakState(),
-          createdAt: serverTimestamp(),
-        });
-      },
+      name: "asking to follow someone",
+      write: (uid, c) =>
+        setDoc(doc(c, `followRequests/${OTHER}/users/${uid}`), {
+          requestedAt: serverTimestamp(),
+        }),
     },
+    // Starting a partner streak is not here: no client creates a bond, so
+    // the startPartnerStreak callable refuses a restricted account
+    // (functions/__tests__/partnerBonds.test.js).
     {
       name: "a Circle event",
       write: (uid, c) =>
@@ -209,7 +212,8 @@ suite("firestore.rules — a restricted account", () => {
           uid,
           kind: "needs_support",
           text: "Struggling this week",
-          createdAt: serverTimestamp(),
+          // The writer's clock in ms, as the app writes it.
+          createdAt: Date.now(),
         }),
     },
   ];

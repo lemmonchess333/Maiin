@@ -21,87 +21,28 @@ import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
-import { containsProfanity } from "@/lib/profanityFilter";
+import { OBJECTIONABLE_POST_MESSAGE } from "@/lib/objectionableMessages";
+import { useWordFilter } from "@/hooks/useWordFilter";
 import { uploadSpacePostPhoto } from "@/lib/spacePhotoUpload";
 import { PhotoRefusedError } from "@/lib/photoScreen";
-import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
-import { liftPostLeadExerciseId } from "@/lib/liftPost";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import SustainedOfflineBanner from "@/components/ui/SustainedOfflineBanner";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { THEME } from "@/lib/theme";
-import { workoutTonnageKg } from "@/hooks/useWorkouts";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
 import RestrictedNotice from "@/components/social/RestrictedNotice";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
-import type { SpacePostActivitySnapshot } from "./spaceTypes";
 import { recentSessionDay, type RecentSession } from "./useRecentSessions";
+import { spacePostSnapshot } from "./spacePostSnapshot";
 import { distanceLabel } from "@/lib/runLabels";
-import { clipRouteEnds, DEFAULT_CLIP_METERS } from "@/lib/shareCard/polyline";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { IconButton } from "@/components/ui/IconButton";
 
 const TITLE_MAX = 120;
 const BODY_MAX = 4000;
-/** Route points cap for the snapshot — bounds the post doc size while
- *  keeping the RouteScene silhouette intact. */
-const ROUTE_POINTS_MAX = 40;
-
-function downsample<T>(points: T[], max: number): T[] {
-  if (points.length <= max) return points;
-  const step = (points.length - 1) / (max - 1);
-  return Array.from({ length: max }, (_, i) => points[Math.round(i * step)]);
-}
-
-function toSnapshot(
-  a: RecentSession,
-  keepRouteEnds: boolean
-): SpacePostActivitySnapshot {
-  if (a.kind === "run") {
-    const r = a.run;
-    // Any signed-in account can read a space post, so the route's ends are
-    // trimmed exactly as a run shared to the feed trims them: the privacy
-    // setting promises that the start and finish of a shared run are hidden.
-    const route =
-      r.routePreview && !keepRouteEnds
-        ? clipRouteEnds(r.routePreview, DEFAULT_CLIP_METERS)
-        : r.routePreview;
-    return {
-      type: "run",
-      distance: r.distance,
-      avgPace: r.avgPace,
-      duration: r.duration,
-      elevationGain: r.elevationGain,
-      ...(route && route.length > 1
-        ? { routePreview: downsample(route, ROUTE_POINTS_MAX) }
-        : {}),
-    };
-  }
-  const w = a.workout;
-  const categories = Array.from(
-    new Set(
-      w.exercises.map((ex) =>
-        inferMovementCategory(ex.exerciseName, ex.exerciseId)
-      )
-    )
-  );
-  const leadExerciseId = liftPostLeadExerciseId(
-    w.exercises.map((ex) => ({
-      exerciseId: ex.exerciseId,
-      name: ex.exerciseName,
-    }))
-  );
-  return {
-    type: "workout",
-    totalVolume: Math.round(workoutTonnageKg(w)),
-    exerciseCount: w.exercises.length,
-    muscleGroups: categories,
-    duration: w.durationMinutes * 60,
-    ...(leadExerciseId ? { leadExerciseId } : {}),
-  };
-}
 
 function attachableLabel(a: RecentSession, unit: DistanceUnit): string {
   if (a.kind === "run") {
@@ -163,12 +104,17 @@ export default function SpacePostComposer({
   const attached =
     picked ?? (attachLatest && !latestRemoved ? (sessions[0] ?? null) : null);
 
-  const profane = containsProfanity(title) || containsProfanity(body);
+  // The word filter loads as the sheet opens; posting waits for it.
+  const wordFilter = useWordFilter(open);
+  const profane =
+    !!wordFilter &&
+    (wordFilter.containsProfanity(title) || wordFilter.containsProfanity(body));
   // Space posts are public content: the rules refuse an unverified email
   // and a restricted account (S4e), so the action is held here and the
   // notice below says why.
   const canPost =
     body.trim().length > 0 &&
+    !!wordFilter &&
     !profane &&
     !busy &&
     !gate.needsVerification &&
@@ -220,7 +166,7 @@ export default function SpacePostComposer({
       body: body.trim(),
       ...(attached
         ? {
-            activity: toSnapshot(
+            activity: spacePostSnapshot(
               attached,
               profile?.hideSharedRouteEnds === false
             ),
@@ -281,7 +227,7 @@ export default function SpacePostComposer({
           onChange={(e) => setTitle(e.target.value.slice(0, TITLE_MAX))}
           placeholder="Title (optional)"
           aria-label="Post title"
-          className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+          className="ds-input text-sm font-semibold"
         />
         <textarea
           value={body}
@@ -289,14 +235,14 @@ export default function SpacePostComposer({
           placeholder="Share something with the space…"
           aria-label="Post body"
           rows={5}
-          className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground leading-snug resize-none focus:outline-none focus:ring-2 focus:ring-primary/40"
+          className="ds-input resize-none text-sm leading-snug"
         />
         {profane && (
           <p
             className="text-xs"
             style={{ color: "hsl(var(--warning-strong))" }}
           >
-            Let&apos;s keep it friendly — please reword that.
+            {OBJECTIONABLE_POST_MESSAGE}
           </p>
         )}
 
@@ -320,14 +266,12 @@ export default function SpacePostComposer({
                 alt="Attachment preview"
                 className="w-full max-h-64 object-cover"
               />
-              <button
-                type="button"
+              <IconButton
                 onClick={() => pickPhoto(null)}
                 aria-label="Remove photo"
-                className="absolute top-2 right-2 size-9 rounded-full bg-card/90 flex items-center justify-center text-foreground active:scale-90 transition-transform"
-              >
-                <X className="size-4" />
-              </button>
+                icon={<X />}
+                className="absolute top-2 right-2 rounded-full bg-card/90 hover:bg-card"
+              />
             </div>
           ) : (
             <Button
@@ -364,17 +308,15 @@ export default function SpacePostComposer({
                 <span className="shrink-0 text-xs text-muted-foreground">
                   {recentSessionDay(attached)}
                 </span>
-                <button
-                  type="button"
+                <IconButton
                   onClick={() => {
                     setPicked(null);
                     setLatestRemoved(true);
                   }}
                   aria-label="Remove attached session"
-                  className="p-3 -m-2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="size-4" />
-                </button>
+                  icon={<X />}
+                  className="-m-2 text-muted-foreground hover:text-foreground"
+                />
               </div>
             ) : (
               <div className="space-y-1.5">

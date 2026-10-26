@@ -80,7 +80,11 @@ async function wipe() {
       .listDocuments();
     for (const d of docs) await d.delete().catch(() => {});
   }
-  await db.collection("users").doc(UID).delete().catch(() => {});
+  await db
+    .collection("users")
+    .doc(UID)
+    .delete()
+    .catch(() => {});
 }
 
 /** Four logged days inside the rolling window (the factor needs >= 3). */

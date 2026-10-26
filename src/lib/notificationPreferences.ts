@@ -1,6 +1,9 @@
 /**
  * The activity notification switches — Settings → Notifications → Activity
- * (S3: one switch per kind, props and comments on, new followers off).
+ * (S3: one switch per kind, props and comments on, new followers off;
+ * Polish2: follow requests on, since a request no one sees just waits).
+ * The follow requests switch covers both ways: someone asking to follow
+ * you, and the answer to a request you made.
  *
  * The server decides what is sent: createNotification
  * (functions/lib/socialFanout.js) reads `profile.notificationPreferences`
@@ -17,6 +20,7 @@ export const NOTIFICATION_CATEGORIES = [
   "kudos",
   "comments",
   "follows",
+  "followRequests",
   "circles",
   "spaces",
 ] as const;
@@ -35,6 +39,7 @@ export const NOTIFICATION_DEFAULTS: Readonly<
   kudos: true,
   comments: true,
   follows: false,
+  followRequests: true,
   circles: true,
   spaces: true,
 };

@@ -41,7 +41,9 @@ vi.mock("@/features/streaks/useStreaks", () => ({
     awardEventBadges: vi.fn(),
   }),
 }));
-vi.mock("@/hooks/useWorkoutDraft", () => ({
+vi.mock("@/hooks/useWorkoutDraft", async (importOriginal) => ({
+  // The pure helpers (`draftLayout`) stay real.
+  ...(await importOriginal<typeof import("@/hooks/useWorkoutDraft")>()),
   useWorkoutDraft: () => ({ load: h.load, save: h.save, clear: h.clear }),
   computeDraftIdentity: () => "test",
   createWorkoutCompletionId: () => "test",

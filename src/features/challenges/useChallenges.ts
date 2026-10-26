@@ -17,6 +17,7 @@ import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { toast } from "@/lib/toast";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
+import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import { showRestrictedToast } from "@/lib/accountRestriction";
 import { logger } from "@/lib/logger";
@@ -75,6 +76,47 @@ export interface ChallengeParticipant {
    */
   photoURL?: string;
   uid?: string;
+  /** Place on the board, shared by a tie (1, 1, 3). Set by
+   *  `rankLeaderboard`, never stored. */
+  rank?: number;
+}
+
+/**
+ * A board in the order it is shown, each entry with its place. Equal
+ * values share a place and the next value skips the places they took
+ * (1, 1, 3). Within a tie entries go by name, so who sits first is not
+ * decided by how account ids happen to sort. A time-based metric
+ * (fastest_effort) ranks the lowest value first.
+ */
+export function rankLeaderboard(
+  entries: readonly ChallengeParticipant[],
+  metric: string
+): ChallengeParticipant[] {
+  const ascending = metric === "fastest_effort";
+  const sorted = [...entries].sort((a, b) => {
+    const byValue = ascending
+      ? a.currentValue - b.currentValue
+      : b.currentValue - a.currentValue;
+    if (byValue !== 0) return byValue;
+    const byName = (a.displayName ?? "").localeCompare(
+      b.displayName ?? "",
+      "en-GB",
+      { sensitivity: "base" }
+    );
+    if (byName !== 0) return byName;
+    return (a.uid ?? "") < (b.uid ?? "")
+      ? -1
+      : (a.uid ?? "") > (b.uid ?? "")
+        ? 1
+        : 0;
+  });
+  let rank = 0;
+  return sorted.map((entry, i) => {
+    if (i === 0 || entry.currentValue !== sorted[i - 1].currentValue) {
+      rank = i + 1;
+    }
+    return { ...entry, rank };
+  });
 }
 
 /* ── Local-day challenge window (mirror of the server's crediting rule) ──
@@ -137,19 +179,21 @@ export function challengeLocalEndMs(
 }
 
 /**
- * The collapsed entry to the not-joined challenges. It used to read
- * "See all challenges · 1 · 20 days left" — a count and a deadline with
- * nothing telling the reader what the number counted. Says what it is:
- * how many more there are, and how soon the nearest one closes.
+ * The collapsed entry to the not-joined challenges: how many more there
+ * are, in plain words. No deadline: the monthly challenges all end on the
+ * same day, and the featured card above already says when.
  */
-export function moreChallengesLabel(
-  count: number,
-  soonest: string | null
-): string {
-  const noun = count === 1 ? "challenge" : "challenges";
-  return `See ${count} more ${noun}${soonest ? ` · ${soonest}` : ""}`;
+export function moreChallengesLabel(count: number): string {
+  return `See ${count} more ${count === 1 ? "challenge" : "challenges"}`;
 }
 
+/**
+ * How long a challenge has left, for the person's own day: "6 days left",
+ * "3 hours left", "40 min left". The units are words or spaced "min",
+ * never "40m" (forty metres, in an app that counts distance). The last
+ * hour counts in minutes and never reads below "1 min left" while the
+ * challenge is live, so it cannot sit on "0 hours left".
+ */
 export function getTimeRemaining(
   endDate: Timestamp | Date,
   now: number = Date.now()
@@ -161,36 +205,9 @@ export function getTimeRemaining(
   const days = Math.floor(ms / 86400000);
   if (days > 1) return `${days} days left`;
   const hours = Math.floor(ms / 3600000);
-  if (hours >= 1) return `${hours}h left`;
-  // Final hour: floor-to-hours read "0h left" for the whole last hour
-  // (probe sweep 2026-08-05, verified) — count minutes instead, never
-  // dropping below "1m left" while the challenge is still live.
+  if (hours >= 1) return hours === 1 ? "1 hour left" : `${hours} hours left`;
   const minutes = Math.max(1, Math.floor(ms / 60000));
-  return `${minutes}m left`;
-}
-
-/**
- * The soonest-ending challenge of a list, by each challenge's LOCAL end
- * instant — null-safe. The previous inline reduce dereferenced
- * `endDate.toDate()` unguarded, but the active list deliberately KEEPS
- * docs with no endDate (lenient for malformed defs), so one malformed doc
- * crashed the whole challenge section (probe sweep 2026-08-05, verified).
- * Docs with no resolvable end simply don't compete for "soonest".
- */
-export function soonestEndingChallenge<
-  T extends { endDate?: Timestamp | Date },
->(list: readonly T[]): T | null {
-  let best: T | null = null;
-  let bestMs = Infinity;
-  for (const c of list) {
-    const endMs = challengeLocalEndMs(c.endDate);
-    if (endMs === null) continue;
-    if (endMs < bestMs) {
-      best = c;
-      bestMs = endMs;
-    }
-  }
-  return best;
+  return `${minutes} min left`;
 }
 
 /** The user's participant doc for each tracked challenge, keyed by
@@ -198,7 +215,7 @@ export function soonestEndingChallenge<
  *  time, in list order. */
 async function readMyProgress(
   uid: string,
-  tracked: readonly Challenge[]
+  tracked: readonly TrackedChallenge[]
 ): Promise<Record<string, ChallengeParticipant>> {
   const prog: Record<string, ChallengeParticipant> = {};
   for (const ch of tracked) {
@@ -208,6 +225,29 @@ async function readMyProgress(
     if (snap.exists()) prog[ch.id] = snap.data() as ChallengeParticipant;
   }
   return prog;
+}
+
+/** What the progress and leaderboard reads need from a challenge. */
+type TrackedChallenge = Pick<Challenge, "id" | "metric">;
+
+/** How far back the listener reaches: the finale window's seven days, and
+ *  one more, since a challenge ends at local midnight of its UTC end day,
+ *  up to half a day after its stored `endDate`. Challenges are never
+ *  deleted, so an unbounded listener grew by a hundred-odd a year, and
+ *  every one of them changing re-ran the reads below for every viewer. */
+const CHALLENGE_LOOKBACK_MS = 8 * 86_400_000;
+
+/** A stable key for a list of challenges: their ids and metrics, sorted.
+ *  The reads below follow it, so a snapshot that changes only a
+ *  challenge's `participantCount` (every join or leave, anywhere) starts
+ *  none of them. */
+function trackedKeyOf(lists: readonly (readonly Challenge[])[]): string {
+  return JSON.stringify(
+    lists
+      .flat()
+      .map((c) => [c.id, c.metric])
+      .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+  );
 }
 
 export function useChallenges() {
@@ -265,9 +305,23 @@ export function useChallenges() {
     }
     return combined;
   }, [uid, progressState, liveProgress]);
-  const [leaderboards, setLeaderboards] = useState<
-    Record<string, ChallengeParticipant[]>
+  /* Each board as read, unranked. Ranked below without anyone either side
+     of a block with the viewer (S4a pin 2, Polish3 call 1), so a block
+     made or lifted re-ranks the boards without reading them again. */
+  const [rawBoards, setRawBoards] = useState<
+    Record<string, { metric: string; entries: ChallengeParticipant[] }>
   >({});
+  const { blocked } = useBlockedUsers();
+  const leaderboards = useMemo(() => {
+    const boards: Record<string, ChallengeParticipant[]> = {};
+    for (const [id, { metric, entries }] of Object.entries(rawBoards)) {
+      boards[id] = rankLeaderboard(
+        entries.filter((p) => !p.uid || !blocked.has(p.uid)),
+        metric
+      );
+    }
+    return boards;
+  }, [rawBoards, blocked]);
   const [loading, setLoading] = useState(true);
 
   // Upcoming definitions may not change at midnight. The day dependency also
@@ -291,7 +345,14 @@ export function useChallenges() {
       if (subscribed) setLoading(false);
     }, 3000);
     const unsub = onSnapshot(
-      collection(db, "challenges"),
+      query(
+        collection(db, "challenges"),
+        where(
+          "endDate",
+          ">",
+          Timestamp.fromMillis(Date.now() - CHALLENGE_LOOKBACK_MS)
+        )
+      ),
       (snap) => {
         if (!subscribed) return;
         clearTimeout(timeout);
@@ -302,12 +363,9 @@ export function useChallenges() {
         // Active = an activity logged TODAY (local day) would credit it —
         // the server's own predicate, so the card never promises counting
         // the server will refuse, and the rollover's one-day-early docs
-        // stay hidden until their day arrives locally. Docs with no dates
-        // are kept in the active list, matching the old lenient behaviour
-        // for malformed defs.
-        const active = all.filter((c) =>
-          c.endDate ? isChallengeActiveOnDay(c, todayKey) : true
-        );
+        // stay hidden until their day arrives locally. A doc with no end
+        // date is not in the query, and the server credits none.
+        const active = all.filter((c) => isChallengeActiveOnDay(c, todayKey));
         const FINALE_WINDOW_MS = 7 * 86_400_000;
         const ended = all.filter((c) => {
           const endMs = challengeLocalEndMs(c.endDate);
@@ -335,11 +393,27 @@ export function useChallenges() {
     };
   }, [uid, todayKey]);
 
+  const trackedKey = trackedKeyOf([challenges, endedChallenges]);
+  const tracked = useMemo(
+    (): TrackedChallenge[] =>
+      (JSON.parse(trackedKey) as [string, Challenge["metric"]][]).map(
+        ([id, metric]) => ({ id, metric })
+      ),
+    [trackedKey]
+  );
+  /* The person's own values, as a key: the boards are read again when
+     their own standing moves, not when anything else in the snapshot
+     does. */
+  const ownValuesKey = JSON.stringify(
+    tracked.map(({ id }) => myProgress[id]?.currentValue ?? null)
+  );
+  /* Bumped by pull-to-refresh, so the boards are read again with it. */
+  const [boardsNonce, setBoardsNonce] = useState(0);
+
   /* Pull-to-refresh still reloads every goal (SOC-P1d). Participation goals
      additionally receive live server backfill/edit results; those snapshots
      override this one-shot read, including observed membership deletions. */
   const loadMyProgress = useCallback((): Promise<void> => {
-    const tracked = [...challenges, ...endedChallenges];
     const session = sessionRef.current;
     if (!uid || !session?.active || session.uid !== uid || tracked.length === 0)
       return Promise.resolve();
@@ -349,18 +423,25 @@ export function useChallenges() {
       if (session.active && sessionRef.current === session)
         setProgressState({ uid, values });
     });
-  }, [uid, challenges, endedChallenges]);
+  }, [uid, tracked]);
 
   useEffect(() => {
     void loadMyProgress();
   }, [loadMyProgress]);
 
+  const refreshProgress = useCallback((): Promise<void> => {
+    setBoardsNonce((n) => n + 1);
+    return loadMyProgress();
+  }, [loadMyProgress]);
+
   useEffect(() => {
-    const tracked = [...challenges, ...endedChallenges];
     if (!uid || tracked.length === 0) return;
     let active = true;
     const load = async () => {
-      const boards: Record<string, ChallengeParticipant[]> = {};
+      const boards: Record<
+        string,
+        { metric: string; entries: ChallengeParticipant[] }
+      > = {};
       for (const ch of tracked) {
         /* Sort direction depends on the challenge's metric semantics.
            For SUM-style metrics (workout_count / total_volume / total_km
@@ -388,25 +469,30 @@ export function useChallenges() {
           );
         }
         const snap = await getDocs(qRef);
-        boards[ch.id] = snap.docs.map(
-          (d) => ({ uid: d.id, ...d.data() }) as ChallengeParticipant
-        );
+        boards[ch.id] = {
+          metric: ch.metric,
+          entries: snap.docs.map(
+            (d) => ({ uid: d.id, ...d.data() }) as ChallengeParticipant
+          ),
+        };
       }
-      if (active) setLeaderboards(boards);
+      if (active) setRawBoards(boards);
     };
     load();
     return () => {
       active = false;
     };
-  }, [uid, challenges, endedChallenges, myProgress]);
+  }, [uid, tracked, ownValuesKey, boardsNonce]);
 
+  /** Joins a challenge. Resolves true once the person is in it, so the
+   *  caller can confirm the join; false when nothing changed. */
   const joinChallenge = useCallback(
-    async (challengeId: string) => {
+    async (challengeId: string): Promise<boolean> => {
       const session = sessionRef.current;
-      if (!uid || !session?.active || session.uid !== uid) return;
+      if (!uid || !session?.active || session.uid !== uid) return false;
       if (isRestricted) {
         showRestrictedToast();
-        return;
+        return false;
       }
       try {
         const participantRef = doc(
@@ -422,7 +508,7 @@ export function useChallenges() {
         // rejoin would be wrong anyway. Just resync local state.
         const existingSnap = await getDoc(participantRef);
         if (existingSnap.exists()) {
-          if (!session.active || sessionRef.current !== session) return;
+          if (!session.active || sessionRef.current !== session) return false;
           const data = existingSnap.data();
           setMyProgress((prev) => ({
             ...prev,
@@ -432,7 +518,7 @@ export function useChallenges() {
               joinedAt: (data.joinedAt as Timestamp) ?? Timestamp.now(),
             },
           }));
-          return;
+          return true;
         }
         const profileSnap = await getDoc(doc(db, "users", uid));
         const name = profileSnap.exists()
@@ -441,7 +527,7 @@ export function useChallenges() {
         const photoURL = profileSnap.exists()
           ? ((profileSnap.data().photoURL as string | null | undefined) ?? null)
           : null;
-        if (!session.active || sessionRef.current !== session) return;
+        if (!session.active || sessionRef.current !== session) return false;
         await setDocGuarded(participantRef, {
           currentValue: 0,
           tierAchieved: null,
@@ -449,7 +535,7 @@ export function useChallenges() {
           displayName: name,
           ...(photoURL ? { photoURL } : {}),
         });
-        if (!session.active || sessionRef.current !== session) return;
+        if (!session.active || sessionRef.current !== session) return false;
         // participantCount is maintained server-side by the
         // onChallengeParticipantCreated/Deleted triggers — the parent
         // challenge doc is server-owned (rules deny client writes). The old
@@ -465,10 +551,12 @@ export function useChallenges() {
           },
         }));
         trackSocialEvent("challenge_joined", { challengeId });
+        return true;
       } catch (error) {
-        if (!session.active || sessionRef.current !== session) return;
+        if (!session.active || sessionRef.current !== session) return false;
         logger.error("[Challenges] Join failed:", error);
         toast.error("Couldn't join the challenge. Try again.");
+        return false;
       }
     },
     [uid, isRestricted, setMyProgress]
@@ -530,7 +618,7 @@ export function useChallenges() {
     leaveChallenge,
     /** SOC-P1d: on-demand progress refetch, preserving newer live participation
      *  snapshots and cascading leaderboard reads — the pull-to-refresh handle. */
-    refreshProgress: loadMyProgress,
+    refreshProgress,
     restricted: isRestricted,
   };
 }

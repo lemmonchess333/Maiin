@@ -27,6 +27,8 @@
 
 const { instantToDateKey } = require("./challengeActivityWindow");
 const { workoutVolumeKg } = require("./workoutVolume");
+const { runMetersFor } = require("./lifetimeAccrual");
+const { creditableVolumeKg } = require("./sharedCreditBounds");
 
 /** Metrics fed by workout docs / run docs. hybrid_score draws from both. */
 const WORKOUT_METRICS = ["workout_count", "total_volume", "hybrid_score"];
@@ -54,6 +56,25 @@ function backfillQueryWindow(challenge) {
 }
 
 /**
+ * How long after its stored UTC end a challenge still takes joins. The app
+ * ends a challenge at local midnight of its UTC end day, which falls up to
+ * twelve hours after that instant (UTC-12); firestore.rules refuses a join
+ * from the same moment.
+ */
+const JOIN_CLOSE_GRACE_MS = 12 * 3_600_000;
+
+/**
+ * Whether a join at `atMs` comes after the challenge closed. A challenge
+ * whose end cannot be read is not called closed here; the backfill's own
+ * window check fails closed on it.
+ */
+function challengeJoinClosed(challenge, atMs) {
+  const endKey = instantToDateKey(challenge && challenge.endDate);
+  if (!endKey || !Number.isFinite(atMs)) return false;
+  return atMs >= Date.parse(`${endKey}T00:00:00Z`) + JOIN_CLOSE_GRACE_MS;
+}
+
+/**
  * SUM-metric increments a workout doc produces. Mirrors (and is consumed
  * by) the onWorkoutCreated trigger: every workout counts once toward
  * workout_count; volume-bearing workouts add their tonnage to
@@ -66,7 +87,9 @@ function workoutChallengeIncrements(data) {
      the hybrid score. `workoutVolumeKg` reads the field when present and
      derives it from the sets when not, which also credits the history
      the join-time backfill replays. */
-  const volume = workoutVolumeKg(data);
+  // Past the shared-credit bound a session still counts as a workout but
+  // adds no volume (sharedCreditBounds).
+  const volume = creditableVolumeKg(workoutVolumeKg(data));
   if (volume) {
     out.push({ metric: "total_volume", value: volume });
     out.push({ metric: "hybrid_score", value: Math.round(volume * 0.1) });
@@ -84,17 +107,17 @@ function workoutChallengeIncrements(data) {
  */
 function runChallengeIncrements(data) {
   const out = [];
-  const distanceKm =
-    (data && data.distanceKm) ||
-    (data && data.distance ? data.distance / 1000 : 0);
-  if (distanceKm > 0) {
-    out.push({
-      metric: "total_km",
-      value: Math.round(distanceKm * 100) / 100,
-    });
-    out.push({ metric: "hybrid_score", value: Math.round(distanceKm * 100) });
+  /* One figure for every run metric, and the lifetime total's: metres as
+     runMetersFor reads them, `distance` (the field isVolumeEligibleRun
+     checks) before the legacy `distanceKm`, and zero past the shared-credit
+     bounds. Read the other way round, a run that passed the gate on a 50 m
+     `distance` would credit whatever `distanceKm` it carried. */
+  const meters = runMetersFor(data);
+  if (meters > 0) {
+    const km = meters / 1000;
+    out.push({ metric: "total_km", value: Math.round(km * 100) / 100 });
+    out.push({ metric: "hybrid_score", value: Math.round(km * 100) });
   }
-  const meters = (data && data.distance) || distanceKm * 1000 || 0;
   const seconds = (data && data.duration) || 0;
   if (meters > 0 && seconds > 0) {
     out.push({ metric: "fastest_effort", meters, seconds });
@@ -106,6 +129,8 @@ module.exports = {
   metricNeedsWorkouts,
   metricNeedsRuns,
   backfillQueryWindow,
+  JOIN_CLOSE_GRACE_MS,
+  challengeJoinClosed,
   workoutChallengeIncrements,
   runChallengeIncrements,
 };

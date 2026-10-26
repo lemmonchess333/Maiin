@@ -7,6 +7,7 @@
  * moderation kit: author delete, or report/block for everyone else.
  * photoUrl renders when present (written by the PR4 photo slice).
  */
+import { BLOCK_DIALOG_DESCRIPTION } from "@/lib/blockCopy";
 import { useState } from "react";
 import { doc, type Timestamp } from "firebase/firestore";
 import {
@@ -193,28 +194,32 @@ export default function SpacePostCard({
         </div>
       )}
 
-      <div className="p-4 space-y-2">
-        <div className="flex items-center gap-2.5">
-          <Avatar
-            photoURL={post.authorPhotoURL}
-            displayName={post.authorName}
-            size="md"
-            fallbackBg={`${accent}20`}
-            fallbackColor={accent}
-          />
+      {/* Padding and gaps in px, so larger text does not take the room
+          its own words need. */}
+      <div className="p-[16px] space-y-2">
+        {/* The picture gives its room to the name and the time under 10em
+            of card (2× text on the phone), where beside it and the menu
+            "Pinned" had a column too narrow for the word. The badge wraps
+            under the name rather than off the card. */}
+        <div className="@container flex items-center gap-[10px]">
+          <div className="shrink-0 @max-[10em]:hidden">
+            <Avatar
+              photoURL={post.authorPhotoURL}
+              displayName={post.authorName}
+              size="md"
+              fallbackBg={`${accent}20`}
+              fallbackColor={accent}
+            />
+          </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 min-w-0">
+              <p className="max-w-full text-sm font-semibold text-foreground truncate">
                 {post.authorName}
               </p>
               {post.official && (
-                <span
-                  className="inline-flex items-center text-caption font-semibold px-1.5 py-0.5 rounded shrink-0"
-                  style={{
-                    background: `${THEME.success}1F`,
-                    color: THEME.success,
-                  }}
-                >
+                /* The success tint with its AA text step: the fixed green
+                   as ink measured 2.24:1 on the light card. */
+                <span className="inline-flex max-w-full items-center text-caption font-semibold px-1.5 py-0.5 rounded bg-success/10 text-success-strong">
                   Tropos Team
                 </span>
               )}
@@ -414,7 +419,7 @@ export default function SpacePostCard({
       <ConfirmDialog
         open={showBlockConfirm}
         title="Block this user?"
-        description="They won't be able to see your activities and you won't see theirs."
+        description={BLOCK_DIALOG_DESCRIPTION}
         confirmLabel="Block"
         destructive
         onConfirm={async () => {

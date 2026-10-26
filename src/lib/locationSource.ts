@@ -6,14 +6,18 @@
  * platform without touching the point pipeline (isValidReading → Kalman →
  * distance/pace). See docs/run-background-gps.md.
  *
- * Today there's ONE source — the browser Web Geolocation API — used on both
- * web and native. That's intentional: this file is the web-safe Step 1 (the
- * seam, zero behaviour change). Step 2 adds a native background-geolocation
- * source and flips `getLocationSource()` to return it on native — at which
- * point tracking survives a locked screen / backgrounded app. The web source
- * is a 1:1 pass-through of the same calls `useGPS` made before, so the
- * callbacks it hands back are the real `GeolocationPosition` /
- * `GeolocationPositionError` (no shape translation, nothing to re-test).
+ * Two sources: the browser's Web Geolocation API on the web, and
+ * `nativeLocationSource` (`@capacitor-community/background-geolocation`) in
+ * the iOS app, so tracking survives a locked screen or a backgrounded app.
+ * The web source is a 1:1 pass-through of the calls `useGPS` made before the
+ * seam, so the callbacks it hands back are the real `GeolocationPosition` /
+ * `GeolocationPositionError`.
+ *
+ * Run tracking only. The one-shot reads elsewhere (the weather, the route
+ * planner, placing a privacy zone) call `navigator.geolocation` themselves,
+ * on purpose: the native source's `getCurrent` takes no timeout, never asks
+ * for permission and may hand back a cached fix, which suits a run already
+ * under way and not a first-time ask or a zone that needs a fresh position.
  */
 import { isNativePlatform } from "./platform";
 import { nativeLocationSource } from "./nativeLocationSource";
@@ -42,24 +46,14 @@ export const webLocationSource: LocationSource = {
 };
 
 /**
- * Resolve the location source for the current platform.
- *
- * Step 1 (now): always the web source — native uses the same Web Geolocation
- * API inside the WKWebView, which is exactly today's behaviour.
- *
- * Step 2 (needs Mac/Xcode build): return a `nativeLocationSource` backed by
- * `@capacitor-community/background-geolocation` when `isNativePlatform()`, so
- * fixes keep flowing with the screen off / app backgrounded. The branch point
- * is here so wiring it is a one-line change.
+ * Resolve the location source for the current platform: the native
+ * background-geolocation source in the app, the web source in a browser.
  */
 export function getLocationSource(): LocationSource {
   if (isNativePlatform()) {
-    // Step 2 (docs/run-background-gps.md): the background-geolocation-backed
-    // source — fixes keep flowing with the screen locked / app backgrounded.
-    // Run.tsx's visibility policy is platform-gated to match (it must NOT
-    // stop this source on hidden). The remaining work is operator-bound:
-    // Info.plist strings + UIBackgroundModes, AndroidManifest permissions,
-    // cap sync, and the device test matrix in the doc.
+    // docs/run-background-gps.md: fixes keep flowing with the screen locked
+    // or the app backgrounded. Run.tsx's visibility policy is platform-gated
+    // to match (it must NOT stop this source on hidden).
     return nativeLocationSource;
   }
   return webLocationSource;

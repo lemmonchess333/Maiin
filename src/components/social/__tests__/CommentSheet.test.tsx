@@ -303,6 +303,41 @@ describe("the word filter", () => {
   });
 });
 
+/* jsdom lays nothing out, so the room is read off the classes. At 320 px
+   and 200% text the time and the two reaction chips were wider than the
+   comment's column and ran past the sheet; the row's control, sized in
+   rem, doubled with the text and took the column's width. */
+describe("a comment's row at large text", () => {
+  it("wraps its time and reactions, and keeps its control at 44 px", async () => {
+    openSheet();
+    await act(async () => {
+      H.reads[0].resolve({
+        comments: [
+          {
+            id: "c1",
+            authorId: "priya",
+            authorName: "Priya",
+            text: "Strong finish",
+            reactions: { fire: ["sam"] },
+          },
+          { id: "c2", authorId: "me", authorName: "Me", text: "Thanks" },
+        ],
+        hasMore: false,
+      });
+    });
+    const reaction = screen.getAllByRole("button", {
+      name: "Add fire reaction",
+    })[0];
+    expect(reaction.parentElement).toHaveClass("flex-wrap");
+    for (const name of ["Delete comment", "More options for Priya's comment"]) {
+      expect(screen.getByRole("button", { name })).toHaveClass("size-[44px]");
+    }
+    expect(screen.getByText("Strong finish").closest("p")).toHaveClass(
+      "break-words"
+    );
+  });
+});
+
 describe("a restricted account (S4e)", () => {
   it("reads the thread but cannot comment, and is told why", async () => {
     restriction.isRestricted = true;
@@ -314,6 +349,27 @@ describe("a restricted account (S4e)", () => {
     ).toHaveAttribute("href", expect.stringMatching(/^mailto:support@/));
     expect(screen.getByLabelText("Add a comment")).toBeDisabled();
     expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
+  });
+
+  it("says so when a reaction fails to save, and puts it back", async () => {
+    H.toggleCommentReaction.mockRejectedValue(
+      Object.assign(new Error("unavailable"), { code: "functions/unavailable" })
+    );
+    await openWith([
+      { id: "c1", authorId: "priya", text: "Strong finish", reactions: {} },
+    ]);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Add fire reaction" })
+      );
+    });
+    expect(H.toggleCommentReaction).toHaveBeenCalledTimes(1);
+    expect(toast.error).toHaveBeenCalledWith(
+      "Couldn't update your reaction. Try again."
+    );
+    expect(
+      screen.getByRole("button", { name: "Add fire reaction" })
+    ).toBeInTheDocument();
   });
 
   it("cannot add a reaction, but can take one back", async () => {

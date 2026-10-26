@@ -26,7 +26,9 @@ import { TABS, WORKOUT, trainRowText } from "../../src/test/journeyScreens";
 import { emulatorAdmin } from "./realCallables";
 
 /** Train shows `day`'s session as the plan holds it: each exercise's name,
- *  and its sets, reps and weight (`trainRowText`). */
+ *  and its sets, reps and weight (`trainRowText`). Only text on screen
+ *  counts: a card above the session can name the same lift inside a
+ *  closed Read more. */
 export async function expectTrainShowsSession(
   page: Page,
   day: WorkoutDay
@@ -34,11 +36,17 @@ export async function expectTrainShowsSession(
   await openTab(page, TABS.train);
   for (const exercise of day.exercises) {
     await expect(
-      page.getByText(exercise.name, { exact: true }).first(),
+      page
+        .getByText(exercise.name, { exact: true })
+        .filter({ visible: true })
+        .first(),
       `Train shows ${exercise.name}`
     ).toBeVisible();
     await expect(
-      page.getByText(trainRowText(exercise), { exact: true }).first(),
+      page
+        .getByText(trainRowText(exercise), { exact: true })
+        .filter({ visible: true })
+        .first(),
       `Train shows ${exercise.name} as the plan holds it`
     ).toBeVisible();
   }

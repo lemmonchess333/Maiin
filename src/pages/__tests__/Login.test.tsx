@@ -4,17 +4,27 @@
  * is the first rung of the sign-up funnel (auth_screen_viewed).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import {
+  render,
+  screen,
+  fireEvent,
+  cleanup,
+  act,
+} from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
 
-const h = vi.hoisted(() => ({ signedInBefore: false }));
+const h = vi.hoisted(() => ({
+  signedInBefore: false,
+  signInWithGoogle: vi.fn(),
+  signInWithApple: vi.fn(),
+}));
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     signIn: vi.fn(),
     signUp: vi.fn(),
-    signInWithGoogle: vi.fn(),
-    signInWithApple: vi.fn(),
+    signInWithGoogle: h.signInWithGoogle,
+    signInWithApple: h.signInWithApple,
     resetPassword: vi.fn(),
     fetchSignInMethods: vi.fn(),
   }),
@@ -40,8 +50,28 @@ const screens = () =>
 beforeEach(() => {
   vi.clearAllMocks();
   h.signedInBefore = false;
+  localStorage.clear();
 });
 afterEach(cleanup);
+
+describe("Login — after an email change", () => {
+  it("says why it signed out, and offers the new address", () => {
+    // Set by requestEmailChange; confirming the change ends the session.
+    localStorage.setItem(
+      "tropos-email-change-pending",
+      JSON.stringify({ email: "new@example.com", at: Date.now() })
+    );
+    show();
+    // Before: the welcome screen, then "Welcome back" and an empty field
+    // that refused the old address.
+    expect(
+      screen.getByText(
+        "Changing your email signs you out once the change is confirmed. Sign in with new@example.com."
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toHaveValue("new@example.com");
+  });
+});
 
 describe("Login — who sees which screen", () => {
   it("a first visit opens on the welcome screen, not on Welcome back", () => {
@@ -141,3 +171,150 @@ describe("Login — agreeing to the Terms", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("Login — closing the Google or Apple sheet", () => {
+  /* Only the web popup's code was silenced, so a cancel on the phone showed
+     Google's or Apple's own sentence as an error. */
+  const tap = async (name: string) => {
+    h.signedInBefore = true;
+    show();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name }));
+    });
+  };
+
+  it.each([
+    [
+      "Continue with Google",
+      "web popup",
+      Object.assign(new Error("Firebase: Error (auth/popup-closed-by-user)."), {
+        code: "auth/popup-closed-by-user",
+      }),
+    ],
+    [
+      "Continue with Google",
+      "native sheet",
+      new Error("The user canceled the sign-in flow."),
+    ],
+    [
+      "Continue with Apple",
+      "Apple sheet",
+      new Error(
+        "The operation couldn’t be completed. (com.apple.AuthenticationServices.AuthorizationError error 1001.)"
+      ),
+    ],
+  ] as const)(
+    "%s, cancelled in the %s, says nothing",
+    async (name, _where, error) => {
+      const signIn = name.includes("Google")
+        ? h.signInWithGoogle
+        : h.signInWithApple;
+      signIn.mockRejectedValueOnce(error);
+      await tap(name);
+      expect(screen.queryByRole("alert")).toBeNull();
+    }
+  );
+
+  it("a sign-in that fails for a reason still says so", async () => {
+    h.signInWithGoogle.mockRejectedValueOnce(
+      new Error("Firebase: Error (auth/network-request-failed).")
+    );
+    await tap("Continue with Google");
+    expect(screen.getByRole("alert")).toHaveTextContent(/Network issue/);
+  });
+});
+
+describe("Login — the way in this phone last used (Polish2 call 3)", () => {
+  it("marks it, and only it", () => {
+    h.signedInBefore = true;
+    localStorage.setItem("tropos.last_sign_in_method", "apple");
+    show();
+    expect(
+      screen.getByRole("button", { name: /Continue with Apple/ })
+    ).toHaveTextContent("Last used");
+    expect(
+      screen.getByRole("button", { name: /Continue with Google/ })
+    ).not.toHaveTextContent("Last used");
+    expect(
+      screen.getByRole("button", { name: /^Sign In/ })
+    ).not.toHaveTextContent("Last used");
+  });
+
+  it("marks the email form for a password sign-in", () => {
+    h.signedInBefore = true;
+    localStorage.setItem("tropos.last_sign_in_method", "password");
+    show();
+    expect(screen.getByRole("button", { name: /^Sign In/ })).toHaveTextContent(
+      "Last used"
+    );
+  });
+
+  it("marks nothing on a phone that has none", () => {
+    h.signedInBefore = true;
+    show();
+    expect(screen.queryByText("Last used")).toBeNull();
+  });
+});
+
+/* The Terms and the Privacy Policy are pages of their own, so reading one
+   leaves this screen; Back brings the form back as it was, except the
+   password, which is never written down. */
+describe("Login — reading the Terms and coming back", () => {
+  beforeEach(() => sessionStorage.clear());
+
+  function withLegalPages() {
+    return render(
+      <MemoryRouter>
+        <Routes>
+          <Route path="*" element={<Login />} />
+          <Route path="/terms" element={<BackLink />} />
+          <Route path="/privacy" element={<BackLink />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+
+  it("keeps the screen and the email, not the password", () => {
+    withLegalPages();
+    fireEvent.click(screen.getByRole("button", { name: "Get started" }));
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "sam@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "secret-pass" },
+    });
+    fireEvent.click(screen.getByRole("link", { name: "Terms" }));
+    expect(screen.queryByLabelText(/email/i)).toBeNull();
+    expect(JSON.stringify({ ...sessionStorage })).not.toContain("secret-pass");
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(
+      screen.getByRole("heading", { name: "Create your account" })
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toHaveValue("sam@example.com");
+    expect(screen.getByLabelText("Password")).toHaveValue("");
+  });
+
+  it("brings the form back once, not on every later visit", () => {
+    withLegalPages();
+    fireEvent.click(screen.getByRole("button", { name: "I have an account" }));
+    fireEvent.click(screen.getByRole("link", { name: "Privacy Policy" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(
+      screen.getByRole("heading", { name: "Welcome back" })
+    ).toBeInTheDocument();
+    cleanup();
+    show();
+    expect(
+      screen.getByRole("button", { name: "Get started" })
+    ).toBeInTheDocument();
+  });
+});
+
+function BackLink() {
+  const navigate = useNavigate();
+  return (
+    <button type="button" onClick={() => navigate(-1)}>
+      Back
+    </button>
+  );
+}

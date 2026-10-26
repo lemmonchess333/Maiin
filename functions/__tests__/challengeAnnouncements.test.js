@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -35,6 +35,28 @@ function firestore(seed = {}) {
     store,
     put,
     doc: (path) => ({ path, get: async () => snap(path) }),
+    collection: (path) => ({
+      aggregate: () => ({
+        get: async () => ({
+          data: () => ({
+            total: [...store.entries()]
+              .filter(
+                ([key]) =>
+                  key.startsWith(`${path}/`) &&
+                  key.split("/").length === path.split("/").length + 1
+              )
+              .reduce(
+                (total, [, value]) =>
+                  total +
+                  (typeof value.currentValue === "number"
+                    ? value.currentValue
+                    : 0),
+                0
+              ),
+          }),
+        }),
+      }),
+    }),
     runTransaction: async (fn) => {
       for (let attempt = 0; attempt < 30; attempt++) {
         const reads = new Map();
@@ -87,6 +109,300 @@ function setup(extra = {}) {
     prune: vi.fn(async () => {}),
   };
 }
+
+const END_NOW = new Date("2026-10-29T09:00:00Z");
+const END_CONSENT = {
+  enabled: true,
+  challenges: false,
+  challengeReminders: true,
+};
+const END_STATE = `users/${UID}/settings/challengeReminder-2026-10`;
+function reminderSetup() {
+  const args = { ...setup(), now: END_NOW };
+  const candidate = announcements.reminderCandidate(
+    PROFILE,
+    END_CONSENT,
+    END_NOW
+  );
+  args.db = firestore({
+    [`users/${UID}`]: PROFILE,
+    [`users/${UID}/settings/push`]: END_CONSENT,
+    ...Object.fromEntries(
+      candidate.definitions.map((definition) => [
+        `challenges/${definition.id}`,
+        definition,
+      ])
+    ),
+  });
+  args.definitions = candidate.definitions;
+  args.join = (
+    definition = candidate.definitions[0],
+    currentValue = 0,
+    uid = UID
+  ) =>
+    args.db.put(`challenges/${definition.id}/participants/${uid}`, {
+      currentValue,
+      tierAchieved: null,
+    });
+  return args;
+}
+
+describe("monthly closing reminders", () => {
+  it.each([
+    ["2026-10-28T09:00:00Z", false],
+    ["2026-10-29T09:00:00Z", true],
+    ["2026-10-31T09:59:00Z", true],
+    ["2026-11-01T09:00:00Z", false],
+    ["2027-02-25T09:00:00Z", false],
+    ["2027-02-26T09:00:00Z", true],
+    ["2028-02-26T09:00:00Z", false],
+    ["2028-02-27T09:00:00Z", true],
+    ["2026-04-27T08:00:00Z", false],
+    ["2026-04-28T08:00:00Z", true],
+    ["2026-12-29T09:00:00Z", true],
+    ["2026-10-29T22:00:00Z", false],
+    ["invalid", false],
+  ])(
+    "uses the final three LOCAL dates at the morning hour: %s => %s",
+    (iso, expected) => {
+      expect(
+        Boolean(
+          announcements.reminderCandidate(PROFILE, END_CONSENT, new Date(iso))
+        )
+      ).toBe(expected);
+    }
+  );
+
+  it("covers February at UTC+14, UTC-12 and fractional offsets without announcing the previous month", () => {
+    const east = new Date("2027-02-25T19:00:00Z");
+    expect(announcements.isReminderSweepWindow(east)).toBe(true);
+    expect(
+      announcements.reminderCandidate(
+        { timezone: "Pacific/Kiritimati" },
+        END_CONSENT,
+        east
+      )?.dayKey
+    ).toBe("2027-02-26");
+    expect(
+      announcements.reminderCandidate(
+        { timezone: "Etc/GMT+12" },
+        END_CONSENT,
+        new Date("2027-02-28T21:00:00Z")
+      )?.dayKey
+    ).toBe("2027-02-28");
+    expect(
+      announcements.reminderCandidate(
+        { timezone: "Asia/Kathmandu" },
+        END_CONSENT,
+        new Date("2027-02-26T04:00:00Z")
+      )?.dayKey
+    ).toBe("2027-02-26");
+    expect(
+      announcements.reminderCandidate(
+        { timezone: "Pacific/Kiritimati" },
+        END_CONSENT,
+        new Date("2026-10-31T19:00:00Z")
+      )
+    ).toBeNull();
+    for (const timezone of [undefined, "not-a-zone"])
+      expect(
+        announcements.reminderCandidate({ timezone }, END_CONSENT, END_NOW)
+      ).toBeNull();
+    expect(announcements.isReminderSweepWindow(new Date("invalid"))).toBe(
+      false
+    );
+  });
+
+  it("requires its own explicit opt-in, independent of launch announcements", async () => {
+    for (const consent of [
+      null,
+      {},
+      { enabled: true, challenges: true },
+      { enabled: false, challengeReminders: true },
+      { enabled: 1, challengeReminders: true },
+      { enabled: true, challengeReminders: "true" },
+    ])
+      expect(
+        announcements.reminderCandidate(PROFILE, consent, END_NOW)
+      ).toBeNull();
+    const args = reminderSetup();
+    args.join();
+    expect(await announcements.maybeSendReminder(args)).toBe(true);
+    expect(args.send.mock.calls[0][0]).toMatchObject({
+      data: {
+        type: "challengeReminders",
+        route: "/social",
+        title: "Monthly challenges end soon",
+        ownerUid: UID,
+      },
+      apns: { headers: { "apns-collapse-id": "challenges-ending-2026-10" } },
+    });
+  });
+
+  it("sends a single campaign for several unfinished goals, once per account/month", async () => {
+    const args = reminderSetup();
+    args.definitions.slice(0, 3).forEach((definition) => args.join(definition));
+    args.db.put(`users/${UID}/settings/challengeAnnouncement-2026-10`, {
+      status: "sent",
+    });
+    const results = await Promise.all(
+      Array.from({ length: 8 }, () => announcements.maybeSendReminder(args))
+    );
+    expect(results.filter(Boolean)).toHaveLength(1);
+    expect(args.send).toHaveBeenCalledTimes(1);
+    await announcements.maybeSendReminder({
+      ...args,
+      now: new Date("2026-10-30T09:00:00Z"),
+    });
+    expect(args.send).toHaveBeenCalledTimes(1);
+    expect(args.db.store.get(END_STATE)).toMatchObject({
+      status: "sent",
+      lastAttemptDateKey: "2026-10-29",
+    });
+    expect(
+      args.db.store.get(`users/${UID}/settings/challengeAnnouncement-2026-10`)
+    ).toEqual({ status: "sent" });
+  });
+
+  it("does not nudge non-members, weekly/seasonal memberships, or another account", async () => {
+    const args = reminderSetup();
+    args.join(undefined, 0, "someone-else");
+    for (const definition of buildCurrentChallenges(END_NOW).filter(
+      (item) => item.type !== "monthly"
+    ))
+      args.join(definition);
+    expect(await announcements.maybeSendReminder(args)).toBe(false);
+    expect(args.send).not.toHaveBeenCalled();
+    expect(args.db.store.has(END_STATE)).toBe(false);
+  });
+
+  it("skips fully completed Gold goals for every personal metric, including lower-is-better 5K", async () => {
+    for (const definition of reminderSetup().definitions.filter(
+      (item) => !item.collectiveTarget
+    )) {
+      const args = reminderSetup();
+      args.join(definition, definition.tiers.gold);
+      expect(await announcements.maybeSendReminder(args), definition.id).toBe(
+        false
+      );
+      args.join(
+        definition,
+        definition.metric === "fastest_effort"
+          ? definition.tiers.gold + 1
+          : definition.tiers.gold - 1
+      );
+      expect(await announcements.maybeSendReminder(args), definition.id).toBe(
+        true
+      );
+    }
+  });
+
+  it("uses current progress rather than a stale tier marker, and rejects malformed values", async () => {
+    const args = reminderSetup();
+    const definition = args.definitions[0];
+    for (const currentValue of [null, "0", NaN, Infinity, -1]) {
+      args.join(definition, currentValue);
+      expect(await announcements.maybeSendReminder(args)).toBe(false);
+    }
+    args.db.put(`challenges/${definition.id}/participants/${UID}`, {
+      currentValue: 0,
+      tierAchieved: "gold",
+    });
+    expect(await announcements.maybeSendReminder(args)).toBe(true);
+  });
+
+  it("uses the shared total to skip a completed collective goal, not the member's mileage", async () => {
+    const args = reminderSetup();
+    const group = args.definitions.find((item) => item.collectiveTarget);
+    args.join(group, 1);
+    args.join(group, 999, "another-runner");
+    expect(await announcements.maybeSendReminder(args)).toBe(false);
+    args.join(group, 998, "another-runner");
+    expect(await announcements.maybeSendReminder(args)).toBe(true);
+  });
+
+  it.each([
+    "consent",
+    "leave",
+    "completed",
+    "definition",
+    "profile",
+    "deletion",
+    "tombstone",
+  ])("rechecks %s when acquiring the send claim", async (change) => {
+    const args = reminderSetup();
+    args.join();
+    const definition = args.definitions[0];
+    args.leaseRegistrations.mockImplementationOnce(async () => {
+      if (change === "consent")
+        args.db.put(`users/${UID}/settings/push`, {
+          ...END_CONSENT,
+          challengeReminders: false,
+        });
+      if (change === "leave")
+        args.db.put(
+          `challenges/${definition.id}/participants/${UID}`,
+          undefined
+        );
+      if (change === "completed") args.join(definition, definition.tiers.gold);
+      if (change === "definition")
+        args.db.put(`challenges/${definition.id}`, {
+          ...definition,
+          metric: "wrong",
+        });
+      if (change === "profile") args.db.put(`users/${UID}`, undefined);
+      if (change === "deletion")
+        args.db.put(`accountDeletionRequests/${UID}`, { status: "running" });
+      if (change === "tombstone") args.db.put(`deletedAccounts/${UID}`, {});
+      return [{ token: "fcm" }];
+    });
+    expect(await announcements.maybeSendReminder(args)).toBe(false);
+    expect(args.send).not.toHaveBeenCalled();
+    expect(args.db.store.has(END_STATE)).toBe(false);
+    expect(args.releaseRegistrations).toHaveBeenCalledOnce();
+  });
+
+  it("retries only confirmed zero-accepted delivery on a later remaining morning", async () => {
+    const args = reminderSetup();
+    args.join();
+    args.send.mockResolvedValueOnce({
+      responses: [
+        { success: false, error: { code: "messaging/server-unavailable" } },
+      ],
+    });
+    expect(await announcements.maybeSendReminder(args)).toBe(false);
+    await announcements.maybeSendReminder(args);
+    expect(args.send).toHaveBeenCalledTimes(1);
+    expect(
+      await announcements.maybeSendReminder({
+        ...args,
+        now: new Date("2026-10-30T09:00:00Z"),
+      })
+    ).toBe(true);
+    expect(args.db.store.get(END_STATE).status).toBe("sent");
+  });
+
+  it("consumes an ambiguous send and cannot recreate an erased reminder ledger", async () => {
+    const args = reminderSetup();
+    args.join();
+    args.send.mockRejectedValueOnce(new Error("ambiguous"));
+    await announcements.maybeSendReminder(args);
+    await announcements.maybeSendReminder({
+      ...args,
+      now: new Date("2026-10-30T09:00:00Z"),
+    });
+    expect(args.send).toHaveBeenCalledTimes(1);
+    expect(args.db.store.get(END_STATE).status).toBe("uncertain");
+    const erased = reminderSetup();
+    erased.join();
+    erased.send.mockImplementationOnce(async () => {
+      erased.db.put(END_STATE, undefined);
+      return { responses: [{ success: true }] };
+    });
+    await announcements.maybeSendReminder(erased);
+    expect(erased.db.store.has(END_STATE)).toBe(false);
+  });
+});
 
 describe("monthly announcement local eligibility", () => {
   it.each([
@@ -495,6 +811,26 @@ describe("all-users announcement pagination", () => {
     });
   });
 
+  it("includes closing mornings in the actual bounded user sweep when enabled", async () => {
+    const perUser = vi.fn(async () => {});
+    await announcements.sweepAnnouncementUsers({
+      db: pages([[UID]]),
+      now: END_NOW,
+      documentId: "DOCUMENT_ID",
+      perUser,
+      includeReminders: true,
+    });
+    expect(perUser).toHaveBeenCalledOnce();
+    perUser.mockClear();
+    await announcements.sweepAnnouncementUsers({
+      db: {},
+      now: END_NOW,
+      documentId: "DOCUMENT_ID",
+      perUser,
+    });
+    expect(perUser).not.toHaveBeenCalled();
+  });
+
   it("surfaces a failed later page for a future scheduled catchup", async () => {
     const perUser = vi.fn(async () => {});
     await expect(
@@ -534,6 +870,52 @@ describe("all-users announcement pagination", () => {
 });
 
 describe("production monthly sender wiring", () => {
+  // The job's run record (lib/jobRuns.js) writes to Firestore, which a unit
+  // run has none of; the record has its own tests.
+  let record;
+  beforeEach(() => {
+    record = vi
+      .spyOn(require("../lib/jobRuns"), "recordJobRun")
+      .mockImplementation((_firestore, _name, job) => job());
+  });
+  afterEach(() => record.mockRestore());
+
+  it("the same hourly export reaches the closing reminder sender in the final-days window", async () => {
+    const fns = require("../index");
+    const locks = require("../lib/accountDeletionLocks");
+    const guard = vi
+      .spyOn(locks, "shouldSystemWriteProceed")
+      .mockResolvedValue(true);
+    const reminder = vi
+      .spyOn(announcements, "maybeSendReminder")
+      .mockResolvedValue(true);
+    const launch = vi
+      .spyOn(announcements, "maybeSendAnnouncement")
+      .mockResolvedValue(true);
+    const sweep = vi
+      .spyOn(announcements, "sweepAnnouncementUsers")
+      .mockImplementation(async ({ perUser, includeReminders }) => {
+        expect(includeReminders).toBe(true);
+        await perUser(UID, PROFILE);
+      });
+    vi.useFakeTimers();
+    vi.setSystemTime(END_NOW);
+    try {
+      await fns.hourlyChallengeAnnouncements.run();
+      expect(reminder).toHaveBeenCalledOnce();
+      expect(reminder).toHaveBeenCalledWith(
+        expect.objectContaining({ uid: UID, now: END_NOW })
+      );
+      expect(launch).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+      guard.mockRestore();
+      reminder.mockRestore();
+      launch.mockRestore();
+      sweep.mockRestore();
+    }
+  });
+
   it("the scheduled export reaches the tested projection and skips other local-hour deletion reads", async () => {
     const fns = require("../index");
     const locks = require("../lib/accountDeletionLocks");

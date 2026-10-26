@@ -161,13 +161,8 @@ async function save(page: Page, owner: Awaited<ReturnType<typeof account>>) {
     exact: true,
   });
   await expect(saveButton.or(finishButton)).toBeVisible({ timeout: 20_000 });
-  if (!(await saveButton.isVisible())) {
-    await finishButton.click();
-    await page
-      .getByRole("alertdialog", { name: "Finish early?", exact: true })
-      .getByRole("button", { name: "Finish", exact: true })
-      .click();
-  }
+  // Finishing early goes straight to the review, which has Save.
+  if (!(await saveButton.isVisible())) await finishButton.click();
   await expect(saveButton).toBeVisible();
   await saveButton.click();
   await expect(

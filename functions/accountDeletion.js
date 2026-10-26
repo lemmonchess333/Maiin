@@ -22,6 +22,7 @@
 const crypto = require("crypto");
 const ledger = require("./lib/accountDeletionLedger");
 const accountDeletionSocial = require("./lib/accountDeletionSocial");
+const restrictedIdentities = require("./lib/restrictedIdentities");
 const { queueAndCancelSubscription } = require("./lib/accountDeletionRetry");
 const goalSpaceCleanup = require("./lib/goalSpaceCleanup");
 const spacesCleanup = require("./lib/spacesCleanup");
@@ -124,6 +125,12 @@ const TOP_LEVEL_USER_KEYED_COLLECTIONS = Object.freeze([
   { parent: "following", sub: "users" },
   { parent: "followers", sub: "users" },
   { parent: "blocks", sub: "users" },
+  // Polish2: follow requests to this account.
+  { parent: "followRequests", sub: "users" },
+  // Polish3: who has blocked this account, the server-written copy
+  // (lib/blockMirror.js). The rows naming this account as the blocker sit
+  // under other accounts and go in the social scan.
+  { parent: "blockedBy", sub: "users" },
 ]);
 
 const STORAGE_PREFIX_TEMPLATES = Object.freeze([
@@ -323,6 +330,20 @@ async function deleteAccount({
       cancelStripeSubscription,
       logger,
       now,
+    });
+
+    // A restricted account's sign-in identities are kept, hashed, before
+    // the restriction itself goes with the social cleanup below (S4e;
+    // lib/restrictedIdentities.js): a new account with any of them is
+    // restricted as it is created. Before, not after: a retry that finds the
+    // restriction already gone keeps nothing, so this attempt must.
+    stage = "restricted_identities";
+    await restrictedIdentities.keepRestrictedIdentities({
+      firestore,
+      auth,
+      uid,
+      now,
+      logger,
     });
 
     stage = "cross_user_social";
@@ -533,6 +554,9 @@ async function deleteAccount({
     // .js) and was orphaning on every deletion. `rateLimits` is already
     // covered by its own range sweep.
     await firestore.doc(`scanUsage/${uid}`).delete();
+    // Polish2: the week shown on followers' boards. The session triggers
+    // that recompute it write nothing for an account being deleted.
+    await firestore.doc(`friendsBoard/${uid}`).delete();
 
     // 5. The user document itself
     stage = "user_document";
@@ -643,15 +667,16 @@ async function deleteAccount({
         uid,
         toStatus: ledger.STATUS.FAILED_CLEANUP,
         expectedGeneration: generation,
-        extraFields: {
+        extraFields: (request) => ({
           // This executor has stopped. Release its lease immediately so a
           // retry isn't blocked for nine minutes by a finished invocation.
           leaseExpiresAt: now,
-          nextAttemptAt: new Date(Date.now() + 60000),
+          // Each failure waits longer than the last (ledger.nextRetryAt).
+          nextAttemptAt: ledger.nextRetryAt(request.attemptCount, Date.now()),
           failedStage: stage,
           lastErrorCode: (err && err.code) || "unknown",
           lastErrorMessage: String((err && err.message) || "").slice(0, 500),
-        },
+        }),
         now,
       });
     } catch (transitionErr) {

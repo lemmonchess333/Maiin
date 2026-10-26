@@ -74,6 +74,47 @@ describe("parseSavedWorkout", () => {
     expect(parseSavedWorkout("w", { date: "later" })).toBeNull();
     expect(parseSavedWorkout("w", { exercises: [] })).toBeNull();
   });
+
+  it("reads an older workout's exercise and load in today's names", () => {
+    const workout = parseSavedWorkout("w", {
+      date: "2025-03-01",
+      exercises: [
+        { name: "Bench Press", sets: [{ weight: 100, reps: 5 }] },
+        // Half-migrated: today's name with the old load, and the other way.
+        { exerciseName: "Row", name: "Barbell Row", sets: [{ weight: 60 }] },
+        { name: "Squat", sets: [{ weightKg: 120, weight: 1, reps: 3 }] },
+      ],
+    });
+    expect(workout?.exercises).toEqual([
+      {
+        name: "Bench Press",
+        exerciseName: "Bench Press",
+        sets: [{ weight: 100, weightKg: 100, reps: 5 }],
+      },
+      {
+        exerciseName: "Row",
+        name: "Barbell Row",
+        sets: [{ weight: 60, weightKg: 60 }],
+      },
+      {
+        name: "Squat",
+        exerciseName: "Squat",
+        sets: [{ weightKg: 120, weight: 1, reps: 3 }],
+      },
+    ]);
+  });
+
+  it("leaves a workout already in today's names as it was stored", () => {
+    const bench = {
+      exerciseName: "Bench Press",
+      sets: [{ setNumber: 1, weightKg: 80, reps: 8 }],
+    };
+    const workout = parseSavedWorkout("w", {
+      date: "2026-06-03",
+      exercises: [bench],
+    });
+    expect(workout?.exercises[0]).toBe(bench);
+  });
 });
 
 describe("fetchSavedWorkouts", () => {

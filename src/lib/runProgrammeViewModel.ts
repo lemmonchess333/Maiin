@@ -249,8 +249,10 @@ export type RunCardStatus =
 
 /**
  * The word before the date on Train's run card, for the selected day.
- * "Up next" belongs to one run: the first still to do from today. A later
- * one is "Upcoming", the lift half's word for a session after the next
+ * "Up next" belongs to one run: the first still to do from today, as the
+ * Lift tab's card says "Up next" over its next session, tomorrow's
+ * included. After another run still to do, tomorrow's is "Tomorrow" and a
+ * later one "Upcoming", the lift half's word for a session after the next
  * (`LIFT_DAY_STATUS_LABEL`), so two runs in a week never both claim to be
  * the next one.
  */
@@ -263,7 +265,6 @@ export function runCardStatus(
   }[]
 ): RunCardStatus {
   if (selectedKey === keys.today) return "Due today";
-  if (selectedKey === keys.tomorrow) return "Tomorrow";
   if (selectedKey < keys.today) return "Pending";
   const runFirst = week.some(
     (day) =>
@@ -273,5 +274,30 @@ export function runCardStatus(
       !day.run.isCompleted &&
       !day.run.isTerminal
   );
-  return runFirst ? "Upcoming" : "Up next";
+  if (!runFirst) return "Up next";
+  return selectedKey === keys.tomorrow ? "Tomorrow" : "Upcoming";
+}
+
+/**
+ * The day Train's Run tab opens on, when the person has not picked one.
+ * Today, when today holds a run still to start. Otherwise the next day
+ * this week that does, so a lift day or a rest day opens on the run to
+ * come, as the Lift tab opens on its next session. Today again when the
+ * rest of the week has none. The week strip still marks today either way.
+ * Runs are date-pinned (ADR-0002): this only chooses what is shown, it
+ * moves nothing.
+ */
+export function defaultRunDayKey(
+  week: readonly {
+    dateKey: string;
+    run: { isStartable: boolean; isCompleted: boolean };
+  }[],
+  today: string
+): string {
+  const startable = (day: (typeof week)[number]) =>
+    day.run.isStartable && !day.run.isCompleted;
+  const todays = week.find((day) => day.dateKey === today);
+  if (todays && startable(todays)) return today;
+  const next = week.find((day) => day.dateKey > today && startable(day));
+  return next?.dateKey ?? today;
 }

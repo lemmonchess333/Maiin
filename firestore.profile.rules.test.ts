@@ -28,7 +28,13 @@ import {
   assertSucceeds,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, setDoc, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
+  updateDoc,
+} from "firebase/firestore";
 import { readFileSync } from "node:fs";
 import {
   PROFILE_FIELD_REGISTRY,
@@ -331,6 +337,22 @@ suite("users/{uid}/public/profile — the uid identity gate", () => {
     );
   });
 
+  it("creates a public profile from the photo fields alone", async () => {
+    // A photo saved before any other public field: the upload writes these
+    // two with a merge set, which is a create when no profile exists yet.
+    const db = env.authenticatedContext(ME).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(db, `users/${ME}/public/profile`),
+        {
+          photoURL: `https://firebasestorage.googleapis.com/v0/b/adaptive-fitness-af8bb.firebasestorage.app/o/profile-photos%2F${ME}%2Fp.jpg`,
+          photoStoragePath: `profile-photos/${ME}/p.jpg`,
+        },
+        { merge: true }
+      )
+    );
+  });
+
   it("refuses another user writing your public profile at all", async () => {
     const db = env.authenticatedContext(VICTIM).firestore();
     await assertFails(
@@ -341,8 +363,216 @@ suite("users/{uid}/public/profile — the uid identity gate", () => {
   });
 });
 
+/**
+ * The figures other people read on a profile (survey item 18): the joined
+ * date, the two streaks and the badge summary. The owner's device writes
+ * them, so the rules bound their shape rather than their truth.
+ */
+suite(
+  "users/{uid}/public/profile — the joined date, streaks and badges",
+  () => {
+    const ME = "pub-figures";
+    const ref = () =>
+      doc(
+        env.authenticatedContext(ME).firestore(),
+        `users/${ME}/public/profile`
+      );
+
+    it("takes the server's time for the joined date, never a backdated one", async () => {
+      await assertFails(
+        setDoc(ref(), {
+          uid: ME,
+          displayName: "Me",
+          createdAt: Timestamp.fromDate(new Date("2020-01-01")),
+        })
+      );
+      await assertSucceeds(
+        setDoc(ref(), {
+          uid: ME,
+          displayName: "Me",
+          createdAt: serverTimestamp(),
+        })
+      );
+    });
+
+    it("keeps the joined date: a write may leave it, not move it", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `users/${ME}/public/profile`), {
+          uid: ME,
+          createdAt: Timestamp.fromDate(new Date("2026-03-01")),
+        });
+      });
+      await assertSucceeds(
+        setDoc(ref(), { currentStreak: 4 }, { merge: true })
+      );
+      await assertFails(
+        updateDoc(ref(), {
+          createdAt: Timestamp.fromDate(new Date("2021-01-01")),
+        })
+      );
+    });
+
+    it("holds a streak to whole days within a century", async () => {
+      for (const bad of ["12", -1, 2.5, 40000, { days: 3 }]) {
+        await assertFails(
+          setDoc(ref(), { currentStreak: bad }, { merge: true })
+        );
+        await assertFails(
+          setDoc(ref(), { longestStreak: bad }, { merge: true })
+        );
+      }
+      await assertSucceeds(
+        setDoc(
+          ref(),
+          { uid: ME, currentStreak: 12, longestStreak: 30 },
+          { merge: true }
+        )
+      );
+    });
+
+    it("lets a profile holding an odd stored streak write its other fields", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `users/${ME}/public/profile`), {
+          uid: ME,
+          currentStreak: 2.5,
+        });
+      });
+      await assertSucceeds(
+        setDoc(ref(), { displayName: "Sam" }, { merge: true })
+      );
+    });
+
+    /* Every search result and profile view downloads this document, and
+       athleteType had no bound: one account could park most of a megabyte
+       in it for every reader. The sanitizer's bound, 30 characters. */
+    it("holds athleteType to a short string, as the sanitizer does", async () => {
+      for (const ok of ["Lifter", "Runner", "Hybrid", null]) {
+        await assertSucceeds(
+          setDoc(ref(), { athleteType: ok }, { merge: true })
+        );
+      }
+      for (const bad of ["x".repeat(31), "x".repeat(5000), 42, { a: 1 }]) {
+        await assertFails(setDoc(ref(), { athleteType: bad }, { merge: true }));
+      }
+    });
+
+    it("lets a profile holding an oversized stored athleteType write its other fields", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `users/${ME}/public/profile`), {
+          uid: ME,
+          athleteType: "x".repeat(100),
+        });
+      });
+      await assertSucceeds(
+        setDoc(ref(), { displayName: "Sam" }, { merge: true })
+      );
+    });
+
+    it("takes the badge summary the app writes, and nothing larger or inconsistent", async () => {
+      await assertSucceeds(
+        setDoc(
+          ref(),
+          {
+            badgeSummary: { earnedMap: { first_step: "2026-06-07" }, count: 1 },
+          },
+          { merge: true }
+        )
+      );
+      const many = Object.fromEntries(
+        Array.from({ length: 101 }, (_, i) => [`b${i}`, "2026-06-07"])
+      );
+      for (const bad of [
+        { earnedMap: { first_step: "2026-06-07" }, count: 40 },
+        { earnedMap: many, count: 101 },
+        { earnedMap: {}, count: 0, extra: "payload" },
+        { earnedMap: "first_step", count: 1 },
+      ]) {
+        await assertFails(
+          setDoc(ref(), { badgeSummary: bad }, { merge: true })
+        );
+      }
+    });
+
+    /* The 100-entry cap left each entry unbounded: a 9 KB "date" a
+       hundred times parked most of a megabyte in a document every search
+       result downloads. The app writes a badge id (18 characters at most)
+       and an ISO date (24). */
+    it("takes every badge with its ISO date, but not a padded date or id", async () => {
+      // The refusals run first, on an empty document: a merge write merges
+      // the map into what is stored, so after the full map below each of
+      // these would fail the entry count instead, and prove nothing.
+      for (const bad of [
+        { earnedMap: { first_step: "x".repeat(4001) }, count: 1 },
+        // Firestore refuses a field name over 1,500 bytes itself, so the
+        // ids are padded short of that and over the total together.
+        {
+          earnedMap: {
+            ["a".repeat(1400)]: "2026-06-07",
+            ["b".repeat(1400)]: "2026-06-07",
+            ["c".repeat(1400)]: "2026-06-07",
+          },
+          count: 3,
+        },
+        // A nested map has no text form to measure. A number or boolean
+        // does, and is bounded like a date; the reader skips it.
+        { earnedMap: { first_step: { at: "x".repeat(5000) } }, count: 1 },
+      ]) {
+        await assertFails(
+          setDoc(ref(), { badgeSummary: bad }, { merge: true })
+        );
+      }
+      const all = Object.fromEntries(
+        Array.from({ length: 100 }, (_, i) => [
+          `programme_complete_${i}`,
+          "2026-06-07T08:09:10.123Z",
+        ])
+      );
+      await assertSucceeds(
+        setDoc(
+          ref(),
+          { badgeSummary: { earnedMap: all, count: 100 } },
+          { merge: true }
+        )
+      );
+    });
+
+    it("lets a profile holding an oversized stored badge summary write its other fields", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), `users/${ME}/public/profile`), {
+          uid: ME,
+          badgeSummary: {
+            earnedMap: { first_step: "x".repeat(5000) },
+            count: 1,
+          },
+        });
+      });
+      await assertSucceeds(
+        setDoc(ref(), { displayName: "Sam" }, { merge: true })
+      );
+    });
+  }
+);
+
 suite("users/{uid}/public/profile — the other two value gates", () => {
   const ME = "pub-gates";
+
+  it("takes the streak's last day as a day key, and nothing else there", async () => {
+    const db = env.authenticatedContext(ME).firestore();
+    const ref = doc(db, `users/${ME}/public/profile`);
+    await assertSucceeds(
+      setDoc(
+        ref,
+        { currentStreak: 5, lastActiveDate: "2026-10-21" },
+        { merge: true }
+      )
+    );
+    await assertFails(
+      setDoc(ref, { lastActiveDate: "yesterday" }, { merge: true })
+    );
+    await assertFails(
+      setDoc(ref, { lastActiveDate: 20261021 }, { merge: true })
+    );
+  });
 
   it("refuses an arbitrary string in trainingForSpaceId", async () => {
     // SOC-P2f: closed vocabulary. An arbitrary string would ride a public,
@@ -370,6 +600,94 @@ suite("users/{uid}/public/profile — the other two value gates", () => {
       setDoc(
         doc(db, `users/${ME}/public/profile`),
         { displayName: "Me", trainingForSpaceId: null },
+        { merge: true }
+      )
+    );
+  });
+
+  it("refuses any document under public/ but profile", async () => {
+    // User search reads the whole collection group: a second document
+    // here was a second search entry under any name.
+    const db = env.authenticatedContext(ME).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(db, `users/${ME}/public/profile`),
+        { displayName: "Me" },
+        {
+          merge: true,
+        }
+      )
+    );
+    await assertFails(
+      setDoc(doc(db, `users/${ME}/public/alias`), {
+        displayName: "Someone Else",
+      })
+    );
+  });
+
+  it("holds the name to the app's 50-character limit, and lets an empty one through", async () => {
+    const db = env.authenticatedContext(ME).firestore();
+    const ref = doc(db, `users/${ME}/public/profile`);
+    await assertSucceeds(
+      setDoc(
+        ref,
+        { displayName: "a".repeat(50), displayNameLower: "a".repeat(50) },
+        {
+          merge: true,
+        }
+      )
+    );
+    await assertFails(
+      setDoc(ref, { displayName: "a".repeat(51) }, { merge: true })
+    );
+    await assertFails(
+      setDoc(ref, { displayNameLower: "a".repeat(51) }, { merge: true })
+    );
+    await assertFails(setDoc(ref, { displayName: 42 }, { merge: true }));
+    await assertSucceeds(setDoc(ref, { displayName: "" }, { merge: true }));
+    await assertSucceeds(setDoc(ref, { displayName: null }, { merge: true }));
+  });
+
+  it("refuses a new profile whose name is past the limit", async () => {
+    // Why sign-up cuts a Google or Apple name first (clampDisplayName):
+    // this create rides one batch with the account's own document.
+    const db = env.authenticatedContext(ME).firestore();
+    await assertFails(
+      setDoc(doc(db, `users/${ME}/public/profile`), {
+        uid: ME,
+        displayName: "a".repeat(60),
+        photoURL: null,
+      })
+    );
+  });
+
+  it("lets a profile already holding a longer name write its other fields", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), `users/${ME}/public/profile`), {
+        uid: ME,
+        displayName: "a".repeat(60),
+        displayNameLower: "a".repeat(60),
+      });
+    });
+    const db = env.authenticatedContext(ME).firestore();
+    const ref = doc(db, `users/${ME}/public/profile`);
+    // The streak mirror's merge, which leaves the name as it is.
+    await assertSucceeds(setDoc(ref, { currentStreak: 3 }, { merge: true }));
+    // Writing the same name again is leaving it as it is.
+    await assertSucceeds(
+      setDoc(ref, { displayName: "a".repeat(60) }, { merge: true })
+    );
+    // A different long name is a name being written, and is held.
+    await assertFails(
+      setDoc(ref, { displayName: "b".repeat(60) }, { merge: true })
+    );
+    await assertFails(
+      setDoc(ref, { displayNameLower: "b".repeat(60) }, { merge: true })
+    );
+    await assertSucceeds(
+      setDoc(
+        ref,
+        { displayName: "Sam", displayNameLower: "sam" },
         { merge: true }
       )
     );

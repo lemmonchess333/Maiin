@@ -80,6 +80,14 @@ afterEach(() => {
 });
 
 describe("usePushSettings — uid safety", () => {
+  it("does not enroll an older launch subscriber in closing reminders", async () => {
+    seedFirestore({ [U1]: { enabled: true, challenges: true } });
+    const { result } = renderHook(() => usePushSettings());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.consent.challenges).toBe(true);
+    expect(result.current.consent.challengeReminders).toBe(false);
+    expect(setDocGuardedMock).not.toHaveBeenCalled();
+  });
   it("a late u1 read never renders under u2", async () => {
     deferReads();
     const { result, rerender } = renderHook(() => usePushSettings());

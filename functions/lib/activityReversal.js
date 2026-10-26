@@ -46,6 +46,13 @@
  * reversal reads the marker and deletes it inside the SAME transaction
  * that applies the decrement, so a redelivery finds nothing and no-ops.
  *
+ * FAILURE. Both reversals throw when any part of them failed, so the
+ * delete trigger fails and failurePolicy delivers it again. The source
+ * document is already gone, so nothing else re-fires: a reversal that
+ * caught its own failure would leave the deleted session's credit in the
+ * challenge and the lifetime total for good. The marker makes the retry
+ * apply only what did not land.
+ *
  * Deleting the marker is also what makes re-logging work: the ids are
  * deterministic for programme and routine sessions (`programme-{id}`,
  * `routine-{id}`), so a delete-then-relog reuses the id, and a surviving
@@ -61,13 +68,18 @@ const fastestEffortRebuild = require("./fastestEffortRebuild");
  * Undo one source activity's SUM-metric challenge credit, everywhere it
  * landed.
  *
- * Mirrors the accrual's shape on purpose: the create path loops every
- * challenge and lets the per-challenge helper decide, so this does too.
+ * Reads EVERY challenge, where the accrual reads only those open on the
+ * session's day (`openOnDayBound`). The day it credited on is not known
+ * here: a corrected date recounts the participation challenges, but a
+ * summed credit stays where it landed, so a bound on the session's
+ * current day could miss a marker and leave the total inflated. Only the
+ * server makes challenges, about a dozen a month (`challengeDefs.js`), so
+ * the read stays in the hundreds of documents for years, on a path that
+ * runs once per delete.
  * There is no query that finds "the markers for this source" directly —
  * the source id lives in the marker's document ID, not in a field — and
  * inventing a denormalised field to enable one would be a schema change
- * for a path that already costs the same order of reads as the accrual it
- * undoes.
+ * to save reads this small.
  *
  * No eligibility re-check, deliberately. An ineligible run (isInvalid /
  * savedAnyway / sub-threshold) never credited, so it has no markers, so
@@ -79,46 +91,58 @@ const fastestEffortRebuild = require("./fastestEffortRebuild");
 async function reverseChallengeProgressForSource(db, uid, sourceId) {
   if (!uid || !sourceId) return;
 
-  let challengesSnap;
-  try {
-    challengesSnap = await db.collection("challenges").get();
-  } catch (err) {
-    console.error(
-      `reverseChallengeProgress: challenge read failed for ${uid}:`,
-      err.message
-    );
-    return;
-  }
+  // A failed read throws: nothing has been reversed yet, so the retry
+  // starts clean.
+  const challengesSnap = await db.collection("challenges").get();
 
+  const failed = [];
   for (const doc of challengesSnap.docs) {
+    let outcome;
     try {
-      const outcome = await reverseChallengeProgressInOne(
+      outcome = await reverseChallengeProgressInOne(
         db,
         doc.id,
         doc.data() || {},
         uid,
         sourceId
       );
-      // Rebuild AFTER the reversal transaction commits (the scan is a
-      // query, so it cannot live inside it). Best-effort per challenge:
-      // a failed rebuild leaves the stale best it would have corrected,
-      // never anything worse, and redelivery retries it.
-      if (outcome && outcome.fastestRebuild) {
+    } catch (err) {
+      // One challenge failing must not strand the rest, or the user is
+      // left with an arbitrary subset reversed and no way to tell which.
+      // It fails the whole call once the others have run, so the retry
+      // reverses it; the ones that landed have no marker left.
+      failed.push(doc.id);
+      console.error(
+        `reverseChallengeProgress: error for ${uid} in ${doc.id}:`,
+        err.message
+      );
+      continue;
+    }
+    // Rebuild AFTER the reversal transaction commits (the scan is a
+    // query, so it cannot live inside it). Best-effort, and NOT retried:
+    // the marker went with the reversal, so a redelivery finds nothing to
+    // rebuild from. A failed rebuild leaves the stale best it would have
+    // corrected, never anything worse.
+    if (outcome && outcome.fastestRebuild) {
+      try {
         await fastestEffortRebuild.rebuildFastestEffortInChallenge(
           db,
           doc.id,
           doc.data() || {},
           uid
         );
+      } catch (err) {
+        console.error(
+          `reverseChallengeProgress: fastest-effort rebuild failed for ${uid} in ${doc.id}:`,
+          err.message
+        );
       }
-    } catch (err) {
-      // One challenge failing must not strand the rest, or the user is
-      // left with an arbitrary subset reversed and no way to tell which.
-      console.error(
-        `reverseChallengeProgress: error for ${uid} in ${doc.id}:`,
-        err.message
-      );
     }
+  }
+  if (failed.length > 0) {
+    throw new Error(
+      `reverseChallengeProgress: ${failed.length} challenge(s) not reversed for ${uid}/${sourceId}: ${failed.join(", ")}`
+    );
   }
 }
 
@@ -237,39 +261,34 @@ async function reverseLifetimeStat(db, uid, kind, sourceId, fallbackAmount) {
   const totalsRef = db.doc(`users/${uid}/lifetime/totals`);
   const markerRef = db.doc(`users/${uid}/lifetime/applied_${kind}_${sourceId}`);
 
-  try {
-    await db.runTransaction(async (tx) => {
-      const [totalsSnap, markerSnap] = await Promise.all([
-        tx.get(totalsRef),
-        tx.get(markerRef),
-      ]);
-      if (!markerSnap.exists) return; // never accrued, or already reversed
+  // A failure throws to the trigger, which is retried; the marker is
+  // deleted in the same transaction, so the retry applies once.
+  await db.runTransaction(async (tx) => {
+    const [totalsSnap, markerSnap] = await Promise.all([
+      tx.get(totalsRef),
+      tx.get(markerRef),
+    ]);
+    if (!markerSnap.exists) return; // never accrued, or already reversed
 
-      const marker = markerSnap.data() || {};
-      const recorded = Number(marker.appliedValue);
-      const applied = Number.isFinite(recorded)
-        ? recorded
-        : Number(fallbackAmount) || 0;
+    const marker = markerSnap.data() || {};
+    const recorded = Number(marker.appliedValue);
+    const applied = Number.isFinite(recorded)
+      ? recorded
+      : Number(fallbackAmount) || 0;
 
-      // Guarded on existence, and written with `update` rather than a
-      // merging `set`, so this can never RE-CREATE a totals document the
-      // account-deletion sweep has already removed. That resurrection is
-      // the failure ADR-0012's first amendment names, and the
-      // system-writer guard in the trigger is only the first line against
-      // it — a guard that passes and then loses a race would still land
-      // here.
-      if (totalsSnap.exists) {
-        const current = Number(totalsSnap.data()[field]) || 0;
-        tx.update(totalsRef, { [field]: Math.max(0, current - applied) });
-      }
-      tx.delete(markerRef);
-    });
-  } catch (err) {
-    console.error(
-      `reverseLifetimeStat: error for ${uid}/${kind}/${sourceId}:`,
-      err.message
-    );
-  }
+    // Guarded on existence, and written with `update` rather than a
+    // merging `set`, so this can never RE-CREATE a totals document the
+    // account-deletion sweep has already removed. That resurrection is
+    // the failure ADR-0012's first amendment names, and the
+    // system-writer guard in the trigger is only the first line against
+    // it — a guard that passes and then loses a race would still land
+    // here.
+    if (totalsSnap.exists) {
+      const current = Number(totalsSnap.data()[field]) || 0;
+      tx.update(totalsRef, { [field]: Math.max(0, current - applied) });
+    }
+    tx.delete(markerRef);
+  });
 }
 
 module.exports = {

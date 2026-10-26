@@ -5,8 +5,17 @@ import {
   zoneForHr,
   zoneDistribution,
   targetZoneForRun,
+  zoneShortLabel,
   ZONE_NAMES,
 } from "../hrZones";
+
+describe("zoneShortLabel", () => {
+  it("is the zone and its range in one item, without the zone's name", () => {
+    const easy = hrZones(186).find((z) => z.zone === 2)!;
+    expect(zoneShortLabel(easy)).toBe(`Z2 ${easy.minBpm}–${easy.maxBpm} bpm`);
+    expect(zoneShortLabel(easy)).not.toContain(easy.name);
+  });
+});
 
 describe("maxHrFromAge — Tanaka 208 − 0.7·age", () => {
   it("computes a sensible max for a typical age", () => {

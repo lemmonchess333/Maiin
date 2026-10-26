@@ -1,0 +1,13 @@
+
+> tropos@1.2.0 verify
+> npm run lint && npm run test:verifiers && npm run check:form-art && npm run check:form-drafts && npm run check:cycles && npm run build && npm run check:dist-size && npm run test
+
+
+> tropos@1.2.0 lint
+> eslint . --max-warnings 0
+
+
+> tropos@1.2.0 test:verifiers
+> python3 -m unittest discover -s scripts -p 'test_verify*.py' -v && node --test scripts/rollover-deployed-challenges.test.mjs
+
+Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Apps > Advanced app settings > App execution aliases.

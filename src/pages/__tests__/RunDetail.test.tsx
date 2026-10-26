@@ -8,7 +8,15 @@
  * a stored document; its map, elevation chart and sheets are stubbed out.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
+import { restoreRealTimers } from "@/test/fakeTimers";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { totalDistance, type GPSPoint } from "@/lib/gps";
 
@@ -255,7 +263,7 @@ describe("RunDetail — a treadmill run says so", () => {
   it("titles a planned long run done there with its type and the treadmill", () => {
     h.run = onTreadmill({ activityType: "long", place: "treadmill" });
     renderDetail();
-    expect(screen.getByText("Long Run · Treadmill")).toBeInTheDocument();
+    expect(screen.getByText("Long run · Treadmill")).toBeInTheDocument();
     expect(screen.getByText("Splits · No GPS route")).toBeInTheDocument();
   });
 
@@ -268,7 +276,81 @@ describe("RunDetail — a treadmill run says so", () => {
   it("titles the same long run outdoors by its type alone", () => {
     h.run = savedRun({ activityType: "long", place: null });
     renderDetail();
-    expect(screen.getByText("Long Run")).toBeInTheDocument();
+    expect(screen.getByText("Long run")).toBeInTheDocument();
     expect(screen.queryByText(/Treadmill/)).toBeNull();
+  });
+});
+
+describe("RunDetail — the route replay", () => {
+  it("leaves no timer behind when the page closes as a replay ends", async () => {
+    h.run = savedRun();
+    vi.useFakeTimers();
+    const pending = new Set<unknown>();
+    const realSet = globalThis.setTimeout;
+    const realClear = globalThis.clearTimeout;
+    const setSpy = vi.spyOn(globalThis, "setTimeout").mockImplementation(((
+      fn: () => void,
+      ms?: number
+    ) => {
+      const id = realSet(() => {
+        pending.delete(id);
+        fn();
+      }, ms);
+      if (ms === 600) pending.add(id);
+      return id;
+    }) as typeof setTimeout);
+    const clearSpy = vi.spyOn(globalThis, "clearTimeout").mockImplementation(((
+      id: unknown
+    ) => {
+      pending.delete(id);
+      realClear(id as ReturnType<typeof setTimeout>);
+    }) as typeof clearTimeout);
+    try {
+      const { unmount } = renderDetail();
+      act(() => {
+        fireEvent.click(screen.getByRole("button", { name: /Replay/ }));
+      });
+      // Thirteen fixes, one a frame: the replay reaches its end and the
+      // button's short wait before it resets begins.
+      act(() => {
+        vi.advanceTimersByTime(13 * 50);
+      });
+      expect(pending.size).toBe(1);
+      unmount();
+      expect(pending.size).toBe(0);
+    } finally {
+      setSpy.mockRestore();
+      clearSpy.mockRestore();
+      await restoreRealTimers();
+    }
+  });
+});
+
+/* The basemap draws the theme on screen. The profile here says light
+   (`darkMode: false`) while the page renders dark, which is what a capture
+   of the dark theme does, and what any other writer of the `dark` class
+   would do: read from the profile, the map drew the light basemap inside a
+   dark page. */
+describe("RunDetail — the map follows the theme on screen", () => {
+  afterEach(() => document.documentElement.classList.remove("dark"));
+
+  it("draws the dark basemap in a dark page whatever the profile says", () => {
+    document.documentElement.classList.add("dark");
+    h.run = savedRun();
+    renderDetail();
+    expect(h.mapProps.at(-1)?.darkMode).toBe(true);
+  });
+
+  it("follows the theme when it flips", async () => {
+    h.run = savedRun();
+    renderDetail();
+    expect(h.mapProps.at(-1)?.darkMode).toBe(false);
+    await act(async () => {
+      document.documentElement.classList.add("dark");
+      // The class is watched by a MutationObserver, which reports in a
+      // microtask.
+      await Promise.resolve();
+    });
+    expect(h.mapProps.at(-1)?.darkMode).toBe(true);
   });
 });

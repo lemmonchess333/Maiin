@@ -1,5 +1,6 @@
 import { toast as sonnerToast, type ExternalToast } from "sonner";
 import { noteCompletionSurface } from "./completionSurfaceCounter";
+import { toastDuration, type ToastKind } from "./toastDurations";
 
 /**
  * Global toast wrapper with content-based deduplication.
@@ -18,16 +19,22 @@ import { noteCompletionSurface } from "./completionSurfaceCounter";
  * Non-string messages (JSX/ReactNode) can't be hashed, so they pass
  * through unchanged and stack as before.
  *
+ * It also sets how long each toast stays, by its kind and whether it
+ * carries an action (`toastDuration`): sonner takes one duration for every
+ * toast, and a call site that names its own only ever lengthens it.
+ *
  * Every call site imports `toast` from here instead of from "sonner"
- * directly, so the dedup is genuinely global. The only sonner import that
- * remains is the `<Toaster />` mount in ToastProvider.tsx.
+ * directly, so the dedup and the durations are genuinely global
+ * (`toastTiming.test.tsx` holds every other source to that). The only
+ * sonner import that remains is the `<Toaster />` mount in
+ * ToastProvider.tsx.
  */
 
 type Message = Parameters<typeof sonnerToast>[0];
 
 // djb2 — small, dependency-free, and stable across reloads. Collisions
-// only matter if two *different* messages hash equal *and* are shown in
-// the same ~1.5s window; the cost is one toast briefly replacing another,
+// only matter if two *different* messages hash equal *and* are on screen
+// at the same time; the cost is one toast briefly replacing another,
 // which is acceptable. Folded to an unsigned 32-bit int for a tidy id.
 function contentId(message: Message): string | undefined {
   if (typeof message !== "string") return undefined;
@@ -46,19 +53,23 @@ function contentId(message: Message): string | undefined {
  * collapsing visually still means two were fired at a user who wanted to
  * be finished, which is exactly the pile-up being watched.
  */
-function withDedupe(
+function withDefaults(
+  kind: ToastKind,
   message: Message,
   options?: ExternalToast
-): ExternalToast | undefined {
+): ExternalToast {
   noteCompletionSurface();
-  if (options?.id != null) return options;
-  const id = contentId(message);
-  if (id == null) return options;
-  return { ...options, id };
+  const id = options?.id ?? contentId(message);
+  const duration = toastDuration(kind, options);
+  return {
+    ...options,
+    ...(id != null && { id }),
+    ...(duration !== undefined && { duration }),
+  };
 }
 
 function base(message: Message, options?: ExternalToast) {
-  return sonnerToast(message, withDedupe(message, options));
+  return sonnerToast(message, withDefaults("default", message, options));
 }
 
 // Copy sonner's full surface (promise, custom, dismiss, getHistory, …)
@@ -67,15 +78,15 @@ function base(message: Message, options?: ExternalToast) {
 // indistinguishable from importing `toast` directly.
 export const toast = Object.assign(base, sonnerToast, {
   success: (message: Message, options?: ExternalToast) =>
-    sonnerToast.success(message, withDedupe(message, options)),
+    sonnerToast.success(message, withDefaults("success", message, options)),
   error: (message: Message, options?: ExternalToast) =>
-    sonnerToast.error(message, withDedupe(message, options)),
+    sonnerToast.error(message, withDefaults("error", message, options)),
   info: (message: Message, options?: ExternalToast) =>
-    sonnerToast.info(message, withDedupe(message, options)),
+    sonnerToast.info(message, withDefaults("info", message, options)),
   warning: (message: Message, options?: ExternalToast) =>
-    sonnerToast.warning(message, withDedupe(message, options)),
+    sonnerToast.warning(message, withDefaults("warning", message, options)),
   message: (message: Message, options?: ExternalToast) =>
-    sonnerToast.message(message, withDedupe(message, options)),
+    sonnerToast.message(message, withDefaults("message", message, options)),
   loading: (message: Message, options?: ExternalToast) =>
-    sonnerToast.loading(message, withDedupe(message, options)),
+    sonnerToast.loading(message, withDefaults("loading", message, options)),
 }) as typeof sonnerToast;

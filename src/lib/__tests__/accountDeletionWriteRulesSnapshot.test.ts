@@ -81,6 +81,8 @@ const PROTECTED_PATHS = [
   "match /feeds/{uid}/items/{doc}",
   "match /following/{uid}/users/{targetUid}",
   "match /followers/{uid}/users/{followerUid}",
+  // Polish2: a request is created only while neither side is frozen.
+  "match /followRequests/{uid}/users/{requesterUid}",
   "match /notifications/{uid}/items/{doc}",
   "match /blocks/{uid}/users/{targetUid}",
   // Crews retirement (2026-07-20): /groups/{crewId} moved to the
@@ -92,13 +94,13 @@ const PROTECTED_PATHS = [
   // data-recreation vector, so both are fully frozen now.
   "match /activities/{activityId}",
   "match /participants/{uid}",
-  // SOCIAL S3 — partner-streak bond. Client-writable create + delete
-  // (either of the two members); Soc7 made UPDATE server-only
-  // (`if false` — streak state is written by the Admin SDK persist path).
-  // Create freezes BOTH members (!isDeleting on members[0] AND members[1])
-  // so a bond can't be minted naming a mid-deletion user. Still a
-  // protected path (create+delete are client-writable). R1A executor
-  // sweeps these in step 3b (inventory key: partnerBondsMember).
+  // SOCIAL S3 — partner-streak bond. Client-writable delete (either of
+  // the two members), frozen on the actor. CREATE is server-only (the
+  // startPartnerStreak callable counts both members' bonds and reads
+  // their deletion state in one transaction) and UPDATE is server-only
+  // (streak state is written by the Admin SDK persist path). Still a
+  // protected path (delete is client-writable). R1A executor sweeps
+  // these in step 3b (inventory key: partnerBondsMember).
   "match /partnerBonds/{bondId}",
   // Spc1 PR1 — Community Spaces. Parser sees the bare nested forms
   // (like /participants/{uid} under challenges): semantic paths are
@@ -178,6 +180,14 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   "match /users/{uid}/performance/{doc}",
   "match /{path=**}/public/{doc}",
   "match /scanUsage/{uid}",
+  // Polish2: the week on followers' boards. Read-only for clients; the
+  // setBoardSharing callable (actor-locked) and the session triggers
+  // (system-writer guard) write it, and the executor deletes it.
+  "match /friendsBoard/{uid}",
+  // Polish3 call 1: who has blocked this account. Read by that account
+  // only; onBlockWritten writes it (system-writer guard), and the
+  // executor deletes it both ways (blockedByOwn, blockedByReverse).
+  "match /blockedBy/{uid}/users/{blockerUid}",
   // S4e (PR #722) — restricted-user marker. Admin SDK writes only
   // (Cloud Function resolveReport sets the doc); clients can read
   // their own doc but cannot write. R1A cleanup is wired via the
@@ -199,6 +209,7 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   "match /deletedCommentEvidence/{id}",
   "match /deletedAccounts/{uid}",
   "match /deletedBillingIdentities/{identifierHash}",
+  "match /restrictedIdentities/{identityHash}",
   "match /paymentEventsPostDeletion/{eventId}",
   // Durable trial-eligibility tombstone (money-path audit F1). Admin SDK
   // writes only (`allow read, write: if false`), written by completeOnboarding
@@ -334,7 +345,7 @@ describe("write-rules snapshot — drift detection", () => {
 });
 
 describe("Blocker E — path-count reconciliation", () => {
-  it("authoritative count is 37 (push lock removed /users/{uid}/devices)", () => {
+  it("authoritative count is 38 (Polish2 added /followRequests)", () => {
     // History: Chunk 2 prose said "22"; Chunk 2.C reconciled to 27.
     // 2026-05-26 audit PR 2 moved /groups/{crewId}/members/{userId}
     // to server-only (write `if false`), dropping the count to 26.
@@ -371,6 +382,8 @@ describe("Blocker E — path-count reconciliation", () => {
     // client-locked /users/{uid}/devices — writable surface gone, moved to
     // INFRASTRUCTURE_AND_READ_ONLY alongside the new /fcmTokenClaims
     // explicit-deny block, → 37.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(37);
+    // Polish2 (2026-10-20) added /followRequests/{uid}/users/{requesterUid}
+    // (create frozen via isWriteFrozen on both sides), → 38.
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(38);
   });
 });

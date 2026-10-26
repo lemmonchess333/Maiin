@@ -1,0 +1,41 @@
+{
+  "text": "Illustration review\n\nRegistered integrated component Â· turkish-get-up\n\nExercise\nBarbell Curl\nSingle-Leg Calf Raise\nTurkish Get-Up\nUse light\nTurkish Get-Up\nFull Body\nKettlebell\n\nSTAND 6/6\n\nReplay\nNormal\nPRIMARY\nShoulders, Core\nSECONDARY\nTriceps, Upper Back, Glutes, Quads\n\nInstructions\n\nPreparation: Lie on your back with the bell beside your shoulder. Press it up with both hands to a locked arm, then free one hand.\n\n1\n\nPress the bell up; eyes on it.\n\n2\n\nRoll onto your free elbow, arm locked.\n\n3\n\nPush up onto your free hand.\n\n4\n\nLift your hips high off the floor.\n\n5\n\nSweep your leg back into a half-kneel.\n\n6\n\nStand tall, then reverse each step down.\n\nWatch out\n\nEyes lock on the bell from start to finish. If you lose sight of it or the arm bends, stop the set — a falling bell on a shoulder ends seasons.\n\nRegistered manual selection 1/6\n\nActual ExerciseThumb, normal cutout\n\nRendered frame trace\n[\n  {\n    \"elapsedMs\": 8,\n    \"alt\": \"Turkish Get-Up, Press\",\n    \"src\": \"/Maiin/form-frames/turkish-get-up/1.webp\",\n    \"decoded\": false\n  },\n  {\n    \"elapsedMs\": 1228,\n    \"alt\": \"Turkish Get-Up, Elbow\",\n    \"src\": \"/Maiin/form-frames/turkish-get-up/2.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 2439,\n    \"alt\": \"Turkish Get-Up, Hand\",\n    \"src\": \"/Maiin/form-frames/turkish-get-up/3.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 3652,\n    \"alt\": \"Turkish Get-Up, Bridge\",\n    \"src\": \"/Maiin/form-frames/turkish-get-up/4.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 4864,\n    \"alt\": \"Turkish Get-Up, Kneel\",\n    \"src\": \"/Maiin/form-frames/turkish-get-up/5.webp\",\n    \"decoded\": true\n  },\n  {\n    \"elapsedMs\": 6082,\n    \"alt\": \"Turkish Get-Up, Stand\",\n    \"src\": \"/Maiin/form-frames/turkish-get-up/6.webp\",\n    \"decoded\": true\n  }\n]",
+  "trace": [
+    {
+      "alt": "Turkish Get-Up, Press",
+      "decoded": false,
+      "elapsedMs": 8,
+      "src": "/Maiin/form-frames/turkish-get-up/1.webp"
+    },
+    {
+      "alt": "Turkish Get-Up, Elbow",
+      "decoded": true,
+      "elapsedMs": 1228,
+      "src": "/Maiin/form-frames/turkish-get-up/2.webp"
+    },
+    {
+      "alt": "Turkish Get-Up, Hand",
+      "decoded": true,
+      "elapsedMs": 2439,
+      "src": "/Maiin/form-frames/turkish-get-up/3.webp"
+    },
+    {
+      "alt": "Turkish Get-Up, Bridge",
+      "decoded": true,
+      "elapsedMs": 3652,
+      "src": "/Maiin/form-frames/turkish-get-up/4.webp"
+    },
+    {
+      "alt": "Turkish Get-Up, Kneel",
+      "decoded": true,
+      "elapsedMs": 4864,
+      "src": "/Maiin/form-frames/turkish-get-up/5.webp"
+    },
+    {
+      "alt": "Turkish Get-Up, Stand",
+      "decoded": true,
+      "elapsedMs": 6082,
+      "src": "/Maiin/form-frames/turkish-get-up/6.webp"
+    }
+  ]
+}

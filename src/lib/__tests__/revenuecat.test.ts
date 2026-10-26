@@ -21,7 +21,7 @@ describe("revenuecat — web/no-key gating (slice 2)", () => {
   it("logIn / logOut / configure are safe no-ops when disabled", async () => {
     // Resolve without throwing and without touching the native plugin.
     await expect(configureRevenueCat("uid123")).resolves.toBeUndefined();
-    await expect(rcLogIn("uid123")).resolves.toBeUndefined();
+    await expect(rcLogIn("uid123")).resolves.toBe(true);
     await expect(rcLogOut()).resolves.toBeUndefined();
   });
 });

@@ -1,0 +1,215 @@
+{
+  "exerciseId": "overhead-extension",
+  "version": "anatomy-v3-2026-10-20-contour-polish-v1",
+  "width": 461,
+  "height": 1547,
+  "reference": {
+    "path": "form-frames/overhead-extension/3.webp",
+    "sha256": "c77362ad26bb293c64300f1f237ce727c7ab404c75634235f32f95c0bf29ef97"
+  },
+  "cueSha256": "c87ec4e1d414a16ed62ea16af0b9bb75f3d6a1b4ed034ad8d0416409fd804fef",
+  "decision": "approved",
+  "reviewer": "Codex scoped native contour review, source-preservation proof, actual mobile light/dark review",
+  "reviewedAt": "2026-10-20T19:00:00.228752+00:00",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared current native sequences to canonical FA56 fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b. Same adult bald faceless lean pale anatomy athlete, smooth featureless pelvis, no shorts, original white trainers; fine grey contours and inherited shading preserved. Current scoped correction: A complete 86x171 native round dumbbell master, including both discs and shaft, is reused by integer translation in both positions. The original pale hand and forearm foreground is preserved. No anatomical pose, crop, scale, muscle pigment or body shading changes."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Current native oblique scene remains coherent. Actual material anchors max-axis drift 1px; independent invariant dimensions maximum relative drift 0.005298155. No canvas/padding anchors, invented 3D calibration, or relaxed tolerances. Normalize the entire lowered source with a single uniform scale and translation. Final scale 1.0322697456032908, translation [-9.28307596033136,-45.91359497998633]. No anatomical part fitting. Current fixed-material proof confirms original same-coordinate anchor patches and complete measured support/hardware regions are decoded-pixel exact. Existing coordinates and dimensions remain valid with unchanged limits."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Complete native limb chains and adult proportions reviewed across all six slots; no detached/duplicated body surfaces or clothing. Elbows flex behind the head and extend overhead; stance is planted. One uniform whole-source camera correction replaces the original scale drift; no isolated anatomy fitting. Small inherited illustrative contour/projection variation is retained; continuous anatomical interpolation is not claimed. Current scoped correction: A complete 86x171 native round dumbbell master, including both discs and shaft, is reused by integer translation in both positions. The original pale hand and forearm foreground is preserved. No anatomical pose, crop, scale, muscle pigment or body shading changes."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One grey dumbbell held with both hands above/behind the head. Native geometry, grips, collars/attachments and selected/resting components reviewed; projecting/rotating load extrema are not falsely treated as fixed scene anchors. Current scoped correction: A complete 86x171 native round dumbbell master, including both discs and shaft, is reused by integer translation in both positions. The original pale hand and forearm foreground is preserved. No anatomical pose, crop, scale, muscle pigment or body shading changes."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Elbows flex behind the head and extend overhead; stance is planted. One uniform whole-source camera correction replaces the original scale drift; no isolated anatomy fitting. Actual named native supports are measured in all six frames: plantedFarTrainerHeelContour, plantedNearTrainerHeelContour. Maximum axis drift 1px. Dimensions: farTrainerToeHeelProjectedSpan, nearTrainerToeHeelProjectedSpan; max 0.52982%. Current fixed-material proof confirms original same-coordinate anchor patches and complete measured support/hardware regions are decoded-pixel exact. Existing coordinates and dimensions remain valid with unchanged limits."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Elbows flex behind the head and extend overhead; stance is planted. One uniform whole-source camera correction replaces the original scale drift; no isolated anatomy fitting. Complete motion is taught through discrete stills, including honest held/reused positions. Qualitative form/rigidity/contact review passes; this is not calibrated biomechanical or manufacturer engineering certification. Current fixed-material proof confirms original same-coordinate anchor patches and complete measured support/hardware regions are decoded-pixel exact. Existing coordinates and dimensions remain valid with unchanged limits."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary Triceps #7B72E9; secondary Front Delts #9590E0, solid fields with inherited tonal shading and source contours. Visible native anatomical fields and exact supplied-art legend reviewed. Occluded surfaces are not painted onto another body region. Current scoped correction: A complete 86x171 native round dumbbell master, including both discs and shaft, is reused by integer translation in both positions. The original pale hand and forearm foreground is preserved. No anatomical pose, crop, scale, muscle pigment or body shading changes."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact bound label/cue sequence reviewed against its drawings: Top: Hold the dumbbell overhead with both hands. / Brace: Keep your core braced and elbows up. / Lower: Bend elbows; lower the dumbbell behind head. / Bottom: Keep your upper arms beside your head. / Extend: Straighten your elbows and squeeze your triceps. / Reset: Keep the dumbbell steady at full extension.. Preparation remains [\"Stand or sit, hold one dumbbell with both hands straight overhead.\", \"Keep elbows close to your ears and pointed at the ceiling.\"]. Elbows flex behind the head and extend overhead; stance is planted. One uniform whole-source camera correction replaces the original scale drift; no isolated anatomy fitting. Exact existing cues, physical pose order and playback mode retained; actual current playback/manual wrap reviewed."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Current six native frames reviewed in order with first/last transition. Current actual manual decoded-path and timed-loop evidence retained separately. Elbows flex behind the head and extend overhead; stance is planted. One uniform whole-source camera correction replaces the original scale drift; no isolated anatomy fitting. Repeated physical poses remain repeated; six-unique-pose and continuous interpolation are not asserted. Exact existing cues, physical pose order and playback mode retained; actual current playback/manual wrap reviewed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual 390x844 production ExerciseFormContent/ExerciseThumb with staged then registered current assets reviewed in light theme. All six decoded frame paths, manual wraps, corrected native pose, captions, legend, preparation and three normal card sizes inspected; current observations and screenshots retained in this review bundle."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual 390x844 production ExerciseFormContent/ExerciseThumb with staged then registered current assets reviewed in dark theme. All six decoded frame paths, manual wraps, corrected native pose, captions, legend, preparation and three normal card sizes inspected; current observations and screenshots retained in this review bundle."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/overhead-extension/1.webp",
+      "sha256": "575d48c589d54295c50f72d263886f9cb7aade3ed0e627316ed255069f752f6f",
+      "anchors": {
+        "plantedFarTrainerHeelContour": {
+          "x": 216,
+          "y": 1409
+        },
+        "plantedNearTrainerHeelContour": {
+          "x": 394,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelProjectedSpan": 184.45595680270128,
+        "nearTrainerToeHeelProjectedSpan": 158.8238017426859
+      }
+    },
+    {
+      "path": "form-frames/overhead-extension/2.webp",
+      "sha256": "575d48c589d54295c50f72d263886f9cb7aade3ed0e627316ed255069f752f6f",
+      "anchors": {
+        "plantedFarTrainerHeelContour": {
+          "x": 216,
+          "y": 1409
+        },
+        "plantedNearTrainerHeelContour": {
+          "x": 394,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelProjectedSpan": 184.45595680270128,
+        "nearTrainerToeHeelProjectedSpan": 158.8238017426859
+      }
+    },
+    {
+      "path": "form-frames/overhead-extension/3.webp",
+      "sha256": "c77362ad26bb293c64300f1f237ce727c7ab404c75634235f32f95c0bf29ef97",
+      "anchors": {
+        "plantedFarTrainerHeelContour": {
+          "x": 216,
+          "y": 1410
+        },
+        "plantedNearTrainerHeelContour": {
+          "x": 394,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelProjectedSpan": 184.29595763336752,
+        "nearTrainerToeHeelProjectedSpan": 159.66527487215245
+      }
+    },
+    {
+      "path": "form-frames/overhead-extension/4.webp",
+      "sha256": "c77362ad26bb293c64300f1f237ce727c7ab404c75634235f32f95c0bf29ef97",
+      "anchors": {
+        "plantedFarTrainerHeelContour": {
+          "x": 216,
+          "y": 1410
+        },
+        "plantedNearTrainerHeelContour": {
+          "x": 394,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelProjectedSpan": 184.29595763336752,
+        "nearTrainerToeHeelProjectedSpan": 159.66527487215245
+      }
+    },
+    {
+      "path": "form-frames/overhead-extension/5.webp",
+      "sha256": "575d48c589d54295c50f72d263886f9cb7aade3ed0e627316ed255069f752f6f",
+      "anchors": {
+        "plantedFarTrainerHeelContour": {
+          "x": 216,
+          "y": 1409
+        },
+        "plantedNearTrainerHeelContour": {
+          "x": 394,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelProjectedSpan": 184.45595680270128,
+        "nearTrainerToeHeelProjectedSpan": 158.8238017426859
+      }
+    },
+    {
+      "path": "form-frames/overhead-extension/6.webp",
+      "sha256": "575d48c589d54295c50f72d263886f9cb7aade3ed0e627316ed255069f752f6f",
+      "anchors": {
+        "plantedFarTrainerHeelContour": {
+          "x": 216,
+          "y": 1409
+        },
+        "plantedNearTrainerHeelContour": {
+          "x": 394,
+          "y": 1475
+        }
+      },
+      "invariantDimensions": {
+        "farTrainerToeHeelProjectedSpan": 184.45595680270128,
+        "nearTrainerToeHeelProjectedSpan": 158.8238017426859
+      }
+    }
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "measurementEvidence": {
+    "method": "Native material-corner structure, local raw-RGB patch correlation and explicit physical-landmark inspection; ambiguous/background points rejected. Planted heel anchors plus independent outer sole contours for barbell-row.",
+    "maxAnchorAxisDriftPx": 1,
+    "maxInvariantRelativeDrift": 0.005298155063872878,
+    "limitsUnchanged": {
+      "anchorAxisPx": 1,
+      "invariantRelative": 0.01
+    },
+    "reviewBundle": "docs/exercise-art/reviews/2026-10-20-strict-review/measurements.json",
+    "currentPreservationProof": "docs/exercise-art/reviews/2026-10-20-contour-polish/fixed-material-proof.json"
+  },
+  "previousReview": {
+    "path": "docs/exercise-art/releases/2026-10-20-strict-review/overhead-extension.json",
+    "sha256": "d0b02910cdf89d85036b8377e14102095071ba120d2565cecff037d9062385d8"
+  },
+  "historicalFindings": [
+    "Residual source head/shoe outlines, proportions and placement differ slightly after integer whole-frame registration; no independent body-part fitting is used.",
+    "Original upper-arm/elbow positions vary between the two endpoints; they remain raised beside the head, but exact fixed-joint mechanics are not certified.",
+    "Original neutral dumbbell head/handle rendering and projected dimensions vary modestly; no calibrated rigid3D equivalence claim.",
+    "Two physical endpoints repeat across six distinct instruction paths; no separately drawn intermediate or continuous trajectory."
+  ],
+  "remainingIllustrationLimits": [
+    "Discrete authored stills and normal pose-dependent foreshortening; no calibrated three-dimensional body reconstruction or continuous animation is claimed."
+  ],
+  "currentMobileEvidence": {
+    "path": "docs/exercise-art/reviews/2026-10-20-contour-polish/mobile/observations.json",
+    "sha256": "2b659fd8804e38950bbf248d00df820329dfcb0a09a04c3c58e418c2c5a2af6f"
+  },
+  "mobileEvidenceReusedForUnchangedArt": false,
+  "nativeSourceArchive": {
+    "path": "docs/exercise-art/sources/overhead-extension/2026-10-20-contour-polish/native-source.zip",
+    "sha256": "277d5c93b803a0eadb8539c2dbd72b8ca33ecbdead80bd64d9eb2fca622c6ec8",
+    "bytes": 3102896,
+    "scope": "A complete 86x171 native round dumbbell master, including both discs and shaft, is reused by integer translation in both positions. The original pale hand and forearm foreground is preserved. No anatomical pose, crop, scale, muscle pigment or body shading changes.",
+    "independentReproductionExact": true
+  },
+  "correctionScope": "A complete 86x171 native round dumbbell master, including both discs and shaft, is reused by integer translation in both positions. The original pale hand and forearm foreground is preserved. No anatomical pose, crop, scale, muscle pigment or body shading changes.",
+  "currentContourReview": {
+    "path": "docs/exercise-art/reviews/2026-10-20-contour-polish/README.md",
+    "scope": "A complete 86x171 native round dumbbell master, including both discs and shaft, is reused by integer translation in both positions. The original pale hand and forearm foreground is preserved. No anatomical pose, crop, scale, muscle pigment or body shading changes."
+  }
+}

@@ -29,6 +29,12 @@ export function describeRejection(err: unknown): string | null {
   const code = String((err as { code?: unknown })?.code ?? "");
   const message = String((err as { message?: unknown })?.message ?? "");
   if (!message) return null;
+  // The account-deletion locks are failed-precondition too, and their
+  // message names the account ("Account <uid> has an in-progress
+  // deletion…"); their details carry it as `uid` or `referencedUid`.
+  const details = (err as { details?: Record<string, unknown> })?.details;
+  if (details && (details.uid != null || details.referencedUid != null))
+    return null;
   if (
     code.endsWith("failed-precondition") ||
     /failed-precondition:/.test(message)
@@ -51,3 +57,20 @@ export function isRateLimitedRejection(err: unknown): boolean {
  *  "Try again", which would be refused as well. */
 export const PLAN_SAVES_TOO_OFTEN =
   "You've changed your plan a lot in the last few minutes. Wait a few minutes, then save again.";
+
+/**
+ * The sentence the app threw for the person ("Sign in again to log
+ * food."), or `fallback` for anything else. The app's own sentences are
+ * plain `Error`s with no code. An SDK error carries a `code` and the SDK's
+ * text ("Missing or insufficient permissions."), and a `TypeError` is a
+ * browser's ("Failed to fetch"); neither is copy. For save paths whose
+ * writes are queued, where the app's sentences are what reach the catch.
+ */
+export function appErrorMessage(err: unknown, fallback: string): string {
+  return err instanceof Error &&
+    err.name === "Error" &&
+    err.message &&
+    !("code" in err)
+    ? err.message
+    : fallback;
+}

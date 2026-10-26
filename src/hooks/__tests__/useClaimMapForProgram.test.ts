@@ -66,7 +66,10 @@ interface ProgramStateLike {
 let mockProgramState: ProgramStateLike | null = null;
 
 import type { ProgramState } from "@/features/program/programTypes";
-import { useClaimMapForProgram } from "../useClaimMapForProgram";
+import {
+  claimWindowStart,
+  useClaimMapForProgram,
+} from "../useClaimMapForProgram";
 function useClaimMap(dateAnchor?: string) {
   return useClaimMapForProgram(
     mockProgramState as ProgramState | null,
@@ -284,7 +287,7 @@ describe("useClaimMap", () => {
             distance: 5000,
             avgPace: 330,
             templateId: "easy-5k",
-            completedAt: Timestamp.fromMillis(1716700000_000),
+            completedAt: Timestamp.fromMillis(1779786000_000),
           },
         },
       ]);
@@ -310,7 +313,7 @@ describe("useClaimMap", () => {
             distance: 8000,
             avgPace: 300,
             templateId: "freerun",
-            completedAt: Timestamp.fromMillis(1716700000_000),
+            completedAt: Timestamp.fromMillis(1779786000_000),
           },
         },
       ]);
@@ -423,7 +426,7 @@ describe("useClaimMap - account ownership", () => {
         duration: 1650,
         avgPace: 330,
         templateId: "easy-5k",
-        completedAt: Timestamp.fromMillis(1716700000_000),
+        completedAt: Timestamp.fromMillis(1779786000_000),
       },
     });
   });
@@ -445,14 +448,15 @@ describe("useClaimMap - account ownership", () => {
 
   it("never lets account A's runs claim a slot for account B", () => {
     seedFirestore({
-      // B's own run, on a date no slot can claim, so B's arrival is
+      // B's own run, on a date no slot can claim (two days after the
+      // planned day, inside the window the hook reads), so B's arrival is
       // visible as an extra.
       "users/u2/runs/b-run": {
-        date: "2026-05-20",
+        date: "2026-05-28",
         distance: 8000,
         duration: 2400,
         avgPace: 300,
-        completedAt: Timestamp.fromMillis(1716200000_000),
+        completedAt: Timestamp.fromMillis(1779958800_000),
       },
     });
     const renders: { uid: string | undefined; claimed?: string }[] = [];
@@ -470,7 +474,7 @@ describe("useClaimMap - account ownership", () => {
 
     currentUser = { uid: "u2" };
     rerender();
-    expect(result.current.unclaimedByDate.get("2026-05-20")?.[0].id).toBe(
+    expect(result.current.unclaimedByDate.get("2026-05-28")?.[0].id).toBe(
       "b-run"
     );
     const underB = renders.filter((r) => r.uid === "u2");
@@ -492,6 +496,62 @@ describe("useClaimMap - account ownership", () => {
  * `long_15k` is deliberate: type "long" buckets as "easy", so no pace
  * requirement can mask what the distance branch decides.
  */
+describe("claimWindowStart", () => {
+  it("starts a day before the earlier of this week and the earliest planned day", () => {
+    // Monday 19 October 2026: the week begins on the Monday.
+    expect(claimWindowStart("2026-10-21", [])).toBe("2026-10-18");
+    expect(
+      claimWindowStart("2026-10-21", [
+        { date: "2026-10-23" },
+        { date: "2026-10-14" },
+      ])
+    ).toBe("2026-10-13");
+    // A malformed date is not a bound.
+    expect(claimWindowStart("2026-10-21", [{ date: "soon" }, {}])).toBe(
+      "2026-10-18"
+    );
+  });
+
+  it("reads runs from that day on, not every run the account has", async () => {
+    resetFirestore();
+    currentUser = mockUser;
+    mockProgramState = {
+      runDays: [
+        {
+          id: "rd-1",
+          date: "2026-05-26",
+          templateId: "easy-5k",
+          status: "planned",
+        },
+      ],
+      manualCompletions: {},
+    };
+    seedRuns([
+      {
+        id: "years-ago",
+        data: {
+          date: "2024-05-26",
+          distance: 5000,
+          completedAt: Timestamp.fromMillis(1716700000_000),
+        },
+      },
+      {
+        id: "this-plan",
+        data: {
+          date: "2026-05-28",
+          distance: 5000,
+          completedAt: Timestamp.fromMillis(1779958800_000),
+        },
+      },
+    ]);
+    const { result } = renderHook(() => useClaimMap("2026-05-26"));
+    await act(async () => {
+      await flushSnapshots();
+    });
+    expect(result.current.runs.map((r) => r.id)).toEqual(["this-plan"]);
+  });
+});
+
 describe("useClaimMap - distance threshold", () => {
   // Sibling describe: the beforeEach above does not reach here, and without
   // its own reset the saved runs from earlier tests stay in the store and
@@ -525,7 +585,7 @@ describe("useClaimMap - distance threshold", () => {
             date: "2026-05-26",
             distance,
             avgPace: 330,
-            completedAt: Timestamp.fromMillis(1716700000_000),
+            completedAt: Timestamp.fromMillis(1779786000_000),
           },
         },
       ]);
@@ -577,7 +637,7 @@ describe("useClaimMap - distance threshold", () => {
             distance: 15000,
             avgPace: 330,
             savedAnyway: true,
-            completedAt: Timestamp.fromMillis(1716700000_000),
+            completedAt: Timestamp.fromMillis(1779786000_000),
           },
         },
       ]);
@@ -631,7 +691,7 @@ describe("useClaimMap - quality bucket honours userOverride", () => {
             date: "2026-05-26",
             distance: 6000,
             avgPace,
-            completedAt: Timestamp.fromMillis(1716700000_000),
+            completedAt: Timestamp.fromMillis(1779786000_000),
           },
         },
       ]);
@@ -741,7 +801,7 @@ describe("useClaimMap - quality bucket honours userOverride", () => {
             avgPace: EASY_PACE,
             activityType: "tempo",
             actualTemplateId: "tempo_20",
-            completedAt: Timestamp.fromMillis(1716700000_000),
+            completedAt: Timestamp.fromMillis(1779786000_000),
           },
         },
       ]);

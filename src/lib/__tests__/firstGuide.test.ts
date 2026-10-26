@@ -8,6 +8,8 @@ import {
   hintDue,
   hintSeenKey,
   rowStop,
+  foodStopBody,
+  todayAbout,
   todayCard,
   todayCardTarget,
   walkOffered,
@@ -16,6 +18,8 @@ import {
 } from "../firstGuide";
 import type { TodaySession } from "../todaySession";
 import type { WorkoutDay } from "@/features/program/programTypes";
+import { cardSessionMinutes } from "@/features/program/expressSession";
+import { group } from "@/test/localeGrouping";
 
 const workout = {
   name: "Full Body Circuit A",
@@ -153,6 +157,132 @@ describe("walkStops", () => {
   });
 });
 
+/* FV3: the walk talks about this person's plan. Today's stop names the
+   session as its card does, and Food's gives today's target. */
+describe("today's stop names this person's session", () => {
+  const day = {
+    dayName: "Full Body — Squat Focus",
+    exercises: [
+      { exerciseId: "back-squat", name: "Back Squat", sets: 3, reps: 5 },
+      { exerciseId: "bench-press", name: "Bench Press", sets: 3, reps: 8 },
+      { exerciseId: "barbell-row", name: "Barbell Row", sets: 3, reps: 8 },
+    ],
+  } as unknown as WorkoutDay;
+  const liftDay: TodaySession = {
+    ...sessions.lift,
+    lift: { ...sessions.lift.lift!, workout: day, name: "Full Body A" },
+  };
+  const minutes = cardSessionMinutes(day.exercises, {});
+
+  it("names a lift, its size, its minutes and its first exercise", () => {
+    const about = todayAbout(liftDay);
+    expect(about).toEqual({
+      kind: "lift",
+      name: "Full Body A",
+      exercises: 3,
+      minutes,
+      first: "Back Squat",
+    });
+    const stop = walkStops({ today: "lift", firstWeekItems: 0, about })[0];
+    expect(stop.title).toBe("Today’s workout");
+    expect(stop.body).toBe(
+      `Full Body A: 3 exercises, about ${minutes} min, starting with Back Squat. Start takes you through it set by set. Not training today? It stays here until it’s done.`
+    );
+  });
+
+  it("names a new lifter's first workout the same way", () => {
+    const about = todayAbout({
+      ...sessions["first-workout"],
+      rest: {
+        kind: "first-workout",
+        workout: day,
+        index: 0,
+        name: "Full Body A",
+      },
+    });
+    const stop = walkStops({
+      today: "first-workout",
+      firstWeekItems: 0,
+      about,
+    })[0];
+    expect(stop.body).toMatch(
+      /^Full Body A: 3 exercises, about \d+ min, starting with Back Squat\. Start takes you through it set by set, whenever suits you\./
+    );
+  });
+
+  it("leaves the minutes out when the card shows none", () => {
+    const unpriced = {
+      ...day,
+      exercises: [{ exerciseId: "plank", name: "Plank" }, ...day.exercises],
+    } as unknown as WorkoutDay;
+    const about = todayAbout({
+      ...liftDay,
+      lift: { ...liftDay.lift!, workout: unpriced },
+    });
+    expect(about).toMatchObject({ minutes: null, first: "Plank" });
+    expect(
+      walkStops({ today: "lift", firstWeekItems: 0, about })[0].body
+    ).toMatch(/^Full Body A: 4 exercises, starting with Plank\. /);
+  });
+
+  it("names a run and its dose", () => {
+    const about = todayAbout({
+      ...sessions.run,
+      run: { ...sessions.run.run!, name: "Easy 40", dose: "40 min" },
+    });
+    expect(about).toEqual({ kind: "run", name: "Easy 40", dose: "40 min" });
+    expect(walkStops({ today: "run", firstWeekItems: 0, about })[0].body).toBe(
+      "Easy 40: 40 min. Start opens the run screen, which records the distance, pace and splits as you go."
+    );
+  });
+
+  it("names a rest day's next session", () => {
+    const about = todayAbout({
+      ...sessions.rest,
+      rest: {
+        kind: "rest",
+        tomorrow: { label: "Pull B", target: "/program?day=1" },
+      },
+    });
+    expect(walkStops({ today: "rest", firstWeekItems: 0, about })[0].body).toBe(
+      "Your next session, Pull B, shows here tomorrow, with Start to begin it."
+    );
+  });
+
+  it("keeps the card's own words when there is nothing to name", () => {
+    // A free run, a run day with nothing written, a rest day before another.
+    expect(todayAbout(sessions["free-run"])).toBeNull();
+    expect(todayAbout(sessions.run)).toBeNull();
+    expect(todayAbout(sessions.rest)).toBeNull();
+    expect(todayAbout(sessions["first-meal"])).toBeNull();
+    // An empty workout has no first exercise to name.
+    expect(todayAbout(sessions.lift)).toBeNull();
+    expect(walkStops({ today: "rest", firstWeekItems: 0 })[0].body).toBe(
+      "Your next session shows here on its day, with Start to begin it."
+    );
+  });
+
+  it("never puts one card's session on another card's stop", () => {
+    const about = todayAbout(liftDay);
+    expect(walkStops({ today: "run", firstWeekItems: 0, about })[0].body).toBe(
+      walkStops({ today: "run", firstWeekItems: 0 })[0].body
+    );
+  });
+
+  it("gives today's calorie target on the Food stop", () => {
+    const body = walkStops({
+      today: null,
+      firstWeekItems: 0,
+      calories: 2449.6,
+    })[0].body;
+    expect(body).toBe(
+      `Log what you eat here, by typing it or scanning it. Today’s target is ${group(2450)} kcal, and it already counts your training, so there’s nothing to eat back.`
+    );
+    expect(foodStopBody(null)).toBe(FOOD_STOP_BODY);
+    expect(foodStopBody(0)).toBe(FOOD_STOP_BODY);
+  });
+});
+
 describe("rowStop", () => {
   it("points the workout row at today's lift card when it is there", () => {
     expect(rowStop("workout", "lift")?.target).toBe("today-lift");
@@ -251,6 +381,23 @@ describe("the guide's words", () => {
   const every = [
     ...(Object.keys(sessions) as TodayCard[]).flatMap((card) =>
       walkStops({ today: card, firstWeekItems: 4 })
+    ),
+    ...(
+      [
+        {
+          kind: "lift",
+          name: "Pull B",
+          exercises: 5,
+          minutes: 50,
+          first: "Pull-up",
+        },
+        { kind: "run", name: "Easy 40", dose: "40 min" },
+        { kind: "rest", next: "Pull B" },
+      ] as const
+    ).flatMap((about) =>
+      (Object.keys(sessions) as TodayCard[]).flatMap((card) =>
+        walkStops({ today: card, firstWeekItems: 4, about, calories: 2450 })
+      )
     ),
     ...(["workout", "run"] as const).flatMap((item) =>
       (["lift", "run", "free-run", "first-workout"] as TodayCard[])
