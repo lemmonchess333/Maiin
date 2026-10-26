@@ -186,18 +186,19 @@
    always wins. index.css also excludes `.ds-input` from its
    global selector belt-and-braces.
 
-   The edge is the shared control boundary, muted-foreground at 80%
-   (FIELD_EDGE in buttonClasses.ts): the field fills with the card, so on
-   a card its edge is all that marks the box, and the `--border` hairline
-   measured 1.1–1.3:1 there. This measures 3:1 or more on the card, the
-   muted tile and the page in both themes (controlBoundaries.test.ts). */
+   The resting fill and edge are theme tokens (tokens.css, "Input
+   states"). Light: a card-white box with the shared control boundary,
+   muted-foreground at 80%, as its edge, 3:1 or more on the card and the
+   page. Dark: a filled box on the raised --muted with the --border
+   hairline, so no field wears a bright outline; its label or placeholder
+   names it. controlBoundaries.test.ts measures both. */
 input.ds-input,
 textarea.ds-input,
 select.ds-input {
   min-height: 3rem;
   border-radius: 0.875rem;
-  border: 1px solid hsl(var(--muted-foreground) / 0.8);
-  background: hsl(var(--card));
+  border: 1px solid var(--ds-color-input-border-rest);
+  background: var(--ds-color-input-fill-rest);
   color: hsl(var(--foreground));
   box-shadow: var(--ds-shadow-input-rest);
   transition:
@@ -275,7 +276,7 @@ select.ds-input:focus {
    `:focus-visible` outline (0,1,0). */
 .ds-input.ds-input-pointer-focus:focus {
   outline: none;
-  border-color: hsl(var(--muted-foreground) / 0.8);
+  border-color: var(--ds-color-input-border-rest);
   box-shadow: var(--ds-shadow-input-rest);
 }
 

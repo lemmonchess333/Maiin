@@ -79,6 +79,10 @@
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-border: hsl(var(--border));
+  /* The selected segment of a SegmentedControl: a filled grey pill under
+     a white label, iOS's dark-mode segmented control. Definitions in
+     :root + .dark below. */
+  --color-segment-selected: hsl(var(--segment-selected));
   /* Semantic status colours — exposed to Tailwind so classes like
      bg-destructive, text-destructive, bg-destructive/10,
      text-destructive-foreground, text-success, bg-warning-bg
@@ -261,6 +265,12 @@
      de-emphasis is the type scale's job, not alpha's. Pinned by
      tokenContrast.test.ts across both themes. */
   --muted-foreground: 240 3.8% 43%;
+  /* The selected segment's fill, under a white label. One grey for both
+     themes, like the sport -fill steps: white on it is 4.83:1 whatever
+     the theme, and it clears 3:1 against the track in both (4.55:1 on
+     this --muted, 3.31:1 on the dark one, the tighter of the two).
+     Pinned by controlBoundaries.test.ts. */
+  --segment-selected: 240 4% 46%; /* #71717A */
   --border: 240 6% 88%; /* DS2: a hair stronger so hairlines register on the lighter canvas */
   --radius: 0.625rem; /* DS2: 8→10px base (premium radius curve) */
   --input-fill: 240 6% 95.5%; /* DS2: lighter than the deepened page so fields stay distinct */
@@ -360,6 +370,8 @@
   /* Raised: a chip, a track, a tile inside a card. */
   --muted: 240 8% 14.1%; /* #212127 */
   --muted-foreground: 240 5% 65%; /* #A1A1AA */
+  /* IDENTICAL to :root — a fill under white text is theme-independent. */
+  --segment-selected: 240 4% 46%; /* #71717A */
   --border: 240 6% 17%; /* #29292E */
   --input-fill: 240 7% 12.5%; /* #1E1E22 */
   --glass-bg: rgba(18, 18, 22, 0.97);
