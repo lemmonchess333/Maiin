@@ -368,7 +368,10 @@ export default function NutritionSection({
                 label: (
                   <span className="flex flex-col items-center leading-tight">
                     <span>{r.label}</span>{" "}
-                    <span className="text-caption font-normal text-muted-foreground font-mono tabular-nums mt-0.5">
+                    {/* The rate takes the option's own colour, so it is
+                        white on the selected fill; its size and weight
+                        make it the second line. */}
+                    <span className="text-caption font-normal font-mono tabular-nums mt-0.5">
                       {weightUnit === "lbs" ? displayRate(r.value) : r.value}{" "}
                       {weightLabel}/wk
                     </span>

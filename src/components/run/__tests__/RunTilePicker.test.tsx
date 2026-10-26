@@ -71,4 +71,11 @@ describe("RunTilePicker", () => {
     fireEvent.click(screen.getByRole("button", { name: /Back/i }));
     expect(onBack).toHaveBeenCalledTimes(1);
   });
+
+  it("starts the tiles at the top, under the heading, not centred", () => {
+    setup();
+    const column = screen.getByText("Tempo run").closest("div.flex-col.gap-3");
+    expect(column).not.toBeNull();
+    expect(column).not.toHaveClass("justify-center");
+  });
 });

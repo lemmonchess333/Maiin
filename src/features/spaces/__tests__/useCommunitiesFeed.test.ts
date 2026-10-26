@@ -1,5 +1,5 @@
 /**
- * useCommunitiesFeed — Feed → "My communities" (SOC-P3a): the posts of
+ * useCommunitiesFeed — Feed → "Spaces" (SOC-P3a): the posts of
  * the spaces you joined, in one stream, newest first.
  *
  * On the one Firestore fake (ADR-0009). Posts are seeded as

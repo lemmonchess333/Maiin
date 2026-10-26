@@ -99,14 +99,41 @@ describe("HeartRateZonesSection", () => {
     /* It said "Live heart rate streams in the app during runs (Apple
        Watch / HealthKit)", and no heart-rate source exists on any
        platform (heartRateSource.ts). */
+    /* The line under the max says it, once. A footer under the zones,
+       "Zones come from your age, or from the max heart rate you enter.",
+       said the same thing again and went. */
     renderSection();
     expect(
       screen.getByText(
-        "Zones come from your age, or from the max heart rate you enter."
+        "Estimated from your age. Set your max for closer zones."
       )
     ).toBeInTheDocument();
+    expect(screen.queryByText(/^Zones come from/)).toBeNull();
     const text = document.body.textContent ?? "";
     expect(text).not.toMatch(/live heart rate|streams|apple watch|healthkit/i);
+  });
+
+  /* Heart-rate zones are running physiology on the run plan page, so its
+     buttons take the run coral, as "Save fitness" above them does. They
+     were the purple brand button, "Set max HR" at the 36px small size. */
+  /* "Set" beside the estimated max was bare ghost text at 36px, which
+     read as a label. It is a real button at the 44px size. */
+  it("offers Set as a secondary button at full size", () => {
+    renderSection();
+    const set = screen.getByRole("button", { name: "Set" });
+    expect(set.className).toContain("min-h-[44px]");
+    expect(set.className).toContain("bg-muted");
+  });
+
+  it("draws Set max HR and its Save in the run coral at full size", () => {
+    mockHeartRate.maxHr = 0;
+    renderSection();
+    const set = screen.getByRole("button", { name: "Set max HR" });
+    expect(set.className).toContain("bg-running-fill");
+    expect(set.className).toContain("min-h-[44px]");
+    fireEvent.click(set);
+    const save = screen.getByRole("button", { name: "Save max HR" });
+    expect(save.className).toContain("bg-running-fill");
   });
 
   it("surfaces a failed save instead of pretending it worked", async () => {

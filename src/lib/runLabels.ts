@@ -294,7 +294,7 @@ export function noSplitsReason(
   if (!hasRoute) return "No GPS route";
   const lapM = lapUnit === "mi" ? METRES_PER_MILE : 1000;
   if (distanceM < lapM) return lapUnit === "mi" ? "Under a mile" : "Under 1 km";
-  return "No splits yet";
+  return "No splits for this run";
 }
 
 /**

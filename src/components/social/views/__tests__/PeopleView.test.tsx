@@ -14,7 +14,12 @@ vi.mock("@/lib/firebase", () => ({ db: {}, auth: { currentUser: null } }));
 vi.mock("@/lib/auth", () => ({ useUid: () => "me" }));
 
 const H = vi.hoisted(() => ({
-  people: [] as { uid: string; displayName: string; reason: string }[],
+  people: [] as {
+    uid: string;
+    displayName: string;
+    reason: string;
+    sharedSpaceId?: string;
+  }[],
   loading: false,
   activeArgs: [] as boolean[],
   spacesReady: true,
@@ -112,11 +117,24 @@ it("asks someone in no space to join one, and someone in a space where suggestio
   ).toBeInTheDocument();
 });
 
-it("lists suggestions with their reason once they arrive", () => {
-  H.people = [{ uid: "priya", displayName: "Priya", reason: "recent_post" }];
+it("lists suggestions with their reason once they arrive, and no line where there is none", () => {
+  H.people = [
+    {
+      uid: "priya",
+      displayName: "Priya",
+      reason: "shared_space",
+      sharedSpaceId: "womens-running",
+    },
+    { uid: "tom", displayName: "Tom", reason: "recent_post" },
+  ];
   renderPeople(true);
   expect(screen.getByText("Priya")).toBeInTheDocument();
-  expect(screen.getByText("Recent post")).toBeInTheDocument();
+  expect(screen.getByText("Also in Women's Running")).toBeInTheDocument();
+  // A recent poster is listed with no reason under the name: "Recent
+  // post" stood under every such name and said nothing.
+  const tom = screen.getByText("Tom");
+  expect(tom.parentElement?.nextElementSibling).toBeNull();
+  expect(screen.queryByText("Recent post")).toBeNull();
   expect(
     screen.getByRole("button", { name: "Refresh suggestions" })
   ).toBeInTheDocument();

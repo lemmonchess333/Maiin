@@ -23,13 +23,15 @@ vi.mock("@/components/social/ActivityCard", () => ({
   default: ({
     feedItem,
     openComments,
+    allExercises,
   }: {
     feedItem: { summary: string; liked?: boolean };
     openComments?: boolean;
+    allExercises?: boolean;
   }) => (
     <article data-testid="post">
       {feedItem.summary} · liked {String(!!feedItem.liked)} · comments{" "}
-      {String(!!openComments)}
+      {String(!!openComments)} · every exercise {String(!!allExercises)}
     </article>
   ),
 }));
@@ -81,6 +83,14 @@ describe("the post a notice opens", () => {
     renderAt("/activity/a1");
     expect(await screen.findByTestId("post")).toHaveTextContent(
       "Easy 5 km · liked true · comments false"
+    );
+  });
+
+  it("lists every exercise, where a feed card's '+N more' leads", async () => {
+    seedFirestore({ "activities/a1": POST });
+    renderAt("/activity/a1");
+    expect(await screen.findByTestId("post")).toHaveTextContent(
+      "every exercise true"
     );
   });
 

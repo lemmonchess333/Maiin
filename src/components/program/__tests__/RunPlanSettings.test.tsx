@@ -5,6 +5,7 @@ import {
   fireEvent,
   waitFor,
   act,
+  within,
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import RunPlanSettings from "../RunPlanSettings";
@@ -173,6 +174,30 @@ function firstUpcomingRace() {
   return races[0];
 }
 
+/** Open the race picker on `race`'s distance, every country shown. The
+ *  picker has no Distance filter of its own: the goal's Distance, chosen
+ *  first, narrows it. */
+function openPickerFor(race: ReturnType<typeof firstUpcomingRace>) {
+  const goalDistance = {
+    "5k": "5K",
+    "10k": "10K",
+    half: "Half",
+    marathon: "Full",
+  }[race.event!.distance as "5k" | "10k" | "half" | "marathon"];
+  fireEvent.click(
+    within(screen.getByRole("radiogroup", { name: "Race distance" })).getByRole(
+      "radio",
+      { name: goalDistance }
+    )
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: /Choose an upcoming race/i })
+  );
+  fireEvent.change(screen.getByLabelText("Country"), {
+    target: { value: "all" },
+  });
+}
+
 describe("RunPlanSettings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -191,7 +216,9 @@ describe("RunPlanSettings", () => {
       weeklyRunDaysTarget: 1,
       weeklyRunsTarget: 1,
     } as unknown as UserProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     const less = screen.getByRole("button", { name: /Decrease run days/i });
     expect(less).toBeDisabled();
     expect(less.parentElement).toHaveTextContent("2");
@@ -243,7 +270,9 @@ describe("RunPlanSettings", () => {
       runFrequency,
       onboardingCompletedAt: { toMillis: () => setUp.getTime() },
     } as unknown as UserProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     fireEvent.click(screen.getByRole("radio", { name: "Half" }));
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: localDateString(addLocalDays(new Date(), 70)) },
@@ -357,9 +386,79 @@ describe("RunPlanSettings", () => {
     expect(sentPayload().profileUpdates.runningBaseline).toBeNull();
   });
 
+  /* Run9a retired the mode the person manages: the page asks whether there
+     is a race, on the same coral segmented control as Distance, where two
+     cards named the stored modes ("Freeform", "Race prep") and the chosen
+     one wore a hand-mixed coral wash. */
+  it("asks whether there is a race on a coral segmented control", () => {
+    renderPage(baseProfile);
+    const group = screen.getByRole("radiogroup", { name: "Race goal" });
+    const noRace = screen.getByRole("radio", { name: "No race" });
+    expect(group).toContainElement(noRace);
+    expect(noRace).toHaveAttribute("aria-checked", "true");
+    expect(noRace.className).toContain("bg-running-fill");
+    expect(screen.queryByText("Freeform")).not.toBeInTheDocument();
+    expect(screen.queryByText("Race prep")).not.toBeInTheDocument();
+  });
+
+  it("draws the plan's two knobs in the running colour, as Distance is", () => {
+    renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: "Training for a race" }));
+    for (const name of ["Long-run volume", "Plan intensity"]) {
+      const group = screen.getByRole("radiogroup", { name });
+      const selected = Array.from(
+        group.querySelectorAll('[aria-checked="true"]')
+      );
+      expect(selected).toHaveLength(1);
+      expect(selected[0].className, name).toContain("bg-running-fill");
+    }
+  });
+
+  /* One heading tier for the page. Its groups opened three ways: a 16px
+     bold heading, a 14px medium label ("Goal time", "Run days / week",
+     "Long-run volume") and a 12px caption ("Distance"), and two of them
+     sat in cards of their own while the rest sat bare. Every group now
+     opens with the compact SectionHeading and none is boxed. */
+  it("opens every race-prep group with the compact section heading", () => {
+    renderPage({ ...baseProfile, weeklyWorkoutsTarget: 3 } as UserProfile);
+    fireEvent.click(screen.getByRole("radio", { name: "Training for a race" }));
+    for (const name of [
+      "Race goal",
+      "Distance",
+      "Race name (optional)",
+      "Target date",
+      "Goal time (optional)",
+      "Run days / week",
+      "Time for running",
+      "Your running starting point",
+      "Long-run volume",
+      "Intensity",
+      "Lighten leg sessions while your runs build",
+    ]) {
+      const heading = screen.getByRole("heading", { name });
+      expect(heading.className, name).toContain("text-base font-bold");
+      expect(heading.closest(".bg-card"), name).toBeNull();
+    }
+  });
+
+  it("keeps each helper line short", () => {
+    renderPage({ ...baseProfile, weeklyWorkoutsTarget: 3 } as UserProfile);
+    fireEvent.click(screen.getByRole("radio", { name: "Training for a race" }));
+    for (const line of [
+      "The longest your runs can be. Race day stays as planned.",
+      "Your recent weekly running, so the plan starts near it.",
+      "How long your longest runs get.",
+      "How much tempo and interval work each week has.",
+      "A third fewer leg sets, at the same weights.",
+    ]) {
+      expect(screen.getByText(line)).toBeInTheDocument();
+      expect(line.length).toBeLessThanOrEqual(60);
+    }
+  });
+
   it("shows only run controls — no lift/nutrition/equipment fields", () => {
     renderPage(baseProfile);
-    expect(screen.getByText("Run mode")).toBeInTheDocument();
+    expect(screen.getByText("Race goal")).toBeInTheDocument();
     expect(screen.queryByText(/Nutrition phase/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Equipment access/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Lift days/i)).not.toBeInTheDocument();
@@ -368,7 +467,9 @@ describe("RunPlanSettings", () => {
   it("reveals the race goal planner only in race prep", () => {
     renderPage(baseProfile);
     expect(screen.queryByText(/Target date/i)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     expect(screen.getByText(/Target date/i)).toBeInTheDocument();
     expect(screen.getByText(/Run days \/ week/i)).toBeInTheDocument();
   });
@@ -380,7 +481,9 @@ describe("RunPlanSettings", () => {
 
   async function saveRaceGoal() {
     const { refreshProfile } = renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
 
@@ -430,7 +533,9 @@ describe("RunPlanSettings", () => {
       weeklyRunsTarget: 2,
     } as unknown as UserProfile;
     renderPage(profile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
     // 2 → 4 via the stepper.
@@ -463,7 +568,9 @@ describe("RunPlanSettings", () => {
 
   it("RUN-EV-02: preview ≡ commit — the committed weekSchedule IS the planner's derivation", async () => {
     renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
     fireEvent.click(
@@ -530,12 +637,14 @@ describe("RunPlanSettings", () => {
 
   it("RACE-EVENT-IDENTITY-01: saving with an event name includes it in the raceGoal", async () => {
     renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
 
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
     const name = screen.getByLabelText(
-      /Event name \(optional\)/i
+      /Race name \(optional\)/i
     ) as HTMLInputElement;
     // Trailing whitespace pins the .trim() on save.
     fireEvent.change(name, { target: { value: "  London Marathon 2027  " } });
@@ -553,15 +662,19 @@ describe("RunPlanSettings", () => {
 
   it("D14: shows the Pgm6 tuning knobs in race prep and persists them on save", async () => {
     renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
 
     expect(screen.getByText("Long-run volume")).toBeInTheDocument();
     expect(screen.getByText("Intensity")).toBeInTheDocument();
     // Pgm6's knob scales the race's own peak (runScheduler's
-    // LIGHTER_PEAK_FACTOR, 0.75): Lighter no longer means 10K.
+    // LIGHTER_PEAK_FACTOR, 0.75): Lighter no longer means 10K. The helper
+    // is one short line now, saying what the knob moves and no amount; the
+    // segment's own words carry the direction.
     expect(screen.queryByText(/caps them at 10K/)).not.toBeInTheDocument();
     expect(
-      screen.getByText(/Lighter peaks about a quarter lower/)
+      screen.getByText("How long your longest runs get.")
     ).toBeInTheDocument();
 
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
@@ -582,7 +695,9 @@ describe("RunPlanSettings", () => {
 
   it("Lift4 (10): asks a lifter about the legs while the runs build, and saves the answer with the plan", async () => {
     renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     const legTrim = screen.getByRole("switch", {
       name: "Lighten leg sessions while your runs build",
     });
@@ -621,7 +736,9 @@ describe("RunPlanSettings", () => {
 
   it("Lift4 (10): not asked of someone who doesn't lift", () => {
     renderPage({ ...baseProfile, weeklyWorkoutsTarget: 0 } as UserProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     expect(
       screen.queryByRole("switch", {
         name: "Lighten leg sessions while your runs build",
@@ -644,7 +761,7 @@ describe("RunPlanSettings", () => {
       raceGoal: { distance: "marathon", targetDate: RACE_TARGET_DATE },
     } as unknown as UserProfile;
     renderPage(raceProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Freeform/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /No race/i }));
     fireEvent.click(await screen.findByRole("button", { name: /Save/i }));
     await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
     const payload = sentPayload();
@@ -670,7 +787,9 @@ describe("RunPlanSettings", () => {
       },
     } as unknown as UserProfile;
     renderPage(profile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
     const time = screen.getByLabelText(/Goal time \(optional\)/i);
@@ -692,7 +811,9 @@ describe("RunPlanSettings", () => {
 
   it("A2: a malformed goal time blocks the save with a hint; empty stays absent", async () => {
     renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
     const time = screen.getByLabelText(/Goal time \(optional\)/i);
@@ -711,7 +832,9 @@ describe("RunPlanSettings", () => {
     /* A 10K showed a 5K time ("e.g. 24:30") and a half a marathon one
        ("e.g. 3:59:00"). */
     renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     const time = screen.getByLabelText(/Goal time \(optional\)/i);
     for (const [distance, example] of [
       ["5K", "24:30"],
@@ -733,7 +856,9 @@ describe("RunPlanSettings", () => {
        covered only the DATE — leaving a filled, enabled "Save run plan"
        that silently did nothing. */
     renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: RACE_TARGET_DATE },
     });
@@ -753,7 +878,9 @@ describe("RunPlanSettings", () => {
        something is wrong but never WHERE — and on a phone the offending
        field is usually scrolled off screen. */
     renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: RACE_TARGET_DATE },
     });
@@ -769,7 +896,9 @@ describe("RunPlanSettings", () => {
   it("a valid draft still saves — the counterweight", async () => {
     // A button wired to refuse everything would pass both tests above.
     renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: RACE_TARGET_DATE },
     });
@@ -868,7 +997,9 @@ describe("RunPlanSettings", () => {
          programme. Its label and focus move are the behaviour the long
          comment above `invalid` keeps. */
       renderPage(baseProfile, "/settings/run-plan", { readiness: "pending" });
-      fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+      fireEvent.click(
+        screen.getByRole("radio", { name: /Training for a race/i })
+      );
       fireEvent.change(screen.getByLabelText(/Target date/i), {
         target: { value: RACE_TARGET_DATE },
       });
@@ -890,25 +1021,29 @@ describe("RunPlanSettings", () => {
        re-rendering IS that journey — the draft lives in component state,
        so nothing else distinguishes a remount from a return. */
     const { unmount } = renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: RACE_TARGET_DATE },
     });
-    fireEvent.change(screen.getByLabelText(/Event name/i), {
+    fireEvent.change(screen.getByLabelText(/Race name/i), {
       target: { value: "Brighton" },
     });
     unmount();
 
     renderPage(baseProfile);
     expect(screen.getByLabelText(/Target date/i)).toHaveValue(RACE_TARGET_DATE);
-    expect(screen.getByLabelText(/Event name/i)).toHaveValue("Brighton");
+    expect(screen.getByLabelText(/Race name/i)).toHaveValue("Brighton");
   });
 
   it("a half-typed goal time survives too", async () => {
     // The invalid draft is exactly the one worth keeping: it is the edit
     // the user has not finished.
     const { unmount } = renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: RACE_TARGET_DATE },
     });
@@ -927,8 +1062,10 @@ describe("RunPlanSettings", () => {
        restoring one would reinstate a change the user had already backed
        out of. */
     const { unmount } = renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
-    fireEvent.click(screen.getByRole("radio", { name: /Freeform/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
+    fireEvent.click(screen.getByRole("radio", { name: /No race/i }));
     unmount();
 
     renderPage(baseProfile);
@@ -938,7 +1075,9 @@ describe("RunPlanSettings", () => {
 
   it("a saved plan clears the draft", async () => {
     const { unmount } = renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: RACE_TARGET_DATE },
     });
@@ -959,7 +1098,9 @@ describe("RunPlanSettings", () => {
        a specific event. Restoring an older half-finished goal over it
        would answer a question the user did not ask. */
     const { unmount } = renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    );
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: RACE_TARGET_DATE },
     });
@@ -988,15 +1129,14 @@ describe("RunPlanSettings", () => {
       }&eventName=${encodeURIComponent(race.name)}&spaceId=${race.id}`
     );
 
-    expect(screen.getByRole("radio", { name: /Race prep/i })).toHaveAttribute(
-      "aria-checked",
-      "true"
-    );
+    expect(
+      screen.getByRole("radio", { name: /Training for a race/i })
+    ).toHaveAttribute("aria-checked", "true");
     expect(
       (screen.getByLabelText(/Target date/i) as HTMLInputElement).value
     ).toBe(race.event!.dateKey);
     expect(
-      (screen.getByLabelText(/Event name/i) as HTMLInputElement).value
+      (screen.getByLabelText(/Race name/i) as HTMLInputElement).value
     ).toBe(race.name);
 
     fireEvent.click(
@@ -1016,7 +1156,7 @@ describe("RunPlanSettings", () => {
       baseProfile,
       "/settings/run-plan?distance=half&date=2020-01-01&spaceId=the-big-half"
     );
-    expect(screen.getByRole("radio", { name: /Freeform/i })).toHaveAttribute(
+    expect(screen.getByRole("radio", { name: /No race/i })).toHaveAttribute(
       "aria-checked",
       "true"
     );
@@ -1025,17 +1165,11 @@ describe("RunPlanSettings", () => {
   it("Door 2: picking a catalogue race prefills the draft and saves the binding", async () => {
     const race = firstUpcomingRace();
     renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
-
     fireEvent.click(
-      screen.getByRole("button", { name: /Choose an upcoming race/i })
+      screen.getByRole("radio", { name: /Training for a race/i })
     );
-    fireEvent.change(screen.getByLabelText("Country"), {
-      target: { value: "all" },
-    });
-    fireEvent.change(screen.getByLabelText("Distance"), {
-      target: { value: "all" },
-    });
+
+    openPickerFor(race);
     fireEvent.click(
       screen.getByRole("option", { name: new RegExp(race.name) })
     );
@@ -1044,7 +1178,7 @@ describe("RunPlanSettings", () => {
       (screen.getByLabelText(/Target date/i) as HTMLInputElement).value
     ).toBe(race.event!.dateKey);
     expect(
-      (screen.getByLabelText(/Event name/i) as HTMLInputElement).value
+      (screen.getByLabelText(/Race name/i) as HTMLInputElement).value
     ).toBe(race.name);
 
     fireEvent.click(
@@ -1059,16 +1193,10 @@ describe("RunPlanSettings", () => {
   it("a manual date edit after picking clears the eventSpaceId binding", async () => {
     const race = firstUpcomingRace();
     renderPage(baseProfile);
-    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     fireEvent.click(
-      screen.getByRole("button", { name: /Choose an upcoming race/i })
+      screen.getByRole("radio", { name: /Training for a race/i })
     );
-    fireEvent.change(screen.getByLabelText("Country"), {
-      target: { value: "all" },
-    });
-    fireEvent.change(screen.getByLabelText("Distance"), {
-      target: { value: "all" },
-    });
+    openPickerFor(race);
     fireEvent.click(
       screen.getByRole("option", { name: new RegExp(race.name) })
     );

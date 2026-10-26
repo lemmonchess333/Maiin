@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   liftPost,
+  liftPostExerciseCount,
   liftPostPreview,
+  liftPostRowDone,
   liftPostRows,
   postedExercises,
   type LiftForPost,
@@ -191,6 +193,143 @@ describe("liftPostRows — every post in the feed", () => {
   });
 });
 
+/* An exercise with no set done stays off every surface that reads a lift
+   post: the rows, the count, the lead drawing and "Save as routine". Posts
+   written now never list one; a post shared from a saved workout before
+   `liftPost` listed every exercise in the workout, and counted it. */
+describe("an exercise with no set done", () => {
+  /* What WorkoutFeedShareSheet wrote for a Pull day whose T-Bar Row was
+     skipped: the saved workout keeps the exercise with no sets, and the
+     post took every exercise and the workout's whole count. */
+  const sharedBefore = {
+    exerciseCount: 4,
+    exercises: [
+      { name: "Lat Pulldown", sets: 2, reps: 8, weightKg: 42.5 },
+      { name: "Seated Cable Row", sets: 2, reps: 10, weightKg: 40 },
+      { name: "T-Bar Row", sets: 0, reps: 0, weightKg: 0 },
+      { name: "Face Pull", sets: 2, reps: 15, weightKg: 15 },
+    ],
+  };
+
+  it("is left off the rows of an older post, never drawn as a dash", () => {
+    const rows = liftPostRows(sharedBefore.exercises);
+    expect(rows.map((row) => row.name)).toEqual([
+      "Lat Pulldown",
+      "Seated Cable Row",
+      "Face Pull",
+    ]);
+    expect(rows.map((row) => row.summary)).toEqual([
+      "2×8×42.5 kg",
+      "2×10×40 kg",
+      "2×15×15 kg",
+    ]);
+  });
+
+  it("is left out of the post's count", () => {
+    expect(liftPostExerciseCount(sharedBefore)).toBe(3);
+  });
+
+  it("is left off in every shape a post can carry it", () => {
+    const rows = liftPostRows([
+      { name: "Bench Press", setCount: 0, targetReps: 0, targetWeightKg: 0 },
+      { name: "Dips", summary: "—" },
+      { name: "Push-Ups", setCount: 3, targetReps: 12, targetWeightKg: 0 },
+    ]);
+    expect(rows.map((row) => row.name)).toEqual(["Push-Ups"]);
+    expect(liftPostRowDone({ name: "Dips", summary: " — " })).toBe(false);
+    expect(
+      liftPostRowDone({ name: "Row", sets: 0, reps: 8, weightKg: 40 })
+    ).toBe(false);
+    // A row that says nothing either way is drawn, as the oldest are.
+    expect(liftPostRowDone({ name: "Row" })).toBe(true);
+    expect(liftPostRowDone({ name: "Squat", summary: "5 x 5 100kg" })).toBe(
+      true
+    );
+  });
+
+  it("is passed over for the lead drawing", () => {
+    expect(
+      liftPostLeadArt([
+        {
+          name: "Bench Press",
+          exerciseId: "bench-press",
+          sets: 0,
+          reps: 0,
+          weightKg: 0,
+        },
+        {
+          name: "Barbell Squat",
+          exerciseId: "squat",
+          sets: 3,
+          reps: 5,
+          weightKg: 80,
+        },
+      ])?.src
+    ).toBe("form-art/squat.webp");
+  });
+
+  it("is never on a post written now, whose count is the rows'", () => {
+    const post = liftPost(AUTHOR, LIFT, { visibility: "public" });
+    expect(liftPostExerciseCount(post)).toBe(2);
+    expect(liftPostRows(post.exercises)).toHaveLength(2);
+  });
+});
+
+describe("liftPostExerciseCount", () => {
+  it("keeps the oldest posts' count, which held three rows of more", () => {
+    expect(
+      liftPostExerciseCount({
+        exerciseCount: 6,
+        exercises: [
+          { name: "Romanian Deadlift", summary: "3 x 8 60kg" },
+          { name: "Back Squat", summary: "5 x 5 100kg" },
+          { name: "Walking Lunge", summary: "3 x 12 BW" },
+          { name: "Leg Curl", summary: "—" },
+        ],
+      })
+    ).toBe(5);
+  });
+
+  it("is the rows of a post whose rows carry figures, which holds them all", () => {
+    // The post's page lists these rows, so the card's count is theirs.
+    expect(
+      liftPostExerciseCount({
+        exerciseCount: 5,
+        exercises: [
+          {
+            name: "Bench Press",
+            setCount: 4,
+            targetReps: 8,
+            targetWeightKg: 65,
+          },
+          {
+            name: "Overhead Press",
+            setCount: 3,
+            targetReps: 10,
+            targetWeightKg: 40,
+          },
+          { name: "Dips", setCount: 0, targetReps: 0, targetWeightKg: 0 },
+        ],
+      })
+    ).toBe(2);
+  });
+
+  it("is never fewer than the rows drawn, and reads a post with neither", () => {
+    expect(
+      liftPostExerciseCount({
+        exercises: [
+          { name: "Squat", setCount: 3, targetReps: 5, targetWeightKg: 80 },
+        ],
+      })
+    ).toBe(1);
+    expect(liftPostExerciseCount({ exerciseCount: 2 })).toBe(2);
+    expect(liftPostExerciseCount({})).toBe(0);
+    expect(liftPostExerciseCount({ exerciseCount: "4", exercises: "x" })).toBe(
+      0
+    );
+  });
+});
+
 /* Lift18: the post stores kg; who reads it decides the unit. */
 describe("a lift post read in lb", () => {
   it("rows with figures are written in the reader's unit", () => {
@@ -266,4 +405,3 @@ describe("liftPostLeadArt", () => {
     expect(liftPostLeadArt([null, 3, "x"])).toBeNull();
   });
 });
-

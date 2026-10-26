@@ -297,6 +297,34 @@ export function startingWeightForExercise(
 const RACKED: ReadonlySet<string> = new Set(["Dumbbells", "Kettlebell"]);
 
 /**
+ * The first weight for a lift added to a day by hand (Train's Add
+ * exercise), by the rule a built plan's lifts start from
+ * (`seedStartingLoads`): scaled to the person when there is a bodyweight,
+ * and otherwise the estimate for a 60 kg beginner. A barbell lift never
+ * starts under the empty bar, and a bodyweight lift starts at 0. The server
+ * takes the weight as sent and defaults to 0 only when none is.
+ */
+export function addedExerciseWeight(
+  exerciseId: string,
+  ctx: StartingLoadContext | undefined,
+  repUnit?: string
+): number {
+  const exercise = getExerciseById(exerciseId);
+  if (!exercise || BODYWEIGHT_IDS.has(exerciseId)) return 0;
+  const seed = startingWeightForExercise(
+    exerciseId,
+    movementCategoryForExerciseId(exerciseId) ??
+      inferMovementCategory(exercise.name, exercise.id),
+    ctx ?? FIRST_GUESS,
+    undefined,
+    undefined,
+    repUnit
+  );
+  if (seed <= 0) return 0;
+  return exercise.equipment === "Barbell" ? Math.max(seed, BAR_KG) : seed;
+}
+
+/**
  * Safe working load when an exercise identity changes.
  *
  * Same-category loaded swaps preserve earned strength through the variation

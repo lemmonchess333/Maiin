@@ -179,19 +179,21 @@ export function challengeLocalEndMs(
 }
 
 /**
- * The collapsed entry to the not-joined challenges. It used to read
- * "See all challenges · 1 · 20 days left" — a count and a deadline with
- * nothing telling the reader what the number counted. Says what it is:
- * how many more there are, and how soon the nearest one closes.
+ * The collapsed entry to the not-joined challenges: how many more there
+ * are, in plain words. No deadline: the monthly challenges all end on the
+ * same day, and the featured card above already says when.
  */
-export function moreChallengesLabel(
-  count: number,
-  soonest: string | null
-): string {
-  const noun = count === 1 ? "challenge" : "challenges";
-  return `See ${count} more ${noun}${soonest ? ` · ${soonest}` : ""}`;
+export function moreChallengesLabel(count: number): string {
+  return `See ${count} more ${count === 1 ? "challenge" : "challenges"}`;
 }
 
+/**
+ * How long a challenge has left, for the person's own day: "6 days left",
+ * "3 hours left", "40 min left". The units are words or spaced "min",
+ * never "40m" (forty metres, in an app that counts distance). The last
+ * hour counts in minutes and never reads below "1 min left" while the
+ * challenge is live, so it cannot sit on "0 hours left".
+ */
 export function getTimeRemaining(
   endDate: Timestamp | Date,
   now: number = Date.now()
@@ -203,36 +205,9 @@ export function getTimeRemaining(
   const days = Math.floor(ms / 86400000);
   if (days > 1) return `${days} days left`;
   const hours = Math.floor(ms / 3600000);
-  if (hours >= 1) return `${hours}h left`;
-  // Final hour: floor-to-hours read "0h left" for the whole last hour
-  // (probe sweep 2026-08-05, verified) — count minutes instead, never
-  // dropping below "1m left" while the challenge is still live.
+  if (hours >= 1) return hours === 1 ? "1 hour left" : `${hours} hours left`;
   const minutes = Math.max(1, Math.floor(ms / 60000));
-  return `${minutes}m left`;
-}
-
-/**
- * The soonest-ending challenge of a list, by each challenge's LOCAL end
- * instant — null-safe. The previous inline reduce dereferenced
- * `endDate.toDate()` unguarded, but the active list deliberately KEEPS
- * docs with no endDate (lenient for malformed defs), so one malformed doc
- * crashed the whole challenge section (probe sweep 2026-08-05, verified).
- * Docs with no resolvable end simply don't compete for "soonest".
- */
-export function soonestEndingChallenge<
-  T extends { endDate?: Timestamp | Date },
->(list: readonly T[]): T | null {
-  let best: T | null = null;
-  let bestMs = Infinity;
-  for (const c of list) {
-    const endMs = challengeLocalEndMs(c.endDate);
-    if (endMs === null) continue;
-    if (endMs < bestMs) {
-      best = c;
-      bestMs = endMs;
-    }
-  }
-  return best;
+  return `${minutes} min left`;
 }
 
 /** The user's participant doc for each tracked challenge, keyed by
@@ -509,13 +484,15 @@ export function useChallenges() {
     };
   }, [uid, tracked, ownValuesKey, boardsNonce]);
 
+  /** Joins a challenge. Resolves true once the person is in it, so the
+   *  caller can confirm the join; false when nothing changed. */
   const joinChallenge = useCallback(
-    async (challengeId: string) => {
+    async (challengeId: string): Promise<boolean> => {
       const session = sessionRef.current;
-      if (!uid || !session?.active || session.uid !== uid) return;
+      if (!uid || !session?.active || session.uid !== uid) return false;
       if (isRestricted) {
         showRestrictedToast();
-        return;
+        return false;
       }
       try {
         const participantRef = doc(
@@ -531,7 +508,7 @@ export function useChallenges() {
         // rejoin would be wrong anyway. Just resync local state.
         const existingSnap = await getDoc(participantRef);
         if (existingSnap.exists()) {
-          if (!session.active || sessionRef.current !== session) return;
+          if (!session.active || sessionRef.current !== session) return false;
           const data = existingSnap.data();
           setMyProgress((prev) => ({
             ...prev,
@@ -541,7 +518,7 @@ export function useChallenges() {
               joinedAt: (data.joinedAt as Timestamp) ?? Timestamp.now(),
             },
           }));
-          return;
+          return true;
         }
         const profileSnap = await getDoc(doc(db, "users", uid));
         const name = profileSnap.exists()
@@ -550,7 +527,7 @@ export function useChallenges() {
         const photoURL = profileSnap.exists()
           ? ((profileSnap.data().photoURL as string | null | undefined) ?? null)
           : null;
-        if (!session.active || sessionRef.current !== session) return;
+        if (!session.active || sessionRef.current !== session) return false;
         await setDocGuarded(participantRef, {
           currentValue: 0,
           tierAchieved: null,
@@ -558,7 +535,7 @@ export function useChallenges() {
           displayName: name,
           ...(photoURL ? { photoURL } : {}),
         });
-        if (!session.active || sessionRef.current !== session) return;
+        if (!session.active || sessionRef.current !== session) return false;
         // participantCount is maintained server-side by the
         // onChallengeParticipantCreated/Deleted triggers — the parent
         // challenge doc is server-owned (rules deny client writes). The old
@@ -574,10 +551,12 @@ export function useChallenges() {
           },
         }));
         trackSocialEvent("challenge_joined", { challengeId });
+        return true;
       } catch (error) {
-        if (!session.active || sessionRef.current !== session) return;
+        if (!session.active || sessionRef.current !== session) return false;
         logger.error("[Challenges] Join failed:", error);
         toast.error("Couldn't join the challenge. Try again.");
+        return false;
       }
     },
     [uid, isRestricted, setMyProgress]

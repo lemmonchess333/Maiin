@@ -312,8 +312,8 @@ function ShareRow({ action }: { action: SessionShareAction }) {
               Share sessions automatically?
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Applies to {appliesTo} from now on. Change it any time in Settings
-              → Social & privacy.
+              Applies to {appliesTo} from now on. Change it any time in
+              Settings, under Social & privacy.
             </p>
           </div>
           <div className="space-y-2">

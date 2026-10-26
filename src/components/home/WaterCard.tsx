@@ -343,12 +343,19 @@ export default function WaterCard({
             for this serving, and the size sheet gains a "Remove" row
             (only while there is something to remove). The full-width card
             keeps its − / + pair, so the design guide's "equal minus/plus"
-            line now names that card only. */}
+            line now names that card only.
+
+            Under 9em the disc drops to the tile's foot, where an empty
+            day's size buttons sit, and would cover them. On an empty day
+            it gives way there: the buttons beside it add the same water. */}
         <IconButton
           onClick={quickAdd}
           aria-label={`Add ${servingMl} ml`}
           size="sm"
-          className="absolute top-3 right-3 @max-[9em]:top-auto @max-[9em]:bottom-3 z-20 size-8 rounded-full bg-teal text-teal-foreground hover:bg-teal/90 before:absolute before:-inset-1.5 before:content-['']"
+          className={cn(
+            "absolute top-3 right-3 @max-[9em]:top-auto @max-[9em]:bottom-3 z-20 size-8 rounded-full bg-teal text-teal-foreground hover:bg-teal/90 before:absolute before:-inset-1.5 before:content-['']",
+            !hasWater && "@max-[9em]:hidden"
+          )}
           icon={<Plus className="size-4" />}
         />
         <div className="relative z-10 flex flex-col flex-1">
@@ -407,7 +414,13 @@ export default function WaterCard({
             {/* The meta line, where Weight keeps its date. At rest it
                 names the step: `servingMl` follows the last container
                 logged, so a sighted user must be able to see whether the
-                plus means 250 ml or 750.
+                plus means 250 ml or 750. On an empty day it is unseen and
+                unread: the two size buttons below already name the
+                amounts, and the line said the same thing a third time. It
+                still holds its place there, wrapped exactly as it would
+                be, because on a narrow phone the size buttons stack and
+                this tile is the taller of the pair, so a missing line
+                would shrink the row and the glass with it.
 
                 For a few seconds after a tap it becomes the way back
                 instead. That job belonged to a toast for one release,
@@ -425,7 +438,8 @@ export default function WaterCard({
                 two cannot disagree — no captured amount to go stale. */}
             {!showUndo && (
               <p
-                className="text-micro mt-1"
+                aria-hidden={hasWater ? undefined : true}
+                className={cn("text-micro mt-1", !hasWater && "invisible")}
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
                 Tap + for {formatWaterVolume(servingMl)}

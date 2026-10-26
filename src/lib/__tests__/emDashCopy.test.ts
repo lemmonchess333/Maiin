@@ -51,8 +51,16 @@ import { globSync } from "tinyglobby";
  * ("Calorie deficit · lose fat, keep muscle"), and a statement followed
  * by a second statement took a full stop. A genuine parenthetical aside
  * was left exactly as it was, because that is what the character is for.
+ *
+ * 123 once the Together copy pass took the collective card's line, the
+ * founding line and the challenge card's progress lines to the middot or
+ * to nothing (128 before it: passes since had lowered the count and left
+ * this number where it was). 121 once Food's empty diary and its weekly
+ * logging focus each said their line in one sentence. 120 once the run
+ * plan page's helpers each took one short line, and 119 once the race
+ * card's Phase tile, with its "—" for no phase, went.
  */
-const EM_DASH_COPY_BASELINE = 174;
+const EM_DASH_COPY_BASELINE = 119;
 /** ExerciseHistory, 8, and every one of them the bare "—" placeholder
  *  rather than the construction. Lower this only against real copy. */
 const WORST_FILE_BASELINE = 8;
@@ -65,9 +73,14 @@ const WORST_FILE_BASELINE = 8;
  * its detail took "with" ("A strong week, with training load running
  * high."). The rest stayed: where every line of a set opened the same way,
  * a third reshaped is enough to break the cadence without making a set
- * that reads as nine rewrites.
+ * that reads as nine rewrites. 327 is where the count already stood when
+ * the Together copy pass found this number four above it. 322 once the
+ * performance verdict's five supporting lines took a full stop ("Quiet
+ * week. Log when you're back"): they follow the verb's own full stop, so
+ * a dash was a second rhythm inside one line. 319 once the effort cues
+ * and the finish screen's all-done line took a full stop too.
  */
-const EM_DASH_TS_COPY_BASELINE = 331;
+const EM_DASH_TS_COPY_BASELINE = 319;
 
 const SRC = join(process.cwd(), "src");
 

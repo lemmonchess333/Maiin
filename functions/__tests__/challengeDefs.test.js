@@ -187,13 +187,12 @@ describe("seasonFor", () => {
   it("gives Spring lifting-session targets and Summer supported hybrid targets", () => {
     expect(seasonFor(at(2027, 2))).toMatchObject({
       metric: "workout_count",
-      description:
-        "Your logged lifting sessions this season count. Rest days are welcome.",
+      description: "Every lifting session you log this season counts.",
       tiers: { bronze: 8, silver: 20, gold: 36 },
     });
     expect(seasonFor(at(2027, 5))).toMatchObject({
       metric: "hybrid_score",
-      description: "Running and lifting both count. Train however you like.",
+      description: "Running and lifting both count, toward one score.",
       tiers: { bronze: 500, silver: 2000, gold: 5000 },
     });
   });
@@ -319,17 +318,19 @@ describe("buildUpcomingChallenges — one UTC day of lookahead", () => {
   });
 });
 
-/* Together pass: a description is what a person reads under the
-   challenge's name. No formulas, no units (a person reads miles or lb),
-   and a full sentence. */
+/* A description says what counts toward a challenge, and is what the
+   card shows for a metric the app cannot phrase as a goal (the app
+   builds the goal from the target, in the reader's units). No formulas,
+   no units (a person reads miles or lb), and ONE full sentence: a second
+   one was filler ("Follow your usual plan.", "Train however you like."). */
 describe("challenge descriptions", () => {
   const months = Array.from({ length: 12 }, (_, m) =>
     buildCurrentChallenges(new Date(Date.UTC(2026, m, 15)))
   ).flat();
   it.each(months.map((c) => [c.name, c.description]))(
-    "%s reads as a sentence: %s",
+    "%s reads as one sentence: %s",
     (_name, description) => {
-      expect(description).toMatch(/^[A-Z].*\.$/);
+      expect(description).toMatch(/^[A-Z][^.]*\.$/);
       expect(description).not.toMatch(/\bx\b|\+|\bkm\b|\bkg\b|\(/);
     }
   );

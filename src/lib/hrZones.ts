@@ -140,6 +140,16 @@ export function zoneMetaItems(band: HrZone): string[] {
   return [`Z${band.zone}`, band.name, `${band.minBpm}–${band.maxBpm} bpm`];
 }
 
+/**
+ * A run's target zone as one short item, "Z2 112–130 bpm", for Train's
+ * run card. The card's feel line already gives the effort in words
+ * ("Easy: you can talk in full sentences"), so the zone's name would say
+ * it twice; the day's sheet keeps all three (`zoneMetaItems`).
+ */
+export function zoneShortLabel(band: HrZone): string {
+  return `Z${band.zone} ${band.minBpm}–${band.maxBpm} bpm`;
+}
+
 export interface ZoneShare {
   zone: ZoneNumber;
   name: string;

@@ -7,7 +7,7 @@
  * - Following someone from their post on Explore: ActivityCard's Follow
  *   link (InlineFollow), the shared follow state, followUser's writes and
  *   the live follow count that the line over the feed reads.
- * - My communities: pulling the page down reads the joined spaces' posts
+ * - The Spaces source: pulling the page down reads the joined spaces' posts
  *   again.
  */
 import { vi, expect, it, describe, afterEach, beforeEach } from "vitest";
@@ -187,7 +187,7 @@ describe("Follow from a post on Explore, chosen as the source", () => {
   });
 });
 
-describe("My communities", () => {
+describe("The Spaces source", () => {
   it("pulling the page down reads the joined spaces' posts again", async () => {
     seedFirestore({
       "spaces/runners/members/me": { uid: "me", joinedAt: minutesAgo(1440) },

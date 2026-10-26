@@ -141,6 +141,23 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("names each control once, with no group title stacked over it", () => {
+    setup({}, "lift");
+    // "Goal" over "Training focus" read as two tiers of one heading.
+    for (const outer of ["Goal", "Weekly plan", "Constraints"])
+      expect(screen.queryByRole("heading", { name: outer })).toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "Training focus" })
+    ).toBeInTheDocument();
+    // The toggles have no headings of their own, so their group keeps one.
+    expect(
+      screen.getByRole("heading", { name: "Advanced" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("These save as you switch them.")
+    ).toBeInTheDocument();
+  });
+
   it("D14: no run controls in the lift editor — the run plan has its own page", () => {
     setup({
       runMode: "race_prep",
@@ -486,7 +503,7 @@ describe("ProgrammeSettings — overview (the Programme page)", () => {
     fireEvent.click(screen.getByRole("button", { name: /reset programme/i }));
     expect(
       within(screen.getByRole("alertdialog")).getByText(
-        /logged workouts and runs stay in history/i
+        /logged workouts and runs stay in analytics/i
       )
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /^reset$/i }));

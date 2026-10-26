@@ -15,11 +15,11 @@ export default function SettingsWorkoutPrefs() {
   );
   const [audioCues, setAudioCues] = useState(profile?.audioCues ?? true);
 
-  if (!profile) return <SettingsSection title="Workout preferences" />;
+  if (!profile) return <SettingsSection title="Workouts" />;
 
   return (
     <SettingsSection
-      title="Workout preferences"
+      title="Workouts"
       subtitle="Rest timer, audio cues"
       section="workout_prefs"
     >

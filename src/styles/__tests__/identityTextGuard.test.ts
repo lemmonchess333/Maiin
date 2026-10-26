@@ -102,7 +102,10 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-10-25: 41 → 42. The runner's welcome back (RunReturnSheet): its
   // footprints ICON (3:1 non-text), as on FellBehindSheet; its words are
   // foreground and muted text.
-  running: 42, // Calendar status icons now use the strong colour step.
+  // 42 → 40. The run plan page asks about a race on the coral segmented
+  // control, so the two mode cards' footprints icon went; and the race
+  // card's Race community row is social, so its icon is neutral.
+  running: 40, // Calendar status icons now use the strong colour step.
   // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
   // the exercise drawing is the card's picture now.
   // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell
@@ -180,11 +183,15 @@ const EXPECTED_INLINE_USES = {
   // water's teal (DESIGN_GUIDE §14): its 68px timer and the compact bar's
   // 22px bold distance, both large text, on a sheet that is dark in both
   // themes, where the coral measures about 5:1.
-  "THEME.running": 17,
+  // 2026-10-26: 17 → 16. The live run's 68px timer greys while the run is
+  // paused, so its coral is one side of a choice and no longer counted.
+  "THEME.running": 16,
   // 2026-09-27: 6 → 5. The Sessions ring's stroke, retired with the
   // summary's rings (PeriodOverview).
   // 2026-10-01: 5 → 4. The same recap card's volume figure.
-  "THEME.lifting": 4,
+  // 2026-10-26: 4 → 3. The exercise picker's dumbbell fallback, which
+  // moved into ExerciseThumb with the row's drawing.
+  "THEME.lifting": 3,
   // The brand, inline. Icon tints (notification glyphs, the ProModal
   // feature tiles, the Home tiles' arrows), legend and ring fills, and
   // TrajectoryCard's 3xl score. The text uses — Home's rest-day eyebrow,

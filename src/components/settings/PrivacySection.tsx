@@ -106,8 +106,7 @@ export default function PrivacySection({
               Approve followers
             </p>
             <p className="text-xs text-muted-foreground">
-              People ask to follow you, and you choose who sees what you share
-              with followers. Off, anyone can follow you.
+              You choose who follows you. Off, anyone can.
             </p>
           </div>
           <Toggle
@@ -169,8 +168,8 @@ export default function PrivacySection({
               Hide route start &amp; end on shared runs
             </p>
             <p className="text-xs text-muted-foreground">
-              Clips ~200m off each end of the route shown to followers, so your
-              home isn&apos;t broadcast. Your own map keeps the full route.
+              Followers don&apos;t see the first and last 200 m. Your own map
+              keeps the whole route.
             </p>
           </div>
           <Toggle
