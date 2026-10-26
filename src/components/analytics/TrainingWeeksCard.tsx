@@ -226,7 +226,7 @@ export default function TrainingWeeksCard({
         <div className="grid grid-cols-3 @max-[17em]:grid-cols-1 gap-2">
           {figures.map((f) => (
             <div key={f.label} className="min-w-0">
-              <span className="block whitespace-nowrap text-h2 font-extrabold font-mono tabular-nums leading-tight text-foreground">
+              <span className="block whitespace-nowrap text-h2 font-extrabold font-figure tabular-nums leading-tight text-foreground">
                 {f.value}
               </span>
               <span className="block text-sm text-muted-foreground truncate">

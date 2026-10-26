@@ -150,14 +150,27 @@
   --font-display:
     "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui,
     sans-serif;
-  /* The numeral / data font. Despite the historical `mono` name (and the
-     `font-mono` Tailwind utility it powers), this is NOT a monospace face —
-     it's Archivo, chosen in the brand bake-off (docs/visual-audit/bakeoff/
-     DECISION.md) to replace JetBrains Mono for all numbers. Archivo is
-     proportional, so digit alignment comes from tabular figures, forced on
-     every `.font-mono` element by the rule below. Sans fallbacks (NOT
-     monospace) for the variable-font-fails case. */
-  --font-mono: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Numbers come in two tiers (DESIGN_GUIDE §4).
+     `font-mono` is a number inside a line of text: "3 sets × 8 reps ·
+     52.5 kg", "about 59 min", "Last: 105 kg × 5". It is the text face,
+     Plus Jakarta Sans, so the digits share the words' x-height, cap
+     height and weight; the rule further down gives them tabular figures.
+     The `mono` name means "this is a number", not a monospace face.
+     `font-figure` is a figure that stands on its own at display size:
+     the calorie ring's 2,336, a tile's 81.7, a hero stat, a timer, a set
+     log's inputs. It is Archivo, the numeral face from the brand bake-off
+     (docs/visual-audit/bakeoff/DECISION.md), with tabular figures too.
+     Sans fallbacks (NOT monospace) for the variable-font-fails case. */
+  --font-mono:
+    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui,
+    sans-serif;
+  --font-figure: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+  /* `font-sans` takes a unit or a word inside a figure back to the text
+     face ("81.7 kg", "5.02 km"). Left at Tailwind's default it would be
+     the system font, a third face. */
+  --font-sans:
+    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui,
+    sans-serif;
 
   /* Typography scale — bridged from design tokens (use: text-display, text-h1, etc.) */
   --text-display: var(--ds-text-display);
@@ -567,12 +580,12 @@ body {
   }
 }
 
-/* Numeral font (Archivo) is proportional, so force tabular figures on every
-   `.font-mono` element — this gives the equal digit width that JetBrains Mono
-   provided inherently (stable count-up animations, aligned stat columns /
-   set-log grids / splits). tnum only affects digits, so units like "kg"/"km"
-   are unaffected. */
-.font-mono {
+/* Both number faces are proportional, so every number element takes
+   tabular figures: equal digit widths keep count-ups still and stat
+   columns, set-log grids and splits aligned. tnum only affects digits, so
+   units like "kg"/"km" are unaffected. */
+.font-mono,
+.font-figure {
   font-feature-settings: "tnum" 1;
   font-variant-numeric: tabular-nums;
 }

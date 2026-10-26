@@ -404,7 +404,7 @@ export default function ExerciseHistory() {
                     ? "Max reps"
                     : "Best 1RM"}
               </SectionLabel>
-              <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
+              <p className="text-lg font-extrabold font-figure tabular-nums text-foreground mt-1">
                 {isTimed
                   ? headerStats.longestHold
                     ? `${headerStats.longestHold}s`
@@ -426,13 +426,13 @@ export default function ExerciseHistory() {
             </div>
             <div className="p-3 rounded-xl bg-card card-shadow">
               <SectionLabel>Sessions</SectionLabel>
-              <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
+              <p className="text-lg font-extrabold font-figure tabular-nums text-foreground mt-1">
                 {headerStats.totalSessions}
               </p>
             </div>
             <div className="p-3 rounded-xl bg-card card-shadow">
               <SectionLabel>Total sets</SectionLabel>
-              <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
+              <p className="text-lg font-extrabold font-figure tabular-nums text-foreground mt-1">
                 {headerStats.totalSets}
               </p>
             </div>

@@ -98,7 +98,7 @@ export default function RacePredictionsCard() {
           {ROWS.map(({ key, label, km }) => (
             <div key={key} className="rounded-xl bg-muted p-3">
               <SectionLabel>{label}</SectionLabel>
-              <p className="text-lg font-bold font-mono tabular-nums text-foreground mt-0.5">
+              <p className="text-lg font-bold font-figure tabular-nums text-foreground mt-0.5">
                 {finishTimeLabel(times[key])}
               </p>
               <p className="text-xs text-muted-foreground font-mono tabular-nums">

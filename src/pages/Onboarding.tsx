@@ -1078,7 +1078,7 @@ export default function Onboarding() {
                   options={([2, 3, 4, 5, 6] as const).map((n) => ({
                     value: n,
                     label: (
-                      <span className="font-mono tabular-nums text-xl">
+                      <span className="font-figure tabular-nums text-xl">
                         {n}
                       </span>
                     ),
@@ -1353,7 +1353,7 @@ export default function Onboarding() {
                             <span className="sr-only">{field.label}</span>
                             <input
                               inputMode="numeric"
-                              className="ds-input w-full min-w-0 text-center text-h2 font-mono tabular-nums"
+                              className="ds-input w-full min-w-0 text-center text-h2 font-figure tabular-nums"
                               value={field.value}
                               aria-invalid={Boolean(
                                 recentRace && "error" in recentRace

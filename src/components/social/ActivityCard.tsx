@@ -325,7 +325,7 @@ function ActivityCard({
       <RouteScene preview={routePreview!} />
       {showDistanceOverlay && (
         <div className="absolute bottom-3 left-4">
-          <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-running">
+          <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-running">
             {distanceValue(activity?.distance || 0, unit, 2)}
           </p>
           <SectionLabel className="mt-0.5">
@@ -340,7 +340,7 @@ function ActivityCard({
      hero it is. */
   const renderVolumeFigure = (className: string) => (
     <div className={className}>
-      <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-lifting">
+      <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-lifting">
         {volumeFigure(activity?.totalVolume ?? 0)}
       </p>
       <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
@@ -517,7 +517,7 @@ function ActivityCard({
                of the no-route card quietly demoting distance to a peer
                of pace and time. */
           <div className="min-w-0">
-            <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-running whitespace-nowrap">
+            <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-running whitespace-nowrap">
               {distanceValue(activity.distance || 0, unit, 2)}
             </p>
             <SectionLabel className="mt-0.5">
@@ -526,7 +526,7 @@ function ActivityCard({
           </div>
         )}
         <div className="min-w-0">
-          <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
+          <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
             {typeof activity.avgPace === "number"
               ? paceMinSec(activity.avgPace, unit)
               : activity.avgPace || "--:--"}
@@ -539,7 +539,7 @@ function ActivityCard({
         </div>
         {(activity.duration ?? 0) > 0 && (
           <div className="min-w-0">
-            <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
+            <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
               {formatDur(activity.duration ?? 0)}
             </p>
             <SectionLabel className="mt-0.5">Time</SectionLabel>
@@ -562,7 +562,7 @@ function ActivityCard({
                   peer cell sat flush against it. It now rides in the
                   caption, so the figures line up and the icon still
                   marks the cell. */}
-            <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
+            <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
               {elevationLabel(activity.elevationGain ?? 0, unit, false)}{" "}
               <span className="text-caption font-semibold text-muted-foreground">
                 {elevationUnitLabel(unit)}
@@ -697,7 +697,7 @@ function ActivityCard({
                text-2xl/800 in the muscle-hero overlay already — this
                matches it so the two paths agree. */
             <div className="min-w-0">
-              <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-lifting whitespace-nowrap">
+              <p className="text-2xl font-extrabold font-figure tabular-nums leading-none text-lifting whitespace-nowrap">
                 {volumeFigure(activity.totalVolume ?? 0)}
               </p>
               <SectionLabel className="mt-0.5">{volumeLabel}</SectionLabel>
@@ -705,7 +705,7 @@ function ActivityCard({
           )}
           {exerciseCount > 0 && (
             <div className="min-w-0">
-              <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
+              <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
                 {exerciseCount}
               </p>
               <SectionLabel className="mt-0.5">
@@ -717,7 +717,7 @@ function ActivityCard({
             <div className="min-w-0">
               <div className="flex items-center gap-1">
                 <Star className="size-4 text-achievement fill-achievement shrink-0" />
-                <p className="text-xl font-bold font-mono tabular-nums leading-none text-achievement whitespace-nowrap">
+                <p className="text-xl font-bold font-figure tabular-nums leading-none text-achievement whitespace-nowrap">
                   {prCount}
                 </p>
               </div>
@@ -729,7 +729,7 @@ function ActivityCard({
           {/* A hybrid card's run stats above already carry the time. */}
           {!isHybrid && (activity.duration ?? 0) > 0 && (
             <div className="min-w-0">
-              <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
+              <p className="text-xl font-bold font-figure tabular-nums leading-none text-foreground whitespace-nowrap">
                 {Math.round((activity.duration ?? 0) / 60)}
               </p>
               <SectionLabel className="mt-0.5">min</SectionLabel>

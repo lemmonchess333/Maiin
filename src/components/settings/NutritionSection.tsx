@@ -282,13 +282,13 @@ export default function NutritionSection({
         {/* TDEE Results */}
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-muted rounded-lg p-3 text-center">
-            <p className="text-lg font-bold text-foreground font-mono tabular-nums">
+            <p className="text-lg font-bold text-foreground font-figure tabular-nums">
               {tdee.bmr}
             </p>
             <p className="text-xs text-muted-foreground">BMR</p>
           </div>
           <div className="bg-muted rounded-lg p-3 text-center">
-            <p className="text-lg font-bold text-foreground font-mono tabular-nums">
+            <p className="text-lg font-bold text-foreground font-figure tabular-nums">
               {tdee.tdee}
             </p>
             <p className="text-xs text-muted-foreground">TDEE</p>
@@ -326,7 +326,7 @@ export default function NutritionSection({
             <Minus className="size-4" />
           </button>
           <div className="text-center">
-            <p className="text-2xl font-mono tabular-nums font-bold text-foreground">
+            <p className="text-2xl font-figure tabular-nums font-bold text-foreground">
               {formatWeightInUnit(goalWeightKg, weightUnit)}
             </p>
             <p className="text-xs text-muted-foreground">

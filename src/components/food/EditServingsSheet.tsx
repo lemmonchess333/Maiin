@@ -515,7 +515,7 @@ function EditServingsSheet({
           </button>
           <div className="text-center min-w-[80px] shrink-0" aria-live="polite">
             <p
-              className="text-4xl font-mono tabular-nums font-extrabold text-foreground"
+              className="text-4xl font-figure tabular-nums font-extrabold text-foreground"
               aria-label={`${target} ${target === 1 ? "serving" : "servings"}`}
             >
               {target}

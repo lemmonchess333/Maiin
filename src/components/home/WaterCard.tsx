@@ -75,10 +75,15 @@ function WaterPresetRow({
           className={cn("min-w-fit flex-1 basis-0 px-2", className)}
           onClick={() => onPick(preset.ml)}
         >
-          <span className="font-mono tabular-nums">
-            {splitWaterVolume(preset.ml).value}
-          </span>{" "}
-          {splitWaterVolume(preset.ml).unit}
+          {/* One span: the Button lays its children out with a gap, which
+              split "250 ml" into "250   ml" when the figure and the unit
+              were two of them. */}
+          <span>
+            <span className="font-mono tabular-nums">
+              {splitWaterVolume(preset.ml).value}
+            </span>{" "}
+            {splitWaterVolume(preset.ml).unit}
+          </span>
         </Button>
       ))}
     </div>
@@ -402,10 +407,10 @@ export default function WaterCard({
                 same visual tier". The non-compact variant below already
                 uses this treatment, so the compact one was the outlier
                 inside its own component too. */}
-            <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
+            <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">
               {splitWaterVolume(ml).value}
               <span
-                className="text-sm font-normal ml-1"
+                className="ml-1 font-sans text-sm font-medium"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
                 {splitWaterVolume(ml).unit}
@@ -556,10 +561,10 @@ export default function WaterCard({
           </div>
           <div className="flex-1 min-w-0">
             <SectionLabel>Water</SectionLabel>
-            <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
+            <p className="text-2xl font-extrabold leading-none text-foreground font-figure tabular-nums">
               {splitWaterVolume(ml).value}
               <span
-                className="text-sm font-normal ml-1"
+                className="ml-1 font-sans text-sm font-medium"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
                 {splitWaterVolume(ml).unit}

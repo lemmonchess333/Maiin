@@ -2301,7 +2301,7 @@ export default function WorkoutSession({
                           disabled={set.completed}
                           className={cn(
                             FIELD_EDGE,
-                            "min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground placeholder:text-muted-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor] disabled:border-transparent"
+                            "min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-figure tabular-nums text-foreground placeholder:text-muted-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor] disabled:border-transparent"
                           )}
                         />
                         <input
@@ -2322,7 +2322,7 @@ export default function WorkoutSession({
                           disabled={set.completed}
                           className={cn(
                             FIELD_EDGE,
-                            "min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-mono tabular-nums text-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor] disabled:border-transparent"
+                            "min-h-[44px] w-full rounded-lg bg-muted px-1 text-center text-lg font-semibold font-figure tabular-nums text-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor] disabled:border-transparent"
                           )}
                         />
                         {/* Keyed by exercise as well as set: a return to an

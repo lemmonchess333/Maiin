@@ -166,7 +166,7 @@ const SAVED_FLASH_MS = 500;
 function AnimatedCalories({ value }: { value: number }) {
   const display = useCountUp(value);
   return (
-    <motion.span className="text-xl font-extrabold font-mono tabular-nums">
+    <motion.span className="text-xl font-extrabold font-figure tabular-nums">
       {display}
     </motion.span>
   );
@@ -1126,7 +1126,7 @@ export default function FoodAnalyzer({
                     className="rounded-full"
                   />
                   <div className="text-center">
-                    <p className="text-2xl font-bold font-mono tabular-nums text-foreground">
+                    <p className="text-2xl font-bold font-figure tabular-nums text-foreground">
                       {servings}
                     </p>
                     <p className="text-xs text-muted-foreground">servings</p>

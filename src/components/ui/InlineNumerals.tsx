@@ -1,4 +1,5 @@
-/** Mixed prose keeps the text font; only its numerals use Archivo. */
+/** Mixed prose: its numerals take the inline number tier (`font-mono`, the
+ *  text face with tabular digits) at the weight of the words around them. */
 export default function InlineNumerals({ children }: { children: string }) {
   return (
     <>

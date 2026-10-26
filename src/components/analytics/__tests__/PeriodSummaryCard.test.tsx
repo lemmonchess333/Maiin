@@ -109,8 +109,12 @@ describe("PeriodSummaryCard", () => {
 
   it("keeps the numeral face on the numbers, not on the words", () => {
     card();
-    expect(screen.getByText("52.8k").className).toContain("font-mono");
-    expect(screen.getByText("kg lifted").className).not.toContain("font-mono");
+    // The headline figure stands on its own at text-h2: the figure tier
+    // (Archivo). Its word is the text face, carrying neither number class.
+    expect(screen.getByText("52.8k").className).toContain("font-figure");
+    expect(screen.getByText("kg lifted").className).not.toMatch(
+      /font-(?:mono|figure)/
+    );
   });
 
   it("reads a rise in the status green and a drop in plain text", () => {

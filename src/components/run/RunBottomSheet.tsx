@@ -537,7 +537,7 @@ export default function RunBottomSheet({
                     fontSize: 68,
                     fontWeight: 800,
                     fontVariantNumeric: "tabular-nums",
-                    fontFamily: "var(--font-mono)",
+                    fontFamily: "var(--font-figure)",
                     color: isPaused ? HUD_SECONDARY.color : THEME.running,
                     lineHeight: 1,
                     letterSpacing: "-2px",
@@ -568,7 +568,7 @@ export default function RunBottomSheet({
                       fontWeight: 700,
                       color: "hsl(var(--stage-foreground))",
                       fontVariantNumeric: "tabular-nums",
-                      fontFamily: "var(--font-mono)",
+                      fontFamily: "var(--font-figure)",
                       lineHeight: 1,
                     }}
                   >
@@ -592,7 +592,7 @@ export default function RunBottomSheet({
                       fontWeight: 700,
                       color: "hsl(var(--stage-foreground))",
                       fontVariantNumeric: "tabular-nums",
-                      fontFamily: "var(--font-mono)",
+                      fontFamily: "var(--font-figure)",
                       lineHeight: 1,
                     }}
                   >
@@ -644,7 +644,7 @@ export default function RunBottomSheet({
                     fontWeight: 600,
                     color: "rgba(255,255,255,0.65)",
                     fontVariantNumeric: "tabular-nums",
-                    fontFamily: "var(--font-mono)",
+                    fontFamily: "var(--font-figure)",
                   }}
                 >
                   {calories}
@@ -674,7 +674,7 @@ export default function RunBottomSheet({
                     fontWeight: 600,
                     color: "rgba(255,255,255,0.65)",
                     fontVariantNumeric: "tabular-nums",
-                    fontFamily: "var(--font-mono)",
+                    fontFamily: "var(--font-figure)",
                   }}
                 >
                   {elevationLabel(elevation, unit)}
@@ -703,7 +703,7 @@ export default function RunBottomSheet({
                     fontWeight: 600,
                     color: "rgba(255,255,255,0.65)",
                     fontVariantNumeric: "tabular-nums",
-                    fontFamily: "var(--font-mono)",
+                    fontFamily: "var(--font-figure)",
                   }}
                 >
                   {splits.length}
@@ -737,7 +737,7 @@ export default function RunBottomSheet({
                         fontWeight: 600,
                         color: hrColor,
                         fontVariantNumeric: "tabular-nums",
-                        fontFamily: "var(--font-mono)",
+                        fontFamily: "var(--font-figure)",
                       }}
                     >
                       {bpm}
@@ -900,7 +900,7 @@ export default function RunBottomSheet({
                   fontWeight: 700,
                   color: isPaused ? HUD_SECONDARY.color : "white",
                   fontVariantNumeric: "tabular-nums",
-                  fontFamily: "var(--font-mono)",
+                  fontFamily: "var(--font-figure)",
                 }}
               >
                 {formatTime(elapsed)}
@@ -921,7 +921,7 @@ export default function RunBottomSheet({
                   fontWeight: 700,
                   color: THEME.running,
                   fontVariantNumeric: "tabular-nums",
-                  fontFamily: "var(--font-mono)",
+                  fontFamily: "var(--font-figure)",
                 }}
               >
                 {distanceValue(distance, unit, 2)}
@@ -942,7 +942,7 @@ export default function RunBottomSheet({
                   fontWeight: 700,
                   color: "white",
                   fontVariantNumeric: "tabular-nums",
-                  fontFamily: "var(--font-mono)",
+                  fontFamily: "var(--font-figure)",
                 }}
               >
                 {livePace}
@@ -1049,7 +1049,7 @@ export default function RunBottomSheet({
           <div className="flex justify-around mb-6">
             <div className="text-center">
               <p
-                className="text-2xl font-bold font-mono text-white"
+                className="text-2xl font-bold font-figure text-white"
                 style={{ fontVariantNumeric: "tabular-nums" }}
               >
                 {distanceValue(distance, unit, 2)}
@@ -1060,7 +1060,7 @@ export default function RunBottomSheet({
             </div>
             <div className="text-center">
               <p
-                className="text-2xl font-bold font-mono text-white"
+                className="text-2xl font-bold font-figure text-white"
                 style={{ fontVariantNumeric: "tabular-nums" }}
               >
                 {formatTime(elapsed)}
@@ -1069,7 +1069,7 @@ export default function RunBottomSheet({
             </div>
             <div className="text-center">
               <p
-                className="text-2xl font-bold font-mono text-white"
+                className="text-2xl font-bold font-figure text-white"
                 style={{ fontVariantNumeric: "tabular-nums" }}
               >
                 {pace}

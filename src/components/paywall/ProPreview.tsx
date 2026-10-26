@@ -22,7 +22,7 @@ function TargetFrame() {
         <p className="text-micro font-semibold text-muted-foreground">
           Calorie target
         </p>
-        <p className="text-2xl font-extrabold text-foreground font-mono tabular-nums leading-tight">
+        <p className="text-2xl font-extrabold text-foreground font-figure tabular-nums leading-tight">
           2,336
           <span className="text-xs font-medium text-muted-foreground">
             {" "}

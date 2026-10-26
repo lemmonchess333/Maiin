@@ -16,7 +16,7 @@ function clock(total: number): string {
  * never changes the set action's label, and nothing above the card moves
  * when it arrives.
  *
- * DS3: the time left is the card's one big thing, in the numeral font,
+ * DS3: the time left is the card's one big thing, in the figure face,
  * beside a ring that empties as the rest runs down. When the rest is over
  * the ring is drawn whole again, in green (green is status): an emptied
  * ring has no arc left to colour. The arc sweeps through each second
@@ -89,7 +89,7 @@ export default function CompactRestTimer({
           </span>
           <span
             className={cn(
-              "block text-h3 font-bold font-mono tabular-nums",
+              "block text-h3 font-bold font-figure tabular-nums",
               done ? "text-success-strong" : "text-foreground"
             )}
           >
