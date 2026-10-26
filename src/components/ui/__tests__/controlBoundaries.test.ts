@@ -119,9 +119,13 @@ describe("controls draw that boundary", () => {
     );
   });
 
-  it("the empty set check's box is the boundary", () => {
+  it("the empty set check's box is the boundary in light, a filled square in dark", () => {
+    // Dark draws the box as the dark field does, a `--muted` fill on the
+    // hairline: the 80% ring was the brightest edge on the workout screen,
+    // and the set's number and fields beside it name the box.
     const src = read("src/components/workout/SetCheck.tsx");
     expect(src).toContain("rounded-lg border-2 border-muted-foreground/80");
+    expect(src).toContain("dark:border dark:border-border dark:bg-muted");
     expect(src).not.toContain("border-2 border-border");
   });
 

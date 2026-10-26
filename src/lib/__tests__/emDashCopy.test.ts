@@ -77,9 +77,10 @@ const WORST_FILE_BASELINE = 8;
  * the Together copy pass found this number four above it. 322 once the
  * performance verdict's five supporting lines took a full stop ("Quiet
  * week. Log when you're back"): they follow the verb's own full stop, so
- * a dash was a second rhythm inside one line.
+ * a dash was a second rhythm inside one line. 319 once the effort cues
+ * and the finish screen's all-done line took a full stop too.
  */
-const EM_DASH_TS_COPY_BASELINE = 322;
+const EM_DASH_TS_COPY_BASELINE = 319;
 
 const SRC = join(process.cwd(), "src");
 

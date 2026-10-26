@@ -192,6 +192,13 @@ async function sheetReady(page: Page, content: Locator) {
    the first working set done, then closed, which leaves its draft on the
    phone. */
 async function leaveAfterOneSet(page: Page) {
+  // A routine saved from someone's post carries no loads, and a loaded
+  // lift can't be ticked at 0 kg: give its empty sets one.
+  const weights = page.getByRole("spinbutton", { name: /weight$/ });
+  await weights.first().waitFor({ timeout: 20_000 });
+  for (const field of await weights.all())
+    if ((await field.getAttribute("placeholder")) === "–")
+      await field.fill("20");
   for (let i = 0; i < 4; i++) {
     const next = page.getByRole("button", { name: /^Complete / }).first();
     await next.waitFor({ timeout: 20_000 });

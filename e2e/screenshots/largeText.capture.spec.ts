@@ -747,6 +747,17 @@ test.describe("large text", () => {
       // The warm-ups first, then the first working set, which is what the
       // strip counts.
       const leaveAfterOneSet = async () => {
+        // A routine saved from someone's post carries no loads, and a
+        // loaded lift can't be ticked at 0 kg: give its empty sets one.
+        await page
+          .getByRole("spinbutton", { name: /weight$/ })
+          .first()
+          .waitFor({ timeout: 20_000 });
+        for (const field of await page
+          .getByRole("spinbutton", { name: /weight$/ })
+          .all())
+          if ((await field.getAttribute("placeholder")) === "–")
+            await field.fill("20");
         for (let i = 0; i < 4; i++) {
           const next = page.getByRole("button", { name: /^Complete / }).first();
           await next.waitFor({ timeout: 20_000 });

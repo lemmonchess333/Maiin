@@ -1039,8 +1039,8 @@ need a phone and a deploy.
 
 - [ ] **Maps on the phone.** A live run, a saved run (RunDetail), the
       finish screen and the route planner draw OpenFreeMap's basemap in
-      both themes. The credit shows as each map opens and folds to its
-      (i) after five seconds; the (i) opens it again, and its links open
+      both themes. The credit starts folded to its (i) on each map; the
+      (i) opens it, a tap on the map folds it again, and its links open
       outside the app. On the live run it sits top-right, clear of the
       GPS pill and the sheet; on RunDetail bottom-left, clear of Replay.
 - [ ] **Weather after the deploy.** `getCurrentWeather` is a new function
