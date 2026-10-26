@@ -859,10 +859,12 @@ export default function ProgrammeRunSection({
           racePace: selectedRacePace?.kind,
         })
       : { purpose: null, weekLabel: null };
+  // Non-breaking spaces: on a narrow card the eyebrow breaks before the
+  // date, never inside it ("Up next · Tue 27" over "Oct").
   const selectedDateLabel = format(
     parseLocalDate(selectedDateKey),
     "EEE d MMM"
-  );
+  ).replace(/ /g, " ");
   // Adaptive Paces: the user's personalised pace for the selected session,
   // surfaced on the command card so the "made for you" pace is visible where
   // the run is started — not just in Settings. Band-first via the shared

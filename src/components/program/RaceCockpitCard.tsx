@@ -124,24 +124,28 @@ export default function RaceCockpitCard({
           {/* The week sits on the date line. The rail below marks the
               phase, and the page header names the week too, so tiles for
               Week and Phase said both a third time. */}
+          {/* Each fact keeps to one line, so a narrow card breaks the line
+              at a middot, never inside "week 1 of 10". */}
           <p className="text-sm text-muted-foreground">
             {/* When the event name takes the heading, the distance demotes
                 into this meta row. */}
             {eventName && (
               <>
-                {distanceLabel}
+                <span className="whitespace-nowrap">{distanceLabel}</span>
                 {" · "}
               </>
             )}
-            {dateLabel}
+            <span className="whitespace-nowrap">{dateLabel}</span>
             {" · "}
-            <span className="font-medium text-foreground">
+            <span className="whitespace-nowrap font-medium text-foreground">
               {daysToRace} {daysToRace === 1 ? "day" : "days"} out
             </span>
             {hasProgress && (
               <>
                 {" · "}
-                <InlineNumerals>{`week ${currentWeek! + 1} of ${totalWeeks!}`}</InlineNumerals>
+                <span className="whitespace-nowrap">
+                  <InlineNumerals>{`week ${currentWeek! + 1} of ${totalWeeks!}`}</InlineNumerals>
+                </span>
               </>
             )}
           </p>

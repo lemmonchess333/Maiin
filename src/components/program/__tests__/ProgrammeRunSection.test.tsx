@@ -2121,7 +2121,7 @@ describe("ProgrammeRunSection — the selector is a CALENDAR week", () => {
       "false"
     );
     expect(
-      screen.getByRole("region", { name: "Up next · Sat 12 Sep — Easy 30" })
+      screen.getByRole("region", { name: /^Up next · Sat\s12\sSep — Easy 30$/ })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "View run" })
@@ -2327,7 +2327,7 @@ describe("ProgrammeRunSection — one run is up next", () => {
   it("calls the runs after the next one upcoming", () => {
     renderSection(commonProps(), week());
     expect(
-      screen.getByRole("region", { name: /^Up next · Tue 20 Oct/ })
+      screen.getByRole("region", { name: /^Up next · Tue\s20\sOct/ })
     ).toBeVisible();
     open("Easy 30");
     expect(screen.getByRole("region", { name: /^Up next · / })).toBeVisible();

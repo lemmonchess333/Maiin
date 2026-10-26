@@ -134,7 +134,14 @@ function UpcomingRacePicker({
 
       <Collapse open={open}>
         <div className="mt-3 space-y-2">
-          <RaceFilters value={filters} onChange={setFilters} trainingOnly />
+          {/* No Distance filter: the goal's own Distance sits just below
+              and narrows the list already. */}
+          <RaceFilters
+            value={filters}
+            onChange={setFilters}
+            trainingOnly
+            showDistance={false}
+          />
           {raceDays.length === 0 ? (
             <EmptyState
               compact
@@ -291,10 +298,11 @@ export default function RaceGoalPlanner({
         />
       </div>
 
-      {/* Event name (optional) */}
+      {/* Race name (optional). No example in the field: a race the
+          person had not entered read as one already filled in. */}
       <div className="space-y-2">
         <SectionHeading size="compact">
-          <label htmlFor="ps-race-event-name">Event name (optional)</label>
+          <label htmlFor="ps-race-event-name">Race name (optional)</label>
         </SectionHeading>
         <input
           id="ps-race-event-name"
@@ -302,7 +310,6 @@ export default function RaceGoalPlanner({
           value={eventName}
           onChange={(e) => onEventNameChange(e.target.value)}
           maxLength={60}
-          placeholder="London Marathon 2026"
           autoComplete="off"
           className="ds-input block min-w-0 appearance-none text-sm"
         />

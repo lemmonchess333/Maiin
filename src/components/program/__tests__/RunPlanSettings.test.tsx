@@ -5,6 +5,7 @@ import {
   fireEvent,
   waitFor,
   act,
+  within,
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import RunPlanSettings from "../RunPlanSettings";
@@ -171,6 +172,30 @@ function firstUpcomingRace() {
   const races = upcomingRaceSpaceDefs(localDateString());
   expect(races.length).toBeGreaterThan(0);
   return races[0];
+}
+
+/** Open the race picker on `race`'s distance, every country shown. The
+ *  picker has no Distance filter of its own: the goal's Distance, chosen
+ *  first, narrows it. */
+function openPickerFor(race: ReturnType<typeof firstUpcomingRace>) {
+  const goalDistance = {
+    "5k": "5K",
+    "10k": "10K",
+    half: "Half",
+    marathon: "Full",
+  }[race.event!.distance as "5k" | "10k" | "half" | "marathon"];
+  fireEvent.click(
+    within(screen.getByRole("radiogroup", { name: "Race distance" })).getByRole(
+      "radio",
+      { name: goalDistance }
+    )
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: /Choose an upcoming race/i })
+  );
+  fireEvent.change(screen.getByLabelText("Country"), {
+    target: { value: "all" },
+  });
 }
 
 describe("RunPlanSettings", () => {
@@ -400,7 +425,7 @@ describe("RunPlanSettings", () => {
     for (const name of [
       "Race goal",
       "Distance",
-      "Event name (optional)",
+      "Race name (optional)",
       "Target date",
       "Goal time (optional)",
       "Run days / week",
@@ -619,7 +644,7 @@ describe("RunPlanSettings", () => {
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
     fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
     const name = screen.getByLabelText(
-      /Event name \(optional\)/i
+      /Race name \(optional\)/i
     ) as HTMLInputElement;
     // Trailing whitespace pins the .trim() on save.
     fireEvent.change(name, { target: { value: "  London Marathon 2027  " } });
@@ -1002,14 +1027,14 @@ describe("RunPlanSettings", () => {
     fireEvent.change(screen.getByLabelText(/Target date/i), {
       target: { value: RACE_TARGET_DATE },
     });
-    fireEvent.change(screen.getByLabelText(/Event name/i), {
+    fireEvent.change(screen.getByLabelText(/Race name/i), {
       target: { value: "Brighton" },
     });
     unmount();
 
     renderPage(baseProfile);
     expect(screen.getByLabelText(/Target date/i)).toHaveValue(RACE_TARGET_DATE);
-    expect(screen.getByLabelText(/Event name/i)).toHaveValue("Brighton");
+    expect(screen.getByLabelText(/Race name/i)).toHaveValue("Brighton");
   });
 
   it("a half-typed goal time survives too", async () => {
@@ -1111,7 +1136,7 @@ describe("RunPlanSettings", () => {
       (screen.getByLabelText(/Target date/i) as HTMLInputElement).value
     ).toBe(race.event!.dateKey);
     expect(
-      (screen.getByLabelText(/Event name/i) as HTMLInputElement).value
+      (screen.getByLabelText(/Race name/i) as HTMLInputElement).value
     ).toBe(race.name);
 
     fireEvent.click(
@@ -1144,15 +1169,7 @@ describe("RunPlanSettings", () => {
       screen.getByRole("radio", { name: /Training for a race/i })
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /Choose an upcoming race/i })
-    );
-    fireEvent.change(screen.getByLabelText("Country"), {
-      target: { value: "all" },
-    });
-    fireEvent.change(screen.getByLabelText("Distance"), {
-      target: { value: "all" },
-    });
+    openPickerFor(race);
     fireEvent.click(
       screen.getByRole("option", { name: new RegExp(race.name) })
     );
@@ -1161,7 +1178,7 @@ describe("RunPlanSettings", () => {
       (screen.getByLabelText(/Target date/i) as HTMLInputElement).value
     ).toBe(race.event!.dateKey);
     expect(
-      (screen.getByLabelText(/Event name/i) as HTMLInputElement).value
+      (screen.getByLabelText(/Race name/i) as HTMLInputElement).value
     ).toBe(race.name);
 
     fireEvent.click(
@@ -1179,15 +1196,7 @@ describe("RunPlanSettings", () => {
     fireEvent.click(
       screen.getByRole("radio", { name: /Training for a race/i })
     );
-    fireEvent.click(
-      screen.getByRole("button", { name: /Choose an upcoming race/i })
-    );
-    fireEvent.change(screen.getByLabelText("Country"), {
-      target: { value: "all" },
-    });
-    fireEvent.change(screen.getByLabelText("Distance"), {
-      target: { value: "all" },
-    });
+    openPickerFor(race);
     fireEvent.click(
       screen.getByRole("option", { name: new RegExp(race.name) })
     );

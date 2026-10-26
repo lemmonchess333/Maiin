@@ -65,7 +65,9 @@ describe("RaceCockpitCard", () => {
      too: one fact four ways on one screen. */
   it("puts the week on the date line, with no Week or Phase tiles", () => {
     renderCard();
-    const line = screen.getByText(/17 Oct 2026/);
+    // Each fact is its own unbreakable span, so the line breaks at a
+    // middot on a narrow card, never inside "week 1 of 20".
+    const line = screen.getByText("17 Oct 2026").closest("p")!;
     expect(line.textContent).toBe("17 Oct 2026 · 140 days out · week 1 of 20");
     expect(screen.queryByText("1 / 20")).not.toBeInTheDocument();
     expect(screen.queryByText("Week")).not.toBeInTheDocument();
