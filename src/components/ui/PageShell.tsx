@@ -54,15 +54,13 @@ export interface PageShellProps extends RootProps {
   title: ReactNode;
   /** A short line above the title — Home's date. */
   eyebrow?: ReactNode;
-  /** A line beneath the title. */
+  /** A line beneath the title. It wraps rather than truncating. */
   subtitle?: ReactNode;
-  /** Reserve a fixed subtitle height so a subtitle that changes length
-   *  (Train's is tab-aware) does not move everything below it. The clamp
-   *  caps it at the same number so it cannot grow and reintroduce the
-   *  jump. Train reserves 1: every line it can render — Lift's split and
-   *  day count, and all four Run variants — is at most 37 characters and
-   *  fits one line at 393 px. */
-  subtitleReserveLines?: 1 | 2;
+  /** The other lines a switching subtitle can show (Train's is
+   *  tab-aware). Each is laid in the subtitle's own place, unseen and
+   *  unread, so the header is as tall as the tallest of them at any
+   *  width and text size, and switching moves nothing below it. */
+  subtitleAlternates?: ReactNode[];
   /** The right-hand action cluster: icon buttons, pills, a settings link. */
   actions?: ReactNode;
   /** A controls row inside the header zone, beneath the title —
@@ -80,7 +78,7 @@ export default function PageShell({
   title,
   eyebrow,
   subtitle,
-  subtitleReserveLines,
+  subtitleAlternates,
   actions,
   controls,
   banner,
@@ -113,17 +111,26 @@ export default function PageShell({
               </p>
             )}
             <h1 className={titleClass}>{title}</h1>
-            {subtitle !== undefined && (
-              <p
-                className={cn(
-                  "text-sm text-muted-foreground mt-1",
-                  subtitleReserveLines === 1 && "line-clamp-1 min-h-[1.25rem]",
-                  subtitleReserveLines === 2 && "line-clamp-2 min-h-[2.5rem]"
-                )}
-              >
-                {subtitle}
-              </p>
-            )}
+            {subtitle !== undefined &&
+              (subtitleAlternates?.length ? (
+                /* One grid cell holds every line: the shown one, and the
+                   others invisible beneath it, so the cell is the height of
+                   the tallest. */
+                <p className="grid text-sm text-muted-foreground mt-1">
+                  <span className="col-start-1 row-start-1">{subtitle}</span>
+                  {subtitleAlternates.map((line, i) => (
+                    <span
+                      key={i}
+                      aria-hidden="true"
+                      className="invisible col-start-1 row-start-1"
+                    >
+                      {line}
+                    </span>
+                  ))}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
+              ))}
           </div>
           {actions && (
             <div className="ml-auto flex items-center gap-1 flex-shrink-0">
