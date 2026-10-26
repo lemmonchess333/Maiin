@@ -233,9 +233,15 @@ test.describe("Monday migration on an existing account", () => {
           "aria-label",
           /completed/
         );
+        // Today (Wednesday the 9th) has no run, so the tab opens on the
+        // week's next one, Friday's Easy 30, with today still marked.
         await expect(
           week.getByRole("tab", { name: /^9, today/ })
-        ).toHaveAttribute("aria-selected", "true");
+        ).toHaveAttribute("aria-selected", "false");
+        await expect(week.getByRole("tab").nth(4)).toHaveAttribute(
+          "aria-selected",
+          "true"
+        );
         await settleImages(page);
         await page.screenshot({
           path: testInfo.outputPath(`monday-programme-${colorScheme}.png`),
