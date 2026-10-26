@@ -183,14 +183,20 @@ export default function ExercisePicker({
   // Close on Escape key. handleClose wrapped in useEffectEvent so
   // the listener stays subscribed across handleClose identity
   // changes (which happen whenever the useCallback deps change).
-  const escapeHandleClose = useEffectEvent(handleClose);
+  // With an exercise's sheet open, Escape is the sheet's: it closes that
+  // and leaves the picker, and what is ticked in it, alone. Heard on the
+  // window's capture phase, before the sheet's own handler has closed it.
+  const escapeHandleClose = useEffectEvent(() => {
+    if (detail) return;
+    handleClose();
+  });
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") escapeHandleClose();
     };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [open]);
 
   const confirmDiscard = () => {
@@ -423,19 +429,26 @@ export default function ExercisePicker({
               if (!o) setDetail(null);
             }}
             title={detail?.name ?? null}
+            // Above the picker (9998/9999): at the sheet's own z-50 it
+            // opened behind it, invisible, with the page made inert.
+            overlayClassName="z-[10000]"
+            className="z-[10001]"
           >
             {detail && (
-              <div className="px-4 pb-4">
-                <Suspense
-                  fallback={
-                    <div className="flex justify-center py-12">
-                      <Spinner label="Loading exercise demo" />
-                    </div>
-                  }
-                >
-                  <ExerciseFormContent exerciseName={detail.name} active />
-                </Suspense>
-                <div className="mt-5">
+              <>
+                {/* The form scrolls; the actions under it stay in reach. */}
+                <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-3">
+                  <Suspense
+                    fallback={
+                      <div className="flex justify-center py-12">
+                        <Spinner label="Loading exercise demo" />
+                      </div>
+                    }
+                  >
+                    <ExerciseFormContent exerciseName={detail.name} active />
+                  </Suspense>
+                </div>
+                <div className="border-t border-border/30 px-4 pt-3 pb-4">
                   <Button
                     variant={
                       !pickAction && selectedIds.has(detail.id)
@@ -481,7 +494,7 @@ export default function ExercisePicker({
                     View full progress
                   </Button>
                 </div>
-              </div>
+              </>
             )}
           </BottomSheet>
         </>
