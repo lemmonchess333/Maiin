@@ -184,7 +184,9 @@ const EXPECTED_INLINE_USES = {
   // 2026-09-27: 6 → 5. The Sessions ring's stroke, retired with the
   // summary's rings (PeriodOverview).
   // 2026-10-01: 5 → 4. The same recap card's volume figure.
-  "THEME.lifting": 4,
+  // 2026-10-26: 4 → 3. The exercise picker's dumbbell fallback, which
+  // moved into ExerciseThumb with the row's drawing.
+  "THEME.lifting": 3,
   // The brand, inline. Icon tints (notification glyphs, the ProModal
   // feature tiles, the Home tiles' arrows), legend and ring fills, and
   // TrajectoryCard's 3xl score. The text uses — Home's rest-day eyebrow,
