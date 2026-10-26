@@ -384,7 +384,11 @@ describe("ExerciseRowSummary — one row's words", () => {
     ]);
     for (const line of lines) {
       expect(line.className).not.toMatch(/\bfont-(?:figure|mono)\b/);
-      const numbers = [...line.querySelectorAll("span")];
+      // The no-wrap spans only hold a fact together ("52.5 kg" on one
+      // line); the number spans are the ones inside them.
+      const numbers = [
+        ...line.querySelectorAll("span:not(.whitespace-nowrap)"),
+      ];
       expect(numbers.length).toBeGreaterThan(0);
       for (const span of numbers) {
         expect(span).toHaveClass("font-mono", "tabular-nums");

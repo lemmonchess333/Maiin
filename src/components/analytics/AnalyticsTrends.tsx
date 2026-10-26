@@ -54,7 +54,7 @@ export default function AnalyticsTrends({
               </span>
               {/* Wraps rather than cuts: "Down 1.2 kg since 30 A…" hid the
                   one part of the line that says what the change is from. */}
-              <span className="block text-sm text-muted-foreground">
+              <span className="block text-sm text-muted-foreground text-pretty">
                 {row.detail}
               </span>
             </span>

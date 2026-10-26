@@ -55,9 +55,10 @@ describe("each lift's line", () => {
       row({ name: "Deadlift", exerciseId: "deadlift", direction: "down" }),
       row({ name: "Barbell Squat", exerciseId: "squat", direction: "level" }),
     ]);
+    // Each fact is held whole by non-breaking spaces; read them as spaces.
     const lines = screen
       .getAllByTestId("lift-status")
-      .map((l) => l.textContent);
+      .map((l) => l.textContent?.replace(/\u00A0/g, " "));
     expect(lines).toEqual([
       "Down from 75 kg × 6 on 28 Aug",
       "Level with 75 kg × 6 on 28 Aug",

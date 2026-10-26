@@ -447,6 +447,28 @@
   }
 }
 
+/* Line breaks (DESIGN_GUIDE §4). A heading balances its lines, so a
+   two-line card title does not leave one word on the first; running text
+   avoids a lone last word ("…Your programme / follows"). In @layer base so
+   a `text-wrap` utility on an element still wins. A number and its unit
+   are held together where they are written (`keepTogether`, or a
+   `whitespace-nowrap` span), which neither of these does. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+  p,
+  li,
+  dd,
+  figcaption,
+  legend {
+    text-wrap: pretty;
+  }
+}
+
 /* App-shell layout variables — single place to tune spacing math so
    pages don't hand-roll `pb-20` / `pt-6` values. Values assume the
    iPhone safe-area envs are set; desktop falls back to 0. */

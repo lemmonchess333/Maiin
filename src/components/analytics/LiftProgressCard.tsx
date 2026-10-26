@@ -8,23 +8,25 @@ import Sparkline from "./Sparkline";
 import { NewRecordChip } from "./PRCard";
 import { LIFT_PROGRESS_SHOWN, type LiftProgressRow } from "@/lib/liftProgress";
 import { parseLocalDate } from "@/lib/dateHelpers";
-import { formatDayMonth } from "@/utils/formatters";
+import { formatDayMonth, keepTogether } from "@/utils/formatters";
 import { THEME } from "@/lib/theme";
 import { T1_SPARKLINE_MIN_POINTS } from "@/lib/dataConfidence";
 import { formatLoad, type LiftUnit } from "@/lib/liftLoad";
 import { useLiftUnit } from "@/hooks/useLiftUnit";
 
-const day = (key: string) => formatDayMonth(parseLocalDate(key));
+/* Each fact stays whole when the line wraps: "26 Aug", "17 sessions",
+   "72.5 kg". */
+const day = (key: string) => keepTogether(formatDayMonth(parseLocalDate(key)));
 const setText = (set: { weight: number; reps: number }, unit: LiftUnit) =>
-  `${formatLoad(set.weight, unit)} × ${set.reps}`;
+  `${keepTogether(formatLoad(set.weight, unit))} × ${set.reps}`;
 
 /** Where the lift stands, in one line of plain words. */
 function statusLine(row: LiftProgressRow, unit: LiftUnit): string {
   if (row.holding) {
     const n = row.holding.sessionsSince;
-    return `No new best since ${day(row.holding.best.date)} · ${n} ${
-      n === 1 ? "session" : "sessions"
-    }`;
+    return `No new best since ${day(row.holding.best.date)} · ${keepTogether(
+      `${n} ${n === 1 ? "session" : "sessions"}`
+    )}`;
   }
   const from = `${setText(row.first, unit)} on ${day(row.first.date)}`;
   if (row.direction === "up") return `Up from ${from}`;

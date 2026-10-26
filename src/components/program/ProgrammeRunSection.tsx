@@ -1343,30 +1343,33 @@ export default function ProgrammeRunSection({
                 </div>
               )}
               {/* Prose labels in the body font; only the numerals take
-                  tabular digits (`font-mono`). */}
+                  tabular digits (`font-mono`). Each fact stays whole when
+                  the line wraps ("5.0 km", "1 day ago"). */}
               {lastRun && (
                 <p className="text-sm text-muted-foreground">
                   <span className="text-foreground">Last run</span>
                   {" · "}
-                  <span className="font-mono tabular-nums">
+                  <span className="whitespace-nowrap font-mono tabular-nums">
                     {distanceLabel(lastRun.distance, unit)}
                   </span>
                   {" · "}
-                  <span className="font-mono tabular-nums">
+                  <span className="whitespace-nowrap font-mono tabular-nums">
                     {durationLabel(lastRun.duration)}
                   </span>
                   {lastRun.avgPace > 0 && (
                     <>
                       {" · "}
-                      <span className="font-mono tabular-nums">
+                      <span className="whitespace-nowrap font-mono tabular-nums">
                         {paceLabel(lastRun.avgPace, unit)}
                       </span>
                     </>
                   )}
                   {" · "}
-                  {formatDistanceToNowStrict(lastRun.completedAt, {
-                    addSuffix: true,
-                  })}
+                  <span className="whitespace-nowrap">
+                    {formatDistanceToNowStrict(lastRun.completedAt, {
+                      addSuffix: true,
+                    })}
+                  </span>
                 </p>
               )}
             </Card>

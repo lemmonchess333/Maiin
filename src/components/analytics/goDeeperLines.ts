@@ -23,7 +23,7 @@ export function liftingLine(rows: readonly LiftProgressRow[]): string | null {
   if (newBests > 0)
     // The PRs tab's window, not the calendar week: on a Tuesday "this week"
     // claimed Saturday's bests.
-    return `${plural(newBests, "new best", "new bests")} in the last ${NEW_BEST_DAYS} days`;
+    return `${plural(newBests, "new best", "new bests")} in the last ${keepTogether(`${NEW_BEST_DAYS} days`)}`;
   const up = rows.filter((r) => !r.holding && r.direction === "up").length;
   const holding = rows.filter((r) => r.holding).length;
   const parts = [

@@ -789,6 +789,16 @@ describe("DS ratchets — surface-level drift", () => {
 });
 
 describe("type tiers", () => {
+  /* Line breaks (§4): headings balance, running text avoids a lone last
+     word. One base rule rather than a class at each of several hundred
+     sites; a `text-wrap` utility on an element still overrides it. */
+  it("headings balance and running text wraps pretty (positive pin)", () => {
+    const css = readFileSync(resolve(srcRoot, "index.css"), "utf8");
+    expect(css).toMatch(
+      /@layer base\s*\{\s*h1,\s*h2,\s*h3,\s*h4\s*\{\s*text-wrap:\s*balance;\s*\}\s*p,\s*li,[^{]*\{\s*text-wrap:\s*pretty;/
+    );
+  });
+
   /* `text-caption` (11px) is the floor for dense numerals and units
      (DESIGN_GUIDE §10). A unit with none of `font-mono`, `font-figure` or `tabular-nums`
      is counted as words; words belong on `text-micro` (12px) or above.
