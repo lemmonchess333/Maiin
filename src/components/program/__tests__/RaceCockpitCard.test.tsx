@@ -60,12 +60,18 @@ describe("RaceCockpitCard", () => {
     expect(screen.getByText(/140 days out/)).toBeInTheDocument();
   });
 
-  it("renders week N of M and the current phase", () => {
+  /* The week is on the date line and the phase on the rail. Week and
+     Phase tiles said both again, under a page header that names the week
+     too: one fact four ways on one screen. */
+  it("puts the week on the date line, with no Week or Phase tiles", () => {
     renderCard();
-    expect(screen.getByText("1 / 20")).toBeInTheDocument();
-    // Phase appears both as the stat value and as the highlighted rail
-    // segment, so assert at least one match.
-    expect(screen.getAllByText("Base").length).toBeGreaterThan(0);
+    const line = screen.getByText(/17 Oct 2026/);
+    expect(line.textContent).toBe("17 Oct 2026 · 140 days out · week 1 of 20");
+    expect(screen.queryByText("1 / 20")).not.toBeInTheDocument();
+    expect(screen.queryByText("Week")).not.toBeInTheDocument();
+    expect(screen.queryByText("Phase")).not.toBeInTheDocument();
+    // The phase is the rail's highlighted segment, once.
+    expect(screen.getAllByText("Base")).toHaveLength(1);
   });
 
   it("sizes the progress bar from (currentWeek + 1) / totalWeeks", () => {
@@ -76,9 +82,10 @@ describe("RaceCockpitCard", () => {
     expect(fill.style.width).toBe("25%");
   });
 
-  it("hides progress + rail when there are no week counters", () => {
+  it("hides the week and the rail when there are no week counters", () => {
     renderCard({ currentWeek: null, totalWeeks: null });
-    expect(screen.queryByText(/\d+ \/ \d+/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/week \d+ of/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Base")).not.toBeInTheDocument();
   });
 
   it("surfaces the compressed-plan note when compressed", () => {
@@ -155,11 +162,33 @@ describe("RaceCockpitCard", () => {
     expect(document.body.textContent ?? "").not.toMatch(/\bhard\b/i);
   });
 
-  it("calls onEdit when the edit affordance is tapped", () => {
+  /* DESIGN_GUIDE §14e: the entry reads as "Edit run plan", not a bare
+     "Edit". It is the Run tab's one way into the editor while a race is
+     set; the tab's footer link shows only when there is no race card. */
+  it("calls onEdit from its Edit run plan link", () => {
     const onEdit = vi.fn();
     renderCard({ onEdit });
-    fireEvent.click(screen.getByRole("button", { name: /Edit race goal/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit run plan" }));
     expect(onEdit).toHaveBeenCalledTimes(1);
+  });
+
+  /* Owner: one way into each. Adjust this week is a row on the race card,
+     under the rail, and nowhere else. */
+  it("offers Adjust this week as a row when the week can be adjusted", () => {
+    const onAdjustWeek = vi.fn();
+    renderCard({ onAdjustWeek });
+    const row = screen.getByRole("button", { name: "Adjust this week" });
+    expect(row.className).toContain("min-h-[44px]");
+    expect(row.textContent).not.toContain("›");
+    fireEvent.click(row);
+    expect(onAdjustWeek).toHaveBeenCalledTimes(1);
+  });
+
+  it("has no Adjust this week row without the handler", () => {
+    renderCard();
+    expect(
+      screen.queryByRole("button", { name: "Adjust this week" })
+    ).not.toBeInTheDocument();
   });
 
   /* PROGRAM-CIRCLE-01 (slice 4a) — the hand-off carries EXACTLY the

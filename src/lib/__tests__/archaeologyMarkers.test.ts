@@ -93,9 +93,11 @@ function countMarkers() {
  *  deleted the solo-first feed's cards, 727 once Train's plateau review
  *  went with its detector, 723 once five comments from the 2026-10-25
  *  audit fixes said what their code does rather than what it did, and
- *  720 after the Together copy pass. Lower it when you
- *  move narrative out; never raise it without the reason written here. */
-const MARKER_BASELINE = 720;
+ *  720 after the Together copy pass, and 718 once the run plan page's
+ *  header said what the page is rather than when it was split out. Lower
+ *  it when you move narrative out; never raise it without the reason
+ *  written here. */
+const MARKER_BASELINE = 718;
 
 describe("archaeology markers in non-test comments (ratchet)", () => {
   const { files, total, byFile, byKind } = countMarkers();

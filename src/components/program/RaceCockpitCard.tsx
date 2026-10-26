@@ -17,15 +17,21 @@
  */
 
 import type { ReactNode } from "react";
-import { ChevronRight, Flag, UserPlus, Users } from "lucide-react";
+import {
+  ChevronRight,
+  Flag,
+  SlidersHorizontal,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SectionLabel from "@/components/ui/SectionLabel";
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import { haptic } from "@/lib/haptic";
 import { spaceDef } from "@/features/spaces/spaceDefs";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonthYear } from "@/utils/formatters";
-import { cn } from "@/lib/utils";
 import PhaseRail from "./PhaseRail";
 
 interface RaceCockpitCardProps {
@@ -55,6 +61,9 @@ interface RaceCockpitCardProps {
   /** The plan's coming weeks (`RaceWeeksAhead`, R23), under the phase
    *  rail: where the plan is, then what is ahead of it. */
   weeksAhead?: ReactNode;
+  /** Opens the Adjust this week sheet. Omitted while the week cannot be
+   *  adjusted (recovery, just after the race), and the row goes with it. */
+  onAdjustWeek?: () => void;
   onEdit: () => void;
 }
 
@@ -71,6 +80,7 @@ export default function RaceCockpitCard({
   belowFloor = false,
   raceSpaceId,
   weeksAhead,
+  onAdjustWeek,
   onEdit,
 }: RaceCockpitCardProps) {
   const navigate = useNavigate();
@@ -95,8 +105,12 @@ export default function RaceCockpitCard({
       aria-label="Race plan"
       className="rounded-2xl bg-card border border-border p-4 space-y-4 card-shadow"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1 min-w-0">
+      {/* "Edit run plan" drops under the heading, at the right, once the
+          heading would be narrower than 9em (a long event name, or larger
+          text on the phone). It is the Run tab's one way into the run plan
+          editor while a race is set. */}
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+        <div className="space-y-1 min-w-[min(100%,9em)] flex-1">
           <SectionLabel
             as="span"
             className="inline-flex items-center gap-1.5 font-bold text-running-strong"
@@ -107,6 +121,9 @@ export default function RaceCockpitCard({
           <h3 className="text-2xl font-extrabold tracking-tight text-foreground leading-tight">
             {eventName || distanceLabel}
           </h3>
+          {/* The week sits on the date line. The rail below marks the
+              phase, and the page header names the week too, so tiles for
+              Week and Phase said both a third time. */}
           <p className="text-sm text-muted-foreground">
             {/* When the event name takes the heading, the distance demotes
                 into this meta row. */}
@@ -121,35 +138,23 @@ export default function RaceCockpitCard({
             <span className="font-medium text-foreground">
               {daysToRace} {daysToRace === 1 ? "day" : "days"} out
             </span>
+            {hasProgress && (
+              <>
+                {" · "}
+                <InlineNumerals>{`week ${currentWeek! + 1} of ${totalWeeks!}`}</InlineNumerals>
+              </>
+            )}
           </p>
         </div>
         <button
           type="button"
           onClick={onEdit}
-          aria-label="Edit race goal"
-          className="shrink-0 inline-flex items-center gap-0.5 min-h-[44px] px-2 -my-1 -mr-1 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.97] transition-transform rounded-md"
+          className="ml-auto shrink-0 inline-flex items-center gap-0.5 min-h-[44px] px-2 -my-1 -mr-2 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.97] transition-transform rounded-md"
         >
-          Edit
+          Edit run plan
           <ChevronRight className="size-3.5" aria-hidden="true" />
         </button>
       </div>
-
-      {hasProgress && (
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-xl bg-muted/60 p-3">
-            <SectionLabel>Week</SectionLabel>
-            <p className="text-lg font-semibold tabular-nums font-mono text-foreground">
-              {currentWeek! + 1} / {totalWeeks!}
-            </p>
-          </div>
-          <div className="rounded-xl bg-muted/60 p-3">
-            <SectionLabel>Phase</SectionLabel>
-            <p className="text-lg font-semibold text-foreground">
-              {phaseLabel ?? "—"}
-            </p>
-          </div>
-        </div>
-      )}
 
       {hasProgress && (
         <div className="space-y-2">
@@ -168,11 +173,21 @@ export default function RaceCockpitCard({
       {/* The card's quiet rows, under the rail. A Circle and a race space
           are social, not a sport, so they are neutral rows rather than
           coral buttons.
+          Adjust this week (Run13) opens the week's sheet. It lives here
+          only: the race plan is what it adjusts, and the owner asked for
+          one way into it.
           PROGRAM-CIRCLE-01 (slice 4a): Train together hands the race plan
           off to a Circle. Privacy fence: ONLY the space type, a readable
           title and the race date travel, never routes, GPS, paces or plan
           internals. */}
       <div className="space-y-2">
+        {onAdjustWeek && (
+          <CardRow
+            icon={SlidersHorizontal}
+            label="Adjust this week"
+            onClick={onAdjustWeek}
+          />
+        )}
         <CardRow
           icon={UserPlus}
           label="Train together"
@@ -260,12 +275,10 @@ function CardRow({
   icon: Icon,
   label,
   onClick,
-  iconClassName = "text-muted-foreground",
 }: {
   icon: LucideIcon;
   label: string;
   onClick: () => void;
-  iconClassName?: string;
 }) {
   return (
     <button
@@ -277,7 +290,7 @@ function CardRow({
       className="w-full min-h-[44px] flex items-center justify-between gap-2 rounded-xl bg-muted/60 px-3.5 text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
     >
       <span className="flex items-center gap-2 min-w-0">
-        <Icon className={cn("size-4 shrink-0", iconClassName)} aria-hidden />
+        <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         <span className="truncate">{label}</span>
       </span>
       <ChevronRight

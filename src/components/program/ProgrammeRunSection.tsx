@@ -591,6 +591,14 @@ export default function ProgrammeRunSection({
       todayKeyDerivation,
     ]
   );
+  // The race card is on screen: a race plan with its race still ahead.
+  // It carries the tab's ways into the run plan editor and Adjust this
+  // week, so nothing else on the tab offers them while it shows.
+  const showRaceCard =
+    currentMode === "race_prep" &&
+    !!raceGoal &&
+    !raceElapsed &&
+    raceCockpitVM !== null;
 
   // ── Run14: ease-week nudge (RUN-05) ────────────────────────────────
   // Suggest+approve: evaluate the harder-streak trigger + every
@@ -1228,9 +1236,9 @@ export default function ProgrammeRunSection({
           shows days-to-race. Worse, as a row directly above the day-selector it
           forced the Run selector's day circles ~33px lower than the Lift tab's
           (the selector also has a weekday-letter row the Lift one lacks), so
-          the stepper visibly jumped when toggling tabs. The manage affordance
-          is preserved by the "Edit run plan ›" footer link and the overflow
-          menu. */}
+          the stepper visibly jumped when toggling tabs. The way into the
+          editor is the race card's "Edit run plan", or the footer link when
+          there is no race card. */}
 
       {/* ── Hero: freeform ──────────────────────────────────────────
           Start CTA + last-run + this-week summary lines. Empty
@@ -1615,12 +1623,10 @@ export default function ProgrammeRunSection({
                         }).feel
                       : undefined
                   }
-                  meta={[
-                    ...(selectedPurpose.weekLabel
-                      ? [selectedPurpose.weekLabel]
-                      : []),
-                    ...selectedRunMeta,
-                  ]}
+                  /* No plan position ("Base · week 1 of 10"): the page
+                     header, the race card's date line and its rail say
+                     it already. */
+                  meta={selectedRunMeta}
                   primaryActionLabel={selectedIsRace ? "View race" : "View run"}
                   onPrimaryAction={() => {
                     haptic();
@@ -1741,47 +1747,65 @@ export default function ProgrammeRunSection({
           {/* Race progress identity card — moved BELOW the selected-day card
               (cockpit reorder). Race-prep only; the actionable race-day /
               race-recent heroes stay on top. */}
-          {currentMode === "race_prep" &&
-            raceGoal &&
-            !raceElapsed &&
-            raceCockpitVM && (
-              <RaceCockpitCard
-                distanceLabel={raceCockpitVM.distanceLabel}
-                eventName={raceCockpitVM.eventName ?? undefined}
-                targetDate={raceCockpitVM.targetDate}
-                daysToRace={raceCockpitVM.daysToRace}
-                currentWeek={raceCockpitVM.currentWeek}
-                totalWeeks={raceCockpitVM.totalWeeks}
-                phaseLabel={raceCockpitVM.phaseLabel}
-                inTaper={raceCockpitVM.inTaper}
-                compressed={raceCockpitVM.compressed}
-                /* belowFloor implies compressed but must be surfaced
+          {showRaceCard && raceCockpitVM && (
+            <RaceCockpitCard
+              distanceLabel={raceCockpitVM.distanceLabel}
+              eventName={raceCockpitVM.eventName ?? undefined}
+              targetDate={raceCockpitVM.targetDate}
+              daysToRace={raceCockpitVM.daysToRace}
+              currentWeek={raceCockpitVM.currentWeek}
+              totalWeeks={raceCockpitVM.totalWeeks}
+              phaseLabel={raceCockpitVM.phaseLabel}
+              inTaper={raceCockpitVM.inTaper}
+              compressed={raceCockpitVM.compressed}
+              /* belowFloor implies compressed but must be surfaced
                    separately — the compressed copy describes interval work
                    trimmed and a long-run progression shortened, and a
                    below-floor plan has neither. The view model has carried
                    this since it was added for exactly that reason; only this
                    hop was missing, so the card fell through to the compressed
                    branch and described training the plan does not contain. */
-                belowFloor={raceCockpitVM.belowFloor}
-                /* PR4 cross-link — the PROFILE copy is canonical for the
+              belowFloor={raceCockpitVM.belowFloor}
+              /* PR4 cross-link — the PROFILE copy is canonical for the
                    catalogue binding (runPlan.raceGoal is the schedule's
                    snapshot and doesn't carry it). */
-                raceSpaceId={profile.raceGoal?.eventSpaceId}
-                /* R23: the plan's coming weeks, a week a row. */
-                weeksAhead={
-                  <RaceWeeksAhead
-                    profile={profile}
-                    programState={programState}
-                    recentLayoff={recentLayoff}
-                    today={todayKeyDerivation}
-                  />
-                }
-                onEdit={() => {
-                  haptic();
-                  navigate("/settings/run-plan");
-                }}
-              />
-            )}
+              raceSpaceId={profile.raceGoal?.eventSpaceId}
+              /* R23: the plan's coming weeks, a week a row. */
+              weeksAhead={
+                <RaceWeeksAhead
+                  profile={profile}
+                  programState={programState}
+                  recentLayoff={recentLayoff}
+                  today={todayKeyDerivation}
+                />
+              }
+              /* Run13 (RUN-02): the standing, proactive week adjustment,
+                   not gated on falling behind. Hidden in recovery and just
+                   after the race, which own their own flows. Opening clears
+                   a pending fell-behind prompt first (Run9c, one primary
+                   action). */
+              onAdjustWeek={
+                !inRecovery && !recoveryEnded
+                  ? () => {
+                      if (contextualPrompt === "fell-behind") {
+                        void dismissFellBehindPrompt();
+                      }
+                      // Opens on the intent chooser, not the nudge's
+                      // preselected easier preview.
+                      setAdjustInitialIntent(undefined);
+                      trackProgram("adjust_week_opened", {
+                        source: "cockpit",
+                      });
+                      setAdjustOpen(true);
+                    }
+                  : undefined
+              }
+              onEdit={() => {
+                haptic();
+                navigate("/settings/run-plan");
+              }}
+            />
+          )}
 
           {/* A7 — race execution card: A/B/C goals + negative-split table.
               Self-gates to taper + race week (raceDayPlanVisible) and to
@@ -1802,13 +1826,8 @@ export default function ProgrammeRunSection({
               />
             )}
 
-          {/* Run13 (RUN-02): proactive week adjustment — a standing, quiet
-              entry (NOT gated on falling behind; the whole point is acting
-              BEFORE misses accumulate). Hidden in recovery / post-race, which
-              own their own flows. Opening clears a pending fell-behind prompt
-              first (Run9c one-primary-action). */}
-          {/* Run14: the ease-week nudge sits just above the standing
-              Adjust entry (same neighbourhood). It has already run all
+          {/* Run14: the ease-week nudge, under the race card whose Adjust
+              this week row it opens preselected. It has already run all
               its scope + suppression rules in the pure module. */}
           {/* A6: the post-ease bounce line — one factual sentence the week
               after an applied easier week. Informational, no actions; the
@@ -1819,7 +1838,7 @@ export default function ProgrammeRunSection({
                 ? "Your latest tempo was inside its pace window. One run does not tell the whole story; the plan is unchanged."
                 : postEaseBounce === "above_window"
                   ? "Your latest tempo was faster than its pace window. The plan is unchanged."
-                  : "Your latest tempo was slower than its pace window. You can review an easier week below."}
+                  : "Your latest tempo was slower than its pace window. Adjust this week, on your race plan, can ease it."}
             </p>
           )}
 
@@ -1849,30 +1868,6 @@ export default function ProgrammeRunSection({
             />
           )}
 
-          {currentMode === "race_prep" &&
-            raceGoal &&
-            !raceElapsed &&
-            !inRecovery &&
-            !recoveryEnded && (
-              <button
-                type="button"
-                onClick={() => {
-                  haptic();
-                  if (contextualPrompt === "fell-behind") {
-                    void dismissFellBehindPrompt();
-                  }
-                  // Normal entry opens on the intent chooser, not the
-                  // nudge's preselected easier preview.
-                  setAdjustInitialIntent(undefined);
-                  trackProgram("adjust_week_opened", { source: "cockpit" });
-                  setAdjustOpen(true);
-                }}
-                className="w-full min-h-[44px] py-2 text-sm text-muted-foreground text-center active:scale-[0.97] transition-transform"
-              >
-                Adjust this week ›
-              </button>
-            )}
-
           {allRunsDone && (
             <div
               className="p-3 rounded-xl text-center text-xs flex items-center justify-center gap-1.5"
@@ -1889,25 +1884,25 @@ export default function ProgrammeRunSection({
         </div>
       )}
 
-      {/* Run8 PR1a — footer link renamed "Change plan" → "Manage Run
-          Plan ›". Points at /settings/run-plan, the focused run-plan
-          editor that now owns mode + race goal + run days + tuning
-          (Set1.2 superseded the Run8-era /settings/training
-          destination). The section subtitle above targets the same
-          destination — both are entry points to the run-plan editor. */}
-      <div className="flex justify-end pt-2 border-t border-border/30">
-        <button
-          type="button"
-          onClick={() => {
-            haptic();
-            navigate("/settings/run-plan");
-          }}
-          className="inline-flex items-center gap-0.5 min-h-[44px] px-2 -my-1 -mr-1 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.97] transition-transform rounded-md"
-        >
-          Edit run plan
-          <ChevronRight className="size-3.5" />
-        </button>
-      </div>
+      {/* The way into the run plan editor (/settings/run-plan) when there
+          is no race card to carry it: a free runner, and a race plan that
+          is over or recovering. With a race card on screen, its own "Edit
+          run plan" is the one way in. */}
+      {!showRaceCard && (
+        <div className="flex justify-end pt-2 border-t border-border/30">
+          <button
+            type="button"
+            onClick={() => {
+              haptic();
+              navigate("/settings/run-plan");
+            }}
+            className="inline-flex items-center gap-0.5 min-h-[44px] px-2 -my-1 -mr-1 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.97] transition-transform rounded-md"
+          >
+            Edit run plan
+            <ChevronRight className="size-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* PR-1: per-day action sheet. scope="run" — the Run tab is sport-
           partitioned by the Lift|Run control, so this manager shows only the
@@ -1955,10 +1950,7 @@ export default function ProgrammeRunSection({
             programState.easeSnapshot.weekNumber === programState.weekNumber
           }
           realignRacePlan={realignRacePlan}
-          // A6's eased-week marker is the sheet's own job now. It was a
-          // callback from here, and the sheet's OTHER mount (SettingsRunPlan)
-          // never passed one — so easing from Settings produced no bounce
-          // line, and undoing from there left this mount's marker standing.
+          // A6's eased-week marker is the sheet's own job, keyed by uid.
           uid={profile.uid}
         />
       )}

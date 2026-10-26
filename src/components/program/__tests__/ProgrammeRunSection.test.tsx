@@ -533,16 +533,85 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
     expect(navigateMock).toHaveBeenCalledWith("/settings/run-plan");
   });
 
-  // Run8 PR1a — footer is a single muted-gray "Manage Run Plan ›"
-  // text-link (was "Change plan ›"). Mode is conveyed by the section
-  // subtitle in non-freeform; freeform shows no subtitle and the
-  // hero IS the mode reveal.
-  it("footer is a single Manage Run Plan link with no 'Running mode:' status prefix", () => {
+  // The way into the editor is one muted text link with no "Running
+  // mode:" status prefix.
+  it("has a single Edit run plan link with no 'Running mode:' status prefix", () => {
     renderSection(commonProps(), makeProgramState([makeRunDay()]));
     expect(screen.queryByText(/Running mode:/i)).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Edit run plan/i })
     ).toBeInTheDocument();
+  });
+
+  /* Owner: "edit plan also appears as I edit plan and adjust". With a
+     race card on screen, its "Edit run plan" and its "Adjust this week"
+     row are the tab's only ways into each, where the tab's footer had a
+     second Edit run plan and a floating "Adjust this week ›" link. */
+  it("race prep: one Edit run plan and one Adjust this week, both on the race card", () => {
+    renderSection(commonProps(), makeProgramState([makeRunDay()]));
+    const card = screen.getByRole("region", { name: "Race plan" });
+    const edits = screen.getAllByRole("button", { name: /Edit run plan/i });
+    expect(edits).toHaveLength(1);
+    expect(card).toContainElement(edits[0]);
+    const adjusts = screen.getAllByRole("button", {
+      name: /Adjust this week/i,
+    });
+    expect(adjusts).toHaveLength(1);
+    expect(card).toContainElement(adjusts[0]);
+    expect(screen.queryByText(/Adjust this week ›/)).not.toBeInTheDocument();
+  });
+
+  /* The week was said four ways: the page header, the race card's tiles,
+     its rail and the run card's meta ("Base · week 1 of 10"). The run
+     card keeps the session; the race card's date line keeps the week. */
+  it("race prep: the run card's meta carries no plan position", () => {
+    renderSection(
+      commonProps(),
+      makeProgramState(
+        [
+          makeRunDay({
+            id: "runday_today",
+            templateId: "easy_30",
+            status: "planned",
+            date: TODAY_KEY,
+            dayIndex: TODAY_DOW,
+          }),
+        ],
+        {
+          runPlan: {
+            mode: "race_prep",
+            raceGoal: { distance: "10k", targetDate: "2099-04-18" },
+            totalWeeks: 12,
+            currentWeek: 0,
+          },
+        }
+      )
+    );
+    const runCard = screen
+      .getAllByRole("region")
+      .find((r) => /^Due today/.test(r.getAttribute("aria-label") ?? ""))!;
+    expect(runCard).toBeDefined();
+    expect(runCard).not.toHaveTextContent(/week \d+ of/i);
+    expect(screen.getByRole("region", { name: "Race plan" })).toHaveTextContent(
+      /week 1 of 12/
+    );
+  });
+
+  it("freeform: the footer link is the way in, and there is no Adjust this week", () => {
+    const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />
+    );
+    expect(
+      screen.getAllByRole("button", { name: /Edit run plan/i })
+    ).toHaveLength(1);
+    expect(
+      screen.queryByRole("button", { name: /Adjust this week/i })
+    ).not.toBeInTheDocument();
   });
 
   // Run7 Q5 — race goal form collapses to a one-line summary when a
@@ -566,7 +635,7 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
     expect(screen.getByText(/days out/i)).toBeInTheDocument();
     // Edit affordance is the muted-gray text-link (navigation discipline),
     // not a coral fill.
-    const editBtn = screen.getByRole("button", { name: /Edit race goal/i });
+    const editBtn = screen.getByRole("button", { name: /Edit run plan/i });
     expect(editBtn.className).toContain("text-muted-foreground");
     expect(editBtn.style.color).toBe("");
   });
@@ -869,11 +938,11 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
       },
     } as Partial<UserProfile>);
     // The meta line sets each token in its own span; read it whole. It
-    // opens with the plan position ("Base · week 1 of 12").
+    // opens with the dose: the plan position is not on the card.
     const metaLine = () =>
       Array.from(document.querySelectorAll("p"))
         .map((el) => el.textContent ?? "")
-        .find((text) => /· \d+ min\b/.test(text));
+        .find((text) => /^\d+ min\b/.test(text));
     const renderToday = (templateId: string) =>
       renderWith(
         <ProgrammeRunSection
@@ -891,10 +960,10 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
         />
       );
     const easy = renderToday("easy_30");
-    expect(metaLine()).toMatch(/· 30 min · .*\/km/);
+    expect(metaLine()).toMatch(/^30 min · .*\/km/);
     easy.unmount();
     renderToday("run_walk_1");
-    expect(metaLine()).toMatch(/· 29 min · /);
+    expect(metaLine()).toMatch(/^29 min · /);
     expect(metaLine()).not.toMatch(/\/km/);
   });
 
@@ -1000,7 +1069,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     const metaLine = () =>
       Array.from(document.querySelectorAll("p"))
         .map((el) => el.textContent ?? "")
-        .find((text) => /· 15 km\b/.test(text));
+        .find((text) => /^15 km\b/.test(text));
     const renderToday = (extra: Partial<UserProfile>) =>
       renderWith(
         <ProgrammeRunSection
@@ -1026,10 +1095,10 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
         pendingConfirmation: false,
       },
     } as Partial<UserProfile>);
-    expect(metaLine()).toMatch(/· 15 km · about 100 min\b/);
+    expect(metaLine()).toMatch(/^15 km · about 100 min\b/);
     confirmed.unmount();
     renderToday({});
-    expect(metaLine()).toMatch(/· 15 km\b/);
+    expect(metaLine()).toMatch(/^15 km\b/);
     expect(metaLine()).not.toMatch(/about \d+ min/);
   });
 
