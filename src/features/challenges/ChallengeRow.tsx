@@ -87,7 +87,6 @@ export default function ChallengeRow({
           )}
         </div>
         <Button
-          size="sm"
           variant={sport === "running" ? "sport" : "primary"}
           className="shrink-0"
           loading={joining}
