@@ -37,6 +37,10 @@ export interface ExerciseSummaryInput {
   exerciseId?: string;
 }
 
+/** The summary for an exercise with no sets, which an older post may
+ *  carry as its stored summary. */
+export const NO_SETS_SUMMARY = "—";
+
 /** `unit` is the reader's (Lift18): a post stores kg, and the summary it
  *  stores is written in kg, as the fallback for a post with no figures. */
 export function formatExerciseSummary(
@@ -47,7 +51,7 @@ export function formatExerciseSummary(
   const reps = Math.max(0, Math.round(input.targetReps || 0));
   const weight = Math.max(0, Number(input.targetWeightKg) || 0);
 
-  if (sets === 0 && reps === 0) return "—";
+  if (sets === 0 && reps === 0) return NO_SETS_SUMMARY;
   if (reps === 0) return `${sets} set${sets === 1 ? "" : "s"}`;
   const timed = isTimedExerciseId(input.exerciseId);
   const count = `${sets}×${reps}${timed ? " s" : ""}`;

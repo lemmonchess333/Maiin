@@ -16,7 +16,7 @@
  */
 import { EXERCISES } from "@/lib/exercises";
 import { getFormArtCutout, type FormArtCutout } from "@/lib/formArtCutouts";
-import { formatExerciseSummary } from "@/lib/exerciseSummary";
+import { formatExerciseSummary, NO_SETS_SUMMARY } from "@/lib/exerciseSummary";
 import { workoutTonnageKg, type WorkoutExercise } from "@/lib/savedWorkouts";
 import type { ActivityPreview, ShareDecision } from "@/lib/shareComposer";
 import type { ActivityPost, PostedExercise } from "@/lib/activityPost";
@@ -133,10 +133,6 @@ export interface LiftPostRow {
 
 const isNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
-
-/** What `formatExerciseSummary` writes for no sets, which a post may
- *  carry as its stored summary. */
-const NO_SETS_SUMMARY = "—";
 
 /**
  * One stored row, read: the row to draw, "not done" for an exercise the
