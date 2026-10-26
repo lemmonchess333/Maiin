@@ -8,6 +8,11 @@
    file is ever added outside src/, it needs its own @source line. */
 @import "tailwindcss" source(".");
 @source "../index.html";
+/* `dark:` follows the app's theme, the `.dark` class public/init.js sets
+   before first paint, not the phone's own appearance setting. Without
+   this, Tailwind v4 compiles `dark:` to prefers-color-scheme, so the
+   app's dark mode on a phone set to Light drew the light-mode edges. */
+@custom-variant dark (&:where(.dark, .dark *));
 @import "./styles/tokens.css";
 @import "./styles/components.css";
 @import "./styles/animations.css";
